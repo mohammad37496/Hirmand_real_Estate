@@ -226,6 +226,28 @@ function Hero({ onSearch }: { onSearch: (draft: InquiryDraft) => void }) {
   );
 }
 
+function TrustStrip() {
+  const highlights = [
+    { value: `${NEIGHBORHOODS.length}+`, label: "محله روی نقشه" },
+    { value: `${SERVICES.length}`, label: "مسیر اصلی معامله" },
+    { value: `${TEAM.length}`, label: "مشاور مستقیم" },
+    { value: "۳", label: "مسیر نقشه و مسیریابی" },
+  ] as const;
+
+  return (
+    <section className="trust-strip-wrap" aria-label="اطلاعات کلیدی هیرمند">
+      <div className="trust-strip">
+        {highlights.map((item) => (
+          <div key={item.label} className="trust-stat">
+            <strong>{item.value}</strong>
+            <span>{item.label}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function About() {
   return (
     <Reveal as="section" className="section about-section" id="about">
@@ -687,6 +709,7 @@ export function SitePage() {
   return (
     <SiteChrome>
       <Hero onSearch={(next) => goInquiry(next)} />
+      <TrustStrip />
       <About />
       <Team />
       <Services onPick={(title) => goInquiry({ deal: title })} />
