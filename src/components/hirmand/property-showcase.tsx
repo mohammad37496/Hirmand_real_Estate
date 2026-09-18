@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Building2, CarFront, ChevronLeft, Elevator, Home, MapPinned, Search } from "lucide-react";
+import { Building2, CarFront, ChevronLeft, Home, MapPinned, Search } from "lucide-react";
 import { PROPERTY_TYPES } from "@/lib/site";
 import { formatToman } from "@/lib/money";
 import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
@@ -29,7 +29,7 @@ export function PropertyCard({ property }: { property: Property }) {
     </div>
     <div className="property-card-body"><div className="property-card-meta"><span>{PROPERTY_TYPE_LABEL[property.propertyType]}</span><span>{property.neighborhood}</span></div>
       <h3>{property.title}</h3><p className="property-card-price">{priceLabel(property)}</p>
-      <div className="property-card-specs">{property.areaM2 ? <span><Home size={14} /> {property.areaM2.toLocaleString("fa-IR")} متر</span> : null}{property.bedrooms ? <span><Building2 size={14} /> {property.bedrooms.toLocaleString("fa-IR")} خواب</span> : null}{property.parking ? <span><CarFront size={14} /> پارکینگ</span> : null}{property.elevator ? <span><Elevator size={14} /> آسانسور</span> : null}</div>
+      <div className="property-card-specs">{property.areaM2 ? <span><Home size={14} /> {property.areaM2.toLocaleString("fa-IR")} متر</span> : null}{property.bedrooms ? <span><Building2 size={14} /> {property.bedrooms.toLocaleString("fa-IR")} خواب</span> : null}{property.parking ? <span><CarFront size={14} /> پارکینگ</span> : null}{property.elevator ? <span><Building2 size={14} /> آسانسور</span> : null}</div>
     </div>
   </Link></article>;
 }
