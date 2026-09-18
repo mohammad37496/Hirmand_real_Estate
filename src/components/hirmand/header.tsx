@@ -66,6 +66,17 @@ export function Header() {
         </nav>
 
         <div className="nav-actions">
+          <Link
+            to="/"
+            hash="inquiry"
+            className="header-inquiry"
+            onClick={(event) => {
+              if (onHome) scrollToId(event, "inquiry", closeMenu);
+              else closeMenu();
+            }}
+          >
+            درخواست ملک
+          </Link>
           <CallMenu className="nav-call-menu" buttonClassName="nav-call" align="end" />
           <button
             type="button"
