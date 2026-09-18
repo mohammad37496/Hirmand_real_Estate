@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, ImagePlus, KeyRound, Save, Trash2 } from "lucide-react";
 import { PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
@@ -20,7 +20,7 @@ function AdminPropertiesPage() {
   useEffect(() => { try { const stored = sessionStorage.getItem("hirmand-admin-key") ?? ""; if (stored) { setAdminKey(stored); setForm((prev) => ({ ...prev, adminKey: stored })); } } catch {} }, []);
   async function refresh(key = adminKey) { if (!key) return; setLoadingList(true); try { setProperties(await listAdminProperties({ data: { adminKey: key } })); } catch (error) { toast.error(error instanceof Error ? error.message : "دسترسی مدیر تأیید نشد."); } finally { setLoadingList(false); } }
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((prev) => ({ ...prev, [key]: value }));
-  async function save(event: React.FormEvent) { event.preventDefault(); setLoading(true); try {
+  async function save(event: FormEvent) { event.preventDefault(); setLoading(true); try {
     if (!form.adminKey.trim()) throw new Error("کلید مدیریت را وارد کنید.");
     const result = await saveProperty({ data: { adminKey: form.adminKey, id: form.id, title: form.title, transactionType: form.transactionType, propertyType: form.propertyType, neighborhood: form.neighborhood, address: form.address, areaM2: numberOrNull(form.areaM2), bedrooms: numberOrNull(form.bedrooms), bathrooms: numberOrNull(form.bathrooms), floor: numberOrNull(form.floor), totalFloors: numberOrNull(form.totalFloors), builtYear: numberOrNull(form.builtYear), parking: form.parking, elevator: form.elevator, storage: form.storage, price: form.price, deposit: form.deposit, rent: form.rent, description: form.description, features: splitLines(form.features), images: splitLines(form.images), contactName: form.contactName, contactPhone: form.contactPhone, status: form.status, featured: form.featured } });
     sessionStorage.setItem("hirmand-admin-key", form.adminKey); setAdminKey(form.adminKey); setProperties((prev) => prev.some((item) => item.id === result.id) ? prev.map((item) => item.id === result.id ? result : item) : [result, ...prev]); setForm(emptyForm(form.adminKey)); toast.success("فایل ملک با موفقیت ذخیره شد.");
