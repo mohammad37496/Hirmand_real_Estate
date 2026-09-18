@@ -2143,47 +2143,136 @@ summary:focus-visible {
 
 /* --- Professional polish: accessibility, trust cues, and responsive details --- */
 
-.hero-image {
+.hero-inner::after {
+  content: "";
+  position: absolute;
+  inset: 12% 10% auto;
+  height: 220px;
+  border-radius: 50%;
+  background: rgba(201, 162, 74, 0.08);
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.service-card,
+.type-card,
+.team-card,
+.contact-card,
+.social-link,
+.faq-item,
+.commission-guide {
+  transition:
+    transform var(--med) var(--ease),
+    border-color var(--fast) var(--ease),
+    background-color var(--fast) var(--ease),
+    box-shadow var(--med) var(--ease);
+}
+
+.service-card:hover,
+.team-card:hover,
+.commission-guide:hover {
+  transform: translateY(-4px);
+  border-color: var(--gold-line);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+}
+
+.service-card-button {
+  position: relative;
+  display: flex;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  min-height: 100%;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 22px 20px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: right;
+}
+
+.service-card-copy {
+  display: grid;
+  gap: 5px;
+  flex: 1;
+}
+
+.service-card-title {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.service-card-text {
+  display: block;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.75;
+}
+
+.service-card-arrow {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--gold);
+  background: rgba(201, 162, 74, 0.06);
+  transition:
+    transform var(--fast) var(--ease),
+    background-color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease);
+}
+
+.service-card:hover .service-card-arrow,
+.service-card-button:focus-visible .service-card-arrow {
+  transform: translate(-2px, -2px);
+  border-color: var(--gold-line);
+  background: var(--gold-soft);
+  color: var(--ink);
+}
+
+.type-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--gold-line);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
+}
+
+.type-card img {
+  transition: transform 500ms var(--ease);
+}
+
+.type-card:hover img {
+  transform: scale(1.03);
+}
+
+.inquiry-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.inquiry-section::before {
+  content: "";
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  inset: -110px auto auto -90px;
+  border-radius: 50%;
+  background: rgba(201, 162, 74, 0.1);
+  filter: blur(12px);
+  pointer-events: none;
+}
+
+.inquiry-form,
+.inquiry-layout {
+  position: relative;
 }
 
 .hero-proof {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  width: min(100%, 760px);
-  margin: 18px auto 0;
-}
-
-.hero-proof span {
-  min-height: 48px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 9px 12px;
-  color: rgba(244, 239, 230, 0.84);
-  border: 1px solid rgba(244, 239, 230, 0.12);
-  border-radius: 14px;
-  background: rgba(7, 9, 13, 0.38);
-  backdrop-filter: blur(10px);
-  font-size: 0.78rem;
-  text-align: center;
-}
-
-.hero-proof strong {
-  color: var(--gold-soft);
-  font-size: 0.92rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.form-hint {
-  margin-top: -2px;
-  color: var(--subtle);
-  font-size: 0.74rem;
-  line-height: 1.7;
+  position: relative;
+  z-index: 1;
 }
 
 .section[id],
@@ -2213,6 +2302,16 @@ summary:focus-visible {
 
   .form-hint {
     font-size: 0.72rem;
+  }
+
+  .service-card-button {
+    padding: 20px 16px;
+  }
+
+  .service-card-arrow {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
   }
 }
 
