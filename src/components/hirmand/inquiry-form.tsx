@@ -13,8 +13,16 @@ export type InquiryDraft = {
 const DEAL_OPTIONS = SERVICES.map((item) => item.title);
 const TYPE_OPTIONS = PROPERTY_TYPES.map((item) => item.title);
 
+function toLatinDigits(value: string) {
+  return value
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
+}
+
 function normalizePhone(value: string) {
-  return value.replace(/[\s-]/g, "").replace(/^(\+98|0098|98)/, "0");
+  return toLatinDigits(value)
+    .replace(/[\s\-()]/g, "")
+    .replace(/^(\+98|0098|98)/, "0");
 }
 
 function isMobile(value: string) {
@@ -114,8 +122,12 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           value={phone}
           onChange={(event) => setPhone(event.target.value)}
           placeholder="0913 000 0000"
+          aria-describedby="inq-phone-hint"
         />
       </div>
+      <p id="inq-phone-hint" className="form-hint field-span">
+        شماره با ارقام فارسی یا انگلیسی قابل وارد کردن است؛ اطلاعات این فرم فقط برای آماده‌سازی درخواست و ارسال به مشاور در همین دستگاه نگهداری می‌شود.
+      </p>
       <div className="field">
         <label htmlFor="inq-deal">نوع معامله</label>
         <select id="inq-deal" value={deal} onChange={(event) => setDeal(event.target.value)}>
