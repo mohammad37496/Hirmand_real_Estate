@@ -79,7 +79,11 @@ export function Header() {
         </div>
       </div>
 
-      <div className={cn("mobile-menu", menuOpen && "is-open")} aria-hidden={!menuOpen}>
+      <div
+        className={cn("mobile-menu", menuOpen && "is-open")}
+        aria-hidden={!menuOpen}
+        inert={!menuOpen}
+      >
         {NAV.map((item) =>
           item.to === "/tracking" ? (
             <Link key={item.id} to="/tracking" onClick={closeMenu}>
