@@ -13,6 +13,7 @@ export const Route = createFileRoute("/tracking")({
         name: "description",
         content: "ثبت قرارداد در سامانه و دریافت کد رهگیری — به‌زودی در گروه مشاورین املاک هیرمند.",
       },
+      { name: "robots", content: "noindex, follow" },
     ],
   }),
 });
