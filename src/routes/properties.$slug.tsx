@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, BedDouble, Building2, CarFront, Check, Elevator, MapPinned, Phone, Ruler, Warehouse } from "lucide-react";
+import { ArrowRight, BedDouble, Building2, CarFront, Check, MapPinned, Phone, Ruler, Warehouse } from "lucide-react";
 import { getPublishedProperty } from "@/lib/properties";
 import { SITE } from "@/lib/site";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
@@ -28,7 +28,7 @@ function PropertyDetailPage() {
         {property.areaM2 ? <div><Ruler size={18} /><span><small>متراژ</small><strong>{property.areaM2.toLocaleString("fa-IR")} متر</strong></span></div> : null}
         {property.bedrooms ? <div><BedDouble size={18} /><span><small>خواب</small><strong>{property.bedrooms.toLocaleString("fa-IR")}</strong></span></div> : null}
         {property.parking ? <div><CarFront size={18} /><span><small>پارکینگ</small><strong>دارد</strong></span></div> : null}
-        {property.elevator ? <div><Elevator size={18} /><span><small>آسانسور</small><strong>دارد</strong></span></div> : null}
+        {property.elevator ? <div><Building2 size={18} /><span><small>آسانسور</small><strong>دارد</strong></span></div> : null}
         {property.storage ? <div><Warehouse size={18} /><span><small>انباری</small><strong>دارد</strong></span></div> : null}
         {property.totalFloors ? <div><Building2 size={18} /><span><small>طبقه</small><strong>{property.floor ?? "—"} از {property.totalFloors}</strong></span></div> : null}
       </div>
