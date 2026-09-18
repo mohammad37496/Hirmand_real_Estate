@@ -51,6 +51,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/tracking': typeof TrackingRoute
+  '/admin': typeof AdminRoute
+  '/properties/$slug': typeof PropertySlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
