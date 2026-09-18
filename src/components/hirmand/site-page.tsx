@@ -39,6 +39,7 @@ import { FinanceTools } from "./finance-tools";
 import { InquiryForm, type InquiryDraft } from "./inquiry-form";
 import { BrandLogo } from "./logo";
 import { MapAppButtons, MapEmbed } from "./map-apps";
+import { PropertyShowcase } from "./property-showcase";
 import { Reveal } from "./reveal";
 import { scrollToId } from "./scroll";
 import { SiteChrome } from "./site-chrome";
@@ -684,7 +685,7 @@ function Location() {
   );
 }
 
-export function SitePage() {
+export function SitePage({ initialProperties = [] }: { initialProperties?: import("@/lib/properties").Property[] }) {
   const [draft, setDraft] = useState<InquiryDraft>({
     deal: "خرید",
     propertyType: "",
@@ -714,6 +715,7 @@ export function SitePage() {
       <Team />
       <Services onPick={(title) => goInquiry({ deal: title })} />
       <Properties onPick={(title) => goInquiry({ propertyType: title })} />
+      <PropertyShowcase initialProperties={initialProperties} />
       <Process />
       <Tools />
       <TrackingCta />
