@@ -21,7 +21,6 @@ import {
 import { toast } from "sonner";
 import {
   FAQS,
-  FAQ_JSON_LD,
   mapLinks,
   NEIGHBORHOOD_GROUPS,
   NEIGHBORHOODS,
