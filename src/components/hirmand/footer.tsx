@@ -12,6 +12,7 @@ export function Footer() {
       <h3>{SITE.nameFa}</h3>
       <p className="footer-managed">{SITE.managedBy}</p>
       <p>{SITE.tagline}</p>
+      <p className="footer-address">{SITE.address}</p>
       <div className="footer-links">
         <Link
           to="/"
@@ -60,6 +61,9 @@ export function Footer() {
           موقعیت
         </Link>
       </div>
+      <Link to="/" hash="inquiry" className="footer-cta">
+        درخواست مشاوره و فایل ملک
+      </Link>
       <small>© {SITE.nameFa} — تمامی حقوق محفوظ است</small>
     </footer>
   );
