@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://1-gamma-azure-46.vercel.app/sitemap.xml
