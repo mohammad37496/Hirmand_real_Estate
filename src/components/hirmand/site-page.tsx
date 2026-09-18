@@ -231,7 +231,7 @@ function TrustStrip() {
     { value: `${NEIGHBORHOODS.length}+`, label: "محله روی نقشه" },
     { value: `${SERVICES.length}`, label: "مسیر اصلی معامله" },
     { value: `${TEAM.length}`, label: "مشاور مستقیم" },
-    { value: "۳", label: "مسیر نقشه و مسیریابی" },
+    { value: "۳", label: "سرویس نقشه و مسیریابی" },
   ] as const;
 
   return (
