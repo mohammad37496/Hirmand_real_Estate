@@ -378,7 +378,6 @@ export const JSON_LD = {
       telephone: ["+989131056029", "+989183576883", "+983137850615"],
       description: SITE.description,
       image: `${SITE.url}/images/hirmand-logo.png`,
-      priceRange: "$",
       address: {
         "@type": "PostalAddress",
         addressLocality: SITE.locality,
