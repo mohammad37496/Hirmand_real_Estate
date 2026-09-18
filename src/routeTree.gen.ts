@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrackingRouteImport } from './routes/tracking'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as PropertySlugRouteImport } from './routes/properties.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,14 +24,28 @@ const TrackingRoute = TrackingRouteImport.update({
   path: '/tracking',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PropertySlugRoute = PropertySlugRouteImport.update({
+  id: '/properties/$slug',
+  path: '/properties/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/tracking': typeof TrackingRoute
+  '/admin': typeof AdminRoute
+  '/properties/$slug': typeof PropertySlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/tracking': typeof TrackingRoute
+  '/admin': typeof AdminRoute
+  '/properties/$slug': typeof PropertySlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -38,15 +54,17 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/tracking'
+  fullPaths: '/' | '/tracking' | '/admin' | '/properties/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/tracking'
-  id: '__root__' | '/' | '/tracking'
+  to: '/' | '/tracking' | '/admin' | '/properties/$slug'
+  id: '__root__' | '/' | '/tracking' | '/admin' | '/properties/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   TrackingRoute: typeof TrackingRoute
+  AdminRoute: typeof AdminRoute
+  PropertySlugRoute: typeof PropertySlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +83,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrackingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/properties/$slug': {
+      id: '/properties/$slug'
+      path: '/properties/$slug'
+      fullPath: '/properties/$slug'
+      preLoaderRoute: typeof PropertySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   TrackingRoute: TrackingRoute,
+  AdminRoute: AdminRoute,
+  PropertySlugRoute: PropertySlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
