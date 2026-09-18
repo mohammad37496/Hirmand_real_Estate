@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Building2, CarFront, ChevronLeft, Home, MapPinned, Search } from "lucide-react";
+import { Building2, CarFront, ChevronLeft, Home, MapPinned, Search, Warehouse } from "lucide-react";
 import { PROPERTY_TYPES } from "@/lib/site";
 import { formatToman } from "@/lib/money";
 import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
