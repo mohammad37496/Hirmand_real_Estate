@@ -16,6 +16,9 @@ export function BrandLogo({
       width={1457}
       height={1079}
       draggable={false}
+      decoding="async"
+      loading={size === "hero" ? "eager" : "lazy"}
+      fetchPriority={size === "hero" ? "high" : "auto"}
       className={cn("brand-logo", `brand-logo-${size}`, className)}
     />
   );
