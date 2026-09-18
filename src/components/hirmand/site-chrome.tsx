@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
+import { FileKey, MessageCircle, Phone } from "lucide-react";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
+import { SITE } from "@/lib/site";
 import { CallMenu } from "./call-menu";
 import { Footer } from "./footer";
 import { Header } from "./header";
@@ -21,6 +24,25 @@ export function SiteChrome({
       <Header />
       <main className={cn("page", className)}>{children}</main>
       <Footer />
+      <div className="quick-actions" aria-label="اقدام سریع">
+        <Link to="/" hash="inquiry" className="quick-action quick-action-primary">
+          <FileKey size={17} />
+          <span>درخواست ملک</span>
+        </Link>
+        <a
+          href={SITE.whatsappDirect}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="quick-action"
+        >
+          <MessageCircle size={17} />
+          <span>واتساپ</span>
+        </a>
+        <a href={`tel:${SITE.phone.mobile}`} className="quick-action">
+          <Phone size={17} />
+          <span>تماس مستقیم</span>
+        </a>
+      </div>
       <CallMenu className="floating-call-menu" buttonClassName="floating-call" label="تماس" />
       <Toaster
         dir="rtl"
