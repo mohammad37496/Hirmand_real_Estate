@@ -3,6 +3,7 @@ export const SITE = {
   shortName: "هیرمند",
   nameEn: "HIRMAND REAL ESTATE CONSULTANTS",
   title: "گروه مشاورین املاک هیرمند | اصفهان",
+  url: "https://1-gamma-azure-46.vercel.app",
   description:
     "گروه مشاورین املاک هیرمند با مدیریت آقای شیخ | خرید، فروش، رهن و اجاره ملک در اصفهان. مشاوره تخصصی، صداقت و تجربه در کنار شما.",
   sloganStrong: "خانه، فقط یک مکان نیست",
@@ -366,34 +367,70 @@ export const FAQS = [
 
 export const JSON_LD = {
   "@context": "https://schema.org",
-  "@type": "RealEstateAgent",
-  name: SITE.nameFa,
-  alternateName: "Hirmand Real Estate Consultants",
-  founder: "آقای شیخ",
-  telephone: ["+989131056029", "+989183576883", "+983137850615"],
-  description: "خرید، فروش، رهن و اجاره ملک در اصفهان — با مدیریت آقای شیخ",
-  image: "/images/hirmand-logo.png",
-  address: {
-    "@type": "PostalAddress",
-    addressLocality: SITE.locality,
-    addressCountry: "IR",
-    streetAddress: "سه راه سیمین، خیابان جانبازان، بلوار شهید بخشی",
-  },
-  geo: {
-    "@type": "GeoCoordinates",
-    latitude: SITE.lat,
-    longitude: SITE.lng,
-  },
-  hasMap: SITE.mapUrl,
-  areaServed: {
-    "@type": "City",
-    name: "اصفهان",
-  },
-  employee: TEAM.map((person) => ({
-    "@type": "Person",
-    name: person.name,
-    jobTitle: person.role,
-    telephone: `+98${person.phone.slice(1)}`,
+  "@graph": [
+    {
+      "@type": "RealEstateAgent",
+      "@id": `${SITE.url}#organization`,
+      name: SITE.nameFa,
+      alternateName: "Hirmand Real Estate Consultants",
+      url: SITE.url,
+      founder: "آقای شیخ",
+      telephone: ["+989131056029", "+989183576883", "+983137850615"],
+      description: SITE.description,
+      image: `${SITE.url}/images/hirmand-logo.png`,
+      priceRange: "$",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: SITE.locality,
+        addressCountry: "IR",
+        streetAddress: "سه راه سیمین، خیابان جانبازان، بلوار شهید بخشی",
+      },
+      geo: {
+        "@type": "GeoCoordinates",
+        latitude: SITE.lat,
+        longitude: SITE.lng,
+      },
+      hasMap: SITE.mapUrl,
+      areaServed: {
+        "@type": "City",
+        name: "اصفهان",
+      },
+      contactPoint: {
+        "@type": "ContactPoint",
+        telephone: "+989131056029",
+        contactType: "customer service",
+        availableLanguage: ["fa"],
+      },
+      employee: TEAM.map((person) => ({
+        "@type": "Person",
+        name: person.name,
+        jobTitle: person.role,
+        telephone: `+98${person.phone.slice(1)}`,
+      })),
+      sameAs: [SITE.instagram, SITE.telegram, SITE.eitaa, SITE.whatsappDirect],
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE.url}#website`,
+      url: SITE.url,
+      name: SITE.nameFa,
+      inLanguage: "fa-IR",
+      publisher: {
+        "@id": `${SITE.url}#organization`,
+      },
+    },
+  ],
+};
+
+export const FAQ_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQS.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.a,
+    },
   })),
-  sameAs: [SITE.instagram, SITE.telegram, SITE.eitaa],
 };
