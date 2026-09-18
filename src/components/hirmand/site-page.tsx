@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner";
 import {
   FAQS,
+  FAQ_JSON_LD,
   mapLinks,
   NEIGHBORHOOD_GROUPS,
   NEIGHBORHOODS,
@@ -138,7 +139,13 @@ function Hero({ onSearch }: { onSearch: (draft: InquiryDraft) => void }) {
   return (
     <section className="hero" id="top">
       <div className="hero-media" aria-hidden="true">
-        <img src="/images/type-heritage.jpg" alt="" />
+        <img
+          className="hero-image"
+          src="/images/type-heritage.jpg"
+          alt=""
+          decoding="async"
+          fetchPriority="high"
+        />
         <div className="hero-veil" />
       </div>
       <div className="hero-inner">
@@ -210,6 +217,11 @@ function Hero({ onSearch }: { onSearch: (draft: InquiryDraft) => void }) {
             icon={<MapPinned size={16} strokeWidth={1.8} />}
           />
         </div>
+        <div className="hero-proof" aria-label="اطلاعات سریع هیرمند">
+          <span><strong>۹۰+</strong> محله اصفهان</span>
+          <span><strong>۴</strong> خدمت اصلی</span>
+          <span><strong>۲</strong> مشاور مستقیم</span>
+        </div>
       </div>
     </section>
   );
@@ -241,7 +253,12 @@ function About() {
           </div>
         </div>
         <figure className="about-photo">
-          <img src="/images/isfahan-arch.jpg" alt="نمایی از معماری اصفهان در شب" />
+          <img
+            src="/images/isfahan-arch.jpg"
+            alt="نمایی از معماری اصفهان در شب"
+            loading="lazy"
+            decoding="async"
+          />
         </figure>
       </div>
     </Reveal>
@@ -357,7 +374,12 @@ function Properties({ onPick }: { onPick: (title: string) => void }) {
           return (
             <Reveal key={item.id} className="type-card" delay={index * 60}>
               <button type="button" onClick={() => onPick(item.title)} aria-label={`درخواست ${item.title}`}>
-                <img src={item.image} alt="" />
+                <img
+                  src={item.image}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
                 <span className="type-body">
                   <span className="icon-box sm">
                     <Icon size={16} strokeWidth={1.8} />
