@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SitePage } from "@/components/hirmand/site-page";
+import { listPublishedProperties } from "@/lib/properties";
 import { FAQ_JSON_LD, JSON_LD, SITE } from "@/lib/site";
 
 export const Route = createFileRoute("/")({
+  loader: () => listPublishedProperties({ data: {} }),
   component: Home,
   head: () => ({
     meta: [
@@ -30,7 +32,7 @@ function Home() {
     <>
       <script type="application/ld+json">{JSON.stringify(JSON_LD)}</script>
       <script type="application/ld+json">{JSON.stringify(FAQ_JSON_LD)}</script>
-      <SitePage />
+      <SitePage initialProperties={Route.useLoaderData()} />
     </>
   );
 }
