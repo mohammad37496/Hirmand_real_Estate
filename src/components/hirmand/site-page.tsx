@@ -333,7 +333,7 @@ function Team() {
   );
 }
 
-function Services() {
+function Services({ onPick }: { onPick: (title: string) => void }) {
   return (
     <Reveal as="section" className="section" id="services">
       <SectionHead
@@ -346,11 +346,21 @@ function Services() {
           const Icon = SERVICE_ICONS[item.id];
           return (
             <Reveal key={item.id} className="service-card" delay={index * 70}>
-              <div className="icon-box">
-                <Icon size={22} strokeWidth={1.8} />
-              </div>
-              <h3>{item.title}</h3>
-              <p>{item.text}</p>
+              <button
+                type="button"
+                className="service-card-button"
+                onClick={() => onPick(item.title)}
+                aria-label={`درخواست ${item.title}`}
+              >
+                <span className="icon-box">
+                  <Icon size={22} strokeWidth={1.8} />
+                </span>
+                <span className="service-card-copy">
+                  <span className="service-card-title">{item.title}</span>
+                  <span className="service-card-text">{item.text}</span>
+                </span>
+                <span className="service-card-arrow" aria-hidden="true">↗</span>
+              </button>
             </Reveal>
           );
         })}
@@ -679,7 +689,7 @@ export function SitePage() {
       <Hero onSearch={(next) => goInquiry(next)} />
       <About />
       <Team />
-      <Services />
+      <Services onPick={(title) => goInquiry({ deal: title })} />
       <Properties onPick={(title) => goInquiry({ propertyType: title })} />
       <Process />
       <Tools />
