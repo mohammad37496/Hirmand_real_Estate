@@ -8,6 +8,7 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: SITE.title },
       { name: "description", content: SITE.description },
+      { name: "robots", content: "index, follow" },
       { property: "og:type", content: "website" },
       { property: "og:locale", content: "fa_IR" },
       { property: "og:site_name", content: SITE.nameFa },
