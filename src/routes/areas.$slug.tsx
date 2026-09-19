@@ -11,10 +11,15 @@ export const Route = createFileRoute("/areas/$slug")({
   loader: async ({ params }) => {
     const area = findAreaBySlug(params.slug);
     if (!area) return { area: null, properties: [] as Awaited<ReturnType<typeof listPublishedProperties>> };
-    const properties = await listPublishedProperties({
-      data: { neighborhood: area.name },
-    });
-    return { area, properties };
+    try {
+      const properties = await listPublishedProperties({
+        data: { neighborhood: area.name },
+      });
+      return { area, properties };
+    } catch (error) {
+      console.error("[area] properties loader failed", error);
+      return { area, properties: [] };
+    }
   },
   head: ({ loaderData, params }) => areaHead(loaderData?.area ?? null, params.slug),
   component: AreaPage,
@@ -61,7 +66,7 @@ function AreaPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbs) }}
       />
 
-      <article className="property-detail">
+      <main className="property-detail">
         <nav
           aria-label="مسیر صفحه"
           style={{
@@ -173,7 +178,7 @@ function AreaPage() {
             </div>
           </aside>
         </div>
-      </article>
+      </main>
     </SiteChrome>
   );
 }
