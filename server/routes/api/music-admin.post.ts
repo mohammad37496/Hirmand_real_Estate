@@ -2,7 +2,10 @@ import { defineEventHandler, readBody, createError } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 
 type Action = "list" | "create" | "toggle" | "delete";
-const ALLOWED_MUSIC_TYPES = new Set(["audio/mpeg","audio/mp3","audio/ogg","audio/wav","audio/x-wav","audio/mp4","audio/x-m4a","audio/aac"]);\n\nfunction requireAdmin(adminKey: string | undefined) {
+type Body = { action?: Action; adminKey?: string; id?: string; active?: boolean; title?: string; artist?: string; url?: string; mimeType?: string; sizeBytes?: number };
+const ALLOWED_MUSIC_TYPES = new Set(["audio/mpeg","audio/mp3","audio/ogg","audio/wav","audio/x-wav","audio/mp4","audio/x-m4a","audio/aac"]);
+
+function requireAdmin(adminKey: string | undefined) {
   const expected = process.env.HIRMAND_ADMIN_KEY?.trim();
   if (!expected || !adminKey || adminKey.trim() !== expected) {
     throw createError({ statusCode: 401, statusMessage: "کلید مدیریت نادرست است." });
@@ -10,7 +13,7 @@ const ALLOWED_MUSIC_TYPES = new Set(["audio/mpeg","audio/mp3","audio/ogg","audio
 }
 
 export default defineEventHandler(async (event) => {
-  const body = (await readBody(event)) as { action?: Action; adminKey?: string; id?: string; active?: boolean };
+  const body = (await readBody(event)) as Body;
   requireAdmin(body.adminKey);
   if (dbSource === "unconfigured") {
     if (body.action === "list") return { tracks: [] };
