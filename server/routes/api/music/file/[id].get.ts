@@ -73,8 +73,9 @@ export default defineEventHandler(async (event) => {
       if (value) headers.set(name, value);
     }
 
+    const contentRange = blob.headers.get("content-range");
     return new Response(blob.stream, {
-      status: range ? 206 : 200,
+      status: contentRange ? 206 : 200,
       headers,
     });
   } catch (error) {
