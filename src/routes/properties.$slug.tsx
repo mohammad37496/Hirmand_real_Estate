@@ -34,6 +34,12 @@ function money(value: string | null) {
   return Number.isFinite(parsed) ? formatToman(parsed) : value;
 }
 
+function whatsappLink(phone: string, title: string) {
+  const intl = phone.replace(/^0/, "98");
+  const text = encodeURIComponent(`سلام، درباره فایل «${title}» از سایت هیرمند پیام می‌دهم.`);
+  return `https://wa.me/${intl}?text=${text}`;
+}
+
 function PropertyDetailPage() {
   const property = Route.useLoaderData();
 
@@ -236,8 +242,7 @@ function PropertyDetailPage() {
                 <Phone size={17} /> تماس با مشاور
               </a>
               <a
-                href={`https://wa.me/${property.contactPhone.replace(/^0/, "98")}?text=${encodeURIComponent(`سلام، درباره فایل «${property.title}» از سایت هیرمند پیام می‌دهم.`)}
-`}
+                href={whatsappLink(property.contactPhone, property.title)}
                 className="btn-ghost"
                 target="_blank"
                 rel="noopener noreferrer"
