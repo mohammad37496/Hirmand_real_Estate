@@ -59,6 +59,7 @@ const publicFiltersSchema = z.object({
     .optional(),
   neighborhood: z.string().trim().max(80).optional(),
   featuredOnly: z.boolean().optional(),
+  search: z.string().trim().max(80).optional(),
 });
 
 const propertyInputSchema = z.object({
@@ -192,6 +193,7 @@ export const listPublishedProperties = createServerFn({ method: "GET" })
     const exactNeighborhood = Boolean(
       neighborhood && neighborhood.length >= 2 && !neighborhood.includes("%"),
     );
+    const search = data.search?.trim() || null;
 
     const rows = await sql.query<Record<string, unknown>>(
       `select ${LIST_COLUMNS}
@@ -205,6 +207,7 @@ export const listPublishedProperties = createServerFn({ method: "GET" })
           or ($5::boolean is false and neighborhood ilike '%' || $3 || '%')
         )
         and ($4::boolean is false or featured = true)
+        and ($6::text is null or title ilike '%' || $6 || '%' or neighborhood ilike '%' || $6 || '%' or address ilike '%' || $6 || '%')
       order by featured desc, published_at desc nulls last, created_at desc
       limit 48`,
       [
@@ -213,6 +216,7 @@ export const listPublishedProperties = createServerFn({ method: "GET" })
         neighborhood,
         data.featuredOnly ?? false,
         exactNeighborhood,
+        search,
       ],
     );
     return rows.map(mapProperty);
