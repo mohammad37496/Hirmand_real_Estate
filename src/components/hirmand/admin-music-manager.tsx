@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Loader2, Music2, Pause, Play, Trash2, Upload, Volume2, VolumeX } from "lucide-react";
+import { upload } from "@vercel/blob/client";
 import { toast } from "sonner";
 
 type AdminMusicTrack = { id: string; title: string; artist: string; url: string; mimeType: string; sizeBytes: number; active: boolean; position: number; createdAt: string };
@@ -18,6 +19,7 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   async function load() {
@@ -59,19 +61,41 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
 
     setBusy(true);
     try {
-      const form = new FormData();
-      form.set("adminKey", adminKey);
-      form.set("title", title.trim());
-      form.set("artist", artist.trim());
-      form.set("file", file);
+      setUploadProgress(0);
+      const safeName = file.name.replace(/[^\\w.\\u0600-\\u06FF-]+/g, "-").slice(0, 100);
+      const pathname = "music/" + Date.now() + "-" + safeName;
+      const blob = await upload(pathname, file, {
+        access: "public",
+        handleUploadUrl: "/api/music-upload",
+        clientPayload: JSON.stringify({
+          adminKey,
+          title: title.trim(),
+          artist: artist.trim(),
+        }),
+        contentType: file.type || "audio/mpeg",
+        multipart: true,
+        onUploadProgress: ({ percentage }) => setUploadProgress(Math.round(percentage)),
+      });
 
-      const response = await fetch("/api/music-upload", { method: "POST", body: form });
+      const response = await fetch("/api/music-admin", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "create",
+          adminKey,
+          title: title.trim(),
+          artist: artist.trim(),
+          url: blob.url,
+          mimeType: file.type || "audio/mpeg",
+          sizeBytes: file.size,
+        }),
+      });
       const data = (await response.json().catch(() => null)) as
         | { track?: AdminMusicTrack; statusMessage?: string; message?: string }
         | null;
 
       if (!response.ok || !data?.track) {
-        throw new Error(data?.statusMessage || data?.message || "آپلود آهنگ انجام نشد.");
+        throw new Error(data?.statusMessage || data?.message || "ثبت آهنگ در کتابخانه انجام نشد.");
       }
 
       setTracks((prev) => [...prev, data.track!]);
@@ -86,6 +110,7 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
       toast.error(error instanceof Error ? error.message : "آپلود آهنگ انجام نشد.");
     } finally {
       setBusy(false);
+      setUploadProgress(0);
     }
   }
 
@@ -202,7 +227,7 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
 
           <button type="submit" className="btn-gold" disabled={busy || !file}>
             {busy ? <Loader2 size={16} className="admin-spin" /> : <Upload size={16} />}
-            {busy ? "در حال آپلود…" : "آپلود آهنگ"}
+            {busy ? "در حال آپلود… " + uploadProgress + "%" : "آپلود آهنگ"}
           </button>
         </form>
       </section>
