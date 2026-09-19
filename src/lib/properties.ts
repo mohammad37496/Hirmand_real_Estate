@@ -243,7 +243,7 @@ export const listPublishedProperties = createServerFn({ method: "GET" })
       [
         "select " + LIST_COLUMNS,
         "from properties where " + publicPropertyWhereSql(),
-        "order by featured desc,",
+        "order by case when $11 = 'newest' then case when featured then 0 else 1 end else 0 end,",
         "case when $11 = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
         "case when $11 = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
         "case when $11 = 'area_asc' then area_m2 end asc nulls last,",
