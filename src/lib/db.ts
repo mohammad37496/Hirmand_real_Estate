@@ -23,20 +23,6 @@ function resolveDatabaseUrlFromEnv(): string | undefined {
   return undefined;
 }
 
-/** Append statement_timeout via startup options (no extra query on connect). */
-function withStatementTimeout(url: string, ms = 8000): string {
-  try {
-    const u = new URL(url);
-    const existing = u.searchParams.get("options") ?? "";
-    if (/statement_timeout/i.test(existing)) return url;
-    const opt = [existing, `-c statement_timeout=${ms}`].filter(Boolean).join(" ");
-    u.searchParams.set("options", opt);
-    return u.toString();
-  } catch {
-    return url;
-  }
-}
-
 const databaseUrl = resolveDatabaseUrlFromEnv();
 
 const isVercelRuntime =
@@ -96,7 +82,9 @@ function createNeonSql(): Promise<Sql> {
     types.setTypeParser(OID_DATE, identity);
     types.setTypeParser(OID_INTERVAL, identity);
     const pool = new Pool({
-      connectionString: withStatementTimeout(databaseUrl!),
+      connectionString: databaseUrl!,
+      // Keep the timeout client-side so Neon pooled connections receive no unsupported startup parameters.
+      query_timeout: Number(process.env.DB_QUERY_TIMEOUT_MS ?? 8_000),
       max: Number(process.env.DB_POOL_MAX ?? 5),
       idleTimeoutMillis: Number(process.env.DB_POOL_IDLE_MS ?? 10_000),
       connectionTimeoutMillis: Number(process.env.DB_POOL_CONNECT_MS ?? 8_000),
