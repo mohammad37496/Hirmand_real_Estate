@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import {
+  BarChart3,
   Building2,
   Copy,
   ExternalLink,
@@ -28,10 +29,11 @@ import { AdminMediaField } from "@/components/hirmand/admin-media-field";
 import { AdminConsultantPicker } from "@/components/hirmand/admin-consultant-picker";
 import { AdminMusicManager } from "@/components/hirmand/admin-music-manager";
 import { AdminLeadManager } from "@/components/hirmand/admin-lead-manager";
+import { AdminDashboard } from "@/components/hirmand/admin-dashboard";
 import { ADMIN_CSS } from "@/components/hirmand/admin-shell-css";
 
 type PublishStatus = "draft" | "published" | "archived";
-type ViewMode = "list" | "form" | "music" | "leads";
+type ViewMode = "dashboard" | "list" | "form" | "music" | "leads";
 
 type FormState = {
   id?: string;
@@ -169,7 +171,7 @@ export function AdminPropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loadingList, setLoadingList] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [view, setView] = useState<ViewMode>("list");
+  const [view, setView] = useState<ViewMode>("dashboard");
   const [listFilter, setListFilter] = useState<"all" | PublishStatus | "featured">("all");
   const [query, setQuery] = useState("");
   const [form, setForm] = useState<FormState>(emptyForm());
@@ -398,6 +400,14 @@ export function AdminPropertiesPage() {
         <nav className="admin-sidebar-nav">
           <button
             type="button"
+            className={`admin-nav-btn${view === "dashboard" ? " is-active" : ""}`}
+            onClick={() => setView("dashboard")}
+          >
+            <BarChart3 size={18} />
+            داشبورد
+          </button>
+          <button
+            type="button"
             className={`admin-nav-btn${view === "list" ? " is-active" : ""}`}
             onClick={() => setView("list")}
           >
@@ -456,42 +466,52 @@ export function AdminPropertiesPage() {
         <header className="admin-topbar">
           <div>
             <h1>
-              {view === "list"
-                ? "فهرست فایل‌ها"
-                : view === "music"
-                  ? "موسیقی سایت"
-                  : view === "leads"
-                    ? "درخواست‌های مشتری"
-                    : form.id
-                    ? "ویرایش فایل"
-                    : "افزودن فایل جدید"}
-            </h1>
+              {view === "dashboard"
+                ? "داشبورد مدیریت"
+                : view === "list"
+                  ? "فهرست فایل‌ها"
+                  : view === "music"
+                    ? "موسیقی سایت"
+                    : view === "leads"
+                      ? "درخواست‌های مشتری"
+                      : form.id
+                      ? "ویرایش فایل"
+                      : "افزودن فایل جدید"}            </h1>
             <p>
-              {view === "list"
-                ? `${stats.total.toLocaleString("fa-IR")} فایل در سیستم`
-                : view === "leads"
-                  ? "مدیریت Leadها و پیگیری مشتریان"
-                  : form.contactName
-                  ? `مشاور مسئول: ${form.contactName}`
-                  : "مشاور مسئول را انتخاب کنید"}
-            </p>
+              {view === "dashboard"
+                ? "نمای کلی فایل‌ها، ورودی مشتری و وضعیت پیگیری"
+                : view === "list"
+                  ? `${stats.total.toLocaleString("fa-IR")} فایل در سیستم`
+                  : view === "leads"
+                    ? "مدیریت Leadها و پیگیری مشتریان"
+                    : form.contactName
+                    ? `مشاور مسئول: ${form.contactName}`
+                    : "مشاور مسئول را انتخاب کنید"}            </p>
           </div>
           <div className="admin-topbar-actions">
-            {view === "list" ? (
+            {view === "dashboard" || view === "list" ? (
               <button type="button" className="btn-gold" onClick={startNew}>
                 <Plus size={16} />
                 فایل جدید
               </button>
             ) : (
-              <button type="button" className="btn-ghost" onClick={() => setView("list")}>
+              <button type="button" className="btn-ghost" onClick={() => setView(view === "form" ? "list" : "dashboard")}>
                 <X size={16} />
-                بستن فرم
+                بستن
               </button>
             )}
           </div>
         </header>
 
         <div className="admin-content">
+          {view === "dashboard" ? (
+            <AdminDashboard
+              adminKey={adminKey}
+              onOpenProperties={() => setView("list")}
+              onOpenLeads={() => setView("leads")}
+            />
+          ) : null}
+
           {view === "list" ? (
             <>
               <div className="admin-stats-grid">
@@ -860,6 +880,14 @@ export function AdminPropertiesPage() {
       </div>
 
       <nav className="admin-mobile-nav">
+        <button
+          type="button"
+          className={view === "dashboard" ? "is-active" : ""}
+          onClick={() => setView("dashboard")}
+        >
+          <BarChart3 size={20} />
+          داشبورد
+        </button>
         <button
           type="button"
           className={view === "list" ? "is-active" : ""}
