@@ -8,6 +8,10 @@ function formatSize(bytes: number) {
   return bytes > 0 ? (bytes / 1024 / 1024).toFixed(1) + " MB" : "—";
 }
 
+function isAutoplayBlocked(error: unknown) {
+  return error instanceof DOMException && error.name === "NotAllowedError";
+}
+
 export function AdminMusicManager({ adminKey }: { adminKey: string }) {
   const [tracks, setTracks] = useState<AdminMusicTrack[]>([]);
   const [title, setTitle] = useState("");
@@ -164,7 +168,13 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
   function playTrack(track: AdminMusicTrack) {
     if (playingId === track.id) {
       if (audioRef.current?.paused) {
-        void audioRef.current.play().catch(() => undefined);
+        void audioRef.current.play().catch((error) => {
+          if (isAutoplayBlocked(error)) {
+            toast.error("مرورگر اجازه شروع پخش را نداد؛ دوباره روی پخش بزنید.");
+          } else {
+            toast.error("فایل صوتی قابل پخش نیست.");
+          }
+        });
       } else {
         audioRef.current?.pause();
       }
@@ -172,8 +182,41 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
     }
 
     stopAudio();
-    const audio = new Audio(`/api/music/file/${encodeURIComponent(track.id)}`);
+
+    const candidates = [
+      track.url,
+      `/api/music/file/${encodeURIComponent(track.id)}`,
+    ].filter((value, index, list) => value && list.indexOf(value) === index);
+
+    const audio = new Audio();
+    let sourceIndex = 0;
     audio.muted = muted;
+    audio.preload = "metadata";
+
+    const loadSource = (index: number) => {
+      const source = candidates[index];
+      if (!source) {
+        toast.error("این فایل موسیقی قابل دریافت یا پخش نیست.");
+        stopAudio();
+        return;
+      }
+      sourceIndex = index;
+      audio.src = source;
+      audio.load();
+      void audio.play().catch((error) => {
+        if (sourceIndex + 1 < candidates.length) {
+          loadSource(sourceIndex + 1);
+          return;
+        }
+        if (isAutoplayBlocked(error)) {
+          toast.error("مرورگر اجازه شروع پخش را نداد؛ دوباره روی پخش بزنید.");
+        } else {
+          toast.error("این فایل صوتی قابل پخش نیست.");
+        }
+        stopAudio();
+      });
+    };
+
     audio.onplay = () => setPlayingId(track.id);
     audio.onpause = () => setPlayingId((id) => (id === track.id ? null : id));
     audio.ontimeupdate = () => {
@@ -181,14 +224,16 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
     };
     audio.onended = stopAudio;
     audio.onerror = () => {
-      toast.error("پخش این فایل ممکن نیست.");
+      if (sourceIndex + 1 < candidates.length) {
+        loadSource(sourceIndex + 1);
+        return;
+      }
+      toast.error("این فایل موسیقی از سرور قابل دریافت نیست.");
       stopAudio();
     };
+
     audioRef.current = audio;
-    void audio.play().catch(() => {
-      toast.error("پخش فایل انجام نشد؛ دکمه پخش را دوباره بزنید.");
-      stopAudio();
-    });
+    loadSource(0);
   }
 
   async function action(id: string, actionName: "toggle" | "delete", active?: boolean) {
