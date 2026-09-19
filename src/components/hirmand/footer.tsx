@@ -8,6 +8,13 @@ export function Footer() {
   const onHome = useRouterState({ select: (s) => s.location.pathname === "/" });
   const year = new Date().getFullYear();
 
+  const socials = [
+    { href: SITE.instagram, label: "اینستاگرام هیرمند", Icon: InstagramIcon },
+    { href: SITE.telegram, label: "تلگرام هیرمند", Icon: TelegramIcon },
+    { href: SITE.eitaa, label: "ایتا هیرمند", Icon: EitaaIcon },
+    { href: SITE.whatsappDirect, label: "واتساپ هیرمند", Icon: WhatsAppIcon },
+  ] as const;
+
   return (
     <footer className="footer">
       <BrandLogo size="footer" />
@@ -16,92 +23,30 @@ export function Footer() {
       <p>{SITE.tagline}</p>
       <p className="footer-address">{SITE.address}</p>
 
-      <div className="footer-social" aria-label="شبکه‌های اجتماعی">
-        <a
-          className="social-link"
-          href={SITE.instagram}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="اینستاگرام هیرمند"
-        >
-          <InstagramIcon />
-        </a>
-        <a
-          className="social-link"
-          href={SITE.telegram}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="تلگرام هیرمند"
-        >
-          <TelegramIcon />
-        </a>
-        <a
-          className="social-link"
-          href={SITE.eitaa}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="ایتا هیرمند"
-        >
-          <EitaaIcon />
-        </a>
-        <a
-          className="social-link"
-          href={SITE.whatsappDirect}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="واتساپ هیرمند"
-        >
-          <WhatsAppIcon />
-        </a>
+      <div className="chip-row" style={{ justifyContent: "center", margin: "18px 0 8px" }} aria-label="شبکه‌های اجتماعی">
+        {socials.map(({ href, label, Icon }) => (
+          <a
+            key={label}
+            className="chip"
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={label}
+            title={label}
+            style={{ width: 44, padding: 0, display: "inline-grid", placeItems: "center" }}
+          >
+            <Icon size={18} />
+          </a>
+        ))}
       </div>
 
       <div className="footer-links">
-        <Link
-          to="/"
-          hash="contact"
-          onClick={(event) => {
-            if (onHome) scrollToId(event, "contact");
-          }}
-        >
-          تماس
-        </Link>
-        <Link
-          to="/"
-          hash="services"
-          onClick={(event) => {
-            if (onHome) scrollToId(event, "services");
-          }}
-        >
-          خدمات
-        </Link>
-        <Link
-          to="/"
-          hash="tools"
-          onClick={(event) => {
-            if (onHome) scrollToId(event, "tools");
-          }}
-        >
-          ابزار مالی
-        </Link>
+        <Link to="/" hash="contact" onClick={(event) => { if (onHome) scrollToId(event, "contact"); }}>تماس</Link>
+        <Link to="/" hash="services" onClick={(event) => { if (onHome) scrollToId(event, "services"); }}>خدمات</Link>
+        <Link to="/" hash="tools" onClick={(event) => { if (onHome) scrollToId(event, "tools"); }}>ابزار مالی</Link>
         <Link to="/tracking">کد رهگیری</Link>
-        <Link
-          to="/"
-          hash="inquiry"
-          onClick={(event) => {
-            if (onHome) scrollToId(event, "inquiry");
-          }}
-        >
-          درخواست
-        </Link>
-        <Link
-          to="/"
-          hash="location"
-          onClick={(event) => {
-            if (onHome) scrollToId(event, "location");
-          }}
-        >
-          موقعیت
-        </Link>
+        <Link to="/" hash="inquiry" onClick={(event) => { if (onHome) scrollToId(event, "inquiry"); }}>درخواست</Link>
+        <Link to="/" hash="location" onClick={(event) => { if (onHome) scrollToId(event, "location"); }}>موقعیت</Link>
       </div>
       <Link to="/" hash="inquiry" className="footer-cta">
         درخواست مشاوره و فایل ملک
