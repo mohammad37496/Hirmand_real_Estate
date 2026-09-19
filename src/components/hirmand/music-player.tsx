@@ -128,13 +128,17 @@ export function MusicPlayer() {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
 
-    const candidates = [
-      currentTrack.src,
-      currentTrack.stream,
-      currentTrack.id
-        ? `/api/music/file/${encodeURIComponent(currentTrack.id)}`
-        : "",
-    ].filter((value, candidateIndex, list) => value && list.indexOf(value) === candidateIndex);
+    const candidates = Array.from(
+      new Set(
+        [
+          currentTrack.src,
+          currentTrack.stream,
+          currentTrack.id
+            ? `/api/music/file/${encodeURIComponent(currentTrack.id)}`
+            : "",
+        ].filter((value): value is string => Boolean(value)),
+      ),
+    );
 
     sourceCandidatesRef.current = candidates;
     sourceIndexRef.current = 0;
