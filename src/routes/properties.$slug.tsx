@@ -61,9 +61,9 @@ function PropertyDetailPage() {
   const images = property.images.length ? property.images : ["/images/type-apartment.jpg"];
   const area = areaSlug(property.neighborhood);
   const crumbs = [
-    { name: "خانه", item: SITE.url },
-    ...(area ? [{ name: property.neighborhood, item: `${SITE.url}/areas/${area}` }] : []),
-    { name: property.title, item: `${SITE.url}/properties/${property.slug}` },
+    { name: "خانه", path: "/" },
+    ...(area ? [{ name: property.neighborhood, path: `/areas/${area}` }] : []),
+    { name: property.title, path: `/properties/${property.slug}` },
   ];
 
   return (
