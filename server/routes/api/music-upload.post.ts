@@ -65,22 +65,12 @@ export default defineEventHandler(async (event) => {
       access: "public",
     });
 
-    const delegation = new URL(presignedUrl).searchParams.get("vercel-blob-delegation");
-    if (!delegation) {
-      throw new Error("لینک امن آپلود شناسه فروشگاه Blob را ندارد.");
-    }
-    const dot = delegation.indexOf(".");
-    if (dot <= 0) throw new Error("توکن Blob نامعتبر است.");
-    const payload = JSON.parse(
-      Buffer.from(delegation.slice(0, dot), "base64url").toString("utf8"),
-    ) as { storeId?: unknown };
-    if (typeof payload.storeId !== "string" || !payload.storeId) {
-      throw new Error("شناسه فروشگاه Blob از توکن قابل استخراج نیست.");
-    }
-    const storeId = payload.storeId.startsWith("store_")
-      ? payload.storeId.slice("store_".length)
-      : payload.storeId;
-    const publicUrl = "https://" + storeId + ".public.blob.vercel-storage.com/" + pathname;
+    // Keep the exact hostname/path returned by Vercel Blob. This avoids
+    // reconstructing the store URL ourselves and accidentally changing the
+    // public Blob hostname for newer/legacy store formats.
+    const publicUrl = new URL(presignedUrl);
+    publicUrl.search = "";
+    publicUrl.hash = "";
 
     return {
       presignedUrl,
