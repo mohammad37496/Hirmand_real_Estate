@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   Building2,
   Copy,
