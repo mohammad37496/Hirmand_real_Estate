@@ -68,8 +68,13 @@ export function MusicPlayer() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/music/playlist.json", { cache: "no-store" })
+    fetch("/api/music", { cache: "no-store" })
       .then(async (response) => {
+        if (!response.ok) throw new Error("music api not found");
+        return (await response.json()) as MusicManifest;
+      })
+      .catch(async () => {
+        const response = await fetch("/music/playlist.json", { cache: "no-store" });
         if (!response.ok) throw new Error("music manifest not found");
         return (await response.json()) as MusicManifest;
       })
@@ -81,9 +86,7 @@ export function MusicPlayer() {
         setManifest({ autoplay: next.autoplay !== false, tracks: safeTracks });
       })
       .catch(() => {
-        if (!cancelled) {
-          setManifest({ autoplay: true, tracks: [] });
-        }
+        if (!cancelled) setManifest({ autoplay: true, tracks: [] });
       });
 
     try {
