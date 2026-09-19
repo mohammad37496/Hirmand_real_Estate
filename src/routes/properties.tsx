@@ -25,8 +25,8 @@ export const Route = createFileRoute("/properties")({
     listPublishedProperties({
       data: {
         search: deps.q || undefined,
-        transactionType: deps.transactionType || undefined,
-        propertyType: deps.propertyType || undefined,
+        transactionType: deps.transactionType ? (deps.transactionType as "buy" | "sell" | "rent" | "mortgage") : undefined,
+        propertyType: deps.propertyType ? (deps.propertyType as "apartment" | "villa" | "office" | "heritage" | "land" | "commercial") : undefined,
         neighborhood: deps.neighborhood || undefined,
       },
     }),
