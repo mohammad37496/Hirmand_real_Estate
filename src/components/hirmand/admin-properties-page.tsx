@@ -1,3 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-// truncated intentionally - will fix
-export function AdminPropertiesPage() { return null; }
+import { AdminPropertiesPage as Impl } from "./_admin_impl";
+export function AdminPropertiesPage() {
+  return <Impl />;
+}
