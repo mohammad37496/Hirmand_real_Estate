@@ -221,7 +221,7 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
             <small>
               {file
                 ? file.name + " · " + formatSize(file.size)
-                : "MP3 / OGG / WAV / M4A / AAC — حداکثر ۸ مگابایت"}
+                : "MP3 / OGG / WAV / M4A / AAC — حداکثر ۱۰۰ مگابایت"}
             </small>
           </label>
 
