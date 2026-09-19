@@ -57,6 +57,10 @@ export function MusicPlayer() {
   const tracks = manifest.tracks;
   const currentTrack = tracks[index] ?? null;
 
+  useEffect(() => {
+    if (tracks.length > 0 && index >= tracks.length) setIndex(0);
+  }, [index, tracks.length]);
+
   const progress = useMemo(
     () => (duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0),
     [currentTime, duration],
