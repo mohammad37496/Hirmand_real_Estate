@@ -57,6 +57,15 @@ export function Header() {
               >
                 {item.label}
               </Link>
+            ) : item.to === "/properties" ? (
+              <Link
+                key={item.id}
+                to="/properties"
+                className={cn(pathname === "/properties" && "is-current")}
+                onClick={closeMenu}
+              >
+                {item.label}
+              </Link>
             ) : (
               <Link key={item.id} to="/" hash={item.hash} onClick={(event) => goHash(event, item.hash)}>
                 {item.label}
@@ -98,6 +107,10 @@ export function Header() {
         {NAV.map((item) =>
           item.to === "/tracking" ? (
             <Link key={item.id} to="/tracking" onClick={closeMenu}>
+              {item.label}
+            </Link>
+          ) : item.to === "/properties" ? (
+            <Link key={item.id} to="/properties" onClick={closeMenu}>
               {item.label}
             </Link>
           ) : (
