@@ -62,7 +62,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       .join("\n");
   }
 
-  function onSubmit(event: FormEvent) {
+  async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (!name.trim()) {
       setError("نام را وارد کنید.");
@@ -88,12 +88,28 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       at: new Date().toISOString(),
     };
     try {
-      const prev = JSON.parse(localStorage.getItem("hirmand-inquiries") || "[]") as unknown[];
-      localStorage.setItem("hirmand-inquiries", JSON.stringify([payload, ...prev].slice(0, 20)));
-    } catch {
-      /* ignore quota */
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: payload.name,
+          phone: payload.phone,
+          deal: payload.deal,
+          propertyType: payload.propertyType,
+          neighborhood: payload.neighborhood,
+          consultant: payload.consultant,
+          note: payload.note,
+        }),
+      });
+      const result = (await response.json().catch(() => null)) as { success?: boolean; statusMessage?: string } | null;
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.statusMessage || "ثبت درخواست انجام نشد.");
+      }
+      toast.success("درخواست شما با موفقیت برای تیم هیرمند ثبت شد.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "ثبت درخواست انجام نشد.");
+      return;
     }
-    toast.success("درخواست ثبت شد. می‌توانید در واتساپ ادامه دهید.");
   }
 
   const waHref = `${selected.wa}?text=${encodeURIComponent(buildMessage())}`;
@@ -126,7 +142,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
         />
       </div>
       <p id="inq-phone-hint" className="form-hint field-span">
-        شماره با ارقام فارسی یا انگلیسی قابل وارد کردن است؛ اطلاعات این فرم فقط برای آماده‌سازی درخواست و ارسال به مشاور در همین دستگاه نگهداری می‌شود.
+        شماره با ارقام فارسی یا انگلیسی قابل وارد کردن است؛ اطلاعات این فرم برای پیگیری درخواست در سامانه هیرمند ثبت و فقط برای ارتباط درباره درخواست شما استفاده می‌شود.
       </p>
       <div className="field">
         <label htmlFor="inq-deal">نوع معامله</label>
