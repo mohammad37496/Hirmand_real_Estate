@@ -13,7 +13,7 @@ export const Route = createFileRoute("/tracking")({
 function TrackingPage() {
   return (
     <SiteChrome className="soon-shell">
-      <section className="soon-page" id="top">
+      <main className="soon-page" id="top">
         <BrandLogo size="soon" />
         <p className="kicker">سامانه قرارداد</p>
         <h1>به زودی</h1>
@@ -33,7 +33,7 @@ function TrackingPage() {
             تماس با دفتر
           </a>
         </div>
-      </section>
+      </main>
     </SiteChrome>
   );
 }
