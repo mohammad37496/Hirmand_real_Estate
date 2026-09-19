@@ -36,6 +36,7 @@ export default defineEventHandler(async () => {
       title: String(row.title),
       artist: String(row.artist ?? ""),
       src: normalizeBlobUrl(String(row.url)),
+      stream: `/api/music/file/${encodeURIComponent(String(row.id))}`,
       position: Number(row.position) || 0,
     })),
   };
