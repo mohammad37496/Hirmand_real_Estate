@@ -218,7 +218,7 @@ function Hero({ onSearch }: { onSearch: (draft: InquiryDraft) => void }) {
           />
         </div>
         <div className="hero-proof" aria-label="اطلاعات سریع هیرمند">
-          <span><strong>۹۰+</strong> محله اصفهان</span>
+          <span><strong>{NEIGHBORHOODS.length}+</strong> محله اصفهان</span>
           <span><strong>۴</strong> خدمت اصلی</span>
           <span><strong>۲</strong> مشاور مستقیم</span>
         </div>
@@ -500,7 +500,7 @@ function Neighborhoods({ onPick }: { onPick: (name: string) => void }) {
       <SectionHead
         kicker="اصفهان"
         title="محله‌هایی که در آن‌ها فعالیم"
-        text="بیش از هشتاد محله اصفهان. روی نام محله بزنید تا روی نقشه گوگل دیده شود؛ مسیر را می‌توانید در بلد یا نشان هم باز کنید."
+        text={`بیش از ${NEIGHBORHOODS.length} محله اصفهان. روی نام محله بزنید تا روی نقشه گوگل دیده شود؛ مسیر را می‌توانید در بلد یا نشان هم باز کنید.`}
       />
       <div className="area-layout">
         <div className="area-groups">
@@ -709,7 +709,8 @@ export function SitePage({ initialProperties = [] }: { initialProperties?: impor
 
   return (
     <SiteChrome>
-      <Hero onSearch={(next) => goInquiry(next)} />
+      <main className="site-home">
+        <Hero onSearch={(next) => goInquiry(next)} />
       <TrustStrip />
       <About />
       <Team />
@@ -724,6 +725,7 @@ export function SitePage({ initialProperties = [] }: { initialProperties?: impor
       <Contact />
       <FAQ />
       <Location />
+      </main>
     </SiteChrome>
   );
 }
