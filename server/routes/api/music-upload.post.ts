@@ -1,4 +1,4 @@
-import { constructBlobUrl, issueSignedToken, presignUrl } from "@vercel/blob";
+import { issueSignedToken, presignUrl } from "@vercel/blob";
 import { createError, defineEventHandler, readBody } from "h3";
 
 const MAX_BYTES = 100 * 1024 * 1024;
@@ -80,7 +80,7 @@ export default defineEventHandler(async (event) => {
     const storeId = payload.storeId.startsWith("store_")
       ? payload.storeId.slice("store_".length)
       : payload.storeId;
-    const publicUrl = constructBlobUrl(storeId, pathname, "public");
+    const publicUrl = "https://" + storeId + ".public.blob.vercel-storage.com/" + pathname;
 
     return {
       presignedUrl,
