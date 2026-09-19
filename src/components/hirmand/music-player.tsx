@@ -40,6 +40,9 @@ function formatTime(value: number) {
 export function MusicPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const resumeAfterLoadRef = useRef(false);
+  const playRequestedRef = useRef(false);
+  const sourceCandidatesRef = useRef<string[]>([]);
+  const sourceIndexRef = useRef(0);
 
   const [manifest, setManifest] = useState<MusicManifest>({ tracks: [] });
   const [index, setIndex] = useState(0);
@@ -121,28 +124,58 @@ export function MusicPlayer() {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
 
-    const source = currentTrack.stream
-      ? currentTrack.stream
-      : currentTrack.id
+    const candidates = [
+      currentTrack.src,
+      currentTrack.stream,
+      currentTrack.id
         ? `/api/music/file/${encodeURIComponent(currentTrack.id)}`
-        : currentTrack.src;
+        : "",
+    ].filter((value, candidateIndex, list) => value && list.indexOf(value) === candidateIndex);
 
-    audio.src = source;
-    audio.load();
+    sourceCandidatesRef.current = candidates;
+    sourceIndexRef.current = 0;
     setCurrentTime(0);
     setDuration(0);
     setLoadError(false);
     setAutoplayBlocked(false);
 
-    const shouldPlay = resumeAfterLoadRef.current;
-    if (!shouldPlay) return;
+    if (!candidates[0]) {
+      setLoadError(true);
+      return;
+    }
+
+    audio.src = candidates[0];
+    audio.load();
+
+    if (!resumeAfterLoadRef.current) return;
 
     const attemptPlay = () => {
       audio.play()
-        .then(() => setIsPlaying(true))
-        .catch(() => {
+        .then(() => {
+          playRequestedRef.current = false;
+          setIsPlaying(true);
+        })
+        .catch((error) => {
+          if (switchToFallbackSource()) {
+            void audio.play().then(
+              () => {
+                playRequestedRef.current = false;
+                setIsPlaying(true);
+              },
+              (fallbackError) => {
+                playRequestedRef.current = false;
+                setIsPlaying(false);
+                if (isAutoplayBlocked(fallbackError)) setAutoplayBlocked(true);
+                else setLoadError(true);
+              },
+            );
+            return;
+          }
+
+          playRequestedRef.current = false;
           setIsPlaying(false);
-          setAutoplayBlocked(true);
+          if (isAutoplayBlocked(error)) setAutoplayBlocked(true);
+          else setLoadError(true);
         });
     };
 
@@ -178,24 +211,62 @@ export function MusicPlayer() {
     }
   }, [index, isExpanded, isMuted, repeat, shuffle, volume]);
 
+  function switchToFallbackSource() {
+    const audio = audioRef.current;
+    const candidates = sourceCandidatesRef.current;
+    const nextIndex = sourceIndexRef.current + 1;
+
+    if (!audio || nextIndex >= candidates.length) return false;
+
+    sourceIndexRef.current = nextIndex;
+    setLoadError(false);
+    setAutoplayBlocked(false);
+    audio.src = candidates[nextIndex]!;
+    audio.load();
+    return true;
+  }
+
   async function playOrPause() {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
 
     if (!audio.paused) {
+      playRequestedRef.current = false;
       audio.pause();
       setIsPlaying(false);
       return;
     }
 
+    playRequestedRef.current = true;
+
     try {
       await audio.play();
+      playRequestedRef.current = false;
       setIsPlaying(true);
       setAutoplayBlocked(false);
       setLoadError(false);
-    } catch {
+    } catch (error) {
+      if (switchToFallbackSource()) {
+        try {
+          await audio.play();
+          playRequestedRef.current = false;
+          setIsPlaying(true);
+          setAutoplayBlocked(false);
+          setLoadError(false);
+          return;
+        } catch (fallbackError) {
+          playRequestedRef.current = false;
+          setIsPlaying(false);
+          if (isAutoplayBlocked(fallbackError)) setAutoplayBlocked(true);
+          else setLoadError(true);
+          return;
+        }
+      }
+
+      playRequestedRef.current = false;
       setIsPlaying(false);
-      setAutoplayBlocked(true);
+      if (isAutoplayBlocked(error)) setAutoplayBlocked(true);
+      else setLoadError(true);
     }
   }
 
@@ -203,6 +274,7 @@ export function MusicPlayer() {
     if (!tracks.length) return;
     const safeIndex = Math.max(0, Math.min(tracks.length - 1, nextIndex));
     resumeAfterLoadRef.current = shouldPlay;
+    playRequestedRef.current = shouldPlay;
     setIndex(safeIndex);
     setIsListOpen(false);
   }
@@ -266,7 +338,22 @@ export function MusicPlayer() {
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onEnded={handleEnded}
-        onError={() => setLoadError(true)}
+        onError={() => {
+          if (playRequestedRef.current && switchToFallbackSource()) {
+            const fallback = audioRef.current;
+            if (fallback) {
+              void fallback.play().catch((error) => {
+                playRequestedRef.current = false;
+                setIsPlaying(false);
+                if (isAutoplayBlocked(error)) setAutoplayBlocked(true);
+                else setLoadError(true);
+              });
+            }
+            return;
+          }
+          setIsPlaying(false);
+          setLoadError(true);
+        }}
       />
 
       <section className={`music-player ${isExpanded ? "is-expanded" : ""}`} aria-label="پخش‌کننده موسیقی هیرمند">
@@ -291,7 +378,7 @@ export function MusicPlayer() {
             {autoplayBlocked ? (
               <small>برای شروع موسیقی روی پخش بزنید</small>
             ) : loadError ? (
-              <small>فایل موسیقی قابل پخش نیست</small>
+              <small>فایل موسیقی قابل پخش نیست؛ لینک یا فرمت فایل را بررسی کنید.</small>
             ) : null}
           </div>
 
