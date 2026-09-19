@@ -21,6 +21,23 @@ function normalizeBlobUrl(raw: string): string {
         }
       }
     }
+
+    if (
+      parsed.hostname === "blob.vercel-storage.com" ||
+      parsed.hostname.endsWith(".private.blob.vercel-storage.com")
+    ) {
+      const storeId = getConfiguredBlobStoreId();
+      if (storeId) {
+        return `https://${storeId}.public.blob.vercel-storage.com${parsed.pathname}`;
+      }
+    }
+
+    if (parsed.hostname.endsWith(".public.blob.vercel-storage.com")) {
+      parsed.search = "";
+      parsed.hash = "";
+      return parsed.toString();
+    }
+
     return raw;
   } catch {
     return raw;
