@@ -6,15 +6,20 @@ import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { PROPERTY_TYPES, NEIGHBORHOOD_NAMES, SERVICES, SITE } from "@/lib/site";
 
-const searchSchema = z.object({
-  q: z.string().trim().max(80).catch(""),
-  transactionType: z.enum(["buy","sell","rent","mortgage"]).catch(""),
-  propertyType: z.enum(["apartment","villa","office","heritage","land","commercial"]).catch(""),
-  neighborhood: z.string().trim().max(80).catch(""),
-});
+function normalizeSearch(search: Record<string, unknown>) {
+  const q = typeof search.q === "string" ? search.q.trim().slice(0, 80) : "";
+  const transactionType = ["buy", "sell", "rent", "mortgage"].includes(String(search.transactionType))
+    ? (String(search.transactionType) as "buy" | "sell" | "rent" | "mortgage")
+    : "";
+  const propertyType = ["apartment", "villa", "office", "heritage", "land", "commercial"].includes(String(search.propertyType))
+    ? (String(search.propertyType) as "apartment" | "villa" | "office" | "heritage" | "land" | "commercial")
+    : "";
+  const neighborhood = typeof search.neighborhood === "string" ? search.neighborhood.trim().slice(0, 80) : "";
+  return { q, transactionType, propertyType, neighborhood };
+}
 
 export const Route = createFileRoute("/properties")({
-  validateSearch: searchSchema,
+  validateSearch: normalizeSearch,
   loaderDeps: ({ search }) => search,
   loader: async ({ deps }) =>
     listPublishedProperties({
