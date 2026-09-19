@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrackingRouteImport } from './routes/tracking'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as PropertySlugRouteImport } from './routes/properties.$slug'
+import { Route as AreaSlugRouteImport } from './routes/areas.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,18 +35,25 @@ const PropertySlugRoute = PropertySlugRouteImport.update({
   path: '/properties/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AreaSlugRoute = AreaSlugRouteImport.update({
+  id: '/areas/$slug',
+  path: '/areas/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/tracking': typeof TrackingRoute
   '/admin': typeof AdminRoute
   '/properties/$slug': typeof PropertySlugRoute
+  '/areas/$slug': typeof AreaSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/tracking': typeof TrackingRoute
   '/admin': typeof AdminRoute
   '/properties/$slug': typeof PropertySlugRoute
+  '/areas/$slug': typeof AreaSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,20 +61,22 @@ export interface FileRoutesById {
   '/tracking': typeof TrackingRoute
   '/admin': typeof AdminRoute
   '/properties/$slug': typeof PropertySlugRoute
+  '/areas/$slug': typeof AreaSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/tracking' | '/admin' | '/properties/$slug'
+  fullPaths: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/tracking' | '/admin' | '/properties/$slug'
-  id: '__root__' | '/' | '/tracking' | '/admin' | '/properties/$slug'
+  to: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug'
+  id: '__root__' | '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   TrackingRoute: typeof TrackingRoute
   AdminRoute: typeof AdminRoute
-  PropertySlugRoute: typeof PropertySlugRoute
+  PropertySlugRoute: typeof PropertySlugRoute,
+  AreaSlugRoute: typeof AreaSlugRoute,
 }
 
 declare module '@tanstack/react-router' {
@@ -97,6 +107,13 @@ declare module '@tanstack/react-router' {
       path: '/properties/$slug'
       fullPath: '/properties/$slug'
       preLoaderRoute: typeof PropertySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/areas/$slug': {
+      id: '/areas/$slug'
+      path: '/areas/$slug'
+      fullPath: '/areas/$slug'
+      preLoaderRoute: typeof AreaSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
