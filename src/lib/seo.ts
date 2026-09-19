@@ -178,7 +178,11 @@ export function propertyJsonLd(property: Property) {
   };
 
   if (property.price) {
-    offers.price = property.price;
+    const tomanPrice = Number(property.price);
+    offers.price =
+      Number.isFinite(tomanPrice) && tomanPrice > 0
+        ? String(Math.round(tomanPrice * 10))
+        : property.price;
   }
 
   return {
@@ -260,15 +264,6 @@ export function enhancedOrganizationJsonLd() {
           { "@type": "City", name: "اصفهان" },
           { "@type": "AdministrativeArea", name: "استان اصفهان" },
         ],
-        openingHoursSpecification: {
-          "@type": "OpeningHoursSpecification",
-          dayOfWeek: ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"],
-          opens: "09:00",
-          closes: "20:00",
-        },
-        priceRange: "$$",
-        currenciesAccepted: "IRR",
-        paymentAccepted: "Cash, Bank Transfer",
         contactPoint: [
           {
             "@type": "ContactPoint",
