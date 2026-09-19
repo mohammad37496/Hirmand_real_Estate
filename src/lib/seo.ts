@@ -304,7 +304,7 @@ export function enhancedOrganizationJsonLd() {
           "@type": "SearchAction",
           target: {
             "@type": "EntryPoint",
-            urlTemplate: `${SITE.url}/#inquiry`,
+            urlTemplate: `${SITE.url}/properties?q={search_term_string}`,
           },
           "query-input": "required name=search_term_string",
         },
