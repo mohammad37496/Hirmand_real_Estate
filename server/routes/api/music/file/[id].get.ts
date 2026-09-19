@@ -12,7 +12,10 @@ function normalizeBlobUrl(raw: string): string {
           Buffer.from(delegation.slice(0, dot), "base64url").toString("utf8"),
         ) as { storeId?: unknown };
         if (typeof payload.storeId === "string" && payload.storeId) {
-          return "https://" + payload.storeId + ".public.blob.vercel-storage.com" + parsed.pathname;
+          const storeId = payload.storeId.startsWith("store_")
+            ? payload.storeId.slice("store_".length)
+            : payload.storeId;
+          return "https://" + storeId + ".public.blob.vercel-storage.com" + parsed.pathname;
         }
       }
     }
