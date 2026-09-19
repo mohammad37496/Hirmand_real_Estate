@@ -3,19 +3,11 @@ import { ArrowRight, Phone } from "lucide-react";
 import { BrandLogo } from "@/components/hirmand/logo";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { SITE } from "@/lib/site";
+import { trackingHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/tracking")({
   component: TrackingPage,
-  head: () => ({
-    meta: [
-      { title: `ثبت قرارداد و کد رهگیری | ${SITE.nameFa}` },
-      {
-        name: "description",
-        content: "ثبت قرارداد در سامانه و دریافت کد رهگیری — به‌زودی در گروه مشاورین املاک هیرمند.",
-      },
-      { name: "robots", content: "noindex, follow" },
-    ],
-  }),
+  head: () => trackingHead(),
 });
 
 function TrackingPage() {

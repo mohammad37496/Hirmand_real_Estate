@@ -17,6 +17,8 @@ export const Route = createRootRoute({
       { name: "theme-color", content: "#07090d" },
       { name: "color-scheme", content: "dark" },
       { name: "author", content: SITE.nameFa },
+      { name: "referrer", content: "strict-origin-when-cross-origin" },
+      { name: "format-detection", content: "telephone=yes" },
       { name: "application-name", content: SITE.shortName },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },

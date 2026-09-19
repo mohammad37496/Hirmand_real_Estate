@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
 
+# پنل مدیریت نباید ایندکس شود
+Disallow: /admin
+Disallow: /admin/
+
 Sitemap: https://hirmand.ir/sitemap.xml
