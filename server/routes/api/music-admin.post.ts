@@ -10,6 +10,15 @@ function normalizeBlobUrl(raw: string): string {
     const url = new URL(raw);
     const delegation = url.searchParams.get("vercel-blob-delegation");
     if (!delegation) {
+      if (
+        url.hostname === "blob.vercel-storage.com" ||
+        url.hostname.endsWith(".private.blob.vercel-storage.com")
+      ) {
+        const storeId = getConfiguredBlobStoreId();
+        if (storeId) {
+          return `https://${storeId}.public.blob.vercel-storage.com${url.pathname}`;
+        }
+      }
       if (url.hostname.endsWith(".public.blob.vercel-storage.com")) {
         url.search = "";
         url.hash = "";
@@ -40,6 +49,12 @@ function requireAdmin(adminKey: string | undefined) {
     throw createError({ statusCode: 401, statusMessage: "کلید مدیریت نادرست است." });
   }
 }
+function getConfiguredBlobStoreId(): string | null {
+  const raw = process.env.BLOB_STORE_ID?.trim();
+  if (!raw) return null;
+  return raw.startsWith("store_") ? raw.slice("store_".length) : raw;
+}
+
 
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as Body;
