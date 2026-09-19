@@ -1,270 +1,113 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  BedDouble,
-  Building2,
-  CarFront,
-  Check,
-  MapPinned,
-  Phone,
-  Ruler,
-  Warehouse,
-} from "lucide-react";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { isVideoUrl } from "@/lib/media";
 import { getPublishedProperty } from "@/lib/properties";
 import { SITE } from "@/lib/site";
-import {
-  breadcrumbJsonLd,
-  propertyHead,
-  propertyJsonLd,
-  TX_LABEL,
-  TYPE_LABEL,
-} from "@/lib/seo";
-import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { formatToman } from "@/lib/money";
-import { areaSlug } from "@/lib/areas";
+import { propertyDetailHead } from "@/lib/seo";
+import { areaPathFromNeighborhood } from "@/lib/areas";
 
 export const Route = createFileRoute("/properties/$slug")({
-  loader: ({ params }) => getPublishedProperty({ data: { slug: params.slug } }),
-  head: ({ loaderData, params }) => propertyHead(loaderData ?? null, params.slug),
+  loader: async ({ params }) => {
+    const property = await getPublishedProperty({ data: { slug: params.slug } });
+    if (!property) throw notFound();
+    return property;
+  },
+  head: ({ loaderData }) => (loaderData ? propertyDetailHead(loaderData) : {}),
   component: PropertyDetailPage,
 });
 
-function money(value: string | null) {
-  if (!value) return "";
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? formatToman(parsed) : value;
-}
-
-function whatsappLink(phone: string, title: string) {
-  const intl = phone.replace(/^0/, "98");
-  const text = encodeURIComponent(`سلام، درباره فایل «${title}» از سایت هیرمند پیام می‌دهم.`);
-  return `https://wa.me/${intl}?text=${text}`;
+function moneyLabel(raw: string | null) {
+  if (!raw) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? `${formatToman(n)} تومان` : raw;
 }
 
 function PropertyDetailPage() {
   const property = Route.useLoaderData();
-
-  if (!property) {
-    return (
-      <SiteChrome className="property-detail-shell">
-        <section className="property-not-found">
-          <MapPinned size={32} />
-          <h1>این فایل دیگر در دسترس نیست</h1>
-          <p>ممکن است فایل فروخته، اجاره داده یا از حالت انتشار خارج شده باشد.</p>
-          <Link to="/" hash="listings" className="btn-gold">
-            مشاهده فایل‌های فعال
-          </Link>
-        </section>
-      </SiteChrome>
-    );
-  }
-
   const images = property.images.length ? property.images : ["/images/type-apartment.jpg"];
-  const price =
-    property.transactionType === "rent"
-      ? `رهن ${money(property.deposit) || "—"} تومان${property.rent ? ` • اجاره ${money(property.rent)} تومان` : ""}`
-      : property.transactionType === "mortgage"
-        ? `رهن ${money(property.deposit) || "—"} تومان`
-        : property.price
-          ? `${money(property.price)} تومان`
-          : "تماس برای قیمت";
-
-  const crumbs = breadcrumbJsonLd([
-    { name: "صفحه اصلی", path: "/" },
-    { name: "فایل‌های ملکی", path: "/#listings" },
-    { name: property.title, path: `/properties/${property.slug}` },
-  ]);
+  const areaPath = areaPathFromNeighborhood(property.neighborhood);
+  const waText = encodeURIComponent(
+    `سلام، درباره فایل «${property.title}» در ${SITE.nameFa} پیام می‌دهم.\n${SITE.url}/properties/${property.slug}`,
+  );
+  const waHref = `https://wa.me/${property.contactPhone.replace(/^0/, "98")}?text=${waText}`;
 
   return (
-    <SiteChrome className="property-detail-shell">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(propertyJsonLd(property)) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbs) }}
-      />
-      <article className="property-detail" itemScope itemType="https://schema.org/RealEstateListing">
-        <nav
-          className="property-breadcrumb"
-          aria-label="مسیر صفحه"
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            gap: 8,
-            marginBottom: 16,
-            fontSize: "0.82rem",
-            color: "var(--subtle)",
-          }}
-        >
-          <Link to="/" style={{ color: "var(--muted)" }}>
-            صفحه اصلی
-          </Link>
-          <span aria-hidden="true">/</span>
-          <Link to="/" hash="listings" style={{ color: "var(--muted)" }}>
-            فایل‌ها
-          </Link>
-          <span aria-hidden="true">/</span>
-          <span>{property.title}</span>
-        </nav>
+    <main className="property-detail-page">
+      <nav className="property-breadcrumb" aria-label="مسیر">
+        <Link to="/">خانه</Link>
+        <span>/</span>
+        {areaPath ? (
+          <>
+            <Link to="/areas/$slug" params={{ slug: areaPath }}>{property.neighborhood}</Link>
+            <span>/</span>
+          </>
+        ) : null}
+        <span>{property.title}</span>
+      </nav>
 
-        <div className="property-detail-top">
-          <Link to="/" hash="listings" className="back-link">
-            <ArrowRight size={17} /> بازگشت به فایل‌ها
-          </Link>
-          <span className="property-detail-code">کد فایل: {property.slug.slice(-8).toUpperCase()}</span>
-        </div>
-
-        <div className="property-gallery">
-          <div className="property-gallery-main">
+      <div className="property-gallery">
+        <div className="property-gallery-main">
+          {isVideoUrl(images[0]) ? (
+            <video src={images[0]} controls playsInline preload="metadata" />
+          ) : (
             <img src={images[0]} alt={property.title} itemProp="image" fetchPriority="high" />
-            {property.featured ? <span className="property-gallery-featured">فایل ویژه</span> : null}
-          </div>
-          {images.slice(1, 5).map((src) => (
-            <div key={src} className="property-gallery-thumb">
+          )}
+          {property.featured ? <span className="property-gallery-featured">فایل ویژه</span> : null}
+        </div>
+        {images.slice(1, 8).map((src) => (
+          <div key={src} className="property-gallery-thumb">
+            {isVideoUrl(src) ? (
+              <video src={src} muted playsInline preload="metadata" />
+            ) : (
               <img src={src} alt="" loading="lazy" />
-            </div>
-          ))}
-        </div>
+            )}
+          </div>
+        ))}
+      </div>
 
-        <div className="property-detail-grid">
-          <div className="property-detail-main">
-            <div className="property-card-meta">
-              <span>{TX_LABEL[property.transactionType] ?? property.transactionType}</span>
-              <span>{TYPE_LABEL[property.propertyType] ?? property.propertyType}</span>
-              <Link
-                to="/areas/$slug"
-                params={{ slug: areaSlug(property.neighborhood) }}
-                itemProp="addressLocality"
-                style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 3 }}
-              >
-                {property.neighborhood}
-              </Link>
-              <span>{property.city}</span>
-            </div>
-            <h1 itemProp="name">{property.title}</h1>
-            <p className="property-detail-description" itemProp="description">
-              {property.description}
+      <div className="property-detail-grid">
+        <article className="property-detail-main">
+          <header>
+            <span className="kicker">{property.neighborhood} · اصفهان</span>
+            <h1>{property.title}</h1>
+            <p className="property-detail-price">
+              {property.price ? moneyLabel(property.price) : null}
+              {property.deposit ? ` · رهن ${moneyLabel(property.deposit)}` : ""}
+              {property.rent ? ` · اجاره ${moneyLabel(property.rent)}` : ""}
             </p>
-
-            <div className="property-spec-grid">
-              {property.areaM2 ? (
-                <div>
-                  <Ruler size={18} />
-                  <span>
-                    <small>متراژ</small>
-                    <strong>{property.areaM2.toLocaleString("fa-IR")} متر</strong>
-                  </span>
-                </div>
-              ) : null}
-              {property.bedrooms ? (
-                <div>
-                  <BedDouble size={18} />
-                  <span>
-                    <small>خواب</small>
-                    <strong>{property.bedrooms.toLocaleString("fa-IR")}</strong>
-                  </span>
-                </div>
-              ) : null}
-              {property.parking ? (
-                <div>
-                  <CarFront size={18} />
-                  <span>
-                    <small>پارکینگ</small>
-                    <strong>دارد</strong>
-                  </span>
-                </div>
-              ) : null}
-              {property.elevator ? (
-                <div>
-                  <Building2 size={18} />
-                  <span>
-                    <small>آسانسور</small>
-                    <strong>دارد</strong>
-                  </span>
-                </div>
-              ) : null}
-              {property.storage ? (
-                <div>
-                  <Warehouse size={18} />
-                  <span>
-                    <small>انباری</small>
-                    <strong>دارد</strong>
-                  </span>
-                </div>
-              ) : null}
-              {property.totalFloors ? (
-                <div>
-                  <Building2 size={18} />
-                  <span>
-                    <small>طبقه</small>
-                    <strong>
-                      {property.floor ?? "—"} از {property.totalFloors}
-                    </strong>
-                  </span>
-                </div>
-              ) : null}
-            </div>
-
+          </header>
+          <div className="property-detail-specs">
+            {property.areaM2 ? <span>{property.areaM2.toLocaleString("fa-IR")} متر</span> : null}
+            {property.bedrooms != null ? <span>{property.bedrooms.toLocaleString("fa-IR")} خواب</span> : null}
+            {property.bathrooms != null ? <span>{property.bathrooms.toLocaleString("fa-IR")} سرویس</span> : null}
+            {property.floor != null ? <span>طبقه {property.floor.toLocaleString("fa-IR")}</span> : null}
+            {property.parking ? <span>پارکینگ</span> : null}
+            {property.elevator ? <span>آسانسور</span> : null}
+            {property.storage ? <span>انباری</span> : null}
+          </div>
+          <div className="property-detail-body">
+            <h2>توضیحات</h2>
+            <p style={{ whiteSpace: "pre-wrap" }}>{property.description}</p>
             {property.features.length ? (
-              <div className="property-features">
-                <h2>ویژگی‌های ملک</h2>
-                <div>
-                  {property.features.map((feature) => (
-                    <span key={feature}>
-                      <Check size={14} /> {feature}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {property.address ? (
-              <div className="property-address">
-                <MapPinned size={20} />
-                <div>
-                  <strong>موقعیت</strong>
-                  <p>
-                    {property.address} — {property.neighborhood}، اصفهان
-                  </p>
-                  <a href={SITE.mapUrl} target="_blank" rel="noopener noreferrer">
-                    باز کردن نقشه دفتر
-                  </a>
-                </div>
-              </div>
+              <>
+                <h2>ویژگی‌ها</h2>
+                <ul>{property.features.map((f) => <li key={f}>{f}</li>)}</ul>
+              </>
             ) : null}
           </div>
-
-          <aside className="property-detail-side">
-            <div className="property-price-box">
-              <span>قیمت / شرایط</span>
-              <strong>{price}</strong>
-            </div>
-            <div className="property-contact-box">
-              <span className="kicker">تماس مستقیم</span>
-              <h2>{property.contactName}</h2>
-              <p>{property.contactPhone}</p>
-              <a href={`tel:${property.contactPhone}`} className="btn-gold">
-                <Phone size={17} /> تماس با مشاور
-              </a>
-              <a
-                href={whatsappLink(property.contactPhone, property.title)}
-                className="btn-ghost"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                واتساپ درباره این فایل
-              </a>
-            </div>
-            <Link to="/" hash="inquiry" className="property-request-box">
-              <strong>این فایل مناسب من است</strong>
-              <span>درخواست بازدید یا فایل مشابه</span>
-            </Link>
-          </aside>
-        </div>
-      </article>
-    </SiteChrome>
+        </article>
+        <aside className="property-detail-aside">
+          <div className="property-contact-card">
+            <h2>مشاور این فایل</h2>
+            <strong>{property.contactName}</strong>
+            <a href={`tel:${property.contactPhone}`} dir="ltr">{property.contactPhone}</a>
+            <a className="btn-gold" href={waHref} target="_blank" rel="noopener noreferrer">
+              پیام در واتساپ
+            </a>
+            <a className="btn-ghost" href={`tel:${property.contactPhone}`}>تماس تلفنی</a>
+          </div>
+        </aside>
+      </div>
+    </main>
   );
 }
