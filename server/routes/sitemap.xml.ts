@@ -56,6 +56,7 @@ export default defineEventHandler(async (event) => {
   const entries: string[] = [];
 
   entries.push(urlEntry(`${SITE}/`, "daily", "1.0", today));
+  entries.push(urlEntry(`${SITE}/properties`, "daily", "0.9", today));
   entries.push(urlEntry(`${SITE}/tracking`, "monthly", "0.3"));
 
   for (const area of allAreas()) {
