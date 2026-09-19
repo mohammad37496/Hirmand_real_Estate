@@ -39,7 +39,7 @@ function formatTime(value: number) {
 
 export function MusicPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const resumeAfterLoadRef = useRef(true);
+  const resumeAfterLoadRef = useRef(false);
 
   const [manifest, setManifest] = useState<MusicManifest>({ tracks: [] });
   const [index, setIndex] = useState(0);
@@ -84,7 +84,7 @@ export function MusicPlayer() {
         const safeTracks = Array.isArray(next.tracks)
           ? next.tracks.filter((track) => track && typeof track.src === "string" && track.src.trim())
           : [];
-        setManifest({ autoplay: next.autoplay !== false, tracks: safeTracks });
+        setManifest({ autoplay: false, tracks: safeTracks });
       })
       .catch(() => {
         if (!cancelled) setManifest({ autoplay: true, tracks: [] });
