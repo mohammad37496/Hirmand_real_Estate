@@ -9,6 +9,7 @@ import {
   KeyRound,
   LayoutDashboard,
   Music2,
+  UsersRound,
   LogOut,
   Plus,
   RefreshCw,
@@ -26,10 +27,11 @@ import { formatToman } from "@/lib/money";
 import { AdminMediaField } from "@/components/hirmand/admin-media-field";
 import { AdminConsultantPicker } from "@/components/hirmand/admin-consultant-picker";
 import { AdminMusicManager } from "@/components/hirmand/admin-music-manager";
+import { AdminLeadManager } from "@/components/hirmand/admin-lead-manager";
 import { ADMIN_CSS } from "@/components/hirmand/admin-shell-css";
 
 type PublishStatus = "draft" | "published" | "archived";
-type ViewMode = "list" | "form" | "music";
+type ViewMode = "list" | "form" | "music" | "leads";
 
 type FormState = {
   id?: string;
@@ -428,6 +430,10 @@ export function AdminPropertiesPage() {
             <Music2 size={18} />
             موسیقی سایت
           </button>
+          <button type="button" className={"admin-nav-btn" + (view === "leads" ? " is-active" : "")} onClick={() => setView("leads")}>
+            <UsersRound size={18} />
+            درخواست‌ها
+          </button>
         </nav>
         <div className="admin-sidebar-foot">
           <button
@@ -458,14 +464,18 @@ export function AdminPropertiesPage() {
                 ? "فهرست فایل‌ها"
                 : view === "music"
                   ? "موسیقی سایت"
-                  : form.id
+                  : view === "leads"
+                    ? "درخواست‌های مشتری"
+                    : form.id
                     ? "ویرایش فایل"
                     : "افزودن فایل جدید"}
             </h1>
             <p>
               {view === "list"
                 ? `${stats.total.toLocaleString("fa-IR")} فایل در سیستم`
-                : form.contactName
+                : view === "leads"
+                  ? "مدیریت Leadها و پیگیری مشتریان"
+                  : form.contactName
                   ? `مشاور مسئول: ${form.contactName}`
                   : "مشاور مسئول را انتخاب کنید"}
             </p>
@@ -605,6 +615,7 @@ export function AdminPropertiesPage() {
           ) : null}
 
           {view === "music" ? <AdminMusicManager adminKey={adminKey} /> : null}
+          {view === "leads" ? <AdminLeadManager adminKey={adminKey} /> : null}
 
           {view === "form" ? (
             <form className="admin-form-wrap" onSubmit={onSubmit}>
@@ -872,6 +883,10 @@ export function AdminPropertiesPage() {
         <button type="button" className={view === "music" ? "is-active" : ""} onClick={() => setView("music")}>
           <Music2 size={20} />
           موسیقی
+        </button>
+        <button type="button" className={view === "leads" ? "is-active" : ""} onClick={() => setView("leads")}>
+          <UsersRound size={20} />
+          درخواست‌ها
         </button>
         <Link to="/">سایت</Link>
       </nav>
