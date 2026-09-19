@@ -85,7 +85,6 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       neighborhood,
       consultant: selected.name,
       note: note.trim(),
-      at: new Date().toISOString(),
     };
     try {
       const response = await fetch("/api/leads", {
@@ -142,7 +141,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
         />
       </div>
       <p id="inq-phone-hint" className="form-hint field-span">
-        شماره با ارقام فارسی یا انگلیسی قابل وارد کردن است؛ اطلاعات این فرم برای پیگیری درخواست در سامانه هیرمند ثبت و فقط برای ارتباط درباره درخواست شما استفاده می‌شود.
+        شماره با ارقام فارسی یا انگلیسی قابل وارد کردن است؛ درخواست شما در سامانه هیرمند ثبت می‌شود و اطلاعات فقط برای پیگیری همین درخواست استفاده خواهد شد.
       </p>
       <div className="field">
         <label htmlFor="inq-deal">نوع معامله</label>
