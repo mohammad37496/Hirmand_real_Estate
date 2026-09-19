@@ -21,6 +21,7 @@ import {
 } from "@/lib/seo";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { formatToman } from "@/lib/money";
+import { areaSlug } from "@/lib/areas";
 
 export const Route = createFileRoute("/properties/$slug")({
   loader: ({ params }) => getPublishedProperty({ data: { slug: params.slug } }),
@@ -133,7 +134,14 @@ function PropertyDetailPage() {
             <div className="property-card-meta">
               <span>{TX_LABEL[property.transactionType] ?? property.transactionType}</span>
               <span>{TYPE_LABEL[property.propertyType] ?? property.propertyType}</span>
-              <span itemProp="addressLocality">{property.neighborhood}</span>
+              <Link
+                to="/areas/$slug"
+                params={{ slug: areaSlug(property.neighborhood) }}
+                itemProp="addressLocality"
+                style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 3 }}
+              >
+                {property.neighborhood}
+              </Link>
               <span>{property.city}</span>
             </div>
             <h1 itemProp="name">{property.title}</h1>
