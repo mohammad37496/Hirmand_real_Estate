@@ -10,7 +10,7 @@ import { Reveal } from "./reveal";
 const PROPERTY_TYPE_LABEL: Record<PropertyType, string> = {
   apartment: "آپارتمان", villa: "ویلا و باغ", office: "اداری", heritage: "خانه اصیل", land: "زمین", commercial: "تجاری",
 };
-const TRANSACTION_LABEL: Record<PropertyTransaction, string> = { buy: "فروش", sell: "فروش", rent: "اجاره", mortgage: "رهن" };
+const TRANSACTION_LABEL: Record<PropertyTransaction, string> = { buy: "خرید", sell: "فروش", rent: "اجاره", mortgage: "رهن" };
 const FALLBACK_IMAGES: Record<PropertyType, string> = {
   apartment: "/images/type-apartment.jpg", villa: "/images/type-villa.jpg", office: "/images/type-office.jpg", heritage: "/images/type-heritage.jpg", land: "/images/type-villa.jpg", commercial: "/images/type-office.jpg",
 };
