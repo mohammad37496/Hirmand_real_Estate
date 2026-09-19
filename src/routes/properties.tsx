@@ -19,26 +19,6 @@ export const Route = createFileRoute("/properties")({
 });
 
 
-  validateSearch: normalizeSearch,
-  loaderDeps: ({ search }) => search,
-  loader: async ({ deps }) =>
-    listPublishedProperties({
-      data: {
-        search: deps.q || undefined,
-        transactionType: deps.transactionType ? (deps.transactionType as "buy" | "sell" | "rent" | "mortgage") : undefined,
-        propertyType: deps.propertyType ? (deps.propertyType as "apartment" | "villa" | "office" | "heritage" | "land" | "commercial") : undefined,
-        neighborhood: deps.neighborhood || undefined,
-      },
-    }),
-  head: () => ({
-    meta: [
-      { title: "فایل‌های ملکی اصفهان | هیرمند" },
-      { name: "description", content: "فایل‌های منتشرشده خرید، فروش، رهن و اجاره در اصفهان از گروه مشاورین املاک هیرمند." },
-    ],
-    links: [{ rel: "canonical", href: `${SITE.url}/properties` }],
-  }),
-  component: PropertiesIndexPage,
-});
 function PropertiesIndexPage() {
   const properties = Route.useLoaderData();
   const [q, setQ] = useState("");
