@@ -23,7 +23,7 @@ export function SiteChrome({
         رفتن به محتوا
       </a>
       <Header />
-      <main className={cn("page", className)}>{children}</main>
+      <div className={cn("page", className)}>{children}</div>
       <Footer />
       <div className="quick-actions" aria-label="اقدام سریع">
         <Link to="/" hash="inquiry" className="quick-action quick-action-primary">
