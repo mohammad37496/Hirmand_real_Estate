@@ -36,6 +36,12 @@ function normalizeBlobUrl(raw: string): string {
     return raw;
   }
 }
+function getConfiguredBlobStoreId(): string | null {
+  const raw = process.env.BLOB_STORE_ID?.trim();
+  if (!raw) return null;
+  return raw.startsWith("store_") ? raw.slice("store_".length) : raw;
+}
+
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "public, s-maxage=60, stale-while-revalidate=300");
