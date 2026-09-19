@@ -1,4 +1,4 @@
-import { defineEventHandler } from "h3";
+import { defineEventHandler, setResponseHeader } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 
 function normalizeBlobUrl(raw: string): string {
@@ -21,7 +21,8 @@ function normalizeBlobUrl(raw: string): string {
   }
 }
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+  setResponseHeader(event, "cache-control", "public, s-maxage=60, stale-while-revalidate=300");
   if (dbSource === "unconfigured") return { autoplay: true, tracks: [] };
   const sql = await getSql();
   const rows = await sql.query<Record<string, unknown>>(
