@@ -15,7 +15,7 @@ export default defineEventHandler(async () => {
       id: String(row.id),
       title: String(row.title),
       artist: String(row.artist ?? ""),
-      src: String(row.url),
+      src: `/api/music/file/${encodeURIComponent(String(row.id))}`,
       position: Number(row.position) || 0,
     })),
   };
