@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Loader2, Music2, Pause, Play, Trash2, Upload, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 
@@ -21,7 +21,7 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch("/api/music-admin", {
@@ -37,7 +37,7 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [adminKey]);
 
   useEffect(() => {
     void load();
@@ -45,7 +45,7 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
       audioRef.current?.pause();
       audioRef.current = null;
     };
-  }, [adminKey]);
+  }, [load]);
 
   async function uploadTrack(event: FormEvent) {
     event.preventDefault();
@@ -90,7 +90,7 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
       }
 
       const xhr = new XMLHttpRequest();
-      let uploadedUrl = "";
+
       const uploadPromise = new Promise<void>((resolve, reject) => {
         xhr.open("PUT", tokenData.presignedUrl!, true);
         xhr.setRequestHeader("content-type", file.type || "audio/mpeg");
@@ -121,7 +121,7 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
           adminKey,
           title: title.trim(),
           artist: artist.trim(),
-          url: tokenData.publicUrl || uploadedUrl,
+          url: tokenData.publicUrl,
           mimeType: file.type || "audio/mpeg",
           sizeBytes: file.size,
         }),
