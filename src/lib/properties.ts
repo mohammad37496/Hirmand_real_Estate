@@ -45,11 +45,19 @@ export type Property = {
   updatedAt: string;
 };
 
+export type PropertySort = "newest" | "price_asc" | "price_desc" | "area_asc" | "area_desc";
+
 export type PropertyFilters = {
   transactionType?: PropertyTransaction;
   propertyType?: PropertyType;
   neighborhood?: string;
   featuredOnly?: boolean;
+  search?: string;
+  minArea?: number;
+  maxArea?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  sort?: PropertySort;
 };
 
 const publicFiltersSchema = z.object({
@@ -60,6 +68,11 @@ const publicFiltersSchema = z.object({
   neighborhood: z.string().trim().max(80).optional(),
   featuredOnly: z.boolean().optional(),
   search: z.string().trim().max(80).optional(),
+  minArea: z.number().int().min(0).max(100000).optional(),
+  maxArea: z.number().int().min(0).max(100000).optional(),
+  minPrice: z.number().int().min(0).max(999999999999999).optional(),
+  maxPrice: z.number().int().min(0).max(999999999999999).optional(),
+  sort: z.enum(["newest", "price_asc", "price_desc", "area_asc", "area_desc"]).optional().default("newest"),
 });
 
 const propertyInputSchema = z.object({
@@ -184,42 +197,76 @@ const DETAIL_COLUMNS = `
   features, images, contact_name, contact_phone, published_at, created_at, updated_at
 `;
 
+function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
+  const neighborhood = data.neighborhood?.trim() || null;
+  const exactNeighborhood = Boolean(
+    neighborhood && neighborhood.length >= 2 && !neighborhood.includes("%"),
+  );
+  return [
+    data.transactionType ?? null,
+    data.propertyType ?? null,
+    neighborhood,
+    data.featuredOnly ?? false,
+    exactNeighborhood,
+    data.search?.trim() || null,
+    data.minArea ?? null,
+    data.maxArea ?? null,
+    data.minPrice ?? null,
+    data.maxPrice ?? null,
+  ] as const;
+}
+
+const PRICE_EXPR = "nullif(coalesce(price, deposit, rent), '')::numeric";
+
+function publicPropertyWhereSql() {
+  return [
+    "status = 'published'",
+    "and ($1::text is null or transaction_type = $1)",
+    "and ($2::text is null or property_type = $2)",
+    "and ($3::text is null or ($5::boolean is true and neighborhood = $3) or ($5::boolean is false and neighborhood ilike '%' || $3 || '%'))",
+    "and ($4::boolean is false or featured = true)",
+    "and ($6::text is null or title ilike '%' || $6 || '%' or neighborhood ilike '%' || $6 || '%' or address ilike '%' || $6 || '%')",
+    "and ($7::int is null or area_m2 >= $7)",
+    "and ($8::int is null or area_m2 <= $8)",
+    "and ($9::numeric is null or " + PRICE_EXPR + " >= $9)",
+    "and ($10::numeric is null or " + PRICE_EXPR + " <= $10)",
+  ].join(" ");
+}
+
 export const listPublishedProperties = createServerFn({ method: "GET" })
   .validator(publicFiltersSchema)
   .handler(async ({ data }) => {
     if (dbSource === "unconfigured") return [];
     const sql = await getSql();
-    const neighborhood = data.neighborhood?.trim() || null;
-    const exactNeighborhood = Boolean(
-      neighborhood && neighborhood.length >= 2 && !neighborhood.includes("%"),
-    );
-    const search = data.search?.trim() || null;
-
+    const params = publicFilterParams(data);
     const rows = await sql.query<Record<string, unknown>>(
-      `select ${LIST_COLUMNS}
-      from properties
-      where status = 'published'
-        and ($1::text is null or transaction_type = $1)
-        and ($2::text is null or property_type = $2)
-        and (
-          $3::text is null
-          or ($5::boolean is true and neighborhood = $3)
-          or ($5::boolean is false and neighborhood ilike '%' || $3 || '%')
-        )
-        and ($4::boolean is false or featured = true)
-        and ($6::text is null or title ilike '%' || $6 || '%' or neighborhood ilike '%' || $6 || '%' or address ilike '%' || $6 || '%')
-      order by featured desc, published_at desc nulls last, created_at desc
-      limit 48`,
       [
-        data.transactionType ?? null,
-        data.propertyType ?? null,
-        neighborhood,
-        data.featuredOnly ?? false,
-        exactNeighborhood,
-        search,
-      ],
+        "select " + LIST_COLUMNS,
+        "from properties where " + publicPropertyWhereSql(),
+        "order by featured desc,",
+        "case when $11 = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
+        "case when $11 = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
+        "case when $11 = 'area_asc' then area_m2 end asc nulls last,",
+        "case when $11 = 'area_desc' then area_m2 end desc nulls last,",
+        "published_at desc nulls last, created_at desc",
+        "limit 48",
+      ].join(" "),
+      [...params, data.sort],
     );
     return rows.map(mapProperty);
+  });
+
+export const countPublishedProperties = createServerFn({ method: "GET" })
+  .validator(publicFiltersSchema)
+  .handler(async ({ data }) => {
+    if (dbSource === "unconfigured") return 0;
+    const sql = await getSql();
+    const params = publicFilterParams(data);
+    const rows = await sql.query<{ count: number }>(
+      "select count(*)::int as count from properties where " + publicPropertyWhereSql(),
+      params,
+    );
+    return Number(rows[0]?.count) || 0;
   });
 
 export const getPublishedProperty = createServerFn({ method: "GET" })
