@@ -14,6 +14,7 @@ import { Route as TrackingRouteImport } from './routes/tracking'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as PropertySlugRouteImport } from './routes/properties.$slug'
 import { Route as AreaSlugRouteImport } from './routes/areas.$slug'
+import { Route as PropertiesRouteImport } from './routes/properties'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +41,11 @@ const AreaSlugRoute = AreaSlugRouteImport.update({
   path: '/areas/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PropertiesRoute = PropertiesRouteImport.update({
+  id: '/properties',
+  path: '/properties',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/properties/$slug': typeof PropertySlugRoute
   '/areas/$slug': typeof AreaSlugRoute
+  '/properties': typeof PropertiesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,13 +69,14 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/properties/$slug': typeof PropertySlugRoute
   '/areas/$slug': typeof AreaSlugRoute
+  '/properties': typeof PropertiesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug'
+  fullPaths: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug' | '/properties'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug'
-  id: '__root__' | '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug'
+  to: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug' | '/properties'
+  id: '__root__' | '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug' | '/properties'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +85,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   PropertySlugRoute: typeof PropertySlugRoute
   AreaSlugRoute: typeof AreaSlugRoute
+  PropertiesRoute: typeof PropertiesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +125,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AreaSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/properties': {
+      id: '/properties'
+      path: '/properties'
+      fullPath: '/properties'
+      preLoaderRoute: typeof PropertiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +141,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   PropertySlugRoute: PropertySlugRoute,
   AreaSlugRoute: AreaSlugRoute,
+  PropertiesRoute: PropertiesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
