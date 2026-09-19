@@ -1,6 +1,6 @@
 import { defineEventHandler, readMultipartFormData, createError } from "h3";
 
-const MAX_BYTES = 25 * 1024 * 1024;
+const MAX_BYTES = 4 * 1024 * 1024;
 const ALLOWED = new Set([
   "image/jpeg",
   "image/png",
@@ -18,11 +18,10 @@ const ALLOWED = new Set([
  */
 export default defineEventHandler(async (event) => {
   const token = process.env.BLOB_READ_WRITE_TOKEN?.trim();
-  if (!token) {
+  if (!token && !(process.env.VERCEL === "1" || process.env.VERCEL === "true")) {
     throw createError({
       statusCode: 503,
-      statusMessage:
-        "آپلود فایل فعال نیست. متغیر BLOB_READ_WRITE_TOKEN را در Vercel تنظیم کنید (Vercel Blob).",
+      statusMessage: "آپلود فایل روی محیط محلی فعال نیست. در Vercel از Vercel Blob/OIDC استفاده می‌شود.",
     });
   }
 
@@ -48,7 +47,7 @@ export default defineEventHandler(async (event) => {
   if (filePart.data.byteLength > MAX_BYTES) {
     throw createError({
       statusCode: 413,
-      statusMessage: "حجم فایل بیش از ۲۵ مگابایت است.",
+      statusMessage: "حجم فایل بیش از ۴ مگابایت است؛ برای ویدیوهای بزرگ‌تر باید آپلود مستقیم به Blob فعال شود.",
     });
   }
 
@@ -69,7 +68,7 @@ export default defineEventHandler(async (event) => {
   const blob = await put(pathname, filePart.data, {
     access: "public",
     contentType: type,
-    token,
+    ...(token ? { token } : {}),
   });
 
   return {
