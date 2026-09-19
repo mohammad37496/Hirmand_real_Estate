@@ -1,28 +1,19 @@
 #!/usr/bin/env node
 /**
  * Deploy-time database migrator (node-postgres, `pg`).
- *
- * Runs during `npm run build` — on every Vercel deploy — applying pending files
- * in ../migrations to DATABASE_URL. Each file is applied in one transaction and
- * recorded in a `_migrations` table, so it runs once and is safe to re-run.
- *
- * The read is non-recursive, so the opt-in auth schema under migrations/auth/
- * is not applied to an app that never asked for sign-in.
- *
- * No DATABASE_URL (local / preview builds) -> skip; the PGLite fallback applies
- * the same files at startup instead (see src/lib/db.ts).
+ * Prefers DATABASE_URL_UNPOOLED for DDL when available (Neon best practice).
  */
-import { resolveDatabaseUrl } from "./resolve-database-url.mjs";
+import { resolveMigrationDatabaseUrl } from "./resolve-database-url.mjs";
 import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import pg from "pg";
 import { pendingMigrations } from "./migration-plan.mjs";
 
-const resolved = resolveDatabaseUrl();
+const resolved = resolveMigrationDatabaseUrl();
 const databaseUrl = resolved.url;
-if (databaseUrl && !process.env.DATABASE_URL?.trim()) {
-  process.env.DATABASE_URL = databaseUrl;
+if (databaseUrl) {
+  console.log(`[migrate] using connection from ${resolved.key}`);
 }
 if (!databaseUrl) {
   console.log(

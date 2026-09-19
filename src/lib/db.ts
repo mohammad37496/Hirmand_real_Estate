@@ -1,20 +1,22 @@
 import { pendingMigrations } from "../../scripts/migration-plan.mjs";
 
-/** Which database backend is active. */
 export type DbSource = "neon" | "pglite" | "unconfigured";
 
-/** Neon / Vercel may expose the connection under several names. */
+/** Prefer pooled Neon/Vercel URLs for runtime queries. */
 function resolveDatabaseUrlFromEnv(): string | undefined {
   if (typeof process === "undefined") return undefined;
-  const keys = [
+  const pooled = [
     "DATABASE_URL",
     "POSTGRES_URL",
     "POSTGRES_PRISMA_URL",
-    "POSTGRES_URL_NON_POOLING",
-    "DATABASE_URL_UNPOOLED",
     "NEON_DATABASE_URL",
   ] as const;
-  for (const key of keys) {
+  const unpooled = ["DATABASE_URL_UNPOOLED", "POSTGRES_URL_NON_POOLING"] as const;
+  for (const key of pooled) {
+    const value = process.env[key]?.trim();
+    if (value) return value;
+  }
+  for (const key of unpooled) {
     const value = process.env[key]?.trim();
     if (value) return value;
   }
@@ -87,6 +89,9 @@ function createNeonSql(): Promise<Sql> {
       allowExitOnIdle: true,
       application_name: "hirmand-real-estate",
     });
+    pool.on("connect", (client) => {
+      void client.query("set statement_timeout = 8000").catch(() => undefined);
+    });
     pool.on("error", (err) => {
       console.error("[db] idle client error", err.message);
     });
@@ -128,9 +133,7 @@ async function createPgliteSql(): Promise<Sql> {
       import: "default",
       eager: true,
     }) as Record<string, string>;
-    const doneRows = await pg.query<{ name: string }>(
-      "select name from _migrations",
-    );
+    const doneRows = await pg.query<{ name: string }>("select name from _migrations");
     const done = doneRows.rows.map((r) => r.name);
     for (const { name, path } of pendingMigrations(Object.keys(migrations), done)) {
       await pg.transaction(async (tx) => {
@@ -156,8 +159,7 @@ let sqlPromise: Promise<Sql> | null = null;
 async function createSql(): Promise<Sql> {
   if (typeof window !== "undefined") {
     throw new Error(
-      "@/lib/db is server-only — call getSql() from a createServerFn handler " +
-        "or a server route loader, never from client code.",
+      "@/lib/db is server-only — call getSql() from a createServerFn handler or a server route loader, never from client code.",
     );
   }
   if (dbSource === "neon") return createNeonSql();
