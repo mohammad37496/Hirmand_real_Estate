@@ -3,12 +3,35 @@ import { pendingMigrations } from "../../scripts/migration-plan.mjs";
 /** Which database backend is active. */
 export type DbSource = "neon" | "pglite" | "unconfigured";
 
-const rawDatabaseUrl =
-  typeof process !== "undefined" ? process.env.DATABASE_URL : undefined;
-const databaseUrl =
-  rawDatabaseUrl && rawDatabaseUrl.trim() ? rawDatabaseUrl : undefined;
+/** Neon / Vercel may expose the connection under several names. */
+function resolveDatabaseUrlFromEnv(): string | undefined {
+  if (typeof process === "undefined") return undefined;
+  const keys = [
+    "DATABASE_URL",
+    "POSTGRES_URL",
+    "POSTGRES_PRISMA_URL",
+    "POSTGRES_URL_NON_POOLING",
+    "DATABASE_URL_UNPOOLED",
+    "NEON_DATABASE_URL",
+  ] as const;
+  for (const key of keys) {
+    const value = process.env[key]?.trim();
+    if (value) return value;
+  }
+  return undefined;
+}
 
-export const dbSource: DbSource = databaseUrl ? "neon" : "pglite";
+const databaseUrl = resolveDatabaseUrlFromEnv();
+
+const isVercelRuntime =
+  typeof process !== "undefined" &&
+  (process.env.VERCEL === "1" || process.env.VERCEL === "true");
+
+export const dbSource: DbSource = databaseUrl
+  ? "neon"
+  : isVercelRuntime
+    ? "unconfigured"
+    : "pglite";
 
 export interface Sql {
   <T = Record<string, unknown>>(
