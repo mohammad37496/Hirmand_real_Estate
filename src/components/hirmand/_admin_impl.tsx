@@ -8,6 +8,7 @@ import {
   Home,
   KeyRound,
   LayoutDashboard,
+  Music2,
   LogOut,
   Plus,
   RefreshCw,
@@ -24,10 +25,11 @@ import { toast, Toaster } from "sonner";
 import { formatToman } from "@/lib/money";
 import { AdminMediaField } from "@/components/hirmand/admin-media-field";
 import { AdminConsultantPicker } from "@/components/hirmand/admin-consultant-picker";
+import { AdminMusicManager } from "@/components/hirmand/admin-music-manager";
 import { ADMIN_CSS } from "@/components/hirmand/admin-shell-css";
 
 type PublishStatus = "draft" | "published" | "archived";
-type ViewMode = "list" | "form";
+type ViewMode = "list" | "form" | "music";
 
 type FormState = {
   id?: string;
@@ -442,6 +444,10 @@ export function AdminPropertiesPage() {
               ویرایش فعلی
             </button>
           ) : null}
+          <button type="button" className={"admin-nav-btn" + (view === "music" ? " is-active" : "")} onClick={() => setView("music")}>
+            <Music2 size={18} />
+            موسیقی سایت
+          </button>
         </nav>
         <div className="admin-sidebar-foot">
           <button
@@ -470,9 +476,11 @@ export function AdminPropertiesPage() {
             <h1>
               {view === "list"
                 ? "فهرست فایل‌ها"
-                : form.id
-                  ? "ویرایش فایل"
-                  : "افزودن فایل جدید"}
+                : view === "music"
+                  ? "موسیقی سایت"
+                  : form.id
+                    ? "ویرایش فایل"
+                    : "افزودن فایل جدید"}
             </h1>
             <p>
               {view === "list"
@@ -615,6 +623,8 @@ export function AdminPropertiesPage() {
               </section>
             </>
           ) : null}
+
+          {view === "music" ? <AdminMusicManager adminKey={adminKey} /> : null}
 
           {view === "form" ? (
             <form className="admin-form-wrap" onSubmit={onSubmit}>
@@ -878,6 +888,10 @@ export function AdminPropertiesPage() {
         >
           <Plus size={20} />
           جدید
+        </button>
+        <button type="button" className={view === "music" ? "is-active" : ""} onClick={() => setView("music")}>
+          <Music2 size={20} />
+          موسیقی
         </button>
         <Link to="/">سایت</Link>
       </nav>
