@@ -117,6 +117,35 @@ export const ADMIN_CSS = `
 .admin-media-item img,.admin-media-item video{width:100%;height:100%;object-fit:cover}
 .admin-media-badge{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.55);border-radius:8px;padding:3px 6px;color:#fff;display:flex}
 .admin-media-remove{position:absolute;bottom:6px;left:6px;width:28px;height:28px;border:0;border-radius:8px;background:rgba(180,40,40,.85);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+
+.admin-music-manager{display:flex;flex-direction:column;gap:16px}
+.admin-music-head h2{margin:0;font-size:1.05rem}
+.admin-music-head p{margin:6px 0 0;color:#7d766c;font-size:.82rem;line-height:1.8}
+.admin-music-upload{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px;align-items:end}
+.admin-music-upload .admin-music-file{display:flex;flex-direction:column;gap:6px}
+.admin-music-file>span{color:#b7b0a4;font-size:.8rem;font-weight:600}
+.admin-music-file input{width:100%;min-height:46px;padding:9px 10px;border:1px solid rgba(244,239,230,.1);border-radius:12px;background:rgba(255,255,255,.03);color:#b7b0a4;font:inherit}
+.admin-music-file small{color:#7d766c;font-size:.74rem;line-height:1.6}
+.admin-music-upload>.btn-gold{min-height:46px;width:max-content}
+.admin-music-list{display:flex;flex-direction:column}
+.admin-music-row{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 16px;border-bottom:1px solid rgba(244,239,230,.06)}
+.admin-music-row:last-child{border-bottom:0}
+.admin-music-main{min-width:0}
+.admin-music-title-row{display:flex;align-items:center;gap:8px;min-width:0}
+.admin-music-title-row strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem}
+.admin-music-main>span{display:block;margin-top:4px;color:#7d766c;font-size:.78rem}
+.admin-music-active,.admin-music-inactive{display:inline-flex;flex-shrink:0;padding:2px 7px;border-radius:999px;font-size:.68rem;font-weight:700}
+.admin-music-active{background:rgba(61,214,140,.16);color:#3dd68c}
+.admin-music-inactive{background:rgba(154,163,178,.14);color:#9aa3b2}
+.admin-music-progress{height:3px;margin-top:8px;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.08)}
+.admin-music-progress span{display:block;height:100%;border-radius:inherit;background:#c9a24a;transition:width .12s linear}
+@media (max-width:960px){
+  .admin-music-upload{grid-template-columns:1fr}
+  .admin-music-upload>.btn-gold{width:100%}
+  .admin-music-row{grid-template-columns:40px minmax(0,1fr)}
+  .admin-music-row>.admin-property-actions{grid-column:2;justify-content:flex-start;padding-top:0}
+}
+
 @media (max-width:960px){
   .admin-sidebar{display:none}
   .admin-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
