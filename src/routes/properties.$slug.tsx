@@ -11,7 +11,6 @@ import {
   Warehouse,
 } from "lucide-react";
 import { getPublishedProperty } from "@/lib/properties";
-import { SITE } from "@/lib/site";
 import {
   breadcrumbJsonLd,
   propertyHead,
