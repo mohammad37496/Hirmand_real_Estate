@@ -164,7 +164,7 @@ export function MusicPlayer() {
     } catch {
       // Storage can be unavailable in private browsing contexts.
     }
-  }, [expanded, index, isExpanded, isMuted, repeat, shuffle, volume]);
+  }, [index, isExpanded, isMuted, repeat, shuffle, volume]);
 
   useEffect(() => {
     if (!tracks.length) return;
