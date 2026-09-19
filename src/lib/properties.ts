@@ -58,6 +58,7 @@ export type PropertyFilters = {
   minPrice?: number;
   maxPrice?: number;
   sort?: PropertySort;
+  offset?: number;
 };
 
 const publicFiltersSchema = z.object({
@@ -73,6 +74,7 @@ const publicFiltersSchema = z.object({
   minPrice: z.number().int().min(0).max(999999999999999).optional(),
   maxPrice: z.number().int().min(0).max(999999999999999).optional(),
   sort: z.enum(["newest", "price_asc", "price_desc", "area_asc", "area_desc"]).optional().default("newest"),
+  offset: z.number().int().min(0).max(100000).optional().default(0),
 });
 
 const propertyInputSchema = z.object({
@@ -213,6 +215,7 @@ function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
     data.maxArea ?? null,
     data.minPrice ?? null,
     data.maxPrice ?? null,
+    data.offset ?? 0,
   ];
 }
 
@@ -243,13 +246,13 @@ export const listPublishedProperties = createServerFn({ method: "GET" })
       [
         "select " + LIST_COLUMNS,
         "from properties where " + publicPropertyWhereSql(),
-        "order by case when $11 = 'newest' then case when featured then 0 else 1 end else 0 end,",
-        "case when $11 = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
-        "case when $11 = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
-        "case when $11 = 'area_asc' then area_m2 end asc nulls last,",
-        "case when $11 = 'area_desc' then area_m2 end desc nulls last,",
+        "order by case when $12 = 'newest' then case when featured then 0 else 1 end else 0 end,",
+        "case when $12 = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
+        "case when $12 = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
+        "case when $12 = 'area_asc' then area_m2 end asc nulls last,",
+        "case when $12 = 'area_desc' then area_m2 end desc nulls last,",
         "published_at desc nulls last, created_at desc",
-        "limit 48",
+        "limit 48 offset $11",
       ].join(" "),
       [...params, data.sort],
     );
@@ -261,7 +264,7 @@ export const countPublishedProperties = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     if (dbSource === "unconfigured") return 0;
     const sql = await getSql();
-    const params = publicFilterParams(data);
+    const params = publicFilterParams(data).slice(0, 10);
     const rows = await sql.query<{ count: number }>(
       "select count(*)::int as count from properties where " + publicPropertyWhereSql(),
       params,
