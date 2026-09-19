@@ -1,12 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Link } from "@tanstack/react-router";
 import {
-  Check,
   Building2,
-  Check,
   Copy,
   ExternalLink,
-undefined  FileEdit,
+  FileEdit,
   Home,
   KeyRound,
   LayoutDashboard,
