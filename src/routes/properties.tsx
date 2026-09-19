@@ -1,7 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { RotateCcw, Search, SlidersHorizontal, X } from "lucide-react";
-import { countPublishedProperties, listPublishedProperties, type PropertySort } from "@/lib/properties";
+import {
+  countPublishedProperties,
+  listPublishedProperties,
+  type PropertySort,
+  type PropertyTransaction,
+  type PropertyType,
+} from "@/lib/properties";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { PROPERTY_TYPES, NEIGHBORHOOD_NAMES, SERVICES, SITE } from "@/lib/site";
@@ -49,8 +55,23 @@ function PropertiesIndexPage() {
     initialized.current = true;
     const params = new URLSearchParams(window.location.search);
     setQ(params.get("q") ?? "");
-    setTransactionType(params.get("transaction") ?? "");
-    setPropertyType(params.get("type") ?? "");
+    const transactionParam = params.get("transaction");
+    const propertyTypeParam = params.get("type");
+    setTransactionType(
+      transactionParam === "buy" || transactionParam === "sell" || transactionParam === "rent" || transactionParam === "mortgage"
+        ? transactionParam
+        : "",
+    );
+    setPropertyType(
+      propertyTypeParam === "apartment" ||
+      propertyTypeParam === "villa" ||
+      propertyTypeParam === "office" ||
+      propertyTypeParam === "heritage" ||
+      propertyTypeParam === "land" ||
+      propertyTypeParam === "commercial"
+        ? propertyTypeParam
+        : "",
+    );
     setNeighborhood(params.get("neighborhood") ?? "");
     setMinArea(params.get("minArea") ?? "");
     setMaxArea(params.get("maxArea") ?? "");
@@ -82,8 +103,8 @@ function PropertiesIndexPage() {
       try {
         const data = {
           search: q.trim() || undefined,
-          transactionType: transactionType || undefined,
-          propertyType: propertyType || undefined,
+          transactionType: (transactionType || undefined) as PropertyTransaction | undefined,
+          propertyType: (propertyType || undefined) as PropertyType | undefined,
           neighborhood: neighborhood || undefined,
           minArea: parseNumber(minArea),
           maxArea: parseNumber(maxArea),
