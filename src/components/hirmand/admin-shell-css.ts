@@ -93,6 +93,30 @@ export const ADMIN_CSS = `
 .btn-gold:disabled{opacity:.55;cursor:not-allowed}
 .btn-ghost{color:#f4efe6;border-color:rgba(244,239,230,.12);background:rgba(255,255,255,.04)}
 .btn-ghost:hover{border-color:rgba(201,162,74,.35);background:rgba(201,162,74,.08)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.admin-consultant{display:flex;flex-direction:column;gap:12px}
+.admin-consultant-hint{margin:0;color:#9aa3b2;font-size:.85rem}
+.admin-consultant-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.admin-consultant-card{display:flex;align-items:center;gap:12px;padding:14px 14px;border-radius:14px;border:1px solid rgba(244,239,230,.12);background:rgba(15,18,24,.75);color:#f4efe6;font:inherit;text-align:right;cursor:pointer;transition:border-color .15s,background .15s,transform .12s;position:relative}
+.admin-consultant-card:hover{border-color:rgba(201,162,74,.45);background:rgba(201,162,74,.06)}
+.admin-consultant-card.is-active{border-color:rgba(201,162,74,.75);background:rgba(201,162,74,.12);box-shadow:0 0 0 1px rgba(201,162,74,.25)}
+.admin-consultant-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(201,162,74,.14);color:#e0c47a;flex-shrink:0}
+.admin-consultant-meta{display:flex;flex-direction:column;gap:2px;min-width:0}
+.admin-consultant-meta strong{font-size:.95rem;font-weight:700}
+.admin-consultant-meta small{color:#9aa3b2;font-size:.78rem}
+.admin-consultant-meta span{color:#c9c2b5;font-size:.8rem;direction:ltr}
+.admin-consultant-check{position:absolute;top:10px;left:10px;width:24px;height:24px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:rgba(201,162,74,.9);color:#1a1408}
+.admin-consultant-select select{width:100%;min-height:44px;border-radius:12px;border:1px solid rgba(244,239,230,.12);background:rgba(15,18,24,.85);color:#f4efe6;padding:10px 12px;font:inherit}
+.admin-media{display:flex;flex-direction:column;gap:10px}
+.admin-media-drop{border:1.5px dashed rgba(201,162,74,.35);border-radius:16px;padding:22px 16px;text-align:center;cursor:pointer;background:rgba(15,18,24,.5);display:flex;flex-direction:column;align-items:center;gap:6px;color:#9aa3b2}
+.admin-media-drop strong{color:#eee}
+.admin-media-drop.is-over{border-color:rgba(201,162,74,.7);background:rgba(201,162,74,.06)}
+.admin-media-drop.is-busy{pointer-events:none;opacity:.75}
+.admin-media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:4px}
+.admin-media-item{position:relative;aspect-ratio:4/3;border-radius:12px;overflow:hidden;background:#0a0c10}
+.admin-media-item img,.admin-media-item video{width:100%;height:100%;object-fit:cover}
+.admin-media-badge{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.55);border-radius:8px;padding:3px 6px;color:#fff;display:flex}
+.admin-media-remove{position:absolute;bottom:6px;left:6px;width:28px;height:28px;border:0;border-radius:8px;background:rgba(180,40,40,.85);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
 @media (max-width:960px){
   .admin-sidebar{display:none}
   .admin-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -107,5 +131,6 @@ export const ADMIN_CSS = `
 @media (max-width:520px){
   .admin-stats-grid{grid-template-columns:1fr 1fr;gap:10px}
   .admin-stat-card strong{font-size:1.3rem}
+  .admin-consultant-grid{grid-template-columns:1fr}
 }
 `;
