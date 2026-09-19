@@ -5,7 +5,14 @@ import { FAQ_JSON_LD } from "@/lib/site";
 import { enhancedOrganizationJsonLd, homeHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
-  loader: () => listPublishedProperties({ data: {} }),
+  loader: async () => {
+    try {
+      return await listPublishedProperties({ data: {} });
+    } catch (err) {
+      console.error("[home] properties loader failed (check DATABASE_URL)", err);
+      return [];
+    }
+  },
   component: Home,
   head: () => homeHead(),
 });
