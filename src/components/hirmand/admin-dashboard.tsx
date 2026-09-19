@@ -3,11 +3,8 @@ import {
   ArrowLeft,
   BarChart3,
   Building2,
-  Clock3,
-  Headphones,
   Phone,
   RefreshCw,
-  Star,
   UserRound,
   UsersRound,
 } from "lucide-react";
@@ -293,23 +290,7 @@ export function AdminDashboard({
         )}
       </section>
 
-      <section className="admin-dashboard-footer-cards">
-        <div className="admin-dashboard-footer-card">
-          <span><Headphones size={17} /> موسیقی سایت</span>
-          <strong>{data.music.active.toLocaleString("fa-IR")} فعال</strong>
-          <small>{data.music.total.toLocaleString("fa-IR")} ترک در کتابخانه</small>
-        </div>
-        <div className="admin-dashboard-footer-card">
-          <span><Star size={17} /> فایل‌های ویژه</span>
-          <strong>{data.properties.featured.toLocaleString("fa-IR")} فایل</strong>
-          <small>برای نمایش برجسته در سایت</small>
-        </div>
-        <div className="admin-dashboard-footer-card">
-          <span><Clock3 size={17} /> آخرین وضعیت</span>
-          <strong>{data.leads.today.toLocaleString("fa-IR")} لید امروز</strong>
-          <small>بر اساس زمان ثبت در دیتابیس</small>
-        </div>
-      </section>
+
     </div>
   );
 }
