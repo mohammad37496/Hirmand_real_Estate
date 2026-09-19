@@ -19,6 +19,7 @@ type MusicTrack = {
   title: string;
   artist?: string;
   src: string;
+  stream?: string;
   cover?: string;
 };
 
@@ -120,9 +121,11 @@ export function MusicPlayer() {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
 
-    const source = currentTrack.id
-      ? `/api/music/file/${encodeURIComponent(currentTrack.id)}`
-      : currentTrack.src;
+    const source = currentTrack.stream
+      ? currentTrack.stream
+      : currentTrack.id
+        ? `/api/music/file/${encodeURIComponent(currentTrack.id)}`
+        : currentTrack.src;
 
     audio.src = source;
     audio.load();
