@@ -77,7 +77,7 @@ function toSql(run: Run): Sql {
   ): Promise<T[]> => {
     // Rebuild with $1, $2, … placeholders so values stay parameterized.
     let text = strings[0];
-    for (let i = 0; i < values.length; i += 1) text += `$${i + 1}${strings[i + 1]}`;
+    for (let i = 0; i < values.length; i += 1) text += `$\${i + 1}\${strings[i + 1]}`;
     return run<T>(text, values);
   }) as unknown as Sql;
   sql.query = <T = Record<string, unknown>>(text: string, params: unknown[] = []) =>
@@ -93,7 +93,20 @@ function createNeonSql(): Promise<Sql> {
     types.setTypeParser(OID_INT8, Number);
     types.setTypeParser(OID_DATE, identity);
     types.setTypeParser(OID_INTERVAL, identity);
-    const pool = new Pool({ connectionString: databaseUrl });
+    // Neon serverless + Vercel: keep the pool small and aggressive about idle
+    // connections so we do not exhaust the plan's connection limit under
+    // concurrent cold starts.
+    const pool = new Pool({
+      connectionString: databaseUrl,
+      max: Number(process.env.DB_POOL_MAX ?? 5),
+      idleTimeoutMillis: Number(process.env.DB_POOL_IDLE_MS ?? 10_000),
+      connectionTimeoutMillis: Number(process.env.DB_POOL_CONNECT_MS ?? 8_000),
+      allowExitOnIdle: true,
+      application_name: "hirmand-real-estate",
+    });
+    pool.on("error", (err) => {
+      console.error("[db] idle client error", err.message);
+    });
     return toSql(async <T>(text: string, params: unknown[]) => {
       const res = await pool.query(text, params);
       return res.rows as T[];
