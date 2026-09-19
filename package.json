@@ -1,8 +1,27 @@
 {
-  "name": "app-builder-workspace",
+  "name": "hirmand-real-estate",
   "private": true,
   "sideEffects": false,
   "type": "module",
+  "version": "1.0.0",
+  "description": "وب‌سایت رسمی گروه مشاورین املاک هیرمند — اصفهان | خرید، فروش، رهن و اجاره",
+  "license": "MIT",
+  "author": "Hirmand Real Estate Consultants",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mohammad37496/Hirmand_real_Estate.git"
+  },
+  "homepage": "https://github.com/mohammad37496/Hirmand_real_Estate#readme",
+  "keywords": [
+    "real-estate",
+    "isfahan",
+    "rtl",
+    "persian",
+    "react",
+    "tanstack",
+    "vite",
+    "hirmand"
+  ],
   "overrides": {
     "nf3": "0.3.17"
   },

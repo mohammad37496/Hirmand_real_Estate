@@ -3,7 +3,7 @@ export const SITE = {
   shortName: "هیرمند",
   nameEn: "HIRMAND REAL ESTATE CONSULTANTS",
   title: "گروه مشاورین املاک هیرمند | اصفهان",
-  url: "https://1-gamma-azure-46.vercel.app",
+  url: (typeof import.meta !== "undefined" && import.meta.env?.VITE_SITE_URL) || "https://hirmand.ir",
   description:
     "گروه مشاورین املاک هیرمند با مدیریت آقای شیخ | خرید، فروش، رهن و اجاره ملک در اصفهان. مشاوره تخصصی، صداقت و تجربه در کنار شما.",
   sloganStrong: "خانه، فقط یک مکان نیست",
