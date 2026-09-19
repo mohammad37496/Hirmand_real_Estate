@@ -37,6 +37,10 @@ function formatTime(value: number) {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
+function isAutoplayBlocked(error: unknown) {
+  return error instanceof DOMException && error.name === "NotAllowedError";
+}
+
 export function MusicPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const resumeAfterLoadRef = useRef(false);
