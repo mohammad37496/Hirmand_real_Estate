@@ -163,17 +163,6 @@ export function AdminDashboard({
 
   return (
     <div className="admin-dashboard">
-      <div className="admin-dashboard-actions">
-        <button type="button" className="btn-ghost" onClick={() => void load()}>
-          <RefreshCw size={15} />
-          به‌روزرسانی
-        </button>
-        <button type="button" className="btn-gold" onClick={onOpenProperties}>
-          <Building2 size={15} />
-          مدیریت فایل‌ها
-        </button>
-      </div>
-
       <div className="admin-dashboard-stats">
         {stats.map(({ label, value, icon: Icon, tone }) => (
           <button key={label} type="button" className="admin-dashboard-stat" data-tone={tone} onClick={label.includes("درخواست") || label.includes("لید") ? onOpenLeads : onOpenProperties}>
