@@ -164,16 +164,6 @@ export const ADMIN_CSS = `
 .admin-lead-note{margin-top:8px;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.03);color:#c9c2b5;font-size:.8rem;line-height:1.8}
 .admin-lead-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .admin-lead-status-select{min-height:36px;border:1px solid rgba(244,239,230,.1);border-radius:10px;background:#0d1117;color:#f4efe6;padding:7px 10px;font:inherit;font-size:.78rem}
-.properties-filter-panel{display:grid;grid-template-columns:2fr repeat(3,1fr);gap:10px;margin-top:22px}
-.properties-filter-panel input,.properties-filter-panel select{min-height:46px;width:100%;border:1px solid rgba(244,239,230,.1);border-radius:12px;background:rgba(255,255,255,.03);color:#f4efe6;padding:10px 12px;font:inherit}
-.properties-result-meta{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:16px 0;color:#7d766c;font-size:.82rem}
-.properties-result-meta span{display:flex;align-items:center;gap:6px}
-.properties-result-meta a{color:#e0c47a;text-decoration:none}
-@media (max-width:960px){
-  .admin-lead-card{grid-template-columns:1fr}
-  .admin-lead-actions{justify-content:flex-start}
-  .properties-filter-panel{grid-template-columns:1fr}
-}
 
 @media (max-width:960px){
   .admin-sidebar{display:none}
@@ -207,7 +197,7 @@ export const ADMIN_CSS = `
 .admin-dashboard-stat small{display:block;color:#7d766c;font-size:.76rem;margin-bottom:4px}
 .admin-dashboard-stat strong{display:block;font-size:1.35rem}
 .admin-dashboard-stat>svg{color:#68635b}
-.admin-dashboard-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.admin-dashboard-grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);gap:16px}
 .admin-funnel{display:flex;flex-direction:column;gap:13px;padding:18px 20px 8px}
 .admin-funnel-label{display:flex;justify-content:space-between;gap:10px;color:#b7b0a4;font-size:.8rem;margin-bottom:6px}
 .admin-funnel-label strong{color:#f4efe6}
@@ -262,13 +252,14 @@ export const ADMIN_CSS = `
 .properties-reset-btn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:0;color:#9aa3b2;font:inherit;font-size:.78rem;cursor:pointer}
 .properties-reset-btn:hover{color:#e0c47a}
 .properties-empty-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.properties-load-more{display:flex;justify-content:center;margin-top:24px}
 @media (max-width:1100px){
   .admin-dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .properties-filter-panel{grid-template-columns:repeat(2,minmax(0,1fr))}
   .properties-filter-search{grid-column:1/-1}
 }
 @media (max-width:700px){
-  .admin-dashboard-grid,.admin-dashboard-footer-cards{grid-template-columns:1fr}
+  .admin-dashboard-grid{grid-template-columns:1fr}
   .admin-dashboard-stats{grid-template-columns:1fr 1fr}
   .admin-lead-chart{padding-inline:12px;gap:5px}
   .admin-lead-chart-bar-wrap{width:min(24px,70%)}
