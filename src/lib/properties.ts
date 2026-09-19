@@ -213,7 +213,7 @@ function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
     data.maxArea ?? null,
     data.minPrice ?? null,
     data.maxPrice ?? null,
-  ] as const;
+  ];
 }
 
 const PRICE_EXPR = "coalesce(price, deposit, rent)";
