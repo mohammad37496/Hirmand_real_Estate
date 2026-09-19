@@ -75,8 +75,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   TrackingRoute: typeof TrackingRoute
   AdminRoute: typeof AdminRoute
-  PropertySlugRoute: typeof PropertySlugRoute,
-  AreaSlugRoute: typeof AreaSlugRoute,
+  PropertySlugRoute: typeof PropertySlugRoute
+  AreaSlugRoute: typeof AreaSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -124,6 +124,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrackingRoute: TrackingRoute,
   AdminRoute: AdminRoute,
   PropertySlugRoute: PropertySlugRoute,
+  AreaSlugRoute: AreaSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
