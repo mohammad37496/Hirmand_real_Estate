@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   ChevronDown,
   ChevronUp,
@@ -339,7 +339,7 @@ export function MusicPlayer() {
             value={Math.min(currentTime, Math.max(duration, 0))}
             onChange={(event) => seek(Number(event.target.value))}
             aria-label="موقعیت آهنگ"
-            style={{ "--music-progress": `${progress}%` } as React.CSSProperties}
+            style={{ "--music-progress": `${progress}%` } as CSSProperties}
           />
           <span>{formatTime(duration)}</span>
         </div>
