@@ -1,3 +1,4 @@
+import { get as getBlob } from "@vercel/blob";
 import { createError, defineEventHandler, getRouterParam } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 
@@ -38,19 +39,50 @@ export default defineEventHandler(async (event) => {
   if (!row) throw createError({ statusCode: 404, statusMessage: "آهنگ پیدا نشد." });
   const target = normalizeBlobUrl(String(row.url));
   const range = event.req.headers.get("range");
-  const upstream = await fetch(target, {
-    headers: range ? { range } : undefined,
-    redirect: "follow",
-  });
-  if (!upstream.ok && upstream.status !== 206) {
-    throw createError({ statusCode: upstream.status >= 400 ? upstream.status : 502, statusMessage: "فایل موسیقی در فضای ذخیره‌سازی قابل دسترسی نیست." });
+
+  try {
+    const blob = await getBlob(target, {
+      access: "public",
+      headers: range ? { range } : undefined,
+    });
+
+    if (!blob) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: "فایل موسیقی پیدا نشد.",
+      });
+    }
+
+    const headers = new Headers();
+    headers.set(
+      "content-type",
+      String(row.mime_type || blob.blob.contentType || "audio/mpeg"),
+    );
+    headers.set("content-disposition", "inline");
+    headers.set("accept-ranges", blob.headers.get("accept-ranges") || "bytes");
+
+    for (const name of [
+      "content-length",
+      "content-range",
+      "etag",
+      "cache-control",
+      "last-modified",
+      "accept-ranges",
+    ]) {
+      const value = blob.headers.get(name);
+      if (value) headers.set(name, value);
+    }
+
+    return new Response(blob.stream, {
+      status: range ? 206 : 200,
+      headers,
+    });
+  } catch (error) {
+    console.error("[music-stream] blob read failed", error);
+    if (error && typeof error === "object" && "statusCode" in error) throw error;
+    throw createError({
+      statusCode: 502,
+      statusMessage: "فایل موسیقی از فضای ذخیره‌سازی قابل دریافت نیست.",
+    });
   }
-  const headers = new Headers();
-  headers.set("content-type", String(row.mime_type || upstream.headers.get("content-type") || "audio/mpeg"));
-  headers.set("accept-ranges", upstream.headers.get("accept-ranges") || "bytes");
-  for (const name of ["content-length", "content-range", "etag", "cache-control", "last-modified"]) {
-    const value = upstream.headers.get(name);
-    if (value) headers.set(name, value);
-  }
-  return new Response(upstream.body, { status: upstream.status, headers });
 });
