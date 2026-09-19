@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 type MusicTrack = {
+  id?: string;
   title: string;
   artist?: string;
   src: string;
@@ -38,7 +39,6 @@ function formatTime(value: number) {
 export function MusicPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const resumeAfterLoadRef = useRef(true);
-  const firstInteractionRef = useRef(false);
 
   const [manifest, setManifest] = useState<MusicManifest>({ tracks: [] });
   const [index, setIndex] = useState(0);
@@ -120,21 +120,23 @@ export function MusicPlayer() {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
 
-    audio.src = currentTrack.src;
+    const source = currentTrack.id
+      ? `/api/music/file/${encodeURIComponent(currentTrack.id)}`
+      : currentTrack.src;
+
+    audio.src = source;
     audio.load();
     setCurrentTime(0);
     setDuration(0);
     setLoadError(false);
+    setAutoplayBlocked(false);
 
     const shouldPlay = resumeAfterLoadRef.current;
-    if (!shouldPlay || manifest.autoplay === false) return;
+    if (!shouldPlay) return;
 
     const attemptPlay = () => {
       audio.play()
-        .then(() => {
-          setIsPlaying(true);
-          setAutoplayBlocked(false);
-        })
+        .then(() => setIsPlaying(true))
         .catch(() => {
           setIsPlaying(false);
           setAutoplayBlocked(true);
@@ -146,7 +148,7 @@ export function MusicPlayer() {
       audio.addEventListener("canplay", attemptPlay, { once: true });
       return () => audio.removeEventListener("canplay", attemptPlay);
     }
-  }, [currentTrack, manifest.autoplay]);
+  }, [currentTrack]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -173,47 +175,24 @@ export function MusicPlayer() {
     }
   }, [index, isExpanded, isMuted, repeat, shuffle, volume]);
 
-  useEffect(() => {
-    if (!tracks.length) return;
-
-    const unlock = () => {
-      if (firstInteractionRef.current || !autoplayBlocked) return;
-      firstInteractionRef.current = true;
-      const audio = audioRef.current;
-      if (!audio || !currentTrack) return;
-      audio.play()
-        .then(() => {
-          setIsPlaying(true);
-          setAutoplayBlocked(false);
-        })
-        .catch(() => undefined);
-    };
-
-    window.addEventListener("pointerdown", unlock, { passive: true });
-    window.addEventListener("keydown", unlock);
-    window.addEventListener("touchstart", unlock, { passive: true });
-
-    return () => {
-      window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("keydown", unlock);
-      window.removeEventListener("touchstart", unlock);
-    };
-  }, [autoplayBlocked, currentTrack, tracks.length]);
-
-  function playOrPause() {
+  async function playOrPause() {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
 
-    if (audio.paused) {
-      audio.play()
-        .then(() => {
-          setIsPlaying(true);
-          setAutoplayBlocked(false);
-        })
-        .catch(() => setAutoplayBlocked(true));
-    } else {
+    if (!audio.paused) {
       audio.pause();
       setIsPlaying(false);
+      return;
+    }
+
+    try {
+      await audio.play();
+      setIsPlaying(true);
+      setAutoplayBlocked(false);
+      setLoadError(false);
+    } catch {
+      setIsPlaying(false);
+      setAutoplayBlocked(true);
     }
   }
 
@@ -350,6 +329,12 @@ export function MusicPlayer() {
           />
           <span>{formatTime(duration)}</span>
         </div>
+
+        {loadError ? (
+          <div className="music-player-error" role="alert">
+            فایل موسیقی از سرور قابل دریافت نیست؛ دوباره روی «پخش» بزنید.
+          </div>
+        ) : null}
 
         {isExpanded ? (
           <div className="music-player-panel">
