@@ -61,7 +61,7 @@ export function Header() {
               <Link
                 key={item.id}
                 to="/properties"
-                search={{}}
+                search={{ q: "", transactionType: "", propertyType: "", neighborhood: "" }}
                 className={cn(pathname === "/properties" && "is-current")}
                 onClick={closeMenu}
               >
