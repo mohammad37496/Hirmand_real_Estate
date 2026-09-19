@@ -299,7 +299,7 @@ export function AdminPropertiesPage() {
           transactionType: form.transactionType,
           propertyType: form.propertyType,
           neighborhood: form.neighborhood.trim(),
-          address: form.address.trim() || null,
+          address: form.address.trim() || undefined,
           areaM2: numberOrNull(form.areaM2),
           bedrooms: numberOrNull(form.bedrooms),
           bathrooms: numberOrNull(form.bathrooms),
