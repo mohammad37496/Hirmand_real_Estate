@@ -2,10 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { listPublishedProperties } from "@/lib/properties";
-import { propertyHead } from "@/lib/seo";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
-import { PROPERTY_TYPES, NEIGHBORHOOD_NAMES, SERVICES } from "@/lib/site";
+import { PROPERTY_TYPES, NEIGHBORHOOD_NAMES, SERVICES, SITE } from "@/lib/site";
 
 const searchSchema = z.object({
   q: z.string().trim().max(80).catch(""),
@@ -31,7 +30,7 @@ export const Route = createFileRoute("/properties")({
       { title: "فایل‌های ملکی اصفهان | هیرمند" },
       { name: "description", content: "فایل‌های منتشرشده خرید، فروش، رهن و اجاره در اصفهان از گروه مشاورین املاک هیرمند." },
     ],
-    links: [{ rel: "canonical", href: "https://hirmand.ir/properties" }],
+    links: [{ rel: "canonical", href: `${SITE.url}/properties` }],
   }),
   component: PropertiesIndexPage,
 });
