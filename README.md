@@ -30,7 +30,7 @@
 
 - **Frontend:** React 19 · TanStack Router / Start · Vite 8 · TypeScript
 - **UI:** Tailwind CSS 4 · Lucide · Vazirmatn · Sonner
-- **Data:** PostgreSQL / Neon (اختیاری) · Kysely · PGlite (لوکال)
+- **Data:** PostgreSQL / Neon (اختیاری) · PGlite (لوکال)
 - **Deploy:** Nitro · Vercel
 
 ---
