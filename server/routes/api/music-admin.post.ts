@@ -5,6 +5,35 @@ type Action = "list" | "create" | "toggle" | "delete";
 type Body = { action?: Action; adminKey?: string; id?: string; active?: boolean; title?: string; artist?: string; url?: string; mimeType?: string; sizeBytes?: number };
 const ALLOWED_MUSIC_TYPES = new Set(["audio/mpeg","audio/mp3","audio/ogg","audio/wav","audio/x-wav","audio/mp4","audio/x-m4a","audio/aac"]);
 
+function normalizeBlobUrl(raw: string): string {
+  try {
+    const url = new URL(raw);
+    const delegation = url.searchParams.get("vercel-blob-delegation");
+    if (!delegation) {
+      if (url.hostname.endsWith(".public.blob.vercel-storage.com")) {
+        url.search = "";
+        url.hash = "";
+        return url.toString();
+      }
+      return raw;
+    }
+
+    const dot = delegation.indexOf(".");
+    if (dot <= 0) return raw;
+    const payload = JSON.parse(
+      Buffer.from(delegation.slice(0, dot), "base64url").toString("utf8"),
+    ) as { storeId?: unknown };
+    if (typeof payload.storeId !== "string" || !payload.storeId) return raw;
+
+    const storeId = payload.storeId.startsWith("store_")
+      ? payload.storeId.slice("store_".length)
+      : payload.storeId;
+    return `https://${storeId}.public.blob.vercel-storage.com${url.pathname}`;
+  } catch {
+    return raw;
+  }
+}
+
 function requireAdmin(adminKey: string | undefined) {
   const expected = process.env.HIRMAND_ADMIN_KEY?.trim();
   if (!expected || !adminKey || adminKey.trim() !== expected) {
@@ -27,7 +56,7 @@ export default defineEventHandler(async (event) => {
        from music_tracks order by position asc, created_at desc`,
     );
     return { tracks: rows.map((row) => ({
-      id: String(row.id), title: String(row.title), artist: String(row.artist ?? ""), url: String(row.url),
+      id: String(row.id), title: String(row.title), artist: String(row.artist ?? ""), url: normalizeBlobUrl(String(row.url)),
       mimeType: String(row.mime_type), sizeBytes: Number(row.size_bytes) || 0, active: Boolean(row.active),
       position: Number(row.position) || 0, createdAt: new Date(String(row.created_at)).toISOString(),
     })) };
