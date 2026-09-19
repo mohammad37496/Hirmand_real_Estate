@@ -59,17 +59,45 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const { put } = await import("@vercel/blob");
   const safeName = (filePart.filename || "media")
     .replace(/[^\w.\u0600-\u06FF-]+/g, "-")
     .slice(0, 80);
   const pathname = `properties/${Date.now()}-${safeName}`;
 
-  const blob = await put(pathname, filePart.data, {
-    access: "public",
-    contentType: type,
-    ...(token ? { token } : {}),
-  });
+  if (!token) {
+    throw createError({
+      statusCode: 503,
+      statusMessage: "توکن Vercel Blob در محیط استقرار تنظیم نشده است.",
+    });
+  }
+
+  const blobResponse = await fetch(
+    `https://blob.vercel-storage.com/${pathname}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "x-api-version": "7",
+        "content-type": type,
+        "x-content-type": type,
+      },
+      body: filePart.data,
+    },
+  );
+
+  if (!blobResponse.ok) {
+    const detail = await blobResponse.text().catch(() => "");
+    console.error("[upload] Vercel Blob upload failed", blobResponse.status, detail.slice(0, 300));
+    throw createError({
+      statusCode: 502,
+      statusMessage: "آپلود در فضای رسانه‌ای انجام نشد.",
+    });
+  }
+
+  const blob = (await blobResponse.json()) as { url?: string };
+  if (!blob.url) {
+    throw createError({ statusCode: 502, statusMessage: "پاسخ فضای رسانه‌ای معتبر نیست." });
+  }
 
   return {
     url: blob.url,
