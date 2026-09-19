@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+<!-- Fallback static sitemap. On Vercel/Nitro, /sitemap.xml is generated dynamically. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://hirmand.ir/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="fa-IR" href="https://hirmand.ir/" />
   </url>
   <url>
     <loc>https://hirmand.ir/tracking</loc>
