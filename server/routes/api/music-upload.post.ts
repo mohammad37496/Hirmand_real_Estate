@@ -1,4 +1,4 @@
-import { issueSignedToken, presignUrl } from "@vercel/blob";
+import { constructBlobUrl, issueSignedToken, presignUrl } from "@vercel/blob";
 import { createError, defineEventHandler, readBody } from "h3";
 
 const MAX_BYTES = 100 * 1024 * 1024;
@@ -65,8 +65,26 @@ export default defineEventHandler(async (event) => {
       access: "public",
     });
 
+    const delegation = new URL(presignedUrl).searchParams.get("vercel-blob-delegation");
+    if (!delegation) {
+      throw new Error("لینک امن آپلود شناسه فروشگاه Blob را ندارد.");
+    }
+    const dot = delegation.indexOf(".");
+    if (dot <= 0) throw new Error("توکن Blob نامعتبر است.");
+    const payload = JSON.parse(
+      Buffer.from(delegation.slice(0, dot), "base64url").toString("utf8"),
+    ) as { storeId?: unknown };
+    if (typeof payload.storeId !== "string" || !payload.storeId) {
+      throw new Error("شناسه فروشگاه Blob از توکن قابل استخراج نیست.");
+    }
+    const storeId = payload.storeId.startsWith("store_")
+      ? payload.storeId.slice("store_".length)
+      : payload.storeId;
+    const publicUrl = constructBlobUrl(storeId, pathname, "public");
+
     return {
       presignedUrl,
+      publicUrl,
       expiresAt: validUntil,
       title,
       artist,
