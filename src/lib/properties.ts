@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { getSql } from "@/lib/db";
+import { dbSource, getSql } from "@/lib/db";
 
 export type PropertyStatus = "draft" | "published" | "archived";
 export type PropertyTransaction = "buy" | "sell" | "rent" | "mortgage";
@@ -168,7 +168,6 @@ function mapProperty(row: Record<string, unknown>): Property {
   };
 }
 
-/** Columns needed for public cards / list views (keeps payload small). */
 const LIST_COLUMNS = `
   id, slug, status, featured, title, transaction_type, property_type, city,
   neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
@@ -187,9 +186,12 @@ const DETAIL_COLUMNS = `
 export const listPublishedProperties = createServerFn({ method: "GET" })
   .validator(publicFiltersSchema)
   .handler(async ({ data }) => {
+    if (dbSource === "unconfigured") return [];
     const sql = await getSql();
     const neighborhood = data.neighborhood?.trim() || null;
-    const exactNeighborhood = Boolean(neighborhood && neighborhood.length >= 2 && !neighborhood.includes("%"));
+    const exactNeighborhood = Boolean(
+      neighborhood && neighborhood.length >= 2 && !neighborhood.includes("%"),
+    );
 
     const rows = await sql.query<Record<string, unknown>>(
       `select ${LIST_COLUMNS}
@@ -219,6 +221,7 @@ export const listPublishedProperties = createServerFn({ method: "GET" })
 export const getPublishedProperty = createServerFn({ method: "GET" })
   .validator(z.object({ slug: z.string().min(1) }))
   .handler(async ({ data }) => {
+    if (dbSource === "unconfigured") return null;
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
       `select ${DETAIL_COLUMNS}
@@ -241,6 +244,7 @@ export const listAdminProperties = createServerFn({ method: "POST" })
   .validator(adminListSchema)
   .handler(async ({ data }) => {
     requireAdmin(data.adminKey);
+    if (dbSource === "unconfigured") return [];
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
       `select ${LIST_COLUMNS}
@@ -251,6 +255,28 @@ export const listAdminProperties = createServerFn({ method: "POST" })
       [data.status ?? null, data.limit, data.offset],
     );
     return rows.map(mapProperty);
+  });
+
+export const countAdminProperties = createServerFn({ method: "POST" })
+  .validator(adminKeySchema)
+  .handler(async ({ data }) => {
+    requireAdmin(data.adminKey);
+    if (dbSource === "unconfigured") {
+      return { total: 0, published: 0, draft: 0, archived: 0 };
+    }
+    const sql = await getSql();
+    const rows = await sql.query<{ status: string; n: number }>(
+      `select status, count(*)::int as n from properties group by status`,
+    );
+    const out = { total: 0, published: 0, draft: 0, archived: 0 };
+    for (const row of rows) {
+      const n = Number(row.n) || 0;
+      out.total += n;
+      if (row.status === "published") out.published = n;
+      else if (row.status === "draft") out.draft = n;
+      else if (row.status === "archived") out.archived = n;
+    }
+    return out;
   });
 
 export const saveProperty = createServerFn({ method: "POST" })
