@@ -65,6 +65,34 @@ function normalizeBounds(a: string, b: string) {
   return [second, first] as const;
 }
 
+function buildFilterData(
+  q: string,
+  transactionType: PropertyTransaction | "",
+  propertyType: PropertyType | "",
+  neighborhood: string,
+  minArea: string,
+  maxArea: string,
+  minPrice: string,
+  maxPrice: string,
+  sort: PropertySort,
+  offset: number,
+) {
+  const [nextMinArea, nextMaxArea] = normalizeBounds(minArea, maxArea);
+  const [nextMinPrice, nextMaxPrice] = normalizeBounds(minPrice, maxPrice);
+  return {
+    search: q.trim() || undefined,
+    transactionType: transactionType || undefined,
+    propertyType: propertyType || undefined,
+    neighborhood: neighborhood || undefined,
+    minArea: nextMinArea,
+    maxArea: nextMaxArea,
+    minPrice: nextMinPrice,
+    maxPrice: nextMaxPrice,
+    sort,
+    offset,
+  };
+}
+
 function PropertiesIndexPage() {
   const initial = Route.useLoaderData();
   const [properties, setProperties] = useState(initial.properties);
@@ -83,6 +111,7 @@ function PropertiesIndexPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [urlReady, setUrlReady] = useState(false);
   const skipInitialFetch = useRef(false);
+  const requestId = useRef(0);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -127,23 +156,6 @@ function PropertiesIndexPage() {
     window.history.replaceState({}, "", query ? `/properties?${query}` : "/properties");
   }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, sort]);
 
-  function buildFilterData(nextOffset: number) {
-    const [nextMinArea, nextMaxArea] = normalizeBounds(minArea, maxArea);
-    const [nextMinPrice, nextMaxPrice] = normalizeBounds(minPrice, maxPrice);
-    return {
-      search: q.trim() || undefined,
-      transactionType: transactionType || undefined,
-      propertyType: propertyType || undefined,
-      neighborhood: neighborhood || undefined,
-      minArea: nextMinArea,
-      maxArea: nextMaxArea,
-      minPrice: nextMinPrice,
-      maxPrice: nextMaxPrice,
-      sort,
-      offset: nextOffset,
-    };
-  }
-
   useEffect(() => {
     if (!urlReady || skipInitialFetch.current) {
       if (urlReady) skipInitialFetch.current = false;
@@ -151,20 +163,33 @@ function PropertiesIndexPage() {
     }
 
     const timer = window.setTimeout(async () => {
+      const currentRequest = ++requestId.current;
       setLoading(true);
       setOffset(0);
       try {
-        const data = buildFilterData(0);
+        const data = buildFilterData(
+          q,
+          transactionType,
+          propertyType,
+          neighborhood,
+          minArea,
+          maxArea,
+          minPrice,
+          maxPrice,
+          sort,
+          0,
+        );
         const [rows, count] = await Promise.all([
           listPublishedProperties({ data }),
           countPublishedProperties({ data }),
         ]);
+        if (requestId.current !== currentRequest) return;
         setProperties(rows);
         setTotal(count);
       } catch {
         // Keep the last successful result visible.
       } finally {
-        setLoading(false);
+        if (requestId.current === currentRequest) setLoading(false);
       }
     }, 250);
 
@@ -176,7 +201,20 @@ function PropertiesIndexPage() {
     const nextOffset = offset + PAGE_SIZE;
     setLoadingMore(true);
     try {
-      const rows = await listPublishedProperties({ data: buildFilterData(nextOffset) });
+      const rows = await listPublishedProperties({
+        data: buildFilterData(
+          q,
+          transactionType,
+          propertyType,
+          neighborhood,
+          minArea,
+          maxArea,
+          minPrice,
+          maxPrice,
+          sort,
+          nextOffset,
+        ),
+      });
       setProperties((current) => [...current, ...rows]);
       setOffset(nextOffset);
     } catch {
