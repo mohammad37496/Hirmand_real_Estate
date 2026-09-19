@@ -5,17 +5,33 @@ function normalizeBlobUrl(raw: string): string {
   try {
     const url = new URL(raw);
     const delegation = url.searchParams.get("vercel-blob-delegation");
-    if (!delegation) return raw;
+
+    if (!delegation) {
+      if (
+        url.hostname.endsWith(".public.blob.vercel-storage.com") ||
+        url.hostname.endsWith(".private.blob.vercel-storage.com")
+      ) {
+        url.search = "";
+        url.hash = "";
+        return url.toString();
+      }
+      return raw;
+    }
+
     const dot = delegation.indexOf(".");
     if (dot <= 0) return raw;
+
     const payload = JSON.parse(
       Buffer.from(delegation.slice(0, dot), "base64url").toString("utf8"),
     ) as { storeId?: unknown };
+
     if (typeof payload.storeId !== "string" || !payload.storeId) return raw;
+
     const storeId = payload.storeId.startsWith("store_")
       ? payload.storeId.slice("store_".length)
       : payload.storeId;
-    return "https://" + storeId + ".public.blob.vercel-storage.com" + url.pathname;
+
+    return `https://${storeId}.public.blob.vercel-storage.com${url.pathname}`;
   } catch {
     return raw;
   }
