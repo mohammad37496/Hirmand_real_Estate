@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Building2,
@@ -173,10 +173,6 @@ export function AdminPropertiesPage() {
   const [listFilter, setListFilter] = useState<"all" | PublishStatus | "featured">("all");
   const [query, setQuery] = useState("");
   const [form, setForm] = useState<FormState>(emptyForm());
-
-  useEffect(() => {
-    // Admin keys are intentionally not persisted in browser storage.
-  }, []);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
