@@ -12,8 +12,21 @@ import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { PROPERTY_TYPES, NEIGHBORHOOD_NAMES, SERVICES, SITE } from "@/lib/site";
 
+const PAGE_SIZE = 48;
+
 export const Route = createFileRoute("/properties")({
-  loader: () => listPublishedProperties({ data: {} }),
+  loader: async () => {
+    try {
+      const [properties, total] = await Promise.all([
+        listPublishedProperties({ data: {} }),
+        countPublishedProperties({ data: {} }),
+      ]);
+      return { properties, total };
+    } catch (error) {
+      console.error("[properties] loader failed", error);
+      return { properties: [], total: 0 };
+    }
+  },
   head: () => ({
     meta: [
       { title: "فایل‌های ملکی اصفهان | هیرمند" },
@@ -29,60 +42,77 @@ function toEnglishDigits(raw: string) {
 }
 
 function parseNumber(raw: string) {
-  const value = Number(toEnglishDigits(raw).replace(/[^\d.-]/g, ""));
+  const cleaned = toEnglishDigits(raw).replace(/[^\d.-]/g, "");
+  if (!cleaned) return undefined;
+  const value = Number(cleaned);
   return Number.isFinite(value) && value >= 0 ? value : undefined;
 }
 
+function validTransaction(value: string): PropertyTransaction | undefined {
+  return value === "buy" || value === "sell" || value === "rent" || value === "mortgage" ? value : undefined;
+}
+
+function validPropertyType(value: string): PropertyType | undefined {
+  return value === "apartment" || value === "villa" || value === "office" || value === "heritage" || value === "land" || value === "commercial"
+    ? value
+    : undefined;
+}
+
+function normalizeBounds(a: string, b: string) {
+  const first = parseNumber(a);
+  const second = parseNumber(b);
+  if (first == null || second == null || first <= second) return [first, second] as const;
+  return [second, first] as const;
+}
+
 function PropertiesIndexPage() {
-  const initialProperties = Route.useLoaderData();
-  const [properties, setProperties] = useState(initialProperties);
-  const [total, setTotal] = useState(initialProperties.length);
+  const initial = Route.useLoaderData();
+  const [properties, setProperties] = useState(initial.properties);
+  const [total, setTotal] = useState(initial.total);
   const [q, setQ] = useState("");
-  const [transactionType, setTransactionType] = useState("");
-  const [propertyType, setPropertyType] = useState("");
+  const [transactionType, setTransactionType] = useState<PropertyTransaction | "">("");
+  const [propertyType, setPropertyType] = useState<PropertyType | "">("");
   const [neighborhood, setNeighborhood] = useState("");
   const [minArea, setMinArea] = useState("");
   const [maxArea, setMaxArea] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sort, setSort] = useState<PropertySort>("newest");
+  const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [urlReady, setUrlReady] = useState(false);
-  const initialized = useRef(false);
+  const skipInitialFetch = useRef(false);
 
   useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
     const params = new URLSearchParams(window.location.search);
+    const tx = validTransaction(params.get("transaction") ?? "");
+    const type = validPropertyType(params.get("type") ?? "");
+    const sortParam = params.get("sort");
+    const validSort =
+      sortParam === "price_asc" ||
+      sortParam === "price_desc" ||
+      sortParam === "area_asc" ||
+      sortParam === "area_desc"
+        ? sortParam
+        : "newest";
+
     setQ(params.get("q") ?? "");
-    const transactionParam = params.get("transaction");
-    const propertyTypeParam = params.get("type");
-    setTransactionType(
-      transactionParam === "buy" || transactionParam === "sell" || transactionParam === "rent" || transactionParam === "mortgage"
-        ? transactionParam
-        : "",
-    );
-    setPropertyType(
-      propertyTypeParam === "apartment" ||
-      propertyTypeParam === "villa" ||
-      propertyTypeParam === "office" ||
-      propertyTypeParam === "heritage" ||
-      propertyTypeParam === "land" ||
-      propertyTypeParam === "commercial"
-        ? propertyTypeParam
-        : "",
-    );
+    setTransactionType(tx ?? "");
+    setPropertyType(type ?? "");
     setNeighborhood(params.get("neighborhood") ?? "");
     setMinArea(params.get("minArea") ?? "");
     setMaxArea(params.get("maxArea") ?? "");
     setMinPrice(params.get("minPrice") ?? "");
     setMaxPrice(params.get("maxPrice") ?? "");
-    setSort((params.get("sort") as PropertySort) || "newest");
+    setSort(validSort);
+    skipInitialFetch.current = Array.from(params.keys()).length === 0;
     setUrlReady(true);
   }, []);
 
   useEffect(() => {
     if (!urlReady) return;
+
     const params = new URLSearchParams();
     if (q.trim()) params.set("q", q.trim());
     if (transactionType) params.set("transaction", transactionType);
@@ -97,21 +127,34 @@ function PropertiesIndexPage() {
     window.history.replaceState({}, "", query ? `/properties?${query}` : "/properties");
   }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, sort]);
 
+  function buildFilterData(nextOffset: number) {
+    const [nextMinArea, nextMaxArea] = normalizeBounds(minArea, maxArea);
+    const [nextMinPrice, nextMaxPrice] = normalizeBounds(minPrice, maxPrice);
+    return {
+      search: q.trim() || undefined,
+      transactionType: transactionType || undefined,
+      propertyType: propertyType || undefined,
+      neighborhood: neighborhood || undefined,
+      minArea: nextMinArea,
+      maxArea: nextMaxArea,
+      minPrice: nextMinPrice,
+      maxPrice: nextMaxPrice,
+      sort,
+      offset: nextOffset,
+    };
+  }
+
   useEffect(() => {
+    if (!urlReady || skipInitialFetch.current) {
+      if (urlReady) skipInitialFetch.current = false;
+      return;
+    }
+
     const timer = window.setTimeout(async () => {
       setLoading(true);
+      setOffset(0);
       try {
-        const data = {
-          search: q.trim() || undefined,
-          transactionType: (transactionType || undefined) as PropertyTransaction | undefined,
-          propertyType: (propertyType || undefined) as PropertyType | undefined,
-          neighborhood: neighborhood || undefined,
-          minArea: parseNumber(minArea),
-          maxArea: parseNumber(maxArea),
-          minPrice: parseNumber(minPrice),
-          maxPrice: parseNumber(maxPrice),
-          sort,
-        } as const;
+        const data = buildFilterData(0);
         const [rows, count] = await Promise.all([
           listPublishedProperties({ data }),
           countPublishedProperties({ data }),
@@ -119,26 +162,29 @@ function PropertiesIndexPage() {
         setProperties(rows);
         setTotal(count);
       } catch {
-        // Keep the last successful result visible; the page should remain usable during a transient request failure.
+        // Keep the last successful result visible.
       } finally {
         setLoading(false);
       }
     }, 250);
 
     return () => window.clearTimeout(timer);
-  }, [q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, sort]);
+  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, sort]);
 
-  const hasFilters = Boolean(
-    q.trim() ||
-    transactionType ||
-    propertyType ||
-    neighborhood ||
-    minArea.trim() ||
-    maxArea.trim() ||
-    minPrice.trim() ||
-    maxPrice.trim() ||
-    sort !== "newest",
-  );
+  async function loadMore() {
+    if (loading || loadingMore || properties.length >= total) return;
+    const nextOffset = offset + PAGE_SIZE;
+    setLoadingMore(true);
+    try {
+      const rows = await listPublishedProperties({ data: buildFilterData(nextOffset) });
+      setProperties((current) => [...current, ...rows]);
+      setOffset(nextOffset);
+    } catch {
+      // Keep current page visible.
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   function resetFilters() {
     setQ("");
@@ -150,7 +196,20 @@ function PropertiesIndexPage() {
     setMinPrice("");
     setMaxPrice("");
     setSort("newest");
+    setOffset(0);
   }
+
+  const hasFilters = Boolean(
+    q.trim() ||
+    transactionType ||
+    propertyType ||
+    neighborhood ||
+    minArea.trim() ||
+    maxArea.trim() ||
+    minPrice.trim() ||
+    maxPrice.trim() ||
+    sort !== "newest"
+  );
 
   return (
     <SiteChrome>
@@ -160,7 +219,7 @@ function PropertiesIndexPage() {
             <div>
               <span className="kicker">فایل‌های هیرمند</span>
               <h1>فایل‌های ملکی اصفهان</h1>
-              <p>جست‌وجوی سریع بین فایل‌های فعال؛ بر اساس نوع معامله، نوع ملک، محله، متراژ و بازه قیمت.</p>
+              <p>جست‌وجوی سریع بین فایل‌های فعال؛ بر اساس معامله، نوع ملک، محله، متراژ و بازه قیمت.</p>
             </div>
             {loading ? <span className="properties-loading-pill">در حال جست‌وجو…</span> : null}
           </div>
@@ -168,33 +227,29 @@ function PropertiesIndexPage() {
           <div className="properties-filter-panel">
             <label className="properties-filter-search">
               <Search size={17} />
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="عنوان، محله یا آدرس…" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="عنوان، محله یا آدرس…" aria-label="جستجوی فایل" />
             </label>
-
-            <select value={transactionType} onChange={(e) => setTransactionType(e.target.value)} aria-label="نوع معامله">
+            <select value={transactionType} onChange={(e) => setTransactionType(validTransaction(e.target.value) ?? "")} aria-label="نوع معامله">
               <option value="">همه معاملات</option>
               {SERVICES.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
             </select>
-
-            <select value={propertyType} onChange={(e) => setPropertyType(e.target.value)} aria-label="نوع ملک">
+            <select value={propertyType} onChange={(e) => setPropertyType(validPropertyType(e.target.value) ?? "")} aria-label="نوع ملک">
               <option value="">همه انواع ملک</option>
               {PROPERTY_TYPES.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
               <option value="land">زمین</option>
               <option value="commercial">تجاری</option>
             </select>
-
             <select value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} aria-label="محله">
               <option value="">همه محله‌ها</option>
               {NEIGHBORHOOD_NAMES.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
-
             <label className="properties-range-field">
               <span>حداقل متراژ</span>
-              <input inputMode="numeric" value={minArea} onChange={(e) => setMinArea(e.target.value)} placeholder="مثلاً ۸۰" />
+              <input inputMode="numeric" value={minArea} onChange={(e) => setMinArea(e.target.value)} placeholder="۸۰" />
             </label>
             <label className="properties-range-field">
               <span>حداکثر متراژ</span>
-              <input inputMode="numeric" value={maxArea} onChange={(e) => setMaxArea(e.target.value)} placeholder="مثلاً ۲۵۰" />
+              <input inputMode="numeric" value={maxArea} onChange={(e) => setMaxArea(e.target.value)} placeholder="۲۵۰" />
             </label>
             <label className="properties-range-field">
               <span>حداقل قیمت</span>
@@ -204,7 +259,6 @@ function PropertiesIndexPage() {
               <span>حداکثر قیمت</span>
               <input inputMode="numeric" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="تومان" />
             </label>
-
             <label className="properties-sort-field">
               <span>مرتب‌سازی</span>
               <select value={sort} onChange={(e) => setSort(e.target.value as PropertySort)}>
@@ -218,28 +272,33 @@ function PropertiesIndexPage() {
           </div>
 
           <div className="properties-result-meta">
-            <span><SlidersHorizontal size={15} /> {total.toLocaleString("fa-IR")} فایل{total > properties.length ? " · نمایش ۴۸ فایل اول" : ""}</span>
+            <span><SlidersHorizontal size={15} /> نمایش {properties.length.toLocaleString("fa-IR")} از {total.toLocaleString("fa-IR")} فایل</span>
             <div className="properties-result-actions">
-              {hasFilters ? (
-                <button type="button" className="properties-reset-btn" onClick={resetFilters}>
-                  <RotateCcw size={14} /> پاک‌کردن فیلترها
-                </button>
-              ) : null}
+              {hasFilters ? <button type="button" className="properties-reset-btn" onClick={resetFilters}><RotateCcw size={14} /> پاک‌کردن فیلترها</button> : null}
               <a href="/#inquiry">درخواست فایل اختصاصی</a>
             </div>
           </div>
 
           {properties.length ? (
-            <div className="property-grid">
-              {properties.map((property) => <PropertyCard key={property.id} property={property} />)}
-            </div>
+            <>
+              <div className="property-grid">
+                {properties.map((property) => <PropertyCard key={property.id} property={property} />)}
+              </div>
+              {properties.length < total ? (
+                <div className="properties-load-more">
+                  <button type="button" className="btn-ghost" onClick={() => void loadMore()} disabled={loadingMore}>
+                    {loadingMore ? "در حال بارگذاری…" : `نمایش ${Math.min(PAGE_SIZE, total - properties.length).toLocaleString("fa-IR")} فایل بیشتر`}
+                  </button>
+                </div>
+              ) : null}
+            </>
           ) : (
             <div className="property-empty">
               <Search size={25} />
               <strong>فایلی با این معیارها پیدا نشد.</strong>
               <p>بازه قیمت یا متراژ را بازتر کنید یا درخواست اختصاصی ثبت کنید تا مشاوران گزینه مناسب را پیدا کنند.</p>
               <div className="properties-empty-actions">
-                <button type="button" className="btn-ghost" onClick={resetFilters}><X size={15} /> پاک‌کردن فیلترها</button>
+                {hasFilters ? <button type="button" className="btn-ghost" onClick={resetFilters}><X size={15} /> پاک‌کردن فیلترها</button> : null}
                 <a href="/#inquiry" className="btn-gold">ثبت درخواست</a>
               </div>
             </div>
