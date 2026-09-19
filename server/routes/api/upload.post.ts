@@ -32,8 +32,9 @@ export default defineEventHandler(async (event) => {
 
   const adminKey = parts
     .find((p) => p.name === "adminKey")
-    ?.data?.toString("utf8")
-    ?.trim();
+    ?.data
+    ? Buffer.from(parts.find((p) => p.name === "adminKey")?.data ?? []).toString("utf8").trim()
+    : undefined;
   const expected = process.env.HIRMAND_ADMIN_KEY?.trim();
   if (!expected || !adminKey || adminKey !== expected) {
     throw createError({ statusCode: 401, statusMessage: "کلید مدیریت نادرست است." });
@@ -81,7 +82,7 @@ export default defineEventHandler(async (event) => {
         "content-type": type,
         "x-content-type": type,
       },
-      body: filePart.data,
+      body: Buffer.from(filePart.data),
     },
   );
 
