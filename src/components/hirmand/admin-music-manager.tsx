@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Loader2, Music2, Pause, Play, Trash2, Upload, Volume2, VolumeX } from "lucide-react";
-import { upload } from "@vercel/blob/client";
 import { toast } from "sonner";
 
 type AdminMusicTrack = { id: string; title: string; artist: string; url: string; mimeType: string; sizeBytes: number; active: boolean; position: number; createdAt: string };
@@ -64,18 +63,51 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
       setUploadProgress(0);
       const safeName = file.name.replace(/[^\\w.\\u0600-\\u06FF-]+/g, "-").slice(0, 100);
       const pathname = "music/" + Date.now() + "-" + safeName;
-      const blob = await upload(pathname, file, {
-        access: "public",
-        handleUploadUrl: "/api/music-upload",
-        clientPayload: JSON.stringify({
+
+      const tokenResponse = await fetch("/api/music-upload", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
           adminKey,
+          pathname,
           title: title.trim(),
           artist: artist.trim(),
+          contentType: file.type || "audio/mpeg",
+          sizeBytes: file.size,
         }),
-        contentType: file.type || "audio/mpeg",
-        multipart: true,
-        onUploadProgress: ({ percentage }) => setUploadProgress(Math.round(percentage)),
       });
+
+      const tokenData = (await tokenResponse.json().catch(() => null)) as
+        | { presignedUrl?: string; statusMessage?: string; message?: string }
+        | null;
+
+      if (!tokenResponse.ok || !tokenData?.presignedUrl) {
+        throw new Error(
+          tokenData?.statusMessage ||
+            tokenData?.message ||
+            "ساخت لینک امن آپلود انجام نشد.",
+        );
+      }
+
+      const xhr = new XMLHttpRequest();
+      const uploadPromise = new Promise<void>((resolve, reject) => {
+        xhr.open("PUT", tokenData.presignedUrl!, true);
+        xhr.setRequestHeader("content-type", file.type || "audio/mpeg");
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            setUploadProgress(Math.round((event.loaded / event.total) * 100));
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error("آپلود فایل در Vercel Blob ناموفق بود."));
+        };
+        xhr.onerror = () => reject(new Error("ارتباط با فضای ذخیره‌سازی قطع شد."));
+        xhr.onabort = () => reject(new Error("آپلود لغو شد."));
+      });
+      xhr.send(file);
+      await uploadPromise;
+      setUploadProgress(100);
 
       const response = await fetch("/api/music-admin", {
         method: "POST",
@@ -85,7 +117,7 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
           adminKey,
           title: title.trim(),
           artist: artist.trim(),
-          url: blob.url,
+          url: new URL(tokenData.presignedUrl).origin + new URL(tokenData.presignedUrl).pathname,
           mimeType: file.type || "audio/mpeg",
           sizeBytes: file.size,
         }),
@@ -95,7 +127,11 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
         | null;
 
       if (!response.ok || !data?.track) {
-        throw new Error(data?.statusMessage || data?.message || "ثبت آهنگ در کتابخانه انجام نشد.");
+        throw new Error(
+          data?.statusMessage ||
+            data?.message ||
+            "ثبت آهنگ در کتابخانه انجام نشد.",
+        );
       }
 
       setTracks((prev) => [...prev, data.track!]);
