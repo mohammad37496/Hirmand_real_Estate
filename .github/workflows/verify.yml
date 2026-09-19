@@ -9,6 +9,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: hirmand-verify-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -30,7 +34,9 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add package-lock.json
             git commit -m "chore(ci): sync package lockfile"
-            git push
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
             echo "updated=true" >> "$GITHUB_OUTPUT"
           fi
       - run: npm ci
