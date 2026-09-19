@@ -78,10 +78,10 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
       });
 
       const tokenData = (await tokenResponse.json().catch(() => null)) as
-        | { presignedUrl?: string; statusMessage?: string; message?: string }
+        | { presignedUrl?: string; publicUrl?: string; statusMessage?: string; message?: string }
         | null;
 
-      if (!tokenResponse.ok || !tokenData?.presignedUrl) {
+      if (!tokenResponse.ok || !tokenData?.presignedUrl || !tokenData?.publicUrl) {
         throw new Error(
           tokenData?.statusMessage ||
             tokenData?.message ||
@@ -101,16 +101,6 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
         };
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const result = JSON.parse(xhr.responseText) as { url?: string; downloadUrl?: string };
-              uploadedUrl = result.url || result.downloadUrl || "";
-            } catch {
-              uploadedUrl = "";
-            }
-            if (!uploadedUrl) {
-              reject(new Error("آپلود انجام شد اما آدرس نهایی Blob دریافت نشد."));
-              return;
-            }
             resolve();
           } else {
             reject(new Error("آپلود فایل در Vercel Blob ناموفق بود."));
@@ -131,7 +121,7 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
           adminKey,
           title: title.trim(),
           artist: artist.trim(),
-          url: uploadedUrl,
+          url: tokenData.publicUrl || uploadedUrl,
           mimeType: file.type || "audio/mpeg",
           sizeBytes: file.size,
         }),
