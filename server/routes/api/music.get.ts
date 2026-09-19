@@ -8,13 +8,21 @@ function normalizeBlobUrl(raw: string): string {
 
     if (!delegation) {
       if (
-        url.hostname.endsWith(".public.blob.vercel-storage.com") ||
+        url.hostname === "blob.vercel-storage.com" ||
         url.hostname.endsWith(".private.blob.vercel-storage.com")
       ) {
+        const storeId = getConfiguredBlobStoreId();
+        if (storeId) {
+          return `https://${storeId}.public.blob.vercel-storage.com${url.pathname}`;
+        }
+      }
+
+      if (url.hostname.endsWith(".public.blob.vercel-storage.com")) {
         url.search = "";
         url.hash = "";
         return url.toString();
       }
+
       return raw;
     }
 
