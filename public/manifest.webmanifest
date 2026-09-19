@@ -1,0 +1,26 @@
+{
+  "name": "گروه مشاورین املاک هیرمند",
+  "short_name": "هیرمند",
+  "description": "خرید، فروش، رهن و اجاره ملک در اصفهان",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07090d",
+  "theme_color": "#07090d",
+  "lang": "fa",
+  "dir": "rtl",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/images/hirmand-logo-square.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/__grok/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
