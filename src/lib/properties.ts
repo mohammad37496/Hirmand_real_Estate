@@ -168,29 +168,49 @@ function mapProperty(row: Record<string, unknown>): Property {
   };
 }
 
+/** Columns needed for public cards / list views (keeps payload small). */
+const LIST_COLUMNS = `
+  id, slug, status, featured, title, transaction_type, property_type, city,
+  neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
+  built_year, parking, elevator, storage, price, deposit, rent,
+  features, images, contact_name, contact_phone, published_at, created_at, updated_at,
+  left(description, 280) as description
+`;
+
+const DETAIL_COLUMNS = `
+  id, slug, status, featured, title, transaction_type, property_type, city,
+  neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
+  built_year, parking, elevator, storage, price, deposit, rent, description,
+  features, images, contact_name, contact_phone, published_at, created_at, updated_at
+`;
+
 export const listPublishedProperties = createServerFn({ method: "GET" })
   .validator(publicFiltersSchema)
   .handler(async ({ data }) => {
     const sql = await getSql();
+    const neighborhood = data.neighborhood?.trim() || null;
+    const exactNeighborhood = Boolean(neighborhood && neighborhood.length >= 2 && !neighborhood.includes("%"));
+
     const rows = await sql.query<Record<string, unknown>>(
-      `select
-        id, slug, status, featured, title, transaction_type, property_type, city,
-        neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
-        built_year, parking, elevator, storage, price, deposit, rent, description,
-        features, images, contact_name, contact_phone, published_at, created_at, updated_at
+      `select ${LIST_COLUMNS}
       from properties
       where status = 'published'
         and ($1::text is null or transaction_type = $1)
         and ($2::text is null or property_type = $2)
-        and ($3::text is null or neighborhood ilike '%' || $3 || '%')
+        and (
+          $3::text is null
+          or ($5::boolean is true and neighborhood = $3)
+          or ($5::boolean is false and neighborhood ilike '%' || $3 || '%')
+        )
         and ($4::boolean is false or featured = true)
       order by featured desc, published_at desc nulls last, created_at desc
       limit 48`,
       [
         data.transactionType ?? null,
         data.propertyType ?? null,
-        data.neighborhood?.trim() || null,
+        neighborhood,
         data.featuredOnly ?? false,
+        exactNeighborhood,
       ],
     );
     return rows.map(mapProperty);
@@ -201,11 +221,7 @@ export const getPublishedProperty = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
-      `select
-        id, slug, status, featured, title, transaction_type, property_type, city,
-        neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
-        built_year, parking, elevator, storage, price, deposit, rent, description,
-        features, images, contact_name, contact_phone, published_at, created_at, updated_at
+      `select ${DETAIL_COLUMNS}
       from properties
       where slug = $1 and status = 'published'
       limit 1`,
@@ -214,20 +230,25 @@ export const getPublishedProperty = createServerFn({ method: "GET" })
     return rows[0] ? mapProperty(rows[0]) : null;
   });
 
+const adminListSchema = z.object({
+  adminKey: z.string().min(1),
+  limit: z.number().int().min(1).max(200).optional().default(50),
+  offset: z.number().int().min(0).max(10000).optional().default(0),
+  status: z.enum(["draft", "published", "archived"]).optional(),
+});
+
 export const listAdminProperties = createServerFn({ method: "POST" })
-  .validator(adminKeySchema)
+  .validator(adminListSchema)
   .handler(async ({ data }) => {
     requireAdmin(data.adminKey);
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
-      `select
-        id, slug, status, featured, title, transaction_type, property_type, city,
-        neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
-        built_year, parking, elevator, storage, price, deposit, rent, description,
-        features, images, contact_name, contact_phone, published_at, created_at, updated_at
+      `select ${LIST_COLUMNS}
       from properties
+      where ($1::text is null or status = $1)
       order by created_at desc
-      limit 100`,
+      limit $2 offset $3`,
+      [data.status ?? null, data.limit, data.offset],
     );
     return rows.map(mapProperty);
   });
@@ -280,7 +301,11 @@ export const saveProperty = createServerFn({ method: "POST" })
         images = excluded.images,
         contact_name = excluded.contact_name,
         contact_phone = excluded.contact_phone,
-        published_at = excluded.published_at,
+        published_at = case
+          when excluded.status = 'published' and properties.published_at is null then excluded.published_at
+          when excluded.status <> 'published' then null
+          else properties.published_at
+        end,
         updated_at = current_timestamp`,
       [
         id,
@@ -314,7 +339,7 @@ export const saveProperty = createServerFn({ method: "POST" })
     );
 
     const rows = await sql.query<Record<string, unknown>>(
-      "select * from properties where id = $1 limit 1",
+      `select ${DETAIL_COLUMNS} from properties where id = $1 limit 1`,
       [id],
     );
     if (!rows[0]) throw new Error("فایل ثبت نشد.");
