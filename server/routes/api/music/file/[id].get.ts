@@ -1,4 +1,3 @@
-import { get as getBlob } from "@vercel/blob";
 import { createError, defineEventHandler, getRouterParam } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 
@@ -12,11 +11,13 @@ function normalizeBlobUrl(raw: string): string {
         const payload = JSON.parse(
           Buffer.from(delegation.slice(0, dot), "base64url").toString("utf8"),
         ) as { storeId?: unknown };
+
         if (typeof payload.storeId === "string" && payload.storeId) {
           const storeId = payload.storeId.startsWith("store_")
             ? payload.storeId.slice("store_".length)
             : payload.storeId;
-          return "https://" + storeId + ".public.blob.vercel-storage.com" + parsed.pathname;
+
+          return `https://${storeId}.public.blob.vercel-storage.com${parsed.pathname}`;
         }
       }
     }
@@ -28,62 +29,63 @@ function normalizeBlobUrl(raw: string): string {
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id")?.trim();
-  if (!id) throw createError({ statusCode: 400, statusMessage: "شناسه آهنگ نامعتبر است." });
-  if (dbSource === "unconfigured") throw createError({ statusCode: 404, statusMessage: "آهنگ پیدا نشد." });
+
+  if (!id) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "شناسه آهنگ نامعتبر است.",
+    });
+  }
+
+  if (dbSource === "unconfigured") {
+    throw createError({
+      statusCode: 404,
+      statusMessage: "آهنگ پیدا نشد.",
+    });
+  }
+
   const sql = await getSql();
   const rows = await sql.query<Record<string, unknown>>(
-    "select url, mime_type from music_tracks where id = $1 and active = true limit 1",
+    "select url from music_tracks where id = $1 and active = true limit 1",
     [id],
   );
   const row = rows[0];
-  if (!row) throw createError({ statusCode: 404, statusMessage: "آهنگ پیدا نشد." });
-  const target = normalizeBlobUrl(String(row.url));
-  const range = event.req.headers.get("range");
 
-  try {
-    const blob = await getBlob(target, {
-      access: "public",
-      headers: range ? { range } : undefined,
-    });
-
-    if (!blob) {
-      throw createError({
-        statusCode: 404,
-        statusMessage: "فایل موسیقی پیدا نشد.",
-      });
-    }
-
-    const headers = new Headers();
-    headers.set(
-      "content-type",
-      String(row.mime_type || blob.blob.contentType || "audio/mpeg"),
-    );
-    headers.set("content-disposition", "inline");
-    headers.set("accept-ranges", blob.headers.get("accept-ranges") || "bytes");
-
-    for (const name of [
-      "content-length",
-      "content-range",
-      "etag",
-      "cache-control",
-      "last-modified",
-      "accept-ranges",
-    ]) {
-      const value = blob.headers.get(name);
-      if (value) headers.set(name, value);
-    }
-
-    const contentRange = blob.headers.get("content-range");
-    return new Response(blob.stream, {
-      status: contentRange ? 206 : 200,
-      headers,
-    });
-  } catch (error) {
-    console.error("[music-stream] blob read failed", error);
-    if (error && typeof error === "object" && "statusCode" in error) throw error;
+  if (!row) {
     throw createError({
-      statusCode: 502,
-      statusMessage: "فایل موسیقی از فضای ذخیره‌سازی قابل دریافت نیست.",
+      statusCode: 404,
+      statusMessage: "آهنگ پیدا نشد.",
     });
   }
+
+  const target = normalizeBlobUrl(String(row.url));
+
+  // The Blob is public, so redirect the browser to the canonical Blob URL.
+  // This keeps native browser byte-range requests, seeking, caching and
+  // media decoding intact instead of proxying the whole file through a
+  // serverless function.
+  let parsedTarget: URL;
+  try {
+    parsedTarget = new URL(target);
+  } catch {
+    throw createError({
+      statusCode: 502,
+      statusMessage: "نشانی فایل موسیقی نامعتبر است.",
+    });
+  }
+
+  if (parsedTarget.protocol !== "https:") {
+    throw createError({
+      statusCode: 502,
+      statusMessage: "نشانی فایل موسیقی امن نیست.",
+    });
+  }
+
+  return new Response(null, {
+    status: 302,
+    headers: {
+      location: parsedTarget.toString(),
+      "cache-control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
+    },
+  });
 });
