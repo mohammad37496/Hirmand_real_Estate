@@ -172,7 +172,7 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
     }
 
     stopAudio();
-    const audio = new Audio(track.url);
+    const audio = new Audio(`/api/music/file/${encodeURIComponent(track.id)}`);
     audio.muted = muted;
     audio.onplay = () => setPlayingId(track.id);
     audio.onpause = () => setPlayingId((id) => (id === track.id ? null : id));
@@ -185,7 +185,10 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
       stopAudio();
     };
     audioRef.current = audio;
-    void audio.play().catch(() => toast.error("پخش آهنگ توسط مرورگر مسدود شد."));
+    void audio.play().catch(() => {
+      toast.error("پخش فایل انجام نشد؛ دکمه پخش را دوباره بزنید.");
+      stopAudio();
+    });
   }
 
   async function action(id: string, actionName: "toggle" | "delete", active?: boolean) {
