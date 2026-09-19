@@ -90,6 +90,7 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
       }
 
       const xhr = new XMLHttpRequest();
+      let uploadedUrl = "";
       const uploadPromise = new Promise<void>((resolve, reject) => {
         xhr.open("PUT", tokenData.presignedUrl!, true);
         xhr.setRequestHeader("content-type", file.type || "audio/mpeg");
@@ -99,8 +100,21 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
           }
         };
         xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) resolve();
-          else reject(new Error("آپلود فایل در Vercel Blob ناموفق بود."));
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const result = JSON.parse(xhr.responseText) as { url?: string; downloadUrl?: string };
+              uploadedUrl = result.url || result.downloadUrl || "";
+            } catch {
+              uploadedUrl = "";
+            }
+            if (!uploadedUrl) {
+              reject(new Error("آپلود انجام شد اما آدرس نهایی Blob دریافت نشد."));
+              return;
+            }
+            resolve();
+          } else {
+            reject(new Error("آپلود فایل در Vercel Blob ناموفق بود."));
+          }
         };
         xhr.onerror = () => reject(new Error("ارتباط با فضای ذخیره‌سازی قطع شد."));
         xhr.onabort = () => reject(new Error("آپلود لغو شد."));
@@ -117,7 +131,7 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
           adminKey,
           title: title.trim(),
           artist: artist.trim(),
-          url: new URL(tokenData.presignedUrl).origin + new URL(tokenData.presignedUrl).pathname,
+          url: uploadedUrl,
           mimeType: file.type || "audio/mpeg",
           sizeBytes: file.size,
         }),
