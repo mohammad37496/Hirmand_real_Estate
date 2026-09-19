@@ -216,7 +216,7 @@ function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
   ] as const;
 }
 
-const PRICE_EXPR = "nullif(coalesce(price, deposit, rent), '')::numeric";
+const PRICE_EXPR = "coalesce(price, deposit, rent)";
 
 function publicPropertyWhereSql() {
   return [
