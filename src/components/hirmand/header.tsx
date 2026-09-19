@@ -61,6 +61,7 @@ export function Header() {
               <Link
                 key={item.id}
                 to="/properties"
+                search={{}}
                 className={cn(pathname === "/properties" && "is-current")}
                 onClick={closeMenu}
               >
@@ -110,7 +111,7 @@ export function Header() {
               {item.label}
             </Link>
           ) : item.to === "/properties" ? (
-            <Link key={item.id} to="/properties" onClick={closeMenu}>
+            <Link key={item.id} to="/properties" search={{}} onClick={closeMenu}>
               {item.label}
             </Link>
           ) : (
