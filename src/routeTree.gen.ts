@@ -61,6 +61,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/properties/$slug': typeof PropertySlugRoute
   '/areas/$slug': typeof AreaSlugRoute
+  '/properties': typeof PropertiesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
