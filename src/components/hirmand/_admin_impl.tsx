@@ -60,7 +60,6 @@ type FormState = {
   featured: boolean;
 };
 
-const STORAGE_KEY = "hirmand_admin_key";
 const STATUS_LABEL: Record<PublishStatus, string> = {
   published: "منتشرشده",
   draft: "پیش‌نویس",
@@ -174,16 +173,7 @@ export function AdminPropertiesPage() {
   const [form, setForm] = useState<FormState>(emptyForm());
 
   useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem(STORAGE_KEY)?.trim();
-      if (saved) {
-        setKeyInput(saved);
-        void unlock(saved, false);
-      }
-    } catch {
-      /* ignore */
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Admin keys are intentionally not persisted in browser storage.
   }, []);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -215,11 +205,6 @@ export function AdminPropertiesPage() {
       setForm((prev) => ({ ...prev, adminKey: key }));
       setProperties(rows);
       setUnlocked(true);
-      try {
-        sessionStorage.setItem(STORAGE_KEY, key);
-      } catch {
-        /* ignore */
-      }
       if (showToast) toast.success("ورود به پنل مدیریت موفق بود.");
     } catch (error) {
       setUnlocked(false);
@@ -235,11 +220,6 @@ export function AdminPropertiesPage() {
     setKeyInput("");
     setProperties([]);
     setForm(emptyForm());
-    try {
-      sessionStorage.removeItem(STORAGE_KEY);
-    } catch {
-      /* ignore */
-    }
   }
 
   const filtered = useMemo(() => {
