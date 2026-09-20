@@ -20,7 +20,7 @@ export type Property = {
   slug: string;
   status: PropertyStatus;
   featured: boolean;
-  featuredUntil: string | null;
+  featuredUntil?: string | null;
   title: string;
   transactionType: PropertyTransaction;
   propertyType: PropertyType;
@@ -84,6 +84,7 @@ export type PropertyCardData = Pick<
   | "latitude"
   | "longitude"
 > & {
+  featuredUntil?: string | null;
   image: string | null;
 };
 
@@ -212,6 +213,10 @@ function numberOrNull(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+export function isFeaturedActive(property: { featured: boolean; featuredUntil?: string | null }) {
+  return property.featured && (!property.featuredUntil || new Date(property.featuredUntil).getTime() >= Date.now());
+}
+
 function numericStringOrNull(value: unknown): string | null {
   const normalized = normalizeMoneyText(value);
   return normalized || null;
@@ -286,6 +291,7 @@ function mapPropertyCard(row: Record<string, unknown>): PropertyCardData {
     slug: String(row.slug),
     status: row.status as PropertyStatus,
     featured: Boolean(row.featured),
+    featuredUntil: row.featured_until ? new Date(String(row.featured_until)).toISOString() : null,
     title: String(row.title),
     transactionType: row.transaction_type as PropertyTransaction,
     propertyType: row.property_type as PropertyType,
@@ -305,7 +311,7 @@ function mapPropertyCard(row: Record<string, unknown>): PropertyCardData {
 }
 
 const DETAIL_COLUMNS = `
-  id, slug, status, featured, title, transaction_type, property_type, city,
+  id, slug, status, featured, featured_until, title, transaction_type, property_type, city,
   neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
   built_year, parking, elevator, storage, price, deposit, rent, description,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
