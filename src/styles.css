@@ -3934,6 +3934,40 @@ summary:focus-visible {
 }
 
 
+
+/* HIRMAND SMART BUDGET MATCHER - RTL/BIDI FIX */
+.budget-input-wrap{
+  direction:rtl;
+}
+.budget-input-wrap input{
+  direction:rtl;
+  text-align:right;
+  unicode-bidi:plaintext;
+}
+.budget-input-wrap small{
+  direction:rtl;
+  unicode-bidi:isolate;
+  white-space:nowrap;
+}
+.budget-presets button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  direction:rtl;
+  unicode-bidi:isolate;
+  white-space:nowrap;
+}
+.budget-presets button b,
+.budget-presets button span{
+  display:inline-block;
+  direction:rtl;
+  unicode-bidi:isolate;
+}
+.budget-presets button b{
+  font-weight:700;
+}
+
 /* HIRMAND SMART BUDGET MATCHER v3 */
 .budget-matcher{
   width:min(100% - 32px,1120px);
