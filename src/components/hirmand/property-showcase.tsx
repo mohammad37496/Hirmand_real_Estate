@@ -14,6 +14,7 @@ import { formatToman } from "@/lib/money";
 import type { Property, PropertyCardData, PropertyType, PropertyTransaction } from "@/lib/properties";
 import { listPublishedPropertyCards } from "@/lib/properties";
 import { PropertyActions } from "./property-actions";
+import { propertyPath } from "@/lib/property-path";
 import { Reveal } from "./reveal";
 
 const PROPERTY_TYPE_LABEL: Record<PropertyType, string> = {
@@ -55,7 +56,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
   return (
     <article className="property-card">
       <a
-        href={`/properties/${encodeURIComponent(property.slug)}`}
+        href={propertyPath(property)}
         className="property-card-link"
         aria-label={`مشاهده جزئیات کامل فایل ${property.title}`}
       >
