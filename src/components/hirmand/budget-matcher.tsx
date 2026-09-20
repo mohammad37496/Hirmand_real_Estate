@@ -5,7 +5,6 @@ import {
   Calculator,
   CheckCircle2,
   ChevronDown,
-  Filter,
   MapPin,
   MessageCircle,
   RefreshCw,
@@ -304,7 +303,7 @@ export function BudgetMatcher() {
                   <div className="budget-presets" aria-label="مقادیر سریع اجاره">
                     {RENT_PRESETS.map((value) => (
                       <button key={value} type="button" onClick={() => setRent(formatToman(value))}>
-                        {formatToman(value)} م
+                        {formatToman(value / 1_000_000)} میلیون
                       </button>
                     ))}
                   </div>
