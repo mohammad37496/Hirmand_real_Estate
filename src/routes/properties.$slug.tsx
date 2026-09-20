@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   ArrowRight,
   BedDouble,
@@ -20,6 +21,7 @@ import {
 } from "@/lib/seo";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
+import { PropertyActions } from "@/components/hirmand/property-actions";
 import { formatToman } from "@/lib/money";
 import { isVideoUrl } from "@/lib/media";
 import { areaSlug } from "@/lib/areas";
@@ -56,6 +58,63 @@ function whatsappLink(phone: string, title: string) {
   const intl = phone.replace(/^0/, "98");
   const text = encodeURIComponent(`سلام، درباره فایل «${title}» از سایت هیرمند پیام می‌دهم.`);
   return `https://wa.me/${intl}?text=${text}`;
+}
+
+function Gallery({
+  images,
+  title,
+  featured,
+}: {
+  images: string[];
+  title: string;
+  featured: boolean;
+}) {
+  const [active, setActive] = useState(0);
+  const current = images[active] ?? images[0] ?? "";
+
+  return (
+    <div className="property-gallery-wrap">
+      <div className="property-gallery">
+        <div className="property-gallery-main">
+          {isVideoUrl(current) ? (
+            <video src={current} controls playsInline preload="metadata" />
+          ) : (
+            <img
+              src={current}
+              alt={title}
+              itemProp="image"
+              fetchPriority="high"
+            />
+          )}
+          {featured ? (
+            <span className="property-gallery-featured">فایل ویژه</span>
+          ) : null}
+          {images.length > 1 ? (
+            <span className="property-gallery-counter">
+              {(active + 1).toLocaleString("fa-IR")} / {images.length.toLocaleString("fa-IR")}
+            </span>
+          ) : null}
+        </div>
+
+        {images.slice(0, 7).map((src, index) => (
+          <button
+            key={src}
+            type="button"
+            className={\`property-gallery-thumb\${index === active ? " is-active" : ""}\`}
+            onClick={() => setActive(index)}
+            aria-label={\`نمایش تصویر \${(index + 1).toLocaleString("fa-IR")}\`}
+            aria-pressed={index === active}
+          >
+            {isVideoUrl(src) ? (
+              <video src={src} muted playsInline preload="metadata" />
+            ) : (
+              <img src={src} alt="" loading="lazy" />
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function PropertyDetailPage() {
@@ -105,25 +164,11 @@ function PropertyDetailPage() {
           <span>{property.title}</span>
         </nav>
 
-        <div className="property-gallery">
-          <div className="property-gallery-main">
-            {isVideoUrl(images[0]) ? (
-              <video src={images[0]} controls playsInline preload="metadata" />
-            ) : (
-              <img src={images[0]} alt={property.title} itemProp="image" fetchPriority="high" />
-            )}
-            {property.featured ? <span className="property-gallery-featured">فایل ویژه</span> : null}
-          </div>
-          {images.slice(1, 8).map((src) => (
-            <div key={src} className="property-gallery-thumb">
-              {isVideoUrl(src) ? (
-                <video src={src} muted playsInline preload="metadata" />
-              ) : (
-                <img src={src} alt="" loading="lazy" />
-              )}
-            </div>
-          ))}
-        </div>
+        <Gallery
+          images={images}
+          title={property.title}
+          featured={property.featured}
+        />
 
         <div className="property-detail-grid">
           <article className="property-detail-main">
@@ -141,6 +186,8 @@ function PropertyDetailPage() {
                 {property.deposit ? ` · رهن ${money(property.deposit)}` : ""}
                 {property.rent ? ` · اجاره ${money(property.rent)}` : ""}
               </p>
+              <PropertyActions property={property} />
+
             </header>
 
             <div className="property-detail-specs">
