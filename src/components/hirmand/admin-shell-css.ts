@@ -311,9 +311,6 @@ export const ADMIN_CSS = `
 @media (max-width:900px){.admin-lead-budget{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:560px){.admin-lead-budget{grid-template-columns:1fr 1fr}}
 
-`;
-
-/* Admin v2 — Obsidian / Teal / Champagne */
 .admin-app{background:#071113;color:#f4f7f6}
 .admin-sidebar{background:linear-gradient(180deg,#0a171a 0%,#071113 100%);border-color:rgba(244,247,246,.08)}
 .admin-sidebar-brand{border-color:rgba(244,247,246,.08)}
@@ -361,3 +358,4 @@ export const ADMIN_CSS = `
 .admin-results-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;color:#788b89;font-size:.75rem}
 @media (max-width:980px){.admin-smart-tools{grid-template-columns:1fr}.admin-filter-row{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-filter-row select:first-child{grid-column:1/-1}}
 @media (max-width:600px){.admin-filter-row{grid-template-columns:1fr}.admin-filter-row select:first-child{grid-column:auto}}
+`;
