@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   BarChart3,
@@ -28,7 +28,11 @@ import {
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
 import {
+  bulkDeleteProperties,
+  bulkSetPropertyFeatured,
+  bulkUpdatePropertyStatus,
   countAdminProperties,
+  countFilteredAdminProperties,
   deleteProperty,
   listAdminProperties,
   saveProperty,
@@ -146,6 +150,32 @@ function parseImageUrls(raw: string): { valid: string[]; invalid: string[] } {
   return { valid, invalid };
 }
 
+function propertyQuality(property: Property) {
+  let score = 0;
+  const title = property.title.trim();
+  const description = property.description.trim();
+  const contact = property.contactName.trim() && property.contactPhone.trim();
+  const hasPrice =
+    property.transactionType === "sell" || property.transactionType === "buy"
+      ? Boolean(property.price)
+      : property.transactionType === "rent"
+        ? Boolean(property.deposit || property.rent)
+        : Boolean(property.deposit);
+
+  if (title.length >= 12) score += 20;
+  if (description.length >= 120) score += 25;
+  if (property.images.length >= 3) score += 20;
+  if (property.address?.trim()) score += 15;
+  if (contact) score += 10;
+  if (hasPrice) score += 10;
+
+  return {
+    score,
+    complete: score >= 80,
+    label: score >= 80 ? "کامل" : score >= 60 ? "قابل انتشار" : "نیازمند تکمیل",
+  };
+}
+
 function propertyToForm(property: Property): FormState {
   return {
     id: property.id,
@@ -183,12 +213,15 @@ export function AdminPropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [propertyOffset, setPropertyOffset] = useState(0);
   const [propertyHasMore, setPropertyHasMore] = useState(false);
+  const [filteredTotal, setFilteredTotal] = useState(0);
   const [serverStats, setServerStats] = useState<{
     total: number;
     published: number;
     draft: number;
     archived: number;
+    featured: number;
   } | null>(null);
+  const propertyRequestId = useRef(0);
   const [loadingList, setLoadingList] = useState(false);
   const [saving, setSaving] = useState(false);
   const [view, setView] = useState<ViewMode>("dashboard");
@@ -223,15 +256,17 @@ export function AdminPropertiesPage() {
 
         if (!data?.authenticated || cancelled) return;
 
-        const [rows, totals] = await Promise.all([
-          listAdminProperties({ data: { limit: 100, offset: 0 } }),
+        const [rows, totals, filteredCount] = await Promise.all([
+          listAdminProperties({ data: { limit: 50, offset: 0 } }),
           countAdminProperties({ data: {} }),
+          countFilteredAdminProperties({ data: { limit: 50, offset: 0 } }),
         ]);
 
         if (cancelled) return;
         setProperties(rows);
         setPropertyOffset(rows.length);
-        setPropertyHasMore(rows.length < totals.total);
+        setFilteredTotal(filteredCount);
+        setPropertyHasMore(rows.length < filteredCount);
         setServerStats(totals);
         setUnlocked(true);
       } catch {
@@ -247,23 +282,46 @@ export function AdminPropertiesPage() {
     };
   }, []);
 
+  function currentListFilters(offset = 0, limit = 50) {
+    return {
+      limit,
+      offset,
+      status:
+        listFilter !== "all" && listFilter !== "featured"
+          ? listFilter
+          : undefined,
+      transactionType: listTransaction !== "all" ? listTransaction : undefined,
+      propertyType: listType !== "all" ? listType : undefined,
+      neighborhood: listNeighborhood || undefined,
+      featuredOnly: listFilter === "featured",
+      search: query.trim() || undefined,
+      sort: listSort,
+    } as const;
+  }
+
   async function refresh() {
     if (!unlocked) return;
+    const requestId = ++propertyRequestId.current;
     setLoadingList(true);
     try {
-      const [rows, totals] = await Promise.all([
-        listAdminProperties({ data: { limit: 100, offset: 0 } }),
+      const filterData = currentListFilters(0, 50);
+      const [rows, totals, filteredCount] = await Promise.all([
+        listAdminProperties({ data: filterData }),
         countAdminProperties({ data: {} }),
+        countFilteredAdminProperties({ data: filterData }),
       ]);
+      if (requestId !== propertyRequestId.current) return;
       setProperties(rows);
       setPropertyOffset(rows.length);
-      setPropertyHasMore(rows.length < totals.total);
+      setFilteredTotal(filteredCount);
+      setPropertyHasMore(rows.length < filteredCount);
       setServerStats(totals);
     } catch (error) {
+      if (requestId !== propertyRequestId.current) return;
       toast.error(error instanceof Error ? error.message : "بارگذاری فایل‌ها انجام نشد.");
       throw error;
     } finally {
-      setLoadingList(false);
+      if (requestId === propertyRequestId.current) setLoadingList(false);
     }
   }
 
@@ -293,15 +351,18 @@ export function AdminPropertiesPage() {
         );
       }
 
-      const [rows, totals] = await Promise.all([
-        listAdminProperties({ data: { limit: 100, offset: 0 } }),
+      const filterData = currentListFilters(0, 50);
+      const [rows, totals, filteredCount] = await Promise.all([
+        listAdminProperties({ data: filterData }),
         countAdminProperties({ data: {} }),
+        countFilteredAdminProperties({ data: filterData }),
       ]);
 
       setKeyInput("");
       setProperties(rows);
       setPropertyOffset(rows.length);
-      setPropertyHasMore(rows.length < totals.total);
+      setFilteredTotal(filteredCount);
+      setPropertyHasMore(rows.length < filteredCount);
       setServerStats(totals);
       setUnlocked(true);
 
@@ -329,6 +390,7 @@ export function AdminPropertiesPage() {
     setProperties([]);
     setPropertyOffset(0);
     setPropertyHasMore(false);
+    setFilteredTotal(0);
     setServerStats(null);
     setForm(emptyForm());
     setSelectedIds([]);
@@ -377,47 +439,16 @@ export function AdminPropertiesPage() {
   }
 
   async function bulkSetStatus(status: PublishStatus) {
-    const targets = properties.filter((property) => selectedIds.includes(property.id));
-    if (!targets.length || bulkBusy) return;
-    if (status === "archived" && !confirm("آرشیو " + targets.length.toLocaleString("fa-IR") + " فایل انتخاب‌شده؟")) return;
+    const ids = Array.from(new Set(selectedIds));
+    if (!ids.length || bulkBusy) return;
+    if (status === "archived" && !confirm("آرشیو " + ids.length.toLocaleString("fa-IR") + " فایل انتخاب‌شده؟")) return;
 
     setBulkBusy(true);
     try {
-      await Promise.all(targets.map(async (property) => {
-        const base = propertyToForm(property);
-        return saveProperty({
-          data: {
-            id: base.id,
-            title: base.title,
-            transactionType: base.transactionType,
-            propertyType: base.propertyType,
-            neighborhood: base.neighborhood,
-            address: base.address || undefined,
-            areaM2: numberOrNull(base.areaM2),
-            bedrooms: numberOrNull(base.bedrooms),
-            bathrooms: numberOrNull(base.bathrooms),
-            floor: numberOrNull(base.floor),
-            totalFloors: numberOrNull(base.totalFloors),
-            builtYear: numberOrNull(base.builtYear),
-            parking: base.parking,
-            elevator: base.elevator,
-            storage: base.storage,
-            price: numberOrNull(base.price),
-            deposit: numberOrNull(base.deposit),
-            rent: numberOrNull(base.rent),
-            description: base.description,
-            features: splitLines(base.features),
-            images: parseImageUrls(base.images).valid,
-            contactName: base.contactName,
-            contactPhone: base.contactPhone,
-            status,
-            featured: base.featured,
-          },
-        });
-      }));
+      const result = await bulkUpdatePropertyStatus({ data: { ids, status } });
       setSelectedIds([]);
       await refresh();
-      toast.success(targets.length.toLocaleString("fa-IR") + " فایل به‌روزرسانی شد.");
+      toast.success((result.updated || ids.length).toLocaleString("fa-IR") + " فایل به‌روزرسانی شد.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "عملیات گروهی کامل نشد.");
     } finally {
@@ -425,17 +456,34 @@ export function AdminPropertiesPage() {
     }
   }
 
-  async function bulkDelete() {
-    const targets = properties.filter((property) => selectedIds.includes(property.id));
-    if (!targets.length || bulkBusy) return;
-    if (!confirm("حذف دائمی " + targets.length.toLocaleString("fa-IR") + " فایل انتخاب‌شده؟ این عمل قابل بازگشت نیست.")) return;
+  async function bulkSetFeatured(featured: boolean) {
+    const ids = Array.from(new Set(selectedIds));
+    if (!ids.length || bulkBusy) return;
 
     setBulkBusy(true);
     try {
-      await Promise.all(targets.map((property) => deleteProperty({ data: { id: property.id } })));
+      const result = await bulkSetPropertyFeatured({ data: { ids, featured } });
       setSelectedIds([]);
       await refresh();
-      toast.success(targets.length.toLocaleString("fa-IR") + " فایل حذف شد.");
+      toast.success((result.updated || ids.length).toLocaleString("fa-IR") + (featured ? " فایل ویژه شد." : " فایل از حالت ویژه خارج شد."));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تغییر وضعیت ویژه انجام نشد.");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  async function bulkDelete() {
+    const ids = Array.from(new Set(selectedIds));
+    if (!ids.length || bulkBusy) return;
+    if (!confirm("حذف دائمی " + ids.length.toLocaleString("fa-IR") + " فایل انتخاب‌شده؟ این عمل قابل بازگشت نیست.")) return;
+
+    setBulkBusy(true);
+    try {
+      const result = await bulkDeleteProperties({ data: { ids } });
+      setSelectedIds([]);
+      await refresh();
+      toast.success((result.deleted || ids.length).toLocaleString("fa-IR") + " فایل حذف شد.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حذف گروهی کامل نشد.");
     } finally {
@@ -443,31 +491,31 @@ export function AdminPropertiesPage() {
     }
   }
 
+  useEffect(() => {
+    if (!unlocked) return;
+    const timer = window.setTimeout(() => {
+      setSelectedIds([]);
+      void refresh();
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [unlocked, query, listFilter, listTransaction, listType, listNeighborhood, listSort]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const items = properties.filter((p) => {
-      if (listFilter === "featured" && !p.featured) return false;
-      if (listFilter !== "all" && listFilter !== "featured" && p.status !== listFilter) return false;
-      if (listTransaction !== "all" && p.transactionType !== listTransaction) return false;
-      if (listType !== "all" && p.propertyType !== listType) return false;
-      if (listNeighborhood && p.neighborhood !== listNeighborhood) return false;
-      if (!q) return true;
-      return (
-        p.title.toLowerCase().includes(q) ||
-        p.neighborhood.toLowerCase().includes(q) ||
-        p.contactName.toLowerCase().includes(q)
-      );
-    });
-    return [...items].sort((a, b) => {
-      if (listSort === "title") return a.title.localeCompare(b.title, "fa");
-      if (listSort === "price_desc") {
-        const price = (p: Property) => Number(p.price || p.deposit || p.rent || 0);
-        return price(b) - price(a);
-      }
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-    });
-  }, [properties, listFilter, query, listTransaction, listType, listNeighborhood, listSort]);
+  const filtered = properties;
+
+  const stats = useMemo(() => {
+    const published = properties.filter((p) => p.status === "published").length;
+    const draft = properties.filter((p) => p.status === "draft").length;
+    const archived = properties.filter((p) => p.status === "archived").length;
+    const featured = properties.filter((p) => p.featured).length;
+
+    return {
+      total: serverStats?.total ?? filteredTotal,
+      published: serverStats?.published ?? published,
+      draft: serverStats?.draft ?? draft,
+      archived: serverStats?.archived ?? archived,
+      featured: serverStats?.featured ?? featured,
+    };
+  }, [properties, serverStats, filteredTotal]);
 
   const stats = useMemo(() => {
     const published = properties.filter((p) => p.status === "published").length;
@@ -490,14 +538,11 @@ export function AdminPropertiesPage() {
     setLoadingList(true);
     try {
       const rows = await listAdminProperties({
-        data: {
-          limit: 100,
-          offset: propertyOffset,
-        },
+        data: currentListFilters(propertyOffset, 50),
       });
       setProperties((current) => [...current, ...rows]);
       setPropertyOffset((current) => current + rows.length);
-      setPropertyHasMore(propertyOffset + rows.length < stats.total);
+      setPropertyHasMore(propertyOffset + rows.length < filteredTotal);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "بارگذاری فایل‌های بیشتر انجام نشد.");
     } finally {
