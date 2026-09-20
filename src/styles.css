@@ -5507,3 +5507,13 @@ body::before {
 .hero-proof strong,.property-card-price,.property-detail-price { color:var(--gold-soft); }
 .type-card:hover,.service-card:hover,.contact-card:hover,.tracking-card:hover { border-color:var(--primary-line); background:linear-gradient(180deg,rgba(15,118,110,.07),transparent 70%),var(--surface); }
 .area-map,.budget-matcher,.smart-recommendations { border-color:var(--primary-line); }
+
+@media print {
+  .site-nav,.footer,.quick-actions,.floating-call-menu,.music-player,.site-utilities,.property-actions,.property-gallery-thumb{display:none!important}
+  body{background:#fff!important;color:#111!important}
+  .page,.property-detail-page,.property-detail-main,.property-detail-aside{background:#fff!important;color:#111!important}
+  .property-card,.property-contact-card,.property-spec-grid>div,.property-address{break-inside:avoid}
+  .property-detail-main > header h1,.property-detail-price,.property-spec-grid strong{color:#111!important}
+  .property-detail-description,.property-detail-body,.property-spec-grid small,.property-address p{color:#333!important}
+  a{color:#111!important;text-decoration:none!important}
+}
