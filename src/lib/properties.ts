@@ -553,9 +553,53 @@ export const matchPublishedPropertiesByBudget = createServerFn({ method: "GET" }
 
 const adminListSchema = z.object({
   limit: z.number().int().min(1).max(200).optional().default(50),
-  offset: z.number().int().min(0).max(10000).optional().default(0),
+  offset: z.number().int().min(0).max(100000).optional().default(0),
   status: z.enum(["draft", "published", "archived"]).optional(),
+  transactionType: z.enum(["buy", "sell", "rent", "mortgage"]).optional(),
+  propertyType: z.enum(["apartment", "villa", "office", "heritage", "land", "commercial"]).optional(),
+  neighborhood: z.string().trim().max(80).optional(),
+  featuredOnly: z.boolean().optional().default(false),
+  search: z.string().trim().max(80).optional(),
+  sort: z.enum(["newest", "title", "price_desc"]).optional().default("newest"),
 });
+
+const adminBulkSchema = z.object({
+  ids: z.array(z.string().trim().min(1).max(160)).min(1).max(2000),
+});
+
+const adminBulkStatusSchema = adminBulkSchema.extend({
+  status: z.enum(["draft", "published", "archived"]),
+});
+
+const adminBulkFeaturedSchema = adminBulkSchema.extend({
+  featured: z.boolean(),
+});
+
+function adminFilterParams(data: z.infer<typeof adminListSchema>) {
+  return [
+    data.status ?? null,
+    data.transactionType ?? null,
+    data.propertyType ?? null,
+    data.neighborhood?.trim() || null,
+    data.featuredOnly ?? false,
+    data.search?.trim() || null,
+  ];
+}
+
+function adminPropertyWhereSql() {
+  return [
+    "($1::text is null or status = $1)",
+    "and ($2::text is null or transaction_type = $2)",
+    "and ($3::text is null or property_type = $3)",
+    "and ($4::text is null or neighborhood = $4)",
+    "and ($5::boolean is false or featured = true)",
+    "and ($6::text is null or title ilike '%' || $6 || '%' or neighborhood ilike '%' || $6 || '%' or coalesce(address, '') ilike '%' || $6 || '%' or contact_name ilike '%' || $6 || '%' or contact_phone ilike '%' || $6 || '%' or id ilike '%' || $6 || '%')",
+  ].join(" ");
+}
+
+const ADMIN_PRICE_EXPR =
+  "case when transaction_type = 'rent' then coalesce(rent, deposit) " +
+  "when transaction_type = 'mortgage' then deposit else price end";
 
 export const listAdminProperties = createServerFn({ method: "POST" })
   .validator(adminListSchema)
@@ -563,37 +607,116 @@ export const listAdminProperties = createServerFn({ method: "POST" })
     await requireAdmin();
     if (dbSource === "unconfigured") return [];
     const sql = await getSql();
+    const filters = adminFilterParams(data);
     const rows = await sql.query<Record<string, unknown>>(
       `select ${LIST_COLUMNS}
-      from properties
-      where ($1::text is null or status = $1)
-      order by created_at desc
-      limit $2 offset $3`,
-      [data.status ?? null, data.limit, data.offset],
+       from properties
+       where ${adminPropertyWhereSql()}
+       order by
+         case when $7 = 'title' then title end asc nulls last,
+         case when $7 = 'price_desc' then ${ADMIN_PRICE_EXPR} end desc nulls last,
+         updated_at desc,
+         created_at desc
+       limit $8 offset $9`,
+      [...filters, data.sort, data.limit, data.offset],
     );
     return rows.map(mapProperty);
   });
 
 export const countAdminProperties = createServerFn({ method: "POST" })
   .validator(adminKeySchema)
-  .handler(async ({ data }) => {
+  .handler(async () => {
     await requireAdmin();
     if (dbSource === "unconfigured") {
-      return { total: 0, published: 0, draft: 0, archived: 0 };
+      return { total: 0, published: 0, draft: 0, archived: 0, featured: 0 };
     }
     const sql = await getSql();
-    const rows = await sql.query<{ status: string; n: number }>(
-      `select status, count(*)::int as n from properties group by status`,
+    const rows = await sql.query<{
+      total: number;
+      published: number;
+      draft: number;
+      archived: number;
+      featured: number;
+    }>(
+      `select
+         count(*)::int as total,
+         count(*) filter (where status = 'published')::int as published,
+         count(*) filter (where status = 'draft')::int as draft,
+         count(*) filter (where status = 'archived')::int as archived,
+         count(*) filter (where featured = true)::int as featured
+       from properties`,
     );
-    const out = { total: 0, published: 0, draft: 0, archived: 0 };
-    for (const row of rows) {
-      const n = Number(row.n) || 0;
-      out.total += n;
-      if (row.status === "published") out.published = n;
-      else if (row.status === "draft") out.draft = n;
-      else if (row.status === "archived") out.archived = n;
-    }
-    return out;
+    const row = rows[0];
+    return {
+      total: Number(row?.total) || 0,
+      published: Number(row?.published) || 0,
+      draft: Number(row?.draft) || 0,
+      archived: Number(row?.archived) || 0,
+      featured: Number(row?.featured) || 0,
+    };
+  });
+
+export const countFilteredAdminProperties = createServerFn({ method: "POST" })
+  .validator(adminListSchema)
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    if (dbSource === "unconfigured") return 0;
+    const sql = await getSql();
+    const rows = await sql.query<{ count: number }>(
+      `select count(*)::int as count
+       from properties
+       where ${adminPropertyWhereSql()}`,
+      adminFilterParams(data),
+    );
+    return Number(rows[0]?.count) || 0;
+  });
+
+export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
+  .validator(adminBulkStatusSchema)
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const sql = await getSql();
+    const rows = await sql.query<{ id: string }>(
+      `update properties
+       set status = $1,
+           published_at = case
+             when $1 = 'published' then coalesce(published_at, current_timestamp)
+             else null
+           end,
+           updated_at = current_timestamp
+       where id = any($2::text[])
+       returning id`,
+      [data.status, data.ids],
+    );
+    return { success: true, updated: rows.length };
+  });
+
+export const bulkSetPropertyFeatured = createServerFn({ method: "POST" })
+  .validator(adminBulkFeaturedSchema)
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const sql = await getSql();
+    const rows = await sql.query<{ id: string }>(
+      `update properties
+       set featured = $1,
+           updated_at = current_timestamp
+       where id = any($2::text[])
+       returning id`,
+      [data.featured, data.ids],
+    );
+    return { success: true, updated: rows.length };
+  });
+
+export const bulkDeleteProperties = createServerFn({ method: "POST" })
+  .validator(adminBulkSchema)
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const sql = await getSql();
+    const rows = await sql.query<{ id: string }>(
+      "delete from properties where id = any($1::text[]) returning id",
+      [data.ids],
+    );
+    return { success: true, deleted: rows.length };
   });
 
 export const saveProperty = createServerFn({ method: "POST" })
