@@ -156,7 +156,7 @@ export function AdminDashboard({
     } finally {
       setLoading(false);
     }
-  }, [adminKey]);
+  }, []);
 
   useEffect(() => {
     void load();
