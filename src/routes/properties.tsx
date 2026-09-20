@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeftRight, Heart, RotateCcw, Search, Share2, SlidersHorizontal, X } from "lucide-react";
+import { ArrowLeftRight, Heart, List, Map, MapPinned, RotateCcw, Search, Share2, SlidersHorizontal, X } from "lucide-react";
 import { toast } from "sonner";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import {
@@ -157,6 +157,8 @@ function PropertiesIndexPage() {
   const [urlReady, setUrlReady] = useState(false);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [savedSearchId, setSavedSearchId] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "split">("grid");
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const skipInitialFetch = useRef(false);
   const requestId = useRef(0);
 
@@ -391,6 +393,20 @@ function PropertiesIndexPage() {
     }
   }
 
+  useEffect(() => {
+    if (viewMode !== "split") return;
+    const current = properties.find((property) => property.id === selectedPropertyId);
+    if (!current || current.latitude == null || current.longitude == null) {
+      const firstWithLocation = properties.find((property) => property.latitude != null && property.longitude != null);
+      setSelectedPropertyId(firstWithLocation?.id ?? null);
+    }
+  }, [viewMode, properties, selectedPropertyId]);
+
+  const selectedProperty = properties.find((property) => property.id === selectedPropertyId) ?? null;
+  const mapUrl = selectedProperty?.latitude != null && selectedProperty?.longitude != null
+    ? `https://www.google.com/maps?q=${selectedProperty.latitude},${selectedProperty.longitude}&z=15&output=embed`
+    : null;
+
   const hasFilters = Boolean(
     q.trim() ||
     transactionType ||
@@ -522,9 +538,53 @@ function PropertiesIndexPage() {
 
           {properties.length ? (
             <>
-              <div className="property-grid">
-                {properties.map((property) => <PropertyCard key={property.id} property={property} />)}
+              <div className="properties-view-switch" role="group" aria-label="نحوه نمایش فایل‌ها">
+                <button type="button" className={viewMode === "grid" ? "is-active" : ""} onClick={() => setViewMode("grid")}>
+                  <List size={15} /> نمایش شبکه‌ای
+                </button>
+                <button type="button" className={viewMode === "split" ? "is-active" : ""} onClick={() => setViewMode("split")}>
+                  <MapPinned size={15} /> لیست + نقشه
+                </button>
               </div>
+              {viewMode === "split" ? (
+                <div className="properties-split-view">
+                  <aside className="properties-map-list" aria-label="فهرست فایل‌های روی نقشه">
+                    {properties.map((property) => (
+                      <button key={property.id} type="button"
+                        className={`properties-map-list-item${selectedPropertyId === property.id ? " is-active" : ""}`}
+                        onClick={() => {
+                          setSelectedPropertyId(property.id);
+                          if (property.latitude == null || property.longitude == null) toast.info("برای این فایل مختصات نقشه ثبت نشده است.");
+                        }}
+                      >
+                        <div className="properties-map-list-image">
+                          {property.image ? <img src={property.image} alt="" loading="lazy" /> : <Map size={20} />}
+                        </div>
+                        <div>
+                          <strong>{property.title}</strong>
+                          <span>{property.neighborhood}{property.areaM2 ? ` · ${property.areaM2.toLocaleString("fa-IR")} متر` : ""}</span>
+                        </div>
+                        {property.latitude != null && property.longitude != null ? <MapPinned size={15} /> : null}
+                      </button>
+                    ))}
+                  </aside>
+                  <section className="properties-map-panel" aria-label="نقشه فایل انتخاب‌شده">
+                    {mapUrl ? (
+                      <iframe title={selectedProperty ? `نقشه ${selectedProperty.title}` : "نقشه فایل‌ها"} src={mapUrl} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+                    ) : (
+                      <div className="property-empty">
+                        <MapPinned size={28} />
+                        <strong>برای نمایش نقشه، یک فایل دارای مختصات انتخاب کنید.</strong>
+                        <p>مختصات فایل‌ها از پنل مدیریت قابل ثبت است.</p>
+                      </div>
+                    )}
+                  </section>
+                </div>
+              ) : (
+                <div className="property-grid">
+                  {properties.map((property) => <PropertyCard key={property.id} property={property} />)}
+                </div>
+              )}
               {properties.length < total ? (
                 <div className="properties-load-more">
                   <button type="button" className="btn-ghost" onClick={() => void loadMore()} disabled={loadingMore}>
