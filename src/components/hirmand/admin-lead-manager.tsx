@@ -34,7 +34,7 @@ function formatDate(value: string) {
   }
 }
 
-export function AdminLeadManager({ adminKey }: { adminKey: string }) {
+export function AdminLeadManager() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
