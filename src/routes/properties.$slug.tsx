@@ -119,6 +119,11 @@ function Gallery({
 
 function PropertyDetailPage() {
   const { property, related } = Route.useLoaderData();
+
+  useEffect(() => {
+    if (property) trackAnalyticsEvent("property_view", property.slug);
+  }, [property]);
+
   if (!property) {
     return (
       <SiteChrome>
@@ -132,10 +137,6 @@ function PropertyDetailPage() {
       </SiteChrome>
     );
   }
-
-  useEffect(() => {
-    trackAnalyticsEvent("property_view", property.slug);
-  }, [property.slug]);
 
   const images = property.images.length ? property.images : ["/images/type-apartment.jpg"];
   const area = areaSlug(property.neighborhood);
