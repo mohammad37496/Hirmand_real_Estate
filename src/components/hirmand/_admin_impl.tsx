@@ -26,7 +26,7 @@ import {
   CheckSquare,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
-import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
+import type { Property, PropertyHistoryState, PropertyType, PropertyTransaction } from "@/lib/properties";
 import {
   bulkAssignPropertyConsultant,
   bulkDeleteProperties,
@@ -238,8 +238,8 @@ export function AdminPropertiesPage() {
   const [changeHistory, setChangeHistory] = useState<Array<{
     id: number;
     action: "created" | "updated" | "deleted";
-    beforeState: Record<string, unknown> | null;
-    afterState: Record<string, unknown> | null;
+    beforeState: PropertyHistoryState | null;
+    afterState: PropertyHistoryState | null;
     changedAt: string;
   }>>([]);
   const [form, setForm] = useState<FormState>(emptyForm());
@@ -1541,7 +1541,13 @@ export function AdminPropertiesPage() {
                           <div key={item.id} className="admin-breakdown-row">
                             <div>
                               <span>{changes.join(" · ")}</span>
-                              <strong>{formatDate(item.changedAt)}</strong>
+                              <strong>
+                                {new Date(item.changedAt).toLocaleDateString("fa-IR")} ·{" "}
+                                {new Date(item.changedAt).toLocaleTimeString("fa-IR", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </strong>
                             </div>
                             <small>{title}</small>
                           </div>
