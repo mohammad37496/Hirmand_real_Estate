@@ -12,7 +12,7 @@ import {
 } from "@/lib/properties";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
-import { PROPERTY_TYPES, NEIGHBORHOOD_NAMES, SERVICES, SITE } from "@/lib/site";
+import { PROPERTY_TYPES, NEIGHBORHOOD_NAMES, SERVICES } from "@/lib/site";
 import { absoluteUrl, socialMeta } from "@/lib/seo";
 
 const PAGE_SIZE = 48;
@@ -484,6 +484,14 @@ function PropertiesIndexPage() {
                 disabled={!hasFilters}
               >
                 ذخیره جست‌وجو
+              </button>
+              <button
+                type="button"
+                className="properties-reset-btn"
+                onClick={() => void shareCurrentSearch()}
+                disabled={!hasFilters}
+              >
+                <Share2 size={14} /> اشتراک‌گذاری
               </button>
               {savedSearches.length ? (
                 <>
