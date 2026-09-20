@@ -35,6 +35,8 @@ function property(overrides: Partial<Property>): Property {
     publishedAt: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    latitude: null,
+    longitude: null,
     ...overrides,
   };
 }
