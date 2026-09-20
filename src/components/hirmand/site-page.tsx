@@ -501,13 +501,13 @@ function TrackingCta() {
     <Reveal as="section" className="section" id="tracking-cta">
       <Link to="/tracking" className="tracking-card">
         <div className="tracking-card-copy">
-          <span className="kicker">سامانه قرارداد</span>
-          <h2>ثبت قرارداد در سامانه و دریافت کد رهگیری</h2>
+          <span className="kicker">باشگاه همکاران هیرمند</span>
+          <h2>ثبت قرارداد، دریافت کد رهگیری و پاداش همکاری</h2>
           <p>
-            پس از توافق، قرارداد در سامانه ثبت می‌شود و کد رهگیری برای پیگیری رسمی معامله صادر می‌گردد.
-            این بخش به‌زودی تکمیل می‌شود.
+            املاک همکار می‌تواند قرارداد را آنلاین ثبت کند، وضعیت تأیید را ببیند و هر ۳ قرارداد تأییدشده
+            یک اعتبار ثبت رایگان دریافت کند. برای هر دفتر، کارت ۱۲ مهر و QR اختصاصی هم داریم.
           </p>
-          <span className="btn-gold tracking-cta">ورود به این بخش</span>
+          <span className="btn-gold tracking-cta">ورود به سامانه همکاری</span>
         </div>
         <div className="tracking-card-icon" aria-hidden="true">
           <FileKey size={42} strokeWidth={1.5} />
