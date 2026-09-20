@@ -5043,6 +5043,9 @@ body {
   font-size: .68rem;
 }
 .properties-filter-panel {
+  display: grid;
+  grid-template-columns: minmax(0,2fr) repeat(3,minmax(140px,1fr));
+  gap: 10px;
   margin-top: 12px;
   padding: 16px;
   border: 1px solid rgba(244,239,230,.09);
@@ -5094,6 +5097,10 @@ body {
   background: rgba(255,255,255,.03);
 }
 .properties-result-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   position: sticky;
   top: 138px;
   z-index: 18;
@@ -5103,7 +5110,16 @@ body {
   background: rgba(7,9,13,.72);
   backdrop-filter: blur(12px);
 }
+.properties-result-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 .properties-result-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--muted);
   font-size: .76rem;
 }
@@ -5198,8 +5214,12 @@ body {
     opacity: 1;
     pointer-events: auto;
   }
+  .properties-filter-panel {
+    grid-template-columns: 1fr 1fr;
+  }
   .properties-filter-panel .properties-filter-search {
     display: flex;
+    grid-column: 1 / -1;
   }
   .properties-mobile-filter-head {
     display: flex;
@@ -5242,6 +5262,7 @@ body {
   }
   .properties-result-meta {
     top: 118px;
+    display: flex;
   }
   .property-grid.is-list-view .property-card,
   .property-grid.is-list-view .property-card-link {
