@@ -493,10 +493,33 @@ export function AdminPropertiesPage() {
 
   useEffect(() => {
     if (!unlocked) return;
+
     const timer = window.setTimeout(() => {
+      const requestId = ++propertyRequestId.current;
       setSelectedIds([]);
-      void refresh();
+      setLoadingList(true);
+
+      const filterData = currentListFilters(0, 50);
+      void Promise.all([
+        listAdminProperties({ data: filterData }),
+        countFilteredAdminProperties({ data: filterData }),
+      ])
+        .then(([rows, filteredCount]) => {
+          if (requestId !== propertyRequestId.current) return;
+          setProperties(rows);
+          setPropertyOffset(rows.length);
+          setFilteredTotal(filteredCount);
+          setPropertyHasMore(rows.length < filteredCount);
+        })
+        .catch((error) => {
+          if (requestId !== propertyRequestId.current) return;
+          toast.error(error instanceof Error ? error.message : "اعمال فیلترها انجام نشد.");
+        })
+        .finally(() => {
+          if (requestId === propertyRequestId.current) setLoadingList(false);
+        });
     }, 350);
+
     return () => window.clearTimeout(timer);
   }, [unlocked, query, listFilter, listTransaction, listType, listNeighborhood, listSort]);
 
@@ -937,7 +960,7 @@ export function AdminPropertiesPage() {
                 <div className="admin-panel-head">
                   <div>
                     <span className="kicker">فایل‌ها</span>
-                    <h2>{filtered.length.toLocaleString("fa-IR")} مورد</h2>
+                    <h2>{filteredTotal.toLocaleString("fa-IR")} مورد مطابق فیلتر</h2>
                   </div>
                   <div className="admin-list-toolbar" style={{ width: "100%" }}>
                     <label className="admin-search" style={{ flex: 1 }}>
@@ -979,7 +1002,7 @@ export function AdminPropertiesPage() {
                       <option value="title">عنوان الفبایی</option>
                       <option value="price_desc">بیشترین قیمت</option>
                     </select>
-                    <div className="admin-results-meta"><ArrowUpDown size={14} /> {filtered.length.toLocaleString("fa-IR")} نتیجه</div>
+                    <div className="admin-results-meta"><ArrowUpDown size={14} /> {filtered.length.toLocaleString("fa-IR")} مورد نمایش‌داده‌شده</div>
                   </div>
                   <div className="admin-list-toolbar" style={{ marginTop: 10, justifyContent: "space-between" }}>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
@@ -992,6 +1015,8 @@ export function AdminPropertiesPage() {
                           <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetStatus("published")}>انتشار ({selectedIds.length.toLocaleString("fa-IR")})</button>
                           <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetStatus("draft")}>پیش‌نویس</button>
                           <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetStatus("archived")}>بایگانی</button>
+                          <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetFeatured(true)}><Star size={15} /> ویژه</button>
+                          <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetFeatured(false)}>حذف ویژه</button>
                           <button type="button" className="btn-ghost danger" disabled={bulkBusy} onClick={() => void bulkDelete()}><Trash2 size={15} /> حذف گروهی</button>
                           <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => setSelectedIds([])}>پاک کردن انتخاب</button>
                         </>
@@ -1039,6 +1064,24 @@ export function AdminPropertiesPage() {
                               {STATUS_LABEL[property.status]}
                             </span>
                             {property.featured ? <span data-featured>ویژه</span> : null}
+                            {(() => {
+                              const quality = propertyQuality(property);
+                              return (
+                                <span
+                                  title={"امتیاز تکمیل اطلاعات: " + quality.score + " از 100"}
+                                  style={{
+                                    border: "1px solid " + (quality.complete ? "rgba(126, 220, 173, .28)" : "rgba(224, 196, 122, .28)"),
+                                    background: quality.complete ? "rgba(126, 220, 173, .08)" : "rgba(224, 196, 122, .08)",
+                                    color: quality.complete ? "#8ee8bf" : "#e0c47a",
+                                    borderRadius: 999,
+                                    padding: "3px 7px",
+                                    fontSize: 11,
+                                  }}
+                                >
+                                  {quality.label} · {quality.score}
+                                </span>
+                              );
+                            })()}
                           </div>
                           <h3>{property.title}</h3>
                           <p>
