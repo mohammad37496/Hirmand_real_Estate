@@ -9,7 +9,8 @@ export type AnalyticsEvent =
   | "property_compare"
   | "budget_match_submit"
   | "budget_match_contact"
-  | "search_share";
+  | "search_share"
+  | "property_search";
 
 export function trackAnalyticsEvent(
   event: AnalyticsEvent,
