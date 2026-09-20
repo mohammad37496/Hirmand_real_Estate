@@ -24,13 +24,14 @@ export default defineEventHandler(async (event) => {
       visitors: { today: 0, last7: 0, last30: 0, pageviewsToday: 0, pageviewsLast7: 0, pageviewsLast30: 0 },
       visitorDays: [],
       topPages: [],
+      topProperties: [],
       eventStats: [],
       recentLeads: [],
     };
   }
 
   const sql = await getSql();
-  const [propertyStats, leadStats, propertyTypes, leadDays, musicStats, recentLeads, visitorStats, visitorDays, topPages, eventStats] = await Promise.all([
+  const [propertyStats, leadStats, propertyTypes, leadDays, musicStats, recentLeads, visitorStats, visitorDays, topPages, topProperties, eventStats] = await Promise.all([
     sql.query<Record<string, unknown>>(`
       select
         count(*)::int as total,
@@ -132,6 +133,24 @@ export default defineEventHandler(async (event) => {
     }),
     sql.query<Record<string, unknown>>(`
       select
+        e.property_slug,
+        p.title,
+        p.neighborhood,
+        count(*)::int as views
+      from site_events e
+      left join properties p on p.slug = e.property_slug
+      where e.day >= (current_timestamp at time zone 'Asia/Tehran')::date - 29
+        and e.event_name = 'property_view'
+        and e.property_slug is not null
+      group by e.property_slug, p.title, p.neighborhood
+      order by views desc
+      limit 8
+    `).catch((error) => {
+      console.error("[admin-dashboard] top properties unavailable", error);
+      return [];
+    }),
+    sql.query<Record<string, unknown>>(`
+      select
         event_name,
         count(*)::int as count
       from site_events
@@ -195,6 +214,12 @@ export default defineEventHandler(async (event) => {
       path: String(row.path),
       pageviews: Number(row.pageviews) || 0,
       uniqueVisitors: Number(row.unique_visitors) || 0,
+    })),
+    topProperties: topProperties.map((row) => ({
+      slug: String(row.property_slug),
+      title: String(row.title ?? "فایل حذف‌شده"),
+      neighborhood: String(row.neighborhood ?? ""),
+      views: Number(row.views) || 0,
     })),
     eventStats: eventStats.map((row) => ({
       event: String(row.event_name),
