@@ -198,7 +198,7 @@ export function BudgetMatcher() {
 
         <label className="field">
           <span>نوع ملک</span>
-          <select value={propertyType} onChange={(event) => setPropertyType(event.target.value)}>
+          <select value={propertyType} onChange={(event) => setPropertyType(event.target.value as PropertyType | "")}>
             <option value="">همه انواع ملک</option>
             {PROPERTY_TYPES.map((item) => (
               <option key={item.id} value={item.id}>{item.title}</option>
