@@ -1,10 +1,11 @@
-import { createError, defineEventHandler, readBody } from "h3";
+import { createError, defineEventHandler, readBody, setResponseHeader } from "h3";
 import { lookupPartnerContract } from "@/lib/partner-program.server";
 
 export default defineEventHandler(async (event) => {
-  const body = (await readBody(event).catch(() => ({}))) as { trackingCode?: string };
-  const code = (body.trackingCode ?? "").trim();
-  if (!code) {
+  setResponseHeader(event, "cache-control", "no-store");
+  const body = (await readBody(event).catch(() => ({}))) as { trackingCode?: unknown };
+  const code = typeof body.trackingCode === "string" ? body.trackingCode.trim().toUpperCase() : "";
+  if (!code || code.length > 32 || !/^HIR-\d{2}-[A-Z0-9]{8}$/.test(code)) {
     throw createError({ statusCode: 400, statusMessage: "کد رهگیری را وارد کنید." });
   }
   const result = await lookupPartnerContract(code);
