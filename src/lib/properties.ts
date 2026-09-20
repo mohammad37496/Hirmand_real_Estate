@@ -718,6 +718,15 @@ export const bulkSetPropertyFeatured = createServerFn({ method: "POST" })
        returning id`,
       [data.featured, data.ids],
     );
+    if (rows.length) {
+      await sql.query(
+        `insert into property_change_history (property_id, action, before_state, after_state)
+         select id, 'updated', null, jsonb_build_object('featured', $1)
+         from properties
+         where id = any($2::text[])`,
+        [data.featured, data.ids],
+      );
+    }
     return { success: true, updated: rows.length };
   });
 
@@ -735,6 +744,15 @@ export const bulkAssignPropertyConsultant = createServerFn({ method: "POST" })
        returning id`,
       [data.contactName, data.contactPhone, data.ids],
     );
+    if (rows.length) {
+      await sql.query(
+        `insert into property_change_history (property_id, action, before_state, after_state)
+         select id, 'updated', null, jsonb_build_object('contactName', $1, 'contactPhone', $2)
+         from properties
+         where id = any($3::text[])`,
+        [data.contactName, data.contactPhone, data.ids],
+      );
+    }
     return { success: true, updated: rows.length };
   });
 
