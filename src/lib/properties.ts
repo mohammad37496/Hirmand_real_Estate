@@ -3,6 +3,7 @@ import { getCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { calculateBudgetMatch, DEFAULT_RAHN_RATE as MATCH_DEFAULT_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
 
 export type PropertyStatus = "draft" | "published" | "archived";
 export type PropertyTransaction = "buy" | "sell" | "rent" | "mortgage";
@@ -106,6 +107,21 @@ const propertyInputSchema = z.object({
   status: z.enum(["draft", "published", "archived"]).default("published"),
   featured: z.boolean().default(false),
 });
+
+const budgetMatchSchema = z
+  .object({
+    depositBudget: z.number().int().min(0).max(999999999999999),
+    rentBudget: z.number().int().min(0).max(999999999999999),
+    propertyType: z
+      .enum(["apartment", "villa", "office", "heritage", "land", "commercial"])
+      .optional(),
+    neighborhood: z.string().trim().max(80).optional(),
+    bedrooms: z.number().int().min(1).max(30).optional(),
+    limit: z.number().int().min(1).max(24).optional().default(12),
+  })
+  .refine((value) => value.depositBudget > 0 || value.rentBudget > 0, {
+    message: "حداقل یکی از مبالغ بودجه باید بیشتر از صفر باشد.",
+  });
 
 const adminKeySchema = z.object({});
 
@@ -344,6 +360,72 @@ export const listRelatedProperties = createServerFn({ method: "GET" })
       [data.slug, data.neighborhood, data.propertyType, data.limit],
     );
     return rows.map(mapProperty);
+  });
+
+export type PropertyBudgetMatch = BudgetMatchDetails & {
+  property: Property;
+};
+
+export const matchPublishedPropertiesByBudget = createServerFn({ method: "GET" })
+  .validator(budgetMatchSchema)
+  .handler(async ({ data }) => {
+    if (dbSource === "unconfigured") return [];
+
+    const sql = await getSql();
+    const rate = MATCH_DEFAULT_RAHN_RATE;
+    const budgetTotal = data.depositBudget + (data.rentBudget * 1_000_000) / rate;
+    const totalExpr =
+      "(coalesce(deposit, 0)::numeric + (coalesce(rent, 0)::numeric * 1000000 / $1::numeric))";
+
+    const rows = await sql.query<Record<string, unknown>>(
+      [
+        "select " + DETAIL_COLUMNS,
+        "from properties",
+        "where status = 'published'",
+        "and transaction_type in ('rent', 'mortgage')",
+        "and (coalesce(deposit, 0) > 0 or coalesce(rent, 0) > 0)",
+        "and ($5::text is null or property_type = $5)",
+        "and ($6::text is null or neighborhood = $6 or neighborhood ilike '%' || $6 || '%')",
+        "and ($7::int is null or bedrooms >= $7)",
+        "and " + totalExpr + " <= $4::numeric * 1.15",
+        "order by",
+        "case",
+        "  when coalesce(deposit, 0) <= $2 and coalesce(rent, 0) <= $3 then 0",
+        "  when " + totalExpr + " <= $4::numeric then 1",
+        "  else 2",
+        "end asc,",
+        "abs(" + totalExpr + " - $4::numeric) asc,",
+        "featured desc, published_at desc nulls last, created_at desc",
+        "limit $8",
+      ].join(" "),
+      [
+        rate,
+        data.depositBudget,
+        data.rentBudget,
+        budgetTotal,
+        data.propertyType ?? null,
+        data.neighborhood?.trim() || null,
+        data.bedrooms ?? null,
+        data.limit,
+      ],
+    );
+
+    const budget: BudgetInput = {
+      depositBudget: data.depositBudget,
+      rentBudget: data.rentBudget,
+    };
+
+    return rows
+      .map(mapProperty)
+      .map((property) => {
+        const details = calculateBudgetMatch(property, budget, rate);
+        return details ? { property, ...details } : null;
+      })
+      .filter((match): match is PropertyBudgetMatch => Boolean(match))
+      .sort((a, b) => {
+        const tierOrder = { within: 0, convertible: 1, near: 2 } as const;
+        return tierOrder[a.tier] - tierOrder[b.tier] || b.score - a.score;
+      });
   });
 
 const adminListSchema = z.object({
