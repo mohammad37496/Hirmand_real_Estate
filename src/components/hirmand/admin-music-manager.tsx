@@ -221,7 +221,7 @@ export function AdminMusicManager() {
       const response = await fetch("/api/music-admin", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: actionName, adminKey, id, active }),
+        body: JSON.stringify({ action: actionName, id, active }),
       });
       const data = (await response.json().catch(() => null)) as
         | { statusMessage?: string; message?: string }
