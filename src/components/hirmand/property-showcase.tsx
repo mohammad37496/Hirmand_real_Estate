@@ -1,20 +1,18 @@
-import { useEffect, useState, type MouseEvent } from "react";
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Building2,
   CarFront,
   ChevronLeft,
-  Heart,
   Home,
   MapPinned,
   Search,
-  Share2,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES } from "@/lib/site";
 import { formatToman } from "@/lib/money";
 import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
 import { listPublishedProperties } from "@/lib/properties";
-import { trackAnalyticsEvent } from "@/lib/analytics";
+import { PropertyActions } from "./property-actions";
 import { Reveal } from "./reveal";
 
 const PROPERTY_TYPE_LABEL: Record<PropertyType, string> = {
@@ -32,68 +30,7 @@ function priceLabel(property: Property) {
 }
 function imageFor(property: Property) { return property.images[0] || FALLBACK_IMAGES[property.propertyType]; }
 
-const FAVORITES_KEY = "hirmand-favorite-properties";
-
-function readFavorites(): string[] {
-  try {
-    const raw = localStorage.getItem(FAVORITES_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
-  } catch {
-    return [];
-  }
-}
-
-function toggleFavorite(slug: string): boolean {
-  const current = readFavorites();
-  const exists = current.includes(slug);
-  const next = exists ? current.filter((item) => item !== slug) : [...current, slug];
-  try {
-    localStorage.setItem(FAVORITES_KEY, JSON.stringify(next.slice(-100)));
-  } catch {
-    // Favorites are optional; ignore storage failures.
-  }
-  return !exists;
-}
-
-async function shareProperty(property: Property) {
-  const url = new URL(`/properties/${property.slug}`, window.location.origin).toString();
-  const shareData = { title: property.title, text: `فایل «${property.title}» در هیرمند`, url };
-
-  try {
-    if (navigator.share) {
-      await navigator.share(shareData);
-    } else {
-      await navigator.clipboard.writeText(url);
-      alert("لینک فایل کپی شد.");
-    }
-    trackAnalyticsEvent("property_share", property.slug);
-  } catch {
-    // User cancelled the native share sheet.
-  }
-}
-
 export function PropertyCard({ property }: { property: Property }) {
-  const [favorite, setFavorite] = useState(false);
-
-  useEffect(() => {
-    setFavorite(readFavorites().includes(property.slug));
-  }, [property.slug]);
-
-  function onFavorite(event: MouseEvent<HTMLButtonElement>) {
-    event.preventDefault();
-    event.stopPropagation();
-    const next = toggleFavorite(property.slug);
-    setFavorite(next);
-    trackAnalyticsEvent("property_favorite", property.slug);
-  }
-
-  function onShare(event: MouseEvent<HTMLButtonElement>) {
-    event.preventDefault();
-    event.stopPropagation();
-    void shareProperty(property);
-  }
-
   return (
     <article className="property-card">
       <Link
@@ -153,27 +90,7 @@ export function PropertyCard({ property }: { property: Property }) {
         </div>
       </Link>
 
-      <div className="property-card-actions">
-        <button
-          type="button"
-          className={\`property-card-action\${favorite ? " is-active" : ""}\`}
-          onClick={onFavorite}
-          aria-label={favorite ? "حذف از ذخیره‌ها" : "ذخیره فایل"}
-          aria-pressed={favorite}
-          title={favorite ? "حذف از ذخیره‌ها" : "ذخیره فایل"}
-        >
-          <Heart size={16} fill={favorite ? "currentColor" : "none"} />
-        </button>
-        <button
-          type="button"
-          className="property-card-action"
-          onClick={onShare}
-          aria-label="اشتراک‌گذاری فایل"
-          title="اشتراک‌گذاری"
-        >
-          <Share2 size={16} />
-        </button>
-      </div>
+      <PropertyActions property={property} compact />
     </article>
   );
 }
