@@ -720,7 +720,7 @@ export function SitePage({ initialProperties = [] }: { initialProperties?: impor
       <Services onPick={(title) => goInquiry({ deal: title })} />
       <Properties onPick={(title) => goInquiry({ propertyType: title })} />
       <PropertyShowcase initialProperties={initialProperties} />
-      <Reveal as="section" className="section" id="budget-section"><BudgetMatcher /></Reveal>
+      <BudgetMatcher />
       <Process />
       <Tools />
       <TrackingCta />
