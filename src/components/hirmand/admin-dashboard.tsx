@@ -572,6 +572,7 @@ export function AdminDashboard({
                   property_view: "بازدید فایل",
                   property_compare: "افزودن به مقایسه",
                   search_share: "اشتراک جست‌وجو",
+                  property_search: "جست‌وجوی فایل",
                 };
                 return (
                   <div key={item.event} className="admin-breakdown-row">
