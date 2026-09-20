@@ -5429,3 +5429,43 @@ body::before {
     width: 100%;
   }
 }
+
+
+/* Pro experience: price drops, recommendations and CRM follow-ups */
+.property-badge-discount {
+  background: rgba(93, 211, 158, 0.14);
+  border-color: rgba(93, 211, 158, 0.28);
+  color: #8ee8bf;
+}
+.smart-recommendations {
+  position: relative;
+}
+.smart-recommendations .kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.smart-recommendations-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: -12px 0 22px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.admin-lead-followup {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 8px;
+  padding: 5px 9px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+.admin-lead-followup.is-due {
+  border-color: rgba(255, 107, 107, 0.25);
+  background: rgba(255, 107, 107, 0.09);
+  color: #ffb1b1;
+}
