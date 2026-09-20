@@ -20,6 +20,85 @@ function listToLines(items: string[]) {
   return items.join("\n");
 }
 
+const MAX_IMAGE_DIMENSION = 2560;
+const IMAGE_QUALITY = 0.82;
+const MAX_FILE_BYTES = 25 * 1024 * 1024;
+
+async function loadImageDimensions(file: File): Promise<{ width: number; height: number; close?: () => void }> {
+  if (typeof createImageBitmap === "function") {
+    const bitmap = await createImageBitmap(file);
+    return { width: bitmap.width, height: bitmap.height, close: () => bitmap.close() };
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const element = new Image();
+      element.onload = () => resolve(element);
+      element.onerror = () => reject(new Error("خواندن تصویر انجام نشد."));
+      element.src = objectUrl;
+    });
+    return { width: image.naturalWidth, height: image.naturalHeight };
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+async function optimizeImage(file: File): Promise<{ file: File; savedBytes: number }> {
+  if (!file.type.startsWith("image/") || file.type === "image/gif" || file.type === "image/svg+xml") {
+    return { file, savedBytes: 0 };
+  }
+
+  if (file.type === "image/webp") {
+    const dimensions = await loadImageDimensions(file);
+    dimensions.close?.();
+    if (dimensions.width <= MAX_IMAGE_DIMENSION && dimensions.height <= MAX_IMAGE_DIMENSION) {
+      return { file, savedBytes: 0 };
+    }
+  }
+
+  const dimensions = await loadImageDimensions(file);
+  const maxDimension = Math.max(dimensions.width, dimensions.height);
+  const scale = maxDimension > MAX_IMAGE_DIMENSION ? MAX_IMAGE_DIMENSION / maxDimension : 1;
+  const width = Math.max(1, Math.round(dimensions.width * scale));
+  const height = Math.max(1, Math.round(dimensions.height * scale));
+  dimensions.close?.();
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const element = new Image();
+      element.onload = () => resolve(element);
+      element.onerror = () => reject(new Error("پردازش تصویر انجام نشد."));
+      element.src = objectUrl;
+    });
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d", { alpha: true });
+    if (!context) return { file, savedBytes: 0 };
+
+    context.drawImage(image, 0, 0, width, height);
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/webp", IMAGE_QUALITY),
+    );
+
+    if (!blob || blob.size >= file.size) {
+      return { file, savedBytes: 0 };
+    }
+
+    const baseName = file.name.replace(/\.[^.]+$/, "") || "property-image";
+    const optimized = new File([blob], baseName + ".webp", {
+      type: "image/webp",
+      lastModified: Date.now(),
+    });
+    return { file: optimized, savedBytes: file.size - optimized.size };
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 export function AdminMediaField({ value, onChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -78,18 +157,23 @@ export function AdminMediaField({ value, onChange }: Props) {
       toast.error("نوع یکی از فایل‌ها پشتیبانی نمی‌شود.");
       return;
     }
-    if (list.some((file) => file.size > 25 * 1024 * 1024)) {
-      toast.error("حجم هر فایل باید حداکثر ۲۵ مگابایت باشد.");
+    if (list.some((file) => file.size > MAX_FILE_BYTES)) {
+      toast.error("حجم فایل اولیه باید حداکثر ۲۵ مگابایت باشد.");
       return;
     }
 
     setUploading(true);
     setUploadProgress(0);
     const uploaded: string[] = [];
+    let optimizedBytes = 0;
 
     try {
       for (let index = 0; index < list.length; index += 1) {
-        const file = list[index]!;
+        const originalFile = list[index]!;
+        const optimized = await optimizeImage(originalFile);
+        const file = optimized.file;
+        optimizedBytes += optimized.savedBytes;
+
         const safeName = file.name
           .replace(/[^\w.\u0600-\u06FF-]+/g, "-")
           .slice(0, 90);
@@ -112,10 +196,14 @@ export function AdminMediaField({ value, onChange }: Props) {
       }
 
       setItems([...items, ...uploaded]);
+      const savedLabel = optimizedBytes > 0
+        ? ` · ${Math.round(optimizedBytes / 1024 / 1024)} مگابایت حجم کم شد`
+        : "";
+
       toast.success(
         uploaded.length === 1
-          ? "فایل با موفقیت آپلود شد."
-          : uploaded.length.toLocaleString("fa-IR") + " فایل آپلود شد.",
+          ? "فایل با موفقیت آپلود شد." + savedLabel
+          : uploaded.length.toLocaleString("fa-IR") + " فایل آپلود شد." + savedLabel,
       );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "آپلود انجام نشد.");
@@ -170,7 +258,7 @@ export function AdminMediaField({ value, onChange }: Props) {
             <Upload size={22} />
             <strong>آپلود از گالری یا کامپیوتر</strong>
             <span>تصویر یا ویدیو را بکشید و رها کنید · یا کلیک کنید</span>
-            <small>jpg / png / webp / gif / svg / mp4 / webm · حداکثر ۲۵ مگابایت برای هر فایل · تا ۱۲ فایل</small>
+            <small>jpg / png / webp / gif / svg / mp4 / webm · تصاویر به WebP و حداکثر ۲۵۶۰px بهینه می‌شوند · حداکثر ۲۵ مگابایت · تا ۱۲ فایل</small>
           </>
         )}
       </div>
