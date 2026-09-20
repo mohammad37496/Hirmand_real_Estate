@@ -14,7 +14,7 @@ export const Route = createRootRoute({
       },
       { title: SITE.title },
       { name: "description", content: SITE.description },
-      { name: "theme-color", content: "#860a0a" },
+      { name: "theme-color", content: "#0f766e" },
       { name: "color-scheme", content: "dark" },
       { name: "author", content: SITE.nameFa },
       { name: "referrer", content: "strict-origin-when-cross-origin" },
