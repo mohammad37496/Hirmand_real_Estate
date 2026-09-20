@@ -189,16 +189,31 @@ export function AdminDashboard({
   return (
     <div className="admin-dashboard">
       <div className="admin-dashboard-stats">
-        {stats.map(({ label, value, icon: Icon, tone }) => (
-          <button key={label} type="button" className="admin-dashboard-stat" data-tone={tone} onClick={label.includes("درخواست") || label.includes("لید") ? onOpenLeads : onOpenProperties}>
-            <span className="admin-dashboard-stat-icon"><Icon size={19} /></span>
-            <span>
-              <small>{label}</small>
-              <strong>{value.toLocaleString("fa-IR")}</strong>
-            </span>
-            <ArrowLeft size={16} />
-          </button>
-        ))}
+        {stats.map(({ label, value, icon: Icon, tone }) => {
+          const action = label.includes("درخواست") || label.includes("لید")
+            ? onOpenLeads
+            : label.includes("فایل")
+              ? onOpenProperties
+              : undefined;
+
+          return (
+            <button
+              key={label}
+              type="button"
+              className="admin-dashboard-stat"
+              data-tone={tone}
+              onClick={action}
+              disabled={!action}
+            >
+              <span className="admin-dashboard-stat-icon"><Icon size={19} /></span>
+              <span>
+                <small>{label}</small>
+                <strong>{value.toLocaleString("fa-IR")}</strong>
+              </span>
+              {action ? <ArrowLeft size={16} /> : null}
+            </button>
+          );
+        })}
       </div>
 
       <div className="admin-dashboard-grid">
