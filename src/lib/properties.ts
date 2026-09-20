@@ -867,11 +867,91 @@ export const saveProperty = createServerFn({ method: "POST" })
         price = excluded.price,
         deposit = excluded.deposit,
         rent = excluded.rent,
-        previous_price = case when $28::numeric is not null then $28::numeric else properties.previous_price end,
-        previous_deposit = case when $29::numeric is not null then $29::numeric else properties.previous_deposit end,
-        previous_rent = case when $30::numeric is not null then $30::numeric else properties.previous_rent end,
-        price_changed_at = case when $31::numeric is not null then current_timestamp else properties.price_changed_at end,
-        price_drop_percent = case when $31::numeric is not null then $31::numeric else null end,
+        previous_price = properties.price,
+        previous_deposit = properties.deposit,
+        previous_rent = properties.rent,
+        price_changed_at = case
+          when (
+            case
+              when properties.transaction_type = 'rent' then coalesce(properties.rent, properties.deposit)
+              when properties.transaction_type = 'mortgage' then properties.deposit
+              else properties.price
+            end
+          ) is not null
+          and (
+            case
+              when excluded.transaction_type = 'rent' then coalesce(excluded.rent, excluded.deposit)
+              when excluded.transaction_type = 'mortgage' then excluded.deposit
+              else excluded.price
+            end
+          ) is not null
+          and (
+            case
+              when properties.transaction_type = 'rent' then coalesce(properties.rent, properties.deposit)
+              when properties.transaction_type = 'mortgage' then properties.deposit
+              else properties.price
+            end
+          ) > 0
+          and (
+            case
+              when excluded.transaction_type = 'rent' then coalesce(excluded.rent, excluded.deposit)
+              when excluded.transaction_type = 'mortgage' then excluded.deposit
+              else excluded.price
+            end
+          ) < (
+            case
+              when properties.transaction_type = 'rent' then coalesce(properties.rent, properties.deposit)
+              when properties.transaction_type = 'mortgage' then properties.deposit
+              else properties.price
+            end
+          )
+          then current_timestamp
+          else properties.price_changed_at
+        end,
+        price_drop_percent = case
+          when (
+            case
+              when properties.transaction_type = 'rent' then coalesce(properties.rent, properties.deposit)
+              when properties.transaction_type = 'mortgage' then properties.deposit
+              else properties.price
+            end
+          ) > 0
+          and (
+            case
+              when excluded.transaction_type = 'rent' then coalesce(excluded.rent, excluded.deposit)
+              when excluded.transaction_type = 'mortgage' then excluded.deposit
+              else excluded.price
+            end
+          ) < (
+            case
+              when properties.transaction_type = 'rent' then coalesce(properties.rent, properties.deposit)
+              when properties.transaction_type = 'mortgage' then properties.deposit
+              else properties.price
+            end
+          )
+          then round((
+            (
+              case
+                when properties.transaction_type = 'rent' then coalesce(properties.rent, properties.deposit)
+                when properties.transaction_type = 'mortgage' then properties.deposit
+                else properties.price
+              end
+            ) - (
+              case
+                when excluded.transaction_type = 'rent' then coalesce(excluded.rent, excluded.deposit)
+                when excluded.transaction_type = 'mortgage' then excluded.deposit
+                else excluded.price
+              end
+            )
+          ) / nullif((
+            case
+              when properties.transaction_type = 'rent' then coalesce(properties.rent, properties.deposit)
+              when properties.transaction_type = 'mortgage' then properties.deposit
+              else properties.price
+            end
+          ), 0) * 100, 2)
+          else null
+        end,
         description = excluded.description,
         features = excluded.features,
         images = excluded.images,
@@ -911,10 +991,6 @@ export const saveProperty = createServerFn({ method: "POST" })
         data.contactName,
         data.contactPhone,
         publishedAt,
-        existing?.price ?? null,
-        existing?.deposit ?? null,
-        existing?.rent ?? null,
-        dropPercent,
       ],
     );
 
