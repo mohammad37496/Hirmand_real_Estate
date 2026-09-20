@@ -76,22 +76,22 @@ export default defineEventHandler(async (event) => {
     sql.query<Record<string, unknown>>(`
       select
         count(*) filter (
-          where day = (current_timestamp at time zone $Asia/Tehran$)::date
+          where day = (current_timestamp at time zone 'Asia/Tehran')::date
         )::int as today,
         count(*) filter (
-          where day >= (current_timestamp at time zone $Asia/Tehran$)::date - 6
+          where day >= (current_timestamp at time zone 'Asia/Tehran')::date - 6
         )::int as last7,
         count(*) filter (
-          where day >= (current_timestamp at time zone $Asia/Tehran$)::date - 29
+          where day >= (current_timestamp at time zone 'Asia/Tehran')::date - 29
         )::int as last30,
         coalesce(sum(pageviews) filter (
-          where day = (current_timestamp at time zone $Asia/Tehran$)::date
+          where day = (current_timestamp at time zone 'Asia/Tehran')::date
         ), 0)::int as pageviews_today,
         coalesce(sum(pageviews) filter (
-          where day >= (current_timestamp at time zone $Asia/Tehran$)::date - 6
+          where day >= (current_timestamp at time zone 'Asia/Tehran')::date - 6
         ), 0)::int as pageviews_last7,
         coalesce(sum(pageviews) filter (
-          where day >= (current_timestamp at time zone $Asia/Tehran$)::date - 29
+          where day >= (current_timestamp at time zone 'Asia/Tehran')::date - 29
         ), 0)::int as pageviews_last30
       from site_visitor_days
     `).catch((error) => {
@@ -104,7 +104,7 @@ export default defineEventHandler(async (event) => {
         count(*)::int as unique_visitors,
         coalesce(sum(pageviews), 0)::int as pageviews
       from site_visitor_days
-      where day >= (current_timestamp at time zone $Asia/Tehran$)::date - 13
+      where day >= (current_timestamp at time zone 'Asia/Tehran')::date - 13
       group by day
       order by day asc
     `).catch((error) => {
@@ -112,8 +112,6 @@ export default defineEventHandler(async (event) => {
       return [];
     }),
   ]);
-  ]);
-
   const p = propertyStats[0] ?? {};
   const l = leadStats[0] ?? {};
   const m = musicStats[0] ?? {};
