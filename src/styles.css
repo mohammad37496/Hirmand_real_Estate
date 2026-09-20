@@ -3,6 +3,7 @@
 @import "@fontsource/vazirmatn/500.css";
 @import "@fontsource/vazirmatn/600.css";
 @import "@fontsource/vazirmatn/700.css";
+@import "./styles/premium.css";
 
 @theme {
   --color-bg: #07090d;
