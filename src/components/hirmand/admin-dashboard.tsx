@@ -150,8 +150,8 @@ export function AdminDashboard({
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const response = await fetch("/api/admin-dashboard", {
         method: "POST",
@@ -173,7 +173,7 @@ export function AdminDashboard({
 
   useEffect(() => {
     void load();
-    const timer = window.setInterval(() => void load(), 60_000);
+    const timer = window.setInterval(() => void load(true), 60_000);
     return () => window.clearInterval(timer);
   }, [load]);
 
