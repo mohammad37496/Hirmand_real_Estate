@@ -573,7 +573,7 @@ async function uploadDivarImages(token: string, urls: string[]) {
   ];
 
   const detectImageType = (bytes: Buffer, headerType: string) => {
-    if (/^image\\//i.test(headerType)) return headerType.split(";")[0].toLowerCase();
+    if (/^image\//i.test(headerType)) return headerType.split(";")[0].toLowerCase();
     if (bytes.subarray(0, 8).toString("hex").startsWith("89504e47")) return "image/png";
     if (bytes.subarray(0, 3).toString("hex") === "ffd8ff") return "image/jpeg";
     if (
