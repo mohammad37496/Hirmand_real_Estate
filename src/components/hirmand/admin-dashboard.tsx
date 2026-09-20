@@ -57,6 +57,10 @@ type DashboardData = {
     title: string;
     neighborhood: string;
     views: number;
+    uniqueViews: number;
+    calls: number;
+    whatsapp: number;
+    favorites: number;
   }[];
   eventStats: {
     event: string;
@@ -447,6 +451,12 @@ export function AdminDashboard({
                     </span>
                     <strong>{item.views.toLocaleString("fa-IR")}</strong>
                   </div>
+                  <small>
+                    {item.uniqueViews.toLocaleString("fa-IR")} نفر ·{" "}
+                    {item.calls.toLocaleString("fa-IR")} تماس ·{" "}
+                    {item.whatsapp.toLocaleString("fa-IR")} واتساپ ·{" "}
+                    {item.favorites.toLocaleString("fa-IR")} ذخیره
+                  </small>
                   <a
                     href={`/properties/${encodeURIComponent(item.slug)}`}
                     target="_blank"
