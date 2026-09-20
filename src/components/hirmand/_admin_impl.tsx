@@ -605,20 +605,7 @@ export function AdminPropertiesPage() {
     };
   }, [properties, serverStats, filteredTotal]);
 
-  const stats = useMemo(() => {
-    const published = properties.filter((p) => p.status === "published").length;
-    const draft = properties.filter((p) => p.status === "draft").length;
-    const archived = properties.filter((p) => p.status === "archived").length;
-    const featured = properties.filter((p) => p.featured).length;
 
-    return {
-      total: serverStats?.total ?? properties.length,
-      published: serverStats?.published ?? published,
-      draft: serverStats?.draft ?? draft,
-      archived: serverStats?.archived ?? archived,
-      featured,
-    };
-  }, [properties, serverStats]);
 
   async function loadMoreProperties() {
     if (!unlocked || loadingList || !propertyHasMore) return;
