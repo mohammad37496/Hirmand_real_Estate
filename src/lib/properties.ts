@@ -693,6 +693,15 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
        returning id`,
       [data.status, data.ids],
     );
+    if (rows.length) {
+      await sql.query(
+        `insert into property_change_history (property_id, action, before_state, after_state)
+         select id, 'updated', null, jsonb_build_object('status', $1)
+         from properties
+         where id = any($2::text[])`,
+        [data.status, data.ids],
+      );
+    }
     return { success: true, updated: rows.length };
   });
 
