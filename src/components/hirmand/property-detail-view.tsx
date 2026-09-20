@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type TouchEvent } from "react";
 import {
   ArrowRight,
   Bath,
@@ -169,7 +169,7 @@ function Gallery({
     return Math.hypot(dx, dy);
   }
 
-  function handleTouchStart(event: React.TouchEvent<HTMLDivElement>) {
+  function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
     if (event.touches.length >= 2) {
       pinchStartDistance.current = touchDistance(event.touches);
       pinchStartScale.current = zoomScale;
@@ -179,7 +179,7 @@ function Gallery({
     touchStartX.current = event.touches[0]?.clientX ?? null;
   }
 
-  function handleTouchMove(event: React.TouchEvent<HTMLDivElement>) {
+  function handleTouchMove(event: TouchEvent<HTMLDivElement>) {
     if (event.touches.length < 2 || pinchStartDistance.current == null) return;
     event.preventDefault();
     const distance = touchDistance(event.touches);
@@ -188,7 +188,7 @@ function Gallery({
     setZoomScale(Math.min(3, Math.max(1, nextScale)));
   }
 
-  function handleTouchEnd(event: React.TouchEvent<HTMLDivElement>) {
+  function handleTouchEnd(event: TouchEvent<HTMLDivElement>) {
     if (pinchStartDistance.current != null) {
       pinchStartDistance.current = null;
       if (zoomScale < 1.05) setZoomScale(1);
