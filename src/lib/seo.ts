@@ -150,7 +150,7 @@ export function propertyHead(property: Property | null, slug: string) {
 export function trackingHead() {
   const title = `ثبت قرارداد و کد رهگیری | ${SITE.nameFa}`;
   const description =
-    "ثبت قرارداد در سامانه و دریافت کد رهگیری — به‌زودی در گروه مشاورین املاک هیرمند.";
+    "سامانه باشگاه همکاران هیرمند؛ ورود امن املاک، ثبت قرارداد، دریافت کد رهگیری و مشاهده وضعیت مهرها و پاداش ثبت رایگان.";
   return {
     meta: [
       { title },
