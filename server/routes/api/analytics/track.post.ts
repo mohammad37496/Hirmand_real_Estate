@@ -94,6 +94,7 @@ export default defineEventHandler(async (event) => {
           ", $1, 1, $2, $2, current_timestamp, current_timestamp) " +
           "on conflict (day, visitor_id) do update set " +
           "pageviews = site_visitor_days.pageviews + case " +
+          "when site_visitor_days.pageviews = 0 then 1 " +
           "when site_visitor_days.last_path = excluded.last_path " +
           "and site_visitor_days.last_seen_at >= current_timestamp - interval '10 seconds' then 0 else 1 end, " +
           "last_path = excluded.last_path, last_seen_at = current_timestamp",
