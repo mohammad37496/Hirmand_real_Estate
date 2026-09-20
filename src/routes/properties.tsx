@@ -13,6 +13,7 @@ import {
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { PROPERTY_TYPES, NEIGHBORHOOD_NAMES, SERVICES, SITE } from "@/lib/site";
+import { absoluteUrl, socialMeta } from "@/lib/seo";
 
 const PAGE_SIZE = 48;
 const SAVED_SEARCHES_KEY = "hirmand-saved-searches";
@@ -60,13 +61,24 @@ export const Route = createFileRoute("/properties")({
       return { properties: [], total: 0 };
     }
   },
-  head: () => ({
-    meta: [
-      { title: "فایل‌های ملکی اصفهان | هیرمند" },
-      { name: "description", content: "فایل‌های منتشرشده خرید، فروش، رهن و اجاره در اصفهان از گروه مشاورین املاک هیرمند." },
-    ],
-    links: [{ rel: "canonical", href: `${SITE.url}/properties` }],
-  }),
+  head: () => {
+    const title = "فایل‌های ملکی اصفهان | خرید، فروش، رهن و اجاره | هیرمند";
+    const description = "فایل‌های منتشرشده خرید، فروش، رهن و اجاره ملک در اصفهان از گروه مشاورین املاک هیرمند.";
+    const url = absoluteUrl("/properties");
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { name: "keywords", content: "فایل ملکی اصفهان, خرید آپارتمان اصفهان, فروش خانه اصفهان, رهن و اجاره اصفهان, املاک هیرمند" },
+        { name: "robots", content: "index, follow, max-image-preview:large" },
+        ...socialMeta({ title, description, url }),
+      ],
+      links: [
+        { rel: "canonical", href: url },
+        { rel: "alternate", hrefLang: "fa-IR", href: url },
+      ],
+    };
+  },
   component: PropertiesIndexPage,
 });
 
