@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
-import { SITE } from "@/lib/site";
+import { PROPERTY_TYPES, SITE } from "@/lib/site";
 import { formatToman } from "@/lib/money";
 
 const COMPARE_KEY = "hirmand-compare-properties";
@@ -32,6 +32,10 @@ export const Route = createFileRoute("/compare")({
   }),
   component: ComparePage,
 });
+
+const PROPERTY_TYPE_LABEL: Record<Property["propertyType"], string> = Object.fromEntries(
+  PROPERTY_TYPES.map((item) => [item.id, item.title]),
+) as Record<Property["propertyType"], string>;
 
 function valueMoney(value: string | null) {
   if (!value) return "—";
@@ -67,7 +71,11 @@ function ComparePage() {
   }, []);
 
   function clearCompare() {
-    localStorage.removeItem(COMPARE_KEY);
+    try {
+      localStorage.removeItem(COMPARE_KEY);
+    } catch {
+      // Ignore storage failures.
+    }
     setProperties([]);
   }
 
@@ -123,7 +131,7 @@ function ComparePage() {
                   </tr>
                   <tr>
                     <th>نوع ملک</th>
-                    {properties.map((p) => <td key={p.id}>{p.propertyType}</td>)}
+                    {properties.map((p) => <td key={p.id}>{PROPERTY_TYPE_LABEL[p.propertyType] ?? p.propertyType}</td>)}
                   </tr>
                   <tr>
                     <th>محله</th>
