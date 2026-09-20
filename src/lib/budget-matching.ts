@@ -1,6 +1,7 @@
-import { DEFAULT_RAHN_RATE } from "@/lib/finance";
-import type { Property } from "@/lib/properties";
 
+import type { Property } from "./properties";
+
+export const DEFAULT_MATCH_RAHN_RATE = 30_000;
 export const BUDGET_NEAR_RATIO = 1.15;
 
 export type BudgetInput = {
@@ -29,7 +30,7 @@ function numeric(value: string | null | undefined): number {
 export function totalRahnEquivalent(
   deposit: number,
   rent: number,
-  rate = DEFAULT_RAHN_RATE,
+  rate = DEFAULT_MATCH_RAHN_RATE,
 ): number {
   if (rate <= 0) return Math.max(0, deposit);
   return Math.max(0, deposit) + (Math.max(0, rent) * 1_000_000) / rate;
@@ -37,7 +38,7 @@ export function totalRahnEquivalent(
 
 export function budgetTotalEquivalent(
   budget: BudgetInput,
-  rate = DEFAULT_RAHN_RATE,
+  rate = DEFAULT_MATCH_RAHN_RATE,
 ): number {
   return totalRahnEquivalent(budget.depositBudget, budget.rentBudget, rate);
 }
@@ -45,7 +46,7 @@ export function budgetTotalEquivalent(
 export function calculateBudgetMatch(
   property: Property,
   budget: BudgetInput,
-  rate = DEFAULT_RAHN_RATE,
+  rate = DEFAULT_MATCH_RAHN_RATE,
 ): BudgetMatchDetails | null {
   const deposit = numeric(property.deposit);
   const rent = numeric(property.rent);
