@@ -1,5 +1,6 @@
-import { defineEventHandler, readBody, createError } from "h3";
+import { createError, defineEventHandler, getCookie, readBody } from "h3";
 import { dbSource, getSql } from "@/lib/db";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 
 type Action = "list" | "create" | "toggle" | "delete";
 type Body = { action?: Action; adminKey?: string; id?: string; active?: boolean; title?: string; artist?: string; url?: string; mimeType?: string; sizeBytes?: number };
@@ -43,12 +44,6 @@ function normalizeBlobUrl(raw: string): string {
   }
 }
 
-function requireAdmin(adminKey: string | undefined) {
-  const expected = process.env.HIRMAND_ADMIN_KEY?.trim();
-  if (!expected || !adminKey || adminKey.trim() !== expected) {
-    throw createError({ statusCode: 401, statusMessage: "کلید مدیریت نادرست است." });
-  }
-}
 function getConfiguredBlobStoreId(): string | null {
   const raw = process.env.BLOB_STORE_ID?.trim();
   if (!raw) return null;
@@ -58,7 +53,13 @@ function getConfiguredBlobStoreId(): string | null {
 
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as Body;
-  requireAdmin(body.adminKey);
+
+  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: "نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.",
+    });
+  }
   if (dbSource === "unconfigured") {
     if (body.action === "list") return { tracks: [] };
     throw createError({ statusCode: 503, statusMessage: "پایگاه داده برای مدیریت موسیقی تنظیم نشده است." });
