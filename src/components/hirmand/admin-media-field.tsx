@@ -1,3 +1,4 @@
+import { upload } from "@vercel/blob/client";
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { Film, ImagePlus, Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ function listToLines(items: string[]) {
 export function AdminMediaField({ adminKey, value, onChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const items = linesToList(value);
 
@@ -47,39 +49,48 @@ export function AdminMediaField({ adminKey, value, onChange }: Props) {
     }
 
     setUploading(true);
+    setUploadProgress(0);
     const uploaded: string[] = [];
+
     try {
-      for (const file of list) {
-        const body = new FormData();
-        body.append("adminKey", adminKey);
-        body.append("file", file);
-        const res = await fetch("/api/upload", { method: "POST", body });
-        const data = (await res.json().catch(() => ({}))) as {
-          url?: string;
-          statusMessage?: string;
-          message?: string;
-        };
-        if (!res.ok || !data.url) {
-          throw new Error(
-            data.statusMessage || data.message || `آپلود «${file.name}» ناموفق بود.`,
-          );
-        }
-        uploaded.push(data.url);
+      for (let index = 0; index < list.length; index += 1) {
+        const file = list[index]!;
+        const safeName = file.name
+          .replace(/[^\w.\u0600-\u06FF-]+/g, "-")
+          .slice(0, 90);
+        const pathname = "properties/" + Date.now() + "-" + index + "-" + safeName;
+
+        const blob = await upload(pathname, file, {
+          access: "public",
+          handleUploadUrl: "/api/upload",
+          headers: { "x-hirmand-admin-key": adminKey },
+          clientPayload: JSON.stringify({
+            contentType: file.type,
+            sizeBytes: file.size,
+          }),
+          multipart: file.size >= 5 * 1024 * 1024,
+          onUploadProgress: (event) => {
+            setUploadProgress(Math.max(0, Math.min(100, event.percentage)));
+          },
+        });
+
+        uploaded.push(blob.url);
       }
+
       setItems([...items, ...uploaded]);
       toast.success(
         uploaded.length === 1
           ? "فایل با موفقیت آپلود شد."
-          : `${uploaded.length.toLocaleString("fa-IR")} فایل آپلود شد.`,
+          : uploaded.length.toLocaleString("fa-IR") + " فایل آپلود شد.",
       );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "آپلود انجام نشد.");
     } finally {
       setUploading(false);
+      setUploadProgress(0);
       if (inputRef.current) inputRef.current.value = "";
     }
   }
-
   function onPick(e: ChangeEvent<HTMLInputElement>) {
     if (e.target.files?.length) void uploadFiles(e.target.files);
   }
@@ -118,14 +129,14 @@ export function AdminMediaField({ adminKey, value, onChange }: Props) {
         {uploading ? (
           <>
             <Loader2 size={22} className="admin-spin" />
-            <strong>در حال آپلود...</strong>
+            <strong>در حال آپلود… {uploadProgress}%</strong>
           </>
         ) : (
           <>
             <Upload size={22} />
             <strong>آپلود از گالری یا کامپیوتر</strong>
             <span>تصویر یا ویدیو را بکشید و رها کنید · یا کلیک کنید</span>
-            <small>jpg / png / webp / mp4 / webm · حداکثر ۲۵ مگابایت · تا ۱۲ فایل</small>
+            <small>jpg / png / webp / mp4 / webm · حداکثر ۲۵ مگابایت برای هر فایل · تا ۱۲ فایل</small>
           </>
         )}
       </div>
