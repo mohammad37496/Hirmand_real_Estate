@@ -19,7 +19,14 @@ export function VisitorTracker() {
         headers: { "content-type": "application/json" },
         credentials: "same-origin",
         keepalive: true,
-        body: JSON.stringify({ path: pathname, ...payload }),
+        body: JSON.stringify({
+        path: pathname,
+        referrer: document.referrer,
+        utmSource: new URLSearchParams(window.location.search).get("utm_source") || "",
+        utmMedium: new URLSearchParams(window.location.search).get("utm_medium") || "",
+        utmCampaign: new URLSearchParams(window.location.search).get("utm_campaign") || "",
+        ...payload,
+      }),
       }).catch(() => {
         // Analytics must never interfere with site navigation.
       });
