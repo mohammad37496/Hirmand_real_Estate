@@ -46,6 +46,7 @@ import type { PropertyCardData } from "@/lib/properties";
 import { Reveal } from "./reveal";
 import { scrollToId } from "./scroll";
 import { SiteChrome } from "./site-chrome";
+import { SmartRecommendations } from "./smart-recommendations";
 import { EitaaIcon, InstagramIcon, TelegramIcon, WhatsAppIcon } from "./social-icons";
 
 const PRINCIPLE_ICONS = {
@@ -754,6 +755,7 @@ export function SitePage({ initialProperties = [] }: { initialProperties?: Prope
       <Services onPick={(title) => goInquiry({ deal: title })} />
       <Properties onPick={(title) => goInquiry({ propertyType: title })} />
       <PropertyShowcase initialProperties={initialProperties} />
+      <SmartRecommendations />
       <BudgetMatcher />
       <Process />
       <Tools />
