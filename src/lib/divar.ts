@@ -52,6 +52,7 @@ export type DivarFile = {
   sourceUrl: string;
   filterStatus: DivarFilterStatus;
   importedPropertyId: string | null;
+  propertySlug: string | null;
   importedAt: string | null;
   lastSeenAt: string;
   createdAt: string;
@@ -546,47 +547,108 @@ function slugify(value: string) {
 
 async function uploadDivarImages(token: string, urls: string[]) {
   const imported: string[] = [];
+  const failures: { source: string; status?: number; reason: string }[] = [];
+  const userAgents = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/153.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/152.0.0.0 Safari/537.36",
+  ];
+
   for (let index = 0; index < Math.min(urls.length, MAX_IMAGES); index += 1) {
     const source = urls[index];
-    try {
-      const response = await fetch(source, {
-        headers: {
-          "user-agent": "Mozilla/5.0",
-          referer: DIVAR_WEB,
-        },
-        signal: AbortSignal.timeout(20_000),
-      });
-      if (!response.ok) continue;
+    let lastReason = "خطای ناشناخته";
 
-      const contentType = response.headers.get("content-type") ?? "";
-      if (!contentType.startsWith("image/")) continue;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const response = await fetch(source, {
+          redirect: "follow",
+          headers: {
+            accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+            "accept-language": "fa-IR,fa;q=0.9,en;q=0.8",
+            "cache-control": "no-cache",
+            origin: DIVAR_WEB,
+            referer: `${DIVAR_WEB}/v/${token}`,
+            "sec-fetch-dest": "image",
+            "sec-fetch-mode": "no-cors",
+            "sec-fetch-site": "same-site",
+            "user-agent": userAgents[attempt % userAgents.length],
+          },
+          signal: AbortSignal.timeout(25_000),
+        });
 
-      const lengthHeader = Number(response.headers.get("content-length") ?? "0");
-      if (lengthHeader > MAX_IMAGE_BYTES) continue;
+        if (!response.ok) {
+          lastReason = `HTTP ${response.status}`;
+          if (attempt < 2) {
+            await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)));
+            continue;
+          }
+          failures.push({ source, status: response.status, reason: lastReason });
+          break;
+        }
 
-      const bytes = Buffer.from(await response.arrayBuffer());
-      if (!bytes.length || bytes.length > MAX_IMAGE_BYTES) continue;
+        const bytes = Buffer.from(await response.arrayBuffer());
+        if (!bytes.length) {
+          lastReason = "فایل تصویر خالی بود";
+          continue;
+        }
+        if (bytes.length > MAX_IMAGE_BYTES) {
+          lastReason = "حجم تصویر بیش از حد مجاز بود";
+          failures.push({ source, reason: lastReason });
+          lastReason = "";
+          break;
+        }
 
-      const extension =
-        contentType.includes("png") ? "png" :
-        contentType.includes("webp") ? "webp" :
-        contentType.includes("gif") ? "gif" : "jpg";
+        const headerType = response.headers.get("content-type") ?? "";
+        const type =
+          /^image\//i.test(headerType)
+            ? headerType.split(";")[0].toLowerCase()
+            : bytes.subarray(0, 8).toString("hex").startsWith("89504e47")
+              ? "image/png"
+              : bytes.subarray(0, 3).toString("hex") === "ffd8ff"
+                ? "image/jpeg"
+                : bytes.subarray(0, 6).toString("ascii") === "GIF89a" || bytes.subarray(0, 6).toString("ascii") === "GIF87a"
+                  ? "image/gif"
+                  : bytes.subarray(0, 4).toString("ascii") === "RIFF" && bytes.subarray(8, 12).toString("ascii") === "WEBP"
+                    ? "image/webp"
+                    : "";
 
-      const blob = await put(
-        `properties/divar/${token}/${index + 1}-${crypto.randomUUID()}.${extension}`,
-        bytes,
-        {
-          access: "public",
-          contentType,
-          addRandomSuffix: false,
-        },
-      );
-      imported.push(blob.url);
-    } catch (error) {
-      console.warn("[divar] image import failed", source, error);
+        if (!type) {
+          lastReason = "محتوای دریافتی تصویر معتبر نبود";
+          failures.push({ source, reason: lastReason });
+          break;
+        }
+
+        const extension =
+          type === "image/png" ? "png" :
+          type === "image/webp" ? "webp" :
+          type === "image/gif" ? "gif" : "jpg";
+
+        const blob = await put(
+          `properties/divar/${token}/${String(index + 1).padStart(2, "0")}-${crypto.randomUUID()}.${extension}`,
+          bytes,
+          {
+            access: "public",
+            contentType: type,
+            addRandomSuffix: false,
+          },
+        );
+        imported.push(blob.url);
+        lastReason = "";
+        break;
+      } catch (error) {
+        lastReason = error instanceof Error ? error.message : "خطای دریافت تصویر";
+        if (attempt < 2) {
+          await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)));
+          continue;
+        }
+      }
+    }
+
+    if (lastReason) {
+      failures.push({ source, reason: lastReason });
     }
   }
-  return imported;
+
+  return { imported, failures };
 }
 
 function parseJsonArray(value: unknown): string[] {
@@ -630,6 +692,7 @@ function mapRow(row: Record<string, unknown>): DivarFile {
     sourceUrl: String(row.source_url),
     filterStatus: row.filter_status as DivarFilterStatus,
     importedPropertyId: row.imported_property_id == null ? null : String(row.imported_property_id),
+    propertySlug: row.imported_property_slug == null ? null : String(row.imported_property_slug),
     importedAt: row.imported_at ? new Date(String(row.imported_at)).toISOString() : null,
     lastSeenAt: new Date(String(row.last_seen_at)).toISOString(),
     createdAt: new Date(String(row.created_at)).toISOString(),
@@ -649,10 +712,11 @@ export const listDivarFiles = createServerFn({ method: "POST" })
     if (dbSource === "unconfigured") return [];
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
-      `select *
+      `select divar_files.*, p.slug as imported_property_slug
        from divar_files
-       where filter_status = $1
-       order by last_seen_at desc, created_at desc
+       left join properties p on p.id = divar_files.imported_property_id
+       where divar_files.filter_status = $1
+       order by divar_files.last_seen_at desc, divar_files.created_at desc
        limit $2`,
       [data.status, data.limit],
     );
@@ -940,9 +1004,6 @@ export const importDivarFile = createServerFn({ method: "POST" })
     if (row.filter_status === "rejected") {
       throw new Error("این فایل به دلیل نشانه‌های مشاور/آژانس قابل ورود نیست.");
     }
-    if (existingPropertyId) {
-      return { propertyId: existingPropertyId, alreadyImported: true, imageCount: 0 };
-    }
 
     const detailText = [
       row.title,
@@ -962,9 +1023,58 @@ export const importDivarFile = createServerFn({ method: "POST" })
     const token = String(row.token);
     const originalImages = parseJsonArray(row.images);
     const images = originalImages.slice(0, MAX_IMAGES);
-    const importedImages = await uploadDivarImages(token, images);
 
-    const id = crypto.randomUUID();
+    if (existingPropertyId) {
+      const propertyRows = await sql.query<Record<string, unknown>>(
+        "select id, slug, status, images from properties where id = $1 limit 1",
+        [existingPropertyId],
+      );
+      const existingProperty = propertyRows[0];
+      if (!existingProperty) {
+        await sql.query(
+          "update divar_files set imported_property_id = null, imported_at = null, filter_status = 'accepted', updated_at = current_timestamp where id = $1",
+          [data.id],
+        );
+      } else {
+        const currentImages = parseJsonArray(existingProperty.images);
+        const importedResult =
+          currentImages.length > 0
+            ? { imported: currentImages, failures: [] as { source: string; status?: number; reason: string }[] }
+            : await uploadDivarImages(token, images);
+
+        await sql.query(
+          `update properties
+           set status = 'published',
+               published_at = coalesce(published_at, current_timestamp),
+               images = $2::jsonb,
+               updated_at = current_timestamp
+           where id = $1`,
+          [existingPropertyId, JSON.stringify(importedResult.imported)],
+        );
+
+        await sql.query(
+          `update divar_files
+           set filter_status='imported',
+               imported_at=coalesce(imported_at, current_timestamp),
+               updated_at=current_timestamp
+           where id=$1`,
+          [data.id],
+        );
+
+        return {
+          propertyId: existingPropertyId,
+          propertySlug: String(existingProperty.slug ?? ""),
+          alreadyImported: true,
+          imageCount: importedResult.imported.length,
+          imageFailures: importedResult.failures.length,
+        };
+      }
+    }
+
+    const importedResult = await uploadDivarImages(token, images);
+    const importedImages = importedResult.imported;
+
+    const id = existingPropertyId ? existingPropertyId : crypto.randomUUID();
     const propertyType = propertyTypeToSite(String(row.property_type) as DivarPropertyType);
     const title = String(row.title).trim() || "فایل دیوار";
     const slug = `${slugify(title)}-${id.slice(0, 8)}`;
@@ -978,10 +1088,10 @@ export const importDivarFile = createServerFn({ method: "POST" })
         built_year, parking, elevator, storage, price, deposit, rent, description,
         features, images, contact_name, contact_phone, published_at
       ) values (
-        $1,$2,'draft',false,$3,$4,$5,'اصفهان',
+        $1,$2,'published',false,$3,$4,$5,'اصفهان',
         $6,null,$7,$8,$9,$10,$11,
         $12,$13,$14,$15,$16,$17,$18,$19,
-        $20::jsonb,$21::jsonb,$22,$23,null
+        $20::jsonb,$21::jsonb,$22,$23,current_timestamp
       )`,
       [
         id,
@@ -1022,7 +1132,9 @@ export const importDivarFile = createServerFn({ method: "POST" })
 
     return {
       propertyId: id,
+      propertySlug: slug,
       alreadyImported: false,
       imageCount: importedImages.length,
+      imageFailures: importedResult.failures.length,
     };
   });

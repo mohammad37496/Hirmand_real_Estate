@@ -144,11 +144,17 @@ export function AdminDivarFiles() {
     setImportingId(file.id);
     try {
       const result = await importDivarFile({ data: { id: file.id } });
-      toast.success(
-        result.imageCount > 0
-          ? `فایل به‌صورت پیش‌نویس وارد سایت شد؛ ${result.imageCount.toLocaleString("fa-IR")} تصویر هم روی فضای رسانه سایت کپی شد.`
-          : "فایل به‌صورت پیش‌نویس وارد سایت شد. تصاویر این آگهی برای کپی در دسترس نبودند.",
-      );
+      if (result.imageFailures > 0) {
+        toast.warning(
+          `فایل منتشر شد، اما ${result.imageFailures.toLocaleString("fa-IR")} تصویر از دیوار قابل دریافت نبود؛ دوباره روی «تکمیل تصاویر» بزنید.`,
+        );
+      } else {
+        toast.success(
+          result.imageCount > 0
+            ? `فایل در سایت منتشر شد و ${result.imageCount.toLocaleString("fa-IR")} تصویر روی فضای رسانه سایت کپی شد.`
+            : "فایل در سایت منتشر شد، اما تصویر قابل دریافت از دیوار پیدا نشد.",
+        );
+      }
       await load();
       setTab("imported");
     } catch (error) {
@@ -300,12 +306,30 @@ export function AdminDivarFiles() {
                           onClick={() => void importFile(file)}
                         >
                           {importing ? <Loader2 size={15} className="admin-spin" /> : <UploadCloud size={15} />}
-                          {importing ? "در حال ورود…" : "ورود به سایت (پیش‌نویس)"}
+                          {importing ? "در حال ورود و انتشار…" : "انتشار در سایت"}
                         </button>
                       ) : (
-                        <a className="btn-ghost" href={`/properties/${file.importedPropertyId ?? ""}`} target="_blank" rel="noreferrer">
-                          <Import size={15} /> مشاهده فایل سایت
-                        </a>
+                        <>
+                          <button
+                            type="button"
+                            className="btn-gold"
+                            disabled={importing}
+                            onClick={() => void importFile(file)}
+                          >
+                            {importing ? <Loader2 size={15} className="admin-spin" /> : <UploadCloud size={15} />}
+                            {importing ? "در حال تکمیل…" : "تکمیل تصاویر / انتشار"}
+                          </button>
+                          {file.importedPropertyId ? (
+                            <a
+                              className="btn-ghost"
+                              href={file.propertySlug ? `/properties/${file.propertySlug}` : "#"}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <Import size={15} /> مشاهده فایل سایت
+                            </a>
+                          ) : null}
+                        </>
                       )}
                     </div>
                   </div>
