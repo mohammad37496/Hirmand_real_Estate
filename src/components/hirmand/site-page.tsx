@@ -142,7 +142,7 @@ function Hero() {
     if (transaction) params.set("transaction", transaction);
     if (type) params.set("type", type);
     if (neighborhood) params.set("neighborhood", neighborhood);
-    trackAnalyticsEvent("inquiry_click");
+    trackAnalyticsEvent("property_search");
     window.location.assign(`/properties${params.toString() ? `?${params.toString()}` : ""}`);
   }
 
