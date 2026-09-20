@@ -50,10 +50,18 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
             decoding="async"
             onError={(event) => {
               const image = event.currentTarget;
+              const source = image.dataset.source ?? image.src;
+              if (image.dataset.proxy !== "1" && /divarcdn\\.com/i.test(source)) {
+                image.dataset.proxy = "1";
+                image.src = `https://wsrv.nl/?url=${encodeURIComponent(source)}`;
+                return;
+              }
               if (image.dataset.fallback === "1") return;
               image.dataset.fallback = "1";
               image.src = FALLBACK_IMAGES[property.propertyType];
             }}
+            referrerPolicy="no-referrer-when-downgrade"
+            data-source={imageFor(property)}
           />
           <div className="property-card-badges">
             {property.featured ? (
@@ -100,6 +108,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
               </span>
             ) : null}
           </div>
+          <span className="property-card-details-link">مشاهده جزئیات فایل <ChevronLeft size={14} /></span>
         </div>
       </Link>
 
