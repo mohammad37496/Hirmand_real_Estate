@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { FileKey, MessageCircle, Phone } from "lucide-react";
 import { Toaster } from "sonner";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { SITE } from "@/lib/site";
 import { CallMenu } from "./call-menu";
