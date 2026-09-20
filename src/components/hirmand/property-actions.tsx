@@ -1,7 +1,7 @@
 import { useEffect, useState, type MouseEvent } from "react";
 import { ArrowLeftRight, Heart, Share2 } from "lucide-react";
 import { toast } from "sonner";
-import type { Property } from "@/lib/properties";
+import type { PropertyCardData } from "@/lib/properties";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 
 const FAVORITES_KEY = "hirmand-favorite-properties";
@@ -65,7 +65,7 @@ function toggleFavorite(slug: string): boolean {
   return !exists;
 }
 
-async function shareProperty(property: Property) {
+async function shareProperty(property: Pick<PropertyCardData, "slug" | "title">) {
   const url = new URL(
     `/properties/${property.slug}`,
     window.location.origin,
@@ -97,7 +97,7 @@ export function PropertyActions({
   property,
   compact = false,
 }: {
-  property: Property;
+  property: Pick<PropertyCardData, "slug" | "title">;
   compact?: boolean;
 }) {
   const [favorite, setFavorite] = useState(false);
