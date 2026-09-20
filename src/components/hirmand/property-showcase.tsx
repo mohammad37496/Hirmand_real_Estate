@@ -10,8 +10,8 @@ import {
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES } from "@/lib/site";
 import { formatToman } from "@/lib/money";
-import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
-import { listPublishedProperties } from "@/lib/properties";
+import type { PropertyCardData, PropertyType, PropertyTransaction } from "@/lib/properties";
+import { listPublishedPropertyCards } from "@/lib/properties";
 import { PropertyActions } from "./property-actions";
 import { Reveal } from "./reveal";
 
@@ -28,9 +28,9 @@ function priceLabel(property: Property) {
   if (property.transactionType === "mortgage") return property.deposit ? `رهن ${money(property.deposit)} تومان` : "تماس برای قیمت";
   return property.price ? `قیمت ${money(property.price)} تومان` : "تماس برای قیمت";
 }
-function imageFor(property: Property) { return property.images[0] || FALLBACK_IMAGES[property.propertyType]; }
+function imageFor(property: PropertyCardData) { return property.image || FALLBACK_IMAGES[property.propertyType]; }
 
-export function PropertyCard({ property }: { property: Property }) {
+export function PropertyCard({ property }: { property: PropertyCardData }) {
   return (
     <article className="property-card">
       <Link
@@ -103,7 +103,7 @@ export function PropertyCard({ property }: { property: Property }) {
 export function PropertyShowcase({ initialProperties }: { initialProperties: Property[] }) {
   const [properties, setProperties] = useState(initialProperties); const [transactionType, setTransactionType] = useState(""); const [propertyType, setPropertyType] = useState(""); const [neighborhood, setNeighborhood] = useState(""); const [loading, setLoading] = useState(false);
   const neighborhoods = NEIGHBORHOOD_NAMES;
-  async function applyFilters() { setLoading(true); try { const next = await listPublishedProperties({ data: { transactionType: (transactionType || undefined) as PropertyTransaction | undefined, propertyType: (propertyType || undefined) as PropertyType | undefined, neighborhood: neighborhood || undefined } }); setProperties(next); } finally { setLoading(false); } }
+  async function applyFilters() { setLoading(true); try { const next = await listPublishedPropertyCards({ data: { transactionType: (transactionType || undefined) as PropertyTransaction | undefined, propertyType: (propertyType || undefined) as PropertyType | undefined, neighborhood: neighborhood || undefined } }); setProperties(next); } finally { setLoading(false); } }
   return <Reveal as="section" className="section property-showcase" id="listings"><SectionHead kicker="فایل‌های فعال" title="ملک‌های موجود هیرمند" text="فایل‌های منتشرشده را ببینید، جزئیات را باز کنید و برای هر ملک مستقیم با مشاور تماس بگیرید." />
     <div className="property-showcase-cta">
       <Link to="/properties" className="text-link">مشاهده همه فایل‌ها</Link>
