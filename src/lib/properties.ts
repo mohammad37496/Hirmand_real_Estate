@@ -257,8 +257,6 @@ function mapProperty(row: Record<string, unknown>): Property {
     latitude: numberOrNull(row.latitude),
     longitude: numberOrNull(row.longitude),
     priceDropPercent: numberOrNull(row.price_drop_percent),
-    latitude: numberOrNull(row.latitude),
-    longitude: numberOrNull(row.longitude),
   };
 }
 
@@ -350,6 +348,9 @@ function publicPropertyWhereSql() {
     "and ($8::int is null or area_m2 <= $8)",
     "and ($9::numeric is null or " + PRICE_EXPR + " >= $9)",
     "and ($10::numeric is null or " + PRICE_EXPR + " <= $10)",
+    "and ($11::int is null or bedrooms >= $11)",
+    "and ($12::boolean is false or parking = true)",
+    "and ($13::boolean is false or elevator = true)",
   ].join(" ");
 }
 
@@ -363,13 +364,13 @@ export const listPublishedPropertyCards = createServerFn({ method: "GET" })
       [
         "select " + CARD_COLUMNS,
         "from properties where " + publicPropertyWhereSql(),
-        "order by case when $12 = 'newest' then case when featured then 0 else 1 end else 0 end,",
-        "case when $12 = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
-        "case when $12 = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
-        "case when $12 = 'area_asc' then area_m2 end asc nulls last,",
-        "case when $12 = 'area_desc' then area_m2 end desc nulls last,",
+        "order by case when $15 = 'newest' then case when featured then 0 else 1 end else 0 end,",
+        "case when $15 = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
+        "case when $15 = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
+        "case when $15 = 'area_asc' then area_m2 end asc nulls last,",
+        "case when $15 = 'area_desc' then area_m2 end desc nulls last,",
         "published_at desc nulls last, created_at desc",
-        "limit 48 offset $11",
+        "limit 48 offset $14",
       ].join(" "),
       [...params, data.sort],
     );
@@ -386,13 +387,13 @@ export const listPublishedProperties = createServerFn({ method: "GET" })
       [
         "select " + LIST_COLUMNS,
         "from properties where " + publicPropertyWhereSql(),
-        "order by case when $12 = 'newest' then case when featured then 0 else 1 end else 0 end,",
-        "case when $12 = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
-        "case when $12 = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
-        "case when $12 = 'area_asc' then area_m2 end asc nulls last,",
-        "case when $12 = 'area_desc' then area_m2 end desc nulls last,",
+        "order by case when $15 = 'newest' then case when featured then 0 else 1 end else 0 end,",
+        "case when $15 = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
+        "case when $15 = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
+        "case when $15 = 'area_asc' then area_m2 end asc nulls last,",
+        "case when $15 = 'area_desc' then area_m2 end desc nulls last,",
         "published_at desc nulls last, created_at desc",
-        "limit 48 offset $11",
+        "limit 48 offset $14",
       ].join(" "),
       [...params, data.sort],
     );
@@ -404,7 +405,7 @@ export const countPublishedProperties = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     if (dbSource === "unconfigured") return 0;
     const sql = await getSql();
-    const params = publicFilterParams(data).slice(0, 10);
+    const params = publicFilterParams(data).slice(0, 13);
     const rows = await sql.query<{ count: number }>(
       "select count(*)::int as count from properties where " + publicPropertyWhereSql(),
       params,
