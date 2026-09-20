@@ -6,8 +6,8 @@ export function VisitorTracker() {
   const trackedRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const key = `${location.pathname}${location.search}`;
     const pathname = window.location.pathname;
+    const key = pathname;
 
     if (pathname.startsWith("/admin") || pathname.startsWith("/api")) return;
     if (trackedRef.current === key) return;
@@ -42,7 +42,7 @@ export function VisitorTracker() {
         // Analytics must never interfere with site navigation.
       });
     }
-  }, [location.pathname, location.search]);
+  }, [location.pathname]);
 
   return null;
 }
