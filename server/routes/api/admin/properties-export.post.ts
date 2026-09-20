@@ -19,14 +19,14 @@ export default defineEventHandler(async (event) => {
   }
 
   const sql = await getSql();
-  const rows = await sql.query<Record<string, unknown>>(\`
+  const rows = await sql.query<Record<string, unknown>>(`
     select id, title, slug, status, featured, transaction_type, property_type,
            neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
            built_year, parking, elevator, storage, price, deposit, rent,
            contact_name, contact_phone, created_at, updated_at
     from properties
     order by created_at desc
-  \`);
+  `);
 
   const headers = [
     "شناسه","عنوان","slug","وضعیت","ویژه","معامله","نوع ملک","محله","آدرس",
