@@ -42,7 +42,7 @@ export function AdminMusicManager() {
     } finally {
       setLoading(false);
     }
-  }, [adminKey]);
+  }, []);
 
   useEffect(() => {
     void load();
