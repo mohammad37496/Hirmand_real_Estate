@@ -20,6 +20,7 @@ export type Property = {
   slug: string;
   status: PropertyStatus;
   featured: boolean;
+  featuredUntil: string | null;
   title: string;
   transactionType: PropertyTransaction;
   propertyType: PropertyType;
@@ -228,6 +229,7 @@ function mapProperty(row: Record<string, unknown>): Property {
     slug: String(row.slug),
     status: row.status as PropertyStatus,
     featured: Boolean(row.featured),
+    featuredUntil: row.featured_until ? new Date(String(row.featured_until)).toISOString() : null,
     title: String(row.title),
     transactionType: row.transaction_type as PropertyTransaction,
     propertyType: row.property_type as PropertyType,
@@ -261,7 +263,7 @@ function mapProperty(row: Record<string, unknown>): Property {
 }
 
 const LIST_COLUMNS = `
-  id, slug, status, featured, title, transaction_type, property_type, city,
+  id, slug, status, featured, featured_until, title, transaction_type, property_type, city,
   neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
   built_year, parking, elevator, storage, price, deposit, rent,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
@@ -270,7 +272,7 @@ const LIST_COLUMNS = `
 `;
 
 const CARD_COLUMNS = `
-  id, slug, status, featured, title, transaction_type, property_type,
+  id, slug, status, featured, featured_until, title, transaction_type, property_type,
   neighborhood, area_m2, bedrooms, parking, elevator, price, deposit, rent,
   nullif(images->>0, '') as image,
   price_drop_percent,
@@ -342,7 +344,7 @@ function publicPropertyWhereSql() {
     "and ($1::text is null or transaction_type = $1)",
     "and ($2::text is null or property_type = $2)",
     "and ($3::text is null or ($5::boolean is true and neighborhood = $3) or ($5::boolean is false and neighborhood ilike '%' || $3 || '%'))",
-    "and ($4::boolean is false or featured = true)",
+    "and ($4::boolean is false or (featured = true and (featured_until is null or featured_until >= current_timestamp)))",
     "and ($6::text is null or title ilike '%' || $6 || '%' or neighborhood ilike '%' || $6 || '%' or address ilike '%' || $6 || '%')",
     "and ($7::int is null or area_m2 >= $7)",
     "and ($8::int is null or area_m2 <= $8)",
@@ -364,7 +366,7 @@ export const listPublishedPropertyCards = createServerFn({ method: "GET" })
       [
         "select " + CARD_COLUMNS,
         "from properties where " + publicPropertyWhereSql(),
-        "order by case when $15 = 'newest' then case when featured then 0 else 1 end else 0 end,",
+        "order by case when $15 = 'newest' then case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end else 0 end,",
         "case when $15 = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
         "case when $15 = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
         "case when $15 = 'area_asc' then area_m2 end asc nulls last,",
@@ -661,7 +663,7 @@ function adminPropertyWhereSql() {
     "and ($2::text is null or transaction_type = $2)",
     "and ($3::text is null or property_type = $3)",
     "and ($4::text is null or neighborhood = $4)",
-    "and ($5::boolean is false or featured = true)",
+    "and ($5::boolean is false or (featured = true and (featured_until is null or featured_until >= current_timestamp)))",
     "and ($6::text is null or title ilike '%' || $6 || '%' or neighborhood ilike '%' || $6 || '%' or coalesce(address, '') ilike '%' || $6 || '%' or contact_name ilike '%' || $6 || '%' or contact_phone ilike '%' || $6 || '%' or id ilike '%' || $6 || '%')",
   ].join(" ");
 }
@@ -712,7 +714,7 @@ export const countAdminProperties = createServerFn({ method: "POST" })
          count(*) filter (where status = 'published')::int as published,
          count(*) filter (where status = 'draft')::int as draft,
          count(*) filter (where status = 'archived')::int as archived,
-         count(*) filter (where featured = true)::int as featured
+         count(*) filter (where featured = true and (featured_until is null or featured_until >= current_timestamp))::int as featured
        from properties`,
     );
     const row = rows[0];
@@ -777,6 +779,7 @@ export const bulkSetPropertyFeatured = createServerFn({ method: "POST" })
     const rows = await sql.query<{ id: string }>(
       `update properties
        set featured = $1,
+           featured_until = case when $1 then null else null end,
            updated_at = current_timestamp
        where id = any($2::text[])
        returning id`,
