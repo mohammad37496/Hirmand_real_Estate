@@ -174,6 +174,8 @@ export function AdminPropertiesPage() {
   const [keyInput, setKeyInput] = useState("");
   const [unlocked, setUnlocked] = useState(false);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [propertyOffset, setPropertyOffset] = useState(0);
+  const [propertyHasMore, setPropertyHasMore] = useState(false);
   const [serverStats, setServerStats] = useState<{
     total: number;
     published: number;
@@ -196,10 +198,12 @@ export function AdminPropertiesPage() {
     setLoadingList(true);
     try {
       const [rows, totals] = await Promise.all([
-        listAdminProperties({ data: { adminKey: key, limit: 100 } }),
+        listAdminProperties({ data: { adminKey: key, limit: 100, offset: 0 } }),
         countAdminProperties({ data: { adminKey: key } }),
       ]);
       setProperties(rows);
+      setPropertyOffset(rows.length);
+      setPropertyHasMore(rows.length < totals.total);
       setServerStats(totals);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "بارگذاری فایل‌ها انجام نشد.");
@@ -217,12 +221,14 @@ export function AdminPropertiesPage() {
     setLoadingList(true);
     try {
       const [rows, totals] = await Promise.all([
-        listAdminProperties({ data: { adminKey: key, limit: 100 } }),
+        listAdminProperties({ data: { adminKey: key, limit: 100, offset: 0 } }),
         countAdminProperties({ data: { adminKey: key } }),
       ]);
       setAdminKey(key);
       setForm((prev) => ({ ...prev, adminKey: key }));
       setProperties(rows);
+      setPropertyOffset(rows.length);
+      setPropertyHasMore(rows.length < totals.total);
       setServerStats(totals);
       setUnlocked(true);
       if (showToast) toast.success("ورود به پنل مدیریت موفق بود.");
@@ -239,6 +245,8 @@ export function AdminPropertiesPage() {
     setAdminKey("");
     setKeyInput("");
     setProperties([]);
+    setPropertyOffset(0);
+    setPropertyHasMore(false);
     setServerStats(null);
     setForm(emptyForm());
   }
@@ -271,6 +279,28 @@ export function AdminPropertiesPage() {
       featured,
     };
   }, [properties, serverStats]);
+
+  async function loadMoreProperties() {
+    if (!adminKey || loadingList || !propertyHasMore) return;
+
+    setLoadingList(true);
+    try {
+      const rows = await listAdminProperties({
+        data: {
+          adminKey,
+          limit: 100,
+          offset: propertyOffset,
+        },
+      });
+      setProperties((current) => [...current, ...rows]);
+      setPropertyOffset((current) => current + rows.length);
+      setPropertyHasMore(propertyOffset + rows.length < stats.total);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "بارگذاری فایل‌های بیشتر انجام نشد.");
+    } finally {
+      setLoadingList(false);
+    }
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -654,6 +684,23 @@ export function AdminPropertiesPage() {
                     ))}
                   </div>
                 )}
+
+                {propertyHasMore ? (
+                  <div className="admin-properties-load-more">
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      onClick={() => void loadMoreProperties()}
+                      disabled={loadingList}
+                    >
+                      {loadingList ? "در حال بارگذاری…" : "نمایش فایل‌های بیشتر"}
+                    </button>
+                    <small>
+                      نمایش {properties.length.toLocaleString("fa-IR")} از{" "}
+                      {stats.total.toLocaleString("fa-IR")} فایل
+                    </small>
+                  </div>
+                ) : null}
               </section>
             </>
           ) : null}
