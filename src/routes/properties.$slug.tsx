@@ -106,7 +106,7 @@ function Gallery({
             aria-pressed={index === active}
           >
             {isVideoUrl(src) ? (
-              <video src={src} muted playsInline preload="metadata" />
+              <video src={src} muted playsInline preload="none" />
             ) : (
               <img src={src} alt="" loading="lazy" />
             )}
