@@ -413,6 +413,22 @@ export const countPublishedProperties = createServerFn({ method: "GET" })
     return Number(rows[0]?.count) || 0;
   });
 
+export const listPublishedPropertiesByContact = createServerFn({ method: "GET" })
+  .validator(z.object({ phone: z.string().trim().min(8).max(30) }))
+  .handler(async ({ data }) => {
+    if (dbSource === "unconfigured") return [];
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select ${DETAIL_COLUMNS}
+       from properties
+       where status = 'published' and contact_phone = $1
+       order by featured desc, published_at desc nulls last, created_at desc
+       limit 48`,
+      [data.phone],
+    );
+    return rows.map(mapProperty);
+  });
+
 export const getPublishedProperty = createServerFn({ method: "GET" })
   .validator(z.object({ slug: z.string().min(1) }))
   .handler(async ({ data }) => {
