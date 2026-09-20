@@ -16,7 +16,7 @@ export const ADMIN_CSS = `
 .admin-topbar h1{font-size:1.15rem;font-weight:700;margin:0}
 .admin-topbar p{margin:2px 0 0;color:#7d766c;font-size:.82rem}
 .admin-topbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.admin-content{padding:24px;flex:1}
+.admin-content{padding:24px;flex:1;width:100%;max-width:1680px;margin:0 auto;box-sizing:border-box}
 .admin-stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:24px}
 .admin-stat-card{border:1px solid rgba(244,239,230,.1);background:rgba(16,20,26,.9);border-radius:16px;padding:18px 16px;cursor:pointer;transition:border-color .15s,background .15s}
 .admin-stat-card:hover{border-color:rgba(201,162,74,.35)}
@@ -53,6 +53,8 @@ export const ADMIN_CSS = `
 .admin-icon-btn{width:36px;height:36px;display:grid;place-items:center;border:1px solid rgba(244,239,230,.1);border-radius:10px;background:rgba(255,255,255,.03);color:#b7b0a4;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
 .admin-icon-btn:hover{border-color:rgba(201,162,74,.4);color:#e0c47a;background:rgba(201,162,74,.08)}
 .admin-icon-btn.danger:hover{border-color:rgba(232,100,100,.45);color:#e88;background:rgba(232,100,100,.1)}
+.admin-nav-btn:focus-visible,.admin-icon-btn:focus-visible,.btn-gold:focus-visible,.btn-ghost:focus-visible{outline:2px solid rgba(201,162,74,.75);outline-offset:2px}
+ .admin-nav-btn:disabled,.admin-icon-btn:disabled{opacity:.5;cursor:not-allowed}
 .admin-empty{text-align:center;padding:56px 20px;color:#7d766c}
 .admin-empty svg{margin:0 auto 12px;opacity:.5}
 .admin-empty strong{display:block;color:#f4efe6;margin-bottom:6px;font-size:1.05rem}
