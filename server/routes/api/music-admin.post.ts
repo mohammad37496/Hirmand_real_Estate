@@ -1,4 +1,5 @@
 import { createError, defineEventHandler, getCookie, readBody } from "h3";
+import { del } from "@vercel/blob";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 
@@ -123,6 +124,27 @@ export default defineEventHandler(async (event) => {
     return { success: true };
   }
   if (action === "delete") {
+    const rows = await sql.query<{ url: string }>(
+      "select url from music_tracks where id = $1 limit 1",
+      [body.id],
+    );
+    const rawUrl = rows[0]?.url;
+
+    if (rawUrl) {
+      const blobUrl = normalizeBlobUrl(rawUrl);
+      try {
+        const parsed = new URL(blobUrl);
+        if (
+          parsed.protocol === "https:" &&
+          parsed.hostname.endsWith(".public.blob.vercel-storage.com")
+        ) {
+          await del(blobUrl);
+        }
+      } catch (error) {
+        console.error("[music-admin] blob cleanup failed", error);
+      }
+    }
+
     await sql.query("delete from music_tracks where id = $1", [body.id]);
     return { success: true };
   }
