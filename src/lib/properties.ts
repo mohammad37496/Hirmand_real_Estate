@@ -847,6 +847,9 @@ export const saveProperty = createServerFn({ method: "POST" })
     const price = numericStringOrNull(data.price);
     const deposit = numericStringOrNull(data.deposit);
     const rent = numericStringOrNull(data.rent);
+    const featuredUntil = data.featured && data.featuredUntil
+      ? new Date(data.featuredUntil).toISOString()
+      : null;
 
     const existingRows = await sql.query<Record<string, unknown>>(
       `select ${DETAIL_COLUMNS} from properties where id = $1 limit 1`,
@@ -860,17 +863,18 @@ export const saveProperty = createServerFn({ method: "POST" })
         id, slug, status, featured, title, transaction_type, property_type, city,
         neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
         built_year, parking, elevator, storage, price, deposit, rent, description,
-        features, images, contact_name, contact_phone, published_at
+        features, images, contact_name, contact_phone, published_at, featured_until
       ) values (
         $1, $2, $3, $4, $5, $6, $7, 'اصفهان',
         $8, $9, $10, $11, $12, $13, $14,
         $15, $16, $17, $18, $19, $20, $21, $22,
-        $23::jsonb, $24::jsonb, $25, $26, $27
+        $23::jsonb, $24::jsonb, $25, $26, $27, $28
       )
       on conflict (id) do update set
         slug = excluded.slug,
         status = excluded.status,
         featured = excluded.featured,
+        featured_until = excluded.featured_until,
         title = excluded.title,
         transaction_type = excluded.transaction_type,
         property_type = excluded.property_type,
@@ -1012,6 +1016,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         data.contactName,
         data.contactPhone,
         publishedAt,
+        featuredUntil,
       ],
     );
 
