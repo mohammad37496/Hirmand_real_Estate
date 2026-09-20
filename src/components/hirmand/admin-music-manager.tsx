@@ -1,3 +1,4 @@
+import { upload } from "@vercel/blob/client";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Loader2, Music2, Pause, Play, Trash2, Upload, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
@@ -53,6 +54,7 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
 
   async function uploadTrack(event: FormEvent) {
     event.preventDefault();
+
     if (!file) {
       toast.error("یک فایل صوتی انتخاب کنید.");
       return;
@@ -63,58 +65,31 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
     }
 
     setBusy(true);
+    setUploadProgress(0);
+
     try {
-      setUploadProgress(0);
-      const safeName = file.name.replace(/[^\\w.\\u0600-\\u06FF-]+/g, "-").slice(0, 100);
+      const safeName = file.name
+        .replace(/[^\\w.\\u0600-\\u06FF-]+/g, "-")
+        .slice(0, 100);
       const pathname = "music/" + Date.now() + "-" + safeName;
 
-      const tokenResponse = await fetch("/api/music-upload", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          adminKey,
-          pathname,
+      // Use Vercel's official browser upload client. It handles direct
+      // Blob uploads, progress events and multipart/retries for large files.
+      const blob = await upload(pathname, file, {
+        access: "public",
+        handleUploadUrl: "/api/music-upload",
+        clientPayload: JSON.stringify({
           title: title.trim(),
           artist: artist.trim(),
           contentType: file.type || "audio/mpeg",
           sizeBytes: file.size,
         }),
+        multipart: file.size >= 5 * 1024 * 1024,
+        onUploadProgress: (event) => {
+          setUploadProgress(Math.max(0, Math.min(100, event.percentage)));
+        },
       });
 
-      const tokenData = (await tokenResponse.json().catch(() => null)) as
-        | { presignedUrl?: string; publicUrl?: string; statusMessage?: string; message?: string }
-        | null;
-
-      if (!tokenResponse.ok || !tokenData?.presignedUrl || !tokenData?.publicUrl) {
-        throw new Error(
-          tokenData?.statusMessage ||
-            tokenData?.message ||
-            "ساخت لینک امن آپلود انجام نشد.",
-        );
-      }
-
-      const xhr = new XMLHttpRequest();
-
-      const uploadPromise = new Promise<void>((resolve, reject) => {
-        xhr.open("PUT", tokenData.presignedUrl!, true);
-        xhr.setRequestHeader("content-type", file.type || "audio/mpeg");
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            setUploadProgress(Math.round((event.loaded / event.total) * 100));
-          }
-        };
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
-          } else {
-            reject(new Error("آپلود فایل در Vercel Blob ناموفق بود."));
-          }
-        };
-        xhr.onerror = () => reject(new Error("ارتباط با فضای ذخیره‌سازی قطع شد."));
-        xhr.onabort = () => reject(new Error("آپلود لغو شد."));
-      });
-      xhr.send(file);
-      await uploadPromise;
       setUploadProgress(100);
 
       const response = await fetch("/api/music-admin", {
@@ -125,11 +100,12 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
           adminKey,
           title: title.trim(),
           artist: artist.trim(),
-          url: tokenData.publicUrl,
-          mimeType: file.type || "audio/mpeg",
+          url: blob.url,
+          mimeType: file.type || blob.contentType || "audio/mpeg",
           sizeBytes: file.size,
         }),
       });
+
       const data = (await response.json().catch(() => null)) as
         | { track?: AdminMusicTrack; statusMessage?: string; message?: string }
         | null;
@@ -149,9 +125,12 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
 
       const input = document.getElementById("admin-music-file") as HTMLInputElement | null;
       if (input) input.value = "";
+
       toast.success("آهنگ با موفقیت اضافه شد.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "آپلود آهنگ انجام نشد.");
+      toast.error(
+        error instanceof Error ? error.message : "آپلود آهنگ انجام نشد.",
+      );
     } finally {
       setBusy(false);
       setUploadProgress(0);
