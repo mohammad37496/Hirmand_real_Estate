@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Heart, RotateCcw, Search, SlidersHorizontal, X } from "lucide-react";
+import { ArrowLeftRight, Heart, RotateCcw, Search, SlidersHorizontal, X } from "lucide-react";
 import {
   countPublishedProperties,
   listPublishedProperties,
