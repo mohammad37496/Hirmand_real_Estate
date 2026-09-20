@@ -7,6 +7,8 @@ export type BudgetLeadMatch = {
   score: number;
   suggestedDeposit: number;
   suggestedRent: number;
+  gapEquivalent?: number;
+  reason?: string;
 };
 
 export type BudgetLeadPayload = {
