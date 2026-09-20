@@ -221,8 +221,12 @@ function PropertyDetailPage() {
               ) : null}
             </div>
 
-            <Link to="/" className="text-link" style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
-              <ArrowRight size={16} /> بازگشت به فهرست
+            <Link
+              to="/properties"
+              className="text-link"
+              style={{ display: "inline-flex", gap: 6, alignItems: "center" }}
+            >
+              <ArrowRight size={16} /> بازگشت به فهرست فایل‌ها
             </Link>
           </article>
 
