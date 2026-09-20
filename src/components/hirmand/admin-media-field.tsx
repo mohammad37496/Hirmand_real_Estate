@@ -82,7 +82,7 @@ export function AdminMediaField({ value, onChange }: Props) {
         const safeName = file.name
           .replace(/[^\w.\u0600-\u06FF-]+/g, "-")
           .slice(0, 90);
-        const pathname = "properties/" + Date.now() + "-" + index + "-" + safeName;
+        const pathname = "properties/" + Date.now() + "-" + crypto.randomUUID() + "-" + index + "-" + safeName;
 
         const blob = await upload(pathname, file, {
           access: "public",
