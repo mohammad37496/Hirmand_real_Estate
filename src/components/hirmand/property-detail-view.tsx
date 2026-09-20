@@ -102,6 +102,11 @@ function Gallery({
   featured: boolean;
 }) {
   const [active, setActive] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  function goTo(next: number) {
+    setActive((next + images.length) % images.length);
+  }
   const current = images[active] ?? images[0] ?? "";
   const fallback = "/images/type-apartment.jpg";
 
@@ -120,6 +125,16 @@ function Gallery({
               loading="eager"
             />
           )}
+          {!isVideoUrl(current) ? (
+            <button
+              type="button"
+              className="property-gallery-open"
+              onClick={() => setLightboxOpen(true)}
+              aria-label="باز کردن تصویر در اندازه بزرگ"
+            >
+              مشاهده تمام‌صفحه
+            </button>
+          ) : null}
           {featured ? <span className="property-gallery-featured">فایل ویژه</span> : null}
           {images.length > 1 ? (
             <span className="property-gallery-counter">
@@ -145,6 +160,86 @@ function Gallery({
           </button>
         ))}
       </div>
+
+      {lightboxOpen ? (
+        <div
+          className="property-lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label="نمایش تصاویر فایل"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <button
+            type="button"
+            className="property-lightbox-close"
+            onClick={() => setLightboxOpen(false)}
+            aria-label="بستن"
+          >
+            ×
+          </button>
+
+          <button
+            type="button"
+            className="property-lightbox-nav property-lightbox-prev"
+            onClick={(event) => {
+              event.stopPropagation();
+              goTo(active - 1);
+            }}
+            aria-label="تصویر قبلی"
+          >
+            ‹
+          </button>
+
+          <div
+            className="property-lightbox-stage"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {isVideoUrl(current) ? (
+              <video src={current} controls playsInline autoPlay />
+            ) : (
+              <ResilientImage
+                src={current}
+                fallback={fallback}
+                alt={title}
+                loading="eager"
+              />
+            )}
+            <div className="property-lightbox-count">
+              {(active + 1).toLocaleString("fa-IR")} / {images.length.toLocaleString("fa-IR")}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="property-lightbox-nav property-lightbox-next"
+            onClick={(event) => {
+              event.stopPropagation();
+              goTo(active + 1);
+            }}
+            aria-label="تصویر بعدی"
+          >
+            ›
+          </button>
+
+          <div className="property-lightbox-strip" onClick={(event) => event.stopPropagation()}>
+            {images.map((src, index) => (
+              <button
+                key={src}
+                type="button"
+                className={`property-lightbox-thumb${index === active ? " is-active" : ""}`}
+                onClick={() => setActive(index)}
+                aria-label={`تصویر ${(index + 1).toLocaleString("fa-IR")}`}
+              >
+                {isVideoUrl(src) ? (
+                  <video src={src} muted playsInline preload="metadata" />
+                ) : (
+                  <ResilientImage src={src} fallback={fallback} alt="" loading="lazy" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
