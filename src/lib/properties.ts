@@ -80,7 +80,6 @@ const publicFiltersSchema = z.object({
 });
 
 const propertyInputSchema = z.object({
-  adminKey: z.string().optional().default(""),
   id: z.string().optional(),
   title: z.string().trim().min(3).max(180),
   transactionType: z.enum(["buy", "sell", "rent", "mortgage"]),
@@ -108,12 +107,9 @@ const propertyInputSchema = z.object({
   featured: z.boolean().default(false),
 });
 
-const adminKeySchema = z.object({
-  adminKey: z.string().optional().default(""),
-});
+const adminKeySchema = z.object({});
 
 const idSchema = z.object({
-  adminKey: z.string().optional().default(""),
   id: z.string().min(1),
 });
 
@@ -351,7 +347,6 @@ export const listRelatedProperties = createServerFn({ method: "GET" })
   });
 
 const adminListSchema = z.object({
-  adminKey: z.string().optional().default(""),
   limit: z.number().int().min(1).max(200).optional().default(50),
   offset: z.number().int().min(0).max(10000).optional().default(0),
   status: z.enum(["draft", "published", "archived"]).optional(),
