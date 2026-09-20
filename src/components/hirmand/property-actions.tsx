@@ -24,7 +24,11 @@ function toggleCompare(slug: string): { added: boolean; next: string[] } {
   const current = readCompare();
   if (current.includes(slug)) {
     const next = current.filter((item) => item !== slug);
-    localStorage.setItem(COMPARE_KEY, JSON.stringify(next));
+    try {
+      localStorage.setItem(COMPARE_KEY, JSON.stringify(next));
+    } catch {
+      // Ignore storage failures in private browsing contexts.
+    }
     return { added: false, next };
   }
   if (current.length >= MAX_COMPARE) return { added: false, next: current };
