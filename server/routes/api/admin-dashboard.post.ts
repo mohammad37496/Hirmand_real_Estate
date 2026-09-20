@@ -23,12 +23,14 @@ export default defineEventHandler(async (event) => {
       music: { total: 0, active: 0 },
       visitors: { today: 0, last7: 0, last30: 0, pageviewsToday: 0, pageviewsLast7: 0, pageviewsLast30: 0 },
       visitorDays: [],
+      topPages: [],
+      eventStats: [],
       recentLeads: [],
     };
   }
 
   const sql = await getSql();
-  const [propertyStats, leadStats, propertyTypes, leadDays, musicStats, recentLeads, visitorStats, visitorDays] = await Promise.all([
+  const [propertyStats, leadStats, propertyTypes, leadDays, musicStats, recentLeads, visitorStats, visitorDays, topPages, eventStats] = await Promise.all([
     sql.query<Record<string, unknown>>(`
       select
         count(*)::int as total,
@@ -78,10 +80,10 @@ export default defineEventHandler(async (event) => {
         count(*) filter (
           where day = (current_timestamp at time zone 'Asia/Tehran')::date
         )::int as today,
-        count(*) filter (
+        count(distinct visitor_id) filter (
           where day >= (current_timestamp at time zone 'Asia/Tehran')::date - 6
         )::int as last7,
-        count(*) filter (
+        count(distinct visitor_id) filter (
           where day >= (current_timestamp at time zone 'Asia/Tehran')::date - 29
         )::int as last30,
         coalesce(sum(pageviews) filter (
@@ -110,6 +112,34 @@ export default defineEventHandler(async (event) => {
       order by day asc
     `).catch((error) => {
       console.error("[admin-dashboard] visitor trend unavailable", error);
+      return [];
+    }),
+    sql.query<Record<string, unknown>>(`
+      select
+        path,
+        coalesce(sum(pageviews), 0)::int as pageviews,
+        count(distinct visitor_id)::int as unique_visitors
+      from site_page_days
+      where day >= (current_timestamp at time zone 'Asia/Tehran')::date - 29
+        and path not like '/api/%'
+        and path not like '/admin%'
+      group by path
+      order by pageviews desc, unique_visitors desc
+      limit 8
+    `).catch((error) => {
+      console.error("[admin-dashboard] top pages unavailable", error);
+      return [];
+    }),
+    sql.query<Record<string, unknown>>(`
+      select
+        event_name,
+        count(*)::int as count
+      from site_events
+      where day >= (current_timestamp at time zone 'Asia/Tehran')::date - 29
+      group by event_name
+      order by count desc
+    `).catch((error) => {
+      console.error("[admin-dashboard] event stats unavailable", error);
       return [];
     }),
   ]);
@@ -160,6 +190,15 @@ export default defineEventHandler(async (event) => {
       day: String(row.day).slice(0, 10),
       uniqueVisitors: Number(row.unique_visitors) || 0,
       pageviews: Number(row.pageviews) || 0,
+    })),
+    topPages: topPages.map((row) => ({
+      path: String(row.path),
+      pageviews: Number(row.pageviews) || 0,
+      uniqueVisitors: Number(row.unique_visitors) || 0,
+    })),
+    eventStats: eventStats.map((row) => ({
+      event: String(row.event_name),
+      count: Number(row.count) || 0,
     })),
     recentLeads: recentLeads.map((row) => ({
       id: String(row.id),
