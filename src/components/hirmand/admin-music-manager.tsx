@@ -13,7 +13,7 @@ function isAutoplayBlocked(error: unknown) {
   return error instanceof DOMException && error.name === "NotAllowedError";
 }
 
-export function AdminMusicManager({ adminKey }: { adminKey: string }) {
+export function AdminMusicManager() {
   const [tracks, setTracks] = useState<AdminMusicTrack[]>([]);
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
