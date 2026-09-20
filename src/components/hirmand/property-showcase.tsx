@@ -44,6 +44,12 @@ export function PropertyCard({ property }: { property: Property }) {
             alt={property.title}
             loading="lazy"
             decoding="async"
+            onError={(event) => {
+              const image = event.currentTarget;
+              if (image.dataset.fallback === "1") return;
+              image.dataset.fallback = "1";
+              image.src = FALLBACK_IMAGES[property.propertyType];
+            }}
           />
           <div className="property-card-badges">
             {property.featured ? (
