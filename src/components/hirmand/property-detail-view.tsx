@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   Bath,
@@ -103,12 +103,111 @@ function Gallery({
 }) {
   const [active, setActive] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
+  const touchStartX = useRef<number | null>(null);
+  const pinchStartDistance = useRef<number | null>(null);
+  const pinchStartScale = useRef(1);
+
+  const fallback = "/images/type-apartment.jpg";
+  const current = images[active] ?? images[0] ?? "";
 
   function goTo(next: number) {
     setActive((next + images.length) % images.length);
+    setZoomScale(1);
   }
-  const current = images[active] ?? images[0] ?? "";
-  const fallback = "/images/type-apartment.jpg";
+
+  function closeLightbox() {
+    setLightboxOpen(false);
+    setZoomScale(1);
+    touchStartX.current = null;
+    pinchStartDistance.current = null;
+  }
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeLightbox();
+      if (event.key === "ArrowLeft") goTo(active - 1);
+      if (event.key === "ArrowRight") goTo(active + 1);
+      if (event.key === "0") setZoomScale(1);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [lightboxOpen, active]);
+
+  useEffect(() => {
+    if (!images.length) return;
+
+    const indexes = [
+      (active + 1) % images.length,
+      (active - 1 + images.length) % images.length,
+    ];
+
+    indexes.forEach((index) => {
+      const src = images[index];
+      if (!src || isVideoUrl(src)) return;
+      const candidate = mediaSourceCandidates(src, fallback)[0];
+      if (!candidate) return;
+      const image = new Image();
+      image.decoding = "async";
+      image.src = candidate;
+    });
+  }, [active, images]);
+
+  function touchDistance(touches: TouchList) {
+    if (touches.length < 2) return 0;
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.hypot(dx, dy);
+  }
+
+  function handleTouchStart(event: React.TouchEvent<HTMLDivElement>) {
+    if (event.touches.length >= 2) {
+      pinchStartDistance.current = touchDistance(event.touches);
+      pinchStartScale.current = zoomScale;
+      touchStartX.current = null;
+      return;
+    }
+    touchStartX.current = event.touches[0]?.clientX ?? null;
+  }
+
+  function handleTouchMove(event: React.TouchEvent<HTMLDivElement>) {
+    if (event.touches.length < 2 || pinchStartDistance.current == null) return;
+    event.preventDefault();
+    const distance = touchDistance(event.touches);
+    if (!distance) return;
+    const nextScale = pinchStartScale.current * (distance / pinchStartDistance.current);
+    setZoomScale(Math.min(3, Math.max(1, nextScale)));
+  }
+
+  function handleTouchEnd(event: React.TouchEvent<HTMLDivElement>) {
+    if (pinchStartDistance.current != null) {
+      pinchStartDistance.current = null;
+      if (zoomScale < 1.05) setZoomScale(1);
+      return;
+    }
+
+    const startX = touchStartX.current;
+    touchStartX.current = null;
+    if (startX == null || zoomScale > 1.05 || images.length < 2) return;
+
+    const endX = event.changedTouches[0]?.clientX ?? startX;
+    const delta = endX - startX;
+    if (Math.abs(delta) < 55) return;
+    goTo(delta > 0 ? active - 1 : active + 1);
+  }
+
+  function toggleZoom() {
+    setZoomScale((value) => (value > 1.05 ? 1 : 2.25));
+  }
 
   return (
     <div className="property-gallery-wrap">
@@ -129,7 +228,10 @@ function Gallery({
             <button
               type="button"
               className="property-gallery-open"
-              onClick={() => setLightboxOpen(true)}
+              onClick={() => {
+                setZoomScale(1);
+                setLightboxOpen(true);
+              }}
               aria-label="باز کردن تصویر در اندازه بزرگ"
             >
               مشاهده تمام‌صفحه
@@ -167,12 +269,12 @@ function Gallery({
           role="dialog"
           aria-modal="true"
           aria-label="نمایش تصاویر فایل"
-          onClick={() => setLightboxOpen(false)}
+          onClick={closeLightbox}
         >
           <button
             type="button"
             className="property-lightbox-close"
-            onClick={() => setLightboxOpen(false)}
+            onClick={closeLightbox}
             aria-label="بستن"
           >
             ×
@@ -193,20 +295,47 @@ function Gallery({
           <div
             className="property-lightbox-stage"
             onClick={(event) => event.stopPropagation()}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             {isVideoUrl(current) ? (
               <video src={current} controls playsInline autoPlay />
             ) : (
-              <ResilientImage
-                src={current}
-                fallback={fallback}
-                alt={title}
-                loading="eager"
-              />
+              <button
+                type="button"
+                className={`property-lightbox-media-button${zoomScale > 1.05 ? " is-zoomed" : ""}`}
+                onDoubleClick={(event) => {
+                  event.stopPropagation();
+                  toggleZoom();
+                }}
+                onClick={(event) => event.stopPropagation()}
+                aria-label={zoomScale > 1.05 ? "بازگرداندن اندازه تصویر" : "بزرگ‌نمایی تصویر"}
+              >
+                <ResilientImage
+                  src={current}
+                  fallback={fallback}
+                  alt={title}
+                  loading="eager"
+                />
+              </button>
             )}
             <div className="property-lightbox-count">
               {(active + 1).toLocaleString("fa-IR")} / {images.length.toLocaleString("fa-IR")}
             </div>
+            {!isVideoUrl(current) ? (
+              <button
+                type="button"
+                className="property-lightbox-zoom-hint"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  toggleZoom();
+                }}
+                aria-label={zoomScale > 1.05 ? "خروج از بزرگ‌نمایی" : "بزرگ‌نمایی"}
+              >
+                {zoomScale > 1.05 ? "بازگشت به اندازه عادی" : "دو بار کلیک / لمس برای زوم"}
+              </button>
+            ) : null}
           </div>
 
           <button
@@ -243,7 +372,6 @@ function Gallery({
     </div>
   );
 }
-
 function ConsultantCard({ property }: { property: Property }) {
   return (
     <aside className="property-contact-card">
