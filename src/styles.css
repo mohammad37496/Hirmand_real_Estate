@@ -4781,3 +4781,127 @@ summary:focus-visible {
   .budget-advanced-toggle>svg{transition:none}
   .budget-spin{animation:none}
 }
+
+
+/* HIRMAND SOCIAL ICONS — TRANSPARENT / PREMIUM SYSTEM */
+.footer-social-chip,
+.team-social,
+.consultant-profile-social,
+.social-link{
+  --social-brand: var(--gold-soft);
+}
+
+/* No colored tiles behind social logos. The icon carries the identity. */
+.footer-social-chip{
+  width:42px;
+  height:42px;
+  padding:0;
+  display:inline-grid;
+  place-items:center;
+  border:1px solid rgba(244,239,230,.10);
+  border-radius:13px;
+  background:transparent !important;
+  color:var(--social-brand);
+  box-shadow:none;
+  transition:transform var(--fast) var(--ease),border-color var(--fast) var(--ease),color var(--fast) var(--ease);
+}
+.footer-social-chip svg{width:19px;height:19px;display:block;transition:transform var(--fast) var(--ease)}
+.footer-social-chip:hover{
+  transform:translateY(-2px);
+  border-color:color-mix(in srgb,var(--social-brand) 68%,transparent);
+  background:transparent !important;
+  color:var(--social-brand);
+  box-shadow:none;
+}
+.footer-social-chip:hover svg{transform:scale(1.08)}
+.footer-social-chip:nth-child(1){--social-brand:#e1306c}
+.footer-social-chip:nth-child(2){--social-brand:#2aabee}
+.footer-social-chip:nth-child(3){--social-brand:#ff8a00}
+.footer-social-chip:nth-child(4){--social-brand:#25d366}
+
+/* Contact section: clean icon rings, no filled badge. */
+.social-badge{
+  width:46px;
+  height:46px;
+  flex-shrink:0;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border-radius:14px;
+  border:1px solid rgba(244,239,230,.11);
+  background:transparent !important;
+  color:var(--social-brand);
+  box-shadow:none;
+  transition:transform var(--fast) var(--ease),border-color var(--fast) var(--ease),color var(--fast) var(--ease);
+}
+.social-badge svg{width:22px;height:22px;display:block}
+.social-link{--social-brand:var(--gold-soft);background:transparent !important}
+.social-link:nth-child(1){--social-brand:#e1306c}
+.social-link:nth-child(2){--social-brand:#2aabee}
+.social-link:nth-child(3){--social-brand:#ff8a00}
+.social-link:nth-child(4){--social-brand:#25d366}
+.social-link:hover .social-badge{
+  transform:translateY(-1px);
+  border-color:color-mix(in srgb,var(--social-brand) 68%,transparent);
+  color:var(--social-brand);
+}
+
+/* Team cards: preserve layout while making social actions visually weightless. */
+.team-socials{gap:10px}
+.team-social{
+  min-height:56px;
+  padding:7px 6px;
+  border:1px solid rgba(244,239,230,.08);
+  border-radius:15px;
+  background:transparent !important;
+  color:var(--social-brand, var(--muted));
+  box-shadow:none;
+}
+.team-social::before{display:none}
+.team-social:nth-child(1){--social-brand:#25d366}
+.team-social:nth-child(2){--social-brand:#2aabee}
+.team-social:nth-child(3){--social-brand:#ff8a00}
+.team-social:nth-child(4){--social-brand:#e1306c}
+.team-social:hover,
+.team-social:focus-visible{
+  border-color:color-mix(in srgb,var(--social-brand) 60%,transparent);
+  background:transparent !important;
+  color:var(--social-brand);
+  box-shadow:none;
+}
+.team-social svg{color:currentColor}
+.team-social span{color:inherit}
+
+/* Consultant profile: transparent social controls with a restrained outline. */
+.consultant-profile-social{
+  min-height:68px;
+  background:transparent !important;
+  color:var(--muted);
+  border-color:rgba(244,239,230,.10);
+  transition:transform var(--fast) var(--ease),border-color var(--fast) var(--ease),color var(--fast) var(--ease);
+}
+.consultant-profile-social:nth-child(1){--social-brand:#25d366}
+.consultant-profile-social:nth-child(2){--social-brand:#2aabee}
+.consultant-profile-social:nth-child(3){--social-brand:#ff8a00}
+.consultant-profile-social:nth-child(4){--social-brand:#e1306c}
+.consultant-profile-social svg{color:var(--social-brand);width:21px;height:21px;flex-shrink:0}
+.consultant-profile-social:hover{
+  transform:translateY(-2px);
+  border-color:color-mix(in srgb,var(--social-brand) 60%,transparent);
+  background:transparent !important;
+  color:var(--social-brand);
+}
+
+/* Keyboard accessibility without reintroducing filled backgrounds. */
+.footer-social-chip:focus-visible,
+.team-social:focus-visible,
+.social-link:focus-visible,
+.consultant-profile-social:focus-visible{
+  outline:2px solid color-mix(in srgb,var(--social-brand, var(--gold)) 65%, white);
+  outline-offset:3px;
+}
+
+@media (max-width:720px){
+  .footer-social-chip{width:40px;height:40px;border-radius:12px}
+  .social-badge{width:42px;height:42px;border-radius:13px}
+}
