@@ -15,8 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      # Live Vercel project identifiers (not credentials).
+      VERCEL_ORG_ID: team_FPapzgJx90YRyaonBmXy9lhS
+      VERCEL_PROJECT_ID: prj_ZgZjE26DjWCLeqiRfMkDSkB90Fzh
     steps:
       - name: Checkout
         uses: actions/checkout@v4
