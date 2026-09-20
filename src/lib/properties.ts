@@ -3,7 +3,7 @@ import { getCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
-import { calculateBudgetMatch, DEFAULT_RAHN_RATE as MATCH_DEFAULT_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
+import { calculateBudgetMatch, DEFAULT_MATCH_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
 
 export type PropertyStatus = "draft" | "published" | "archived";
 export type PropertyTransaction = "buy" | "sell" | "rent" | "mortgage";
@@ -372,7 +372,7 @@ export const matchPublishedPropertiesByBudget = createServerFn({ method: "GET" }
     if (dbSource === "unconfigured") return [];
 
     const sql = await getSql();
-    const rate = MATCH_DEFAULT_RAHN_RATE;
+    const rate = DEFAULT_MATCH_RAHN_RATE;
     const budgetTotal = data.depositBudget + (data.rentBudget * 1_000_000) / rate;
     const totalExpr =
       "(coalesce(deposit, 0)::numeric + (coalesce(rent, 0)::numeric * 1000000 / $1::numeric))";
