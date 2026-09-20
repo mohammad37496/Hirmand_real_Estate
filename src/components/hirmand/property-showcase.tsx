@@ -51,16 +51,23 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
             onError={(event) => {
               const image = event.currentTarget;
               const source = image.dataset.source ?? image.src;
-              if (image.dataset.proxy !== "1" && /divarcdn\.com/i.test(source)) {
-                image.dataset.proxy = "1";
-                image.src = `https://wsrv.nl/?url=${encodeURIComponent(source)}`;
-                return;
+              if (image.dataset.proxy !== "2" && /divarcdn\.com/i.test(source)) {
+                const proxyIndex = Number(image.dataset.proxy || "0");
+                const proxies = [
+                  `https://wsrv.nl/?url=${encodeURIComponent(source)}`,
+                  `https://images.weserv.nl/?url=${encodeURIComponent(source)}`,
+                ];
+                if (proxyIndex < proxies.length) {
+                  image.dataset.proxy = String(proxyIndex + 1);
+                  image.src = proxies[proxyIndex];
+                  return;
+                }
               }
               if (image.dataset.fallback === "1") return;
               image.dataset.fallback = "1";
               image.src = FALLBACK_IMAGES[property.propertyType];
             }}
-            referrerPolicy="no-referrer-when-downgrade"
+            referrerPolicy="no-referrer"
             data-source={imageFor(property)}
           />
           <div className="property-card-badges">
