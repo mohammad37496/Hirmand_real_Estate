@@ -385,6 +385,9 @@ function Team() {
                 </a>
                 <CopyButton value={person.phone} label={`کپی شماره ${person.name}`} />
               </div>
+              <a className="team-profile-link" href={`/consultants/${person.id}`}>
+                پروفایل مشاور ↗
+              </a>
               <TeamMessenger personId={person.id} />
             </article>
           );
