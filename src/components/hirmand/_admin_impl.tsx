@@ -42,7 +42,6 @@ type ViewMode = "dashboard" | "list" | "form" | "music" | "leads";
 
 type FormState = {
   id?: string;
-  adminKey: string;
   title: string;
   transactionType: PropertyTransaction;
   propertyType: PropertyType;
@@ -81,9 +80,9 @@ const TX_OPTIONS: { value: PropertyTransaction; label: string }[] = [
   { value: "mortgage", label: "رهن" },
 ];
 
-function emptyForm(adminKey = ""): FormState {
+function emptyForm(): FormState {
   return {
-    adminKey,
+
     title: "",
     transactionType: "sell",
     propertyType: "apartment",
@@ -138,10 +137,9 @@ function parseImageUrls(raw: string): { valid: string[]; invalid: string[] } {
   return { valid, invalid };
 }
 
-function propertyToForm(property: Property, adminKey: string): FormState {
+function propertyToForm(property: Property): FormState {
   return {
     id: property.id,
-    adminKey,
     title: property.title,
     transactionType: property.transactionType,
     propertyType: property.propertyType,
@@ -170,7 +168,6 @@ function propertyToForm(property: Property, adminKey: string): FormState {
 }
 
 export function AdminPropertiesPage() {
-  const [adminKey, setAdminKey] = useState("");
   const [keyInput, setKeyInput] = useState("");
   const [unlocked, setUnlocked] = useState(false);
   const [sessionChecking, setSessionChecking] = useState(true);
@@ -286,9 +283,7 @@ export function AdminPropertiesPage() {
         countAdminProperties({ data: { adminKey: "" } }),
       ]);
 
-      setAdminKey("");
       setKeyInput("");
-      setForm((prev) => ({ ...prev, adminKey: "" }));
       setProperties(rows);
       setPropertyOffset(rows.length);
       setPropertyHasMore(rows.length < totals.total);
@@ -315,7 +310,6 @@ export function AdminPropertiesPage() {
     });
 
     setUnlocked(false);
-    setAdminKey("");
     setKeyInput("");
     setProperties([]);
     setPropertyOffset(0);
@@ -361,7 +355,6 @@ export function AdminPropertiesPage() {
     try {
       const rows = await listAdminProperties({
         data: {
-          adminKey: "",
           limit: 100,
           offset: propertyOffset,
         },
@@ -404,7 +397,6 @@ export function AdminPropertiesPage() {
     try {
       const result = await saveProperty({
         data: {
-          adminKey: "",
           id: form.id,
           title: form.title.trim(),
           transactionType: form.transactionType,
@@ -433,7 +425,7 @@ export function AdminPropertiesPage() {
         },
       });
       toast.success(form.id ? "فایل به‌روزرسانی شد." : "فایل جدید ذخیره شد.");
-      setForm(propertyToForm(result, adminKey));
+      setForm(propertyToForm(result));
       await refresh();
       setView("list");
     } catch (error) {
@@ -444,17 +436,17 @@ export function AdminPropertiesPage() {
   }
 
   function startNew() {
-    setForm(emptyForm(""));
+    setForm(emptyForm());
     setView("form");
   }
 
   function editProperty(property: Property) {
-    setForm(propertyToForm(property, adminKey));
+    setForm(propertyToForm(property));
     setView("form");
   }
 
   function duplicateProperty(property: Property) {
-    const base = propertyToForm(property, "");
+    const base = propertyToForm(property);
     setForm({
       ...base,
       id: undefined,
@@ -653,7 +645,6 @@ export function AdminPropertiesPage() {
         <div className="admin-content">
           {view === "dashboard" ? (
             <AdminDashboard
-              adminKey={adminKey}
               onOpenProperties={() => setView("list")}
               onOpenLeads={() => setView("leads")}
             />
@@ -794,8 +785,8 @@ export function AdminPropertiesPage() {
             </>
           ) : null}
 
-          {view === "music" ? <AdminMusicManager adminKey={adminKey} /> : null}
-          {view === "leads" ? <AdminLeadManager adminKey={adminKey} /> : null}
+          {view === "music" ? <AdminMusicManager /> : null}
+          {view === "leads" ? <AdminLeadManager /> : null}
 
           {view === "form" ? (
             <form className="admin-form-wrap" onSubmit={onSubmit}>
@@ -960,7 +951,6 @@ export function AdminPropertiesPage() {
                 <fieldset className="admin-section">
                   <legend>رسانه (تصویر و ویدیو)</legend>
                   <AdminMediaField
-                    adminKey={adminKey}
                     value={form.images}
                     onChange={(next) => update("images", next)}
                   />
