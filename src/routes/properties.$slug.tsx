@@ -84,7 +84,7 @@ function whatsappLink(phone: string, title: string) {
 }
 
 function sourceCandidates(src: string, fallback: string) {
-  const isExternal = /divarcdn\\.com|wsrv\\.nl/i.test(src);
+  const isExternal = /divarcdn\.com|wsrv\.nl/i.test(src);
   const proxy = isExternal
     ? `https://wsrv.nl/?url=${encodeURIComponent(src)}`
     : "";
@@ -97,12 +97,14 @@ function ResilientImage({
   fallback,
   className,
   loading,
+  itemProp,
 }: {
   src: string;
   alt: string;
   fallback: string;
   className?: string;
   loading?: "eager" | "lazy";
+  itemProp?: string;
 }) {
   const candidates = sourceCandidates(src, fallback);
   const [attempt, setAttempt] = useState(0);
@@ -114,6 +116,7 @@ function ResilientImage({
       alt={alt}
       className={className}
       loading={loading}
+      itemProp={itemProp}
       decoding="async"
       onError={() => {
         setAttempt((value) => Math.min(value + 1, candidates.length - 1));
