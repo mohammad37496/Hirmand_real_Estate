@@ -4905,3 +4905,48 @@ summary:focus-visible {
   .footer-social-chip{width:40px;height:40px;border-radius:12px}
   .social-badge{width:42px;height:42px;border-radius:13px}
 }
+
+
+/* HIRMAND GLOBAL POLISH — shared interaction and responsive finish */
+html {
+  scroll-behavior: smooth;
+  text-size-adjust: 100%;
+}
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+::selection {
+  background: rgba(201, 162, 74, 0.24);
+  color: var(--fg);
+}
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gold-soft) 76%, white);
+  outline-offset: 3px;
+}
+:where(button, input, select, textarea):disabled {
+  cursor: not-allowed;
+}
+.property-card-link {
+  text-decoration: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .property-card {
+    will-change: transform;
+  }
+}
+@media (max-width: 760px) {
+  .property-card-media {
+    height: 205px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .property-card,
+  .property-card-media img {
+    transition: none !important;
+  }
+}
