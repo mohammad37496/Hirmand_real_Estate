@@ -118,6 +118,55 @@ async function ensureConfigured() {
   return getSql();
 }
 
+export async function recordPartnerAudit(input: {
+  partnerId: string;
+  action: string;
+  targetId?: string;
+  note?: string;
+  metadata?: Record<string, unknown>;
+}) {
+  if (dbSource === "unconfigured") return;
+  const sql = await getSql();
+  await sql.query(
+    `
+      insert into partner_audit_logs
+        (id, partner_id, action, actor, target_id, note, metadata)
+      values ($1, $2, $3, 'admin', $4, $5, $6::jsonb)
+    `,
+    [
+      crypto.randomUUID(),
+      input.partnerId,
+      input.action.slice(0, 80),
+      input.targetId ?? null,
+      (input.note ?? "").trim().slice(0, 500),
+      JSON.stringify(input.metadata ?? {}),
+    ],
+  );
+}
+
+export async function listPartnerAuditLogs(partnerId: string) {
+  const sql = await ensureConfigured();
+  const rows = await sql.query<Record<string, unknown>>(
+    `
+      select id, action, actor, target_id, note, metadata, created_at
+      from partner_audit_logs
+      where partner_id = $1
+      order by created_at desc
+      limit 80
+    `,
+    [partnerId],
+  );
+  return rows.map((row) => ({
+    id: String(row.id),
+    action: String(row.action),
+    actor: String(row.actor),
+    targetId: row.target_id ? String(row.target_id) : null,
+    note: String(row.note ?? ""),
+    metadata: (row.metadata && typeof row.metadata === "object" ? row.metadata : {}) as Record<string, unknown>,
+    createdAt: new Date(String(row.created_at)).toISOString(),
+  }));
+}
+
 export async function getPartnerSummary(partnerId: string) {
   const sql = await ensureConfigured();
   const rows = await sql.query<Record<string, unknown>>(
@@ -229,6 +278,12 @@ export async function createPartnerAccount(input: {
 
   const summary = await getPartnerSummary(id);
   if (!summary) throw new Error("حساب همکار ایجاد نشد.");
+  await recordPartnerAudit({
+    partnerId: id,
+    action: "account_created",
+    note: "حساب همکاری ایجاد شد.",
+    metadata: { agencyName, contactName, phone },
+  });
   return { summary, partnerCode: code, pin };
 }
 
@@ -446,6 +501,15 @@ export async function approvePartnerContract(contractId: string) {
     throw new Error("تأیید قرارداد انجام نشد.");
   }
 
+  await recordPartnerAudit({
+    partnerId: String(result.partner_id),
+    action: "contract_approved",
+    targetId: String(result.contract_id),
+    metadata: {
+      contractCount: Number(result.contract_count) || 0,
+      cardStamps: Number(result.card_stamps) || 0,
+    },
+  });
   const overview = await getPartnerOverview(String(result.partner_id));
   return {
     contractId: String(result.contract_id),
@@ -470,6 +534,18 @@ export async function rejectPartnerContract(contractId: string, note: string) {
     [contractId, note.trim().slice(0, 500)],
   );
   if (!result[0]) throw new Error("قرارداد پیدا نشد یا قبلاً تعیین تکلیف شده است.");
+  const contractRows = await sql.query<{ partner_id: string }>(
+    `select partner_id from partner_contracts where id = $1 limit 1`,
+    [contractId],
+  );
+  if (contractRows[0]) {
+    await recordPartnerAudit({
+      partnerId: String(contractRows[0].partner_id),
+      action: "contract_rejected",
+      targetId: contractId,
+      note,
+    });
+  }
   return true;
 }
 
@@ -487,6 +563,11 @@ export async function issueNewPartnerCard(partnerId: string) {
     [partnerId],
   );
   if (!rows[0]) throw new Error("کارت فعلی هنوز ۱۲ مهر نشده یا حساب فعال نیست.");
+  await recordPartnerAudit({
+    partnerId,
+    action: "card_issued",
+    metadata: { cardNumber: Number(rows[0].card_number) || 1 },
+  });
   return getPartnerOverview(partnerId);
 }
 
@@ -509,6 +590,13 @@ export async function claimPartnerReward(partnerId: string, note: string) {
     [partnerId, note.trim().slice(0, 500)],
   );
   if (!rows[0]) throw new Error("پاداش آماده‌ای برای مصرف وجود ندارد.");
+  await recordPartnerAudit({
+    partnerId,
+    action: "reward_claimed",
+    targetId: String(rows[0].id),
+    note,
+    metadata: { rewardNumber: Number(rows[0].reward_number) || 0 },
+  });
   return getPartnerOverview(partnerId);
 }
 
@@ -520,5 +608,9 @@ export async function updatePartnerStatus(partnerId: string, status: PartnerStat
     [partnerId, status],
   );
   if (!rows[0]) throw new Error("حساب همکار پیدا نشد.");
+  await recordPartnerAudit({
+    partnerId,
+    action: status === "active" ? "account_activated" : "account_suspended",
+  });
   return getPartnerOverview(partnerId);
 }
