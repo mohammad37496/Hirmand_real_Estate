@@ -2900,6 +2900,16 @@ summary:focus-visible {
   font-weight: 800;
 }
 
+.property-related {
+  margin-top: 64px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.property-related .section-head {
+  max-width: 720px;
+}
+
 .property-detail-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
