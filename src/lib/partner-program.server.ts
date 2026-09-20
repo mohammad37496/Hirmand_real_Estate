@@ -127,9 +127,10 @@ export async function recordPartnerAudit(input: {
 }) {
   if (dbSource === "unconfigured") return;
   const sql = await getSql();
-  await sql.query(
-    `
-      insert into partner_audit_logs
+  try {
+    await sql.query(
+      `
+        insert into partner_audit_logs
         (id, partner_id, action, actor, target_id, note, metadata)
       values ($1, $2, $3, 'admin', $4, $5, $6::jsonb)
     `,
