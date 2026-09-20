@@ -27,6 +27,7 @@ import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
 import { areaSlug } from "@/lib/areas";
 import { propertyPath } from "@/lib/property-path";
 import { TEAM } from "@/lib/site";
+import { isFeaturedActive } from "@/lib/properties";
 
 function money(value: string | null) {
   if (!value) return "";
@@ -499,7 +500,7 @@ export function PropertyDetailView({
 
         <section className="property-detail-top" aria-label="خلاصه فایل">
           <div className="property-detail-top-gallery">
-            <Gallery images={images} title={property.title} featured={property.featured} />
+            <Gallery images={images} title={property.title} featured={isFeaturedActive(property)} />
           </div>
 
           <div className="property-detail-summary">
