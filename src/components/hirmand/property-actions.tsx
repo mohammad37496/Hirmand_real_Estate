@@ -3,6 +3,7 @@ import { ArrowLeftRight, Heart, Printer, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import type { PropertyCardData } from "@/lib/properties";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import { propertyPath } from "@/lib/property-path";
 
 const FAVORITES_KEY = "hirmand-favorite-properties";
 const COMPARE_KEY = "hirmand-compare-properties";
@@ -65,11 +66,8 @@ function toggleFavorite(slug: string): boolean {
   return !exists;
 }
 
-async function shareProperty(property: Pick<PropertyCardData, "slug" | "title">) {
-  const url = new URL(
-    `/properties/${property.slug}`,
-    window.location.origin,
-  ).toString();
+async function shareProperty(property: Pick<PropertyCardData, "id" | "slug" | "title">) {
+  const url = new URL(propertyPath(property), window.location.origin).toString();
   const shareData = {
     title: property.title,
     text: `فایل «${property.title}» در هیرمند`,
@@ -97,7 +95,7 @@ export function PropertyActions({
   property,
   compact = false,
 }: {
-  property: Pick<PropertyCardData, "slug" | "title">;
+  property: Pick<PropertyCardData, "id" | "slug" | "title">;
   compact?: boolean;
 }) {
   const [favorite, setFavorite] = useState(false);
