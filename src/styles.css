@@ -1072,6 +1072,25 @@ summary:focus-visible {
   .property-actions:not(.property-actions-compact) .property-action {
     flex: 1 1 auto;
   }
+
+  .favorites-page {
+    width: min(100% - 28px, var(--wrap));
+    padding-top: 102px;
+  }
+
+  .favorites-head {
+    align-items: center;
+    gap: 14px;
+  }
+
+  .favorites-head > svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .property-gallery {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
   .section,
   .inquiry-section,
   .footer {
@@ -2974,6 +2993,47 @@ summary:focus-visible {
   background: var(--gold-soft);
   font-size: 0.75rem;
   font-weight: 800;
+}
+
+.favorites-page {
+  width: min(100% - 32px, var(--wrap));
+  margin: 0 auto;
+  padding: 118px 0 72px;
+}
+
+.favorites-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 30px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.favorites-head h1 {
+  margin-top: 10px;
+  font-size: clamp(1.75rem, 1.2rem + 1.8vw, 2.6rem);
+  line-height: 1.25;
+}
+
+.favorites-head p {
+  max-width: 680px;
+  margin-top: 12px;
+  color: var(--muted);
+  line-height: 2;
+}
+
+.favorites-head > svg {
+  flex: 0 0 auto;
+  color: var(--gold-soft);
+}
+
+.properties-saved-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .property-related {
