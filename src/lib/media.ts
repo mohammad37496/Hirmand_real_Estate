@@ -8,32 +8,43 @@ export function isImageUrl(src: string): boolean {
   return !isVideoUrl(src);
 }
 
+function isDivarHost(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  return (
+    host.endsWith("divarcdn.com") ||
+    host === "divar.ir" ||
+    host.endsWith(".divar.ir") ||
+    host === "divar.com" ||
+    host.endsWith(".divar.com") ||
+    host.includes("divarcdn")
+  );
+}
+
 /**
- * Returns a deterministic set of browser-safe fallbacks for remote property
- * media. Some classifieds/CDN hosts reject hotlink requests, so we try the
- * original URL first and then image proxy providers before using the local
- * property-type placeholder.
+ * Returns browser-safe candidates for remote property media. Divar often
+ * serves media without a normal file extension and may reject hotlinking;
+ * keep the original first, then deterministic image proxies, then a local
+ * placeholder. The importer should still copy media to Blob for production.
  */
 export function mediaSourceCandidates(src: string, fallback = ""): string[] {
   const value = src.trim();
   if (!value) return fallback ? [fallback] : [];
 
-  const hostnameMatch = value.match(/^https?:\/\/([^/]+)/i);
-  const hostname = hostnameMatch?.[1]?.toLowerCase() ?? "";
-  const isDivarRemote =
-    hostname.endsWith("divarcdn.com") ||
-    hostname === "divar.ir" ||
-    hostname.endsWith(".divar.ir") ||
-    hostname === "divar.com" ||
-    hostname.endsWith(".divar.com") ||
-    hostname.includes("divarcdn");
+  let parsed: URL | null = null;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return [value, fallback].filter(Boolean);
+  }
 
-  const proxies = isDivarRemote
-    ? [
-        `https://wsrv.nl/?url=${encodeURIComponent(value)}`,
-        `https://images.weserv.nl/?url=${encodeURIComponent(value)}`,
-      ]
-    : [];
+  if (!isDivarHost(parsed.hostname)) return Array.from(new Set([value, fallback].filter(Boolean)));
+
+  const encoded = encodeURIComponent(value);
+  const proxies = [
+    `https://wsrv.nl/?url=${encoded}`,
+    `https://images.weserv.nl/?url=${encoded}`,
+    `https://wsrv.nl/?url=${encoded}&output=jpg`,
+  ];
 
   return Array.from(new Set([value, ...proxies, fallback].filter(Boolean)));
 }
