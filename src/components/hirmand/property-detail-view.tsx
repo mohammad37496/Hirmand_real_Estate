@@ -26,6 +26,7 @@ import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
 import { areaSlug } from "@/lib/areas";
 import { propertyPath } from "@/lib/property-path";
+
 function money(value: string | null) {
   if (!value) return "";
   const parsed = Number(value);
@@ -36,7 +37,7 @@ function mapsLink(latitude: number | null, longitude: number | null, neighborhoo
   if (latitude != null && longitude != null) {
     return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
   }
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`اصفهان ${neighborhood}`) }`;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`اصفهان ${neighborhood}`)}`;
 }
 
 function osmEmbedUrl(latitude: number, longitude: number) {
@@ -119,9 +120,7 @@ function Gallery({
               loading="eager"
             />
           )}
-          {featured ? (
-            <span className="property-gallery-featured">فایل ویژه</span>
-          ) : null}
+          {featured ? <span className="property-gallery-featured">فایل ویژه</span> : null}
           {images.length > 1 ? (
             <span className="property-gallery-counter">
               {(active + 1).toLocaleString("fa-IR")} / {images.length.toLocaleString("fa-IR")}
@@ -150,6 +149,41 @@ function Gallery({
   );
 }
 
+function ConsultantCard({ property }: { property: Property }) {
+  return (
+    <aside className="property-contact-card">
+      <div className="property-contact-heading">
+        <div>
+          <span className="kicker">تماس با مشاور</span>
+          <h2>مشاور این فایل</h2>
+        </div>
+        <Phone size={18} />
+      </div>
+      <strong className="property-contact-name">{property.contactName}</strong>
+      <a href={`tel:${property.contactPhone}`} dir="ltr" className="property-contact-phone">
+        <Phone size={16} /> {property.contactPhone}
+      </a>
+      <div className="property-contact-actions">
+        <a
+          className="btn-gold"
+          href={whatsappLink(property.contactPhone, property.title)}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
+        >
+          پیام در واتساپ
+        </a>
+        <a
+          className="btn-ghost"
+          href={`tel:${property.contactPhone}`}
+          onClick={() => trackAnalyticsEvent("call_click", property.slug)}
+        >
+          تماس تلفنی
+        </a>
+      </div>
+    </aside>
+  );
+}
 
 export function PropertyDetailView({
   property,
@@ -158,7 +192,6 @@ export function PropertyDetailView({
   property: Property | null;
   related: Property[];
 }) {
-
   if (!property) {
     return (
       <SiteChrome>
@@ -191,6 +224,7 @@ export function PropertyDetailView({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(crumbs)) }}
       />
+
       <main className="property-detail-page">
         <nav className="property-breadcrumb" aria-label="مسیر">
           <Link to="/">خانه</Link>
@@ -204,15 +238,13 @@ export function PropertyDetailView({
           <span>{property.title}</span>
         </nav>
 
-        <Gallery
-          images={images}
-          title={property.title}
-          featured={property.featured}
-        />
+        <section className="property-detail-top" aria-label="خلاصه فایل">
+          <div className="property-detail-top-gallery">
+            <Gallery images={images} title={property.title} featured={property.featured} />
+          </div>
 
-        <div className="property-detail-grid">
-          <article className="property-detail-main">
-            <header>
+          <div className="property-detail-summary">
+            <header className="property-detail-summary-head">
               <span className="kicker">
                 {TX_LABEL[property.transactionType]} · {TYPE_LABEL[property.propertyType]}
               </span>
@@ -221,15 +253,28 @@ export function PropertyDetailView({
                 <MapPinned size={16} /> {property.neighborhood}
                 {property.address ? ` · ${property.address}` : ""}
               </p>
-              <p className="property-detail-price">
-                {property.price ? `${money(property.price)} تومان` : null}
-                {property.deposit ? ` · رهن ${money(property.deposit)}` : ""}
-                {property.rent ? ` · اجاره ${money(property.rent)}` : ""}
-              </p>
+              <div className="property-price-block">
+                <span>قیمت فایل</span>
+                <strong>
+                  {property.price ? `${money(property.price)} تومان` : "تماس بگیرید"}
+                </strong>
+                {property.deposit || property.rent ? (
+                  <small>
+                    {property.deposit ? `رهن ${money(property.deposit)}` : ""}
+                    {property.deposit && property.rent ? " · " : ""}
+                    {property.rent ? `اجاره ${money(property.rent)}` : ""}
+                  </small>
+                ) : null}
+              </div>
               <PropertyActions property={property} />
-
             </header>
 
+            <ConsultantCard property={property} />
+          </div>
+        </section>
+
+        <section className="property-detail-content">
+          <article className="property-detail-main">
             <section className="property-divar-specs" aria-labelledby="property-specs-title">
               <div className="property-section-heading">
                 <div>
@@ -319,33 +364,7 @@ export function PropertyDetailView({
               <ArrowRight size={16} /> بازگشت به فهرست فایل‌ها
             </Link>
           </article>
-
-          <aside className="property-detail-aside">
-            <div className="property-contact-card">
-              <h2>مشاور این فایل</h2>
-              <strong>{property.contactName}</strong>
-              <a href={`tel:${property.contactPhone}`} dir="ltr" className="property-contact-phone">
-                <Phone size={16} /> {property.contactPhone}
-              </a>
-              <a
-                className="btn-gold"
-                href={whatsappLink(property.contactPhone, property.title)}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
-              >
-                پیام در واتساپ
-              </a>
-              <a
-                className="btn-ghost"
-                href={`tel:${property.contactPhone}`}
-                onClick={() => trackAnalyticsEvent("call_click", property.slug)}
-              >
-                تماس تلفنی
-              </a>
-            </div>
-          </aside>
-        </div>
+        </section>
 
         {related.length ? (
           <section className="property-related" aria-labelledby="related-properties-title">
