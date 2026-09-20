@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ArrowRight,
   BedDouble,
@@ -25,7 +25,6 @@ import { PropertyActions } from "@/components/hirmand/property-actions";
 import { formatToman } from "@/lib/money";
 import { isVideoUrl } from "@/lib/media";
 import { areaSlug } from "@/lib/areas";
-import { trackAnalyticsEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/properties/$slug")({
   loader: async ({ params }) => {
@@ -119,10 +118,6 @@ function Gallery({
 
 function PropertyDetailPage() {
   const { property, related } = Route.useLoaderData();
-
-  useEffect(() => {
-    if (property) trackAnalyticsEvent("property_view", property.slug);
-  }, [property]);
 
   if (!property) {
     return (
