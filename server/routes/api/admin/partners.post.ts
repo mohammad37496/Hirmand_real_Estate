@@ -8,6 +8,7 @@ import {
   listAdminPartners,
   listPartnerContractsForAdmin,
   listPendingPartnerContracts,
+  listPartnerAuditLogs,
   rejectPartnerContract,
   approvePartnerContract,
   updatePartnerStatus,
@@ -62,12 +63,13 @@ export default defineEventHandler(async (event) => {
 
     if (body.action === "details") {
       if (!body.partnerId) throw new Error("شناسه همکار مشخص نیست.");
-      const [partner, contracts] = await Promise.all([
+      const [partner, contracts, audits] = await Promise.all([
         getPartnerOverview(body.partnerId),
         listPartnerContractsForAdmin(body.partnerId),
+        listPartnerAuditLogs(body.partnerId),
       ]);
       if (!partner) throw new Error("حساب همکار پیدا نشد.");
-      return { partner, contracts };
+      return { partner, contracts, audits };
     }
 
     if (body.action === "approve") {
