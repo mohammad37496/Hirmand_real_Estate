@@ -184,6 +184,29 @@ export default defineEventHandler(async (event) => {
       console.error("[admin-dashboard] event stats unavailable", error);
       return [];
     }),
+    sql.query<Record<string, unknown>>(`
+      select
+        coalesce(nullif(utm_source, ''), nullif(referrer_host, ''), 'direct') as source,
+        coalesce(nullif(utm_campaign, ''), 'بدون کمپین') as campaign,
+        count(distinct visitor_id)::int as visitors
+      from site_visitor_days
+      where day >= (current_timestamp at time zone 'Asia/Tehran')::date - 29
+      group by 1, 2
+      order by visitors desc
+      limit 12
+    `).catch((error) => {
+      console.error("[admin-dashboard] visitor sources unavailable", error);
+      return [];
+    }),
+    sql.query<Record<string, unknown>>(`
+      select
+        count(*) filter (where status in ('new','contacted') and follow_up_at <= current_timestamp)::int as due,
+        count(*) filter (where status in ('new','contacted') and follow_up_at > current_timestamp and follow_up_at <= current_timestamp + interval '7 days')::int as next7
+      from leads
+    `).catch((error) => {
+      console.error("[admin-dashboard] follow-up stats unavailable", error);
+      return [{}];
+    }),
   ]);
   const p = propertyStats[0] ?? {};
   const l = leadStats[0] ?? {};
