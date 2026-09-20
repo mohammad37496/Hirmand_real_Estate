@@ -116,7 +116,7 @@ export default defineEventHandler(async (event) => {
   const p = propertyStats[0] ?? {};
   const l = leadStats[0] ?? {};
   const m = musicStats[0] ?? {};
-  const v = visitorStats[0] ?? {};
+  const v = (visitorStats[0] ?? {}) as Record<string, unknown>;
 
   return {
     properties: {
