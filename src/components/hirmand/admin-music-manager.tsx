@@ -162,8 +162,8 @@ export function AdminMusicManager() {
     stopAudio();
 
     const candidates = [
-      track.url,
       `/api/music/file/${encodeURIComponent(track.id)}`,
+      track.url,
     ].filter((value, index, list) => value && list.indexOf(value) === index);
 
     const audio = new Audio();
