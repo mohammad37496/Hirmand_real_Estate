@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Clock3, ExternalLink, Loader2, Phone, Trash2, UserRound } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { CheckCircle2, Clock3, Download, ExternalLink, Loader2, Phone, Search, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 type LeadStatus = "new" | "contacted" | "closed" | "spam";
@@ -37,6 +37,8 @@ function formatDate(value: string) {
 export function AdminLeadManager({ adminKey }: { adminKey: string }) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | LeadStatus>("all");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -94,17 +96,88 @@ export function AdminLeadManager({ adminKey }: { adminKey: string }) {
 
   const newCount = leads.filter((lead) => lead.status === "new").length;
 
+  const filteredLeads = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return leads.filter((lead) => {
+      if (statusFilter !== "all" && lead.status !== statusFilter) return false;
+      if (!q) return true;
+      return [lead.name, lead.phone, lead.deal, lead.propertyType, lead.neighborhood, lead.consultant, lead.note]
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [leads, query, statusFilter]);
+
+  function exportCsv() {
+    const header = ["نام", "تلفن", "معامله", "نوع ملک", "محله", "مشاور", "وضعیت", "توضیحات", "تاریخ"];
+    const rows = filteredLeads.map((lead) => [
+      lead.name,
+      lead.phone,
+      lead.deal,
+      lead.propertyType,
+      lead.neighborhood,
+      lead.consultant,
+      STATUS_LABEL[lead.status],
+      lead.note,
+      formatDate(lead.createdAt),
+    ]);
+
+    const csv = [header, ...rows]
+      .map((row) =>
+        row.map((value) => {
+          const text = String(value ?? "");
+          return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+        }).join(","),
+      )
+      .join("\n");
+
+    const blob = new Blob(["\\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "hirmand-leads.csv";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="admin-lead-manager">
       <section className="admin-panel">
         <div className="admin-panel-head">
           <div>
             <span className="kicker">CRM</span>
-            <h2>{leads.length.toLocaleString("fa-IR")} درخواست · {newCount.toLocaleString("fa-IR")} جدید</h2>
+            <h2>{filteredLeads.length.toLocaleString("fa-IR")} درخواست · {newCount.toLocaleString("fa-IR")} جدید</h2>
           </div>
-          <button type="button" className="btn-ghost" onClick={() => void load()}>
-            به‌روزرسانی
-          </button>
+          <div className="admin-list-toolbar">
+            <label className="admin-search">
+              <Search size={16} />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="جستجوی نام، تلفن، محله…"
+                aria-label="جستجوی درخواست‌ها"
+              />
+            </label>
+            <select
+              className="admin-lead-status-select"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value as "all" | LeadStatus)}
+              aria-label="فیلتر وضعیت"
+            >
+              <option value="all">همه وضعیت‌ها</option>
+              <option value="new">جدید</option>
+              <option value="contacted">در حال پیگیری</option>
+              <option value="closed">بسته‌شده</option>
+              <option value="spam">اسپم</option>
+            </select>
+            <button type="button" className="btn-ghost" onClick={exportCsv} disabled={!filteredLeads.length}>
+              <Download size={16} />
+              خروجی CSV
+            </button>
+            <button type="button" className="btn-ghost" onClick={() => void load()}>
+              به‌روزرسانی
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -120,7 +193,7 @@ export function AdminLeadManager({ adminKey }: { adminKey: string }) {
           </div>
         ) : (
           <div className="admin-lead-list">
-            {leads.map((lead) => (
+            {filteredLeads.map((lead) => (
               <article key={lead.id} className="admin-lead-card">
                 <div className="admin-lead-main">
                   <div className="admin-lead-title">
