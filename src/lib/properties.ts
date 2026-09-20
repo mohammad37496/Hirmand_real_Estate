@@ -205,6 +205,15 @@ function numberOrNull(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+function numericStringOrNull(value: unknown): string | null {
+  if (value == null) return null;
+  const normalized = String(value).trim();
+  if (!normalized || normalized.toLowerCase() === "null" || normalized.toLowerCase() === "undefined") {
+    return null;
+  }
+  return normalized;
+}
+
 function parseJsonArray(value: unknown): string[] {
   if (Array.isArray(value)) {
     return value.filter((item): item is string => typeof item === "string");
@@ -805,6 +814,9 @@ export const saveProperty = createServerFn({ method: "POST" })
 
     const id = data.id ?? crypto.randomUUID();
     const slug = `${slugify(data.title)}-${id.slice(0, 8)}`;
+    const price = numericStringOrNull(data.price);
+    const deposit = numericStringOrNull(data.deposit);
+    const rent = numericStringOrNull(data.rent);
 
     const existingRows = await sql.query<Record<string, unknown>>(
       `select ${DETAIL_COLUMNS} from properties where id = $1 limit 1`,
@@ -961,9 +973,9 @@ export const saveProperty = createServerFn({ method: "POST" })
         data.parking,
         data.elevator,
         data.storage,
-        data.price || null,
-        data.deposit || null,
-        data.rent || null,
+        price,
+        deposit,
+        rent,
         data.description,
         JSON.stringify(data.features),
         JSON.stringify(data.images),
