@@ -1,7 +1,10 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 
-export const ADMIN_SESSION_COOKIE = "__Host-hirmand-admin";
+export const ADMIN_SESSION_COOKIE =
+  process.env.NODE_ENV === "production" || process.env.VERCEL === "1"
+    ? "__Host-hirmand-admin"
+    : "hirmand-admin";
 export const ADMIN_SESSION_MAX_AGE = 60 * 60 * 8;
 
 function sessionSecret() {
