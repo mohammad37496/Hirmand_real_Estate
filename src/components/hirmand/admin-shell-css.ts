@@ -299,4 +299,16 @@ export const ADMIN_CSS = `
 .admin-media-controls .admin-media-remove{background:rgba(180,40,40,.85);color:#fff}
 @media (max-width:720px){.admin-price-conversion-grid{grid-template-columns:1fr}}
 
+.admin-lead-budget-badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:rgba(201,162,74,.13);color:#e0c47a;font-size:.66rem;font-weight:700}
+.admin-lead-budget{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px;padding:10px;border:1px solid rgba(201,162,74,.14);border-radius:12px;background:rgba(201,162,74,.035)}
+.admin-lead-budget>div{min-width:0;padding:8px 9px;border-radius:9px;background:rgba(255,255,255,.025)}
+.admin-lead-budget span{display:block;color:#68635b;font-size:.64rem}
+.admin-lead-budget strong{display:block;margin-top:3px;color:#e0c47a;font-size:.76rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-lead-matches{grid-column:1/-1;display:flex!important;gap:6px!important;flex-wrap:wrap}
+.admin-lead-matches a{padding:5px 7px;border-radius:8px;background:rgba(255,255,255,.03);color:#b7b0a4;text-decoration:none;font-size:.68rem}
+.admin-lead-matches a:hover{color:#e0c47a;background:rgba(201,162,74,.08)}
+.admin-budget-send{color:#e0c47a!important}
+@media (max-width:900px){.admin-lead-budget{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.admin-lead-budget{grid-template-columns:1fr 1fr}}
+
 `;

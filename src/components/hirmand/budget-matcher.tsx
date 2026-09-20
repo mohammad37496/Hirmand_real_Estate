@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { ArrowLeftRight, CheckCircle2, Filter, Search, Sparkles, WalletCards } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { PROPERTY_TYPES, NEIGHBORHOOD_NAMES } from "@/lib/site";
+import { PROPERTY_TYPES, NEIGHBORHOOD_NAMES, SITE, TEAM } from "@/lib/site";
 import { DEFAULT_RAHN_RATE, RAHN_RATE_PRESETS } from "@/lib/finance";
 import { formatToman, parseAmount } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
@@ -31,6 +31,11 @@ function amountText(value: string) {
 export function BudgetMatcher() {
   const [deposit, setDeposit] = useState("");
   const [rent, setRent] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [consultant, setConsultant] = useState<(typeof TEAM)[number]["id"]>(TEAM[0].id);
+  const [leadSaving, setLeadSaving] = useState(false);
+  const [leadSaved, setLeadSaved] = useState(false);
   const [propertyType, setPropertyType] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [bedrooms, setBedrooms] = useState("");
@@ -71,6 +76,71 @@ export function BudgetMatcher() {
       toast.error(error instanceof Error ? error.message : "جستجوی بودجه انجام نشد.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  function normalizePhone(value: string) {
+    return value
+      .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+      .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+      .replace(/[\s\-()]/g, "")
+      .replace(/^(?:\+98|0098|98)/, "0");
+  }
+
+  async function saveBudgetLead(event: FormEvent) {
+    event.preventDefault();
+    const normalizedPhone = normalizePhone(phone);
+    if (!name.trim()) {
+      toast.error("نام و نام خانوادگی را وارد کنید.");
+      return;
+    }
+    if (!/^09\d{9}$/.test(normalizedPhone)) {
+      toast.error("شماره موبایل معتبر وارد کنید.");
+      return;
+    }
+
+    setLeadSaving(true);
+    try {
+      const selected = TEAM.find((person) => person.id === consultant) ?? TEAM[0];
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          phone: normalizedPhone,
+          deal: "رهن و اجاره",
+          propertyType,
+          neighborhood,
+          consultant: selected.name,
+          source: "budget_match",
+          budgetDeposit: depositNumber,
+          budgetRent: rentNumber,
+          budgetBedrooms: bedrooms ? Number(bedrooms) : undefined,
+          matches: matches.slice(0, 12).map((match) => ({
+            slug: match.property.slug,
+            title: match.property.title,
+            tier: match.tier,
+            score: match.score,
+            suggestedDeposit: match.suggestedDeposit,
+            suggestedRent: match.suggestedRent,
+          })),
+          note: "مشتری از جستجوی هوشمند بودجه درخواست پیگیری کرده است.",
+        }),
+      });
+      const result = (await response.json().catch(() => null)) as {
+        success?: boolean;
+        statusMessage?: string;
+      } | null;
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.statusMessage || "ثبت درخواست انجام نشد.");
+      }
+      setLeadSaved(true);
+      trackAnalyticsEvent("budget_match_contact");
+      toast.success("درخواست بودجه شما برای مشاور هیرمند ثبت شد.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "ثبت درخواست انجام نشد.");
+    } finally {
+      setLeadSaving(false);
     }
   }
 
@@ -175,6 +245,48 @@ export function BudgetMatcher() {
           <small>با نرخ هر ۱ میلیون رهن ≈ {formatToman(DEFAULT_RAHN_RATE)} تومان اجاره</small>
         </div>
       </div>
+
+      {searched && !leadSaved ? (
+        <form className="budget-lead-form" onSubmit={saveBudgetLead}>
+          <div className="budget-lead-copy">
+            <span className="kicker">پیگیری مشاور</span>
+            <h3>فایل‌ها را برایتان پیگیری کنیم؟</h3>
+            <p>نام و شماره موبایل را ثبت کنید تا همین بودجه و فایل‌های پیشنهادی داخل پنل مشاور ذخیره شود.</p>
+          </div>
+          <div className="budget-lead-fields">
+            <label className="field">
+              <span>نام و نام خانوادگی</span>
+              <input value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" placeholder="مثلاً علی رضایی" />
+            </label>
+            <label className="field">
+              <span>شماره موبایل</span>
+              <input value={phone} onChange={(event) => setPhone(event.target.value)} inputMode="tel" dir="ltr" autoComplete="tel" placeholder="0913 000 0000" />
+            </label>
+            <label className="field">
+              <span>مشاور</span>
+              <select value={consultant} onChange={(event) => setConsultant(event.target.value as (typeof TEAM)[number]["id"])}>
+                {TEAM.map((person) => <option key={person.id} value={person.id}>{person.name} — {person.role}</option>)}
+              </select>
+            </label>
+            <button type="submit" className="btn-gold" disabled={leadSaving}>
+              {leadSaving ? "در حال ثبت..." : "ثبت درخواست پیگیری"}
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {leadSaved ? (
+        <div className="budget-lead-success">
+          <CheckCircle2 size={20} />
+          <div>
+            <strong>درخواست شما ثبت شد.</strong>
+            <p>مشاور منتخب می‌تواند بودجه و فایل‌های پیشنهادی شما را در سامانه پیگیری کند.</p>
+          </div>
+          <a className="btn-ghost" href={TEAM.find((person) => person.id === consultant)?.wa ?? SITE.whatsappDirect} target="_blank" rel="noopener noreferrer">
+            پیام در واتساپ
+          </a>
+        </div>
+      ) : null}
 
       {searched ? (
         <div className="budget-results">
