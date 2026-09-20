@@ -88,6 +88,7 @@ export interface FileRoutesById {
   '/areas/$slug': typeof AreaSlugRoute
   '/properties': typeof PropertiesRoute
   '/favorites': typeof FavoritesRoute
+  '/compare': typeof CompareRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
