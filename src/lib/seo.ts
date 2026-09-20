@@ -74,7 +74,6 @@ export function homeHead() {
       { name: "geo.position", content: `${SITE.lat};${SITE.lng}` },
       { name: "ICBM", content: `${SITE.lat}, ${SITE.lng}` },
       { name: "language", content: "fa" },
-      { name: "revisit-after", content: "7 days" },
       ...socialMeta({ title, description, url }),
     ],
     links: [
