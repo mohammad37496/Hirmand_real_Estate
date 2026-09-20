@@ -135,10 +135,20 @@ function Hero({ onSearch }: { onSearch: (draft: InquiryDraft) => void }) {
   const [propertyType, setPropertyType] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
 
+  function searchProperties() {
+    const transaction = SERVICES.find((item) => item.title === deal)?.id;
+    const type = PROPERTY_TYPES.find((item) => item.title === propertyType)?.id;
+    const params = new URLSearchParams();
+    if (transaction) params.set("transaction", transaction);
+    if (type) params.set("type", type);
+    if (neighborhood) params.set("neighborhood", neighborhood);
+    trackAnalyticsEvent("inquiry_click");
+    window.location.assign(`/properties${params.toString() ? `?${params.toString()}` : ""}`);
+  }
+
   function submit(event: FormEvent) {
     event.preventDefault();
-    trackAnalyticsEvent("inquiry_click");
-    onSearch({ deal, propertyType, neighborhood });
+    searchProperties();
   }
 
   return (
@@ -206,16 +216,19 @@ function Hero({ onSearch }: { onSearch: (draft: InquiryDraft) => void }) {
           </select>
           <button type="submit" className="btn-gold search-submit">
             <Search size={16} />
-            ثبت درخواست
+            جستجوی فایل
           </button>
         </form>
         <div className="hero-actions">
+          <Link to="/" hash="inquiry" className="btn-ghost" onClick={(event) => scrollToId(event, "inquiry")}>
+            درخواست اختصاصی
+          </Link>
           <CallMenu label="تماس با مشاور" />
           <Link to="/properties" className="btn-gold">
-            مشاهده فایل‌ها
+            همه فایل‌ها
           </Link>
           <a className="btn-ghost" href="#services" onClick={(event) => scrollToId(event, "services")}>
-            مشاهده خدمات
+            خدمات
           </a>
           <MapMenu
             label="موقعیت املاک"
@@ -229,28 +242,33 @@ function Hero({ onSearch }: { onSearch: (draft: InquiryDraft) => void }) {
           <button
             type="button"
             className="hero-intent"
-            onClick={() => onSearch({ deal: "خرید", propertyType: "آپارتمان", neighborhood: "" })}
+            onClick={() => {
+              setDeal("خرید");
+              setPropertyType("آپارتمان");
+              setNeighborhood("");
+              window.location.assign("/properties?transaction=sell&type=apartment");
+            }}
           >
             خرید آپارتمان
           </button>
           <button
             type="button"
             className="hero-intent"
-            onClick={() => onSearch({ deal: "رهن", propertyType: "آپارتمان", neighborhood: "" })}
+            onClick={() => window.location.assign("/properties?transaction=mortgage&type=apartment")}
           >
             رهن آپارتمان
           </button>
           <button
             type="button"
             className="hero-intent"
-            onClick={() => onSearch({ deal: "اجاره", propertyType: "آپارتمان", neighborhood: "" })}
+            onClick={() => window.location.assign("/properties?transaction=rent&type=apartment")}
           >
             اجاره آپارتمان
           </button>
           <button
             type="button"
             className="hero-intent"
-            onClick={() => onSearch({ deal: "خرید", propertyType: "ویلا و باغ", neighborhood: "" })}
+            onClick={() => window.location.assign("/properties?transaction=sell&type=villa")}
           >
             خرید ویلا و باغ
           </button>
