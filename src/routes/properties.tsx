@@ -529,6 +529,15 @@ function PropertiesIndexPage() {
             </div>
           </div>
 
+          {mobileFiltersOpen ? (
+            <button
+              type="button"
+              className="properties-filter-backdrop"
+              aria-label="بستن فیلترها"
+              onClick={() => setMobileFiltersOpen(false)}
+            />
+          ) : null}
+
           <div
             className={`properties-filter-panel${mobileFiltersOpen ? " is-mobile-open" : ""}`}
             role={mobileFiltersOpen ? "dialog" : undefined}
