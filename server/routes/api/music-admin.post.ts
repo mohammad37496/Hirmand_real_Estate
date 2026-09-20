@@ -4,7 +4,7 @@ import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 
 type Action = "list" | "create" | "toggle" | "delete";
-type Body = { action?: Action; adminKey?: string; id?: string; active?: boolean; title?: string; artist?: string; url?: string; mimeType?: string; sizeBytes?: number };
+type Body = { action?: Action; id?: string; active?: boolean; title?: string; artist?: string; url?: string; mimeType?: string; sizeBytes?: number };
 const ALLOWED_MUSIC_TYPES = new Set(["audio/mpeg","audio/mp3","audio/ogg","audio/wav","audio/x-wav","audio/mp4","audio/x-m4a","audio/aac"]);
 
 function normalizeBlobUrl(raw: string): string {
