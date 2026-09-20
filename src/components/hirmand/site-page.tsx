@@ -246,7 +246,7 @@ function Hero({ onSearch }: { onSearch: (draft: InquiryDraft) => void }) {
               setDeal("خرید");
               setPropertyType("آپارتمان");
               setNeighborhood("");
-              window.location.assign("/properties?transaction=sell&type=apartment");
+              window.location.assign("/properties?transaction=buy&type=apartment");
             }}
           >
             خرید آپارتمان
