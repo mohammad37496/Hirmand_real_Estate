@@ -29,7 +29,6 @@ import {
   saveProperty,
 } from "@/lib/properties";
 import { toast, Toaster } from "sonner";
-import { formatToman } from "@/lib/money";
 import { AdminMediaField } from "@/components/hirmand/admin-media-field";
 import { AdminPricingPanel } from "@/components/hirmand/admin-pricing-panel";
 import { AdminConsultantPicker } from "@/components/hirmand/admin-consultant-picker";
