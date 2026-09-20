@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Briefcase, Check, Handshake, Instagram, MessageCircle, Phone, Send, ArrowRight } from "lucide-react";
+import { Briefcase, Check, Handshake, MessageCircle, Phone, ArrowRight } from "lucide-react";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { EitaaIcon, TelegramIcon, WhatsAppIcon, InstagramIcon } from "@/components/hirmand/social-icons";
