@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { BadgeCheck, Check, Copy, Gift, History, KeyRound, LogIn, LogOut, RefreshCw, Send, Ticket, UserRound } from "lucide-react";
+import { BadgeCheck, Check, Copy, Gift, History, KeyRound, LogIn, LogOut, RefreshCw, Send, Ticket } from "lucide-react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BrandLogo } from "@/components/hirmand/logo";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
