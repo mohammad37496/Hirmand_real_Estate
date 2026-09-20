@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SitePage } from "@/components/hirmand/site-page";
-import { listPublishedProperties } from "@/lib/properties";
+import { listPublishedPropertyCards } from "@/lib/properties";
 import { FAQ_JSON_LD } from "@/lib/site";
 import { enhancedOrganizationJsonLd, homeHead } from "@/lib/seo";
 
@@ -9,7 +9,7 @@ import { enhancedOrganizationJsonLd, homeHead } from "@/lib/seo";
 export const Route = createFileRoute("/")({
   loader: async () => {
     try {
-      return await listPublishedProperties({ data: {} });
+      return await listPublishedPropertyCards({ data: {} });
     } catch (err) {
       console.error("[home] properties loader failed (check DATABASE_URL)", err);
       return [];
