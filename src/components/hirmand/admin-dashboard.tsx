@@ -99,9 +99,30 @@ function formatDate(value: string) {
   }
 }
 
+function tehranDateKey(offset = 0) {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tehran",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  const now = new Date();
+  const parts = formatter.formatToParts(now);
+  const year = Number(parts.find((item) => item.type === "year")?.value);
+  const month = Number(parts.find((item) => item.type === "month")?.value);
+  const day = Number(parts.find((item) => item.type === "day")?.value);
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  utc.setUTCDate(utc.getUTCDate() - offset);
+  return formatter.format(utc);
+}
+
 function formatDay(value: string) {
   try {
-    return new Intl.DateTimeFormat("fa-IR", { weekday: "short" }).format(new Date(value + "T12:00:00"));
+    return new Intl.DateTimeFormat("fa-IR", {
+      weekday: "short",
+      timeZone: "Asia/Tehran",
+    }).format(new Date(value + "T12:00:00+03:30"));
   } catch {
     return value;
   }
