@@ -216,7 +216,9 @@ function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
   ];
 }
 
-const PRICE_EXPR = "coalesce(price, deposit, rent)";
+const PRICE_EXPR =
+  "case when transaction_type = 'rent' then coalesce(rent, deposit) " +
+  "when transaction_type = 'mortgage' then deposit else price end";
 
 function publicPropertyWhereSql() {
   return [
