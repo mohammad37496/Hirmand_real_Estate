@@ -1,4 +1,5 @@
-import { createError, defineEventHandler, getCookie, readBody } from "h3";
+import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
+import { z } from "zod";
 import { PARTNER_SESSION_COOKIE, verifyPartnerSessionToken } from "@/lib/partner-session.server";
 import {
   getPartnerOverview,
@@ -11,15 +12,21 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: "نشست همکار معتبر نیست. دوباره وارد شوید." });
   }
 
-  const body = (await readBody(event).catch(() => ({}))) as {
-    action?: "list" | "create";
-    contractReference?: string;
-    clientName?: string;
-    transactionType?: "buy" | "sell" | "rent" | "mortgage";
-    note?: string;
-  };
+  setResponseHeader(event, "cache-control", "no-store");
+  const schema = z.object({
+    action: z.enum(["list", "create"]).optional().default("list"),
+    contractReference: z.string().trim().max(80).optional().default(""),
+    clientName: z.string().trim().max(120).optional().default(""),
+    transactionType: z.enum(["buy", "sell", "rent", "mortgage"]).optional(),
+    note: z.string().trim().max(500).optional().default(""),
+  });
+  const parsed = schema.safeParse(await readBody(event).catch(() => ({})));
+  if (!parsed.success) {
+    throw createError({ statusCode: 400, statusMessage: "اطلاعات قرارداد نامعتبر است." });
+  }
+  const body = parsed.data;
 
-  if (body.action === "list" || !body.action) {
+  if (body.action === "list") {
     const partner = await getPartnerOverview(partnerId);
     if (!partner) throw createError({ statusCode: 404, statusMessage: "حساب همکار پیدا نشد." });
     return { partner };
