@@ -23,6 +23,7 @@ function csvDate(value: unknown) {
 }
 
 export default defineEventHandler(async (event) => {
+  setResponseHeader(event, "cache-control", "no-store");
   const body = (await readBody(event)) as {
     action?: "list" | "status" | "delete" | "export";
     id?: string;
