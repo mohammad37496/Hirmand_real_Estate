@@ -22,7 +22,12 @@ import {
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
-import { deleteProperty, listAdminProperties, saveProperty } from "@/lib/properties";
+import {
+  countAdminProperties,
+  deleteProperty,
+  listAdminProperties,
+  saveProperty,
+} from "@/lib/properties";
 import { toast, Toaster } from "sonner";
 import { formatToman } from "@/lib/money";
 import { AdminMediaField } from "@/components/hirmand/admin-media-field";
@@ -169,6 +174,12 @@ export function AdminPropertiesPage() {
   const [keyInput, setKeyInput] = useState("");
   const [unlocked, setUnlocked] = useState(false);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [serverStats, setServerStats] = useState<{
+    total: number;
+    published: number;
+    draft: number;
+    archived: number;
+  } | null>(null);
   const [loadingList, setLoadingList] = useState(false);
   const [saving, setSaving] = useState(false);
   const [view, setView] = useState<ViewMode>("dashboard");
@@ -184,7 +195,12 @@ export function AdminPropertiesPage() {
     if (!key) return;
     setLoadingList(true);
     try {
-      setProperties(await listAdminProperties({ data: { adminKey: key, limit: 100 } }));
+      const [rows, totals] = await Promise.all([
+        listAdminProperties({ data: { adminKey: key, limit: 100 } }),
+        countAdminProperties({ data: { adminKey: key } }),
+      ]);
+      setProperties(rows);
+      setServerStats(totals);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "بارگذاری فایل‌ها انجام نشد.");
       throw error;
@@ -200,10 +216,14 @@ export function AdminPropertiesPage() {
     }
     setLoadingList(true);
     try {
-      const rows = await listAdminProperties({ data: { adminKey: key, limit: 100 } });
+      const [rows, totals] = await Promise.all([
+        listAdminProperties({ data: { adminKey: key, limit: 100 } }),
+        countAdminProperties({ data: { adminKey: key } }),
+      ]);
       setAdminKey(key);
       setForm((prev) => ({ ...prev, adminKey: key }));
       setProperties(rows);
+      setServerStats(totals);
       setUnlocked(true);
       if (showToast) toast.success("ورود به پنل مدیریت موفق بود.");
     } catch (error) {
@@ -219,6 +239,7 @@ export function AdminPropertiesPage() {
     setAdminKey("");
     setKeyInput("");
     setProperties([]);
+    setServerStats(null);
     setForm(emptyForm());
   }
 
@@ -241,8 +262,15 @@ export function AdminPropertiesPage() {
     const draft = properties.filter((p) => p.status === "draft").length;
     const archived = properties.filter((p) => p.status === "archived").length;
     const featured = properties.filter((p) => p.featured).length;
-    return { total: properties.length, published, draft, archived, featured };
-  }, [properties]);
+
+    return {
+      total: serverStats?.total ?? properties.length,
+      published: serverStats?.published ?? published,
+      draft: serverStats?.draft ?? draft,
+      archived: serverStats?.archived ?? archived,
+      featured,
+    };
+  }, [properties, serverStats]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
