@@ -3786,3 +3786,149 @@ summary:focus-visible {
 .properties-map-panel iframe{display:block;width:100%;height:100%;min-height:620px;border:0}
 @media(max-width:900px){.properties-split-view{grid-template-columns:1fr;min-height:0}.properties-map-list{order:2;max-height:330px;border-left:0;border-top:1px solid rgba(244,239,230,.07)}.properties-map-panel{order:1;min-height:360px}.properties-map-panel iframe{min-height:360px}.properties-view-switch{justify-content:stretch}.properties-view-switch button{flex:1;justify-content:center}}
 @media(max-width:600px){.properties-map-list{max-height:290px}.properties-map-list-item{grid-template-columns:58px minmax(0,1fr) auto;padding:9px}.properties-map-list-image{width:58px;height:50px}.properties-map-panel,.properties-map-panel iframe{min-height:300px}}
+
+
+/* HIRMAND SEARCH + PROFILE + PWA FINAL POLISH */
+.properties-feature-filters {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.properties-feature-toggle {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255,255,255,.03);
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 600;
+}
+.properties-feature-toggle:has(input:checked) {
+  border-color: var(--gold-line);
+  background: rgba(201,162,74,.1);
+  color: var(--fg);
+}
+.properties-feature-toggle input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--gold);
+}
+.property-card-unit-price {
+  display: inline-flex;
+  margin-top: 2px;
+  color: var(--gold-soft);
+  font-size: .78rem;
+  font-weight: 600;
+}
+.property-price-per-m2 {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: .78rem;
+}
+.property-price-per-m2 strong {
+  color: var(--gold-soft);
+}
+.property-contact-profile {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 10px;
+  color: var(--gold);
+  font-size: .82rem;
+  font-weight: 700;
+}
+.team-profile-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 8px 13px;
+  border: 1px solid var(--gold-line);
+  border-radius: 12px;
+  color: var(--gold-soft);
+  background: rgba(201,162,74,.07);
+  font-size: .8rem;
+  font-weight: 700;
+}
+.consultant-profile-page {
+  width: min(100% - 40px, var(--wrap));
+  margin: 0 auto;
+  padding: 56px 0 110px;
+}
+.consultant-profile-hero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 22px;
+  align-items: center;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(201,162,74,.12), transparent 38%),
+    var(--surface);
+  box-shadow: var(--shadow);
+}
+.consultant-profile-avatar {
+  width: 100px;
+  height: 100px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--gold-line);
+  border-radius: 28px;
+  color: var(--gold-soft);
+  background: linear-gradient(145deg, rgba(201,162,74,.16), rgba(255,255,255,.04));
+}
+.consultant-profile-role {
+  color: var(--gold);
+  font-size: .82rem;
+  font-weight: 700;
+}
+.consultant-profile-hero h1 {
+  margin-top: 5px;
+  font-size: clamp(1.7rem, 1.2rem + 1.5vw, 2.5rem);
+}
+.consultant-profile-phone {
+  display: inline-flex;
+  margin-top: 7px;
+  color: var(--muted);
+}
+.consultant-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+.consultant-profile-socials {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 22px;
+}
+.consultant-profile-social {
+  min-height: 74px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.consultant-profile-social:hover {
+  border-color: var(--gold-line);
+}
+@media (max-width: 760px) {
+  .consultant-profile-hero { grid-template-columns: 1fr; text-align: center; }
+  .consultant-profile-avatar { margin-inline: auto; }
+  .consultant-profile-actions { justify-content: center; }
+  .consultant-profile-socials { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .team-profile-link,
+  .consultant-profile-social { transition: none !important; }
+}
