@@ -9,6 +9,8 @@ import {
   History,
   KeyRound,
   Plus,
+  Printer,
+  QrCode,
   RefreshCw,
   ShieldCheck,
   Ticket,
@@ -17,6 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { PartnerContract, PartnerOverview, PartnerSummary } from "@/lib/partner-program.server";
+import { partnerPortalUrl, partnerQrImageUrl } from "@/lib/partner-links";
 
 type CreateForm = { agencyName: string; contactName: string; phone: string };
 const EMPTY_FORM: CreateForm = { agencyName: "", contactName: "", phone: "" };
@@ -91,6 +94,14 @@ export function AdminPartnerManager() {
   const [busy, setBusy] = useState("");
   const [credentials, setCredentials] = useState<{ code: string; pin: string; agency: string } | null>(null);
   const [search, setSearch] = useState("");
+  const [selectedAudits, setSelectedAudits] = useState<Array<{
+    id: string;
+    action: string;
+    actor: string;
+    targetId: string | null;
+    note: string;
+    createdAt: string;
+  }>>([]);
 
   async function api<T>(body: Record<string, unknown>): Promise<T> {
     const response = await fetch("/api/admin/partners", {
@@ -271,6 +282,40 @@ export function AdminPartnerManager() {
     }
   }
 
+  function printPartnerCard(partner: PartnerSummary | PartnerOverview) {
+    const portal = partnerPortalUrl(partner.partnerCode);
+    const qr = partnerQrImageUrl(partner.partnerCode);
+    const boxes = Array.from({ length: 12 }, (_, index) =>
+      "<span class=\"stamp" + (index < partner.cardStamps ? " filled" : "") + "\">" +
+      (index < partner.cardStamps ? "✓" : String(index + 1)) +
+      "</span>"
+    ).join("");
+    const popup = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
+    if (!popup) {
+      toast.error("پنجره چاپ توسط مرورگر مسدود شد.");
+      return;
+    }
+    popup.document.write(`
+      <!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
+      <title>کارت همکاری ${partner.agencyName}</title>
+      <style>
+        *{box-sizing:border-box}body{margin:0;padding:28px;background:#071113;color:#f4f7f6;font-family:Tahoma,Arial,sans-serif}
+        .card{width:860px;max-width:100%;margin:auto;padding:28px;border:2px solid #c6a56a;border-radius:28px;background:linear-gradient(145deg,#102326,#071113);page-break-inside:avoid}
+        .top{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}.brand{font-weight:800;font-size:24px}.muted{color:#aab8b7;font-size:13px;line-height:1.8}.code{font:700 16px ui-monospace,monospace;letter-spacing:.08em;color:#e3c991}
+        .qr{width:154px;height:154px;border-radius:18px;background:#fff;padding:8px}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:9px;margin:28px 0 12px}.stamp{aspect-ratio:1;display:grid;place-items:center;border:2px dashed #60706e;border-radius:12px;color:#788b89;font-weight:800}.stamp.filled{border-style:solid;background:#e3c991;color:#0a1b18;border-color:#e3c991}
+        .bottom{display:flex;justify-content:space-between;gap:18px;align-items:end;margin-top:16px}.rule{font-weight:700;color:#e3c991}.url{font:12px ui-monospace,monospace;direction:ltr;word-break:break-all;color:#aab8b7}
+        @media print{body{padding:0;background:#fff}.card{box-shadow:none;color:#111;background:#fff;border-color:#777}.muted,.url{color:#444}.code,.rule{color:#111}.stamp{border-color:#777;color:#555}.stamp.filled{background:#e3c991;color:#111;border-color:#777}}
+      </style></head><body onload="setTimeout(()=>window.print(),250)">
+      <div class="card">
+        <div class="top"><div><div class="brand">گروه مشاورین املاک هیرمند</div><div class="muted">باشگاه همکاران · کارت ۱۲ مهر</div><div style="margin-top:18px" class="code">${partner.partnerCode}</div><div class="muted">${partner.agencyName} · ${partner.contactName}</div></div>
+        <img class="qr" src="${qr}" alt="QR"></div>
+        <div class="grid">${boxes}</div>
+        <div class="bottom"><div><div class="rule">هر ۳ قرارداد تأییدشده = یک ثبت قرارداد رایگان</div><div class="muted" style="margin-top:6px">اسکن QR برای ورود به سامانه همکاری</div></div><div class="url">${portal}</div></div>
+      </div></body></html>
+    `);
+    popup.document.close();
+  }
+
   if (loading) {
     return (
       <section className="admin-panel">
@@ -447,6 +492,9 @@ export function AdminPartnerManager() {
               <p>{selected.contactName} · {selected.phone} · {selected.partnerCode}</p>
             </div>
             <div className="admin-partner-detail-head-actions">
+              <button type="button" className="btn-ghost" onClick={() => printPartnerCard(selected)}>
+                <Printer size={15} /> چاپ کارت
+              </button>
               <button type="button" className="btn-ghost" onClick={() => void toggleStatus(selected)} disabled={Boolean(busy)}>
                 <ShieldCheck size={15} /> {selected.status === "active" ? "غیرفعال‌کردن" : "فعال‌کردن"}
               </button>
@@ -463,13 +511,55 @@ export function AdminPartnerManager() {
             </div>
           </div>
 
-          <StampCard stamps={selected.cardStamps} cardNumber={selected.cardNumber} />
+          <div className="admin-partner-digital-card">
+            <StampCard stamps={selected.cardStamps} cardNumber={selected.cardNumber} />
+            <div className="admin-partner-qr">
+              <div>
+                <span className="kicker">QR اختصاصی همکار</span>
+                <h3>ورود سریع به سامانه</h3>
+                <p>این QR را روی کارت ویزیت همان املاک چاپ کنید؛ با اسکن، کد همکاری به‌صورت خودکار وارد می‌شود.</p>
+                <a href={partnerPortalUrl(selected.partnerCode)} target="_blank" rel="noreferrer" className="text-link">
+                  <QrCode size={15} /> باز کردن لینک
+                </a>
+              </div>
+              <img src={partnerQrImageUrl(selected.partnerCode)} alt={"QR ورود " + selected.agencyName} />
+            </div>
+          </div>
 
           <div className="admin-dashboard-mini-grid">
             <div><span>کل قرارداد تأییدشده</span><strong>{selected.contractCount.toLocaleString("fa-IR")}</strong></div>
             <div><span>پاداش کسب‌شده</span><strong>{selected.rewardsEarned.toLocaleString("fa-IR")}</strong></div>
             <div><span>پاداش قابل استفاده</span><strong>{selected.availableRewards.toLocaleString("fa-IR")}</strong></div>
             <div><span>آخرین ورود</span><strong>{selected.lastLoginAt ? faDate(selected.lastLoginAt) : "هنوز وارد نشده"}</strong></div>
+          </div>
+
+          <div className="admin-partner-history">
+            <div className="admin-panel-head">
+              <div><span className="kicker">لاگ مدیریتی</span><h3>تاریخچه عملیات</h3></div>
+            </div>
+            {selectedAudits.length === 0 ? (
+              <div className="admin-empty"><History size={22} /><strong>هنوز عملیات مدیریتی ثبت نشده</strong></div>
+            ) : (
+              <div className="admin-partner-audit-list">
+                {selectedAudits.slice(0, 20).map((audit) => {
+                  const labels: Record<string, string> = {
+                    account_created: "ساخت حساب",
+                    contract_approved: "تأیید قرارداد و مهر",
+                    contract_rejected: "رد قرارداد",
+                    card_issued: "صدور کارت جدید",
+                    reward_claimed: "مصرف پاداش",
+                    account_activated: "فعال‌سازی حساب",
+                    account_suspended: "غیرفعال‌سازی حساب",
+                  };
+                  return (
+                    <div key={audit.id} className="admin-partner-audit-row">
+                      <strong>{labels[audit.action] ?? audit.action}</strong>
+                      <span>{audit.note || "بدون توضیح"} · {faDate(audit.createdAt)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="admin-partner-history">
