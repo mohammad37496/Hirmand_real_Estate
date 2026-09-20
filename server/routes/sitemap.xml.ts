@@ -1,6 +1,6 @@
 /**
  * Dynamic sitemap at /sitemap.xml
- * Includes: home, tracking, all neighborhood area pages, published properties.
+ * Includes: home, all neighborhood area pages, and published properties.
  */
 import { defineEventHandler, setResponseHeader } from "h3";
 import { allAreas, areaPath } from "../../src/lib/areas";
