@@ -102,7 +102,7 @@ function Gallery({
             type="button"
             className={`property-gallery-thumb${index === active ? " is-active" : ""}`}
             onClick={() => setActive(index)}
-            aria-label={\`نمایش تصویر \${(index + 1).toLocaleString("fa-IR")}\`}
+            aria-label={`نمایش تصویر ${(index + 1).toLocaleString("fa-IR")}`}
             aria-pressed={index === active}
           >
             {isVideoUrl(src) ? (
