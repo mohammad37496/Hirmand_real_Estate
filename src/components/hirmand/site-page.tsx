@@ -130,7 +130,7 @@ function SectionHead({ kicker, title, text }: { kicker: string; title: string; t
   );
 }
 
-function Hero({ onSearch }: { onSearch: (draft: InquiryDraft) => void }) {
+function Hero() {
   const [deal, setDeal] = useState("خرید");
   const [propertyType, setPropertyType] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
@@ -769,7 +769,7 @@ export function SitePage({ initialProperties = [] }: { initialProperties?: Prope
   return (
     <SiteChrome>
       <main className="site-home">
-        <Hero onSearch={(next) => goInquiry(next)} />
+        <Hero />
       <TrustStrip />
       <About />
       <Team />
