@@ -68,7 +68,7 @@ export default defineEventHandler(async (event) => {
 
     const rows = await sql.query<Record<string, unknown>>(
       "select name, phone, deal, property_type, neighborhood, consultant, status, note, source, " +
-        "acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, " +
+        "acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, follow_up_at, last_contacted_at, " +
         "budget_deposit, budget_rent, budget_equivalent, budget_bedrooms, match_count, created_at " +
         "from leads where " + conditions.join(" and ") +
         " order by created_at desc limit 50000",
@@ -114,7 +114,7 @@ export default defineEventHandler(async (event) => {
   if ((body.action ?? "list") === "list") {
     const rows = await sql.query<Record<string, unknown>>(
       "select id,name,phone,deal,property_type,neighborhood,consultant,note,status,source, " +
-        "acquisition_source,acquisition_medium,acquisition_campaign,acquisition_referrer, " +
+        "acquisition_source,acquisition_medium,acquisition_campaign,acquisition_referrer,follow_up_at,last_contacted_at, " +
         "budget_deposit,budget_rent,budget_equivalent,budget_bedrooms,budget_rate,matched_properties,match_count,created_at " +
         "from leads order by created_at desc limit 300",
     );
