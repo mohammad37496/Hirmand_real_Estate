@@ -27,7 +27,9 @@
 | **ابزارهای مالی** | تبدیل رهن/اجاره، محاسبه کمیسیون، وام و سود سپرده |
 | **SEO** | Canonical، Open Graph، Structured Data، صفحات محله، Sitemap داینامیک و robots.txt |
 | **دسترسی‌پذیری** | RTL کامل، Vazirmatn، skip link و پشتیبانی `prefers-reduced-motion` |
-| **PWA** | Manifest، نصب‌پذیری و تجربه موبایل |\n| **چاپ فایل** | نسخه چاپی تمیز برای ذخیره/پرینت مشخصات ملک |\n| **Admin Pro** | فیلتر چندگانه فایل‌ها، مرتب‌سازی و امتیاز کیفیت آگهی |
+| **PWA** | Manifest، نصب‌پذیری و تجربه موبایل |
+| **چاپ فایل** | نسخه چاپی تمیز برای ذخیره/پرینت مشخصات ملک |
+| **Admin Pro** | فیلتر چندگانه فایل‌ها، مرتب‌سازی و امتیاز کیفیت آگهی |
 
 ---
 
@@ -57,7 +59,7 @@ npm run dev
 |-------|--------|--------|
 | `DATABASE_URL` | اتصال PostgreSQL / Neon برای فایل‌ها، Leadها و Analytics | برای امکانات دیتابیسی |
 | `HIRMAND_ADMIN_KEY` | کلید دسترسی به `/admin` | برای پنل ادمین |
-| `VITE_SITE_URL` | آدرس نهایی و canonical سایت، ترجیحاً `https://hirmand.ir` | بسیار مهم |
+| `VITE_SITE_URL` | آدرس نهایی و canonical سایت، ترجیحاً `https://www.hirmandrealestate.ir` | بسیار مهم |
 | `VITE_GOOGLE_SITE_VERIFICATION` | توکن تأیید Google Search Console | اختیاری |
 | `VITE_AUTH_ENABLED` | فعال‌سازی Better Auth | خیر |
 
@@ -75,8 +77,8 @@ npm run dev
 
 ### کارهای لازم برای Google
 
-1. دامنه `hirmand.ir` را به Vercel وصل کنید و `VITE_SITE_URL=https://hirmand.ir` تنظیم باشد.
-2. سایت را در Google Search Console تأیید کنید و `https://hirmand.ir/sitemap.xml` را Submit کنید.
+1. دامنه `hirmand.ir` را به Vercel وصل کنید و `VITE_SITE_URL=https://www.hirmandrealestate.ir` تنظیم باشد.
+2. سایت را در Google Search Console تأیید کنید و `https://www.hirmandrealestate.ir/sitemap.xml` را Submit کنید.
 3. برای صفحه اصلی و صفحات کلیدی Request Indexing بزنید.
 4. Google Business Profile / Google Maps را با نام، تلفن و آدرس واقعی کسب‌وکار تکمیل و تأیید کنید.
 5. محتوای واقعی و مفید برای محله‌ها و خدمات اضافه کنید و لینک‌های طبیعی و معتبر بسازید.
@@ -93,7 +95,7 @@ npm run dev
 /compare                مقایسه فایل‌ها
 /favorites              علاقه‌مندی‌ها
 /admin                  پنل مدیریت
-/tracking               بخش قرارداد (فعلاً noindex)
+/tracking               باشگاه همکاران، ثبت قرارداد و کد رهگیری (noindex)
 ```
 
 ## پنل مدیریت
