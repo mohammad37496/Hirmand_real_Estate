@@ -1018,7 +1018,7 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
       [data.id, data.limit],
     );
 
-    const state = (value: unknown) => {
+    const state = (value: unknown): PropertyHistoryState => {
       if (!value || typeof value !== "object") {
         return {
           title: null,
