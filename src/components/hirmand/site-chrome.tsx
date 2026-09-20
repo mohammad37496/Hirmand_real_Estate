@@ -10,6 +10,7 @@ import { MusicPlayer } from "./music-player";
 import { Header } from "./header";
 import { scrollToId } from "./scroll";
 import { VisitorTracker } from "./visitor-tracker";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 export function SiteChrome({
   children,
@@ -28,7 +29,7 @@ export function SiteChrome({
       <div className={cn("page", className)}>{children}</div>
       <Footer />
       <div className="quick-actions" aria-label="اقدام سریع">
-        <Link to="/" hash="inquiry" className="quick-action quick-action-primary">
+        <Link to="/" hash="inquiry" className="quick-action quick-action-primary" onClick={() => trackAnalyticsEvent("inquiry_submit")}>
           <FileKey size={17} />
           <span>درخواست ملک</span>
         </Link>
@@ -37,11 +38,16 @@ export function SiteChrome({
           target="_blank"
           rel="noopener noreferrer"
           className="quick-action"
+          onClick={() => trackAnalyticsEvent("whatsapp_click")}
         >
           <MessageCircle size={17} />
           <span>واتساپ</span>
         </a>
-        <a href={`tel:${SITE.phone.mobile}`} className="quick-action">
+        <a
+          href={`tel:${SITE.phone.mobile}`}
+          className="quick-action"
+          onClick={() => trackAnalyticsEvent("call_click")}
+        >
           <Phone size={17} />
           <span>تماس مستقیم</span>
         </a>
