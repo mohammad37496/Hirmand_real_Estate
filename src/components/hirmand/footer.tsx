@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
 import { SITE } from "@/lib/site";
 import { BrandLogo } from "./logo";
 import { scrollToId } from "./scroll";
@@ -27,13 +28,12 @@ export function Footer() {
         {socials.map(({ href, label, Icon }) => (
           <a
             key={label}
-            className="chip"
+            className={cn("chip", "footer-social-chip", label.includes("اینستاگرام") && "is-instagram", label.includes("تلگرام") && "is-telegram", label.includes("ایتا") && "is-eitaa", label.includes("واتساپ") && "is-whatsapp")}
             href={href}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={label}
             title={label}
-            style={{ width: 44, padding: 0, display: "inline-grid", placeItems: "center" }}
           >
             <Icon size={18} />
           </a>
