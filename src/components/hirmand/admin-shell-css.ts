@@ -114,7 +114,7 @@ export const ADMIN_CSS = `
 .admin-media-drop.is-over{border-color:rgba(201,162,74,.7);background:rgba(201,162,74,.06)}
 .admin-media-drop.is-busy{pointer-events:none;opacity:.75}
 .admin-media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:4px}
-.admin-media-item{position:relative;aspect-ratio:4/3;border-radius:12px;overflow:hidden;background:#0a0c10}
+.admin-media-item{position:relative;aspect-ratio:4/3;border-radius:12px;overflow:hidden;background:#0a0c10;cursor:grab;transition:transform .18s ease,opacity .18s ease,box-shadow .18s ease}.admin-media-item:active{cursor:grabbing}.admin-media-item.is-dragging{opacity:.55;transform:scale(.97);box-shadow:0 0 0 2px rgba(201,162,74,.55)}
 .admin-media-item img,.admin-media-item video{width:100%;height:100%;object-fit:cover}
 .admin-media-badge{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.55);border-radius:8px;padding:3px 6px;color:#fff;display:flex}
 .admin-media-remove{position:absolute;bottom:6px;left:6px;width:28px;height:28px;border:0;border-radius:8px;background:rgba(180,40,40,.85);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
