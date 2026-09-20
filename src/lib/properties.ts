@@ -249,6 +249,8 @@ function mapProperty(row: Record<string, unknown>): Property {
     latitude: numberOrNull(row.latitude),
     longitude: numberOrNull(row.longitude),
     priceDropPercent: numberOrNull(row.price_drop_percent),
+    latitude: numberOrNull(row.latitude),
+    longitude: numberOrNull(row.longitude),
   };
 }
 
@@ -265,7 +267,8 @@ const CARD_COLUMNS = `
   id, slug, status, featured, title, transaction_type, property_type,
   neighborhood, area_m2, bedrooms, parking, elevator, price, deposit, rent,
   nullif(images->>0, '') as image,
-  price_drop_percent
+  price_drop_percent,
+  latitude, longitude
 `;
 
 function mapPropertyCard(row: Record<string, unknown>): PropertyCardData {
