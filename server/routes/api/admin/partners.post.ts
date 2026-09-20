@@ -1,0 +1,109 @@
+import { createError, defineEventHandler, getCookie, readBody } from "h3";
+import { verifyAdminSessionToken, ADMIN_SESSION_COOKIE } from "@/lib/admin-session.server";
+import {
+  claimPartnerReward,
+  createPartnerAccount,
+  getPartnerOverview,
+  issueNewPartnerCard,
+  listAdminPartners,
+  listPartnerContractsForAdmin,
+  listPendingPartnerContracts,
+  rejectPartnerContract,
+  approvePartnerContract,
+  updatePartnerStatus,
+} from "@/lib/partner-program.server";
+
+export default defineEventHandler(async (event) => {
+  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: "نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.",
+    });
+  }
+
+  const body = (await readBody(event).catch(() => ({}))) as {
+    action?:
+      | "list"
+      | "create"
+      | "pending"
+      | "details"
+      | "approve"
+      | "reject"
+      | "new-card"
+      | "claim-reward"
+      | "status";
+    partnerId?: string;
+    contractId?: string;
+    agencyName?: string;
+    contactName?: string;
+    phone?: string;
+    note?: string;
+    status?: "active" | "suspended";
+  };
+
+  try {
+    if (body.action === "create") {
+      if (!body.agencyName || !body.contactName || !body.phone) {
+        throw new Error("نام املاک، مسئول و شماره تماس را کامل کنید.");
+      }
+      return {
+        success: true,
+        created: await createPartnerAccount({
+          agencyName: body.agencyName,
+          contactName: body.contactName,
+          phone: body.phone,
+        }),
+      };
+    }
+
+    if (body.action === "pending") {
+      return { contracts: await listPendingPartnerContracts() };
+    }
+
+    if (body.action === "details") {
+      if (!body.partnerId) throw new Error("شناسه همکار مشخص نیست.");
+      const [partner, contracts] = await Promise.all([
+        getPartnerOverview(body.partnerId),
+        listPartnerContractsForAdmin(body.partnerId),
+      ]);
+      if (!partner) throw new Error("حساب همکار پیدا نشد.");
+      return { partner, contracts };
+    }
+
+    if (body.action === "approve") {
+      if (!body.contractId) throw new Error("شناسه قرارداد مشخص نیست.");
+      return { success: true, result: await approvePartnerContract(body.contractId) };
+    }
+
+    if (body.action === "reject") {
+      if (!body.contractId) throw new Error("شناسه قرارداد مشخص نیست.");
+      return { success: true, result: await rejectPartnerContract(body.contractId, body.note ?? "") };
+    }
+
+    if (body.action === "new-card") {
+      if (!body.partnerId) throw new Error("شناسه همکار مشخص نیست.");
+      return { success: true, partner: await issueNewPartnerCard(body.partnerId) };
+    }
+
+    if (body.action === "claim-reward") {
+      if (!body.partnerId) throw new Error("شناسه همکار مشخص نیست.");
+      return { success: true, partner: await claimPartnerReward(body.partnerId, body.note ?? "") };
+    }
+
+    if (body.action === "status") {
+      if (!body.partnerId || !body.status) throw new Error("حساب یا وضعیت مشخص نیست.");
+      return { success: true, partner: await updatePartnerStatus(body.partnerId, body.status) };
+    }
+
+    const [partners, pendingContracts] = await Promise.all([
+      listAdminPartners(),
+      listPendingPartnerContracts(),
+    ]);
+    return { partners, pendingContracts };
+  } catch (error) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: error instanceof Error ? error.message : "عملیات همکاری انجام نشد.",
+    });
+  }
+});
