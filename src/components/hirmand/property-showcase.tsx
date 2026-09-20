@@ -39,7 +39,7 @@ function imageFor(property: Property | PropertyCardData) {
 function PropertyImage({ src, alt, fallback }: { src: string; alt: string; fallback: string }) {
   const candidates = mediaSourceCandidates(src, fallback);
   const [attempt, setAttempt] = useState(0);
-  const current = candidates[Math.min(attempt, Math.max(0, candidates.length - 1))] ?? fallback;
+  const current = candidates[Math.min(attempt, candidates.length - 1)] ?? fallback;
   return (
     <img
       src={current}
@@ -54,38 +54,17 @@ function PropertyImage({ src, alt, fallback }: { src: string; alt: string; fallb
 export function PropertyCard({ property }: { property: Property | PropertyCardData }) {
   return (
     <article className="property-card">
-      <a
-        href={`/properties/${property.slug}`}
+      <Link
+        to="/properties/$slug"
+        params={{ slug: property.slug }}
         className="property-card-link"
         aria-label={`مشاهده جزئیات فایل ${property.title}`}
       >
         <div className="property-card-media">
-          <img
+          <PropertyImage
             src={imageFor(property)}
             alt={property.title}
-            loading="lazy"
-            decoding="async"
-            onError={(event) => {
-              const image = event.currentTarget;
-              const source = image.dataset.source ?? image.src;
-              if (image.dataset.proxy !== "2" && /divarcdn\.com/i.test(source)) {
-                const proxyIndex = Number(image.dataset.proxy || "0");
-                const proxies = [
-                  `https://wsrv.nl/?url=${encodeURIComponent(source)}`,
-                  `https://images.weserv.nl/?url=${encodeURIComponent(source)}`,
-                ];
-                if (proxyIndex < proxies.length) {
-                  image.dataset.proxy = String(proxyIndex + 1);
-                  image.src = proxies[proxyIndex];
-                  return;
-                }
-              }
-              if (image.dataset.fallback === "1") return;
-              image.dataset.fallback = "1";
-              image.src = FALLBACK_IMAGES[property.propertyType];
-            }}
-            referrerPolicy="no-referrer"
-            data-source={imageFor(property)}
+            fallback={FALLBACK_IMAGES[property.propertyType]}
           />
           <div className="property-card-badges">
             {property.featured ? (
@@ -134,7 +113,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
           </div>
           <span className="property-card-details-link">مشاهده جزئیات فایل <ChevronLeft size={14} /></span>
         </div>
-      </a>
+      </Link>
 
       <PropertyActions property={property} compact />
     </article>
