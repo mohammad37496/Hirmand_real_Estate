@@ -107,7 +107,7 @@ function ComparePage() {
             <p>در صفحه فایل‌ها یا روی کارت ملک، دکمه «مقایسه» را بزنید.</p>
             <div className="properties-empty-actions">
               <Link to="/properties" className="btn-gold">مشاهده فایل‌ها</Link>
-              {properties.length ? <Link to={`/properties/${properties[0]!.slug}`} className="btn-ghost">مشاهده فایل انتخاب‌شده</Link> : null}
+              {properties.length ? <Link to="/properties/$slug" params={{ slug: properties[0]!.slug }} className="btn-ghost">مشاهده فایل انتخاب‌شده</Link> : null}
             </div>
           </section>
         ) : (
