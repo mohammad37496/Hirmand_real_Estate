@@ -59,7 +59,6 @@ export function AdminMediaField({ adminKey, value, onChange }: Props) {
         const blob = await upload(pathname, file, {
           access: "public",
           handleUploadUrl: "/api/upload",
-          headers: { "x-hirmand-admin-key": adminKey },
           clientPayload: JSON.stringify({
             contentType: file.type,
             sizeBytes: file.size,
