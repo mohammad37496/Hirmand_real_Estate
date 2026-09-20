@@ -78,7 +78,6 @@ export function AdminMusicManager({ adminKey }: { adminKey: string }) {
       const blob = await upload(pathname, file, {
         access: "public",
         handleUploadUrl: "/api/music-upload",
-        headers: { "x-hirmand-admin-key": adminKey },
         clientPayload: JSON.stringify({
           title: title.trim(),
           artist: artist.trim(),
