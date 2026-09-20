@@ -262,7 +262,7 @@ function PropertiesIndexPage() {
     }, 250);
 
     return () => window.clearTimeout(timer);
-  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, sort]);
+  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, parkingOnly, elevatorOnly, sort]);
 
   async function loadMore() {
     if (loading || loadingMore || properties.length >= total) return;
