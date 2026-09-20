@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   BarChart3,
@@ -173,6 +173,7 @@ export function AdminPropertiesPage() {
   const [adminKey, setAdminKey] = useState("");
   const [keyInput, setKeyInput] = useState("");
   const [unlocked, setUnlocked] = useState(false);
+  const [sessionChecking, setSessionChecking] = useState(true);
   const [properties, setProperties] = useState<Property[]>([]);
   const [propertyOffset, setPropertyOffset] = useState(0);
   const [propertyHasMore, setPropertyHasMore] = useState(false);
@@ -192,6 +193,47 @@ export function AdminPropertiesPage() {
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function restoreSession() {
+      try {
+        const response = await fetch("/api/admin/session", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ action: "login" }),
+        });
+        const data = (await response.json().catch(() => null)) as
+          | { authenticated?: boolean }
+          | null;
+
+        if (!data?.authenticated || cancelled) return;
+
+        const [rows, totals] = await Promise.all([
+          listAdminProperties({ data: { adminKey: "", limit: 100, offset: 0 } }),
+          countAdminProperties({ data: { adminKey: "" } }),
+        ]);
+
+        if (cancelled) return;
+        setProperties(rows);
+        setPropertyOffset(rows.length);
+        setPropertyHasMore(rows.length < totals.total);
+        setServerStats(totals);
+        setUnlocked(true);
+      } catch {
+        // No valid session: show the login screen.
+      } finally {
+        if (!cancelled) setSessionChecking(false);
+      }
+    }
+
+    void restoreSession();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function refresh() {
     if (!unlocked) return;
@@ -433,6 +475,21 @@ export function AdminPropertiesPage() {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حذف انجام نشد.");
     }
+  }
+
+  if (sessionChecking) {
+    return (
+      <div className="admin-login">
+        <Toaster position="top-center" dir="rtl" richColors closeButton />
+        <style dangerouslySetInnerHTML={{ __html: ADMIN_CSS }} />
+        <div className="admin-login-card">
+          <span className="kicker">پنل داخلی هیرمند</span>
+          <h1>در حال بررسی نشست</h1>
+          <p>اعتبار نشست مدیریت بررسی می‌شود…</p>
+          <RefreshCw size={24} className="admin-spin" />
+        </div>
+      </div>
+    );
   }
 
   if (!unlocked) {
