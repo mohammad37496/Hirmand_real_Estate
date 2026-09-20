@@ -39,6 +39,7 @@ export function AdminLeadManager() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | LeadStatus>("all");
+  const [exporting, setExporting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -108,36 +109,37 @@ export function AdminLeadManager() {
     });
   }, [leads, query, statusFilter]);
 
-  function exportCsv() {
-    const header = ["نام", "تلفن", "معامله", "نوع ملک", "محله", "مشاور", "وضعیت", "توضیحات", "تاریخ"];
-    const rows = filteredLeads.map((lead) => [
-      lead.name,
-      lead.phone,
-      lead.deal,
-      lead.propertyType,
-      lead.neighborhood,
-      lead.consultant,
-      STATUS_LABEL[lead.status],
-      lead.note,
-      formatDate(lead.createdAt),
-    ]);
-
-    const csv = [header, ...rows]
-      .map((row) =>
-        row.map((value) => {
-          const text = String(value ?? "");
-          return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-        }).join(","),
-      )
-      .join("\n");
-
-    const blob = new Blob(["\\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = "hirmand-leads.csv";
-    anchor.click();
-    URL.revokeObjectURL(url);
+  async function exportCsv() {
+    setExporting(true);
+    try {
+      const response = await fetch("/api/leads-admin", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "export",
+          query: query.trim() || undefined,
+          status: statusFilter === "all" ? undefined : statusFilter,
+        }),
+      });
+      if (!response.ok) {
+        const result = (await response.json().catch(() => null)) as { statusMessage?: string } | null;
+        throw new Error(result?.statusMessage || "خروجی CSV آماده نشد.");
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "hirmand-leads.csv";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      toast.success("خروجی کامل CRM آماده شد.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "خروجی CSV آماده نشد.");
+    } finally {
+      setExporting(false);
+    }
   }
 
   return (
@@ -170,9 +172,9 @@ export function AdminLeadManager() {
               <option value="closed">بسته‌شده</option>
               <option value="spam">اسپم</option>
             </select>
-            <button type="button" className="btn-ghost" onClick={exportCsv} disabled={!filteredLeads.length}>
+            <button type="button" className="btn-ghost" onClick={() => void exportCsv()} disabled={exporting}>
               <Download size={16} />
-              خروجی CSV
+              {exporting ? "در حال ساخت…" : "خروجی CSV"}
             </button>
             <button type="button" className="btn-ghost" onClick={() => void load()}>
               به‌روزرسانی
