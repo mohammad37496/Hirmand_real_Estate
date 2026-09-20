@@ -387,6 +387,10 @@ export function AdminPropertiesPage() {
       toast.error("نام و تلفن مشاور را مشخص کنید.");
       return;
     }
+    if (form.description.trim().length < 10) {
+      toast.error("توضیحات فایل را کامل‌تر بنویسید.");
+      return;
+    }
     const price = numberOrNull(form.price);
     const deposit = numberOrNull(form.deposit);
     const rent = numberOrNull(form.rent);
