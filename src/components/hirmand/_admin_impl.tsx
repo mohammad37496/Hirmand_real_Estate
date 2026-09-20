@@ -26,7 +26,7 @@ import {
   CheckSquare,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
-import type { Property, PropertyHistoryState, PropertyType, PropertyTransaction } from "@/lib/properties";
+import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
 import {
   bulkAssignPropertyConsultant,
   bulkDeleteProperties,
@@ -238,9 +238,23 @@ export function AdminPropertiesPage() {
   const [changeHistory, setChangeHistory] = useState<Array<{
     id: number;
     action: "created" | "updated" | "deleted";
-    beforeState: PropertyHistoryState | null;
-    afterState: PropertyHistoryState | null;
     changedAt: string;
+    beforeTitle: string | null;
+    beforeStatus: "draft" | "published" | "archived" | null;
+    beforeFeatured: boolean | null;
+    beforePrice: string | null;
+    beforeDeposit: string | null;
+    beforeRent: string | null;
+    beforeContactName: string | null;
+    beforeContactPhone: string | null;
+    afterTitle: string | null;
+    afterStatus: "draft" | "published" | "archived" | null;
+    afterFeatured: boolean | null;
+    afterPrice: string | null;
+    afterDeposit: string | null;
+    afterRent: string | null;
+    afterContactName: string | null;
+    afterContactPhone: string | null;
   }>>([]);
   const [form, setForm] = useState<FormState>(emptyForm());
 
@@ -1498,13 +1512,13 @@ export function AdminPropertiesPage() {
                   ) : (
                     <div className="admin-breakdown">
                       {changeHistory.map((item) => {
-                        const before = item.beforeState ?? {};
-                        const after = item.afterState ?? {};
+                        const before = item;
+                        const after = item;
                         const changes: string[] = [];
                         if (item.action === "created") changes.push("فایل ایجاد شد");
                         if (item.action === "deleted") changes.push("فایل حذف شد");
                         if (item.action === "updated") {
-                          if (before.status !== after.status) {
+                          if (before.beforeStatus !== after.afterStatus) {
                             const labels: Record<string, string> = {
                               published: "منتشرشده",
                               draft: "پیش‌نویس",
@@ -1512,31 +1526,29 @@ export function AdminPropertiesPage() {
                             };
                             changes.push(
                               "وضعیت: " +
-                                (labels[String(before.status)] ?? String(before.status ?? "—")) +
+                                (labels[String(before.beforeStatus)] ?? String(before.beforeStatus ?? "—")) +
                                 " ← " +
-                                (labels[String(after.status)] ?? String(after.status ?? "—")),
+                                (labels[String(after.afterStatus)] ?? String(after.afterStatus ?? "—")),
                             );
                           }
-                          if (before.featured !== after.featured) {
-                            changes.push(after.featured === true ? "ویژه شد" : "از حالت ویژه خارج شد");
+                          if (before.beforeFeatured !== after.afterFeatured) {
+                            changes.push(after.afterFeatured === true ? "ویژه شد" : "از حالت ویژه خارج شد");
                           }
-                          if (before.contactName !== after.contactName) {
+                          if (before.beforeContactName !== after.afterContactName) {
                             changes.push("مشاور تغییر کرد");
                           }
                           if (
-                            before.title !== after.title ||
-                            before.price !== after.price ||
-                            before.deposit !== after.deposit ||
-                            before.rent !== after.rent
+                            before.beforeTitle !== after.afterTitle ||
+                            before.beforePrice !== after.afterPrice ||
+                            before.beforeDeposit !== after.afterDeposit ||
+                            before.beforeRent !== after.afterRent
                           ) {
                             changes.push("اطلاعات اصلی/قیمت ویرایش شد");
                           }
                           if (!changes.length) changes.push("اطلاعات فایل ویرایش شد");
                         }
 
-                        const state = item.afterState ?? item.beforeState;
-                        const title = state && typeof state.title === "string" ? state.title : form.title;
-
+                        const title = item.afterTitle ?? item.beforeTitle ?? form.title;
                         return (
                           <div key={item.id} className="admin-breakdown-row">
                             <div>
