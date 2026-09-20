@@ -1,8 +1,26 @@
-import { createError, defineEventHandler, getCookie, readBody } from "h3";
+import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 
 type Status = "new" | "contacted" | "closed" | "spam";
+
+function csvCell(value: unknown) {
+  let text = String(value ?? "").replace(/\r?\n/g, " ");
+  if (/^[=+\-@]/.test(text)) text = "'" + text;
+  return /[",]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+
+function csvDate(value: unknown) {
+  try {
+    return new Intl.DateTimeFormat("fa-IR", {
+      dateStyle: "short",
+      timeStyle: "short",
+      timeZone: "Asia/Tehran",
+    }).format(new Date(String(value)));
+  } catch {
+    return String(value ?? "");
+  }
+}
 
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as {
@@ -20,6 +38,71 @@ export default defineEventHandler(async (event) => {
 
   if (dbSource === "unconfigured") return { leads: [] };
   const sql = await getSql();
+
+  if (body.action === "export") {
+    const query = typeof (body as { query?: unknown }).query === "string"
+      ? String((body as { query?: string }).query).trim().slice(0, 80)
+      : "";
+    const status = (body as { status?: Status }).status;
+
+    if (status && !["new", "contacted", "closed", "spam"].includes(status)) {
+      throw createError({ statusCode: 400, statusMessage: "فیلتر وضعیت نامعتبر است." });
+    }
+
+    const params: string[] = [];
+    const conditions = ["true"];
+    if (status) {
+      params.push(status);
+      conditions.push("status = $1");
+    }
+    if (query) {
+      params.push("%" + query + "%");
+      const index = params.length;
+      conditions.push(
+        "(" +
+          ["name", "phone", "deal", "property_type", "neighborhood", "consultant", "note"]
+            .map((column) => column + " ilike $" + index)
+            .join(" or ") +
+          ")",
+      );
+    }
+
+    const rows = await sql.query<Record<string, unknown>>(
+      "select name, phone, deal, property_type, neighborhood, consultant, status, note, created_at " +
+        "from leads where " + conditions.join(" and ") +
+        " order by created_at desc limit 50000",
+      params,
+    );
+
+    const labels: Record<Status, string> = {
+      new: "جدید",
+      contacted: "در حال پیگیری",
+      closed: "بسته‌شده",
+      spam: "اسپم",
+    };
+    const header = ["نام", "تلفن", "معامله", "نوع ملک", "محله", "مشاور", "وضعیت", "توضیحات", "تاریخ"];
+    const lines = [
+      header.map(csvCell).join(","),
+      ...rows.map((row) =>
+        [
+          row.name,
+          row.phone,
+          row.deal,
+          row.property_type,
+          row.neighborhood,
+          row.consultant,
+          labels[String(row.status) as Status] ?? row.status,
+          row.note,
+          csvDate(row.created_at),
+        ].map(csvCell).join(","),
+      ),
+    ];
+
+    setResponseHeader(event, "content-type", "text/csv; charset=utf-8");
+    setResponseHeader(event, "content-disposition", 'attachment; filename="hirmand-leads.csv"');
+    setResponseHeader(event, "cache-control", "no-store");
+    return "\uFEFF" + lines.join("\n");
+  }
 
   if ((body.action ?? "list") === "list") {
     const rows = await sql.query<Record<string, unknown>>(
