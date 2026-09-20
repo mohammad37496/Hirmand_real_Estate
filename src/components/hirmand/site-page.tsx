@@ -268,7 +268,7 @@ function Hero() {
           <button
             type="button"
             className="hero-intent"
-            onClick={() => window.location.assign("/properties?transaction=sell&type=villa")}
+            onClick={() => window.location.assign("/properties?transaction=buy&type=villa")}
           >
             خرید ویلا و باغ
           </button>
