@@ -38,7 +38,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
   return (
     <article className="property-card">
       <a
-        href={`/properties/${encodeURIComponent(property.slug)}`}
+        href={`/properties/${property.slug}`}
         className="property-card-link"
         aria-label={`مشاهده جزئیات فایل ${property.title}`}
       >
