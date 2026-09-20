@@ -9,6 +9,7 @@ import {
   Search,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES } from "@/lib/site";
+import { mediaSourceCandidates } from "@/lib/media";
 import { formatToman } from "@/lib/money";
 import type { Property, PropertyCardData, PropertyType, PropertyTransaction } from "@/lib/properties";
 import { listPublishedPropertyCards } from "@/lib/properties";
@@ -34,6 +35,22 @@ function imageFor(property: Property | PropertyCardData) {
   return FALLBACK_IMAGES[property.propertyType];
 }
 
+
+function PropertyImage({ src, alt, fallback }: { src: string; alt: string; fallback: string }) {
+  const candidates = mediaSourceCandidates(src, fallback);
+  const [attempt, setAttempt] = useState(0);
+  const current = candidates[Math.min(attempt, Math.max(0, candidates.length - 1))] ?? fallback;
+  return (
+    <img
+      src={current}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      referrerPolicy="no-referrer"
+      onError={() => setAttempt((value) => Math.min(value + 1, candidates.length - 1))}
+    />
+  );
+}
 export function PropertyCard({ property }: { property: Property | PropertyCardData }) {
   return (
     <article className="property-card">
