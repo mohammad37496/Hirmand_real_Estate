@@ -155,7 +155,7 @@ export function BudgetMatcher() {
         </label>
 
         <button type="submit" className="btn-gold budget-search-button" disabled={loading}>
-          {loading ? <Search size={17} className="admin-spin" /> : <Search size={17} />}
+          {loading ? <Search size={17} className="budget-spin" /> : <Search size={17} />}
           {loading ? "در حال تطبیق..." : "پیدا کردن فایل‌های مناسب"}
         </button>
       </form>
