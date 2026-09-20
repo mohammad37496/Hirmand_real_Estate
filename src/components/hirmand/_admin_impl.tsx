@@ -234,11 +234,38 @@ export function AdminPropertiesPage() {
   const [listSort, setListSort] = useState<"newest" | "title" | "price_desc">("newest");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [changeHistory, setChangeHistory] = useState<Array<{
+    id: number;
+    action: "created" | "updated" | "deleted";
+    beforeState: Record<string, unknown> | null;
+    afterState: Record<string, unknown> | null;
+    changedAt: string;
+  }>>([]);
   const [form, setForm] = useState<FormState>(emptyForm());
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
+
+  useEffect(() => {
+    if (!unlocked || !form.id) {
+      setChangeHistory([]);
+      return;
+    }
+
+    let cancelled = false;
+    void listPropertyChangeHistory({ data: { id: form.id, limit: 10 } })
+      .then((items) => {
+        if (!cancelled) setChangeHistory(items);
+      })
+      .catch(() => {
+        if (!cancelled) setChangeHistory([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [unlocked, form.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -687,6 +714,8 @@ export function AdminPropertiesPage() {
       });
       toast.success(form.id ? "فایل به‌روزرسانی شد." : "فایل جدید ذخیره شد.");
       setForm(propertyToForm(result));
+      const history = await listPropertyChangeHistory({ data: { id: result.id, limit: 10 } }).catch(() => []);
+      setChangeHistory(history);
       await refresh();
       setView("list");
     } catch (error) {
@@ -698,6 +727,7 @@ export function AdminPropertiesPage() {
 
   function startNew() {
     setForm(emptyForm());
+    setChangeHistory([]);
     setView("form");
   }
 
@@ -1469,6 +1499,70 @@ export function AdminPropertiesPage() {
                   </div>
                 </fieldset>
               </div>
+
+              {form.id ? (
+                <fieldset className="admin-section">
+                  <legend>تاریخچه فایل</legend>
+                  {changeHistory.length === 0 ? (
+                    <div className="admin-empty">
+                      <span>هنوز سابقه‌ای برای این فایل ثبت نشده است.</span>
+                    </div>
+                  ) : (
+                    <div className="admin-breakdown">
+                      {changeHistory.map((item) => {
+                        const before = item.beforeState ?? {};
+                        const after = item.afterState ?? {};
+                        const changes: string[] = [];
+                        if (item.action === "created") changes.push("فایل ایجاد شد");
+                        if (item.action === "deleted") changes.push("فایل حذف شد");
+                        if (item.action === "updated") {
+                          if (before.status !== after.status) {
+                            const labels: Record<string, string> = {
+                              published: "منتشرشده",
+                              draft: "پیش‌نویس",
+                              archived: "بایگانی",
+                            };
+                            changes.push(
+                              "وضعیت: " +
+                                (labels[String(before.status)] ?? String(before.status ?? "—")) +
+                                " ← " +
+                                (labels[String(after.status)] ?? String(after.status ?? "—")),
+                            );
+                          }
+                          if (before.featured !== after.featured) {
+                            changes.push(after.featured === true ? "ویژه شد" : "از حالت ویژه خارج شد");
+                          }
+                          if (before.contactName !== after.contactName) {
+                            changes.push("مشاور تغییر کرد");
+                          }
+                          if (
+                            before.title !== after.title ||
+                            before.price !== after.price ||
+                            before.deposit !== after.deposit ||
+                            before.rent !== after.rent
+                          ) {
+                            changes.push("اطلاعات اصلی/قیمت ویرایش شد");
+                          }
+                          if (!changes.length) changes.push("اطلاعات فایل ویرایش شد");
+                        }
+
+                        const state = item.afterState ?? item.beforeState;
+                        const title = state && typeof state.title === "string" ? state.title : form.title;
+
+                        return (
+                          <div key={item.id} className="admin-breakdown-row">
+                            <div>
+                              <span>{changes.join(" · ")}</span>
+                              <strong>{formatDate(item.changedAt)}</strong>
+                            </div>
+                            <small>{title}</small>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </fieldset>
+              ) : null}
 
               <div className="admin-sticky-bar">
                 <div className="admin-sticky-bar-info">
