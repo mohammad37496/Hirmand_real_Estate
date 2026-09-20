@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
+  BedDouble,
   Building2,
   CarFront,
   ChevronLeft,
-  Home,
   MapPinned,
+  Ruler,
   Search,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES } from "@/lib/site";
@@ -118,10 +119,10 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
 
           <div className="property-card-specs" aria-label="مشخصات خلاصه">
             {property.areaM2 ? (
-              <span><RulerIcon /> {property.areaM2.toLocaleString("fa-IR")} متر</span>
+              <span><Ruler size={14} /> {property.areaM2.toLocaleString("fa-IR")} متر</span>
             ) : null}
             {property.bedrooms ? (
-              <span><BedIcon /> {property.bedrooms.toLocaleString("fa-IR")} خواب</span>
+              <span><BedDouble size={14} /> {property.bedrooms.toLocaleString("fa-IR")} خواب</span>
             ) : null}
             {property.parking ? (
               <span><CarFront size={14} /> پارکینگ</span>
@@ -147,18 +148,6 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
       </div>
     </article>
   );
-}
-
-function RulerIcon() {
-  return <span aria-hidden="true" className="property-card-inline-icon">㎡</span>;
-}
-
-function BedIcon() {
-  return <BedDoubleIcon />;
-}
-
-function BedDoubleIcon() {
-  return <span aria-hidden="true" className="property-card-inline-icon">خ</span>;
 }
 
 export function PropertyShowcase({ initialProperties }: { initialProperties: PropertyCardData[] }) {
