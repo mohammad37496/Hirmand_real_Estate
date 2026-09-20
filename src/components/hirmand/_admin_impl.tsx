@@ -957,8 +957,6 @@ export function AdminPropertiesPage() {
                   </div>
                 </fieldset>
 
-                </fieldset>
-
                 <fieldset className="admin-section">
                   <legend>رسانه (تصویر و ویدیو)</legend>
                   <AdminMediaField
