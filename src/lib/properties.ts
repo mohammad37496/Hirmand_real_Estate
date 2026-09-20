@@ -117,6 +117,9 @@ const publicFiltersSchema = z.object({
   maxArea: z.number().int().min(0).max(100000).optional(),
   minPrice: z.number().int().min(0).max(999999999999999).optional(),
   maxPrice: z.number().int().min(0).max(999999999999999).optional(),
+  minBedrooms: z.number().int().min(0).max(30).optional(),
+  parkingOnly: z.boolean().optional(),
+  elevatorOnly: z.boolean().optional(),
   sort: z.enum(["newest", "price_asc", "price_desc", "area_asc", "area_desc"]).optional().default("newest"),
   offset: z.number().int().min(0).max(100000).optional().default(0),
 });
@@ -324,6 +327,9 @@ function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
     data.maxArea ?? null,
     data.minPrice ?? null,
     data.maxPrice ?? null,
+    data.minBedrooms ?? null,
+    data.parkingOnly ?? false,
+    data.elevatorOnly ?? false,
     data.offset ?? 0,
   ];
 }
