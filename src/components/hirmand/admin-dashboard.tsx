@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   BarChart3,
   Building2,
+  Eye,
   Phone,
   RefreshCw,
   UserRound,
@@ -33,6 +34,19 @@ type DashboardData = {
   propertyTypes: { type: string; count: number }[];
   leadDays: { day: string; count: number }[];
   music: { total: number; active: number };
+  visitors: {
+    today: number;
+    last7: number;
+    last30: number;
+    pageviewsToday: number;
+    pageviewsLast7: number;
+    pageviewsLast30: number;
+  };
+  visitorDays: {
+    day: string;
+    uniqueVisitors: number;
+    pageviews: number;
+  }[];
   recentLeads: {
     id: string;
     name: string;
@@ -118,6 +132,10 @@ export function AdminDashboard({
     () => Math.max(1, ...(data?.propertyTypes.map((item) => item.count) ?? [0])),
     [data],
   );
+  const maxVisitorDay = useMemo(
+    () => Math.max(1, ...(data?.visitorDays.map((item) => item.uniqueVisitors) ?? [0])),
+    [data],
+  );
 
   const last7Days = useMemo(() => {
     const map = new Map((data?.leadDays ?? []).map((item) => [item.day, item.count]));
@@ -146,6 +164,7 @@ export function AdminDashboard({
 
   const stats = [
     { label: "کل فایل‌ها", value: data.properties.total, icon: Building2, tone: "gold" },
+    { label: "بازدید امروز", value: data.visitors.today, icon: Eye, tone: "blue" },
     { label: "فایل‌های منتشرشده", value: data.properties.published, icon: BarChart3, tone: "green" },
     { label: "درخواست‌های جدید", value: data.leads.new, icon: UsersRound, tone: "amber" },
     { label: "لید در ۳۰ روز", value: data.leads.last30, icon: UserRound, tone: "blue" },
@@ -249,6 +268,74 @@ export function AdminDashboard({
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="admin-panel">
+        <div className="admin-panel-head">
+          <div>
+            <span className="kicker">آنالیز سایت</span>
+            <h2>بازدیدکننده‌های سایت</h2>
+          </div>
+          <span className="admin-dashboard-summary">
+            امروز {data.visitors.today.toLocaleString("fa-IR")} نفر
+          </span>
+        </div>
+
+        <div className="admin-dashboard-mini-grid">
+          <div>
+            <span>بازدیدکننده امروز</span>
+            <strong>{data.visitors.today.toLocaleString("fa-IR")}</strong>
+          </div>
+          <div>
+            <span>بازدیدکننده ۷ روز</span>
+            <strong>{data.visitors.last7.toLocaleString("fa-IR")}</strong>
+          </div>
+          <div>
+            <span>بازدیدکننده ۳۰ روز</span>
+            <strong>{data.visitors.last30.toLocaleString("fa-IR")}</strong>
+          </div>
+        </div>
+
+        <div className="admin-dashboard-mini-grid">
+          <div>
+            <span>نمایش صفحه امروز</span>
+            <strong>{data.visitors.pageviewsToday.toLocaleString("fa-IR")}</strong>
+          </div>
+          <div>
+            <span>نمایش صفحه ۷ روز</span>
+            <strong>{data.visitors.pageviewsLast7.toLocaleString("fa-IR")}</strong>
+          </div>
+          <div>
+            <span>نمایش صفحه ۳۰ روز</span>
+            <strong>{data.visitors.pageviewsLast30.toLocaleString("fa-IR")}</strong>
+          </div>
+        </div>
+
+        <div className="admin-lead-chart" aria-label="روند بازدیدکننده‌ها در ۱۴ روز اخیر">
+          {data.visitorDays.map((item) => (
+            <div key={item.day} className="admin-lead-chart-col">
+              <div className="admin-lead-chart-value">
+                {item.uniqueVisitors.toLocaleString("fa-IR")}
+              </div>
+              <div className="admin-lead-chart-bar-wrap">
+                <span
+                  style={{
+                    height:
+                      Math.max(
+                        item.uniqueVisitors ? 12 : 4,
+                        (item.uniqueVisitors / maxVisitorDay) * 100,
+                      ) + "%",
+                  }}
+                />
+              </div>
+              <small>{item.day.slice(5)}</small>
+            </div>
+          ))}
+        </div>
+
+        <p className="admin-dashboard-summary">
+          «بازدیدکننده» بر اساس یک شناسه ناشناس در کوکی همان مرورگر محاسبه می‌شود؛ حذف کوکی یا تعویض مرورگر می‌تواند یک نفر را دوباره به‌عنوان بازدیدکننده جدید ثبت کند.
+        </p>
       </section>
 
       <section className="admin-panel">
