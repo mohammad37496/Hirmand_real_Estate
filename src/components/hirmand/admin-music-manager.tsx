@@ -97,7 +97,6 @@ export function AdminMusicManager() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           action: "create",
-          adminKey,
           title: title.trim(),
           artist: artist.trim(),
           url: blob.url,
