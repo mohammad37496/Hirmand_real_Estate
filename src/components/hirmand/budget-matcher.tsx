@@ -305,7 +305,7 @@ export function BudgetMatcher() {
                   <div className="budget-presets" aria-label="مقادیر سریع اجاره">
                     {RENT_PRESETS.map((value) => (
                       <button key={value} type="button" onClick={() => setRent(formatToman(value))}>
-                        {formatToman(value / 1_000_000)} میلیون
+                        <b>{formatToman(value / 1_000_000)}</b><span>میلیون</span>
                       </button>
                     ))}
                   </div>
