@@ -128,6 +128,8 @@ export function AdminPartnerManager() {
     }
   }
 
+  // The loader is intentionally called once on mount; its function identity changes with render state.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { void load(); }, []);
 
   const filtered = useMemo(() => {
