@@ -270,6 +270,7 @@ export function BudgetMatcher() {
                   <div className="budget-input-wrap">
                     <input
                       inputMode="numeric"
+                      dir="rtl"
                       value={deposit}
                       onChange={(event) => setDeposit(event.target.value)}
                       onBlur={() => setDeposit(cleanInput(deposit))}
@@ -281,7 +282,7 @@ export function BudgetMatcher() {
                   <div className="budget-presets" aria-label="مقادیر سریع رهن">
                     {DEPOSIT_PRESETS.map((value) => (
                       <button key={value} type="button" onClick={() => setDeposit(formatToman(value))}>
-                        {formatToman(value / 1_000_000)} میلیون
+                        <><b>{formatToman(value / 1_000_000)}</b><span>میلیون</span></>
                       </button>
                     ))}
                   </div>
@@ -292,6 +293,7 @@ export function BudgetMatcher() {
                   <div className="budget-input-wrap">
                     <input
                       inputMode="numeric"
+                      dir="rtl"
                       value={rent}
                       onChange={(event) => setRent(event.target.value)}
                       onBlur={() => setRent(cleanInput(rent))}
