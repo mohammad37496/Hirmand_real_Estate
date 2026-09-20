@@ -375,7 +375,7 @@ export const listAdminProperties = createServerFn({ method: "POST" })
 export const countAdminProperties = createServerFn({ method: "POST" })
   .validator(adminKeySchema)
   .handler(async ({ data }) => {
-    await requireAdmin(data.adminKey);
+    await requireAdmin();
     if (dbSource === "unconfigured") {
       return { total: 0, published: 0, draft: 0, archived: 0 };
     }
@@ -397,7 +397,7 @@ export const countAdminProperties = createServerFn({ method: "POST" })
 export const saveProperty = createServerFn({ method: "POST" })
   .validator(propertyInputSchema)
   .handler(async ({ data }) => {
-    await requireAdmin(data.adminKey);
+    await requireAdmin();
     const sql = await getSql();
 
     const id = data.id ?? crypto.randomUUID();
@@ -490,7 +490,7 @@ export const saveProperty = createServerFn({ method: "POST" })
 export const deleteProperty = createServerFn({ method: "POST" })
   .validator(idSchema)
   .handler(async ({ data }) => {
-    await requireAdmin(data.adminKey);
+    await requireAdmin();
     const sql = await getSql();
     await sql.query("delete from properties where id = $1", [data.id]);
     return { success: true };
