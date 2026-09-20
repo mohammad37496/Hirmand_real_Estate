@@ -8,6 +8,7 @@ const ALLOWED = [
   "image/png",
   "image/webp",
   "image/gif",
+  "image/svg+xml",
   "video/mp4",
   "video/webm",
   "video/quicktime",
