@@ -119,28 +119,7 @@ export function PropertyCard({ property }: { property: Property }) {
           <span className="property-card-arrow" aria-hidden="true">
             <ChevronLeft size={16} />
           </span>
-          <div className="property-card-actions">
-            <button
-              type="button"
-              className={`property-card-action${favorite ? " is-active" : ""}`}
-              onClick={onFavorite}
-              aria-label={favorite ? "حذف از ذخیره‌ها" : "ذخیره فایل"}
-              aria-pressed={favorite}
-              title={favorite ? "حذف از ذخیره‌ها" : "ذخیره فایل"}
-            >
-              <Heart size={16} fill={favorite ? "currentColor" : "none"} />
-            </button>
-            <button
-              type="button"
-              className="property-card-action"
-              onClick={onShare}
-              aria-label="اشتراک‌گذاری فایل"
-              title="اشتراک‌گذاری"
-            >
-              <Share2 size={16} />
-            </button>
-          </div>
-        </div>
+</div>
 
         <div className="property-card-body">
           <div className="property-card-meta">
@@ -172,6 +151,28 @@ export function PropertyCard({ property }: { property: Property }) {
             ) : null}
           </div>
         </div>
+      <div className="property-card-actions">
+        <button
+          type="button"
+          className={`property-card-action${favorite ? " is-active" : ""}`}
+          onClick={onFavorite}
+          aria-label={favorite ? "حذف از ذخیره‌ها" : "ذخیره فایل"}
+          aria-pressed={favorite}
+          title={favorite ? "حذف از ذخیره‌ها" : "ذخیره فایل"}
+        >
+          <Heart size={16} fill={favorite ? "currentColor" : "none"} />
+        </button>
+        <button
+          type="button"
+          className="property-card-action"
+          onClick={onShare}
+          aria-label="اشتراک‌گذاری فایل"
+          title="اشتراک‌گذاری"
+        >
+          <Share2 size={16} />
+        </button>
+      </div>
+
       </Link>
     </article>
   );
