@@ -40,8 +40,8 @@ export function BudgetMatcher() {
 
   async function search(event: FormEvent) {
     event.preventDefault();
-    const depositBudget = parseAmount(deposit);
-    const rentBudget = parseAmount(rent);
+    const depositBudget = Math.round(parseAmount(deposit));
+    const rentBudget = Math.round(parseAmount(rent));
 
     if (depositBudget <= 0 && rentBudget <= 0) {
       toast.error("حداقل یکی از مبلغ رهن یا اجاره را وارد کنید.");
