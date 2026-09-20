@@ -11,6 +11,7 @@ import { Header } from "./header";
 import { scrollToId } from "./scroll";
 import { VisitorTracker } from "./visitor-tracker";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import { SiteUtilities } from "./site-utilities";
 
 export function SiteChrome({
   children,
@@ -29,6 +30,10 @@ export function SiteChrome({
       <div className={cn("page", className)}>{children}</div>
       <Footer />
       <div className="quick-actions" aria-label="اقدام سریع">
+        <Link to="/properties" className="quick-action" onClick={() => trackAnalyticsEvent("property_list_view")}>
+          <FileKey size={17} />
+          <span>فایل‌ها</span>
+        </Link>
         <Link to="/" hash="inquiry" className="quick-action quick-action-primary" onClick={() => trackAnalyticsEvent("inquiry_click")}>
           <FileKey size={17} />
           <span>درخواست ملک</span>
@@ -49,9 +54,10 @@ export function SiteChrome({
           onClick={() => trackAnalyticsEvent("call_click")}
         >
           <Phone size={17} />
-          <span>تماس مستقیم</span>
+          <span>تماس</span>
         </a>
       </div>
+      <SiteUtilities />
       <CallMenu className="floating-call-menu" buttonClassName="floating-call" label="تماس" />
       <MusicPlayer />
       <Toaster
