@@ -2,11 +2,16 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   ArrowRight,
+  Bath,
   BedDouble,
   Building2,
+  CalendarDays,
   CarFront,
   Check,
+  ExternalLink,
+  Layers3,
   MapPinned,
+  Navigation,
   Phone,
   Ruler,
   Warehouse,
@@ -54,10 +59,67 @@ function money(value: string | null) {
   return Number.isFinite(parsed) ? formatToman(parsed) : value;
 }
 
+function mapsLink(latitude: number | null, longitude: number | null, neighborhood: string) {
+  if (latitude != null && longitude != null) {
+    return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`اصفهان ${neighborhood}`) }`;
+}
+
+function osmEmbedUrl(latitude: number, longitude: number) {
+  const delta = 0.012;
+  const bbox = [
+    longitude - delta,
+    latitude - delta,
+    longitude + delta,
+    latitude + delta,
+  ].join(",");
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${latitude}%2C${longitude}`;
+}
+
 function whatsappLink(phone: string, title: string) {
   const intl = phone.replace(/^0/, "98");
   const text = encodeURIComponent(`سلام، درباره فایل «${title}» از سایت هیرمند پیام می‌دهم.`);
   return `https://wa.me/${intl}?text=${text}`;
+}
+
+function sourceCandidates(src: string, fallback: string) {
+  const isExternal = /divarcdn\\.com|wsrv\\.nl/i.test(src);
+  const proxy = isExternal
+    ? `https://wsrv.nl/?url=${encodeURIComponent(src)}`
+    : "";
+  return Array.from(new Set([src, proxy, fallback].filter(Boolean)));
+}
+
+function ResilientImage({
+  src,
+  alt,
+  fallback,
+  className,
+  loading,
+}: {
+  src: string;
+  alt: string;
+  fallback: string;
+  className?: string;
+  loading?: "eager" | "lazy";
+}) {
+  const candidates = sourceCandidates(src, fallback);
+  const [attempt, setAttempt] = useState(0);
+  const current = candidates[Math.min(attempt, candidates.length - 1)];
+
+  return (
+    <img
+      src={current}
+      alt={alt}
+      className={className}
+      loading={loading}
+      decoding="async"
+      onError={() => {
+        setAttempt((value) => Math.min(value + 1, candidates.length - 1));
+      }}
+    />
+  );
 }
 
 function Gallery({
@@ -71,6 +133,7 @@ function Gallery({
 }) {
   const [active, setActive] = useState(0);
   const current = images[active] ?? images[0] ?? "";
+  const fallback = "/images/type-apartment.jpg";
 
   return (
     <div className="property-gallery-wrap">
@@ -79,11 +142,12 @@ function Gallery({
           {isVideoUrl(current) ? (
             <video src={current} controls playsInline preload="metadata" />
           ) : (
-            <img
+            <ResilientImage
               src={current}
+              fallback={fallback}
               alt={title}
               itemProp="image"
-              fetchPriority="high"
+              loading="eager"
             />
           )}
           {featured ? (
@@ -96,7 +160,7 @@ function Gallery({
           ) : null}
         </div>
 
-        {images.slice(0, 7).map((src, index) => (
+        {images.slice(0, 9).map((src, index) => (
           <button
             key={src}
             type="button"
@@ -108,7 +172,7 @@ function Gallery({
             {isVideoUrl(src) ? (
               <video src={src} muted playsInline preload="none" />
             ) : (
-              <img src={src} alt="" loading="lazy" />
+              <ResilientImage src={src} fallback={fallback} alt="" loading="lazy" />
             )}
           </button>
         ))}
@@ -116,6 +180,7 @@ function Gallery({
     </div>
   );
 }
+
 
 function PropertyDetailPage() {
   const { property, related } = Route.useLoaderData();
@@ -191,20 +256,26 @@ function PropertyDetailPage() {
 
             </header>
 
-            <div className="property-detail-specs">
-              {property.areaM2 != null ? (
-                <span><Ruler size={16} /> {property.areaM2.toLocaleString("fa-IR")} متر</span>
-              ) : null}
-              {property.bedrooms != null ? (
-                <span><BedDouble size={16} /> {property.bedrooms.toLocaleString("fa-IR")} خواب</span>
-              ) : null}
-              {property.floor != null ? (
-                <span><Building2 size={16} /> طبقه {property.floor.toLocaleString("fa-IR")}</span>
-              ) : null}
-              {property.parking ? <span><CarFront size={16} /> پارکینگ</span> : null}
-              {property.storage ? <span><Warehouse size={16} /> انباری</span> : null}
-              {property.elevator ? <span><Check size={16} /> آسانسور</span> : null}
-            </div>
+            <section className="property-divar-specs" aria-labelledby="property-specs-title">
+              <div className="property-section-heading">
+                <div>
+                  <span className="kicker">جزئیات فایل</span>
+                  <h2 id="property-specs-title">مشخصات ملک</h2>
+                </div>
+                <span className="property-source-badge">اطلاعات آگهی</span>
+              </div>
+              <div className="property-spec-grid">
+                {property.areaM2 != null ? <div><Ruler size={18} /><span><small>متراژ</small><strong>{property.areaM2.toLocaleString("fa-IR")} متر</strong></span></div> : null}
+                {property.bedrooms != null ? <div><BedDouble size={18} /><span><small>اتاق خواب</small><strong>{property.bedrooms.toLocaleString("fa-IR")}</strong></span></div> : null}
+                {property.bathrooms != null ? <div><Bath size={18} /><span><small>سرویس</small><strong>{property.bathrooms.toLocaleString("fa-IR")}</strong></span></div> : null}
+                {property.floor != null ? <div><Building2 size={18} /><span><small>طبقه</small><strong>{property.floor.toLocaleString("fa-IR")}</strong></span></div> : null}
+                {property.totalFloors != null ? <div><Layers3 size={18} /><span><small>تعداد طبقات</small><strong>{property.totalFloors.toLocaleString("fa-IR")}</strong></span></div> : null}
+                {property.builtYear != null ? <div><CalendarDays size={18} /><span><small>سال ساخت</small><strong>{property.builtYear.toLocaleString("fa-IR")}</strong></span></div> : null}
+                <div><CarFront size={18} /><span><small>پارکینگ</small><strong>{property.parking ? "دارد" : "ندارد"}</strong></span></div>
+                <div><Navigation size={18} /><span><small>آسانسور</small><strong>{property.elevator ? "دارد" : "ندارد"}</strong></span></div>
+                <div><Warehouse size={18} /><span><small>انباری</small><strong>{property.storage ? "دارد" : "ندارد"}</strong></span></div>
+              </div>
+            </section>
 
             <div className="property-detail-body">
               <h2>توضیحات</h2>
@@ -216,6 +287,55 @@ function PropertyDetailPage() {
                 </>
               ) : null}
             </div>
+
+            {(property.latitude != null && property.longitude != null) || property.neighborhood ? (
+              <section className="property-location-section" aria-labelledby="property-location-title">
+                <div className="property-section-heading">
+                  <div>
+                    <span className="kicker">موقعیت</span>
+                    <h2 id="property-location-title">موقعیت فایل روی نقشه</h2>
+                  </div>
+                  <MapPinned size={20} />
+                </div>
+                {property.latitude != null && property.longitude != null ? (
+                  <div className="property-map-card">
+                    <iframe
+                      title={`موقعیت ${property.title}`}
+                      src={osmEmbedUrl(property.latitude, property.longitude)}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                    <div className="property-map-actions">
+                      <span>اصفهان · {property.neighborhood}</span>
+                      <a
+                        href={mapsLink(property.latitude, property.longitude, property.neighborhood)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-ghost"
+                      >
+                        <ExternalLink size={15} /> باز کردن در نقشه
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="property-location-fallback">
+                    <MapPinned size={20} />
+                    <div>
+                      <strong>محدوده فایل</strong>
+                      <p>اصفهان، {property.neighborhood}</p>
+                    </div>
+                    <a
+                      href={mapsLink(null, null, property.neighborhood)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-ghost"
+                    >
+                      <ExternalLink size={15} /> جستجو در نقشه
+                    </a>
+                  </div>
+                )}
+              </section>
+            ) : null}
 
             <Link
               to="/properties"
