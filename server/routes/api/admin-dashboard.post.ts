@@ -25,12 +25,13 @@ export default defineEventHandler(async (event) => {
       topProperties: [],
       eventStats: [],
       visitorSources: [],
+      followUps: { due: 0, next7: 0 },
       recentLeads: [],
     };
   }
 
   const sql = await getSql();
-  const [propertyStats, leadStats, propertyTypes, leadDays, musicStats, recentLeads, visitorStats, activeVisitorStats, visitorDays, topPages, topProperties, eventStats, visitorSources] = await Promise.all([
+  const [propertyStats, leadStats, propertyTypes, leadDays, musicStats, recentLeads, visitorStats, activeVisitorStats, visitorDays, topPages, topProperties, eventStats, visitorSources, followUps] = await Promise.all([
     sql.query<Record<string, unknown>>(`
       select
         count(*)::int as total,
@@ -183,6 +184,29 @@ export default defineEventHandler(async (event) => {
       console.error("[admin-dashboard] event stats unavailable", error);
       return [];
     }),
+    sql.query<Record<string, unknown>>(`
+      select
+        coalesce(nullif(utm_source, ''), nullif(referrer_host, ''), 'direct') as source,
+        coalesce(nullif(utm_campaign, ''), 'بدون کمپین') as campaign,
+        count(distinct visitor_id)::int as visitors
+      from site_visitor_days
+      where day >= (current_timestamp at time zone 'Asia/Tehran')::date - 29
+      group by 1, 2
+      order by visitors desc
+      limit 12
+    `).catch((error) => {
+      console.error("[admin-dashboard] visitor sources unavailable", error);
+      return [];
+    }),
+    sql.query<Record<string, unknown>>(`
+      select
+        count(*) filter (where status in ('new','contacted') and follow_up_at <= current_timestamp)::int as due,
+        count(*) filter (where status in ('new','contacted') and follow_up_at > current_timestamp and follow_up_at <= current_timestamp + interval '7 days')::int as next7
+      from leads
+    `).catch((error) => {
+      console.error("[admin-dashboard] follow-up stats unavailable", error);
+      return [{}];
+    }),
   ]);
   const p = propertyStats[0] ?? {};
   const l = leadStats[0] ?? {};
@@ -259,6 +283,10 @@ export default defineEventHandler(async (event) => {
       campaign: String(row.campaign),
       visitors: Number(row.visitors) || 0,
     })),
+    followUps: {
+      due: Number(followUps[0]?.due) || 0,
+      next7: Number(followUps[0]?.next7) || 0,
+    },
     recentLeads: recentLeads.map((row) => ({
       id: String(row.id),
       name: String(row.name),

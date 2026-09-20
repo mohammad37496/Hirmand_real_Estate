@@ -21,6 +21,8 @@ type Lead = {
   acquisitionMedium: string | null;
   acquisitionCampaign: string | null;
   acquisitionReferrer: string | null;
+  followUpAt: string | null;
+  lastContactedAt: string | null;
   budgetDeposit: number | null;
   budgetRent: number | null;
   budgetEquivalent: number | null;
@@ -288,6 +290,11 @@ export function AdminLeadManager() {
                           ))}
                         </div>
                       ) : null}
+                    </div>
+                  ) : null}
+                  {lead.followUpAt ? (
+                    <div className={new Date(lead.followUpAt).getTime() <= Date.now() ? "admin-lead-followup is-due" : "admin-lead-followup"}>
+                      پیگیری: <strong>{formatDate(lead.followUpAt)}</strong>
                     </div>
                   ) : null}
                   {lead.acquisitionSource ? (

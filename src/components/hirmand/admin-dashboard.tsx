@@ -73,6 +73,7 @@ type DashboardData = {
     campaign: string;
     visitors: number;
   }[];
+  followUps: { due: number; next7: number };
   recentLeads: {
     id: string;
     name: string;
@@ -243,6 +244,21 @@ export function AdminDashboard({
   return (
     <div className="admin-dashboard">
       <div className="admin-dashboard-stats">
+        <button type="button" className="admin-dashboard-stat" data-tone="red" onClick={onOpenLeads}>
+          <span className="admin-dashboard-stat-icon"><Phone size={19} /></span>
+          <span>
+            <small>پیگیری‌های سررسیدشده</small>
+            <strong>{data.followUps.due.toLocaleString("fa-IR")}</strong>
+          </span>
+          <ArrowLeft size={16} />
+        </button>
+        <div className="admin-dashboard-stat" data-tone="green">
+          <span className="admin-dashboard-stat-icon"><RefreshCw size={19} /></span>
+          <span>
+            <small>پیگیری در ۷ روز آینده</small>
+            <strong>{data.followUps.next7.toLocaleString("fa-IR")}</strong>
+          </span>
+        </div>
         {stats.map(({ label, value, icon: Icon, tone }) => {
           const action = label.includes("درخواست") || label.includes("لید")
             ? onOpenLeads

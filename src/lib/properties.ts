@@ -46,6 +46,7 @@ export type Property = {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  priceDropPercent: number | null;
 };
 
 export type PropertyCardData = Pick<
@@ -65,6 +66,7 @@ export type PropertyCardData = Pick<
   | "price"
   | "deposit"
   | "rent"
+  | "priceDropPercent"
 > & {
   image: string | null;
 };
@@ -211,6 +213,7 @@ function mapProperty(row: Record<string, unknown>): Property {
     publishedAt: row.published_at ? new Date(String(row.published_at)).toISOString() : null,
     createdAt: new Date(String(row.created_at)).toISOString(),
     updatedAt: new Date(String(row.updated_at)).toISOString(),
+    priceDropPercent: numberOrNull(row.price_drop_percent),
   };
 }
 
@@ -219,13 +222,15 @@ const LIST_COLUMNS = `
   neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
   built_year, parking, elevator, storage, price, deposit, rent,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
+  price_drop_percent,
   left(description, 280) as description
 `;
 
 const CARD_COLUMNS = `
   id, slug, status, featured, title, transaction_type, property_type,
   neighborhood, area_m2, bedrooms, parking, elevator, price, deposit, rent,
-  nullif(images->>0, '') as image
+  nullif(images->>0, '') as image,
+  price_drop_percent
 `;
 
 function mapPropertyCard(row: Record<string, unknown>): PropertyCardData {
@@ -246,6 +251,7 @@ function mapPropertyCard(row: Record<string, unknown>): PropertyCardData {
     deposit: row.deposit == null ? null : String(row.deposit),
     rent: row.rent == null ? null : String(row.rent),
     image: row.image ? String(row.image) : null,
+    priceDropPercent: numberOrNull(row.price_drop_percent),
   };
 }
 
@@ -253,7 +259,8 @@ const DETAIL_COLUMNS = `
   id, slug, status, featured, title, transaction_type, property_type, city,
   neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
   built_year, parking, elevator, storage, price, deposit, rent, description,
-  features, images, contact_name, contact_phone, published_at, created_at, updated_at
+  features, images, contact_name, contact_phone, published_at, created_at, updated_at,
+  price_drop_percent
 `;
 
 function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
@@ -367,6 +374,25 @@ export const getPublishedProperty = createServerFn({ method: "GET" })
       [data.slug],
     );
     return rows[0] ? mapProperty(rows[0]) : null;
+  });
+
+export const listPublishedPropertyCardsBySlugs = createServerFn({ method: "GET" })
+  .validator(z.object({
+    slugs: z.array(z.string().trim().min(1).max(220)).max(8),
+  }))
+  .handler(async ({ data }) => {
+    if (dbSource === "unconfigured" || data.slugs.length === 0) return [];
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select ${CARD_COLUMNS}
+       from properties
+       where status = 'published'
+         and slug = any($1::text[])
+       order by featured desc, published_at desc nulls last, created_at desc`,
+      [data.slugs],
+    );
+    const bySlug = new Map(rows.map((row) => [String(row.slug), mapPropertyCard(row)]));
+    return data.slugs.map((slug) => bySlug.get(slug)).filter((property): property is PropertyCardData => Boolean(property));
   });
 
 export const listPublishedPropertiesBySlugs = createServerFn({ method: "GET" })
@@ -552,6 +578,33 @@ export const saveProperty = createServerFn({ method: "POST" })
 
     const id = data.id ?? crypto.randomUUID();
     const slug = `${slugify(data.title)}-${id.slice(0, 8)}`;
+
+    const existingRows = await sql.query<Record<string, unknown>>(
+      "select transaction_type, price, deposit, rent from properties where id = $1 limit 1",
+      [id],
+    );
+    const existing = existingRows[0] ?? null;
+    const numeric = (value: unknown) => {
+      if (value == null || value === "") return null;
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
+    };
+    const effectiveValue = (
+      transaction: PropertyTransaction | null | undefined,
+      price: unknown,
+      deposit: unknown,
+      rent: unknown,
+    ) => {
+      if (transaction === "rent") return numeric(rent) ?? numeric(deposit);
+      if (transaction === "mortgage") return numeric(deposit);
+      return numeric(price);
+    };
+    const oldValue = existing
+      ? effectiveValue(existing.transaction_type as PropertyTransaction, existing.price, existing.deposit, existing.rent)
+      : null;
+    const newValue = effectiveValue(data.transactionType, data.price, data.deposit, data.rent);
+    const dropped = oldValue != null && newValue != null && oldValue > 0 && newValue < oldValue;
+    const dropPercent = dropped ? Number((((oldValue - newValue) / oldValue) * 100).toFixed(2)) : null;
     const publishedAt = data.status === "published" ? new Date().toISOString() : null;
 
     await sql.query(
@@ -587,6 +640,11 @@ export const saveProperty = createServerFn({ method: "POST" })
         price = excluded.price,
         deposit = excluded.deposit,
         rent = excluded.rent,
+        previous_price = case when $28 is not null then $28 else properties.previous_price end,
+        previous_deposit = case when $29 is not null then $29 else properties.previous_deposit end,
+        previous_rent = case when $30 is not null then $30 else properties.previous_rent end,
+        price_changed_at = case when $31::numeric is not null then current_timestamp else properties.price_changed_at end,
+        price_drop_percent = case when $31::numeric is not null then $31::numeric else null end,
         description = excluded.description,
         features = excluded.features,
         images = excluded.images,
@@ -626,6 +684,10 @@ export const saveProperty = createServerFn({ method: "POST" })
         data.contactName,
         data.contactPhone,
         publishedAt,
+        existing?.price ?? null,
+        existing?.deposit ?? null,
+        existing?.rent ?? null,
+        dropPercent,
       ],
     );
 

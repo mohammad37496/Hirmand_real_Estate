@@ -55,6 +55,9 @@ export function PropertyCard({ property }: { property: PropertyCardData }) {
             {property.featured ? (
               <span className="property-badge property-badge-featured">ویژه</span>
             ) : null}
+            {property.priceDropPercent && property.priceDropPercent > 0 ? (
+              <span className="property-badge property-badge-discount">٪{property.priceDropPercent.toLocaleString("fa-IR")} کاهش</span>
+            ) : null}
             <span className="property-badge">
               {TRANSACTION_LABEL[property.transactionType]}
             </span>
