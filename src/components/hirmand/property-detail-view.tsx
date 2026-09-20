@@ -104,7 +104,6 @@ function ResilientImage({
       loading={loading}
       fetchPriority={fetchPriority}
       itemProp={itemProp}
-      fetchPriority={fetchPriority}
       referrerPolicy="no-referrer"
       decoding="async"
       onError={() => {
