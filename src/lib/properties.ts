@@ -751,7 +751,7 @@ export const saveProperty = createServerFn({ method: "POST" })
     const slug = `${slugify(data.title)}-${id.slice(0, 8)}`;
 
     const existingRows = await sql.query<Record<string, unknown>>(
-      "select transaction_type, price, deposit, rent from properties where id = $1 limit 1",
+      `select ${DETAIL_COLUMNS} from properties where id = $1 limit 1`,
       [id],
     );
     const existing = existingRows[0] ?? null;
@@ -867,7 +867,53 @@ export const saveProperty = createServerFn({ method: "POST" })
       [id],
     );
     if (!rows[0]) throw new Error("فایل ثبت نشد.");
+
+    const action = existing ? "updated" : "created";
+    await sql.query(
+      `insert into property_change_history (property_id, action, before_state, after_state)
+       values ($1, $2, $3::jsonb, $4::jsonb)`,
+      [
+        id,
+        action,
+        existing ? JSON.stringify(mapProperty(existing)) : null,
+        JSON.stringify(mapProperty(rows[0])),
+      ],
+    );
+
     return mapProperty(rows[0]);
+  });
+
+export const listPropertyChangeHistory = createServerFn({ method: "POST" })
+  .validator(z.object({
+    id: z.string().min(1),
+    limit: z.number().int().min(1).max(30).optional().default(12),
+  }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    if (dbSource === "unconfigured") return [];
+    const sql = await getSql();
+    const rows = await sql.query<{
+      id: number;
+      action: "created" | "updated" | "deleted";
+      before_state: Record<string, unknown> | null;
+      after_state: Record<string, unknown> | null;
+      changed_at: string | Date;
+    }>(
+      `select id, action, before_state, after_state, changed_at
+       from property_change_history
+       where property_id = $1
+       order by changed_at desc, id desc
+       limit $2`,
+      [data.id, data.limit],
+    );
+
+    return rows.map((row) => ({
+      id: Number(row.id),
+      action: row.action,
+      beforeState: row.before_state,
+      afterState: row.after_state,
+      changedAt: new Date(String(row.changed_at)).toISOString(),
+    }));
   });
 
 export const deleteProperty = createServerFn({ method: "POST" })
@@ -875,6 +921,20 @@ export const deleteProperty = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAdmin();
     const sql = await getSql();
+    const existingRows = await sql.query<Record<string, unknown>>(
+      `select ${DETAIL_COLUMNS} from properties where id = $1 limit 1`,
+      [data.id],
+    );
+    const existing = existingRows[0] ?? null;
     await sql.query("delete from properties where id = $1", [data.id]);
+
+    if (existing) {
+      await sql.query(
+        `insert into property_change_history (property_id, action, before_state, after_state)
+         values ($1, 'deleted', $2::jsonb, null)`,
+        [data.id, JSON.stringify(mapProperty(existing))],
+      );
+    }
+
     return { success: true };
   });
