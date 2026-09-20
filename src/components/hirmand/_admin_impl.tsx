@@ -31,6 +31,7 @@ import {
 import { toast, Toaster } from "sonner";
 import { formatToman } from "@/lib/money";
 import { AdminMediaField } from "@/components/hirmand/admin-media-field";
+import { AdminPricingPanel } from "@/components/hirmand/admin-pricing-panel";
 import { AdminConsultantPicker } from "@/components/hirmand/admin-consultant-picker";
 import { AdminMusicManager } from "@/components/hirmand/admin-music-manager";
 import { AdminLeadManager } from "@/components/hirmand/admin-lead-manager";
@@ -114,10 +115,10 @@ function toEnglishDigits(raw: string) {
   return raw.replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)));
 }
 function numberOrNull(raw: string) {
-  const digits = toEnglishDigits(raw).replace(/[^\d.-]/g, "");
+  const digits = toEnglishDigits(raw).replace(/[^\d-]/g, "");
   if (!digits.trim()) return null;
   const value = Number(digits);
-  return Number.isFinite(value) ? value : null;
+  return Number.isFinite(value) && value >= 0 ? value : null;
 }
 function splitLines(raw: string) {
   return raw.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
@@ -387,6 +388,22 @@ export function AdminPropertiesPage() {
       toast.error("نام و تلفن مشاور را مشخص کنید.");
       return;
     }
+    const price = numberOrNull(form.price);
+    const deposit = numberOrNull(form.deposit);
+    const rent = numberOrNull(form.rent);
+    if (form.transactionType === "sell" && price == null) {
+      toast.error("برای فایل فروش، قیمت فروش را وارد کنید.");
+      return;
+    }
+    if (form.transactionType === "rent" && deposit == null && rent == null) {
+      toast.error("برای فایل اجاره حداقل یکی از رهن یا اجاره را وارد کنید.");
+      return;
+    }
+    if (form.transactionType === "mortgage" && deposit == null) {
+      toast.error("برای فایل رهن، مبلغ رهن را وارد کنید.");
+      return;
+    }
+
     const { valid: images, invalid } = parseImageUrls(form.images);
     if (invalid.length) {
       toast.error("برخی لینک‌های تصویر/ویدیو معتبر نیستند.");
@@ -462,7 +479,7 @@ export function AdminPropertiesPage() {
     try {
       await deleteProperty({ data: { id: property.id } });
       toast.success("فایل حذف شد.");
-      if (form.id === property.id) setForm(emptyForm(""));
+      if (form.id === property.id) setForm(emptyForm());
       await refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حذف انجام نشد.");
@@ -919,24 +936,17 @@ export function AdminPropertiesPage() {
                 </fieldset>
 
                 <fieldset className="admin-section">
-                  <legend>قیمت</legend>
-                  <div className="admin-form-grid">
-                    <label className="field">
-                      <span>قیمت فروش (تومان)</span>
-                      <input value={form.price} onChange={(e) => update("price", e.target.value)} />
-                      {numberOrNull(form.price) != null ? (
-                        <small className="admin-money-hint">{formatToman(numberOrNull(form.price)!)}
-                        </small>
-                      ) : null}
-                    </label>
-                    <label className="field">
-                      <span>رهن (تومان)</span>
-                      <input value={form.deposit} onChange={(e) => update("deposit", e.target.value)} />
-                    </label>
-                    <label className="field">
-                      <span>اجاره ماهانه (تومان)</span>
-                      <input value={form.rent} onChange={(e) => update("rent", e.target.value)} />
-                    </label>
+                  <legend>قیمت و شرایط مالی</legend>
+                  <AdminPricingPanel
+                    transactionType={form.transactionType}
+                    price={form.price}
+                    deposit={form.deposit}
+                    rent={form.rent}
+                    onPriceChange={(value) => update("price", value)}
+                    onDepositChange={(value) => update("deposit", value)}
+                    onRentChange={(value) => update("rent", value)}
+                  />
+                  <div className="admin-form-grid" style={{ marginTop: 14 }}>
                     <label className="field admin-span-2">
                       <span>ویژگی‌ها (هر خط یک مورد)</span>
                       <textarea
@@ -946,6 +956,8 @@ export function AdminPropertiesPage() {
                       />
                     </label>
                   </div>
+                </fieldset>
+
                 </fieldset>
 
                 <fieldset className="admin-section">
