@@ -1,6 +1,6 @@
 import { upload } from "@vercel/blob/client";
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
-import { Film, ImagePlus, Loader2, Trash2, Upload } from "lucide-react";
+import { ChevronDown, ChevronUp, Film, ImagePlus, Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { isVideoUrl } from "@/lib/media";
 
@@ -28,7 +28,18 @@ export function AdminMediaField({ value, onChange }: Props) {
   const items = linesToList(value);
 
   function setItems(next: string[]) {
-    onChange(listToLines(next.slice(0, 12)));
+    const unique = Array.from(new Set(next.map((item) => item.trim()).filter(Boolean)));
+    onChange(listToLines(unique.slice(0, 12)));
+  }
+
+  function moveItem(index: number, direction: -1 | 1) {
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= items.length) return;
+    const next = [...items];
+    const current = next[index]!;
+    next[index] = next[nextIndex]!;
+    next[nextIndex] = current;
+    setItems(next);
   }
 
   function removeAt(index: number) {
@@ -40,6 +51,24 @@ export function AdminMediaField({ value, onChange }: Props) {
     if (!list.length) return;
     if (items.length + list.length > 12) {
       toast.error("حداکثر ۱۲ فایل رسانه مجاز است.");
+      return;
+    }
+
+    const allowedTypes = new Set([
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+      "video/mp4",
+      "video/webm",
+      "video/quicktime",
+    ]);
+    if (list.some((file) => !allowedTypes.has(file.type))) {
+      toast.error("نوع یکی از فایل‌ها پشتیبانی نمی‌شود.");
+      return;
+    }
+    if (list.some((file) => file.size > 25 * 1024 * 1024)) {
+      toast.error("حجم هر فایل باید حداکثر ۲۵ مگابایت باشد.");
       return;
     }
 
@@ -136,29 +165,39 @@ export function AdminMediaField({ value, onChange }: Props) {
       </div>
 
       {items.length ? (
-        <div className="admin-media-grid">
-          {items.map((src, index) => {
-            const video = isVideoUrl(src);
-            return (
-              <div key={`${src}-${index}`} className="admin-media-item">
-                {video ? (
-                  <video src={src} muted playsInline preload="metadata" />
-                ) : (
-                  <img src={src} alt="" loading="lazy" />
-                )}
-                <span className="admin-media-badge">{video ? <Film size={12} /> : <ImagePlus size={12} />}</span>
-                <button
-                  type="button"
-                  className="admin-media-remove"
-                  onClick={() => removeAt(index)}
-                  title="حذف"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            );
-          })}
-        </div>
+        <>
+          <div className="admin-media-toolbar">
+            <strong>{items.length.toLocaleString("fa-IR")} رسانه از ۱۲</strong>
+            <span>اولین مورد به‌عنوان تصویر اصلی فایل استفاده می‌شود.</span>
+          </div>
+          <div className="admin-media-grid">
+            {items.map((src, index) => {
+              const video = isVideoUrl(src);
+              return (
+                <div key={`${src}-${index}`} className={`admin-media-item${index === 0 ? " is-primary" : ""}`}>
+                  {video ? (
+                    <video src={src} muted playsInline preload="metadata" />
+                  ) : (
+                    <img src={src} alt="" loading="lazy" />
+                  )}
+                  {index === 0 ? <span className="admin-media-primary">کاور اصلی</span> : null}
+                  <span className="admin-media-badge">{video ? <Film size={12} /> : <ImagePlus size={12} />}</span>
+                  <div className="admin-media-controls">
+                    <button type="button" className="admin-media-move" onClick={() => moveItem(index, -1)} disabled={index === 0} title="بالا">
+                      <ChevronUp size={13} />
+                    </button>
+                    <button type="button" className="admin-media-move" onClick={() => moveItem(index, 1)} disabled={index === items.length - 1} title="پایین">
+                      <ChevronDown size={13} />
+                    </button>
+                    <button type="button" className="admin-media-remove" onClick={() => removeAt(index)} title="حذف">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       ) : null}
 
       <label className="field" style={{ marginTop: 12 }}>
