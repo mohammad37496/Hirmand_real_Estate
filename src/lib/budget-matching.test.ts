@@ -80,3 +80,24 @@ test("rejects properties far above the budget", () => {
   );
   assert.equal(result, null);
 });
+
+test("builds a feasible conversion when monthly rent is above the user's cap", () => {
+  const result = calculateBudgetMatch(
+    property({ deposit: "200000000", rent: "20000000" }),
+    { depositBudget: 700_000_000, rentBudget: 10_000_000 },
+  );
+  assert.equal(result?.tier, "convertible");
+  assert.equal(result?.suggestedRent, 10_000_000);
+  assert.equal(result?.suggestedDeposit, 533_333_333);
+  assert.equal(result?.conversionDirection, "rent_to_deposit");
+});
+
+test("returns transparent financial metadata for the UI", () => {
+  const result = calculateBudgetMatch(
+    property({ deposit: "600000000", rent: "6000000" }),
+    { depositBudget: 500_000_000, rentBudget: 10_000_000 },
+  );
+  assert.equal(result?.budgetUsagePercent, 93);
+  assert.equal(result?.gapEquivalent, 0);
+  assert.match(result?.reason ?? "", /بودجه/);
+});
