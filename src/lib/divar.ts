@@ -413,7 +413,6 @@ function parseDivarListing(
       firstStringByKey(webInfo, /seller|owner|user|business/i),
     sellerType: JSON.stringify(detail).includes("real-estate-business") ? "مشاور املاک" : "شخصی",
     sourceUrl: `${DIVAR_WEB}/v/${token}`,
-    filterStatus: "accepted",
   };
 }
 

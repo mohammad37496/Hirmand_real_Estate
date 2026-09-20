@@ -23,12 +23,16 @@ const FALLBACK_IMAGES: Record<PropertyType, string> = {
   apartment: "/images/type-apartment.jpg", villa: "/images/type-villa.jpg", office: "/images/type-office.jpg", heritage: "/images/type-heritage.jpg", land: "/images/type-villa.jpg", commercial: "/images/type-office.jpg",
 };
 function money(value: string | null) { if (!value) return ""; const parsed = Number(value); return Number.isFinite(parsed) ? formatToman(parsed) : value; }
-function priceLabel(property: Property) {
+function priceLabel(property: Property | PropertyCardData) {
   if (property.transactionType === "rent") return property.deposit ? `رهن ${money(property.deposit)} تومان${property.rent ? ` • اجاره ${money(property.rent)} تومان` : ""}` : property.rent ? `اجاره ${money(property.rent)} تومان` : "تماس برای قیمت";
   if (property.transactionType === "mortgage") return property.deposit ? `رهن ${money(property.deposit)} تومان` : "تماس برای قیمت";
   return property.price ? `قیمت ${money(property.price)} تومان` : "تماس برای قیمت";
 }
-function imageFor(property: PropertyCardData) { return property.image || FALLBACK_IMAGES[property.propertyType]; }
+function imageFor(property: Property | PropertyCardData) {
+  if ("image" in property && property.image) return property.image;
+  if ("images" in property && property.images[0]) return property.images[0];
+  return FALLBACK_IMAGES[property.propertyType];
+}
 
 export function PropertyCard({ property }: { property: Property | PropertyCardData }) {
   return (

@@ -10,6 +10,11 @@ const POOLED_KEYS = [
   "NEON_DATABASE_URL",
 ];
 
+/**
+ * @param {string[]} keys
+ * @param {Record<string, string | undefined>} env
+ * @returns {{ key: string | null, url: string | undefined }}
+ */
 function firstEnv(keys, env) {
   for (const key of keys) {
     const value = env[key]?.trim();
