@@ -164,6 +164,27 @@ export function AdminDashboard({
     });
   }, [data]);
 
+  const conversion = useMemo(() => {
+    const inquiry = data?.eventStats.find((item) => item.event === "inquiry_submit");
+    const calls = data?.eventStats.find((item) => item.event === "call_click");
+    const whatsapp = data?.eventStats.find((item) => item.event === "whatsapp_click");
+    const rate =
+      data?.visitors.last30 && inquiry
+        ? (inquiry.uniqueVisitors / data.visitors.last30) * 100
+        : 0;
+    const pagesPerVisitor =
+      data?.visitors.last30
+        ? data.visitors.pageviewsLast30 / data.visitors.last30
+        : 0;
+    return {
+      inquiryVisitors: inquiry?.uniqueVisitors ?? 0,
+      calls: calls?.count ?? 0,
+      whatsapp: whatsapp?.count ?? 0,
+      rate,
+      pagesPerVisitor,
+    };
+  }, [data]);
+
   if (loading || !data) {
     return (
       <div className="admin-dashboard">
@@ -329,6 +350,21 @@ export function AdminDashboard({
 
         <div className="admin-dashboard-mini-grid">
           <div>
+            <span>نرخ تبدیل به درخواست</span>
+            <strong>{conversion.rate.toFixed(1)}٪</strong>
+          </div>
+          <div>
+            <span>کلیک تماس</span>
+            <strong>{conversion.calls.toLocaleString("fa-IR")}</strong>
+          </div>
+          <div>
+            <span>کلیک واتساپ</span>
+            <strong>{conversion.whatsapp.toLocaleString("fa-IR")}</strong>
+          </div>
+        </div>
+
+        <div className="admin-dashboard-mini-grid">
+          <div>
             <span>نمایش صفحه امروز</span>
             <strong>{data.visitors.pageviewsToday.toLocaleString("fa-IR")}</strong>
           </div>
@@ -365,6 +401,7 @@ export function AdminDashboard({
         </div>
 
         <p className="admin-dashboard-summary">
+          میانگین نمایش صفحه برای هر بازدیدکننده در ۳۰ روز: {conversion.pagesPerVisitor.toFixed(1)} صفحه.
           «بازدیدکننده» بر اساس یک شناسه ناشناس در کوکی همان مرورگر محاسبه می‌شود؛ حذف کوکی یا تعویض مرورگر می‌تواند یک نفر را دوباره به‌عنوان بازدیدکننده جدید ثبت کند.
         </p>
       </section>
@@ -461,6 +498,7 @@ export function AdminDashboard({
                   inquiry_click: "باز کردن فرم درخواست",
                   property_share: "اشتراک فایل",
                   property_favorite: "ذخیره فایل",
+                  property_view: "بازدید فایل",
                 };
                 return (
                   <div key={item.event} className="admin-breakdown-row">
