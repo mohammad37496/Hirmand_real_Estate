@@ -360,3 +360,10 @@ export const ADMIN_CSS = `
 @media (max-width:980px){.admin-smart-tools{grid-template-columns:1fr}.admin-filter-row{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-filter-row select:first-child{grid-column:1/-1}}
 @media (max-width:600px){.admin-filter-row{grid-template-columns:1fr}.admin-filter-row select:first-child{grid-column:auto}}
 `;
+
+.admin-lead-status.status-follow_up{background:rgba(245,197,66,.14);color:#f5c542}
+.admin-lead-status.status-visited{background:rgba(174,120,255,.14);color:#c5a0ff}
+.admin-lead-status.status-contract{background:rgba(61,214,140,.18);color:#65e0a0}
+.admin-dashboard-stat[data-tone="violet"] .admin-dashboard-stat-icon{background:rgba(174,120,255,.12);color:#c5a0ff}
+.admin-funnel-track span[data-tone="amber"]{background:#f5c542}
+.admin-funnel-track span[data-tone="violet"]{background:#c5a0ff}
