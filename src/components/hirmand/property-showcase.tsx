@@ -25,6 +25,12 @@ const FALLBACK_IMAGES: Record<PropertyType, string> = {
   apartment: "/images/type-apartment.jpg", villa: "/images/type-villa.jpg", office: "/images/type-office.jpg", heritage: "/images/type-heritage.jpg", land: "/images/type-villa.jpg", commercial: "/images/type-office.jpg",
 };
 function money(value: string | null) { if (!value) return ""; const parsed = Number(value); return Number.isFinite(parsed) ? formatToman(parsed) : value; }
+function unitPriceLabel(property: Property | PropertyCardData) {
+  if ((property.transactionType !== "buy" && property.transactionType !== "sell") || !property.price || !property.areaM2 || property.areaM2 <= 0) return "";
+  const price = Number(property.price);
+  if (!Number.isFinite(price) || price <= 0) return "";
+  return `هر متر ${formatToman(Math.round(price / property.areaM2))} تومان`;
+}
 function priceLabel(property: Property | PropertyCardData) {
   if (property.transactionType === "rent") return property.deposit ? `رهن ${money(property.deposit)} تومان${property.rent ? ` • اجاره ${money(property.rent)} تومان` : ""}` : property.rent ? `اجاره ${money(property.rent)} تومان` : "تماس برای قیمت";
   if (property.transactionType === "mortgage") return property.deposit ? `رهن ${money(property.deposit)} تومان` : "تماس برای قیمت";
@@ -89,6 +95,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
           </div>
           <h3>{property.title}</h3>
           <p className="property-card-price">{priceLabel(property)}</p>
+          {unitPriceLabel(property) ? <span className="property-card-unit-price">{unitPriceLabel(property)}</span> : null}
           <div className="property-card-specs">
             {property.areaM2 ? (
               <span>
