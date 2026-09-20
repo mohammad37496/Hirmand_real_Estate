@@ -17,6 +17,10 @@ type Lead = {
   status: LeadStatus;
   createdAt: string;
   source: string;
+  acquisitionSource: string | null;
+  acquisitionMedium: string | null;
+  acquisitionCampaign: string | null;
+  acquisitionReferrer: string | null;
   budgetDeposit: number | null;
   budgetRent: number | null;
   budgetEquivalent: number | null;
@@ -284,6 +288,13 @@ export function AdminLeadManager() {
                           ))}
                         </div>
                       ) : null}
+                    </div>
+                  ) : null}
+                  {lead.acquisitionSource ? (
+                    <div className="admin-lead-attribution">
+                      منبع جذب: <strong>{lead.acquisitionSource}</strong>
+                      {lead.acquisitionMedium ? " · " + lead.acquisitionMedium : ""}
+                      {lead.acquisitionCampaign ? " · کمپین: " + lead.acquisitionCampaign : ""}
                     </div>
                   ) : null}
                   {lead.note ? <div className="admin-lead-note">{lead.note}</div> : null}
