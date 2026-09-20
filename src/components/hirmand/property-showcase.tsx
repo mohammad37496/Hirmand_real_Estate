@@ -37,10 +37,10 @@ function imageFor(property: Property | PropertyCardData) {
 export function PropertyCard({ property }: { property: Property | PropertyCardData }) {
   return (
     <article className="property-card">
-      <Link
-        to="/properties/$slug"
-        params={{ slug: property.slug }}
+      <a
+        href={`/properties/${encodeURIComponent(property.slug)}`}
         className="property-card-link"
+        aria-label={`مشاهده جزئیات فایل ${property.title}`}
       >
         <div className="property-card-media">
           <img
@@ -117,7 +117,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
           </div>
           <span className="property-card-details-link">مشاهده جزئیات فایل <ChevronLeft size={14} /></span>
         </div>
-      </Link>
+      </a>
 
       <PropertyActions property={property} compact />
     </article>
