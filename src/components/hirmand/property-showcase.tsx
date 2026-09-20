@@ -12,7 +12,7 @@ import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES } from "@/lib/site";
 import { mediaSourceCandidates } from "@/lib/media";
 import { formatToman } from "@/lib/money";
 import type { Property, PropertyCardData, PropertyType, PropertyTransaction } from "@/lib/properties";
-import { listPublishedPropertyCards } from "@/lib/properties";
+import { isFeaturedActive, listPublishedPropertyCards } from "@/lib/properties";
 import { PropertyActions } from "./property-actions";
 import { Reveal } from "./reveal";
 
@@ -58,6 +58,11 @@ function PropertyImage({ src, alt, fallback }: { src: string; alt: string; fallb
   );
 }
 export function PropertyCard({ property }: { property: Property | PropertyCardData }) {
+  const image = imageFor(property);
+  const transaction = TRANSACTION_LABEL[property.transactionType];
+  const type = PROPERTY_TYPE_LABEL[property.propertyType];
+  const code = property.id.slice(-6).toUpperCase();
+
   return (
     <article className="property-card">
       <Link
@@ -68,7 +73,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
       >
         <div className="property-card-media">
           <PropertyImage
-            src={imageFor(property)}
+            src={image}
             alt={property.title}
             fallback={FALLBACK_IMAGES[property.propertyType]}
           />
@@ -76,49 +81,64 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
             {isFeaturedActive(property) ? (
               <span className="property-badge property-badge-featured">ویژه</span>
             ) : null}
-            {property.priceDropPercent && property.priceDropPercent > 0 ? (
-              <span className="property-badge property-badge-discount">٪{property.priceDropPercent.toLocaleString("fa-IR")} کاهش</span>
-            ) : null}
-            <span className="property-badge">
-              {TRANSACTION_LABEL[property.transactionType]}
-            </span>
+            <span className="property-badge">{transaction}</span>
           </div>
+          {property.priceDropPercent && property.priceDropPercent > 0 ? (
+            <span className="property-badge property-badge-discount">
+              ٪{property.priceDropPercent.toLocaleString("fa-IR")} کاهش
+            </span>
+          ) : null}
+          <span className="property-card-image-count" aria-label={`${type} · ${property.neighborhood}`}>
+            <span>{type}</span>
+            <span>اصفهان، {property.neighborhood}</span>
+          </span>
           <span className="property-card-arrow" aria-hidden="true">
             <ChevronLeft size={16} />
           </span>
         </div>
 
         <div className="property-card-body">
-          <div className="property-card-meta">
-            <span>{PROPERTY_TYPE_LABEL[property.propertyType]}</span>
-            <span>{property.neighborhood}</span>
+          <div className="property-card-topline">
+            <div className="property-card-meta">
+              <span>{transaction}</span>
+              <span>{type}</span>
+              <span>{property.neighborhood}</span>
+            </div>
+            <span className="property-card-code">کد {code}</span>
           </div>
+
           <h3>{property.title}</h3>
-          <p className="property-card-price">{priceLabel(property)}</p>
-          {unitPriceLabel(property) ? <span className="property-card-unit-price">{unitPriceLabel(property)}</span> : null}
-          <div className="property-card-specs">
+
+          <div className="property-card-price-row">
+            <p className="property-card-price">{priceLabel(property)}</p>
+            {unitPriceLabel(property) ? (
+              <span className="property-card-unit-price">{unitPriceLabel(property)}</span>
+            ) : null}
+          </div>
+
+          <div className="property-card-specs" aria-label="مشخصات خلاصه">
             {property.areaM2 ? (
-              <span>
-                <Home size={14} /> {property.areaM2.toLocaleString("fa-IR")} متر
-              </span>
+              <span><RulerIcon /> {property.areaM2.toLocaleString("fa-IR")} متر</span>
             ) : null}
             {property.bedrooms ? (
-              <span>
-                <Building2 size={14} /> {property.bedrooms.toLocaleString("fa-IR")} خواب
-              </span>
+              <span><BedIcon /> {property.bedrooms.toLocaleString("fa-IR")} خواب</span>
             ) : null}
             {property.parking ? (
-              <span>
-                <CarFront size={14} /> پارکینگ
-              </span>
+              <span><CarFront size={14} /> پارکینگ</span>
             ) : null}
             {property.elevator ? (
-              <span>
-                <Building2 size={14} /> آسانسور
-              </span>
+              <span><Building2 size={14} /> آسانسور</span>
             ) : null}
           </div>
-          <span className="property-card-details-link">مشاهده جزئیات کامل فایل <ChevronLeft size={14} /></span>
+
+          <div className="property-card-footer">
+            <span className="property-card-location">
+              <MapPinned size={14} /> {property.neighborhood}
+            </span>
+            <span className="property-card-details-link">
+              جزئیات فایل <ChevronLeft size={14} />
+            </span>
+          </div>
         </div>
       </Link>
 
@@ -128,6 +148,19 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
     </article>
   );
 }
+
+function RulerIcon() {
+  return <span aria-hidden="true" className="property-card-inline-icon">㎡</span>;
+}
+
+function BedIcon() {
+  return <BedDoubleIcon />;
+}
+
+function BedDoubleIcon() {
+  return <span aria-hidden="true" className="property-card-inline-icon">خ</span>;
+}
+
 export function PropertyShowcase({ initialProperties }: { initialProperties: PropertyCardData[] }) {
   const [properties, setProperties] = useState(initialProperties); const [transactionType, setTransactionType] = useState(""); const [propertyType, setPropertyType] = useState(""); const [neighborhood, setNeighborhood] = useState(""); const [loading, setLoading] = useState(false);
   const neighborhoods = NEIGHBORHOOD_NAMES;
