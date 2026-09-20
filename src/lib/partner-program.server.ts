@@ -131,18 +131,22 @@ export async function recordPartnerAudit(input: {
     await sql.query(
       `
         insert into partner_audit_logs
-        (id, partner_id, action, actor, target_id, note, metadata)
-      values ($1, $2, $3, 'admin', $4, $5, $6::jsonb)
-    `,
-    [
-      crypto.randomUUID(),
-      input.partnerId,
-      input.action.slice(0, 80),
-      input.targetId ?? null,
-      (input.note ?? "").trim().slice(0, 500),
-      JSON.stringify(input.metadata ?? {}),
-    ],
-  );
+          (id, partner_id, action, actor, target_id, note, metadata)
+        values ($1, $2, $3, 'admin', $4, $5, $6::jsonb)
+      `,
+      [
+        crypto.randomUUID(),
+        input.partnerId,
+        input.action.slice(0, 80),
+        input.targetId ?? null,
+        (input.note ?? "").trim().slice(0, 500),
+        JSON.stringify(input.metadata ?? {}),
+      ],
+    );
+  } catch (error) {
+    // Audit logging must never turn a completed business operation into an error.
+    console.error("[partner-audit] write failed", error);
+  }
 }
 
 export async function listPartnerAuditLogs(partnerId: string) {
