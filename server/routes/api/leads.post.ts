@@ -1,7 +1,7 @@
 import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
-import { DEFAULT_MATCH_RAHN_RATE } from "@/lib/budget-matching";
+import { buildBudgetLeadNote, budgetEquivalent } from "@/lib/budget-lead";
 
 const matchSchema = z.object({
   slug: z.string().trim().min(1).max(220),
@@ -43,17 +43,21 @@ export default defineEventHandler(async (event) => {
 
   const budgetDeposit = parsed.data.budgetDeposit ?? 0;
   const budgetRent = parsed.data.budgetRent ?? 0;
-  const budgetEquivalent =
-    budgetDeposit + (budgetRent * 1_000_000) / DEFAULT_MATCH_RAHN_RATE;
   const matchedProperties = parsed.data.matches.slice(0, 12);
+  const budgetPayload = {
+    name: parsed.data.name,
+    phone: parsed.data.phone,
+    depositBudget: budgetDeposit,
+    rentBudget: budgetRent,
+    propertyType: parsed.data.propertyType,
+    neighborhood: parsed.data.neighborhood,
+    bedrooms: parsed.data.budgetBedrooms,
+    matches: matchedProperties,
+    note: parsed.data.note,
+  };
+  const equivalent = parsed.data.source === "budget_match" ? budgetEquivalent(budgetPayload) : 0;
   const note = parsed.data.source === "budget_match"
-    ? [
-        parsed.data.note,
-        "بودجه جستجوی هوشمند: رهن " + budgetDeposit.toLocaleString("fa-IR") + " تومان",
-        "اجاره ماهانه " + budgetRent.toLocaleString("fa-IR") + " تومان",
-        "معادل رهنی بودجه: " + Math.round(budgetEquivalent).toLocaleString("fa-IR") + " تومان",
-        matchedProperties.length ? "فایل‌های پیشنهادی ثبت‌شده: " + matchedProperties.length : "",
-      ].filter(Boolean).join("\n")
+    ? buildBudgetLeadNote(budgetPayload)
     : parsed.data.note;
 
   if (existing[0]) {
@@ -77,7 +81,7 @@ export default defineEventHandler(async (event) => {
           budgetDeposit || null,
           budgetRent || null,
           DEFAULT_MATCH_RAHN_RATE,
-          budgetEquivalent || null,
+          equivalent || null,
           parsed.data.budgetBedrooms ?? null,
           JSON.stringify(matchedProperties),
           matchedProperties.length,
