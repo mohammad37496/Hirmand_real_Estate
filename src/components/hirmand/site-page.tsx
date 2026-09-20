@@ -42,6 +42,7 @@ import { BrandLogo } from "./logo";
 import { MapAppButtons, MapEmbed } from "./map-apps";
 import { PropertyShowcase } from "./property-showcase";
 import { BudgetMatcher } from "./budget-matcher";
+import type { PropertyCardData } from "@/lib/properties";
 import { Reveal } from "./reveal";
 import { scrollToId } from "./scroll";
 import { SiteChrome } from "./site-chrome";
@@ -721,7 +722,7 @@ function Location() {
   );
 }
 
-export function SitePage({ initialProperties = [] }: { initialProperties?: import("@/lib/properties").Property[] }) {
+export function SitePage({ initialProperties = [] }: { initialProperties?: PropertyCardData[] }) {
   const [draft, setDraft] = useState<InquiryDraft>({
     deal: "خرید",
     propertyType: "",
