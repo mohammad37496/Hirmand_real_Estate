@@ -3570,3 +3570,23 @@ summary:focus-visible {
     transition:none;
   }
 }
+
+
+/* HIRMAND PROPERTY MAP/LIST VIEW */
+.properties-view-switch{display:flex;justify-content:flex-end;gap:8px;margin:18px 0 14px}
+.properties-view-switch button{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(244,239,230,.1);background:rgba(255,255,255,.025);color:inherit;border-radius:12px;padding:9px 13px;cursor:pointer;font:inherit;transition:.2s ease}
+.properties-view-switch button:hover{border-color:rgba(218,181,92,.35);transform:translateY(-1px)}
+.properties-view-switch button.is-active{background:rgba(218,181,92,.12);border-color:rgba(218,181,92,.45);color:#e6c979}
+.properties-split-view{display:grid;grid-template-columns:minmax(280px,36%) minmax(0,1fr);gap:14px;min-height:620px;border:1px solid rgba(244,239,230,.08);border-radius:20px;overflow:hidden;background:rgba(255,255,255,.02)}
+.properties-map-list{overflow:auto;max-height:620px;border-left:1px solid rgba(244,239,230,.07);background:rgba(7,9,13,.55)}
+.properties-map-list-item{width:100%;display:grid;grid-template-columns:72px minmax(0,1fr) auto;align-items:center;gap:10px;padding:11px;border:0;border-bottom:1px solid rgba(244,239,230,.06);background:transparent;color:inherit;text-align:right;cursor:pointer;font:inherit}
+.properties-map-list-item:hover,.properties-map-list-item.is-active{background:rgba(218,181,92,.08)}
+.properties-map-list-item.is-active{box-shadow:inset -3px 0 0 #d8b55f}
+.properties-map-list-image{width:72px;height:58px;border-radius:10px;overflow:hidden;display:grid;place-items:center;background:rgba(255,255,255,.04);color:#d8b55f}
+.properties-map-list-image img{width:100%;height:100%;object-fit:cover}
+.properties-map-list-item strong{display:block;font-size:13px;line-height:1.65;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.properties-map-list-item span{display:block;color:rgba(244,239,230,.6);font-size:11px;margin-top:2px}
+.properties-map-panel{min-width:0;min-height:620px;background:#e9e5dc}
+.properties-map-panel iframe{display:block;width:100%;height:100%;min-height:620px;border:0}
+@media(max-width:900px){.properties-split-view{grid-template-columns:1fr;min-height:0}.properties-map-list{order:2;max-height:330px;border-left:0;border-top:1px solid rgba(244,239,230,.07)}.properties-map-panel{order:1;min-height:360px}.properties-map-panel iframe{min-height:360px}.properties-view-switch{justify-content:stretch}.properties-view-switch button{flex:1;justify-content:center}}
+@media(max-width:600px){.properties-map-list{max-height:290px}.properties-map-list-item{grid-template-columns:58px minmax(0,1fr) auto;padding:9px}.properties-map-list-image{width:58px;height:50px}.properties-map-panel,.properties-map-panel iframe{min-height:300px}}
