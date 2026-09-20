@@ -13,6 +13,7 @@ export function VisitorTracker() {
 
     if (pathname.startsWith("/admin") || pathname.startsWith("/api")) return;
 
+    const searchParams = new URLSearchParams(window.location.search);
     const send = (payload: Record<string, string>) => {
       void fetch("/api/analytics/track", {
         method: "POST",
@@ -20,13 +21,13 @@ export function VisitorTracker() {
         credentials: "same-origin",
         keepalive: true,
         body: JSON.stringify({
-        path: pathname,
-        referrer: document.referrer,
-        utmSource: new URLSearchParams(window.location.search).get("utm_source") || "",
-        utmMedium: new URLSearchParams(window.location.search).get("utm_medium") || "",
-        utmCampaign: new URLSearchParams(window.location.search).get("utm_campaign") || "",
-        ...payload,
-      }),
+          path: pathname,
+          referrer: document.referrer,
+          utmSource: searchParams.get("utm_source") || "",
+          utmMedium: searchParams.get("utm_medium") || "",
+          utmCampaign: searchParams.get("utm_campaign") || "",
+          ...payload,
+        }),
       }).catch(() => {
         // Analytics must never interfere with site navigation.
       });
