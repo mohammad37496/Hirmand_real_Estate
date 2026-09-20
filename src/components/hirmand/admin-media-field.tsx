@@ -39,10 +39,6 @@ export function AdminMediaField({ adminKey, value, onChange }: Props) {
   async function uploadFiles(files: FileList | File[]) {
     const list = Array.from(files);
     if (!list.length) return;
-    if (!adminKey) {
-      toast.error("ابتدا وارد پنل مدیریت شوید.");
-      return;
-    }
     if (items.length + list.length > 12) {
       toast.error("حداکثر ۱۲ فایل رسانه مجاز است.");
       return;
