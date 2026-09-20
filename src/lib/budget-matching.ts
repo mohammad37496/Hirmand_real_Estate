@@ -1,4 +1,3 @@
-
 import type { Property } from "./properties";
 
 export const DEFAULT_MATCH_RAHN_RATE = 30_000;
@@ -17,14 +16,21 @@ export type BudgetMatchDetails = {
   rate: number;
   propertyTotalEquivalent: number;
   budgetTotalEquivalent: number;
+  budgetUsagePercent: number;
   gapEquivalent: number;
   suggestedDeposit: number;
   suggestedRent: number;
+  conversionDirection: "none" | "deposit_to_rent" | "rent_to_deposit" | "mixed";
+  reason: string;
 };
 
 function numeric(value: string | null | undefined): number {
   const n = Number(value ?? 0);
   return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
 
 export function totalRahnEquivalent(
@@ -41,6 +47,50 @@ export function budgetTotalEquivalent(
   rate = DEFAULT_MATCH_RAHN_RATE,
 ): number {
   return totalRahnEquivalent(budget.depositBudget, budget.rentBudget, rate);
+}
+
+function buildConvertibleAllocation(
+  propertyTotal: number,
+  budget: BudgetInput,
+  rate: number,
+  propertyDeposit: number,
+  propertyRent: number,
+) {
+  const maxDeposit = Math.max(0, budget.depositBudget);
+  const maxRent = Math.max(0, budget.rentBudget);
+  const maxRentEquivalent = (maxRent * 1_000_000) / rate;
+
+  let suggestedDeposit = clamp(propertyDeposit, 0, maxDeposit);
+  let suggestedRent = Math.max(
+    0,
+    (propertyTotal - suggestedDeposit) * rate / 1_000_000,
+  );
+
+  if (suggestedRent > maxRent) {
+    suggestedRent = maxRent;
+    suggestedDeposit = clamp(
+      propertyTotal - maxRentEquivalent,
+      0,
+      maxDeposit,
+    );
+  }
+
+  const depositChanged = Math.abs(suggestedDeposit - propertyDeposit) >= 1;
+  const rentChanged = Math.abs(suggestedRent - propertyRent) >= 1;
+
+  let conversionDirection: BudgetMatchDetails["conversionDirection"] = "mixed";
+  if (!depositChanged && !rentChanged) conversionDirection = "none";
+  else if (propertyDeposit > suggestedDeposit && suggestedRent > propertyRent) {
+    conversionDirection = "deposit_to_rent";
+  } else if (propertyRent > suggestedRent && suggestedDeposit > propertyDeposit) {
+    conversionDirection = "rent_to_deposit";
+  }
+
+  return {
+    suggestedDeposit: Math.round(suggestedDeposit),
+    suggestedRent: Math.round(suggestedRent),
+    conversionDirection,
+  };
 }
 
 export function calculateBudgetMatch(
@@ -65,27 +115,43 @@ export function calculateBudgetMatch(
 
   const usage = budgetTotal > 0 ? propertyTotal / budgetTotal : 1;
   const distance = Math.abs(1 - usage);
-  const baseScore = Math.max(0, 100 - Math.round(Math.min(1, distance) * 100));
-  const score = Math.min(100, baseScore + (within ? 8 : convertible ? 4 : 0));
+  const closenessScore = Math.round(
+    Math.max(0, 100 - Math.min(1, distance) * 100),
+  );
+  const tierBonus = within ? 10 : convertible ? 5 : 0;
+  const score = Math.min(100, closenessScore + tierBonus);
 
-  const suggestedDeposit = Math.min(deposit, budgetDeposit);
-  const remainingEquivalent = Math.max(0, propertyTotal - suggestedDeposit);
-  const suggestedRent = remainingEquivalent * rate / 1_000_000;
+  const allocation = buildConvertibleAllocation(
+    propertyTotal,
+    budget,
+    rate,
+    deposit,
+    rent,
+  );
+
+  const gapEquivalent = Math.max(0, propertyTotal - budgetTotal);
+  let reason = "این فایل با ترکیب فعلی رهن و اجاره داخل سقف بودجه شماست.";
+  if (convertible) {
+    reason = "با جابه‌جایی بخشی از رهن و اجاره، این فایل داخل معادل بودجه شما قرار می‌گیرد.";
+  } else if (near) {
+    reason = "این فایل کمی بالاتر از معادل بودجه شماست، اما برای بررسی نزدیک پیشنهاد شده است.";
+  }
 
   return {
     tier: within ? "within" : convertible ? "convertible" : "near",
     score,
     rate,
-    propertyTotalEquivalent: propertyTotal,
-    budgetTotalEquivalent: budgetTotal,
-    gapEquivalent: propertyTotal - budgetTotal,
-    suggestedDeposit,
-    suggestedRent,
+    propertyTotalEquivalent: Math.round(propertyTotal),
+    budgetTotalEquivalent: Math.round(budgetTotal),
+    budgetUsagePercent: Math.round((propertyTotal / budgetTotal) * 100),
+    gapEquivalent: Math.round(gapEquivalent),
+    ...allocation,
+    reason,
   };
 }
 
 export function tierLabel(tier: BudgetMatchTier): string {
-  if (tier === "within") return "داخل بودجه شما";
+  if (tier === "within") return "داخل بودجه";
   if (tier === "convertible") return "قابل تبدیل";
-  return "کمی بالاتر از بودجه";
+  return "نزدیک بودجه";
 }
