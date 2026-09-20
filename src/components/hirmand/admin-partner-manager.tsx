@@ -167,8 +167,20 @@ export function AdminPartnerManager() {
   async function inspectPartner(id: string) {
     setBusy("details:" + id);
     try {
-      const data = await api<{ partner: PartnerOverview; contracts: PartnerContract[] }>({ action: "details", partnerId: id });
+      const data = await api<{
+        partner: PartnerOverview;
+        contracts: PartnerContract[];
+        audits: Array<{
+          id: string;
+          action: string;
+          actor: string;
+          targetId: string | null;
+          note: string;
+          createdAt: string;
+        }>;
+      }>({ action: "details", partnerId: id });
       setSelected({ ...data.partner, contracts: data.contracts });
+      setSelectedAudits(data.audits ?? []);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "جزئیات همکار خوانده نشد.");
     } finally {
@@ -209,8 +221,8 @@ export function AdminPartnerManager() {
     if (!selected) return;
     setBusy("card:" + selected.id);
     try {
-      const data = await api<{ partner: PartnerOverview }>({ action: "new-card", partnerId: selected.id });
-      setSelected(data.partner);
+      await api<{ partner: PartnerOverview }>({ action: "new-card", partnerId: selected.id });
+      await inspectPartner(selected.id);
       await load(false);
       toast.success("کارت جدید صادر شد و شمارنده کارت از صفر شروع شد.");
     } catch (error) {
@@ -225,12 +237,12 @@ export function AdminPartnerManager() {
     const note = window.prompt("توضیح مصرف پاداش (اختیاری):", "") ?? "";
     setBusy("reward:" + selected.id);
     try {
-      const data = await api<{ partner: PartnerOverview }>({
+      await api<{ partner: PartnerOverview }>({
         action: "claim-reward",
         partnerId: selected.id,
         note,
       });
-      setSelected(data.partner);
+      await inspectPartner(selected.id);
       await load(false);
       toast.success("یک پاداش به‌عنوان مصرف‌شده ثبت شد.");
     } catch (error) {
@@ -243,12 +255,12 @@ export function AdminPartnerManager() {
   async function claimRewardFor(id: string) {
     setBusy("reward:" + id);
     try {
-      const data = await api<{ partner: PartnerOverview }>({
+      await api<{ partner: PartnerOverview }>({
         action: "claim-reward",
         partnerId: id,
         note: "ثبت مصرف از پنل مدیریت",
       });
-      setSelected(data.partner);
+      await inspectPartner(id);
       await load(false);
       toast.success("پاداش مصرف شد.");
     } catch (error) {
