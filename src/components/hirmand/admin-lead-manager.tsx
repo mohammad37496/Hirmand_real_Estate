@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { SITE } from "@/lib/site";
 import { formatToman } from "@/lib/money";
 
-type LeadStatus = "new" | "contacted" | "closed" | "spam";
+type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 type Lead = {
   id: string;
   name: string;
@@ -41,8 +41,11 @@ type Lead = {
 
 const STATUS_LABEL: Record<LeadStatus, string> = {
   new: "جدید",
-  contacted: "در حال پیگیری",
-  closed: "بسته‌شده",
+  contacted: "تماس گرفته شد",
+  follow_up: "پیگیری",
+  visited: "بازدید",
+  contract: "قرارداد",
+  closed: "ناموفق / بسته‌شده",
   spam: "اسپم",
 };
 
@@ -215,8 +218,11 @@ export function AdminLeadManager() {
             >
               <option value="all">همه وضعیت‌ها</option>
               <option value="new">جدید</option>
-              <option value="contacted">در حال پیگیری</option>
-              <option value="closed">بسته‌شده</option>
+              <option value="contacted">تماس گرفته شد</option>
+              <option value="follow_up">پیگیری</option>
+              <option value="visited">بازدید</option>
+              <option value="contract">قرارداد</option>
+              <option value="closed">ناموفق / بسته‌شده</option>
               <option value="spam">اسپم</option>
             </select>
             <button type="button" className="btn-ghost" onClick={() => void exportCsv()} disabled={exporting}>
@@ -341,8 +347,11 @@ export function AdminLeadManager() {
                     aria-label="وضعیت درخواست"
                   >
                     <option value="new">جدید</option>
-                    <option value="contacted">در حال پیگیری</option>
-                    <option value="closed">بسته‌شده</option>
+                    <option value="contacted">تماس گرفته شد</option>
+                    <option value="follow_up">پیگیری</option>
+                    <option value="visited">بازدید</option>
+                    <option value="contract">قرارداد</option>
+                    <option value="closed">ناموفق / بسته‌شده</option>
                     <option value="spam">اسپم</option>
                   </select>
                   <button
