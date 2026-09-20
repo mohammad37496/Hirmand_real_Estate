@@ -19,6 +19,7 @@ import {
   Trees,
 } from "lucide-react";
 import { toast } from "sonner";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 import {
   FAQS,
   mapLinks,
