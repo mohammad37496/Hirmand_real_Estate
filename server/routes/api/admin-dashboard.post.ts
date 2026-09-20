@@ -46,9 +46,16 @@ export default defineEventHandler(async (event) => {
         count(*) filter (where status = 'contacted')::int as contacted,
         count(*) filter (where status = 'closed')::int as closed,
         count(*) filter (where status = 'spam')::int as spam,
-        count(*) filter (where created_at >= current_date)::int as today,
-        count(*) filter (where created_at >= current_timestamp - interval '7 days')::int as last7,
-        count(*) filter (where created_at >= current_timestamp - interval '30 days')::int as last30
+        count(*) filter (
+          where created_at >= (current_timestamp at time zone 'Asia/Tehran')::date
+            at time zone 'Asia/Tehran'
+        )::int as today,
+        count(*) filter (
+          where created_at >= current_timestamp - interval '7 days'
+        )::int as last7,
+        count(*) filter (
+          where created_at >= current_timestamp - interval '30 days'
+        )::int as last30
       from leads
     `),
     sql.query<Record<string, unknown>>(`
