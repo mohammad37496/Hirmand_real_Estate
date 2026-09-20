@@ -71,6 +71,7 @@ function ResilientImage({
   className?: string;
   loading?: "eager" | "lazy";
   itemProp?: string;
+  fetchPriority?: "high" | "low" | "auto";
 }) {
   const candidates = mediaSourceCandidates(src, fallback);
   const [attempt, setAttempt] = useState(0);
@@ -82,6 +83,7 @@ function ResilientImage({
       alt={alt}
       className={className}
       loading={loading}
+      fetchPriority={fetchPriority}
       itemProp={itemProp}
       referrerPolicy="no-referrer"
       decoding="async"
@@ -222,6 +224,7 @@ function Gallery({
               alt={title}
               itemProp="image"
               loading="eager"
+              fetchPriority="high"
             />
           )}
           {!isVideoUrl(current) ? (
