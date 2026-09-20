@@ -413,6 +413,7 @@ export function AdminDashboard({
                   call_click: "کلیک تماس",
                   whatsapp_click: "کلیک واتساپ",
                   inquiry_submit: "ثبت درخواست",
+                  inquiry_click: "باز کردن فرم درخواست",
                   property_share: "اشتراک فایل",
                   property_favorite: "ذخیره فایل",
                 };
