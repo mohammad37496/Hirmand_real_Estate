@@ -48,7 +48,6 @@ import { AdminLeadManager } from "@/components/hirmand/admin-lead-manager";
 import { AdminDashboard } from "@/components/hirmand/admin-dashboard";
 import { ADMIN_CSS } from "@/components/hirmand/admin-shell-css";
 import { AdminListingAssistant } from "@/components/hirmand/admin-listing-assistant";
-import { BrandLogo } from "@/components/hirmand/logo";
 import { AdminPartnerManager } from "@/components/hirmand/admin-partner-manager";
 import { AdminDivarFiles } from "@/components/hirmand/admin-divar-files";
 
