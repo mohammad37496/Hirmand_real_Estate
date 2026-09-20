@@ -17,12 +17,23 @@ function escapeXml(value: string) {
     .replace(/'/g, "&apos;");
 }
 
-function urlEntry(loc: string, changefreq: string, priority: string, lastmod?: string) {
+function urlEntry(
+  loc: string,
+  changefreq: string,
+  priority: string,
+  lastmod?: string,
+  images: string[] = [],
+) {
   const lm = lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : "";
-  return `  <url>\n    <loc>${escapeXml(loc)}</loc>${lm}\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
+  const imageXml = images
+    .filter((src) => /^https?:\\/\\//i.test(src))
+    .slice(0, 10)
+    .map((src) => `\n    <image:image><image:loc>${escapeXml(src)}</image:loc></image:image>`)
+    .join("");
+  return `  <url>\n    <loc>${escapeXml(loc)}</loc>${lm}${imageXml}\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
 }
 
-async function loadPropertyUrls(): Promise<{ loc: string; lastmod?: string }[]> {
+async function loadPropertyUrls(): Promise<{ loc: string; lastmod?: string; images: string[] }[]> {
   const databaseUrl = resolveDatabaseUrl().url;
   if (!databaseUrl) return [];
 
@@ -30,8 +41,8 @@ async function loadPropertyUrls(): Promise<{ loc: string; lastmod?: string }[]> 
     const { Pool } = await import("pg");
     const pool = new Pool({ connectionString: databaseUrl, max: 1, idleTimeoutMillis: 3000, connectionTimeoutMillis: 3000 });
     try {
-      const res = await pool.query<{ id: string; slug: string; updated_at: Date | string | null }>(
-        `select id, slug, updated_at from properties
+      const res = await pool.query<{ id: string; slug: string; updated_at: Date | string | null; images: unknown }>(
+        `select id, slug, updated_at, images from properties
          where status = 'published'
          order by published_at desc nulls last, created_at desc
          limit 49000`,
@@ -41,7 +52,25 @@ async function loadPropertyUrls(): Promise<{ loc: string; lastmod?: string }[]> 
           row.updated_at != null
             ? new Date(row.updated_at).toISOString().slice(0, 10)
             : undefined;
-        return { loc: `${SITE}/v/${encodeURIComponent(String(row.slug))}/${encodeURIComponent(String(row.id))}`, lastmod };
+        let images: string[] = [];
+        if (Array.isArray(row.images)) {
+          images = row.images.filter((src): src is string => typeof src === "string");
+        } else if (typeof row.images === "string") {
+          try {
+            const parsed = JSON.parse(row.images);
+            if (Array.isArray(parsed)) {
+              images = parsed.filter((src): src is string => typeof src === "string");
+            }
+          } catch {
+            images = [];
+          }
+        }
+
+        return {
+          loc: `${SITE}/v/${encodeURIComponent(String(row.slug))}/${encodeURIComponent(String(row.id))}`,
+          lastmod,
+          images,
+        };
       });
     } finally {
       await pool.end().catch(() => undefined);
@@ -65,10 +94,10 @@ export default defineEventHandler(async (event) => {
 
   const properties = await loadPropertyUrls();
   for (const item of properties) {
-    entries.push(urlEntry(item.loc, "weekly", "0.8", item.lastmod ?? today));
+    entries.push(urlEntry(item.loc, "weekly", "0.8", item.lastmod ?? today, item.images));
   }
 
-  const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join("\n")}\n</urlset>\n`;
+  const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${entries.join("\n")}\n</urlset>\n`;
 
   setResponseHeader(event, "content-type", "application/xml; charset=utf-8");
   setResponseHeader(event, "cache-control", "public, s-maxage=3600, stale-while-revalidate=86400");
