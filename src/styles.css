@@ -5469,3 +5469,25 @@ body::before {
   background: rgba(255, 107, 107, 0.09);
   color: #ffb1b1;
 }
+
+/* Hirmand Signature Theme — primary brand: #860A0A */
+:root {
+  --primary: #860a0a; --primary-hover: #a30d0d; --primary-deep: #5f0606;
+  --primary-soft: rgba(134,10,10,.12); --primary-line: rgba(134,10,10,.42);
+  --bg: #08090a; --surface: #121316; --surface-2: #1a1b1f;
+  --fg: #f7f4ef; --muted: #b8b1a7; --subtle: #898278;
+  --line: rgba(247,244,239,.10); --shadow: 0 22px 52px rgba(0,0,0,.34);
+}
+::selection { background: rgba(134,10,10,.82); color:#fff; }
+.btn-gold { color:#fff; background:linear-gradient(135deg,var(--primary),var(--primary-deep)); border-color:rgba(255,255,255,.04); box-shadow:0 12px 30px rgba(134,10,10,.28); }
+.btn-gold:hover { filter:none; background:linear-gradient(135deg,var(--primary-hover),var(--primary)); box-shadow:0 16px 34px rgba(134,10,10,.34); transform:translateY(-1px); }
+.btn-gold:active { transform:scale(.97); }
+.btn-ghost:hover { border-color:var(--primary-line); background:var(--primary-soft); }
+.btn-gold:focus-visible,.btn-ghost:focus-visible,.chip:focus-visible,.quick-action:focus-visible,.footer-cta:focus-visible { outline:3px solid rgba(134,10,10,.34); outline-offset:2px; }
+.skip-link { background:var(--primary); color:#fff; box-shadow:0 10px 26px rgba(134,10,10,.28); }
+.hero-veil { background:linear-gradient(180deg,rgba(7,9,13,.18) 0%,rgba(7,9,13,.48) 42%,rgba(7,9,13,.9) 78%,#08090a 100%),radial-gradient(ellipse at 50% 12%,rgba(134,10,10,.2),transparent 44%); }
+.site-nav.is-scrolled { background:rgba(8,9,10,.88); }
+.quick-action-primary,.footer-cta { color:#fff; background:linear-gradient(135deg,var(--primary),var(--primary-deep)); box-shadow:0 10px 24px rgba(134,10,10,.24); }
+.quick-action-primary:hover,.footer-cta:hover { color:#fff; background:linear-gradient(135deg,var(--primary-hover),var(--primary)); }
+.property-badge-featured { border-color:rgba(134,10,10,.38); background:rgba(134,10,10,.16); color:#ffb0b0; }
+.properties-filter-search:focus-within,.properties-range-field:focus-within,.properties-sort-field:focus-within { border-color:var(--primary-line); box-shadow:0 0 0 3px rgba(134,10,10,.12); }
