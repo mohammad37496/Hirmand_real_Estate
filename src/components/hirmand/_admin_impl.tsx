@@ -313,13 +313,13 @@ export function AdminPropertiesPage() {
   }, [properties, serverStats]);
 
   async function loadMoreProperties() {
-    if (!adminKey || loadingList || !propertyHasMore) return;
+    if (!unlocked || loadingList || !propertyHasMore) return;
 
     setLoadingList(true);
     try {
       const rows = await listAdminProperties({
         data: {
-          adminKey,
+          adminKey: "",
           limit: 100,
           offset: propertyOffset,
         },
