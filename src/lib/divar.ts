@@ -627,6 +627,17 @@ async function uploadDivarImages(token: string, urls: string[]) {
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/153.0.0.0 Safari/537.36",
       },
     },
+    {
+      label: "proxy2",
+      url: "https://images.weserv.nl/?url=" + encodeURIComponent(source),
+      timeoutMs: 12_000,
+      headers: {
+        accept: "image/avif,image/webp,image/png,image/jpeg,image/*,*/*;q=0.8",
+        "accept-language": "fa-IR,fa;q=0.9,en;q=0.8",
+        "user-agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/153.0.0.0 Safari/537.36",
+      },
+    },
   ];
 
   const detectImageType = (bytes: Buffer, headerType: string) => {
