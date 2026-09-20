@@ -53,6 +53,8 @@ export type DivarFile = {
   filterStatus: DivarFilterStatus;
   importedPropertyId: string | null;
   propertySlug: string | null;
+  latitude: number | null;
+  longitude: number | null;
   importedAt: string | null;
   lastSeenAt: string;
   createdAt: string;
@@ -154,6 +156,59 @@ function collectMediaUrls(value: unknown, out: string[] = [], keyHint = "", dept
     }
   }
   return out;
+}
+
+function normalizeCoordinate(value: unknown, max: number): number | null {
+  if (typeof value !== "number" && typeof value !== "string") return null;
+  const raw = String(value).replace(/,/g, "").trim();
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return null;
+  const normalized = Math.abs(parsed) > max ? parsed / 1_000_000 : parsed;
+  return Number.isFinite(normalized) && Math.abs(normalized) <= max ? normalized : null;
+}
+
+function findDivarCoordinates(value: unknown, depth = 0): { latitude: number; longitude: number } | null {
+  if (depth > 12 || value == null) return null;
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findDivarCoordinates(item, depth + 1);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (typeof value !== "object") return null;
+
+  const obj = value as Record<string, unknown>;
+  const keyMap = new Map(
+    Object.entries(obj).map(([key, item]) => [normalizeDivarText(key).replace(/\s+/g, ""), item]),
+  );
+
+  const latitude =
+    normalizeCoordinate(keyMap.get("latitude"), 90) ??
+    normalizeCoordinate(keyMap.get("lat"), 90) ??
+    normalizeCoordinate(keyMap.get("latitudee7"), 90) ??
+    normalizeCoordinate(keyMap.get("late7"), 90);
+  const longitude =
+    normalizeCoordinate(keyMap.get("longitude"), 180) ??
+    normalizeCoordinate(keyMap.get("lng"), 180) ??
+    normalizeCoordinate(keyMap.get("lon"), 180) ??
+    normalizeCoordinate(keyMap.get("long"), 180) ??
+    normalizeCoordinate(keyMap.get("longitudee7"), 180) ??
+    normalizeCoordinate(keyMap.get("lnge7"), 180);
+
+  if (latitude != null && longitude != null) return { latitude, longitude };
+
+  const preferredEntries = Object.entries(obj).sort(([a], [b]) => {
+    const score = (key: string) =>
+      /location|map|geo|coordinate|coordinates|موقعیت|نقشه/i.test(key) ? 0 : 1;
+    return score(a) - score(b);
+  });
+
+  for (const [, item] of preferredEntries) {
+    const found = findDivarCoordinates(item, depth + 1);
+    if (found) return found;
+  }
+  return null;
 }
 
 function firstStringByKey(value: unknown, pattern: RegExp, depth = 0): string | null {
@@ -370,8 +425,8 @@ function parseDivarListing(
   const elevator = /آسانسور/u.test(featureBlob) && !/بدون آسانسور|آسانسور ندارد/u.test(featureBlob);
   const storage = /انباری/u.test(featureBlob) && !/بدون انباری|انباری ندارد/u.test(featureBlob);
 
-  const images = Array.from(new Set(collectMediaUrls(detail)))
-    .slice(0, MAX_IMAGES);
+  const images = Array.from(new Set(collectMediaUrls(detail))).slice(0, MAX_IMAGES);
+  const coordinates = findDivarCoordinates(detail);
 
   const title = String(webInfo.title ?? "فایل دیوار").trim();
   const neighborhood = String(webInfo.district_persian ?? webInfo.district ?? "اصفهان").trim();
@@ -409,6 +464,8 @@ function parseDivarListing(
       ),
     ),
     images,
+    latitude: coordinates?.latitude ?? null,
+    longitude: coordinates?.longitude ?? null,
     sellerName:
       firstStringByKey(detail, /^(?:seller|owner|user|username|business_name|profile_name|author_name)$/i) ??
       firstStringByKey(webInfo, /seller|owner|user|business/i),
@@ -732,6 +789,8 @@ function mapRow(row: Record<string, unknown>): DivarFile {
     filterStatus: row.filter_status as DivarFilterStatus,
     importedPropertyId: row.imported_property_id == null ? null : String(row.imported_property_id),
     propertySlug: row.imported_property_slug == null ? null : String(row.imported_property_slug),
+    latitude: row.latitude == null ? null : Number(row.latitude),
+    longitude: row.longitude == null ? null : Number(row.longitude),
     importedAt: row.imported_at ? new Date(String(row.imported_at)).toISOString() : null,
     lastSeenAt: new Date(String(row.last_seen_at)).toISOString(),
     createdAt: new Date(String(row.created_at)).toISOString(),
@@ -945,13 +1004,13 @@ export const syncDivarFiles = createServerFn({ method: "POST" })
           area_m2, bedrooms, bathrooms, floor, total_floors, built_year,
           parking, elevator, storage, price, deposit, rent, description,
           features, images, seller_name, seller_type, source_url,
-          filter_status, last_seen_at, updated_at
+          latitude, longitude, filter_status, last_seen_at, updated_at
         ) values (
           $1,$2,$3,$4,$5,$6,
           $7,$8,$9,$10,$11,$12,
           $13,$14,$15,$16,$17,$18,$19,
           $20::jsonb,$21::jsonb,$22,$23,$24,
-          $25,current_timestamp,current_timestamp
+          $25,$26,$27,current_timestamp,current_timestamp
         )
         on conflict (token) do update set
           title = excluded.title,
@@ -976,6 +1035,8 @@ export const syncDivarFiles = createServerFn({ method: "POST" })
           seller_name = excluded.seller_name,
           seller_type = excluded.seller_type,
           source_url = excluded.source_url,
+          latitude = excluded.latitude,
+          longitude = excluded.longitude,
           filter_status = case when divar_files.filter_status = 'imported' then 'imported' else 'accepted' end,
           reject_reason = null,
           last_seen_at = current_timestamp,
@@ -1005,6 +1066,8 @@ export const syncDivarFiles = createServerFn({ method: "POST" })
           item.sellerName,
           item.sellerType,
           item.sourceUrl,
+          item.latitude,
+          item.longitude,
           existing === "imported" ? "imported" : "accepted",
         ],
       );
@@ -1076,19 +1139,31 @@ export const importDivarFile = createServerFn({ method: "POST" })
         );
       } else {
         const currentImages = parseJsonArray(existingProperty.images);
-        const importedResult =
-          currentImages.length > 0
-            ? { imported: currentImages, failures: [] as { source: string; status?: number; reason: string }[] }
-            : await uploadDivarImages(token, images);
+        const needsImageRepair =
+          currentImages.length === 0 ||
+          currentImages.some((url) => /divarcdn\.com|wsrv\.nl/i.test(url));
+        const uploadResult = needsImageRepair
+          ? await uploadDivarImages(token, images)
+          : { imported: currentImages, failures: [] as { source: string; status?: number; reason: string }[] };
+        const finalImages = Array.from(
+          new Set([...uploadResult.imported, ...currentImages, ...images]),
+        ).slice(0, MAX_IMAGES);
 
         await sql.query(
           `update properties
            set status = 'published',
                published_at = coalesce(published_at, current_timestamp),
                images = $2::jsonb,
+               latitude = $3,
+               longitude = $4,
                updated_at = current_timestamp
            where id = $1`,
-          [existingPropertyId, JSON.stringify(importedResult.imported)],
+          [
+            existingPropertyId,
+            JSON.stringify(finalImages),
+            row.latitude == null ? null : Number(row.latitude),
+            row.longitude == null ? null : Number(row.longitude),
+          ],
         );
 
         await sql.query(
@@ -1104,14 +1179,16 @@ export const importDivarFile = createServerFn({ method: "POST" })
           propertyId: existingPropertyId,
           propertySlug: String(existingProperty.slug ?? ""),
           alreadyImported: true,
-          imageCount: importedResult.imported.length,
-          imageFailures: importedResult.failures.length,
+          imageCount: uploadResult.imported.length,
+          imageFailures: uploadResult.failures.length,
         };
       }
     }
 
     const importedResult = await uploadDivarImages(token, images);
-    const importedImages = importedResult.imported;
+    const importedImages = Array.from(
+      new Set([...importedResult.imported, ...images]),
+    ).slice(0, MAX_IMAGES);
 
     const id = existingPropertyId ? existingPropertyId : crypto.randomUUID();
     const propertyType = propertyTypeToSite(String(row.property_type) as DivarPropertyType);
@@ -1125,12 +1202,12 @@ export const importDivarFile = createServerFn({ method: "POST" })
         id, slug, status, featured, title, transaction_type, property_type, city,
         neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
         built_year, parking, elevator, storage, price, deposit, rent, description,
-        features, images, contact_name, contact_phone, published_at
+        features, images, contact_name, contact_phone, latitude, longitude, published_at
       ) values (
         $1,$2,'published',false,$3,$4,$5,'اصفهان',
         $6,null,$7,$8,$9,$10,$11,
         $12,$13,$14,$15,$16,$17,$18,$19,
-        $20::jsonb,$21::jsonb,$22,$23,current_timestamp
+        $20::jsonb,$21::jsonb,$22,$23,$24,$25,current_timestamp
       )`,
       [
         id,
@@ -1156,6 +1233,8 @@ export const importDivarFile = createServerFn({ method: "POST" })
         JSON.stringify(importedImages),
         TEAM[0]?.name ?? "مشاور هیرمند",
         TEAM[0]?.phone ?? SITE.phone.mobile,
+        row.latitude == null ? null : Number(row.latitude),
+        row.longitude == null ? null : Number(row.longitude),
       ],
     );
 
@@ -1173,7 +1252,7 @@ export const importDivarFile = createServerFn({ method: "POST" })
       propertyId: id,
       propertySlug: slug,
       alreadyImported: false,
-      imageCount: importedImages.length,
+      imageCount: importedResult.imported.length,
       imageFailures: importedResult.failures.length,
     };
   });
