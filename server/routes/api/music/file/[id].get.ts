@@ -43,12 +43,21 @@ function normalizeBlobUrl(raw: string): string {
     return raw;
   }
 }
+
 function getConfiguredBlobStoreId(): string | null {
   const raw = process.env.BLOB_STORE_ID?.trim();
   if (!raw) return null;
   return raw.startsWith("store_") ? raw.slice("store_".length) : raw;
 }
 
+function isPublicBlobUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname.endsWith(".public.blob.vercel-storage.com");
+  } catch {
+    return false;
+  }
+}
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id")?.trim();
@@ -83,32 +92,63 @@ export default defineEventHandler(async (event) => {
 
   const target = normalizeBlobUrl(String(row.url));
 
-  // The Blob is public, so redirect the browser to the canonical Blob URL.
-  // This keeps native browser byte-range requests, seeking, caching and
-  // media decoding intact instead of proxying the whole file through a
-  // serverless function.
-  let parsedTarget: URL;
+  if (!isPublicBlobUrl(target)) {
+    throw createError({
+      statusCode: 502,
+      statusMessage: "نشانی فایل موسیقی عمومی و قابل پخش نیست.",
+    });
+  }
+
+  const range = event.req.headers.get("range");
+  let upstream: Response;
+
   try {
-    parsedTarget = new URL(target);
-  } catch {
+    upstream = await fetch(target, {
+      method: event.req.method === "HEAD" ? "HEAD" : "GET",
+      headers: range ? { range } : undefined,
+    });
+  } catch (error) {
+    console.error("[music-file] blob fetch failed", error);
     throw createError({
       statusCode: 502,
-      statusMessage: "نشانی فایل موسیقی نامعتبر است.",
+      statusMessage: "فایل موسیقی از فضای ذخیره‌سازی قابل دریافت نیست.",
     });
   }
 
-  if (parsedTarget.protocol !== "https:") {
+  if (!upstream.ok && upstream.status !== 206) {
+    console.error("[music-file] blob response failed", upstream.status, target);
     throw createError({
-      statusCode: 502,
-      statusMessage: "نشانی فایل موسیقی امن نیست.",
+      statusCode: upstream.status === 404 ? 404 : 502,
+      statusMessage: upstream.status === 404
+        ? "فایل موسیقی پیدا نشد."
+        : "فایل موسیقی از فضای ذخیره‌سازی قابل دریافت نیست.",
     });
   }
 
-  return new Response(null, {
-    status: 302,
-    headers: {
-      location: parsedTarget.toString(),
-      "cache-control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
+  const headers = new Headers();
+  for (const name of [
+    "content-type",
+    "content-length",
+    "content-range",
+    "accept-ranges",
+    "etag",
+    "last-modified",
+  ]) {
+    const value = upstream.headers.get(name);
+    if (value) headers.set(name, value);
+  }
+
+  headers.set(
+    "cache-control",
+    "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
+  );
+  headers.set("content-disposition", "inline");
+
+  return new Response(
+    event.req.method === "HEAD" ? null : upstream.body,
+    {
+      status: upstream.status,
+      headers,
     },
-  });
+  );
 });
