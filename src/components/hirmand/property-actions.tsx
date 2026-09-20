@@ -1,5 +1,5 @@
 import { useEffect, useState, type MouseEvent } from "react";
-import { ArrowLeftRight, Heart, Share2 } from "lucide-react";
+import { ArrowLeftRight, Heart, Printer, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import type { PropertyCardData } from "@/lib/properties";
 import { trackAnalyticsEvent } from "@/lib/analytics";
@@ -123,6 +123,12 @@ export function PropertyActions({
     void shareProperty(property);
   }
 
+  function onPrint(event: MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    window.setTimeout(() => window.print(), 50);
+  }
+
   function onCompare(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
@@ -166,6 +172,16 @@ export function PropertyActions({
       >
         <Share2 size={compact ? 17 : 16} />
         {!compact ? <span>اشتراک‌گذاری</span> : null}
+      </button>
+      <button
+        type="button"
+        className="property-action"
+        onClick={onPrint}
+        aria-label="چاپ فایل"
+        title="چاپ فایل"
+      >
+        <Printer size={compact ? 17 : 16} />
+        {!compact ? <span>چاپ فایل</span> : null}
       </button>
       <button
         type="button"
