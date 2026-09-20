@@ -471,7 +471,7 @@ export function AdminPropertiesPage() {
       await deleteProperty({ data: { adminKey: "", id: property.id } });
       toast.success("فایل حذف شد.");
       if (form.id === property.id) setForm(emptyForm(""));
-      await refresh(adminKey);
+      await refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حذف انجام نشد.");
     }
