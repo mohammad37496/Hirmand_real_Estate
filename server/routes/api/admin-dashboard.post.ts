@@ -2,7 +2,7 @@ import { createError, defineEventHandler, getCookie, setResponseHeader } from "h
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 
-type LeadStatus = "new" | "contacted" | "closed" | "spam";
+type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   if (dbSource === "unconfigured") {
     return {
       properties: { total: 0, published: 0, draft: 0, archived: 0, featured: 0 },
-      leads: { total: 0, new: 0, contacted: 0, closed: 0, spam: 0, today: 0, last7: 0, last30: 0 },
+      leads: { total: 0, new: 0, contacted: 0, follow_up: 0, visited: 0, contract: 0, closed: 0, spam: 0, today: 0, last7: 0, last30: 0 },
       propertyTypes: [],
       leadDays: [],
       music: { total: 0, active: 0 },
@@ -47,6 +47,9 @@ export default defineEventHandler(async (event) => {
         count(*)::int as total,
         count(*) filter (where status = 'new')::int as new,
         count(*) filter (where status = 'contacted')::int as contacted,
+        count(*) filter (where status = 'follow_up')::int as follow_up,
+        count(*) filter (where status = 'visited')::int as visited,
+        count(*) filter (where status = 'contract')::int as contract,
         count(*) filter (where status = 'closed')::int as closed,
         count(*) filter (where status = 'spam')::int as spam,
         count(*) filter (
@@ -201,8 +204,8 @@ export default defineEventHandler(async (event) => {
     }),
     sql.query<Record<string, unknown>>(`
       select
-        count(*) filter (where status in ('new','contacted') and follow_up_at <= current_timestamp)::int as due,
-        count(*) filter (where status in ('new','contacted') and follow_up_at > current_timestamp and follow_up_at <= current_timestamp + interval '7 days')::int as next7
+        count(*) filter (where status in ('new','contacted','follow_up','visited','contract') and follow_up_at <= current_timestamp)::int as due,
+        count(*) filter (where status in ('new','contacted','follow_up','visited','contract') and follow_up_at > current_timestamp and follow_up_at <= current_timestamp + interval '7 days')::int as next7
       from leads
     `).catch((error) => {
       console.error("[admin-dashboard] follow-up stats unavailable", error);
@@ -228,6 +231,9 @@ export default defineEventHandler(async (event) => {
       total: Number(l.total) || 0,
       new: Number(l.new) || 0,
       contacted: Number(l.contacted) || 0,
+      follow_up: Number(l.follow_up) || 0,
+      visited: Number(l.visited) || 0,
+      contract: Number(l.contract) || 0,
       closed: Number(l.closed) || 0,
       spam: Number(l.spam) || 0,
       today: Number(l.today) || 0,
