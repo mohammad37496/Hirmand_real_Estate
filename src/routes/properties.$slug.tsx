@@ -23,6 +23,7 @@ import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { PropertyActions } from "@/components/hirmand/property-actions";
 import { formatToman } from "@/lib/money";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl } from "@/lib/media";
 import { areaSlug } from "@/lib/areas";
 
