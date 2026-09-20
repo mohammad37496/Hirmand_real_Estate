@@ -20,7 +20,7 @@ function listToLines(items: string[]) {
   return items.join("\n");
 }
 
-export function AdminMediaField({ adminKey, value, onChange }: Props) {
+export function AdminMediaField({ value, onChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
