@@ -536,6 +536,7 @@ export function AdminDashboard({
                   property_favorite: "ذخیره فایل",
                   property_view: "بازدید فایل",
                   property_compare: "افزودن به مقایسه",
+                  search_share: "اشتراک جست‌وجو",
                 };
                 return (
                   <div key={item.event} className="admin-breakdown-row">
