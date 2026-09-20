@@ -10,7 +10,7 @@ import {
   Ruler,
   Warehouse,
 } from "lucide-react";
-import { getPublishedProperty } from "@/lib/properties";
+import { getPublishedProperty, listRelatedProperties } from "@/lib/properties";
 import {
   breadcrumbJsonLd,
   propertyHead,
@@ -19,13 +19,30 @@ import {
   TYPE_LABEL,
 } from "@/lib/seo";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
+import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { formatToman } from "@/lib/money";
 import { isVideoUrl } from "@/lib/media";
 import { areaSlug } from "@/lib/areas";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/properties/$slug")({
-  loader: ({ params }) => getPublishedProperty({ data: { slug: params.slug } }),
-  head: ({ loaderData, params }) => propertyHead(loaderData ?? null, params.slug),
+  loader: async ({ params }) => {
+    const property = await getPublishedProperty({ data: { slug: params.slug } });
+    if (!property) return { property: null, related: [] };
+
+    const related = await listRelatedProperties({
+      data: {
+        slug: property.slug,
+        neighborhood: property.neighborhood,
+        propertyType: property.propertyType,
+        limit: 6,
+      },
+    });
+
+    return { property, related };
+  },
+  head: ({ loaderData, params }) =>
+    propertyHead(loaderData?.property ?? null, params.slug),
   component: PropertyDetailPage,
 });
 
@@ -42,7 +59,7 @@ function whatsappLink(phone: string, title: string) {
 }
 
 function PropertyDetailPage() {
-  const property = Route.useLoaderData();
+  const { property, related } = Route.useLoaderData();
   if (!property) {
     return (
       <SiteChrome>
@@ -169,13 +186,35 @@ function PropertyDetailPage() {
                 href={whatsappLink(property.contactPhone, property.title)}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
               >
                 پیام در واتساپ
               </a>
-              <a className="btn-ghost" href={`tel:${property.contactPhone}`}>تماس تلفنی</a>
+              <a
+                className="btn-ghost"
+                href={`tel:${property.contactPhone}`}
+                onClick={() => trackAnalyticsEvent("call_click", property.slug)}
+              >
+                تماس تلفنی
+              </a>
             </div>
           </aside>
         </div>
+
+        {related.length ? (
+          <section className="property-related" aria-labelledby="related-properties-title">
+            <div className="section-head">
+              <span className="kicker">پیشنهاد هیرمند</span>
+              <h2 id="related-properties-title">فایل‌های مشابه</h2>
+              <p>چند گزینه نزدیک به این فایل، بر اساس محله و نوع ملک.</p>
+            </div>
+            <div className="property-grid">
+              {related.map((item) => (
+                <PropertyCard key={item.id} property={item} />
+              ))}
+            </div>
+          </section>
+        ) : null}
       </main>
     </SiteChrome>
   );
