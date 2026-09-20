@@ -35,11 +35,23 @@ export default defineEventHandler(async (event) => {
   const existingId = await verifyPartnerSessionToken(getCookie(event, PARTNER_SESSION_COOKIE));
   if (action === "me") {
     const overview = existingId ? await getPartnerOverview(existingId) : null;
+    if (overview?.status === "suspended") {
+      setCookie(event, PARTNER_SESSION_COOKIE, "", cookieOptions(0));
+      return { authenticated: false, partner: null };
+    }
     return { authenticated: Boolean(overview), partner: overview };
   }
 
   if (existingId) {
     const overview = await getPartnerOverview(existingId);
+    if (!overview) {
+      setCookie(event, PARTNER_SESSION_COOKIE, "", cookieOptions(0));
+      return { success: false, authenticated: false, partner: null };
+    }
+    if (overview.status === "suspended") {
+      setCookie(event, PARTNER_SESSION_COOKIE, "", cookieOptions(0));
+      return { success: false, authenticated: false, partner: null };
+    }
     return { success: true, authenticated: true, partner: overview };
   }
 
