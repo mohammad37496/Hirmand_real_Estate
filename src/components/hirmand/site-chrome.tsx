@@ -29,7 +29,7 @@ export function SiteChrome({
       <div className={cn("page", className)}>{children}</div>
       <Footer />
       <div className="quick-actions" aria-label="اقدام سریع">
-        <Link to="/" hash="inquiry" className="quick-action quick-action-primary" onClick={() => trackAnalyticsEvent("inquiry_submit")}>
+        <Link to="/" hash="inquiry" className="quick-action quick-action-primary" onClick={() => trackAnalyticsEvent("inquiry_click")}>
           <FileKey size={17} />
           <span>درخواست ملک</span>
         </Link>
