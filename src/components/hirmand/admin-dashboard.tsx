@@ -144,7 +144,7 @@ export function AdminDashboard({
       const response = await fetch("/api/admin-dashboard", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ adminKey }),
+        body: JSON.stringify({}),
       });
       if (!response.ok) {
         const result = (await response.json().catch(() => null)) as { statusMessage?: string } | null;
