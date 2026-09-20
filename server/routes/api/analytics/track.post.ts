@@ -14,6 +14,7 @@ const EVENT_NAMES = new Set([
   "call_click",
   "whatsapp_click",
   "inquiry_submit",
+  "inquiry_click",
   "property_share",
   "property_favorite",
   "property_view",
