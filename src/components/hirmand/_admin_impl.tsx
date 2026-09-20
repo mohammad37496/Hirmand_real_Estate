@@ -495,6 +495,50 @@ export function AdminPropertiesPage() {
     setView("form");
   }
 
+  async function quickSetStatus(property: Property, status: PublishStatus) {
+    if (status === "archived" && !confirm(`بایگانی «${property.title}»؟`)) return;
+    try {
+      setSaving(true);
+      const base = propertyToForm(property);
+      const result = await saveProperty({
+        data: {
+          id: base.id,
+          title: base.title,
+          transactionType: base.transactionType,
+          propertyType: base.propertyType,
+          neighborhood: base.neighborhood,
+          address: base.address || undefined,
+          areaM2: numberOrNull(base.areaM2),
+          bedrooms: numberOrNull(base.bedrooms),
+          bathrooms: numberOrNull(base.bathrooms),
+          floor: numberOrNull(base.floor),
+          totalFloors: numberOrNull(base.totalFloors),
+          builtYear: numberOrNull(base.builtYear),
+          parking: base.parking,
+          elevator: base.elevator,
+          storage: base.storage,
+          price: numberOrNull(base.price),
+          deposit: numberOrNull(base.deposit),
+          rent: numberOrNull(base.rent),
+          description: base.description,
+          features: splitLines(base.features),
+          images: parseImageUrls(base.images).valid,
+          contactName: base.contactName,
+          contactPhone: base.contactPhone,
+          status,
+          featured: base.featured,
+        },
+      });
+      setProperties((current) => current.map((item) => item.id === result.id ? result : item));
+      toast.success(status === "published" ? "فایل فوراً منتشر شد." : "فایل بایگانی شد.");
+      await refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تغییر وضعیت انجام نشد.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function removeProperty(property: Property) {
     if (!confirm(`حذف «${property.title}»؟ این عمل قابل بازگشت نیست.`)) return;
     try {
@@ -796,6 +840,25 @@ export function AdminPropertiesPage() {
                           </p>
                         </div>
                         <div className="admin-property-actions">
+                          {property.status === "draft" ? (
+                            <button
+                              type="button"
+                              className="admin-icon-btn"
+                              title="انتشار سریع"
+                              onClick={() => void quickSetStatus(property, "published")}
+                            >
+                              <Save size={16} />
+                            </button>
+                          ) : property.status === "published" ? (
+                            <button
+                              type="button"
+                              className="admin-icon-btn"
+                              title="بایگانی سریع"
+                              onClick={() => void quickSetStatus(property, "archived")}
+                            >
+                              <X size={16} />
+                            </button>
+                          ) : null}
                           <button
                             type="button"
                             className="admin-icon-btn"
