@@ -41,6 +41,7 @@ type DashboardData = {
     pageviewsToday: number;
     pageviewsLast7: number;
     pageviewsLast30: number;
+    activeNow: number;
   };
   visitorDays: {
     day: string;
@@ -354,6 +355,10 @@ export function AdminDashboard({
         </div>
 
         <div className="admin-dashboard-mini-grid">
+          <div>
+            <span>فعال در ۵ دقیقه اخیر</span>
+            <strong>{data.visitors.activeNow.toLocaleString("fa-IR")}</strong>
+          </div>
           <div>
             <span>بازدیدکننده امروز</span>
             <strong>{data.visitors.today.toLocaleString("fa-IR")}</strong>
