@@ -98,6 +98,9 @@ export type PropertyFilters = {
   maxArea?: number;
   minPrice?: number;
   maxPrice?: number;
+  minBedrooms?: number;
+  parkingOnly?: boolean;
+  elevatorOnly?: boolean;
   sort?: PropertySort;
   offset?: number;
 };
