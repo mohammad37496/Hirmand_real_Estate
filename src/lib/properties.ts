@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
+import { ADMIN_SESSION_COOKIE, isAdminKeyValid, verifyAdminSessionToken } from "@/lib/admin-session.server";
 
 export type PropertyStatus = "draft" | "published" | "archived";
 export type PropertyTransaction = "buy" | "sell" | "rent" | "mortgage";
@@ -78,7 +80,7 @@ const publicFiltersSchema = z.object({
 });
 
 const propertyInputSchema = z.object({
-  adminKey: z.string().min(1),
+  adminKey: z.string().optional().default(""),
   id: z.string().optional(),
   title: z.string().trim().min(3).max(180),
   transactionType: z.enum(["buy", "sell", "rent", "mortgage"]),
@@ -107,24 +109,21 @@ const propertyInputSchema = z.object({
 });
 
 const adminKeySchema = z.object({
-  adminKey: z.string().min(1),
+  adminKey: z.string().optional().default(""),
 });
 
 const idSchema = z.object({
-  adminKey: z.string().min(1),
+  adminKey: z.string().optional().default(""),
   id: z.string().min(1),
 });
 
-function requireAdmin(adminKey: string) {
-  const expected = process.env.HIRMAND_ADMIN_KEY?.trim();
-  if (!expected) {
-    throw new Error(
-      "مدیریت فایل‌ها فعال نشده است. متغیر HIRMAND_ADMIN_KEY را در محیط سرور تنظیم کنید.",
-    );
-  }
-  if (adminKey !== expected) {
-    throw new Error("کلید مدیریت فایل‌ها نادرست است.");
-  }
+async function requireAdmin(adminKey?: string) {
+  const session = getCookie(ADMIN_SESSION_COOKIE);
+  if (await verifyAdminSessionToken(session)) return;
+
+  if (isAdminKeyValid(adminKey)) return;
+
+  throw new Error("نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.");
 }
 
 function slugify(value: string): string {
@@ -352,7 +351,7 @@ export const listRelatedProperties = createServerFn({ method: "GET" })
   });
 
 const adminListSchema = z.object({
-  adminKey: z.string().min(1),
+  adminKey: z.string().optional().default(""),
   limit: z.number().int().min(1).max(200).optional().default(50),
   offset: z.number().int().min(0).max(10000).optional().default(0),
   status: z.enum(["draft", "published", "archived"]).optional(),
@@ -361,7 +360,7 @@ const adminListSchema = z.object({
 export const listAdminProperties = createServerFn({ method: "POST" })
   .validator(adminListSchema)
   .handler(async ({ data }) => {
-    requireAdmin(data.adminKey);
+    await requireAdmin(data.adminKey);
     if (dbSource === "unconfigured") return [];
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
@@ -378,7 +377,7 @@ export const listAdminProperties = createServerFn({ method: "POST" })
 export const countAdminProperties = createServerFn({ method: "POST" })
   .validator(adminKeySchema)
   .handler(async ({ data }) => {
-    requireAdmin(data.adminKey);
+    await requireAdmin(data.adminKey);
     if (dbSource === "unconfigured") {
       return { total: 0, published: 0, draft: 0, archived: 0 };
     }
@@ -400,7 +399,7 @@ export const countAdminProperties = createServerFn({ method: "POST" })
 export const saveProperty = createServerFn({ method: "POST" })
   .validator(propertyInputSchema)
   .handler(async ({ data }) => {
-    requireAdmin(data.adminKey);
+    await requireAdmin(data.adminKey);
     const sql = await getSql();
 
     const id = data.id ?? crypto.randomUUID();
@@ -493,7 +492,7 @@ export const saveProperty = createServerFn({ method: "POST" })
 export const deleteProperty = createServerFn({ method: "POST" })
   .validator(idSchema)
   .handler(async ({ data }) => {
-    requireAdmin(data.adminKey);
+    await requireAdmin(data.adminKey);
     const sql = await getSql();
     await sql.query("delete from properties where id = $1", [data.id]);
     return { success: true };
