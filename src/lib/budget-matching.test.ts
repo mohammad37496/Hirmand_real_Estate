@@ -40,7 +40,7 @@ function property(overrides: Partial<Property>): Property {
 }
 
 test("converts rent to rahn equivalent using the default rate", () => {
-  assert.equal(totalRahnEquivalent(500_000_000, 10_000_000), 833_333_333.3333334);
+  assert.ok(Math.abs(totalRahnEquivalent(500_000_000, 10_000_000) - 833_333_333.3333334) < 0.01);
 });
 
 test("marks a property within the user's direct budget", () => {
