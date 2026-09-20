@@ -1,6 +1,9 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "@tanstack/react-router";
 
+const RECENT_PROPERTIES_KEY = "hirmand-recent-properties";
+const MAX_RECENT_PROPERTIES = 8;
+
 export function VisitorTracker() {
   const location = useLocation();
   const trackedRef = useRef<string | null>(null);
@@ -26,10 +29,23 @@ export function VisitorTracker() {
     if (trackedRef.current !== key) {
       trackedRef.current = key;
       send({});
-      
+
       const propertyMatch = pathname.match(/^\/properties\/([^/]+)$/);
       const propertySlug = propertyMatch?.[1];
       if (propertySlug) {
+        try {
+          const raw = localStorage.getItem(RECENT_PROPERTIES_KEY);
+          const parsed = raw ? JSON.parse(raw) : [];
+          const current = Array.isArray(parsed)
+            ? parsed.filter((item): item is string => typeof item === "string")
+            : [];
+          const next = [propertySlug, ...current.filter((item) => item !== propertySlug)]
+            .slice(0, MAX_RECENT_PROPERTIES);
+          localStorage.setItem(RECENT_PROPERTIES_KEY, JSON.stringify(next));
+        } catch {
+          // Recent views are optional convenience data.
+        }
+
         send({ event: "property_view", propertySlug });
       }
     }
