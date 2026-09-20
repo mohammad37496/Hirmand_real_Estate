@@ -9,6 +9,7 @@ import { trackAnalyticsEvent } from "@/lib/analytics";
 import {
   matchPublishedPropertiesByBudget,
   type PropertyBudgetMatch,
+  type PropertyType,
 } from "@/lib/properties";
 import { PropertyCard } from "./property-showcase";
 
@@ -36,7 +37,7 @@ export function BudgetMatcher() {
   const [consultant, setConsultant] = useState<(typeof TEAM)[number]["id"]>(TEAM[0].id);
   const [leadSaving, setLeadSaving] = useState(false);
   const [leadSaved, setLeadSaved] = useState(false);
-  const [propertyType, setPropertyType] = useState("");
+  const [propertyType, setPropertyType] = useState<PropertyType | "">("");
   const [neighborhood, setNeighborhood] = useState("");
   const [bedrooms, setBedrooms] = useState("");
   const [matches, setMatches] = useState<PropertyBudgetMatch[]>([]);
