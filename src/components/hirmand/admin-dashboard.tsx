@@ -68,6 +68,11 @@ type DashboardData = {
     count: number;
     uniqueVisitors: number;
   }[];
+  visitorSources: {
+    source: string;
+    campaign: string;
+    visitors: number;
+  }[];
   recentLeads: {
     id: string;
     name: string;
