@@ -24,9 +24,10 @@ function csvDate(value: unknown) {
 
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as {
-    action?: "list" | "status" | "delete";
+    action?: "list" | "status" | "delete" | "export";
     id?: string;
     status?: Status;
+    query?: string;
   };
 
   if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
@@ -40,10 +41,8 @@ export default defineEventHandler(async (event) => {
   const sql = await getSql();
 
   if (body.action === "export") {
-    const query = typeof (body as { query?: unknown }).query === "string"
-      ? String((body as { query?: string }).query).trim().slice(0, 80)
-      : "";
-    const status = (body as { status?: Status }).status;
+    const query = typeof body.query === "string" ? body.query.trim().slice(0, 80) : "";
+    const status = body.status;
 
     if (status && !["new", "contacted", "closed", "spam"].includes(status)) {
       throw createError({ statusCode: 400, statusMessage: "فیلتر وضعیت نامعتبر است." });
