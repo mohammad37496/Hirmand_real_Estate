@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Download, ExternalLink, Loader2, Phone, Search, Trash2, UserRound } from "lucide-react";
+import { Download, ExternalLink, Loader2, MessageCircle, Phone, Search, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
+import { SITE } from "@/lib/site";
+import { formatToman } from "@/lib/money";
 
 type LeadStatus = "new" | "contacted" | "closed" | "spam";
 type Lead = {
@@ -14,6 +16,21 @@ type Lead = {
   note: string;
   status: LeadStatus;
   createdAt: string;
+  source: string;
+  budgetDeposit: number | null;
+  budgetRent: number | null;
+  budgetEquivalent: number | null;
+  budgetBedrooms: number | null;
+  budgetRate: number | null;
+  matchCount: number;
+  matchedProperties: Array<{
+    slug: string;
+    title: string;
+    tier: "within" | "convertible" | "near";
+    score: number;
+    suggestedDeposit: number;
+    suggestedRent: number;
+  }>;
 };
 
 const STATUS_LABEL: Record<LeadStatus, string> = {
@@ -109,6 +126,30 @@ export function AdminLeadManager() {
     });
   }, [leads, query, statusFilter]);
 
+  function budgetWhatsappHref(lead: Lead) {
+    const lines = [
+      "سلام " + lead.name + "،",
+      "نتیجه بررسی بودجه شما از طرف هیرمند:",
+      lead.budgetDeposit ? "رهن: " + formatToman(lead.budgetDeposit) + " تومان" : "",
+      lead.budgetRent ? "اجاره ماهانه: " + formatToman(lead.budgetRent) + " تومان" : "",
+      lead.neighborhood ? "محله: " + lead.neighborhood : "",
+      lead.budgetBedrooms ? "حداقل خواب: " + lead.budgetBedrooms : "",
+      "",
+      "فایل‌های پیشنهادی:",
+      ...lead.matchedProperties.slice(0, 5).map((item, index) =>
+        (index + 1) + ". " + item.title + " — " + SITE.url + "/properties/" + item.slug
+      ),
+      "",
+      "برای هماهنگی بازدید با ما در تماس باشید.",
+    ].filter(Boolean);
+    return (
+      "https://wa.me/" +
+      lead.phone.replace(/^0/, "98") +
+      "?text=" +
+      encodeURIComponent(lines.join("\n"))
+    );
+  }
+
   async function exportCsv() {
     setExporting(true);
     try {
@@ -203,6 +244,9 @@ export function AdminLeadManager() {
                     <span className={"admin-lead-status status-" + lead.status}>
                       {STATUS_LABEL[lead.status]}
                     </span>
+                    {lead.source === "budget_match" ? (
+                      <span className="admin-lead-budget-badge">بودجه‌یابی</span>
+                    ) : null}
                   </div>
                   <a className="admin-lead-phone" href={"tel:" + lead.phone}>
                     <Phone size={15} /> {lead.phone}
@@ -213,6 +257,35 @@ export function AdminLeadManager() {
                     {lead.neighborhood ? " · " + lead.neighborhood : ""}
                     {lead.consultant ? " · مشاور: " + lead.consultant : ""}
                   </p>
+                  {lead.source === "budget_match" ? (
+                    <div className="admin-lead-budget">
+                      <div>
+                        <span>رهن</span>
+                        <strong>{lead.budgetDeposit ? formatToman(lead.budgetDeposit) : "—"}</strong>
+                      </div>
+                      <div>
+                        <span>اجاره</span>
+                        <strong>{lead.budgetRent ? formatToman(lead.budgetRent) : "—"}</strong>
+                      </div>
+                      <div>
+                        <span>معادل رهنی</span>
+                        <strong>{lead.budgetEquivalent ? formatToman(lead.budgetEquivalent) : "—"}</strong>
+                      </div>
+                      <div>
+                        <span>فایل پیشنهادی</span>
+                        <strong>{lead.matchCount.toLocaleString("fa-IR")} مورد</strong>
+                      </div>
+                      {lead.matchedProperties.length ? (
+                        <div className="admin-lead-matches">
+                          {lead.matchedProperties.slice(0, 5).map((item) => (
+                            <a key={item.slug} href={SITE.url + "/properties/" + item.slug} target="_blank" rel="noreferrer">
+                              {item.title}
+                            </a>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                   {lead.note ? <div className="admin-lead-note">{lead.note}</div> : null}
                   <small>{formatDate(lead.createdAt)}</small>
                 </div>
@@ -232,6 +305,17 @@ export function AdminLeadManager() {
                   >
                     <ExternalLink size={16} />
                   </a>
+                  {lead.source === "budget_match" && lead.matchedProperties.length ? (
+                    <a
+                      className="admin-icon-btn admin-budget-send"
+                      href={budgetWhatsappHref(lead)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="ارسال فایل‌های پیشنهادی"
+                    >
+                      <MessageCircle size={16} />
+                    </a>
+                  ) : null}
                   <select
                     className="admin-lead-status-select"
                     value={lead.status}
