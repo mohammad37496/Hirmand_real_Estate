@@ -144,7 +144,7 @@ function Hero({ onSearch }: { onSearch: (draft: InquiryDraft) => void }) {
       <div className="hero-media" aria-hidden="true">
         <img
           className="hero-image"
-          src="/images/type-heritage.jpg"
+          src="/images/isfahan-hero.jpg"
           alt=""
           decoding="async"
           fetchPriority="high"
@@ -209,6 +209,9 @@ function Hero({ onSearch }: { onSearch: (draft: InquiryDraft) => void }) {
         </form>
         <div className="hero-actions">
           <CallMenu label="تماس با مشاور" />
+          <Link to="/properties" className="btn-gold">
+            مشاهده فایل‌ها
+          </Link>
           <a className="btn-ghost" href="#services" onClick={(event) => scrollToId(event, "services")}>
             مشاهده خدمات
           </a>
@@ -219,6 +222,36 @@ function Hero({ onSearch }: { onSearch: (draft: InquiryDraft) => void }) {
             neshan={OFFICE_MAP.neshan}
             icon={<MapPinned size={16} strokeWidth={1.8} />}
           />
+        </div>
+        <div className="hero-intents" aria-label="شروع سریع جست‌وجو">
+          <button
+            type="button"
+            className="hero-intent"
+            onClick={() => onSearch({ deal: "خرید", propertyType: "آپارتمان", neighborhood: "" })}
+          >
+            خرید آپارتمان
+          </button>
+          <button
+            type="button"
+            className="hero-intent"
+            onClick={() => onSearch({ deal: "رهن", propertyType: "آپارتمان", neighborhood: "" })}
+          >
+            رهن آپارتمان
+          </button>
+          <button
+            type="button"
+            className="hero-intent"
+            onClick={() => onSearch({ deal: "اجاره", propertyType: "آپارتمان", neighborhood: "" })}
+          >
+            اجاره آپارتمان
+          </button>
+          <button
+            type="button"
+            className="hero-intent"
+            onClick={() => onSearch({ deal: "خرید", propertyType: "ویلا و باغ", neighborhood: "" })}
+          >
+            خرید ویلا و باغ
+          </button>
         </div>
         <div className="hero-proof" aria-label="اطلاعات سریع هیرمند">
           <span><strong>{NEIGHBORHOODS.length}+</strong> محله اصفهان</span>
