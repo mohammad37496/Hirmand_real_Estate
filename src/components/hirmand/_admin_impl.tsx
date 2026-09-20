@@ -36,6 +36,7 @@ import {
   countFilteredAdminProperties,
   deleteProperty,
   listAdminProperties,
+  listPropertyChangeHistory,
   saveProperty,
 } from "@/lib/properties";
 import { toast, Toaster } from "sonner";
