@@ -2,6 +2,7 @@ import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { buildBudgetLeadNote, budgetEquivalent } from "@/lib/budget-lead";
+import { DEFAULT_MATCH_RAHN_RATE } from "@/lib/budget-matching";
 
 const matchSchema = z.object({
   slug: z.string().trim().min(1).max(220),
@@ -80,7 +81,7 @@ export default defineEventHandler(async (event) => {
           parsed.data.source,
           budgetDeposit || null,
           budgetRent || null,
-          30_000,
+          DEFAULT_MATCH_RAHN_RATE,
           equivalent || null,
           parsed.data.budgetBedrooms ?? null,
           JSON.stringify(matchedProperties),
