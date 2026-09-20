@@ -20,11 +20,13 @@ export default defineEventHandler(async (event) => {
     const adminKey = getHeader(event, "x-hirmand-admin-key")?.trim();
     const expected = process.env.HIRMAND_ADMIN_KEY?.trim();
 
-    if (!expected || !adminKey || adminKey !== expected) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: "کلید مدیریت نادرست است.",
-      });
+    if (requestBody.type === "blob.generate-client-token") {
+      if (!expected || !adminKey || adminKey !== expected) {
+        throw createError({
+          statusCode: 401,
+          statusMessage: "کلید مدیریت نادرست است.",
+        });
+      }
     }
 
     const jsonResponse = await handleUpload({
