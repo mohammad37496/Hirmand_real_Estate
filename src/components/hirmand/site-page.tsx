@@ -134,6 +134,7 @@ function Hero({ onSearch }: { onSearch: (draft: InquiryDraft) => void }) {
 
   function submit(event: FormEvent) {
     event.preventDefault();
+    trackAnalyticsEvent("inquiry_click");
     onSearch({ deal, propertyType, neighborhood });
   }
 
