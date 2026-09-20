@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
-import { ADMIN_SESSION_COOKIE, isAdminKeyValid, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 
 export type PropertyStatus = "draft" | "published" | "archived";
 export type PropertyTransaction = "buy" | "sell" | "rent" | "mortgage";
@@ -117,11 +117,9 @@ const idSchema = z.object({
   id: z.string().min(1),
 });
 
-async function requireAdmin(adminKey?: string) {
+async function requireAdmin() {
   const session = getCookie(ADMIN_SESSION_COOKIE);
   if (await verifyAdminSessionToken(session)) return;
-
-  if (isAdminKeyValid(adminKey)) return;
 
   throw new Error("نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.");
 }
@@ -360,7 +358,7 @@ const adminListSchema = z.object({
 export const listAdminProperties = createServerFn({ method: "POST" })
   .validator(adminListSchema)
   .handler(async ({ data }) => {
-    await requireAdmin(data.adminKey);
+    await requireAdmin();
     if (dbSource === "unconfigured") return [];
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
