@@ -100,12 +100,13 @@ export default defineEventHandler(async (event) => {
     }),
     sql.query<Record<string, unknown>>(`
       select
-        day,
-        count(*)::int as unique_visitors,
-        coalesce(sum(pageviews), 0)::int as pageviews
-      from site_visitor_days
-      where day >= (current_timestamp at time zone 'Asia/Tehran')::date - 13
-      group by day
+        ((current_timestamp at time zone 'Asia/Tehran')::date - days.n)::date as day,
+        count(site_visitor_days.visitor_id)::int as unique_visitors,
+        coalesce(sum(site_visitor_days.pageviews), 0)::int as pageviews
+      from generate_series(0, 13) as days(n)
+      left join site_visitor_days
+        on site_visitor_days.day = ((current_timestamp at time zone 'Asia/Tehran')::date - days.n)
+      group by days.n
       order by day asc
     `).catch((error) => {
       console.error("[admin-dashboard] visitor trend unavailable", error);
