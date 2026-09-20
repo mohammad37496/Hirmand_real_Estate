@@ -1,5 +1,6 @@
 import { SITE, TEAM } from "@/lib/site";
 import type { Property } from "@/lib/properties";
+import { propertyPath } from "@/lib/property-path";
 
 const TX_LABEL: Record<string, string> = {
   buy: "خرید",
@@ -119,7 +120,7 @@ export function propertyHead(property: Property | null, slug: string) {
 
   const title = propertyPageTitle(property);
   const description = propertyPageDescription(property);
-  const url = absoluteUrl(`/properties/${property.slug}`);
+  const url = absoluteUrl(propertyPath(property));
   const image =
     property.images[0] && property.images[0].startsWith("http")
       ? property.images[0]
