@@ -88,6 +88,7 @@ export interface FileRoutesByTo {
   '/tracking': typeof TrackingRoute
   '/admin': typeof AdminRoute
   '/properties/$slug': typeof PropertySlugRoute
+  '/v/$slug/$id': typeof VSlugIdRoute
   '/areas/$slug': typeof AreaSlugRoute
   '/properties': typeof PropertiesRoute
   '/favorites': typeof FavoritesRoute
@@ -100,6 +101,7 @@ export interface FileRoutesById {
   '/tracking': typeof TrackingRoute
   '/admin': typeof AdminRoute
   '/properties/$slug': typeof PropertySlugRoute
+  '/v/$slug/$id': typeof VSlugIdRoute
   '/areas/$slug': typeof AreaSlugRoute
   '/properties': typeof PropertiesRoute
   '/favorites': typeof FavoritesRoute
