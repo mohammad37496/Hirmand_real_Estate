@@ -25,12 +25,13 @@ export default defineEventHandler(async (event) => {
       topProperties: [],
       eventStats: [],
       visitorSources: [],
+      followUps: { due: 0, next7: 0 },
       recentLeads: [],
     };
   }
 
   const sql = await getSql();
-  const [propertyStats, leadStats, propertyTypes, leadDays, musicStats, recentLeads, visitorStats, activeVisitorStats, visitorDays, topPages, topProperties, eventStats, visitorSources] = await Promise.all([
+  const [propertyStats, leadStats, propertyTypes, leadDays, musicStats, recentLeads, visitorStats, activeVisitorStats, visitorDays, topPages, topProperties, eventStats, visitorSources, followUps] = await Promise.all([
     sql.query<Record<string, unknown>>(`
       select
         count(*)::int as total,
@@ -259,6 +260,10 @@ export default defineEventHandler(async (event) => {
       campaign: String(row.campaign),
       visitors: Number(row.visitors) || 0,
     })),
+    followUps: {
+      due: Number(followUps[0]?.due) || 0,
+      next7: Number(followUps[0]?.next7) || 0,
+    },
     recentLeads: recentLeads.map((row) => ({
       id: String(row.id),
       name: String(row.name),
