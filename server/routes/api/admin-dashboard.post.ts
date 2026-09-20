@@ -150,7 +150,8 @@ export default defineEventHandler(async (event) => {
     sql.query<Record<string, unknown>>(`
       select
         event_name,
-        count(*)::int as count
+        count(*)::int as count,
+        count(distinct visitor_id)::int as unique_visitors
       from site_events
       where day >= (current_timestamp at time zone 'Asia/Tehran')::date - 29
       group by event_name
@@ -222,6 +223,7 @@ export default defineEventHandler(async (event) => {
     eventStats: eventStats.map((row) => ({
       event: String(row.event_name),
       count: Number(row.count) || 0,
+      uniqueVisitors: Number(row.unique_visitors) || 0,
     })),
     recentLeads: recentLeads.map((row) => ({
       id: String(row.id),
