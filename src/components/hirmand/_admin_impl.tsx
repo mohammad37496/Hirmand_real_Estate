@@ -21,6 +21,7 @@ import {
   X,
   Filter,
   ArrowUpDown,
+  Globe2,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
@@ -41,9 +42,10 @@ import { ADMIN_CSS } from "@/components/hirmand/admin-shell-css";
 import { AdminListingAssistant } from "@/components/hirmand/admin-listing-assistant";
 import { BrandLogo } from "@/components/hirmand/logo";
 import { AdminPartnerManager } from "@/components/hirmand/admin-partner-manager";
+import { AdminDivarFiles } from "@/components/hirmand/admin-divar-files";
 
 type PublishStatus = "draft" | "published" | "archived";
-type ViewMode = "dashboard" | "list" | "form" | "music" | "leads" | "partners";
+type ViewMode = "dashboard" | "list" | "form" | "music" | "leads" | "partners" | "divar";
 
 type FormState = {
   id?: string;
@@ -667,6 +669,10 @@ export function AdminPropertiesPage() {
             <UsersRound size={18} />
             همکاران و کد رهگیری
           </button>
+          <button type="button" className={"admin-nav-btn" + (view === "divar" ? " is-active" : "")} onClick={() => setView("divar")}>
+            <Globe2 size={18} />
+            فایل‌های دیوار
+          </button>
         </nav>
         <div className="admin-sidebar-foot">
           <button
@@ -703,7 +709,9 @@ export function AdminPropertiesPage() {
                       ? "درخواست‌های مشتری"
                       : view === "partners"
                         ? "باشگاه همکاران و کد رهگیری"
-                        : form.id
+                        : view === "divar"
+                          ? "فایل‌های دیوار"
+                          : form.id
                         ? "ویرایش فایل"
                         : "افزودن فایل جدید"}            </h1>
             <p>
@@ -713,7 +721,9 @@ export function AdminPropertiesPage() {
                   ? `${stats.total.toLocaleString("fa-IR")} فایل در سیستم`
                   : view === "leads"
                     ? "مدیریت Leadها و پیگیری مشتریان"
-                    : form.contactName
+                    : view === "divar"
+                      ? "دریافت، فیلتر و ورود فایل‌های شخصی از دیوار"
+                      : form.contactName
                     ? `مشاور مسئول: ${form.contactName}`
                     : "مشاور مسئول را انتخاب کنید"}            </p>
           </div>
@@ -929,6 +939,7 @@ export function AdminPropertiesPage() {
           {view === "music" ? <AdminMusicManager /> : null}
           {view === "leads" ? <AdminLeadManager /> : null}
           {view === "partners" ? <AdminPartnerManager /> : null}
+          {view === "divar" ? <AdminDivarFiles /> : null}
 
           {view === "form" ? (
             <form className="admin-form-wrap" onSubmit={onSubmit}>
@@ -1222,6 +1233,10 @@ export function AdminPropertiesPage() {
         <button type="button" className={view === "leads" ? "is-active" : ""} onClick={() => setView("leads")}>
           <UsersRound size={20} />
           درخواست‌ها
+        </button>
+        <button type="button" className={view === "divar" ? "is-active" : ""} onClick={() => setView("divar")}>
+          <Globe2 size={20} />
+          دیوار
         </button>
         <Link to="/">سایت</Link>
       </nav>
