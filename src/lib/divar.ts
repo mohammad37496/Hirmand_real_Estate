@@ -108,7 +108,7 @@ function normalizeDivarText(value: unknown): string {
     .replace(/ي/g, "ی")
     .replace(/ك/g, "ک")
     .replace(/[ةۀ]/g, "ه")
-    .replace(/[\u200c\u200d\u200e\u200f\u0640]/g, "")
+    .replace(/(?:\u200c|\u200d|\u200e|\u200f|\u0640)/g, "")
     .replace(/[\n\r\t]+/g, " ")
     .replace(/[\u00a0]+/g, " ")
     .replace(/\s+/g, " ")
