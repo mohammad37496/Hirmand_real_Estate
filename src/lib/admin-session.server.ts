@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 
 export const ADMIN_SESSION_COOKIE = "__Host-hirmand-admin";
@@ -35,5 +35,8 @@ export async function verifyAdminSessionToken(token: string | undefined) {
 
 export function isAdminKeyValid(adminKey: string | undefined) {
   const expected = process.env.HIRMAND_ADMIN_KEY?.trim();
-  return Boolean(expected && adminKey && adminKey.trim() === expected);
+  if (!expected || !adminKey) return false;
+  const actual = Buffer.from(adminKey.trim());
+  const target = Buffer.from(expected);
+  return actual.length === target.length && timingSafeEqual(actual, target);
 }
