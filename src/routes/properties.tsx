@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeftRight, Heart, RotateCcw, Search, SlidersHorizontal, X } from "lucide-react";
+import { toast } from "sonner";
 import {
   countPublishedProperties,
   listPublishedProperties,
@@ -13,6 +14,37 @@ import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { PROPERTY_TYPES, NEIGHBORHOOD_NAMES, SERVICES, SITE } from "@/lib/site";
 
 const PAGE_SIZE = 48;
+const SAVED_SEARCHES_KEY = "hirmand-saved-searches";
+const MAX_SAVED_SEARCHES = 10;
+
+type SavedSearch = {
+  id: string;
+  name: string;
+  params: string;
+};
+
+function readSavedSearches(): SavedSearch[] {
+  try {
+    const raw = localStorage.getItem(SAVED_SEARCHES_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed)
+      ? parsed
+          .filter(
+            (item): item is SavedSearch =>
+              Boolean(
+                item &&
+                  typeof item === "object" &&
+                  typeof item.id === "string" &&
+                  typeof item.name === "string" &&
+                  typeof item.params === "string",
+              ),
+          )
+          .slice(0, MAX_SAVED_SEARCHES)
+      : [];
+  } catch {
+    return [];
+  }
+}
 
 export const Route = createFileRoute("/properties")({
   loader: async () => {
@@ -110,10 +142,13 @@ function PropertiesIndexPage() {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [urlReady, setUrlReady] = useState(false);
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
+  const [savedSearchId, setSavedSearchId] = useState("");
   const skipInitialFetch = useRef(false);
   const requestId = useRef(0);
 
   useEffect(() => {
+    setSavedSearches(readSavedSearches());
     const params = new URLSearchParams(window.location.search);
     const tx = validTransaction(params.get("transaction") ?? "");
     const type = validPropertyType(params.get("type") ?? "");
@@ -224,6 +259,87 @@ function PropertiesIndexPage() {
     }
   }
 
+  function currentFilterParams() {
+    const params = new URLSearchParams();
+    if (q.trim()) params.set("q", q.trim());
+    if (transactionType) params.set("transaction", transactionType);
+    if (propertyType) params.set("type", propertyType);
+    if (neighborhood) params.set("neighborhood", neighborhood);
+    if (minArea.trim()) params.set("minArea", minArea.trim());
+    if (maxArea.trim()) params.set("maxArea", maxArea.trim());
+    if (minPrice.trim()) params.set("minPrice", minPrice.trim());
+    if (maxPrice.trim()) params.set("maxPrice", maxPrice.trim());
+    if (sort !== "newest") params.set("sort", sort);
+    return params;
+  }
+
+  function saveCurrentSearch() {
+    const params = currentFilterParams();
+    if (!params.toString()) {
+      toast.info("اول چند فیلتر یا یک عبارت جست‌وجو انتخاب کنید.");
+      return;
+    }
+
+    const defaultName = q.trim() || (transactionType ? SERVICES.find((item) => item.id === transactionType)?.title : "") || "جست‌وجوی من";
+    const name = window.prompt("نام این جست‌وجو را وارد کنید:", defaultName)?.trim();
+    if (!name) return;
+
+    const entry: SavedSearch = {
+      id: typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Date.now()),
+      name: name.slice(0, 60),
+      params: params.toString(),
+    };
+    const next = [entry, ...savedSearches.filter((item) => item.params !== entry.params)].slice(0, MAX_SAVED_SEARCHES);
+
+    try {
+      localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(next));
+      setSavedSearches(next);
+      setSavedSearchId(entry.id);
+      toast.success("جست‌وجو ذخیره شد.");
+    } catch {
+      toast.error("ذخیره جست‌وجو در این مرورگر ممکن نشد.");
+    }
+  }
+
+  function loadSavedSearch(id: string) {
+    setSavedSearchId(id);
+    const saved = savedSearches.find((item) => item.id === id);
+    if (!saved) return;
+
+    const params = new URLSearchParams(saved.params);
+    setQ(params.get("q") ?? "");
+    setTransactionType(validTransaction(params.get("transaction") ?? "") ?? "");
+    setPropertyType(validPropertyType(params.get("type") ?? "") ?? "");
+    setNeighborhood(params.get("neighborhood") ?? "");
+    setMinArea(params.get("minArea") ?? "");
+    setMaxArea(params.get("maxArea") ?? "");
+    setMinPrice(params.get("minPrice") ?? "");
+    setMaxPrice(params.get("maxPrice") ?? "");
+    const savedSort = params.get("sort");
+    setSort(
+      savedSort === "price_asc" ||
+        savedSort === "price_desc" ||
+        savedSort === "area_asc" ||
+        savedSort === "area_desc"
+        ? savedSort
+        : "newest",
+    );
+    toast.success("جست‌وجوی ذخیره‌شده اعمال شد.");
+  }
+
+  function deleteSavedSearch() {
+    if (!savedSearchId) return;
+    const next = savedSearches.filter((item) => item.id !== savedSearchId);
+    try {
+      localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(next));
+      setSavedSearches(next);
+      setSavedSearchId("");
+      toast.success("جست‌وجوی ذخیره‌شده حذف شد.");
+    } catch {
+      toast.error("حذف جست‌وجو انجام نشد.");
+    }
+  }
+
   function resetFilters() {
     setQ("");
     setTransactionType("");
@@ -323,6 +439,37 @@ function PropertiesIndexPage() {
               <Link to="/compare" className="properties-saved-link">
                 <ArrowLeftRight size={14} /> مقایسه فایل‌ها
               </Link>
+              <button
+                type="button"
+                className="properties-reset-btn"
+                onClick={saveCurrentSearch}
+                disabled={!hasFilters}
+              >
+                ذخیره جست‌وجو
+              </button>
+              {savedSearches.length ? (
+                <>
+                  <select
+                    className="properties-saved-search-select"
+                    value={savedSearchId}
+                    onChange={(event) => loadSavedSearch(event.target.value)}
+                    aria-label="جست‌وجوهای ذخیره‌شده"
+                  >
+                    <option value="">جست‌وجوهای ذخیره‌شده</option>
+                    {savedSearches.map((item) => (
+                      <option key={item.id} value={item.id}>{item.name}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="properties-reset-btn"
+                    onClick={deleteSavedSearch}
+                    disabled={!savedSearchId}
+                  >
+                    حذف جست‌وجوی ذخیره‌شده
+                  </button>
+                </>
+              ) : null}
               <a href="/#inquiry">درخواست فایل اختصاصی</a>
             </div>
           </div>
