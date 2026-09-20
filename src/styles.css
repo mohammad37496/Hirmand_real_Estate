@@ -7484,3 +7484,235 @@ textarea{
     grid-template-columns:1fr !important;
   }
 }
+
+
+/* =========================================================
+   PROPERTY DETAIL — premium gallery + compact location
+   ========================================================= */
+
+.property-detail-page{
+  padding-top: 10px;
+}
+
+.property-gallery-wrap{
+  position: relative;
+  isolation: isolate;
+}
+
+.property-gallery{
+  grid-template-columns: minmax(0, 1.8fr) minmax(180px, .72fr) minmax(180px, .72fr);
+  grid-template-rows: 210px 210px;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(201,162,74,.09), rgba(255,255,255,.025));
+  box-shadow: 0 20px 55px rgba(0,0,0,.25);
+}
+
+.property-gallery-main{
+  border-radius: 18px;
+}
+
+.property-gallery-main img,
+.property-gallery-main video{
+  transition: transform 500ms var(--ease), filter 300ms ease;
+}
+
+.property-gallery-main:hover img,
+.property-gallery-main:hover video{
+  transform: scale(1.012);
+}
+
+.property-gallery-thumb{
+  border-radius: 14px;
+  border-color: rgba(255,255,255,.07);
+  opacity: .86;
+}
+
+.property-gallery-thumb:hover{
+  opacity: 1;
+  transform: translateY(-2px);
+  border-color: var(--gold-line);
+}
+
+.property-gallery-thumb.is-active{
+  opacity: 1;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(201,162,74,.16), 0 8px 24px rgba(0,0,0,.22);
+}
+
+.property-gallery-thumb img,
+.property-gallery-thumb video{
+  transition: transform 350ms var(--ease), filter 250ms ease;
+}
+
+.property-gallery-thumb:hover img,
+.property-gallery-thumb:hover video{
+  transform: scale(1.04);
+}
+
+.property-gallery-counter{
+  left: 18px;
+  bottom: 18px;
+  min-height: 32px;
+  padding: 5px 11px;
+  background: rgba(7,9,13,.78);
+  box-shadow: 0 8px 24px rgba(0,0,0,.22);
+}
+
+.property-gallery-featured{
+  top: 18px;
+  right: 18px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.22);
+}
+
+.property-detail-main > header{
+  padding: 4px 2px 2px;
+}
+
+.property-detail-main > header h1{
+  margin-top: 5px;
+  letter-spacing: -.025em;
+}
+
+.property-detail-meta{
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.property-detail-price{
+  margin-top: 8px;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--gold-soft);
+}
+
+.property-divar-specs,
+.property-location-section{
+  padding: 16px;
+  border-radius: 18px;
+}
+
+.property-divar-specs{
+  margin-top: 16px;
+}
+
+.property-divar-specs .property-spec-grid{
+  grid-template-columns: repeat(3,minmax(0,1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.property-spec-grid > div{
+  min-height: 64px;
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.property-location-section{
+  margin-top: 16px;
+  background:
+    linear-gradient(135deg, rgba(201,162,74,.055), transparent 48%),
+    var(--surface);
+}
+
+.property-location-section .property-section-heading{
+  margin-bottom: 10px;
+}
+
+.property-location-section .property-section-heading .kicker{
+  margin-bottom: 2px;
+}
+
+.property-location-section .property-section-heading h2{
+  font-size: 1rem;
+}
+
+.property-map-card{
+  border-radius: 14px;
+}
+
+.property-map-card iframe{
+  height: 245px;
+  min-height: 245px;
+}
+
+.property-map-actions{
+  min-height: 52px;
+  padding: 8px 10px;
+}
+
+.property-map-actions .btn-ghost{
+  min-height: 38px;
+}
+
+.property-location-fallback{
+  padding: 12px 14px;
+  border-radius: 13px;
+}
+
+@media (min-width: 1200px){
+  .property-gallery{
+    grid-template-rows: 235px 235px;
+  }
+}
+
+@media (max-width: 900px){
+  .property-gallery{
+    grid-template-columns: minmax(0, 1.45fr) minmax(150px, .75fr) minmax(150px, .75fr);
+    grid-template-rows: 190px 190px;
+  }
+}
+
+@media (max-width: 720px){
+  .property-gallery-wrap{
+    margin-inline: -10px;
+  }
+
+  .property-gallery{
+    grid-template-columns: repeat(4,minmax(0,1fr));
+    grid-template-rows: minmax(230px,58vw) 68px;
+    gap: 5px;
+    padding: 4px;
+    border-radius: 18px;
+  }
+
+  .property-gallery-main{
+    border-radius: 13px;
+  }
+
+  .property-gallery-thumb{
+    border-radius: 9px;
+  }
+
+  .property-gallery-counter{
+    left: 10px;
+    bottom: 10px;
+  }
+
+  .property-gallery-featured{
+    top: 10px;
+    right: 10px;
+  }
+
+  .property-location-section{
+    padding: 13px;
+  }
+
+  .property-map-card iframe{
+    height: 220px !important;
+    min-height: 220px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .property-gallery-main img,
+  .property-gallery-main video,
+  .property-gallery-thumb img,
+  .property-gallery-thumb video{
+    transition: none;
+  }
+}
