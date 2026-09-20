@@ -1,7 +1,6 @@
-# گروه مشاورین املاک هیرمند | Hirmand Real Estate
+# املاک هیرمند | Hirmand Real Estate
 
-وب‌سایت رسمی **گروه مشاورین املاک هیرمند** در اصفهان.  
-طراحی RTL فارسی، سریع، واکنش‌گرا و آمادهٔ دیپلوی روی Vercel.
+وب‌سایت رسمی **گروه مشاورین املاک هیرمند** در اصفهان؛ برای خرید، فروش، رهن و اجاره ملک.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev/)
@@ -11,18 +10,24 @@
 
 ---
 
-## امکانات
+## امکانات کلیدی
 
 | بخش | توضیح |
 |-----|--------|
+| **Theme برند** | طراحی RTL با هویت اصلی قرمز `#860A0A` + مشکی عمیق + طلایی ظریف |
 | **خدمات** | خرید · فروش · رهن · اجاره |
 | **فرم درخواست** | ثبت Lead واقعی در PostgreSQL + ارسال واتساپ |
-| **تماس مستقیم** | تماس، واتساپ، تلگرام، ایتا و اینستاگرام |
-| **نقشه** | لینک سریع Google Maps، بلد و نشان + embed |
-| **ابزار مالی** | تبدیل رهن/اجاره، محاسبه کمیسیون، وام و سود سپرده |
-| **فایل‌های ملکی** | `/properties` + جستجو/فیلتر + صفحه جزئیات + پنل ادمین |
-| **SEO** | Canonical، Open Graph، SearchAction، Sitemap، Structured Data |
-| **دسترسی‌پذیری** | RTL کامل، پشتیبانی `prefers-reduced-motion` |
+| **CRM** | وضعیت Lead، منبع جذب، پیگیری سررسیدشده و پیگیری‌های آینده |
+| **فایل‌های ملکی** | `/properties` + جستجو، فیلتر، مرتب‌سازی، صفحه جزئیات، مقایسه و علاقه‌مندی |
+| **قیمت** | تشخیص کاهش قیمت و نمایش Badge کاهش قیمت روی فایل |
+| **پیشنهاد هوشمند** | نمایش فایل‌هایی که کاربر اخیراً دیده است |
+| **آنالیتیکس داخلی** | بازدید روزانه، بازدید یکتا، صفحات پربازدید، فایل‌های پربازدید، رویدادها و منابع جذب |
+| **محله‌ها** | صفحات اختصاصی `/areas/:slug` برای محله‌های اصفهان با محتوای قابل ایندکس |
+| **نقشه** | Google Maps، بلد، نشان و OpenStreetMap |
+| **ابزارهای مالی** | تبدیل رهن/اجاره، محاسبه کمیسیون، وام و سود سپرده |
+| **SEO** | Canonical، Open Graph، Structured Data، صفحات محله، Sitemap داینامیک و robots.txt |
+| **دسترسی‌پذیری** | RTL کامل، Vazirmatn، skip link و پشتیبانی `prefers-reduced-motion` |
+| **PWA** | Manifest، نصب‌پذیری و تجربه موبایل |
 
 ---
 
@@ -38,99 +43,116 @@
 ## شروع سریع
 
 ```bash
-# کلون
 git clone https://github.com/mohammad37496/Hirmand_real_Estate.git
 cd Hirmand_real_Estate
-
-# نصب
 npm install
-
-# اجرا در حالت توسعه (پورت 8080)
 npm run dev
 ```
 
-سایت روی `http://localhost:8080` باز می‌شود.
-
----
+سایت روی `http://localhost:8080` اجرا می‌شود.
 
 ## متغیرهای محیطی
 
-فایل `.env.example` را کپی کنید:
-
-```bash
-cp .env.example .env
-```
-
 | متغیر | توضیح | اجباری |
 |-------|--------|--------|
-| `DATABASE_URL` | اتصال PostgreSQL / Neon برای ذخیره فایل‌های ملک | برای پنل ادمین |
+| `DATABASE_URL` | اتصال PostgreSQL / Neon برای فایل‌ها، Leadها و Analytics | برای امکانات دیتابیسی |
 | `HIRMAND_ADMIN_KEY` | کلید دسترسی به `/admin` | برای پنل ادمین |
-| `VITE_SITE_URL` | آدرس نهایی سایت (برای SEO و sitemap) | توصیه می‌شود |
-| `VITE_AUTH_ENABLED` | فعال‌سازی لایه احراز هویت (پیش‌فرض `false`) | خیر |
+| `VITE_SITE_URL` | آدرس نهایی و canonical سایت، ترجیحاً `https://hirmand.ir` | بسیار مهم |
+| `VITE_GOOGLE_SITE_VERIFICATION` | توکن تأیید Google Search Console | اختیاری |
+| `VITE_AUTH_ENABLED` | فعال‌سازی Better Auth | خیر |
 
----
+## SEO و Google
 
-## دیپلوی روی Vercel
+زیرساخت SEO پروژه برای برند **«املاک هیرمند»** روی نام برند + موقعیت جغرافیایی + صفحات خدمات و محله‌ها متمرکز شده است.
 
-1. ریپو را در [Vercel](https://vercel.com) ایمپورت کنید.
-2. **Build Command:** `npm run build`
-3. متغیرهای `DATABASE_URL` و `HIRMAND_ADMIN_KEY` را در تنظیمات Environment Variables قرار دهید.
-4. دامنهٔ دلخواه را متصل کنید و `VITE_SITE_URL` را روی همان دامنه تنظیم کنید.
+- عنوان و H1 صفحه اصلی شامل «املاک هیرمند» است.
+- Structured Data شامل `RealEstateAgent` / `LocalBusiness`، `WebSite` و `SearchAction` است.
+- هر محله صفحه مستقل با عنوان، توضیحات، Canonical و Structured Data دارد.
+- Sitemap در `/sitemap.xml` به‌صورت داینامیک ساخته می‌شود و فایل‌های منتشرشده ملک را هم اضافه می‌کند.
+- `robots.txt` پنل مدیریت را از ایندکس‌شدن خارج می‌کند.
+- صفحات عمومی با لینک‌های قابل crawl در دسترس هستند.
+- توکن Search Console از طریق `VITE_GOOGLE_SITE_VERIFICATION` قابل تزریق به `<head>` صفحه اصلی است.
 
-سایت معرفی اصلی **بدون دیتابیس** هم کار می‌کند؛ فقط بخش فایل‌های ملکی و پنل ادمین به `DATABASE_URL` نیاز دارد.
+### کارهای لازم برای Google
 
----
+1. دامنه `hirmand.ir` را به Vercel وصل کنید و `VITE_SITE_URL=https://hirmand.ir` تنظیم باشد.
+2. سایت را در Google Search Console تأیید کنید و `https://hirmand.ir/sitemap.xml` را Submit کنید.
+3. برای صفحه اصلی و صفحات کلیدی Request Indexing بزنید.
+4. Google Business Profile / Google Maps را با نام، تلفن و آدرس واقعی کسب‌وکار تکمیل و تأیید کنید.
+5. محتوای واقعی و مفید برای محله‌ها و خدمات اضافه کنید و لینک‌های طبیعی و معتبر بسازید.
 
-## ساختار پروژه
+> **نکته:** هیچ کدی رتبه ۱ گوگل را تضمین نمی‌کند. هدف این تغییرات، تقویت سیگنال‌های فنی، محتوایی و محلی برای جست‌وجوی «املاک هیرمند» است.
 
+## مسیرهای اصلی
+
+```text
+/                       صفحه اصلی
+/properties             فهرست فایل‌ها
+/properties/:slug       جزئیات هر ملک
+/areas/:slug            صفحه اختصاصی محله
+/compare                مقایسه فایل‌ها
+/favorites              علاقه‌مندی‌ها
+/admin                  پنل مدیریت
+/tracking               بخش قرارداد (فعلاً noindex)
 ```
-src/
-├── components/hirmand/   # کامپوننت‌های برند هیرمند
-├── lib/
-│   ├── site.ts           # محتوا، تماس، محله‌ها، JSON-LD
-│   ├── properties.ts     # منطق فایل‌های ملکی
-│   └── ...
-├── routes/               # صفحات (TanStack file-based routing)
-public/
-├── images/               # تصاویر و لوگوی برند
-├── sitemap.xml
-└── robots.txt
-migrations/               # اسکیمای دیتابیس
-```
-
----
 
 ## پنل مدیریت
 
-- آدرس: `/admin`
-- آدرس: `/admin`
-- فایل‌های ملکی: افزودن، ویرایش، انتشار، پیش‌نویس، ویژه‌کردن و حذف
-- موسیقی: آپلود مستقیم به Vercel Blob، پخش، فعال/غیرفعال و حذف
-- Leadها: مشاهده، تغییر وضعیت و حذف درخواست‌های مشتری
-- کلید `HIRMAND_ADMIN_KEY` فقط در حافظه پنل نگه داشته می‌شود و در browser storage ذخیره نمی‌شود
-
-> فایل‌های رسانه‌ای بزرگ‌تر از محدودیت Function از مسیر آپلود مستقیم Blob عبور می‌کنند.
-
----
+- افزودن، ویرایش، انتشار، پیش‌نویس، ویژه‌کردن و حذف فایل
+- آپلود رسانه به Vercel Blob
+- مدیریت Leadها و وضعیت پیگیری
+- مشاهده آمار بازدید روزانه و بازدید یکتا
+- صفحات پربازدید و فایل‌های پربازدید
+- منابع جذب، رویدادها و عملکرد Lead
+- موسیقی و رسانه‌های سایت
 
 ## اسکریپت‌ها
 
 | دستور | کار |
 |-------|-----|
 | `npm run dev` | سرور توسعه |
-| `npm run build` | بیلد production + مایگریشن |
+| `npm run build` | بیلد production + migration |
 | `npm run typecheck` | بررسی TypeScript |
 | `npm run lint` | ESLint |
+| `npm test` | اجرای تست‌ها |
 | `npm run format` | Prettier |
 
----
+## ساختار پروژه
+
+```text
+src/
+├── components/hirmand/   # برند و UI
+├── lib/
+│   ├── site.ts            # برند، تماس، محله‌ها، JSON-LD
+│   ├── seo.ts             # meta/canonical/Open Graph/Structured Data
+│   ├── properties.ts      # دیتای فایل‌های ملکی
+│   └── analytics.ts       # رویدادهای آنالیتیکس
+├── routes/                # مسیرهای TanStack
+server/
+├── routes/api/            # APIهای Lead، Analytics، Upload و Admin
+└── routes/sitemap.xml.ts  # sitemap داینامیک
+public/
+├── images/                # تصاویر برند
+├── manifest.webmanifest
+├── robots.txt
+└── og.jpg
+migrations/                # migrationهای PostgreSQL
+```
+
+## توسعه
+
+قبل از push پیشنهاد می‌شود:
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run build
+```
 
 ## لایسنس
 
 MIT © گروه مشاورین املاک هیرمند
 
----
-
-**تماس دفتر:**  
-اصفهان، سه راه سیمین، خیابان جانبازان، بلوار شهید بخشی  
-موبایل: ۰۹۱۳ ۱۰۵ ۶۰۲۹ · دفتر: ۰۳۱ ۳۷۸۵ ۰۶۱۵
+**دفتر:** اصفهان، سه راه سیمین، خیابان جانبازان، بلوار شهید بخشی  
+**موبایل:** ۰۹۱۳ ۱۰۵ ۶۰۲۹ · **دفتر:** ۰۳۱ ۳۷۸۵ ۰۶۱۵
