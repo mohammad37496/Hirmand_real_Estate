@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CheckCircle2,
   Clock3,
@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   Sparkles,
   UploadCloud,
-  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
