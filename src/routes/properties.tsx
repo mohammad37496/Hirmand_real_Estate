@@ -166,7 +166,8 @@ function PropertiesIndexPage() {
   const [urlReady, setUrlReady] = useState(false);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [savedSearchId, setSavedSearchId] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "split">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "split">("grid");
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const skipInitialFetch = useRef(false);
   const requestId = useRef(0);
@@ -452,6 +453,41 @@ function PropertiesIndexPage() {
     sort !== "newest"
   );
 
+  const activeFilterCount = [
+    q.trim(),
+    transactionType,
+    propertyType,
+    neighborhood,
+    minArea.trim() || maxArea.trim(),
+    minPrice.trim() || maxPrice.trim(),
+    minBedrooms.trim(),
+    parkingOnly ? "parking" : "",
+    elevatorOnly ? "elevator" : "",
+  ].filter(Boolean).length;
+
+  const transactionLabel = transactionType
+    ? SERVICES.find((item) => item.id === transactionType)?.title ?? transactionType
+    : "";
+  const propertyTypeLabel = propertyType
+    ? PROPERTY_TYPES.find((item) => item.id === propertyType)?.title ?? propertyType
+    : "";
+
+  const filterChips = [
+    q.trim() ? { label: `جستجو: ${q.trim()}`, clear: () => setQ("") } : null,
+    transactionType ? { label: transactionLabel, clear: () => setTransactionType("") } : null,
+    propertyType ? { label: propertyTypeLabel, clear: () => setPropertyType("") } : null,
+    neighborhood ? { label: neighborhood, clear: () => setNeighborhood("") } : null,
+    minArea.trim() || maxArea.trim()
+      ? { label: `متراژ ${minArea || "۰"} تا ${maxArea || "∞"} متر`, clear: () => { setMinArea(""); setMaxArea(""); } }
+      : null,
+    minPrice.trim() || maxPrice.trim()
+      ? { label: `قیمت ${minPrice || "۰"} تا ${maxPrice || "∞"}`, clear: () => { setMinPrice(""); setMaxPrice(""); } }
+      : null,
+    minBedrooms.trim() ? { label: `${minBedrooms} خواب به بالا`, clear: () => setMinBedrooms("") } : null,
+    parkingOnly ? { label: "پارکینگ", clear: () => setParkingOnly(false) } : null,
+    elevatorOnly ? { label: "آسانسور", clear: () => setElevatorOnly(false) } : null,
+  ].filter((item): item is { label: string; clear: () => void } => Boolean(item));
+
   return (
     <SiteChrome>
       <main className="page-shell properties-index-page">
@@ -465,7 +501,49 @@ function PropertiesIndexPage() {
             {loading ? <span className="properties-loading-pill">در حال جست‌وجو…</span> : null}
           </div>
 
-          <div className="properties-filter-panel">
+          <div className="properties-market-toolbar">
+            <button
+              type="button"
+              className="properties-mobile-filter-button"
+              onClick={() => setMobileFiltersOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={mobileFiltersOpen}
+            >
+              <SlidersHorizontal size={16} />
+              فیلترها
+              {activeFilterCount ? <span>{activeFilterCount.toLocaleString("fa-IR")}</span> : null}
+            </button>
+            <div className="properties-market-search">
+              <Search size={17} />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="دنبال چه ملکی هستید؟ محله، عنوان یا آدرس"
+                aria-label="جستجوی سریع فایل"
+              />
+              {q ? (
+                <button type="button" aria-label="پاک کردن جستجو" onClick={() => setQ("")}>
+                  <X size={15} />
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          <div
+            className={`properties-filter-panel${mobileFiltersOpen ? " is-mobile-open" : ""}`}
+            role={mobileFiltersOpen ? "dialog" : undefined}
+            aria-modal={mobileFiltersOpen ? true : undefined}
+            aria-label={mobileFiltersOpen ? "فیلترهای فایل" : undefined}
+          >
+            <div className="properties-mobile-filter-head">
+              <div>
+                <strong>فیلتر و مرتب‌سازی</strong>
+                <small>فایل مناسب خود را سریع‌تر پیدا کنید.</small>
+              </div>
+              <button type="button" aria-label="بستن فیلترها" onClick={() => setMobileFiltersOpen(false)}>
+                <X size={19} />
+              </button>
+            </div>
             <label className="properties-filter-search">
               <Search size={17} />
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="عنوان، محله یا آدرس…" aria-label="جستجوی فایل" />
@@ -525,6 +603,21 @@ function PropertiesIndexPage() {
               </select>
             </label>
           </div>
+
+          {filterChips.length ? (
+            <div className="properties-active-filters" aria-label="فیلترهای فعال">
+              <span className="properties-active-label">فیلترهای فعال:</span>
+              {filterChips.map((item) => (
+                <button key={item.label} type="button" className="properties-filter-chip" onClick={item.clear}>
+                  {item.label}
+                  <X size={12} />
+                </button>
+              ))}
+              <button type="button" className="properties-filter-chip properties-filter-chip-clear" onClick={resetFilters}>
+                پاک کردن همه
+              </button>
+            </div>
+          ) : null}
 
           <div className="properties-result-meta">
             <span><SlidersHorizontal size={15} /> نمایش {properties.length.toLocaleString("fa-IR")} از {total.toLocaleString("fa-IR")} فایل</span>
@@ -586,11 +679,14 @@ function PropertiesIndexPage() {
           {properties.length ? (
             <>
               <div className="properties-view-switch" role="group" aria-label="نحوه نمایش فایل‌ها">
+                <button type="button" className={viewMode === "list" ? "is-active" : ""} onClick={() => setViewMode("list")}>
+                  <List size={15} /> لیستی
+                </button>
                 <button type="button" className={viewMode === "grid" ? "is-active" : ""} onClick={() => setViewMode("grid")}>
-                  <List size={15} /> نمایش شبکه‌ای
+                  <span aria-hidden="true" className="properties-grid-icon">▪▪<br />▪▪</span> شبکه‌ای
                 </button>
                 <button type="button" className={viewMode === "split" ? "is-active" : ""} onClick={() => setViewMode("split")}>
-                  <MapPinned size={15} /> لیست + نقشه
+                  <MapPinned size={15} /> نقشه
                 </button>
               </div>
               {viewMode === "split" ? (
@@ -628,7 +724,7 @@ function PropertiesIndexPage() {
                   </section>
                 </div>
               ) : (
-                <div className="property-grid">
+                <div className={`property-grid${viewMode === "list" ? " is-list-view" : ""}`}>
                   {properties.map((property) => <PropertyCard key={property.id} property={property} />)}
                 </div>
               )}
