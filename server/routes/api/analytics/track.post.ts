@@ -19,6 +19,8 @@ const EVENT_NAMES = new Set([
   "property_favorite",
   "property_view",
   "property_compare",
+  "budget_match_submit",
+  "budget_match_contact",
   "heartbeat",
 ]);
 
