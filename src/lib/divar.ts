@@ -464,6 +464,7 @@ function parseDivarListing(
       ),
     ),
     images,
+    propertySlug: null,
     latitude: coordinates?.latitude ?? null,
     longitude: coordinates?.longitude ?? null,
     sellerName:
@@ -603,7 +604,12 @@ function slugify(value: string) {
 }
 
 async function uploadDivarImages(token: string, urls: string[]) {
-  const candidatesFor = (source: string) => [
+  const candidatesFor = (source: string): Array<{
+    label: string;
+    url: string;
+    timeoutMs: number;
+    headers: Record<string, string>;
+  }> => [
     {
       label: "direct",
       url: source,
