@@ -46,7 +46,7 @@ export function AdminLeadManager() {
       const response = await fetch("/api/leads-admin", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "list", adminKey }),
+        body: JSON.stringify({ action: "list" }),
       });
       if (!response.ok) throw new Error("بارگذاری درخواست‌ها انجام نشد.");
       const data = (await response.json()) as { leads?: Lead[] };
