@@ -1,6 +1,7 @@
 export const ADMIN_CSS = `
 .admin-app{min-height:100vh;display:flex;background:#07090d;color:#f4efe6;font-family:var(--font,Vazirmatn,Tahoma,sans-serif)}
 .admin-sidebar{width:240px;flex-shrink:0;border-left:1px solid rgba(244,239,230,.08);background:linear-gradient(180deg,#0c1016 0%,#07090d 100%);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:30}
+.admin-sidebar-brand .brand-logo-nav{width:44px;height:44px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 7px 18px rgba(15,118,110,.18))}
 .admin-sidebar-brand{padding:22px 18px 18px;border-bottom:1px solid rgba(244,239,230,.08);display:flex;align-items:center;gap:12px}
 .admin-sidebar-brand strong{display:block;font-size:.95rem;font-weight:700}
 .admin-sidebar-brand small{color:#7d766c;font-size:.72rem}
