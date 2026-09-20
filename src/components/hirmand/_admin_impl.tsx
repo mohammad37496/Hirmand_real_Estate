@@ -19,6 +19,8 @@ import {
   Star,
   Trash2,
   X,
+  Filter,
+  ArrowUpDown,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
@@ -36,6 +38,7 @@ import { AdminMusicManager } from "@/components/hirmand/admin-music-manager";
 import { AdminLeadManager } from "@/components/hirmand/admin-lead-manager";
 import { AdminDashboard } from "@/components/hirmand/admin-dashboard";
 import { ADMIN_CSS } from "@/components/hirmand/admin-shell-css";
+import { AdminListingAssistant } from "@/components/hirmand/admin-listing-assistant";
 
 type PublishStatus = "draft" | "published" | "archived";
 type ViewMode = "dashboard" | "list" | "form" | "music" | "leads";
@@ -185,6 +188,10 @@ export function AdminPropertiesPage() {
   const [view, setView] = useState<ViewMode>("dashboard");
   const [listFilter, setListFilter] = useState<"all" | PublishStatus | "featured">("all");
   const [query, setQuery] = useState("");
+  const [listTransaction, setListTransaction] = useState<"all" | PropertyTransaction>("all");
+  const [listType, setListType] = useState<"all" | PropertyType>("all");
+  const [listNeighborhood, setListNeighborhood] = useState("");
+  const [listSort, setListSort] = useState<"newest" | "title" | "price_desc">("newest");
   const [form, setForm] = useState<FormState>(emptyForm());
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -321,9 +328,12 @@ export function AdminPropertiesPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return properties.filter((p) => {
+    const items = properties.filter((p) => {
       if (listFilter === "featured" && !p.featured) return false;
       if (listFilter !== "all" && listFilter !== "featured" && p.status !== listFilter) return false;
+      if (listTransaction !== "all" && p.transactionType !== listTransaction) return false;
+      if (listType !== "all" && p.propertyType !== listType) return false;
+      if (listNeighborhood && p.neighborhood !== listNeighborhood) return false;
       if (!q) return true;
       return (
         p.title.toLowerCase().includes(q) ||
@@ -331,7 +341,15 @@ export function AdminPropertiesPage() {
         p.contactName.toLowerCase().includes(q)
       );
     });
-  }, [properties, listFilter, query]);
+    return [...items].sort((a, b) => {
+      if (listSort === "title") return a.title.localeCompare(b.title, "fa");
+      if (listSort === "price_desc") {
+        const price = (p: Property) => Number(p.price || p.deposit || p.rent || 0);
+        return price(b) - price(a);
+      }
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+  }, [properties, listFilter, query, listTransaction, listType, listNeighborhood, listSort]);
 
   const stats = useMemo(() => {
     const published = properties.filter((p) => p.status === "published").length;
@@ -700,8 +718,8 @@ export function AdminPropertiesPage() {
                     <span className="kicker">فایل‌ها</span>
                     <h2>{filtered.length.toLocaleString("fa-IR")} مورد</h2>
                   </div>
-                  <div className="admin-list-toolbar">
-                    <label className="admin-search">
+                  <div className="admin-list-toolbar" style={{ width: "100%" }}>
+                    <label className="admin-search" style={{ flex: 1 }}>
                       <Search size={16} />
                       <input
                         value={query}
@@ -709,6 +727,38 @@ export function AdminPropertiesPage() {
                         placeholder="جستجو عنوان، محله، مشاور…"
                       />
                     </label>
+                    <button type="button" className="btn-ghost" onClick={() => {
+                      setQuery("");
+                      setListTransaction("all");
+                      setListType("all");
+                      setListNeighborhood("");
+                      setListSort("newest");
+                    }}>
+                      <Filter size={15} /> پاک‌سازی فیلتر
+                    </button>
+                  </div>
+                  <div className="admin-filter-row">
+                    <select value={listTransaction} onChange={(e) => setListTransaction(e.target.value as typeof listTransaction)} aria-label="فیلتر معامله">
+                      <option value="all">همه معاملات</option>
+                      <option value="sell">فروش</option>
+                      <option value="rent">اجاره</option>
+                      <option value="mortgage">رهن</option>
+                      <option value="buy">درخواست خرید</option>
+                    </select>
+                    <select value={listType} onChange={(e) => setListType(e.target.value as typeof listType)} aria-label="فیلتر نوع ملک">
+                      <option value="all">همه انواع ملک</option>
+                      {PROPERTY_TYPES.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+                    </select>
+                    <select value={listNeighborhood} onChange={(e) => setListNeighborhood(e.target.value)} aria-label="فیلتر محله">
+                      <option value="">همه محله‌ها</option>
+                      {NEIGHBORHOOD_NAMES.map((name) => <option key={name} value={name}>{name}</option>)}
+                    </select>
+                    <select value={listSort} onChange={(e) => setListSort(e.target.value as typeof listSort)} aria-label="مرتب‌سازی">
+                      <option value="newest">آخرین تغییر</option>
+                      <option value="title">عنوان الفبایی</option>
+                      <option value="price_desc">بیشترین قیمت</option>
+                    </select>
+                    <div className="admin-results-meta"><ArrowUpDown size={14} /> {filtered.length.toLocaleString("fa-IR")} نتیجه</div>
                   </div>
                 </div>
 
@@ -880,6 +930,28 @@ export function AdminPropertiesPage() {
                       />
                     </label>
                   </div>
+                </fieldset>
+
+                <fieldset className="admin-section">
+                  <legend>دستیار و کیفیت آگهی</legend>
+                  <AdminListingAssistant
+                    transactionType={form.transactionType}
+                    propertyType={form.propertyType}
+                    neighborhood={form.neighborhood}
+                    areaM2={form.areaM2}
+                    bedrooms={form.bedrooms}
+                    bathrooms={form.bathrooms}
+                    builtYear={form.builtYear}
+                    parking={form.parking}
+                    elevator={form.elevator}
+                    storage={form.storage}
+                    title={form.title}
+                    description={form.description}
+                    features={form.features}
+                    imageCount={form.images.split(/[\n,]+/).map((x) => x.trim()).filter(Boolean).length}
+                    onApplyTitle={(value) => update("title", value)}
+                    onApplyDescription={(value) => update("description", value)}
+                  />
                 </fieldset>
 
                 <fieldset className="admin-section">
