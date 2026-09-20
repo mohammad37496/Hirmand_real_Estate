@@ -1,4 +1,5 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { SITE } from "@/lib/site";
@@ -34,6 +35,16 @@ export const Route = createRootRoute({
   component: RootDocument,
 });
 
+function PwaRegistrar() {
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {
+      // PWA support is optional and must never affect navigation.
+    });
+  }, []);
+  return null;
+}
+
 function RootDocument() {
   return (
     <html lang="fa" dir="rtl" className="js antialiased" suppressHydrationWarning>
@@ -41,6 +52,7 @@ function RootDocument() {
         <HeadContent />
       </head>
       <body>
+        <PwaRegistrar />
         <PreviewHostBridge />
         <AuthProvider>
           <Outlet />
