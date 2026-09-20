@@ -1,10 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeftRight, Heart, RotateCcw, Search, SlidersHorizontal, X } from "lucide-react";
+import { ArrowLeftRight, Heart, RotateCcw, Search, Share2, SlidersHorizontal, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   countPublishedProperties,
-  listPublishedProperties,
   listPublishedPropertyCards,
   type PropertySort,
   type PropertyTransaction,
@@ -51,7 +50,7 @@ export const Route = createFileRoute("/properties")({
   loader: async () => {
     try {
       const [properties, total] = await Promise.all([
-        listPublishedProperties({ data: {} }),
+        listPublishedPropertyCards({ data: {} }),
         countPublishedProperties({ data: {} }),
       ]);
       return { properties, total };
@@ -352,6 +351,32 @@ function PropertiesIndexPage() {
     setMaxPrice("");
     setSort("newest");
     setOffset(0);
+  }
+
+  async function shareCurrentSearch() {
+    const params = currentFilterParams();
+    const url = new URL("/properties", window.location.origin);
+    url.search = params.toString();
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "جست‌وجوی فایل‌های هیرمند",
+          text: "این جست‌وجوی فایل در هیرمند را ببینید.",
+          url: url.toString(),
+        });
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url.toString());
+        toast.success("لینک جست‌وجو کپی شد.");
+      } else {
+        window.prompt("لینک جست‌وجو:", url.toString());
+        return;
+      }
+      const { trackAnalyticsEvent } = await import("@/lib/analytics");
+      trackAnalyticsEvent("search_share");
+    } catch {
+      // User cancelled the native share sheet.
+    }
   }
 
   const hasFilters = Boolean(
