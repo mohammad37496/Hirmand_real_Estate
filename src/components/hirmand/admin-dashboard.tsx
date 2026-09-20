@@ -407,7 +407,6 @@ export function AdminDashboard({
           </div>
         </section>
 
-      <div className="admin-dashboard-grid">
         <section className="admin-panel">
           <div className="admin-panel-head">
             <div>
