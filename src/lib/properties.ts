@@ -963,13 +963,60 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
       [data.id, data.limit],
     );
 
-    return rows.map((row) => ({
-      id: Number(row.id),
-      action: row.action,
-      beforeState: mapPropertyHistoryState(row.before_state),
-      afterState: mapPropertyHistoryState(row.after_state),
-      changedAt: new Date(String(row.changed_at)).toISOString(),
-    }));
+    const state = (value: unknown) => {
+      if (!value || typeof value !== "object") {
+        return {
+          title: null,
+          status: null,
+          featured: null,
+          price: null,
+          deposit: null,
+          rent: null,
+          contactName: null,
+          contactPhone: null,
+        };
+      }
+      const row = value as Record<string, unknown>;
+      return {
+        title: typeof row.title === "string" ? row.title : null,
+        status:
+          row.status === "draft" || row.status === "published" || row.status === "archived"
+            ? row.status
+            : null,
+        featured: typeof row.featured === "boolean" ? row.featured : null,
+        price: row.price == null ? null : String(row.price),
+        deposit: row.deposit == null ? null : String(row.deposit),
+        rent: row.rent == null ? null : String(row.rent),
+        contactName: typeof row.contactName === "string" ? row.contactName : null,
+        contactPhone: typeof row.contactPhone === "string" ? row.contactPhone : null,
+      };
+    };
+
+    return rows.map((row) => {
+      const before = state(row.before_state);
+      const after = state(row.after_state);
+      return {
+        id: Number(row.id),
+        action: row.action,
+        changedAt: new Date(String(row.changed_at)).toISOString(),
+        beforeTitle: before.title,
+        beforeStatus: before.status,
+        beforeFeatured: before.featured,
+        beforePrice: before.price,
+        beforeDeposit: before.deposit,
+        beforeRent: before.rent,
+        beforeContactName: before.contactName,
+        beforeContactPhone: before.contactPhone,
+        afterTitle: after.title,
+        afterStatus: after.status,
+        afterFeatured: after.featured,
+        afterPrice: after.price,
+        afterDeposit: after.deposit,
+        afterRent: after.rent,
+        afterContactName: after.contactName,
+        afterContactPhone: after.contactPhone,
+      };
+    });
   });
 
 export const deleteProperty = createServerFn({ method: "POST" })
