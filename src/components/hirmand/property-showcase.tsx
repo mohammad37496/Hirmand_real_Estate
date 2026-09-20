@@ -105,13 +105,17 @@ export function PropertyShowcase({ initialProperties }: { initialProperties: Pro
   const neighborhoods = NEIGHBORHOOD_NAMES;
   async function applyFilters() { setLoading(true); try { const next = await listPublishedProperties({ data: { transactionType: (transactionType || undefined) as PropertyTransaction | undefined, propertyType: (propertyType || undefined) as PropertyType | undefined, neighborhood: neighborhood || undefined } }); setProperties(next); } finally { setLoading(false); } }
   return <Reveal as="section" className="section property-showcase" id="listings"><SectionHead kicker="فایل‌های فعال" title="ملک‌های موجود هیرمند" text="فایل‌های منتشرشده را ببینید، جزئیات را باز کنید و برای هر ملک مستقیم با مشاور تماس بگیرید." />
+    <div className="property-showcase-cta">
+      <Link to="/properties" className="text-link">مشاهده همه فایل‌ها</Link>
+      <Link to="/" hash="budget-match" className="text-link">جستجوی هوشمند بودجه</Link>
+    </div>
     <div className="property-toolbar"><div className="property-toolbar-title"><span className="icon-box sm"><Search size={16} /></span><div><strong>جستجوی فایل</strong><small>{loading ? "در حال جستجو…" : `${properties.length.toLocaleString("fa-IR")} فایل نمایش داده می‌شود`}</small></div></div>
       <div className="property-filters"><label><span className="sr-only">نوع معامله</span><select value={transactionType} onChange={(event) => setTransactionType(event.target.value)}><option value="">همه معاملات</option><option value="buy">خرید</option><option value="sell">فروش</option><option value="rent">اجاره</option><option value="mortgage">رهن</option></select></label>
         <label><span className="sr-only">نوع ملک</span><select value={propertyType} onChange={(event) => setPropertyType(event.target.value)}><option value="">همه انواع ملک</option>{PROPERTY_TYPES.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
         <label><span className="sr-only">محله</span><select value={neighborhood} onChange={(event) => setNeighborhood(event.target.value)}><option value="">همه محله‌ها</option>{neighborhoods.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
         <button type="button" className="btn-gold property-filter-button" onClick={applyFilters} disabled={loading}>{loading ? "در حال جستجو..." : "جستجو"}</button>
       </div></div>
-    {properties.length ? <div className="property-grid">{properties.map((property) => <PropertyCard key={property.id} property={property} />)}</div> : <div className="property-empty"><MapPinned size={24} /><strong>فعلاً فایل منتشرشده‌ای با این فیلتر پیدا نشد.</strong><p>فیلترها را تغییر دهید یا درخواست ملک ثبت کنید تا مشاور فایل مناسب را برایتان پیدا کند.</p><Link to="/" hash="inquiry" className="btn-gold">ثبت درخواست ملک</Link></div>}
+    {properties.length ? <div className="property-grid">{properties.map((property) => <PropertyCard key={property.id} property={property} />)}</div> : <div className="property-empty"><MapPinned size={24} /><strong>فعلاً فایل منتشرشده‌ای با این فیلتر پیدا نشد.</strong><p>فیلترها را تغییر دهید یا درخواست ملک ثبت کنید تا مشاور فایل مناسب را برایتان پیدا کند.</p><div className="properties-empty-actions"><Link to="/" hash="inquiry" className="btn-gold">ثبت درخواست ملک</Link><Link to="/" hash="budget-match" className="btn-ghost">جستجوی بودجه</Link></div></div>}
   </Reveal>;
 }
 function SectionHead({ kicker, title, text }: { kicker: string; title: string; text?: string }) { return <div className="section-head"><span className="kicker">{kicker}</span><h2>{title}</h2>{text ? <p>{text}</p> : null}</div>; }
