@@ -1,18 +1,16 @@
-import { createError, defineEventHandler, readBody } from "h3";
+import { createError, defineEventHandler, getCookie } from "h3";
 import { dbSource, getSql } from "@/lib/db";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 
 type LeadStatus = "new" | "contacted" | "closed" | "spam";
 
-function requireAdmin(adminKey: string | undefined) {
-  const expected = process.env.HIRMAND_ADMIN_KEY?.trim();
-  if (!expected || !adminKey || adminKey.trim() !== expected) {
-    throw createError({ statusCode: 401, statusMessage: "کلید مدیریت نادرست است." });
-  }
-}
-
 export default defineEventHandler(async (event) => {
-  const body = (await readBody(event)) as { adminKey?: string };
-  requireAdmin(body.adminKey);
+  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: "نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.",
+    });
+  }
 
   if (dbSource === "unconfigured") {
     return {
