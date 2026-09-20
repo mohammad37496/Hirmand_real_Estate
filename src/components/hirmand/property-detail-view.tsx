@@ -65,6 +65,17 @@ function whatsappLink(phone: string, title: string) {
   return `https://wa.me/${intl}?text=${text}`;
 }
 
+function formatAdDate(value: string | null | undefined) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("fa-IR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(date);
+}
+
 function ResilientImage({
   src,
   alt,
@@ -508,6 +519,10 @@ export function PropertyDetailView({
               <span className="kicker">
                 {TX_LABEL[property.transactionType]} · {TYPE_LABEL[property.propertyType]}
               </span>
+              <div className="property-detail-ad-meta">
+                <span>کد آگهی {property.id.slice(-6).toUpperCase()}</span>
+                {property.updatedAt ? <span>به‌روزرسانی {formatAdDate(property.updatedAt)}</span> : null}
+              </div>
               <h1>{property.title}</h1>
               <p className="property-detail-meta">
                 <MapPinned size={16} /> {property.neighborhood}
