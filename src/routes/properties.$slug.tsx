@@ -100,7 +100,7 @@ function Gallery({
           <button
             key={src}
             type="button"
-            className={\`property-gallery-thumb\${index === active ? " is-active" : ""}\`}
+            className={`property-gallery-thumb${index === active ? " is-active" : ""}`}
             onClick={() => setActive(index)}
             aria-label={\`نمایش تصویر \${(index + 1).toLocaleString("fa-IR")}\`}
             aria-pressed={index === active}
