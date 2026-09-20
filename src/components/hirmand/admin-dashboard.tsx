@@ -52,6 +52,12 @@ type DashboardData = {
     pageviews: number;
     uniqueVisitors: number;
   }[];
+  topProperties: {
+    slug: string;
+    title: string;
+    neighborhood: string;
+    views: number;
+  }[];
   eventStats: {
     event: string;
     count: number;
@@ -361,6 +367,45 @@ export function AdminDashboard({
           «بازدیدکننده» بر اساس یک شناسه ناشناس در کوکی همان مرورگر محاسبه می‌شود؛ حذف کوکی یا تعویض مرورگر می‌تواند یک نفر را دوباره به‌عنوان بازدیدکننده جدید ثبت کند.
         </p>
       </section>
+
+      <div className="admin-dashboard-grid">
+        <section className="admin-panel">
+          <div className="admin-panel-head">
+            <div>
+              <span className="kicker">فایل‌های محبوب</span>
+              <h2>پربازدیدترین فایل‌ها</h2>
+            </div>
+            <span className="admin-dashboard-summary">۳۰ روز اخیر</span>
+          </div>
+          <div className="admin-breakdown">
+            {data.topProperties.length === 0 ? (
+              <div className="admin-empty">
+                <Building2 size={24} />
+                <strong>هنوز بازدید فایل ثبت نشده</strong>
+              </div>
+            ) : (
+              data.topProperties.map((item) => (
+                <div key={item.slug} className="admin-breakdown-row">
+                  <div>
+                    <span>
+                      {item.title}
+                      {item.neighborhood ? " · " + item.neighborhood : ""}
+                    </span>
+                    <strong>{item.views.toLocaleString("fa-IR")}</strong>
+                  </div>
+                  <a
+                    href={`/properties/${encodeURIComponent(item.slug)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-link"
+                  >
+                    مشاهده
+                  </a>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
 
       <div className="admin-dashboard-grid">
         <section className="admin-panel">
