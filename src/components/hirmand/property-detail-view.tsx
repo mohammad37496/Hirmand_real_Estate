@@ -129,7 +129,7 @@ function Gallery({
           ) : null}
         </div>
 
-        {images.slice(0, 9).map((src, index) => (
+        {images.slice(0, 4).map((src, index) => (
           <button
             key={src}
             type="button"
