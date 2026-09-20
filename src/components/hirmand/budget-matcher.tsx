@@ -282,7 +282,7 @@ export function BudgetMatcher() {
                   <div className="budget-presets" aria-label="مقادیر سریع رهن">
                     {DEPOSIT_PRESETS.map((value) => (
                       <button key={value} type="button" onClick={() => setDeposit(formatToman(value))}>
-                        {formatToman(value)} م
+                        {formatToman(value / 1_000_000)} میلیون
                       </button>
                     ))}
                   </div>
