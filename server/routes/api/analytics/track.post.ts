@@ -16,6 +16,7 @@ const EVENT_NAMES = new Set([
   "inquiry_submit",
   "property_share",
   "property_favorite",
+  "property_view",
 ]);
 
 function validVisitorId(value: string | undefined) {
