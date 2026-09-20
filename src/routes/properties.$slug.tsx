@@ -133,6 +133,10 @@ function PropertyDetailPage() {
     );
   }
 
+  useEffect(() => {
+    trackAnalyticsEvent("property_view", property.slug);
+  }, [property.slug]);
+
   const images = property.images.length ? property.images : ["/images/type-apartment.jpg"];
   const area = areaSlug(property.neighborhood);
   const crumbs = [
