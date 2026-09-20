@@ -305,6 +305,9 @@ function PropertiesIndexPage() {
     if (maxArea.trim()) params.set("maxArea", maxArea.trim());
     if (minPrice.trim()) params.set("minPrice", minPrice.trim());
     if (maxPrice.trim()) params.set("maxPrice", maxPrice.trim());
+    if (minBedrooms.trim()) params.set("bedrooms", minBedrooms.trim());
+    if (parkingOnly) params.set("parking", "1");
+    if (elevatorOnly) params.set("elevator", "1");
     if (sort !== "newest") params.set("sort", sort);
     return params;
   }
@@ -351,6 +354,9 @@ function PropertiesIndexPage() {
     setMaxArea(params.get("maxArea") ?? "");
     setMinPrice(params.get("minPrice") ?? "");
     setMaxPrice(params.get("maxPrice") ?? "");
+    setMinBedrooms(params.get("bedrooms") ?? "");
+    setParkingOnly(params.get("parking") === "1");
+    setElevatorOnly(params.get("elevator") === "1");
     const savedSort = params.get("sort");
     setSort(
       savedSort === "price_asc" ||
@@ -385,6 +391,9 @@ function PropertiesIndexPage() {
     setMaxArea("");
     setMinPrice("");
     setMaxPrice("");
+    setMinBedrooms("");
+    setParkingOnly(false);
+    setElevatorOnly(false);
     setSort("newest");
     setOffset(0);
   }
@@ -437,6 +446,9 @@ function PropertiesIndexPage() {
     maxArea.trim() ||
     minPrice.trim() ||
     maxPrice.trim() ||
+    minBedrooms.trim() ||
+    parkingOnly ||
+    elevatorOnly ||
     sort !== "newest"
   );
 
@@ -488,6 +500,20 @@ function PropertiesIndexPage() {
               <span>حداکثر قیمت</span>
               <input inputMode="numeric" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="تومان" />
             </label>
+            <label className="properties-range-field">
+              <span>حداقل خواب</span>
+              <input inputMode="numeric" min="0" max="30" value={minBedrooms} onChange={(e) => setMinBedrooms(e.target.value)} placeholder="۲" />
+            </label>
+            <div className="properties-feature-filters" role="group" aria-label="امکانات ملک">
+              <label className="properties-feature-toggle">
+                <input type="checkbox" checked={parkingOnly} onChange={(e) => setParkingOnly(e.target.checked)} />
+                <span>فقط پارکینگ‌دار</span>
+              </label>
+              <label className="properties-feature-toggle">
+                <input type="checkbox" checked={elevatorOnly} onChange={(e) => setElevatorOnly(e.target.checked)} />
+                <span>فقط آسانسوردار</span>
+              </label>
+            </div>
             <label className="properties-sort-field">
               <span>مرتب‌سازی</span>
               <select value={sort} onChange={(e) => setSort(e.target.value as PropertySort)}>
