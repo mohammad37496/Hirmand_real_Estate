@@ -546,12 +546,11 @@ function slugify(value: string) {
 }
 
 async function uploadDivarImages(token: string, urls: string[]) {
-  const imported: string[] = [];
-  const failures: { source: string; status?: number; reason: string }[] = [];
   const candidatesFor = (source: string) => [
     {
       label: "direct",
       url: source,
+      timeoutMs: 6_000,
       headers: {
         accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
         "accept-language": "fa-IR,fa;q=0.9,en;q=0.8",
@@ -563,6 +562,7 @@ async function uploadDivarImages(token: string, urls: string[]) {
     {
       label: "proxy",
       url: "https://wsrv.nl/?url=" + encodeURIComponent(source),
+      timeoutMs: 12_000,
       headers: {
         accept: "image/avif,image/webp,image/png,image/jpeg,image/*,*/*;q=0.8",
         "accept-language": "fa-IR,fa;q=0.9,en;q=0.8",
@@ -573,7 +573,7 @@ async function uploadDivarImages(token: string, urls: string[]) {
   ];
 
   const detectImageType = (bytes: Buffer, headerType: string) => {
-    if (/^image\//i.test(headerType)) return headerType.split(";")[0].toLowerCase();
+    if (/^image\\//i.test(headerType)) return headerType.split(";")[0].toLowerCase();
     if (bytes.subarray(0, 8).toString("hex").startsWith("89504e47")) return "image/png";
     if (bytes.subarray(0, 3).toString("hex") === "ffd8ff") return "image/jpeg";
     if (
@@ -591,96 +591,104 @@ async function uploadDivarImages(token: string, urls: string[]) {
     return "";
   };
 
-  for (let index = 0; index < Math.min(urls.length, MAX_IMAGES); index += 1) {
-    const source = urls[index];
+  const downloadOne = async (source: string, index: number) => {
     let lastReason = "تصویر قابل دریافت نبود";
 
     for (const candidate of candidatesFor(source)) {
-      for (let attempt = 0; attempt < 2; attempt += 1) {
-        try {
-          const response = await fetch(candidate.url, {
-            redirect: "follow",
-            headers: candidate.headers,
-            signal: AbortSignal.timeout(candidate.label === "proxy" ? 30_000 : 20_000),
-          });
+      try {
+        const response = await fetch(candidate.url, {
+          redirect: "follow",
+          headers: candidate.headers,
+          signal: AbortSignal.timeout(candidate.timeoutMs),
+        });
 
-          if (!response.ok) {
-            lastReason = candidate.label + ": HTTP " + response.status;
-            if (attempt < 1) {
-              await new Promise((resolve) => setTimeout(resolve, 500));
-              continue;
-            }
-            break;
-          }
-
-          const bytes = Buffer.from(await response.arrayBuffer());
-          if (!bytes.length) {
-            lastReason = candidate.label + ": فایل خالی بود";
-            if (attempt < 1) {
-              await new Promise((resolve) => setTimeout(resolve, 500));
-              continue;
-            }
-            break;
-          }
-
-          if (bytes.length > MAX_IMAGE_BYTES) {
-            lastReason = candidate.label + ": حجم تصویر بیش از ۱۲ مگابایت بود";
-            break;
-          }
-
-          const type = detectImageType(bytes, response.headers.get("content-type") ?? "");
-          if (!type) {
-            lastReason = candidate.label + ": محتوای دریافتی تصویر معتبر نبود";
-            break;
-          }
-
-          const extension =
-            type === "image/png"
-              ? "png"
-              : type === "image/webp"
-                ? "webp"
-                : type === "image/gif"
-                  ? "gif"
-                  : "jpg";
-
-          const blob = await put(
-            "properties/divar/" +
-              token +
-              "/" +
-              String(index + 1).padStart(2, "0") +
-              "-" +
-              crypto.randomUUID() +
-              "." +
-              extension,
-            bytes,
-            {
-              access: "public",
-              contentType: type,
-              addRandomSuffix: false,
-            },
-          );
-
-          imported.push(blob.url);
-          lastReason = "";
-          break;
-        } catch (error) {
-          lastReason =
-            candidate.label +
-            ": " +
-            (error instanceof Error ? error.message : "خطای دریافت تصویر");
-          if (attempt < 1) {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-          }
+        if (!response.ok) {
+          lastReason = candidate.label + ": HTTP " + response.status;
+          continue;
         }
-      }
 
-      if (!lastReason) break;
+        const bytes = Buffer.from(await response.arrayBuffer());
+        if (!bytes.length) {
+          lastReason = candidate.label + ": فایل خالی بود";
+          continue;
+        }
+
+        if (bytes.length > MAX_IMAGE_BYTES) {
+          lastReason = candidate.label + ": حجم تصویر بیش از ۱۲ مگابایت بود";
+          continue;
+        }
+
+        const type = detectImageType(bytes, response.headers.get("content-type") ?? "");
+        if (!type) {
+          lastReason = candidate.label + ": محتوای دریافتی تصویر معتبر نبود";
+          continue;
+        }
+
+        const extension =
+          type === "image/png"
+            ? "png"
+            : type === "image/webp"
+              ? "webp"
+              : type === "image/gif"
+                ? "gif"
+                : "jpg";
+
+        const blob = await put(
+          "properties/divar/" +
+            token +
+            "/" +
+            String(index + 1).padStart(2, "0") +
+            "-" +
+            crypto.randomUUID() +
+            "." +
+            extension,
+          bytes,
+          {
+            access: "public",
+            contentType: type,
+            addRandomSuffix: false,
+          },
+        );
+
+        return { index, url: blob.url, failure: null as null | { source: string; reason: string } };
+      } catch (error) {
+        lastReason =
+          candidate.label +
+          ": " +
+          (error instanceof Error ? error.message : "خطای دریافت تصویر");
+      }
     }
 
-    if (lastReason) failures.push({ source, reason: lastReason });
+    return {
+      index,
+      url: null,
+      failure: { source, reason: lastReason },
+    };
+  };
+
+  const results: Array<{
+    index: number;
+    url: string | null;
+    failure: { source: string; reason: string } | null;
+  }> = [];
+
+  const safeUrls = urls.slice(0, MAX_IMAGES);
+  const concurrency = 6;
+
+  for (let startIndex = 0; startIndex < safeUrls.length; startIndex += concurrency) {
+    const batch = safeUrls.slice(startIndex, startIndex + concurrency);
+    const batchResults = await Promise.all(
+      batch.map((source, offset) => downloadOne(source, startIndex + offset)),
+    );
+    results.push(...batchResults);
   }
 
-  return { imported, failures };
+  results.sort((a, b) => a.index - b.index);
+
+  return {
+    imported: results.flatMap((result) => (result.url ? [result.url] : [])),
+    failures: results.flatMap((result) => (result.failure ? [result.failure] : [])),
+  };
 }
 function parseJsonArray(value: unknown): string[] {
   if (Array.isArray(value)) return value.filter((v): v is string => typeof v === "string");
