@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeftRight, Heart, RotateCcw, Search, Share2, SlidersHorizontal, X } from "lucide-react";
 import { toast } from "sonner";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 import {
   countPublishedProperties,
   listPublishedPropertyCards,
@@ -372,7 +373,6 @@ function PropertiesIndexPage() {
         window.prompt("لینک جست‌وجو:", url.toString());
         return;
       }
-      const { trackAnalyticsEvent } = await import("@/lib/analytics");
       trackAnalyticsEvent("search_share");
     } catch {
       // User cancelled the native share sheet.
