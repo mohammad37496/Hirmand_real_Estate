@@ -287,6 +287,31 @@ export const getPublishedProperty = createServerFn({ method: "GET" })
     return rows[0] ? mapProperty(rows[0]) : null;
   });
 
+export const listPublishedPropertiesBySlugs = createServerFn({ method: "GET" })
+  .validator(
+    z.object({
+      slugs: z.array(z.string().trim().min(1).max(220)).max(100),
+    }),
+  )
+  .handler(async ({ data }) => {
+    if (dbSource === "unconfigured" || data.slugs.length === 0) return [];
+
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select ${DETAIL_COLUMNS}
+       from properties
+       where status = 'published'
+         and slug = any($1::text[])
+       order by featured desc, published_at desc nulls last, created_at desc`,
+      [data.slugs],
+    );
+
+    const bySlug = new Map(rows.map((row) => [String(row.slug), mapProperty(row)]));
+    return data.slugs
+      .map((slug) => bySlug.get(slug))
+      .filter((property): property is Property => Boolean(property));
+  });
+
 export const listRelatedProperties = createServerFn({ method: "GET" })
   .validator(
     z.object({
