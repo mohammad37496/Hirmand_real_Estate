@@ -376,6 +376,25 @@ export const getPublishedProperty = createServerFn({ method: "GET" })
     return rows[0] ? mapProperty(rows[0]) : null;
   });
 
+export const listPublishedPropertyCardsBySlugs = createServerFn({ method: "GET" })
+  .validator(z.object({
+    slugs: z.array(z.string().trim().min(1).max(220)).max(8),
+  }))
+  .handler(async ({ data }) => {
+    if (dbSource === "unconfigured" || data.slugs.length === 0) return [];
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select ${CARD_COLUMNS}
+       from properties
+       where status = 'published'
+         and slug = any($1::text[])
+       order by featured desc, published_at desc nulls last, created_at desc`,
+      [data.slugs],
+    );
+    const bySlug = new Map(rows.map((row) => [String(row.slug), mapPropertyCard(row)]));
+    return data.slugs.map((slug) => bySlug.get(slug)).filter((property): property is PropertyCardData => Boolean(property));
+  });
+
 export const listPublishedPropertiesBySlugs = createServerFn({ method: "GET" })
   .validator(
     z.object({
