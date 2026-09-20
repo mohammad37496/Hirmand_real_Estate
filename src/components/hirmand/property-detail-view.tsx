@@ -25,6 +25,7 @@ import { formatToman } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
 import { areaSlug } from "@/lib/areas";
+import { propertyPath } from "@/lib/property-path";
 function money(value: string | null) {
   if (!value) return "";
   const parsed = Number(value);
@@ -177,7 +178,7 @@ export function PropertyDetailView({
   const crumbs = [
     { name: "خانه", path: "/" },
     ...(area ? [{ name: property.neighborhood, path: `/areas/${area}` }] : []),
-    { name: property.title, path: `/properties/${property.slug}` },
+    { name: property.title, path: propertyPath(property) },
   ];
 
   return (
