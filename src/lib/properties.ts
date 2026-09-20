@@ -264,7 +264,7 @@ const DETAIL_COLUMNS = `
   neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
   built_year, parking, elevator, storage, price, deposit, rent, description,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
-  price_drop_percent
+  latitude, longitude, price_drop_percent
 `;
 
 function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
@@ -370,13 +370,35 @@ export const getPublishedProperty = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     if (dbSource === "unconfigured") return null;
     const sql = await getSql();
+
+    const decodedCandidates = [data.slug];
+    for (let i = 0; i < 2; i += 1) {
+      const current = decodedCandidates[decodedCandidates.length - 1];
+      try {
+        const decoded = decodeURIComponent(current);
+        if (decoded !== current && !decodedCandidates.includes(decoded)) {
+          decodedCandidates.push(decoded);
+        } else {
+          break;
+        }
+      } catch {
+        break;
+      }
+    }
+
     const rows = await sql.query<Record<string, unknown>>(
       `select ${DETAIL_COLUMNS}
-      from properties
-      where slug = $1 and status = 'published'
-      limit 1`,
-      [data.slug],
+       from properties
+       where status = 'published'
+         and (
+           slug = any($1::text[])
+           or id::text = any($1::text[])
+         )
+       order by case when slug = $2 then 0 when slug = $3 then 1 else 2 end
+       limit 1`,
+      [decodedCandidates, decodedCandidates[0], decodedCandidates[1] ?? decodedCandidates[0]],
     );
+
     return rows[0] ? mapProperty(rows[0]) : null;
   });
 
