@@ -27,7 +27,7 @@ function urlEntry(
 ) {
   const lm = lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : "";
   const imageXml = images
-    .filter((src) => /^https?:\\/\\//i.test(src))
+    .filter((src) => /^https?:\/\//i.test(src))
     .slice(0, 10)
     .map((src) => `\n    <image:image><image:loc>${escapeXml(src)}</image:loc></image:image>`)
     .join("");
