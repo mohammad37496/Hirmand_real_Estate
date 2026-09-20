@@ -9,6 +9,7 @@ import { Footer } from "./footer";
 import { MusicPlayer } from "./music-player";
 import { Header } from "./header";
 import { scrollToId } from "./scroll";
+import { VisitorTracker } from "./visitor-tracker";
 
 export function SiteChrome({
   children,
@@ -23,6 +24,7 @@ export function SiteChrome({
         رفتن به محتوا
       </a>
       <Header />
+      <VisitorTracker />
       <div className={cn("page", className)}>{children}</div>
       <Footer />
       <div className="quick-actions" aria-label="اقدام سریع">
