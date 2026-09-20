@@ -2,7 +2,7 @@ import { createError, defineEventHandler, getCookie, readBody, setResponseHeader
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 
-type Status = "new" | "contacted" | "closed" | "spam";
+type Status = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 
 function csvCell(value: unknown) {
   let text = String(value ?? "").replace(/\r?\n/g, " ");
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
     const query = typeof body.query === "string" ? body.query.trim().slice(0, 80) : "";
     const status = body.status;
 
-    if (status && !["new", "contacted", "closed", "spam"].includes(status)) {
+    if (status && !["new", "contacted", "follow_up", "visited", "contract", "closed", "spam"].includes(status)) {
       throw createError({ statusCode: 400, statusMessage: "فیلتر وضعیت نامعتبر است." });
     }
 
@@ -78,8 +78,11 @@ export default defineEventHandler(async (event) => {
 
     const labels: Record<Status, string> = {
       new: "جدید",
-      contacted: "در حال پیگیری",
-      closed: "بسته‌شده",
+      contacted: "تماس گرفته شد",
+      follow_up: "پیگیری",
+      visited: "بازدید",
+      contract: "قرارداد",
+      closed: "ناموفق / بسته‌شده",
       spam: "اسپم",
     };
     const header = ["نام", "تلفن", "معامله", "نوع ملک", "محله", "مشاور", "وضعیت", "منبع جذب", "رهن بودجه", "اجاره بودجه", "معادل رهنی", "خواب", "تعداد فایل پیشنهادی", "توضیحات", "تاریخ"];
@@ -168,7 +171,7 @@ export default defineEventHandler(async (event) => {
       [
         body.id,
         body.status,
-        body.status === "new" ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : body.status === "contacted" ? new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString() : null,
+        ["new", "contacted", "follow_up", "visited"].includes(body.status) ? new Date(Date.now() + (body.status === "new" ? 24 : body.status === "visited" ? 72 : 48) * 60 * 60 * 1000).toISOString() : null,
       ],
     );
     return { success: true };
