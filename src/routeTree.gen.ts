@@ -79,6 +79,7 @@ export interface FileRoutesById {
   '/properties/$slug': typeof PropertySlugRoute
   '/areas/$slug': typeof AreaSlugRoute
   '/properties': typeof PropertiesRoute
+  '/favorites': typeof FavoritesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -159,6 +160,7 @@ const rootRouteChildren: RootRouteChildren = {
   PropertySlugRoute: PropertySlugRoute,
   AreaSlugRoute: AreaSlugRoute,
   PropertiesRoute: PropertiesRoute,
+  FavoritesRoute: FavoritesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
