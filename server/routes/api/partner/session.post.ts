@@ -1,4 +1,5 @@
-import { createError, defineEventHandler, getCookie, readBody, setCookie } from "h3";
+import { createError, defineEventHandler, getCookie, readBody, setCookie, setResponseHeader } from "h3";
+import { z } from "zod";
 import {
   PARTNER_SESSION_COOKIE,
   PARTNER_SESSION_MAX_AGE,
@@ -7,11 +8,11 @@ import {
 } from "@/lib/partner-session.server";
 import { authenticatePartner, getPartnerOverview } from "@/lib/partner-program.server";
 
-type Body = {
-  action?: "login" | "logout" | "me";
-  partnerCode?: string;
-  pin?: string;
-};
+const bodySchema = z.object({
+  action: z.enum(["login", "logout", "me"]).optional().default("me"),
+  partnerCode: z.string().trim().max(32).optional().default(""),
+  pin: z.string().max(16).optional().default(""),
+});
 
 function cookieOptions(maxAge: number) {
   return {
@@ -24,8 +25,13 @@ function cookieOptions(maxAge: number) {
 }
 
 export default defineEventHandler(async (event) => {
-  const body = (await readBody(event).catch(() => ({}))) as Body;
-  const action = body.action ?? "me";
+  setResponseHeader(event, "cache-control", "no-store");
+  const parsed = bodySchema.safeParse(await readBody(event).catch(() => ({})));
+  if (!parsed.success) {
+    throw createError({ statusCode: 400, statusMessage: "اطلاعات نشست نامعتبر است." });
+  }
+  const body = parsed.data;
+  const action = body.action;
 
   if (action === "logout") {
     setCookie(event, PARTNER_SESSION_COOKIE, "", cookieOptions(0));
