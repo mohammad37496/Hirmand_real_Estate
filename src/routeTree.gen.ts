@@ -16,6 +16,7 @@ import { Route as PropertySlugRouteImport } from './routes/properties.$slug'
 import { Route as AreaSlugRouteImport } from './routes/areas.$slug'
 import { Route as PropertiesRouteImport } from './routes/properties'
 import { Route as FavoritesRouteImport } from './routes/favorites'
+import { Route as CompareRouteImport } from './routes/compare'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +53,11 @@ const FavoritesRoute = FavoritesRouteImport.update({
   path: '/favorites',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompareRoute = CompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/areas/$slug': typeof AreaSlugRoute
   '/properties': typeof PropertiesRoute
   '/favorites': typeof FavoritesRoute
+  '/compare': typeof CompareRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByTo {
   '/areas/$slug': typeof AreaSlugRoute
   '/properties': typeof PropertiesRoute
   '/favorites': typeof FavoritesRoute
+  '/compare': typeof CompareRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -83,10 +91,10 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug' | '/properties' | '/favorites'
+  fullPaths: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug' | '/properties' | '/favorites' | '/compare'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug' | '/properties' | '/favorites'
-  id: '__root__' | '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug' | '/properties' | '/favorites'
+  to: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug' | '/properties' | '/favorites' | '/compare'
+  id: '__root__' | '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug' | '/properties' | '/favorites' | '/compare'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -97,6 +105,7 @@ export interface RootRouteChildren {
   AreaSlugRoute: typeof AreaSlugRoute
   PropertiesRoute: typeof PropertiesRoute
   FavoritesRoute: typeof FavoritesRoute
+  CompareRoute: typeof CompareRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -150,6 +159,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FavoritesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/compare': {
+      id: '/compare'
+      path: '/compare'
+      fullPath: '/compare'
+      preLoaderRoute: typeof CompareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -161,6 +177,7 @@ const rootRouteChildren: RootRouteChildren = {
   AreaSlugRoute: AreaSlugRoute,
   PropertiesRoute: PropertiesRoute,
   FavoritesRoute: FavoritesRoute,
+  CompareRoute: CompareRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
