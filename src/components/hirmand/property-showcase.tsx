@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Building2,
@@ -80,7 +80,7 @@ export function PropertyCard({ property }: { property: Property }) {
     setFavorite(readFavorites().includes(property.slug));
   }, [property.slug]);
 
-  function onFavorite(event: React.MouseEvent<HTMLButtonElement>) {
+  function onFavorite(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
     const next = toggleFavorite(property.slug);
@@ -88,7 +88,7 @@ export function PropertyCard({ property }: { property: Property }) {
     trackAnalyticsEvent("property_favorite", property.slug);
   }
 
-  function onShare(event: React.MouseEvent<HTMLButtonElement>) {
+  function onShare(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
     void shareProperty(property);
