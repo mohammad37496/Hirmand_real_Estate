@@ -13,6 +13,8 @@ const matchSchema = z.object({
   score: z.number().min(0).max(100),
   suggestedDeposit: z.number().min(0).max(999999999999999),
   suggestedRent: z.number().min(0).max(999999999999999),
+  gapEquivalent: z.number().min(0).max(999999999999999).optional(),
+  reason: z.string().trim().max(500).optional(),
 });
 
 const schema = z.object({
