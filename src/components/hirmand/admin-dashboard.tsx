@@ -47,6 +47,15 @@ type DashboardData = {
     uniqueVisitors: number;
     pageviews: number;
   }[];
+  topPages: {
+    path: string;
+    pageviews: number;
+    uniqueVisitors: number;
+  }[];
+  eventStats: {
+    event: string;
+    count: number;
+  }[];
   recentLeads: {
     id: string;
     name: string;
@@ -337,6 +346,74 @@ export function AdminDashboard({
           «بازدیدکننده» بر اساس یک شناسه ناشناس در کوکی همان مرورگر محاسبه می‌شود؛ حذف کوکی یا تعویض مرورگر می‌تواند یک نفر را دوباره به‌عنوان بازدیدکننده جدید ثبت کند.
         </p>
       </section>
+
+      <div className="admin-dashboard-grid">
+        <section className="admin-panel">
+          <div className="admin-panel-head">
+            <div>
+              <span className="kicker">صفحات</span>
+              <h2>پربازدیدترین صفحات</h2>
+            </div>
+            <span className="admin-dashboard-summary">۳۰ روز اخیر</span>
+          </div>
+          <div className="admin-breakdown">
+            {data.topPages.length === 0 ? (
+              <div className="admin-empty">
+                <BarChart3 size={24} />
+                <strong>هنوز داده‌ای ثبت نشده</strong>
+              </div>
+            ) : (
+              data.topPages.map((item) => (
+                <div key={item.path} className="admin-breakdown-row">
+                  <div>
+                    <span dir="ltr">{item.path}</span>
+                    <strong>{item.pageviews.toLocaleString("fa-IR")}</strong>
+                  </div>
+                  <small>
+                    {item.uniqueVisitors.toLocaleString("fa-IR")} بازدیدکننده
+                  </small>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        <section className="admin-panel">
+          <div className="admin-panel-head">
+            <div>
+              <span className="kicker">تبدیل</span>
+              <h2>اقدام‌های مهم کاربران</h2>
+            </div>
+            <span className="admin-dashboard-summary">۳۰ روز اخیر</span>
+          </div>
+          <div className="admin-breakdown">
+            {data.eventStats.length === 0 ? (
+              <div className="admin-empty">
+                <UsersRound size={24} />
+                <strong>هنوز رویدادی ثبت نشده</strong>
+              </div>
+            ) : (
+              data.eventStats.map((item) => {
+                const labels: Record<string, string> = {
+                  call_click: "کلیک تماس",
+                  whatsapp_click: "کلیک واتساپ",
+                  inquiry_submit: "ثبت درخواست",
+                  property_share: "اشتراک فایل",
+                  property_favorite: "ذخیره فایل",
+                };
+                return (
+                  <div key={item.event} className="admin-breakdown-row">
+                    <div>
+                      <span>{labels[item.event] ?? item.event}</span>
+                      <strong>{item.count.toLocaleString("fa-IR")}</strong>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </section>
+      </div>
 
       <section className="admin-panel">
         <div className="admin-panel-head">
