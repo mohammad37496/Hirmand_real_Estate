@@ -80,6 +80,7 @@ type FormState = {
   contactPhone: string;
   status: PublishStatus;
   featured: boolean;
+  featuredUntil: string;
 };
 
 const STATUS_LABEL: Record<PublishStatus, string> = {
@@ -121,6 +122,7 @@ function emptyForm(): FormState {
     contactPhone: TEAM[0]?.phone ?? SITE.phone.mobile,
     status: "published",
     featured: false,
+    featuredUntil: "",
   };
 }
 
@@ -204,6 +206,7 @@ function propertyToForm(property: Property): FormState {
     contactPhone: property.contactPhone,
     status: property.status,
     featured: property.featured,
+    featuredUntil: property.featuredUntil ?? "",
   };
 }
 
@@ -711,6 +714,7 @@ export function AdminPropertiesPage() {
           contactPhone: form.contactPhone.trim(),
           status: form.status,
           featured: form.featured,
+          featuredUntil: form.featuredUntil ? new Date(form.featuredUntil).toISOString() : null,
         },
       });
       toast.success(form.id ? "فایل به‌روزرسانی شد." : "فایل جدید ذخیره شد.");
@@ -745,6 +749,7 @@ export function AdminPropertiesPage() {
       title: `${base.title} (کپی)`,
       status: "draft",
       featured: false,
+      featuredUntil: "",
     });
     setView("form");
   }
@@ -781,6 +786,7 @@ export function AdminPropertiesPage() {
           contactPhone: base.contactPhone,
           status,
           featured: base.featured,
+          featuredUntil: base.featuredUntil ? new Date(base.featuredUntil).toISOString() : null,
         },
       });
       setProperties((current) => current.map((item) => item.id === result.id ? result : item));
