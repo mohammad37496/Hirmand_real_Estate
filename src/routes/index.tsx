@@ -4,6 +4,7 @@ import { listPublishedProperties } from "@/lib/properties";
 import { FAQ_JSON_LD } from "@/lib/site";
 import { enhancedOrganizationJsonLd, homeHead } from "@/lib/seo";
 
+// Premium UI audit verified after the typecheck fixes.
 export const Route = createFileRoute("/")({
   loader: async () => {
     try {

@@ -116,7 +116,7 @@ function FavoritesPage() {
           </section>
         )}
 
-        {(recentLoading || recentProperties.length) ? (
+        {recentLoading || recentProperties.length ? (
           <section className="favorites-recent-section">
             <header className="favorites-head favorites-recent-head">
               <div>
@@ -138,7 +138,7 @@ function FavoritesPage() {
               </div>
             )}
           </section>
-        )}
+        ) : null}
       </main>
     </SiteChrome>
   );
