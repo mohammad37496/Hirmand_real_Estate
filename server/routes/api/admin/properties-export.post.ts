@@ -44,12 +44,12 @@ export default defineEventHandler(async (event) => {
     headers.map(csvCell).join(","),
     ...rows.map((row) => [
       row.id, row.title, row.slug, statusLabels[String(row.status)] ?? row.status,
-      Boolean(row.featured) ? "بله" : "خیر",
+      row.featured ? "بله" : "خیر",
       transactionLabels[String(row.transaction_type)] ?? row.transaction_type,
       row.property_type, row.neighborhood, row.address, row.area_m2, row.bedrooms,
       row.bathrooms, row.floor, row.total_floors, row.built_year,
-      Boolean(row.parking) ? "بله" : "خیر", Boolean(row.elevator) ? "بله" : "خیر",
-      Boolean(row.storage) ? "بله" : "خیر", row.price, row.deposit, row.rent,
+      row.parking ? "بله" : "خیر", row.elevator ? "بله" : "خیر",
+      row.storage ? "بله" : "خیر", row.price, row.deposit, row.rent,
       row.contact_name, row.contact_phone, row.created_at, row.updated_at,
     ].map(csvCell).join(","))
   ];
