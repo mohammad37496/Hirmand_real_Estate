@@ -30,7 +30,7 @@ export function SiteChrome({
       <div className={cn("page", className)}>{children}</div>
       <Footer />
       <div className="quick-actions" aria-label="اقدام سریع">
-        <Link to="/properties" className="quick-action" onClick={() => trackAnalyticsEvent("property_list_view")}>
+        <Link to="/properties" className="quick-action">
           <FileKey size={17} />
           <span>فایل‌ها</span>
         </Link>
