@@ -590,9 +590,10 @@ export const matchPublishedPropertiesByBudget = createServerFn({ method: "GET" }
         "  when " + totalExpr + " <= $4::numeric then 1",
         "  else 2",
         "end asc,",
+        "case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end asc,",
         "abs(" + totalExpr + " - $4::numeric) asc,",
-        "featured desc, published_at desc nulls last, created_at desc",
-        "limit $8",
+        "published_at desc nulls last, created_at desc",
+        "limit greatest($8, 36)",
       ].join(" "),
       [
         rate,
@@ -620,8 +621,11 @@ export const matchPublishedPropertiesByBudget = createServerFn({ method: "GET" }
       .filter((match): match is PropertyBudgetMatch => Boolean(match))
       .sort((a, b) => {
         const tierOrder = { within: 0, convertible: 1, near: 2 } as const;
-        return tierOrder[a.tier] - tierOrder[b.tier] || b.score - a.score;
-      });
+        return tierOrder[a.tier] - tierOrder[b.tier]
+          || b.score - a.score
+          || a.gapEquivalent - b.gapEquivalent;
+      })
+      .slice(0, data.limit);
   });
 
 const adminListSchema = z.object({
