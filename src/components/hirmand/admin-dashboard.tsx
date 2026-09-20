@@ -517,6 +517,7 @@ export function AdminDashboard({
                   property_share: "اشتراک فایل",
                   property_favorite: "ذخیره فایل",
                   property_view: "بازدید فایل",
+                  property_compare: "افزودن به مقایسه",
                 };
                 return (
                   <div key={item.event} className="admin-breakdown-row">
