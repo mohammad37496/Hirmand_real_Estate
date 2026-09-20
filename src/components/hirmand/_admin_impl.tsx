@@ -135,6 +135,13 @@ function numberOrNull(raw: string) {
   const value = Number(digits);
   return Number.isFinite(value) && value >= 0 ? value : null;
 }
+function toDateTimeLocal(value: string | null | undefined) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "";
+  const pad = (item: number) => String(item).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
 function splitLines(raw: string) {
   return raw.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
 }
@@ -206,7 +213,7 @@ function propertyToForm(property: Property): FormState {
     contactPhone: property.contactPhone,
     status: property.status,
     featured: property.featured,
-    featuredUntil: property.featuredUntil ?? "",
+    featuredUntil: toDateTimeLocal(property.featuredUntil),
   };
 }
 
@@ -1502,6 +1509,18 @@ export function AdminPropertiesPage() {
                       <span style={{ display: "flex", alignItems: "center", gap: 6, color: "#e0c47a", fontWeight: 600 }}>
                         <Star size={15} /> فایل ویژه
                       </span>
+                    </label>
+                    <label className="field">
+                      <span>پایان ویژه (اختیاری)</span>
+                      <input
+                        type="datetime-local"
+                        value={form.featuredUntil}
+                        onChange={(e) => update("featuredUntil", e.target.value)}
+                        disabled={!form.featured}
+                      />
+                      <small style={{ color: "#7d766c", marginTop: 5 }}>
+                        خالی = بدون انقضا. بعد از این زمان، فایل خودکار از اولویت «ویژه» خارج می‌شود.
+                      </small>
                     </label>
                   </div>
                 </fieldset>
