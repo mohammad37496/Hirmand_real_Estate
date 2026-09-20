@@ -148,6 +148,7 @@ export function AdminDashboard({
 }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -162,6 +163,7 @@ export function AdminDashboard({
         throw new Error(result?.statusMessage || "بارگذاری داشبورد انجام نشد.");
       }
       setData((await response.json()) as DashboardData);
+      setLastUpdated(new Date());
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "بارگذاری داشبورد انجام نشد.");
     } finally {
@@ -171,6 +173,8 @@ export function AdminDashboard({
 
   useEffect(() => {
     void load();
+    const timer = window.setInterval(() => void load(), 60_000);
+    return () => window.clearInterval(timer);
   }, [load]);
 
   const maxLeadDay = useMemo(() => Math.max(1, ...(data?.leadDays.map((item) => item.count) ?? [0])), [data]);
@@ -293,7 +297,13 @@ export function AdminDashboard({
               <span className="kicker">CRM</span>
               <h2>قیف درخواست‌ها</h2>
             </div>
-            <button type="button" className="btn-ghost" onClick={onOpenLeads}>مشاهده همه</button>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <span className="admin-dashboard-summary">
+                {lastUpdated ? "آخرین بروزرسانی " + lastUpdated.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }) : "در حال بروزرسانی"}
+              </span>
+              <button type="button" className="btn-ghost" onClick={() => void load()}>بروزرسانی</button>
+              <button type="button" className="btn-ghost" onClick={onOpenLeads}>مشاهده همه</button>
+            </div>
           </div>
           <div className="admin-funnel">
             {leadStatuses.map((item) => (
