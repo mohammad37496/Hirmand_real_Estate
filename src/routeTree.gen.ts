@@ -18,6 +18,7 @@ import { Route as AreaSlugRouteImport } from './routes/areas.$slug'
 import { Route as PropertiesRouteImport } from './routes/properties'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as CompareRouteImport } from './routes/compare'
+import { Route as ConsultantIdRouteImport } from './routes/consultants.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -64,6 +65,11 @@ const CompareRoute = CompareRouteImport.update({
   path: '/compare',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConsultantIdRoute = ConsultantIdRouteImport.update({
+  id: '/consultants/$id',
+  path: '/consultants/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -75,6 +81,8 @@ export interface FileRoutesByFullPath {
   '/properties': typeof PropertiesRoute
   '/favorites': typeof FavoritesRoute
   '/compare': typeof CompareRoute
+  '/consultants/$id': typeof ConsultantIdRoute
+  '/consultants/$id': typeof ConsultantIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -85,6 +93,8 @@ export interface FileRoutesByTo {
   '/properties': typeof PropertiesRoute
   '/favorites': typeof FavoritesRoute
   '/compare': typeof CompareRoute
+  '/consultants/$id': typeof ConsultantIdRoute
+  '/consultants/$id': typeof ConsultantIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -96,6 +106,7 @@ export interface FileRoutesById {
   '/properties': typeof PropertiesRoute
   '/favorites': typeof FavoritesRoute
   '/compare': typeof CompareRoute
+  '/consultants/$id': typeof ConsultantIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -115,6 +126,7 @@ export interface RootRouteChildren {
   PropertiesRoute: typeof PropertiesRoute
   FavoritesRoute: typeof FavoritesRoute
   CompareRoute: typeof CompareRoute
+  ConsultantIdRoute: typeof ConsultantIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -182,6 +194,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompareRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/consultants/$id': {
+      id: '/consultants/$id'
+      path: '/consultants/$id'
+      fullPath: '/consultants/$id'
+      preLoaderRoute: typeof ConsultantIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -195,6 +214,7 @@ const rootRouteChildren: RootRouteChildren = {
   PropertiesRoute: PropertiesRoute,
   FavoritesRoute: FavoritesRoute,
   CompareRoute: CompareRoute,
+  ConsultantIdRoute: ConsultantIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
