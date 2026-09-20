@@ -575,6 +575,11 @@ const adminBulkFeaturedSchema = adminBulkSchema.extend({
   featured: z.boolean(),
 });
 
+const adminBulkConsultantSchema = adminBulkSchema.extend({
+  contactName: z.string().trim().min(2).max(80),
+  contactPhone: z.string().trim().min(8).max(30),
+});
+
 function adminFilterParams(data: z.infer<typeof adminListSchema>) {
   return [
     data.status ?? null,
@@ -703,6 +708,23 @@ export const bulkSetPropertyFeatured = createServerFn({ method: "POST" })
        where id = any($2::text[])
        returning id`,
       [data.featured, data.ids],
+    );
+    return { success: true, updated: rows.length };
+  });
+
+export const bulkAssignPropertyConsultant = createServerFn({ method: "POST" })
+  .validator(adminBulkConsultantSchema)
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const sql = await getSql();
+    const rows = await sql.query<{ id: string }>(
+      `update properties
+       set contact_name = $1,
+           contact_phone = $2,
+           updated_at = current_timestamp
+       where id = any($3::text[])
+       returning id`,
+      [data.contactName, data.contactPhone, data.ids],
     );
     return { success: true, updated: rows.length };
   });
