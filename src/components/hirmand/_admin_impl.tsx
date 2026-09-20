@@ -193,13 +193,13 @@ export function AdminPropertiesPage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  async function refresh(key = adminKey) {
-    if (!key) return;
+  async function refresh() {
+    if (!unlocked) return;
     setLoadingList(true);
     try {
       const [rows, totals] = await Promise.all([
-        listAdminProperties({ data: { adminKey: key, limit: 100, offset: 0 } }),
-        countAdminProperties({ data: { adminKey: key } }),
+        listAdminProperties({ data: { adminKey: "", limit: 100, offset: 0 } }),
+        countAdminProperties({ data: { adminKey: "" } }),
       ]);
       setProperties(rows);
       setPropertyOffset(rows.length);
@@ -218,19 +218,41 @@ export function AdminPropertiesPage() {
       toast.error("کلید مدیریت را وارد کنید.");
       return;
     }
+
     setLoadingList(true);
     try {
+      const sessionResponse = await fetch("/api/admin/session", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ action: "login", adminKey: key }),
+      });
+      const sessionData = (await sessionResponse.json().catch(() => null)) as
+        | { authenticated?: boolean; statusMessage?: string; message?: string }
+        | null;
+
+      if (!sessionResponse.ok || !sessionData?.authenticated) {
+        throw new Error(
+          sessionData?.statusMessage ||
+            sessionData?.message ||
+            "ورود به پنل مدیریت انجام نشد.",
+        );
+      }
+
       const [rows, totals] = await Promise.all([
-        listAdminProperties({ data: { adminKey: key, limit: 100, offset: 0 } }),
-        countAdminProperties({ data: { adminKey: key } }),
+        listAdminProperties({ data: { adminKey: "", limit: 100, offset: 0 } }),
+        countAdminProperties({ data: { adminKey: "" } }),
       ]);
-      setAdminKey(key);
-      setForm((prev) => ({ ...prev, adminKey: key }));
+
+      setAdminKey("");
+      setKeyInput("");
+      setForm((prev) => ({ ...prev, adminKey: "" }));
       setProperties(rows);
       setPropertyOffset(rows.length);
       setPropertyHasMore(rows.length < totals.total);
       setServerStats(totals);
       setUnlocked(true);
+
       if (showToast) toast.success("ورود به پنل مدیریت موفق بود.");
     } catch (error) {
       setUnlocked(false);
@@ -241,6 +263,15 @@ export function AdminPropertiesPage() {
   }
 
   function logout() {
+    void fetch("/api/admin/session", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ action: "logout" }),
+    }).catch(() => {
+      // Local state is still cleared even when the logout request fails.
+    });
+
     setUnlocked(false);
     setAdminKey("");
     setKeyInput("");
@@ -250,6 +281,7 @@ export function AdminPropertiesPage() {
     setServerStats(null);
     setForm(emptyForm());
   }
+
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -304,7 +336,7 @@ export function AdminPropertiesPage() {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!adminKey) {
+    if (!unlocked) {
       toast.error("ابتدا وارد پنل شوید.");
       return;
     }
@@ -330,7 +362,7 @@ export function AdminPropertiesPage() {
     try {
       const result = await saveProperty({
         data: {
-          adminKey,
+          adminKey: "",
           id: form.id,
           title: form.title.trim(),
           transactionType: form.transactionType,
@@ -360,7 +392,7 @@ export function AdminPropertiesPage() {
       });
       toast.success(form.id ? "فایل به‌روزرسانی شد." : "فایل جدید ذخیره شد.");
       setForm(propertyToForm(result, adminKey));
-      await refresh(adminKey);
+      await refresh();
       setView("list");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "ذخیره انجام نشد.");
@@ -370,7 +402,7 @@ export function AdminPropertiesPage() {
   }
 
   function startNew() {
-    setForm(emptyForm(adminKey));
+    setForm(emptyForm(""));
     setView("form");
   }
 
@@ -380,7 +412,7 @@ export function AdminPropertiesPage() {
   }
 
   function duplicateProperty(property: Property) {
-    const base = propertyToForm(property, adminKey);
+    const base = propertyToForm(property, "");
     setForm({
       ...base,
       id: undefined,
@@ -394,9 +426,9 @@ export function AdminPropertiesPage() {
   async function removeProperty(property: Property) {
     if (!confirm(`حذف «${property.title}»؟ این عمل قابل بازگشت نیست.`)) return;
     try {
-      await deleteProperty({ data: { adminKey, id: property.id } });
+      await deleteProperty({ data: { adminKey: "", id: property.id } });
       toast.success("فایل حذف شد.");
-      if (form.id === property.id) setForm(emptyForm(adminKey));
+      if (form.id === property.id) setForm(emptyForm(""));
       await refresh(adminKey);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حذف انجام نشد.");
