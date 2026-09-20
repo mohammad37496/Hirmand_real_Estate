@@ -67,7 +67,8 @@ export default defineEventHandler(async (event) => {
     }
 
     const rows = await sql.query<Record<string, unknown>>(
-      "select name, phone, deal, property_type, neighborhood, consultant, status, note, " +
+      "select name, phone, deal, property_type, neighborhood, consultant, status, note, source, " +
+        "acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, " +
         "budget_deposit, budget_rent, budget_equivalent, budget_bedrooms, match_count, created_at " +
         "from leads where " + conditions.join(" and ") +
         " order by created_at desc limit 50000",
@@ -80,7 +81,7 @@ export default defineEventHandler(async (event) => {
       closed: "بسته‌شده",
       spam: "اسپم",
     };
-    const header = ["نام", "تلفن", "معامله", "نوع ملک", "محله", "مشاور", "وضعیت", "رهن بودجه", "اجاره بودجه", "معادل رهنی", "خواب", "تعداد فایل پیشنهادی", "توضیحات", "تاریخ"];
+    const header = ["نام", "تلفن", "معامله", "نوع ملک", "محله", "مشاور", "وضعیت", "منبع جذب", "رهن بودجه", "اجاره بودجه", "معادل رهنی", "خواب", "تعداد فایل پیشنهادی", "توضیحات", "تاریخ"];
     const lines = [
       header.map(csvCell).join(","),
       ...rows.map((row) =>
@@ -92,6 +93,7 @@ export default defineEventHandler(async (event) => {
           row.neighborhood,
           row.consultant,
           labels[String(row.status) as Status] ?? row.status,
+          row.acquisition_source ?? row.source,
           row.budget_deposit,
           row.budget_rent,
           row.budget_equivalent,
@@ -112,6 +114,7 @@ export default defineEventHandler(async (event) => {
   if ((body.action ?? "list") === "list") {
     const rows = await sql.query<Record<string, unknown>>(
       "select id,name,phone,deal,property_type,neighborhood,consultant,note,status,source, " +
+        "acquisition_source,acquisition_medium,acquisition_campaign,acquisition_referrer, " +
         "budget_deposit,budget_rent,budget_equivalent,budget_bedrooms,budget_rate,matched_properties,match_count,created_at " +
         "from leads order by created_at desc limit 300",
     );
@@ -127,6 +130,10 @@ export default defineEventHandler(async (event) => {
         note: String(row.note ?? ""),
         status: String(row.status) as Status,
         source: String(row.source ?? "website"),
+        acquisitionSource: row.acquisition_source == null ? null : String(row.acquisition_source),
+        acquisitionMedium: row.acquisition_medium == null ? null : String(row.acquisition_medium),
+        acquisitionCampaign: row.acquisition_campaign == null ? null : String(row.acquisition_campaign),
+        acquisitionReferrer: row.acquisition_referrer == null ? null : String(row.acquisition_referrer),
         budgetDeposit: row.budget_deposit == null ? null : Number(row.budget_deposit),
         budgetRent: row.budget_rent == null ? null : Number(row.budget_rent),
         budgetEquivalent: row.budget_equivalent == null ? null : Number(row.budget_equivalent),

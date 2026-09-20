@@ -48,6 +48,27 @@ export type Property = {
   updatedAt: string;
 };
 
+export type PropertyCardData = Pick<
+  Property,
+  | "id"
+  | "slug"
+  | "status"
+  | "featured"
+  | "title"
+  | "transactionType"
+  | "propertyType"
+  | "neighborhood"
+  | "areaM2"
+  | "bedrooms"
+  | "parking"
+  | "elevator"
+  | "price"
+  | "deposit"
+  | "rent"
+> & {
+  image: string | null;
+};
+
 export type PropertySort = "newest" | "price_asc" | "price_desc" | "area_asc" | "area_desc";
 
 export type PropertyFilters = {
@@ -201,6 +222,33 @@ const LIST_COLUMNS = `
   left(description, 280) as description
 `;
 
+const CARD_COLUMNS = `
+  id, slug, status, featured, title, transaction_type, property_type,
+  neighborhood, area_m2, bedrooms, parking, elevator, price, deposit, rent,
+  nullif(images->>0, '') as image
+`;
+
+function mapPropertyCard(row: Record<string, unknown>): PropertyCardData {
+  return {
+    id: String(row.id),
+    slug: String(row.slug),
+    status: row.status as PropertyStatus,
+    featured: Boolean(row.featured),
+    title: String(row.title),
+    transactionType: row.transaction_type as PropertyTransaction,
+    propertyType: row.property_type as PropertyType,
+    neighborhood: String(row.neighborhood),
+    areaM2: numberOrNull(row.area_m2),
+    bedrooms: numberOrNull(row.bedrooms),
+    parking: Boolean(row.parking),
+    elevator: Boolean(row.elevator),
+    price: row.price == null ? null : String(row.price),
+    deposit: row.deposit == null ? null : String(row.deposit),
+    rent: row.rent == null ? null : String(row.rent),
+    image: row.image ? String(row.image) : null,
+  };
+}
+
 const DETAIL_COLUMNS = `
   id, slug, status, featured, title, transaction_type, property_type, city,
   neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
@@ -246,6 +294,29 @@ function publicPropertyWhereSql() {
     "and ($10::numeric is null or " + PRICE_EXPR + " <= $10)",
   ].join(" ");
 }
+
+export const listPublishedPropertyCards = createServerFn({ method: "GET" })
+  .validator(publicFiltersSchema)
+  .handler(async ({ data }) => {
+    if (dbSource === "unconfigured") return [];
+    const sql = await getSql();
+    const params = publicFilterParams(data);
+    const rows = await sql.query<Record<string, unknown>>(
+      [
+        "select " + CARD_COLUMNS,
+        "from properties where " + publicPropertyWhereSql(),
+        "order by case when $12 = 'newest' then case when featured then 0 else 1 end else 0 end,",
+        "case when $12 = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
+        "case when $12 = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
+        "case when $12 = 'area_asc' then area_m2 end asc nulls last,",
+        "case when $12 = 'area_desc' then area_m2 end desc nulls last,",
+        "published_at desc nulls last, created_at desc",
+        "limit 48 offset $11",
+      ].join(" "),
+      [...params, data.sort],
+    );
+    return rows.map(mapPropertyCard);
+  });
 
 export const listPublishedProperties = createServerFn({ method: "GET" })
   .validator(publicFiltersSchema)
