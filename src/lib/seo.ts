@@ -164,7 +164,7 @@ export function trackingHead() {
 }
 
 export function propertyJsonLd(property: Property) {
-  const url = absoluteUrl(`/properties/${property.slug}`);
+  const url = absoluteUrl(propertyPath(property));
   const image = property.images.map((src) =>
     src.startsWith("http") ? src : absoluteUrl(src),
   );
