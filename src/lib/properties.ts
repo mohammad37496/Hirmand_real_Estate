@@ -287,6 +287,45 @@ export const getPublishedProperty = createServerFn({ method: "GET" })
     return rows[0] ? mapProperty(rows[0]) : null;
   });
 
+export const listRelatedProperties = createServerFn({ method: "GET" })
+  .validator(
+    z.object({
+      slug: z.string().min(1),
+      neighborhood: z.string().trim().min(1).max(80),
+      propertyType: z.enum([
+        "apartment",
+        "villa",
+        "office",
+        "heritage",
+        "land",
+        "commercial",
+      ]),
+      limit: z.number().int().min(1).max(12).optional().default(6),
+    }),
+  )
+  .handler(async ({ data }) => {
+    if (dbSource === "unconfigured") return [];
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select ${LIST_COLUMNS}
+       from properties
+       where status = 'published'
+         and slug <> $1
+         and (
+           neighborhood = $2
+           or property_type = $3
+         )
+       order by
+         case when neighborhood = $2 then 0 else 1 end,
+         case when featured then 0 else 1 end,
+         published_at desc nulls last,
+         created_at desc
+       limit $4`,
+      [data.slug, data.neighborhood, data.propertyType, data.limit],
+    );
+    return rows.map(mapProperty);
+  });
+
 const adminListSchema = z.object({
   adminKey: z.string().min(1),
   limit: z.number().int().min(1).max(200).optional().default(50),
