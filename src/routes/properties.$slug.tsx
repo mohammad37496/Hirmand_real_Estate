@@ -29,7 +29,7 @@ import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { PropertyActions } from "@/components/hirmand/property-actions";
 import { formatToman } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
-import { isVideoUrl } from "@/lib/media";
+import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
 import { areaSlug } from "@/lib/areas";
 
 export const Route = createFileRoute("/properties/$slug")({
@@ -109,7 +109,7 @@ function ResilientImage({
   loading?: "eager" | "lazy";
   itemProp?: string;
 }) {
-  const candidates = sourceCandidates(src, fallback);
+  const candidates = mediaSourceCandidates(src, fallback);
   const [attempt, setAttempt] = useState(0);
   const current = candidates[Math.min(attempt, candidates.length - 1)];
 
