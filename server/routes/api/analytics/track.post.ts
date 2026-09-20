@@ -19,6 +19,7 @@ const EVENT_NAMES = new Set([
   "property_favorite",
   "property_view",
   "property_compare",
+  "heartbeat",
 ]);
 
 function validVisitorId(value: string | undefined) {
@@ -60,12 +61,28 @@ export default defineEventHandler(async (event) => {
 
   const sql = await getSql();
   const dayExpr = "(current_timestamp at time zone 'Asia/Tehran')::date";
+  const safePath = path.slice(0, 500);
 
-  if (eventName) {
+  if (eventName === "heartbeat") {
+    await sql.query(
+      "insert into site_visitor_days " +
+        "(day, visitor_id, pageviews, first_path, last_path, first_seen_at, last_seen_at) " +
+        "values (" + dayExpr + ", $1, 0, $2, $2, current_timestamp, current_timestamp) " +
+        "on conflict (day, visitor_id) do update set " +
+        "last_path = excluded.last_path, last_seen_at = current_timestamp",
+      [visitorId, safePath],
+    );
+  } else if (eventName) {
     await sql.query(
       "insert into site_events (id, day, visitor_id, event_name, path, property_slug) " +
-        "values ($1, " + dayExpr + ", $2, $3, $4, $5)",
-      [crypto.randomUUID(), visitorId, eventName, path.slice(0, 500), propertySlug],
+        "select $1, " + dayExpr + ", $2, $3, $4, $5 " +
+        "where not exists (" +
+        "select 1 from site_events " +
+        "where visitor_id = $2 and event_name = $3 and path = $4 " +
+        "and coalesce(property_slug, '') = coalesce($5, '') " +
+        "and created_at >= current_timestamp - interval '8 seconds'" +
+        ")",
+      [crypto.randomUUID(), visitorId, eventName, safePath, propertySlug],
     );
   } else {
     await Promise.all([
@@ -76,22 +93,22 @@ export default defineEventHandler(async (event) => {
           dayExpr +
           ", $1, 1, $2, $2, current_timestamp, current_timestamp) " +
           "on conflict (day, visitor_id) do update set " +
-          "pageviews = site_visitor_days.pageviews + 1, " +
+          "pageviews = site_visitor_days.pageviews + case " +
+          "when site_visitor_days.last_path = excluded.last_path " +
+          "and site_visitor_days.last_seen_at >= current_timestamp - interval '10 seconds' then 0 else 1 end, " +
           "last_path = excluded.last_path, last_seen_at = current_timestamp",
-        [visitorId, path.slice(0, 500)],
+        [visitorId, safePath],
       ),
       sql.query(
         "insert into site_page_days (day, visitor_id, path, pageviews, last_seen_at) " +
-          "values (" +
-          dayExpr +
-          ", $1, $2, 1, current_timestamp) " +
+          "values (" + dayExpr + ", $1, $2, 1, current_timestamp) " +
           "on conflict (day, visitor_id, path) do update set " +
-          "pageviews = site_page_days.pageviews + 1, " +
+          "pageviews = site_page_days.pageviews + case " +
+          "when site_page_days.last_seen_at >= current_timestamp - interval '10 seconds' then 0 else 1 end, " +
           "last_seen_at = current_timestamp",
-        [visitorId, path.slice(0, 500)],
+        [visitorId, safePath],
       ),
     ]);
   }
-
   return { ok: true, tracked: true };
 });
