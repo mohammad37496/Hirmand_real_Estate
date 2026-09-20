@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrackingRouteImport } from './routes/tracking'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as PropertySlugRouteImport } from './routes/properties.$slug'
+import { Route as VSlugIdRouteImport } from './routes/v.$slug.$id'
 import { Route as AreaSlugRouteImport } from './routes/areas.$slug'
 import { Route as PropertiesRouteImport } from './routes/properties'
 import { Route as FavoritesRouteImport } from './routes/favorites'
@@ -36,6 +37,11 @@ const AdminRoute = AdminRouteImport.update({
 const PropertySlugRoute = PropertySlugRouteImport.update({
   id: '/properties/$slug',
   path: '/properties/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VSlugIdRoute = VSlugIdRouteImport.update({
+  id: '/v/$slug/$id',
+  path: '/v/$slug/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AreaSlugRoute = AreaSlugRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/tracking': typeof TrackingRoute
   '/admin': typeof AdminRoute
   '/properties/$slug': typeof PropertySlugRoute
+  '/v/$slug/$id': typeof VSlugIdRoute
   '/areas/$slug': typeof AreaSlugRoute
   '/properties': typeof PropertiesRoute
   '/favorites': typeof FavoritesRoute
@@ -92,10 +99,10 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug' | '/properties' | '/favorites' | '/compare'
+  fullPaths: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/v/$slug/$id' | '/areas/$slug' | '/properties' | '/favorites' | '/compare'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug' | '/properties' | '/favorites' | '/compare'
-  id: '__root__' | '/' | '/tracking' | '/admin' | '/properties/$slug' | '/areas/$slug' | '/properties' | '/favorites' | '/compare'
+  to: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/v/$slug/$id' | '/areas/$slug' | '/properties' | '/favorites' | '/compare'
+  id: '__root__' | '/' | '/tracking' | '/admin' | '/properties/$slug' | '/v/$slug/$id' | '/areas/$slug' | '/properties' | '/favorites' | '/compare'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -139,6 +146,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PropertySlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/v/$slug/$id': {
+      id: '/v/$slug/$id'
+      path: '/v/$slug/$id'
+      fullPath: '/v/$slug/$id'
+      preLoaderRoute: typeof VSlugIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/areas/$slug': {
       id: '/areas/$slug'
       path: '/areas/$slug'
@@ -175,6 +189,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrackingRoute: TrackingRoute,
   AdminRoute: AdminRoute,
   PropertySlugRoute: PropertySlugRoute,
+  VSlugIdRoute: VSlugIdRoute,
   AreaSlugRoute: AreaSlugRoute,
   PropertiesRoute: PropertiesRoute,
   FavoritesRoute: FavoritesRoute,
