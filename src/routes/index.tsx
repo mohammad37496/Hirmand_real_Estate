@@ -5,6 +5,7 @@ import { FAQ_JSON_LD } from "@/lib/site";
 import { enhancedOrganizationJsonLd, homeHead } from "@/lib/seo";
 
 // Premium UI audit verified after the typecheck fixes.
+// Production deploy trigger: keep Git/Vercel output synchronized.
 export const Route = createFileRoute("/")({
   loader: async () => {
     try {
