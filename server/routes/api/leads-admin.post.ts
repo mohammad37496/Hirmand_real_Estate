@@ -67,7 +67,8 @@ export default defineEventHandler(async (event) => {
     }
 
     const rows = await sql.query<Record<string, unknown>>(
-      "select name, phone, deal, property_type, neighborhood, consultant, status, note, created_at " +
+      "select name, phone, deal, property_type, neighborhood, consultant, status, note, " +
+        "budget_deposit, budget_rent, budget_equivalent, budget_bedrooms, match_count, created_at " +
         "from leads where " + conditions.join(" and ") +
         " order by created_at desc limit 50000",
       params,
@@ -79,7 +80,7 @@ export default defineEventHandler(async (event) => {
       closed: "بسته‌شده",
       spam: "اسپم",
     };
-    const header = ["نام", "تلفن", "معامله", "نوع ملک", "محله", "مشاور", "وضعیت", "توضیحات", "تاریخ"];
+    const header = ["نام", "تلفن", "معامله", "نوع ملک", "محله", "مشاور", "وضعیت", "رهن بودجه", "اجاره بودجه", "معادل رهنی", "خواب", "تعداد فایل پیشنهادی", "توضیحات", "تاریخ"];
     const lines = [
       header.map(csvCell).join(","),
       ...rows.map((row) =>
@@ -105,7 +106,8 @@ export default defineEventHandler(async (event) => {
 
   if ((body.action ?? "list") === "list") {
     const rows = await sql.query<Record<string, unknown>>(
-      "select id,name,phone,deal,property_type,neighborhood,consultant,note,status,created_at " +
+      "select id,name,phone,deal,property_type,neighborhood,consultant,note,status,source, " +
+        "budget_deposit,budget_rent,budget_equivalent,budget_bedrooms,budget_rate,matched_properties,match_count,created_at " +
         "from leads order by created_at desc limit 300",
     );
     return {
@@ -119,6 +121,14 @@ export default defineEventHandler(async (event) => {
         consultant: String(row.consultant ?? ""),
         note: String(row.note ?? ""),
         status: String(row.status) as Status,
+        source: String(row.source ?? "website"),
+        budgetDeposit: row.budget_deposit == null ? null : Number(row.budget_deposit),
+        budgetRent: row.budget_rent == null ? null : Number(row.budget_rent),
+        budgetEquivalent: row.budget_equivalent == null ? null : Number(row.budget_equivalent),
+        budgetBedrooms: row.budget_bedrooms == null ? null : Number(row.budget_bedrooms),
+        budgetRate: row.budget_rate == null ? null : Number(row.budget_rate),
+        matchCount: Number(row.match_count) || 0,
+        matchedProperties: Array.isArray(row.matched_properties) ? row.matched_properties : [],
         createdAt: new Date(String(row.created_at)).toISOString(),
       })),
     };
