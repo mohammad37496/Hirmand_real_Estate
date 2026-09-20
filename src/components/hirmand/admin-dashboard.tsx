@@ -61,6 +61,7 @@ type DashboardData = {
   eventStats: {
     event: string;
     count: number;
+    uniqueVisitors: number;
   }[];
   recentLeads: {
     id: string;
@@ -467,6 +468,9 @@ export function AdminDashboard({
                       <span>{labels[item.event] ?? item.event}</span>
                       <strong>{item.count.toLocaleString("fa-IR")}</strong>
                     </div>
+                    <small>
+                      {item.uniqueVisitors.toLocaleString("fa-IR")} نفر
+                    </small>
                   </div>
                 );
               })
