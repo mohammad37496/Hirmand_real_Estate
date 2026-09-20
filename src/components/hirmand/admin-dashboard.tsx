@@ -413,7 +413,7 @@ export function AdminDashboard({
                   }}
                 />
               </div>
-              <small>{item.day.slice(5)}</small>
+              <small>{formatDay(item.day)}</small>
             </div>
           ))}
         </div>
