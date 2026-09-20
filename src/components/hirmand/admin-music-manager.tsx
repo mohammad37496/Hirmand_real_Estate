@@ -32,7 +32,7 @@ export function AdminMusicManager() {
       const response = await fetch("/api/music-admin", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "list", adminKey }),
+        body: JSON.stringify({ action: "list" }),
       });
       if (!response.ok) throw new Error("بارگذاری آهنگ‌ها انجام نشد.");
       const data = (await response.json()) as { tracks?: AdminMusicTrack[] };
