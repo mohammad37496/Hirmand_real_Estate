@@ -4,6 +4,7 @@
  */
 import { defineEventHandler, setResponseHeader } from "h3";
 import { allAreas, areaPath } from "../../src/lib/areas";
+import { resolveDatabaseUrl } from "../../scripts/resolve-database-url.mjs";
 
 const SITE = (process.env.VITE_SITE_URL || "https://www.hirmandrealestate.ir").replace(/\/$/, "");
 
@@ -22,7 +23,7 @@ function urlEntry(loc: string, changefreq: string, priority: string, lastmod?: s
 }
 
 async function loadPropertyUrls(): Promise<{ loc: string; lastmod?: string }[]> {
-  const databaseUrl = process.env.DATABASE_URL?.trim();
+  const databaseUrl = resolveDatabaseUrl().url;
   if (!databaseUrl) return [];
 
   try {
