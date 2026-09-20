@@ -166,7 +166,7 @@ function PropertiesIndexPage() {
   const [urlReady, setUrlReady] = useState(false);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [savedSearchId, setSavedSearchId] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "split">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "split">("list");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const skipInitialFetch = useRef(false);
