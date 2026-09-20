@@ -73,7 +73,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
             fallback={FALLBACK_IMAGES[property.propertyType]}
           />
           <div className="property-card-badges">
-            {property.featured ? (
+            {isFeaturedActive(property) ? (
               <span className="property-badge property-badge-featured">ویژه</span>
             ) : null}
             {property.priceDropPercent && property.priceDropPercent > 0 ? (
