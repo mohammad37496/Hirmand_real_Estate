@@ -112,7 +112,7 @@ export default defineEventHandler(async (event) => {
       await sql.query(
         `update leads
          set name=$2, deal=$3, property_type=$4, neighborhood=$5, consultant=$6, note=$7,
-             source=$8, acquisition_source=$16, acquisition_medium=$17, acquisition_campaign=$18, acquisition_referrer=$19, acquisition_landing_path=$20, budget_deposit=$9, budget_rent=$10, budget_rate=$11,
+             source=$8, follow_up_at=current_timestamp + interval '24 hours', acquisition_source=$16, acquisition_medium=$17, acquisition_campaign=$18, acquisition_referrer=$19, acquisition_landing_path=$20, budget_deposit=$9, budget_rent=$10, budget_rate=$11,
              budget_equivalent=$12, budget_bedrooms=$13, matched_properties=$14::jsonb,
              match_count=$15, updated_at=current_timestamp
          where id=$1`,
@@ -148,10 +148,10 @@ export default defineEventHandler(async (event) => {
     `insert into leads (
       id, name, phone, deal, property_type, neighborhood, consultant, note, source,
       acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, acquisition_landing_path,
-      budget_deposit, budget_rent, budget_rate, budget_equivalent, budget_bedrooms,
+      follow_up_at, budget_deposit, budget_rent, budget_rate, budget_equivalent, budget_bedrooms,
       matched_properties, match_count
     )
-    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21::jsonb,$22)
+    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,current_timestamp + interval '24 hours',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21::jsonb,$22)
     returning id`,
     [
       crypto.randomUUID(),
