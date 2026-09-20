@@ -41,7 +41,7 @@ async function loadPropertyUrls(): Promise<{ loc: string; lastmod?: string }[]> 
           row.updated_at != null
             ? new Date(row.updated_at).toISOString().slice(0, 10)
             : undefined;
-        return { loc: `${SITE}/properties/${row.slug}`, lastmod };
+        return { loc: `${SITE}/v/${encodeURIComponent(String(row.slug))}/${encodeURIComponent(String(row.id))}`, lastmod };
       });
     } finally {
       await pool.end().catch(() => undefined);
