@@ -74,6 +74,9 @@ export function homeHead() {
       { name: "geo.position", content: `${SITE.lat};${SITE.lng}` },
       { name: "ICBM", content: `${SITE.lat}, ${SITE.lng}` },
       { name: "language", content: "fa" },
+      ...(typeof import.meta !== "undefined" && import.meta.env?.VITE_GOOGLE_SITE_VERIFICATION
+        ? [{ name: "google-site-verification", content: import.meta.env.VITE_GOOGLE_SITE_VERIFICATION }]
+        : []),
       ...socialMeta({ title, description, url }),
     ],
     links: [
