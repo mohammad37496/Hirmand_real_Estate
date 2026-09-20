@@ -3857,3 +3857,45 @@ summary:focus-visible {
     min-width: 620px;
   }
 }
+
+
+/* --- Saved searches & recent property history --- */
+.properties-saved-search-select {
+  min-width: 170px;
+  max-width: 260px;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.properties-saved-search-select:focus {
+  outline: 2px solid color-mix(in srgb, var(--gold) 50%, transparent);
+  outline-offset: 2px;
+}
+
+.favorites-recent-section {
+  margin-top: 64px;
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+}
+
+.favorites-recent-head {
+  margin-bottom: 22px;
+}
+
+.favorites-recent-head h2 {
+  margin-top: 8px;
+  font-size: clamp(1.35rem, 1.1rem + 0.9vw, 1.9rem);
+}
+
+@media (max-width: 720px) {
+  .properties-saved-search-select {
+    width: 100%;
+    max-width: none;
+  }
+}
