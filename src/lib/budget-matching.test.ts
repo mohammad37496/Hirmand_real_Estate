@@ -1,0 +1,80 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { calculateBudgetMatch, totalRahnEquivalent } from "./budget-matching";
+import type { Property } from "./properties";
+
+function property(overrides: Partial<Property>): Property {
+  return {
+    id: "1",
+    slug: "test",
+    status: "published",
+    featured: false,
+    title: "ملک تست",
+    transactionType: "rent",
+    propertyType: "apartment",
+    city: "اصفهان",
+    neighborhood: "مرداویج",
+    address: null,
+    areaM2: 100,
+    bedrooms: 2,
+    bathrooms: 1,
+    floor: 2,
+    totalFloors: 5,
+    builtYear: 1400,
+    parking: true,
+    elevator: true,
+    storage: true,
+    price: null,
+    deposit: "500000000",
+    rent: "10000000",
+    description: "ملک تستی برای آزمون منطق تطبیق بودجه.",
+    features: [],
+    images: [],
+    contactName: "هیرمند",
+    contactPhone: "09130000000",
+    publishedAt: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+test("converts rent to rahn equivalent using the default rate", () => {
+  assert.equal(totalRahnEquivalent(500_000_000, 10_000_000), 833_333_333.3333334);
+});
+
+test("marks a property within the user's direct budget", () => {
+  const result = calculateBudgetMatch(
+    property({ deposit: "400000000", rent: "8000000" }),
+    { depositBudget: 500_000_000, rentBudget: 10_000_000 },
+  );
+  assert.equal(result?.tier, "within");
+  assert.ok((result?.score ?? 0) >= 90);
+});
+
+test("marks a higher-deposit property as convertible when total equivalent fits", () => {
+  const result = calculateBudgetMatch(
+    property({ deposit: "700000000", rent: "0" }),
+    { depositBudget: 500_000_000, rentBudget: 10_000_000 },
+  );
+  assert.equal(result?.tier, "convertible");
+  assert.equal(result?.suggestedDeposit, 500_000_000);
+  assert.equal(Math.round(result?.suggestedRent ?? 0), 6_000_000);
+});
+
+test("marks a property just above budget as near", () => {
+  const result = calculateBudgetMatch(
+    property({ deposit: "900000000", rent: "0" }),
+    { depositBudget: 500_000_000, rentBudget: 10_000_000 },
+  );
+  assert.equal(result?.tier, "near");
+  assert.ok((result?.gapEquivalent ?? 0) > 0);
+});
+
+test("rejects properties far above the budget", () => {
+  const result = calculateBudgetMatch(
+    property({ deposit: "1_200_000_000", rent: "0" }),
+    { depositBudget: 500_000_000, rentBudget: 10_000_000 },
+  );
+  assert.equal(result, null);
+});
