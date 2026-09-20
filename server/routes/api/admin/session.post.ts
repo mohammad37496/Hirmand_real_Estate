@@ -4,6 +4,7 @@ import {
   getCookie,
   readBody,
   setCookie,
+  setResponseHeader,
 } from "h3";
 import {
   ADMIN_SESSION_COOKIE,
@@ -19,7 +20,8 @@ type Body = {
 };
 
 export default defineEventHandler(async (event) => {
-  const body = (await readBody(event)) as Body;
+  setResponseHeader(event, "cache-control", "no-store");
+  const body = (await readBody(event).catch(() => ({}))) as Body;
   const action = body.action ?? "login";
 
   if (action === "logout") {
