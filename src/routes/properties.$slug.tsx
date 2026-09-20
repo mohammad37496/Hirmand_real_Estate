@@ -83,17 +83,6 @@ function whatsappLink(phone: string, title: string) {
   return `https://wa.me/${intl}?text=${text}`;
 }
 
-function sourceCandidates(src: string, fallback: string) {
-  const isExternal = /divarcdn\.com|wsrv\.nl/i.test(src);
-  const proxies = isExternal
-    ? [
-        `https://wsrv.nl/?url=${encodeURIComponent(src)}`,
-        `https://images.weserv.nl/?url=${encodeURIComponent(src)}`,
-      ]
-    : [];
-  return Array.from(new Set([src, ...proxies, fallback].filter(Boolean)));
-}
-
 function ResilientImage({
   src,
   alt,
