@@ -177,10 +177,7 @@ export function AdminDashboard({
   const last7Days = useMemo(() => {
     const map = new Map((data?.leadDays ?? []).map((item) => [item.day, item.count]));
     return Array.from({ length: 7 }, (_, index) => {
-      const day = new Date();
-      day.setHours(12, 0, 0, 0);
-      day.setDate(day.getDate() - (6 - index));
-      const key = day.toISOString().slice(0, 10);
+      const key = tehranDateKey(6 - index);
       return { day: key, count: map.get(key) ?? 0 };
     });
   }, [data]);
