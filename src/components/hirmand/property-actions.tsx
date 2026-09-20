@@ -1,10 +1,37 @@
 import { useEffect, useState, type MouseEvent } from "react";
-import { Heart, Share2 } from "lucide-react";
+import { ArrowLeftRight, Heart, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Property } from "@/lib/properties";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 
 const FAVORITES_KEY = "hirmand-favorite-properties";
+const COMPARE_KEY = "hirmand-compare-properties";
+const MAX_COMPARE = 3;
+
+function readCompare(): string[] {
+  try {
+    const raw = localStorage.getItem(COMPARE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string").slice(0, MAX_COMPARE)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function toggleCompare(slug: string): { added: boolean; next: string[] } {
+  const current = readCompare();
+  if (current.includes(slug)) {
+    const next = current.filter((item) => item !== slug);
+    localStorage.setItem(COMPARE_KEY, JSON.stringify(next));
+    return { added: false, next };
+  }
+  if (current.length >= MAX_COMPARE) return { added: false, next: current };
+  const next = [...current, slug];
+  localStorage.setItem(COMPARE_KEY, JSON.stringify(next));
+  return { added: true, next };
+}
 
 function readFavorites(): string[] {
   try {
@@ -70,9 +97,11 @@ export function PropertyActions({
   compact?: boolean;
 }) {
   const [favorite, setFavorite] = useState(false);
+  const [compared, setCompared] = useState(false);
 
   useEffect(() => {
     setFavorite(readFavorites().includes(property.slug));
+    setCompared(readCompare().includes(property.slug));
   }, [property.slug]);
 
   function onFavorite(event: MouseEvent<HTMLButtonElement>) {
@@ -89,6 +118,27 @@ export function PropertyActions({
     event.stopPropagation();
     void shareProperty(property);
   }
+
+  function onCompare(event: MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const current = readCompare();
+    if (!compared && current.length >= MAX_COMPARE) {
+      toast.info("برای مقایسه هم‌زمان حداکثر ۳ فایل انتخاب کنید.");
+      return;
+    }
+
+    const result = toggleCompare(property.slug);
+    setCompared(result.added);
+    trackAnalyticsEvent("property_compare", property.slug);
+    toast.success(
+      result.added
+        ? "فایل به مقایسه اضافه شد."
+        : "فایل از مقایسه حذف شد.",
+    );
+  }
+
 
   return (
     <div className={`property-actions${compact ? " property-actions-compact" : ""}`}>
@@ -112,6 +162,17 @@ export function PropertyActions({
       >
         <Share2 size={compact ? 17 : 16} />
         {!compact ? <span>اشتراک‌گذاری</span> : null}
+      </button>
+      <button
+        type="button"
+        className={`property-action${compared ? " is-active" : ""}`}
+        onClick={onCompare}
+        aria-label={compared ? "حذف از مقایسه" : "افزودن به مقایسه"}
+        aria-pressed={compared}
+        title={compared ? "حذف از مقایسه" : "مقایسه فایل"}
+      >
+        <ArrowLeftRight size={compact ? 17 : 16} />
+        {!compact ? <span>{compared ? "در مقایسه" : "مقایسه"}</span> : null}
       </button>
     </div>
   );
