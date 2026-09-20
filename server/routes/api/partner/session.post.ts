@@ -1,0 +1,59 @@
+import { createError, defineEventHandler, getCookie, readBody, setCookie } from "h3";
+import {
+  PARTNER_SESSION_COOKIE,
+  PARTNER_SESSION_MAX_AGE,
+  createPartnerSessionToken,
+  verifyPartnerSessionToken,
+} from "@/lib/partner-session.server";
+import { authenticatePartner, getPartnerOverview } from "@/lib/partner-program.server";
+
+type Body = {
+  action?: "login" | "logout" | "me";
+  partnerCode?: string;
+  pin?: string;
+};
+
+function cookieOptions(maxAge: number) {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production" || process.env.VERCEL === "1",
+    path: "/",
+    maxAge,
+  };
+}
+
+export default defineEventHandler(async (event) => {
+  const body = (await readBody(event).catch(() => ({}))) as Body;
+  const action = body.action ?? "me";
+
+  if (action === "logout") {
+    setCookie(event, PARTNER_SESSION_COOKIE, "", cookieOptions(0));
+    return { success: true };
+  }
+
+  const existingId = await verifyPartnerSessionToken(getCookie(event, PARTNER_SESSION_COOKIE));
+  if (action === "me") {
+    const overview = existingId ? await getPartnerOverview(existingId) : null;
+    return { authenticated: Boolean(overview), partner: overview };
+  }
+
+  if (existingId) {
+    const overview = await getPartnerOverview(existingId);
+    return { success: true, authenticated: true, partner: overview };
+  }
+
+  const partnerId = await authenticatePartner(body.partnerCode ?? "", body.pin ?? "");
+  if (!partnerId) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: "کد همکاری یا رمز ورود نادرست است.",
+    });
+  }
+
+  const token = await createPartnerSessionToken(partnerId);
+  setCookie(event, PARTNER_SESSION_COOKIE, token, cookieOptions(PARTNER_SESSION_MAX_AGE));
+
+  const overview = await getPartnerOverview(partnerId);
+  return { success: true, authenticated: true, partner: overview };
+});
