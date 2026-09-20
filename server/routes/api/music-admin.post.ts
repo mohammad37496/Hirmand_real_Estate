@@ -1,4 +1,4 @@
-import { createError, defineEventHandler, getCookie, readBody } from "h3";
+import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
 import { del } from "@vercel/blob";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
@@ -53,6 +53,7 @@ function getConfiguredBlobStoreId(): string | null {
 
 
 export default defineEventHandler(async (event) => {
+  setResponseHeader(event, "cache-control", "no-store");
   const body = (await readBody(event)) as Body;
 
   if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
