@@ -4,6 +4,7 @@
  */
 import { defineEventHandler, setResponseHeader } from "h3";
 import { allAreas, areaPath } from "../../src/lib/areas";
+import { TEAM } from "../../src/lib/site";
 import { resolveDatabaseUrl } from "../../scripts/resolve-database-url.mjs";
 
 const SITE = (process.env.VITE_SITE_URL || "https://www.hirmandrealestate.ir").replace(/\/$/, "");
@@ -87,6 +88,10 @@ export default defineEventHandler(async (event) => {
 
   entries.push(urlEntry(`${SITE}/`, "daily", "1.0", today));
   entries.push(urlEntry(`${SITE}/properties`, "daily", "0.9", today));
+
+  for (const person of TEAM) {
+    entries.push(urlEntry(`${SITE}/consultants/${encodeURIComponent(person.id)}`, "weekly", "0.6", today));
+  }
 
   for (const area of allAreas()) {
     entries.push(urlEntry(`${SITE}${areaPath(area.slug)}`, "weekly", "0.7", today));
