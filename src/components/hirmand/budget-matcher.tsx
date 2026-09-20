@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { ArrowLeftRight, CheckCircle2, Filter, Search, Sparkles, WalletCards } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { PROPERTY_TYPES, NEIGHBORHOOD_NAMES } from "@/lib/site";
 import { DEFAULT_RAHN_RATE, RAHN_RATE_PRESETS } from "@/lib/finance";
-import { formatGroupedInput, formatToman, parseAmount } from "@/lib/money";
+import { formatToman, parseAmount } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import {
   matchPublishedPropertiesByBudget,
@@ -38,7 +38,7 @@ export function BudgetMatcher() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  async function search(event: React.FormEvent) {
+  async function search(event: FormEvent) {
     event.preventDefault();
     const depositBudget = parseAmount(deposit);
     const rentBudget = parseAmount(rent);
