@@ -1650,7 +1650,11 @@ export function AdminPropertiesPage() {
           <Globe2 size={20} />
           دیوار
         </button>
-        <Link to="/">سایت</Link>
+        <button type="button" className={view === "partners" ? "is-active" : ""} onClick={() => setView("partners")}>
+          <UsersRound size={20} />
+          همکاران
+        </button>
+        <Link to="/" className="admin-mobile-site">سایت</Link>
       </nav>
     </div>
   );

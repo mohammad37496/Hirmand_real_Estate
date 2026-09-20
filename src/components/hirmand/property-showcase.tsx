@@ -61,8 +61,9 @@ function PropertyImage({ src, alt, fallback }: { src: string; alt: string; fallb
 export function PropertyCard({ property }: { property: Property | PropertyCardData }) {
   return (
     <article className="property-card">
-      <a
-        href={propertyPath(property)}
+      <Link
+        to="/properties/$slug"
+        params={{ slug: property.slug }}
         className="property-card-link"
         aria-label={`مشاهده جزئیات کامل فایل ${property.title}`}
       >
@@ -120,7 +121,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
           </div>
           <span className="property-card-details-link">مشاهده جزئیات کامل فایل <ChevronLeft size={14} /></span>
         </div>
-      </a>
+      </Link>
 
       <div className="property-card-actions" aria-label="عملیات فایل">
         <PropertyActions property={property} compact />
