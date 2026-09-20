@@ -2710,6 +2710,45 @@ summary:focus-visible {
   transform: none;
 }
 
+.property-card-actions {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+
+.property-card-action {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 11px;
+  color: var(--fg);
+  background: rgba(7, 9, 13, 0.74);
+  backdrop-filter: blur(10px);
+  transition:
+    color var(--fast) var(--ease),
+    background-color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
+}
+
+.property-card-action:hover {
+  color: var(--gold-soft);
+  border-color: var(--gold-line);
+  background: rgba(7, 9, 13, 0.9);
+  transform: translateY(-1px);
+}
+
+.property-card-action.is-active {
+  color: var(--gold-soft);
+  border-color: var(--gold-line);
+  background: rgba(201, 162, 74, 0.14);
+}
+
 .property-card-body {
   padding: 18px;
 }
