@@ -811,27 +811,6 @@ export const saveProperty = createServerFn({ method: "POST" })
       [id],
     );
     const existing = existingRows[0] ?? null;
-    const numeric = (value: unknown) => {
-      if (value == null || value === "") return null;
-      const n = Number(value);
-      return Number.isFinite(n) ? n : null;
-    };
-    const effectiveValue = (
-      transaction: PropertyTransaction | null | undefined,
-      price: unknown,
-      deposit: unknown,
-      rent: unknown,
-    ) => {
-      if (transaction === "rent") return numeric(rent) ?? numeric(deposit);
-      if (transaction === "mortgage") return numeric(deposit);
-      return numeric(price);
-    };
-    const oldValue = existing
-      ? effectiveValue(existing.transaction_type as PropertyTransaction, existing.price, existing.deposit, existing.rent)
-      : null;
-    const newValue = effectiveValue(data.transactionType, data.price, data.deposit, data.rent);
-    const dropped = oldValue != null && newValue != null && oldValue > 0 && newValue < oldValue;
-    const dropPercent = dropped ? Number((((oldValue - newValue) / oldValue) * 100).toFixed(2)) : null;
     const publishedAt = data.status === "published" ? new Date().toISOString() : null;
 
     await sql.query(
