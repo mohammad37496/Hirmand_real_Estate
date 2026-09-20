@@ -110,9 +110,9 @@ export function Header() {
               {item.label}
             </Link>
           ) : item.to === "/properties" ? (
-            <a key={item.id} href="/properties" onClick={closeMenu}>
+            <Link key={item.id} to="/properties" onClick={closeMenu}>
               {item.label}
-            </a>
+            </Link>
           ) : (
             <Link key={item.id} to="/" hash={item.hash} onClick={(event) => goHash(event, item.hash)}>
               {item.label}
