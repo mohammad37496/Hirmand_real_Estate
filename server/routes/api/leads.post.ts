@@ -1,8 +1,10 @@
-import { createError, defineEventHandler, readBody } from "h3";
+import { createError, defineEventHandler, getCookie, readBody } from "h3";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { buildBudgetLeadNote, budgetEquivalent } from "@/lib/budget-lead";
 import { DEFAULT_MATCH_RAHN_RATE } from "@/lib/budget-matching";
+
+const VISITOR_COOKIE = "hirmand_visitor_id";
 
 const matchSchema = z.object({
   slug: z.string().trim().min(1).max(220),
