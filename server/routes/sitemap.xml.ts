@@ -30,8 +30,8 @@ async function loadPropertyUrls(): Promise<{ loc: string; lastmod?: string }[]> 
     const { Pool } = await import("pg");
     const pool = new Pool({ connectionString: databaseUrl, max: 1, idleTimeoutMillis: 3000, connectionTimeoutMillis: 3000 });
     try {
-      const res = await pool.query<{ slug: string; updated_at: Date | string | null }>(
-        `select slug, updated_at from properties
+      const res = await pool.query<{ id: string; slug: string; updated_at: Date | string | null }>(
+        `select id, slug, updated_at from properties
          where status = 'published'
          order by published_at desc nulls last, created_at desc
          limit 49000`,
