@@ -1,4 +1,5 @@
-import { createError, defineEventHandler, getCookie, readBody } from "h3";
+import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
+import { z } from "zod";
 import { verifyAdminSessionToken, ADMIN_SESSION_COOKIE } from "@/lib/admin-session.server";
 import {
   claimPartnerReward,
@@ -22,6 +23,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  setResponseHeader(event, "cache-control", "no-store");
   const body = (await readBody(event).catch(() => ({}))) as {
     action?:
       | "list"
@@ -44,16 +46,19 @@ export default defineEventHandler(async (event) => {
 
   try {
     if (body.action === "create") {
-      if (!body.agencyName || !body.contactName || !body.phone) {
-        throw new Error("نام املاک، مسئول و شماره تماس را کامل کنید.");
-      }
+      const input = z.object({
+        agencyName: z.string().trim().min(2).max(120),
+        contactName: z.string().trim().min(2).max(100),
+        phone: z.string().trim().min(7).max(20),
+      }).safeParse({
+        agencyName: body.agencyName,
+        contactName: body.contactName,
+        phone: body.phone,
+      });
+      if (!input.success) throw new Error("نام املاک، مسئول و شماره تماس را معتبر وارد کنید.");
       return {
         success: true,
-        created: await createPartnerAccount({
-          agencyName: body.agencyName,
-          contactName: body.contactName,
-          phone: body.phone,
-        }),
+        created: await createPartnerAccount(input.data),
       };
     }
 
