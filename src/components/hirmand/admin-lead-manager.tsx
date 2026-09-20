@@ -67,7 +67,7 @@ export function AdminLeadManager() {
       const response = await fetch("/api/leads-admin", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "status", adminKey, id, status }),
+        body: JSON.stringify({ action: "status", id, status }),
       });
       if (!response.ok) {
         const result = (await response.json().catch(() => null)) as { statusMessage?: string } | null;
@@ -85,7 +85,7 @@ export function AdminLeadManager() {
       const response = await fetch("/api/leads-admin", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "delete", adminKey, id }),
+        body: JSON.stringify({ action: "delete", id }),
       });
       if (!response.ok) throw new Error("حذف درخواست انجام نشد.");
       setLeads((prev) => prev.filter((lead) => lead.id !== id));
