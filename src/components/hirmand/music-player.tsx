@@ -131,11 +131,11 @@ export function MusicPlayer() {
     const candidates = Array.from(
       new Set(
         [
-          currentTrack.src,
           currentTrack.stream,
           currentTrack.id
             ? `/api/music/file/${encodeURIComponent(currentTrack.id)}`
             : "",
+          currentTrack.src,
         ].filter((value): value is string => Boolean(value)),
       ),
     );
