@@ -7,6 +7,7 @@ import {
   verifyPartnerSessionToken,
 } from "@/lib/partner-session.server";
 import { authenticatePartner, getPartnerOverview } from "@/lib/partner-program.server";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
   action: z.enum(["login", "logout", "me"]).optional().default("me"),
@@ -48,13 +49,11 @@ export default defineEventHandler(async (event) => {
     return { authenticated: Boolean(overview), partner: overview };
   }
 
+  enforceRateLimit(event, "partner-login", 12, 60_000);
+
   if (existingId) {
     const overview = await getPartnerOverview(existingId);
-    if (!overview) {
-      setCookie(event, PARTNER_SESSION_COOKIE, "", cookieOptions(0));
-      return { success: false, authenticated: false, partner: null };
-    }
-    if (overview.status === "suspended") {
+    if (!overview || overview.status === "suspended") {
       setCookie(event, PARTNER_SESSION_COOKIE, "", cookieOptions(0));
       return { success: false, authenticated: false, partner: null };
     }
