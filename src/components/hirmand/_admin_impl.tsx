@@ -209,8 +209,8 @@ export function AdminPropertiesPage() {
         if (!data?.authenticated || cancelled) return;
 
         const [rows, totals] = await Promise.all([
-          listAdminProperties({ data: { adminKey: "", limit: 100, offset: 0 } }),
-          countAdminProperties({ data: { adminKey: "" } }),
+          listAdminProperties({ data: { limit: 100, offset: 0 } }),
+          countAdminProperties({ data: {} }),
         ]);
 
         if (cancelled) return;
@@ -237,8 +237,8 @@ export function AdminPropertiesPage() {
     setLoadingList(true);
     try {
       const [rows, totals] = await Promise.all([
-        listAdminProperties({ data: { adminKey: "", limit: 100, offset: 0 } }),
-        countAdminProperties({ data: { adminKey: "" } }),
+        listAdminProperties({ data: { limit: 100, offset: 0 } }),
+        countAdminProperties({ data: {} }),
       ]);
       setProperties(rows);
       setPropertyOffset(rows.length);
@@ -279,8 +279,8 @@ export function AdminPropertiesPage() {
       }
 
       const [rows, totals] = await Promise.all([
-        listAdminProperties({ data: { adminKey: "", limit: 100, offset: 0 } }),
-        countAdminProperties({ data: { adminKey: "" } }),
+        listAdminProperties({ data: { limit: 100, offset: 0 } }),
+        countAdminProperties({ data: {} }),
       ]);
 
       setKeyInput("");
@@ -460,7 +460,7 @@ export function AdminPropertiesPage() {
   async function removeProperty(property: Property) {
     if (!confirm(`حذف «${property.title}»؟ این عمل قابل بازگشت نیست.`)) return;
     try {
-      await deleteProperty({ data: { adminKey: "", id: property.id } });
+      await deleteProperty({ data: { id: property.id } });
       toast.success("فایل حذف شد.");
       if (form.id === property.id) setForm(emptyForm(""));
       await refresh();
