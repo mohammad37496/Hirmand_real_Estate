@@ -7,6 +7,7 @@ import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties"
 import { SITE } from "@/lib/site";
 
 const FAVORITES_KEY = "hirmand-favorite-properties";
+const RECENT_PROPERTIES_KEY = "hirmand-recent-properties";
 
 function readFavorites() {
   try {
@@ -14,6 +15,19 @@ function readFavorites() {
     const parsed = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed)
       ? parsed.filter((item): item is string => typeof item === "string").slice(0, 100)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+
+function readRecent() {
+  try {
+    const raw = localStorage.getItem(RECENT_PROPERTIES_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string").slice(0, 8)
       : [];
   } catch {
     return [];
@@ -33,19 +47,31 @@ export const Route = createFileRoute("/favorites")({
 
 function FavoritesPage() {
   const [properties, setProperties] = useState<Property[]>([]);
+  const [recentProperties, setRecentProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const [recentLoading, setRecentLoading] = useState(true);
 
   useEffect(() => {
-    const slugs = readFavorites();
-    if (!slugs.length) {
+    const favoriteSlugs = readFavorites();
+    const recentSlugs = readRecent();
+
+    if (favoriteSlugs.length) {
+      void listPublishedPropertiesBySlugs({ data: { slugs: favoriteSlugs } })
+        .then(setProperties)
+        .catch(() => setProperties([]))
+        .finally(() => setLoading(false));
+    } else {
       setLoading(false);
-      return;
     }
 
-    listPublishedPropertiesBySlugs({ data: { slugs } })
-      .then(setProperties)
-      .catch(() => setProperties([]))
-      .finally(() => setLoading(false));
+    if (recentSlugs.length) {
+      void listPublishedPropertiesBySlugs({ data: { slugs: recentSlugs } })
+        .then(setRecentProperties)
+        .catch(() => setRecentProperties([]))
+        .finally(() => setRecentLoading(false));
+    } else {
+      setRecentLoading(false);
+    }
   }, []);
 
   return (
@@ -87,6 +113,30 @@ function FavoritesPage() {
               <Search size={16} />
               مشاهده فایل‌ها
             </Link>
+          </section>
+        )}
+
+        {(recentLoading || recentProperties.length) ? (
+          <section className="favorites-recent-section">
+            <header className="favorites-head favorites-recent-head">
+              <div>
+                <span className="kicker">تاریخچه مرور</span>
+                <h2>اخیراً دیده‌شده</h2>
+                <p>آخرین فایل‌هایی که در این مرورگر بررسی کرده‌اید.</p>
+              </div>
+            </header>
+            {recentLoading ? (
+              <section className="property-empty">
+                <Loader2 size={22} className="admin-spin" />
+                <strong>در حال آماده‌سازی تاریخچه…</strong>
+              </section>
+            ) : (
+              <div className="property-grid">
+                {recentProperties.map((property) => (
+                  <PropertyCard key={property.id} property={property} />
+                ))}
+              </div>
+            )}
           </section>
         )}
       </main>
