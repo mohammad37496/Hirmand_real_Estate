@@ -151,7 +151,7 @@ export default defineEventHandler(async (event) => {
       follow_up_at, budget_deposit, budget_rent, budget_rate, budget_equivalent, budget_bedrooms,
       matched_properties, match_count
     )
-    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,current_timestamp + interval '24 hours',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21::jsonb,$22)
+    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,current_timestamp + interval '24 hours',$15,$16,$17,$18,$19,$20::jsonb,$21)
     returning id`,
     [
       crypto.randomUUID(),
