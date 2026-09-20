@@ -51,7 +51,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
             onError={(event) => {
               const image = event.currentTarget;
               const source = image.dataset.source ?? image.src;
-              if (image.dataset.proxy !== "1" && /divarcdn\\.com/i.test(source)) {
+              if (image.dataset.proxy !== "1" && /divarcdn\.com/i.test(source)) {
                 image.dataset.proxy = "1";
                 image.src = `https://wsrv.nl/?url=${encodeURIComponent(source)}`;
                 return;
