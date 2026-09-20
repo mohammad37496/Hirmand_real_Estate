@@ -6199,3 +6199,27 @@ body {
     grid-template-rows: 245px 86px;
   }
 }
+
+
+.property-detail-ad-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px 12px;
+  margin-bottom: 3px;
+  color: #8a8f96;
+  font-size: .68rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.property-detail-ad-meta span + span::before {
+  content: "•";
+  margin-inline-end: 10px;
+  color: #b3b7bc;
+}
+
+@media (max-width:680px) {
+  .property-detail-ad-meta {
+    font-size: .64rem;
+  }
+}
