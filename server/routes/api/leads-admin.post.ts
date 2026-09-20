@@ -134,6 +134,8 @@ export default defineEventHandler(async (event) => {
         acquisitionMedium: row.acquisition_medium == null ? null : String(row.acquisition_medium),
         acquisitionCampaign: row.acquisition_campaign == null ? null : String(row.acquisition_campaign),
         acquisitionReferrer: row.acquisition_referrer == null ? null : String(row.acquisition_referrer),
+        followUpAt: row.follow_up_at == null ? null : new Date(String(row.follow_up_at)).toISOString(),
+        lastContactedAt: row.last_contacted_at == null ? null : new Date(String(row.last_contacted_at)).toISOString(),
         budgetDeposit: row.budget_deposit == null ? null : Number(row.budget_deposit),
         budgetRent: row.budget_rent == null ? null : Number(row.budget_rent),
         budgetEquivalent: row.budget_equivalent == null ? null : Number(row.budget_equivalent),
@@ -161,8 +163,12 @@ export default defineEventHandler(async (event) => {
       });
     }
     await sql.query(
-      "update leads set status=$2, updated_at=current_timestamp where id=$1",
-      [body.id, body.status],
+      "update leads set status=$2, follow_up_at=$3, last_contacted_at=case when $2='contacted' then current_timestamp else last_contacted_at end, updated_at=current_timestamp where id=$1",
+      [
+        body.id,
+        body.status,
+        body.status === "new" ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() : body.status === "contacted" ? new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString() : null,
+      ],
     );
     return { success: true };
   }
