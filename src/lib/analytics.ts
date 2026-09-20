@@ -4,7 +4,8 @@ export type AnalyticsEvent =
   | "inquiry_submit"
   | "inquiry_click"
   | "property_share"
-  | "property_favorite";
+  | "property_favorite"
+  | "property_view";
 
 export function trackAnalyticsEvent(
   event: AnalyticsEvent,
