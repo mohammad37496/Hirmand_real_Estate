@@ -59,7 +59,12 @@ function FavoritesPage() {
               فایل‌هایی که برای مقایسه و بررسی بعدی ذخیره کرده‌اید، اینجا در دسترس هستند.
             </p>
           </div>
-          <Heart size={30} />
+          <div className="favorites-head-actions">
+            <Link to="/compare" className="btn-ghost">
+              <ArrowLeftRight size={15} /> مقایسه فایل‌ها
+            </Link>
+            <Heart size={30} />
+          </div>
         </header>
 
         {loading ? (
