@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
 
   const sql = await getSql();
   const rows = await sql.query<Record<string, unknown>>(`
-    select id, title, slug, status, featured, transaction_type, property_type,
+    select id, title, slug, status, featured, featured_until, transaction_type, property_type,
            neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
            built_year, parking, elevator, storage, price, deposit, rent,
            contact_name, contact_phone, created_at, updated_at
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
   `);
 
   const headers = [
-    "شناسه","عنوان","slug","وضعیت","ویژه","معامله","نوع ملک","محله","آدرس",
+    "شناسه","عنوان","slug","وضعیت","ویژه","پایان ویژه","معامله","نوع ملک","محله","آدرس",
     "متراژ","خواب","سرویس","طبقه","کل طبقات","سال ساخت","پارکینگ","آسانسور",
     "انباری","قیمت","رهن","اجاره","مشاور","تلفن","ایجاد","آخرین بروزرسانی"
   ];
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
     ...rows.map((row) => [
       row.id, row.title, row.slug, statusLabels[String(row.status)] ?? row.status,
       row.featured ? "بله" : "خیر",
-      row.featured_until ? csvDate(row.featured_until) : "",
+      row.featured_until ? new Date(String(row.featured_until)).toISOString() : "",
       transactionLabels[String(row.transaction_type)] ?? row.transaction_type,
       row.property_type, row.neighborhood, row.address, row.area_m2, row.bedrooms,
       row.bathrooms, row.floor, row.total_floors, row.built_year,
