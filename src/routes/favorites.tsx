@@ -138,7 +138,7 @@ function FavoritesPage() {
               </div>
             )}
           </section>
-        )}
+        ) : null}
       </main>
     </SiteChrome>
   );
