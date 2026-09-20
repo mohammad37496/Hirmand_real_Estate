@@ -65,10 +65,13 @@ export default defineEventHandler(async (event) => {
       order by count desc
     `),
     sql.query<Record<string, unknown>>(`
-      select created_at::date as day, count(*)::int as count
+      select (created_at at time zone 'Asia/Tehran')::date as day, count(*)::int as count
       from leads
-      where created_at >= current_date - interval '6 days'
-      group by created_at::date
+      where created_at >= (
+        ((current_timestamp at time zone 'Asia/Tehran')::date - 6)
+        at time zone 'Asia/Tehran'
+      )
+      group by (created_at at time zone 'Asia/Tehran')::date
       order by day asc
     `),
     sql.query<Record<string, unknown>>(`
