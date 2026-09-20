@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { isVideoUrl } from "@/lib/media";
 
 type Props = {
-  adminKey: string;
   value: string;
   onChange: (next: string) => void;
 };
