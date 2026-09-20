@@ -1,5 +1,6 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
-import { createError, defineEventHandler, getHeader, readBody } from "h3";
+import { createError, defineEventHandler, getCookie, readBody } from "h3";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 
 const MAX_BYTES = 25 * 1024 * 1024;
 const ALLOWED = [
@@ -16,15 +17,14 @@ export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as HandleUploadBody;
 
   try {
-    if (body.type === "blob.generate-client-token") {
-      const adminKey = getHeader(event, "x-hirmand-admin-key")?.trim();
-      const expected = process.env.HIRMAND_ADMIN_KEY?.trim();
-      if (!expected || !adminKey || adminKey !== expected) {
-        throw createError({
-          statusCode: 401,
-          statusMessage: "کلید مدیریت نادرست است.",
-        });
-      }
+    if (
+      body.type === "blob.generate-client-token" &&
+      !await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))
+    ) {
+      throw createError({
+        statusCode: 401,
+        statusMessage: "نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.",
+      });
     }
 
     return await handleUpload({
