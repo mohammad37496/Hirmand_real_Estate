@@ -119,6 +119,9 @@ function buildFilterData(
   maxArea: string,
   minPrice: string,
   maxPrice: string,
+  minBedrooms: string,
+  parkingOnly: boolean,
+  elevatorOnly: boolean,
   sort: PropertySort,
   offset: number,
 ) {
@@ -133,6 +136,9 @@ function buildFilterData(
     maxArea: nextMaxArea,
     minPrice: nextMinPrice,
     maxPrice: nextMaxPrice,
+    minBedrooms: parseNumber(minBedrooms),
+    parkingOnly,
+    elevatorOnly,
     sort,
     offset,
   };
@@ -150,6 +156,9 @@ function PropertiesIndexPage() {
   const [maxArea, setMaxArea] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [minBedrooms, setMinBedrooms] = useState("");
+  const [parkingOnly, setParkingOnly] = useState(false);
+  const [elevatorOnly, setElevatorOnly] = useState(false);
   const [sort, setSort] = useState<PropertySort>("newest");
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -184,6 +193,9 @@ function PropertiesIndexPage() {
     setMaxArea(params.get("maxArea") ?? "");
     setMinPrice(params.get("minPrice") ?? "");
     setMaxPrice(params.get("maxPrice") ?? "");
+    setMinBedrooms(params.get("bedrooms") ?? "");
+    setParkingOnly(params.get("parking") === "1");
+    setElevatorOnly(params.get("elevator") === "1");
     setSort(validSort);
     skipInitialFetch.current = Array.from(params.keys()).length === 0;
     setUrlReady(true);
@@ -201,10 +213,13 @@ function PropertiesIndexPage() {
     if (maxArea.trim()) params.set("maxArea", maxArea.trim());
     if (minPrice.trim()) params.set("minPrice", minPrice.trim());
     if (maxPrice.trim()) params.set("maxPrice", maxPrice.trim());
+    if (minBedrooms.trim()) params.set("bedrooms", minBedrooms.trim());
+    if (parkingOnly) params.set("parking", "1");
+    if (elevatorOnly) params.set("elevator", "1");
     if (sort !== "newest") params.set("sort", sort);
     const query = params.toString();
     window.history.replaceState({}, "", query ? `/properties?${query}` : "/properties");
-  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, sort]);
+  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, parkingOnly, elevatorOnly, sort]);
 
   useEffect(() => {
     if (!urlReady || skipInitialFetch.current) {
@@ -226,6 +241,9 @@ function PropertiesIndexPage() {
           maxArea,
           minPrice,
           maxPrice,
+          minBedrooms,
+          parkingOnly,
+          elevatorOnly,
           sort,
           0,
         );
@@ -261,6 +279,9 @@ function PropertiesIndexPage() {
           maxArea,
           minPrice,
           maxPrice,
+          minBedrooms,
+          parkingOnly,
+          elevatorOnly,
           sort,
           nextOffset,
         ),
