@@ -499,7 +499,20 @@ export function AdminPropertiesPage() {
       setSelectedIds([]);
       setLoadingList(true);
 
-      const filterData = currentListFilters(0, 50);
+      const filterData = {
+        limit: 50,
+        offset: 0,
+        status:
+          listFilter !== "all" && listFilter !== "featured"
+            ? listFilter
+            : undefined,
+        transactionType: listTransaction !== "all" ? listTransaction : undefined,
+        propertyType: listType !== "all" ? listType : undefined,
+        neighborhood: listNeighborhood || undefined,
+        featuredOnly: listFilter === "featured",
+        search: query.trim() || undefined,
+        sort: listSort,
+      };
       void Promise.all([
         listAdminProperties({ data: filterData }),
         countFilteredAdminProperties({ data: filterData }),
