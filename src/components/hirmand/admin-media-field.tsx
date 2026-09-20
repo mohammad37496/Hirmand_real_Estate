@@ -25,6 +25,7 @@ export function AdminMediaField({ value, onChange }: Props) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
   const items = linesToList(value);
 
   function setItems(next: string[]) {
@@ -39,6 +40,15 @@ export function AdminMediaField({ value, onChange }: Props) {
     const current = next[index]!;
     next[index] = next[nextIndex]!;
     next[nextIndex] = current;
+    setItems(next);
+  }
+
+  function reorderByDrag(from: number, to: number) {
+    if (from === to || from < 0 || to < 0 || from >= items.length || to >= items.length) return;
+    const next = [...items];
+    const [moved] = next.splice(from, 1);
+    if (!moved) return;
+    next.splice(to, 0, moved);
     setItems(next);
   }
 
@@ -169,13 +179,21 @@ export function AdminMediaField({ value, onChange }: Props) {
         <>
           <div className="admin-media-toolbar">
             <strong>{items.length.toLocaleString("fa-IR")} رسانه از ۱۲</strong>
-            <span>اولین مورد به‌عنوان تصویر اصلی فایل استفاده می‌شود.</span>
+            <span>اولین مورد کاور اصلی است · برای جابه‌جایی، رسانه را بکشید و روی جای جدید رها کنید.</span>
           </div>
           <div className="admin-media-grid">
             {items.map((src, index) => {
               const video = isVideoUrl(src);
               return (
-                <div key={`${src}-${index}`} className={`admin-media-item${index === 0 ? " is-primary" : ""}`}>
+                <div
+                  key={`${src}-${index}`}
+                  className={`admin-media-item${index === 0 ? " is-primary" : ""}${dragIndex === index ? " is-dragging" : ""}`}
+                  draggable={!uploading}
+                  onDragStart={(e) => { setDragIndex(index); e.dataTransfer.effectAllowed = "move"; }}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+                  onDrop={(e) => { e.preventDefault(); reorderByDrag(dragIndex ?? index, index); setDragIndex(null); }}
+                  onDragEnd={() => setDragIndex(null)}
+                >
                   {video ? (
                     <video src={src} muted playsInline preload="metadata" />
                   ) : (
