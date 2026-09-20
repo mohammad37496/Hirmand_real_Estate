@@ -224,14 +224,53 @@ export async function authenticatePartner(partnerCode: string, pin: string) {
   const sql = await ensureConfigured();
   const code = normalizePartnerCode(partnerCode);
   const rows = await sql.query<Record<string, unknown>>(
-    `select id, pin_hash, pin_salt, status from partner_accounts where partner_code = $1 limit 1`,
+    `
+      select id, pin_hash, pin_salt, status, failed_login_count, locked_until
+      from partner_accounts
+      where partner_code = $1
+      limit 1
+    `,
     [code],
   );
   const row = rows[0];
   if (!row || String(row.status) !== "active") return null;
-  if (!verifyPartnerPin(normalizeDigits(pin), String(row.pin_hash), String(row.pin_salt))) return null;
 
-  await touchPartnerLogin(String(row.id));
+  const lockedUntil = row.locked_until ? new Date(String(row.locked_until)).getTime() : 0;
+  if (lockedUntil && lockedUntil > Date.now()) return null;
+
+  const valid = verifyPartnerPin(
+    normalizeDigits(pin),
+    String(row.pin_hash),
+    String(row.pin_salt),
+  );
+
+  if (!valid) {
+    const failures = (Number(row.failed_login_count) || 0) + 1;
+    await sql.query(
+      `
+        update partner_accounts
+        set failed_login_count = $2,
+            locked_until = case when $2 >= 5 then current_timestamp + interval '15 minutes' else null end,
+            updated_at = current_timestamp
+        where id = $1
+      `,
+      [String(row.id), failures],
+    );
+    return null;
+  }
+
+  await sql.query(
+    `
+      update partner_accounts
+      set failed_login_count = 0,
+          locked_until = null,
+          last_login_at = current_timestamp,
+          updated_at = current_timestamp
+      where id = $1
+    `,
+    [String(row.id)],
+  );
+
   return String(row.id);
 }
 
