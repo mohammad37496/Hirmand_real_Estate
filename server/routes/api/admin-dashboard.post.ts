@@ -144,14 +144,18 @@ export default defineEventHandler(async (event) => {
         e.property_slug,
         p.title,
         p.neighborhood,
-        count(*)::int as views
+        count(*) filter (where e.event_name = 'property_view')::int as views,
+        count(distinct e.visitor_id) filter (where e.event_name = 'property_view')::int as unique_views,
+        count(*) filter (where e.event_name = 'call_click')::int as calls,
+        count(*) filter (where e.event_name = 'whatsapp_click')::int as whatsapp,
+        count(*) filter (where e.event_name = 'property_favorite')::int as favorites
       from site_events e
       left join properties p on p.slug = e.property_slug
       where e.day >= (current_timestamp at time zone 'Asia/Tehran')::date - 29
-        and e.event_name = 'property_view'
         and e.property_slug is not null
       group by e.property_slug, p.title, p.neighborhood
-      order by views desc
+      having count(*) filter (where e.event_name = 'property_view') > 0
+      order by views desc, unique_views desc
       limit 8
     `).catch((error) => {
       console.error("[admin-dashboard] top properties unavailable", error);
@@ -229,6 +233,10 @@ export default defineEventHandler(async (event) => {
       title: String(row.title ?? "فایل حذف‌شده"),
       neighborhood: String(row.neighborhood ?? ""),
       views: Number(row.views) || 0,
+      uniqueViews: Number(row.unique_views) || 0,
+      calls: Number(row.calls) || 0,
+      whatsapp: Number(row.whatsapp) || 0,
+      favorites: Number(row.favorites) || 0,
     })),
     eventStats: eventStats.map((row) => ({
       event: String(row.event_name),
