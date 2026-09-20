@@ -166,6 +166,7 @@ const propertyInputSchema = z.object({
   contactPhone: z.string().trim().min(8).max(30),
   status: z.enum(["draft", "published", "archived"]).default("published"),
   featured: z.boolean().default(false),
+  featuredUntil: z.string().trim().max(80).nullable().optional().default(null),
 });
 
 const budgetMatchSchema = z
