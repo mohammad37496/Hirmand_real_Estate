@@ -2,6 +2,7 @@ export type AnalyticsEvent =
   | "call_click"
   | "whatsapp_click"
   | "inquiry_submit"
+  | "inquiry_click"
   | "property_share"
   | "property_favorite";
 
