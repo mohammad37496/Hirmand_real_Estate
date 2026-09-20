@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { BadgeCheck, Check, Copy, Gift, History, KeyRound, LogIn, LogOut, RefreshCw, Send, Ticket, UserRound } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { BrandLogo } from "@/components/hirmand/logo";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { SITE } from "@/lib/site";
