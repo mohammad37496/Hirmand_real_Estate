@@ -320,6 +320,9 @@ function PropertiesIndexPage() {
               <Link to="/favorites" className="properties-saved-link">
                 <Heart size={14} /> ذخیره‌های من
               </Link>
+              <Link to="/compare" className="properties-saved-link">
+                <ArrowLeftRight size={14} /> مقایسه فایل‌ها
+              </Link>
               <a href="/#inquiry">درخواست فایل اختصاصی</a>
             </div>
           </div>
