@@ -100,7 +100,7 @@ export function PropertyCard({ property }: { property: PropertyCardData }) {
     </article>
   );
 }
-export function PropertyShowcase({ initialProperties }: { initialProperties: Property[] }) {
+export function PropertyShowcase({ initialProperties }: { initialProperties: PropertyCardData[] }) {
   const [properties, setProperties] = useState(initialProperties); const [transactionType, setTransactionType] = useState(""); const [propertyType, setPropertyType] = useState(""); const [neighborhood, setNeighborhood] = useState(""); const [loading, setLoading] = useState(false);
   const neighborhoods = NEIGHBORHOOD_NAMES;
   async function applyFilters() { setLoading(true); try { const next = await listPublishedPropertyCards({ data: { transactionType: (transactionType || undefined) as PropertyTransaction | undefined, propertyType: (propertyType || undefined) as PropertyType | undefined, neighborhood: neighborhood || undefined } }); setProperties(next); } finally { setLoading(false); } }
