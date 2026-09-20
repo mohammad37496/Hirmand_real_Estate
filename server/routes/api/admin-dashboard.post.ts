@@ -1,10 +1,11 @@
-import { createError, defineEventHandler, getCookie } from "h3";
+import { createError, defineEventHandler, getCookie, setResponseHeader } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 
 type LeadStatus = "new" | "contacted" | "closed" | "spam";
 
 export default defineEventHandler(async (event) => {
+  setResponseHeader(event, "cache-control", "no-store");
   if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
     throw createError({
       statusCode: 401,
