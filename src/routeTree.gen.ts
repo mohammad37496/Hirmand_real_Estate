@@ -110,6 +110,7 @@ export interface RootRouteChildren {
   TrackingRoute: typeof TrackingRoute
   AdminRoute: typeof AdminRoute
   PropertySlugRoute: typeof PropertySlugRoute
+  VSlugIdRoute: typeof VSlugIdRoute
   AreaSlugRoute: typeof AreaSlugRoute
   PropertiesRoute: typeof PropertiesRoute
   FavoritesRoute: typeof FavoritesRoute
