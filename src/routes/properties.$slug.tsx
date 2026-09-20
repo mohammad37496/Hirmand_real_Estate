@@ -85,10 +85,13 @@ function whatsappLink(phone: string, title: string) {
 
 function sourceCandidates(src: string, fallback: string) {
   const isExternal = /divarcdn\.com|wsrv\.nl/i.test(src);
-  const proxy = isExternal
-    ? `https://wsrv.nl/?url=${encodeURIComponent(src)}`
-    : "";
-  return Array.from(new Set([src, proxy, fallback].filter(Boolean)));
+  const proxies = isExternal
+    ? [
+        `https://wsrv.nl/?url=${encodeURIComponent(src)}`,
+        `https://images.weserv.nl/?url=${encodeURIComponent(src)}`,
+      ]
+    : [];
+  return Array.from(new Set([src, ...proxies, fallback].filter(Boolean)));
 }
 
 function ResilientImage({
@@ -117,6 +120,7 @@ function ResilientImage({
       className={className}
       loading={loading}
       itemProp={itemProp}
+      referrerPolicy="no-referrer"
       decoding="async"
       onError={() => {
         setAttempt((value) => Math.min(value + 1, candidates.length - 1));
