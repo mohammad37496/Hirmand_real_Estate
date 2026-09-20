@@ -213,6 +213,7 @@ export default defineEventHandler(async (event) => {
   const m = musicStats[0] ?? {};
   const v = (visitorStats[0] ?? {}) as Record<string, unknown>;
   const active = (activeVisitorStats[0] ?? {}) as Record<string, unknown>;
+  const followUp = (followUps[0] ?? {}) as Record<string, unknown>;
 
   return {
     properties: {
@@ -284,8 +285,8 @@ export default defineEventHandler(async (event) => {
       visitors: Number(row.visitors) || 0,
     })),
     followUps: {
-      due: Number(followUps[0]?.due) || 0,
-      next7: Number(followUps[0]?.next7) || 0,
+      due: Number(followUp.due) || 0,
+      next7: Number(followUp.next7) || 0,
     },
     recentLeads: recentLeads.map((row) => ({
       id: String(row.id),
