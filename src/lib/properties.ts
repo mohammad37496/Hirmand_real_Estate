@@ -51,6 +51,35 @@ export type Property = {
   priceDropPercent?: number | null;
 };
 
+export type PropertyHistoryState = {
+  title: string | null;
+  status: PropertyStatus | null;
+  featured: boolean | null;
+  price: string | null;
+  deposit: string | null;
+  rent: string | null;
+  contactName: string | null;
+  contactPhone: string | null;
+};
+
+function mapPropertyHistoryState(value: unknown): PropertyHistoryState | null {
+  if (!value || typeof value !== "object") return null;
+  const row = value as Record<string, unknown>;
+  return {
+    title: typeof row.title === "string" ? row.title : null,
+    status:
+      row.status === "draft" || row.status === "published" || row.status === "archived"
+        ? row.status
+        : null,
+    featured: typeof row.featured === "boolean" ? row.featured : null,
+    price: row.price == null ? null : String(row.price),
+    deposit: row.deposit == null ? null : String(row.deposit),
+    rent: row.rent == null ? null : String(row.rent),
+    contactName: typeof row.contactName === "string" ? row.contactName : null,
+    contactPhone: typeof row.contactPhone === "string" ? row.contactPhone : null,
+  };
+}
+
 export type PropertyCardData = Pick<
   Property,
   | "id"
@@ -922,8 +951,8 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
     const rows = await sql.query<{
       id: number;
       action: "created" | "updated" | "deleted";
-      before_state: Record<string, unknown> | null;
-      after_state: Record<string, unknown> | null;
+      before_state: unknown;
+      after_state: unknown;
       changed_at: string | Date;
     }>(
       `select id, action, before_state, after_state, changed_at
@@ -937,8 +966,8 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
     return rows.map((row) => ({
       id: Number(row.id),
       action: row.action,
-      beforeState: row.before_state,
-      afterState: row.after_state,
+      beforeState: mapPropertyHistoryState(row.before_state),
+      afterState: mapPropertyHistoryState(row.after_state),
       changedAt: new Date(String(row.changed_at)).toISOString(),
     }));
   });
