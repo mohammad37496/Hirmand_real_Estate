@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeftRight, Heart, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { PropertyActions } from "@/components/hirmand/property-actions";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
@@ -43,6 +42,16 @@ function valueMoney(value: string | null) {
 function ComparePage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+
+  function removeFromCompare(slug: string) {
+    const next = readCompare().filter((item) => item !== slug);
+    try {
+      localStorage.setItem(COMPARE_KEY, JSON.stringify(next));
+    } catch {
+      // Ignore storage failures.
+    }
+    setProperties((current) => current.filter((property) => property.slug !== slug));
+  }
 
   useEffect(() => {
     const slugs = readCompare();
@@ -164,7 +173,13 @@ function ComparePage() {
               {properties.map((property) => (
                 <div key={property.id}>
                   <strong>{property.title}</strong>
-                  <PropertyActions property={property} />
+                  <button
+                    type="button"
+                    className="properties-reset-btn"
+                    onClick={() => removeFromCompare(property.slug)}
+                  >
+                    <Trash2 size={14} /> حذف از مقایسه
+                  </button>
                 </div>
               ))}
             </div>
