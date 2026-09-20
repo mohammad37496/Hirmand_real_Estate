@@ -41,6 +41,7 @@ import { InquiryForm, type InquiryDraft } from "./inquiry-form";
 import { BrandLogo } from "./logo";
 import { MapAppButtons, MapEmbed } from "./map-apps";
 import { PropertyShowcase } from "./property-showcase";
+import { BudgetMatcher } from "./budget-matcher";
 import { Reveal } from "./reveal";
 import { scrollToId } from "./scroll";
 import { SiteChrome } from "./site-chrome";
@@ -719,6 +720,7 @@ export function SitePage({ initialProperties = [] }: { initialProperties?: impor
       <Services onPick={(title) => goInquiry({ deal: title })} />
       <Properties onPick={(title) => goInquiry({ propertyType: title })} />
       <PropertyShowcase initialProperties={initialProperties} />
+      <Reveal as="section" className="section" id="budget-section"><BudgetMatcher /></Reveal>
       <Process />
       <Tools />
       <TrackingCta />
