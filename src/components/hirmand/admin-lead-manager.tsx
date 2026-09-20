@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Clock3, Download, ExternalLink, Loader2, Phone, Search, Trash2, UserRound } from "lucide-react";
+import { Download, ExternalLink, Loader2, Phone, Search, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 type LeadStatus = "new" | "contacted" | "closed" | "spam";
