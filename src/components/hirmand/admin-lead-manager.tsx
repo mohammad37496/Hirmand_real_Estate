@@ -56,7 +56,7 @@ export function AdminLeadManager() {
     } finally {
       setLoading(false);
     }
-  }, [adminKey]);
+  }, []);
 
   useEffect(() => {
     void load();
