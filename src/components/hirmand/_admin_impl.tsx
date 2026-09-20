@@ -28,6 +28,7 @@ import {
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
 import {
+  bulkAssignPropertyConsultant,
   bulkDeleteProperties,
   bulkSetPropertyFeatured,
   bulkUpdatePropertyStatus,
@@ -468,6 +469,29 @@ export function AdminPropertiesPage() {
       toast.success((result.updated || ids.length).toLocaleString("fa-IR") + (featured ? " فایل ویژه شد." : " فایل از حالت ویژه خارج شد."));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "تغییر وضعیت ویژه انجام نشد.");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  async function bulkAssignConsultant(member: { name: string; phone: string }) {
+    const ids = Array.from(new Set(selectedIds));
+    if (!ids.length || bulkBusy) return;
+
+    setBulkBusy(true);
+    try {
+      const result = await bulkAssignPropertyConsultant({
+        data: {
+          ids,
+          contactName: member.name,
+          contactPhone: member.phone,
+        },
+      });
+      setSelectedIds([]);
+      await refresh();
+      toast.success((result.updated || ids.length).toLocaleString("fa-IR") + " فایل به «" + member.name + "» واگذار شد.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تخصیص مشاور انجام نشد.");
     } finally {
       setBulkBusy(false);
     }
@@ -1030,6 +1054,26 @@ export function AdminPropertiesPage() {
                           <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetStatus("archived")}>بایگانی</button>
                           <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetFeatured(true)}><Star size={15} /> ویژه</button>
                           <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetFeatured(false)}>حذف ویژه</button>
+                          {TEAM.length > 0 ? (
+                            <select
+                              className="admin-lead-status-select"
+                              disabled={bulkBusy}
+                              defaultValue=""
+                              aria-label="تخصیص مشاور به فایل‌های انتخاب‌شده"
+                              onChange={(e) => {
+                                const member = TEAM.find((item) => item.phone === e.target.value);
+                                if (member) void bulkAssignConsultant(member);
+                                e.currentTarget.value = "";
+                              }}
+                            >
+                              <option value="">تخصیص مشاور…</option>
+                              {TEAM.map((member) => (
+                                <option key={member.phone} value={member.phone}>
+                                  {member.name}
+                                </option>
+                              ))}
+                            </select>
+                          ) : null}
                           <button type="button" className="btn-ghost danger" disabled={bulkBusy} onClick={() => void bulkDelete()}><Trash2 size={15} /> حذف گروهی</button>
                           <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => setSelectedIds([])}>پاک کردن انتخاب</button>
                         </>
