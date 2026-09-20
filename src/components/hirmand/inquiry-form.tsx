@@ -3,6 +3,7 @@ import { Phone, Send } from "lucide-react";
 import { toast } from "sonner";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SERVICES, SITE, TEAM } from "@/lib/site";
 import { cn } from "@/lib/utils";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 export type InquiryDraft = {
   deal: string;
@@ -104,6 +105,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       if (!response.ok || !result?.success) {
         throw new Error(result?.statusMessage || "ثبت درخواست انجام نشد.");
       }
+      trackAnalyticsEvent("inquiry_submit");
       toast.success("درخواست شما با موفقیت برای تیم هیرمند ثبت شد.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "ثبت درخواست انجام نشد.");
@@ -217,11 +219,21 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
         <button type="submit" className="btn-gold">
           ثبت درخواست
         </button>
-        <a className={cn("btn-ghost")} href={waHref} target="_blank" rel="noopener noreferrer">
+        <a
+          className={cn("btn-ghost")}
+          href={waHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => trackAnalyticsEvent("whatsapp_click")}
+        >
           <Send size={16} />
           ارسال در واتساپ
         </a>
-        <a className="btn-ghost" href={`tel:${selected.phone}`}>
+        <a
+          className="btn-ghost"
+          href={`tel:${selected.phone}`}
+          onClick={() => trackAnalyticsEvent("call_click")}
+        >
           <Phone size={16} />
           تماس با {selected.name}
         </a>
