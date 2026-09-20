@@ -14,6 +14,9 @@ export function VisitorTracker() {
 
     trackedRef.current = key;
 
+    const propertyMatch = pathname.match(/^\/properties\/([^/]+)$/);
+    const propertySlug = propertyMatch?.[1];
+
     void fetch("/api/analytics/track", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -23,6 +26,22 @@ export function VisitorTracker() {
     }).catch(() => {
       // Analytics must never interfere with site navigation.
     });
+
+    if (propertySlug) {
+      void fetch("/api/analytics/track", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "same-origin",
+        keepalive: true,
+        body: JSON.stringify({
+          path: pathname,
+          event: "property_view",
+          propertySlug,
+        }),
+      }).catch(() => {
+        // Analytics must never interfere with site navigation.
+      });
+    }
   }, [location.pathname, location.search]);
 
   return null;
