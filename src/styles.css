@@ -1836,6 +1836,202 @@ summary:focus-visible {
   background: rgba(201, 162, 74, 0.12);
 }
 
+/* HIRMAND TEAM / SOCIAL CONTACTS v2 */
+.team-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 100% 0, rgba(201, 162, 74, 0.11), transparent 34%),
+    linear-gradient(145deg, rgba(255,255,255,0.025), transparent 55%),
+    var(--surface);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.16);
+  transition:
+    transform var(--fast) var(--ease),
+    border-color var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease);
+}
+
+.team-card::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.8;
+}
+
+.team-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--gold-line);
+  box-shadow: 0 24px 65px rgba(0, 0, 0, 0.24);
+}
+
+.team-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255,255,255,0.16), transparent 30%),
+    linear-gradient(145deg, rgba(201,162,74,0.24), rgba(201,162,74,0.06));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.team-copy h3 {
+  font-size: clamp(1.15rem, 1vw + 0.8rem, 1.45rem);
+}
+
+.team-phone {
+  direction: ltr;
+  unicode-bidi: plaintext;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 9px;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.025);
+}
+
+.team-actions {
+  align-items: center;
+}
+
+.team-actions .btn-gold {
+  min-height: 44px;
+  flex: 1 1 180px;
+  justify-content: center;
+}
+
+.team-actions .copy-btn {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.025);
+}
+
+.team-socials {
+  gap: 10px;
+}
+
+.team-social {
+  position: relative;
+  min-height: 58px;
+  padding: 8px 6px;
+  border-radius: 16px;
+  color: var(--muted);
+  background: rgba(255,255,255,0.025);
+  border-color: rgba(255,255,255,0.08);
+  transition:
+    transform var(--fast) var(--ease),
+    border-color var(--fast) var(--ease),
+    background-color var(--fast) var(--ease),
+    color var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease);
+}
+
+.team-social::before {
+  content: "";
+  width: 34px;
+  height: 34px;
+  position: absolute;
+  top: 6px;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  border-radius: 11px;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.team-social svg {
+  position: relative;
+  z-index: 1;
+  width: 20px;
+  height: 20px;
+  transition: transform var(--fast) var(--ease);
+}
+
+.team-social span {
+  position: relative;
+  z-index: 1;
+}
+
+.team-social:hover {
+  transform: translateY(-2px);
+  color: var(--fg);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.14);
+}
+
+.team-social:hover svg {
+  transform: scale(1.08);
+}
+
+/* Brand-specific visual identity without hard-coding the icon SVGs. */
+.team-social:nth-child(1) {
+  --social-brand: #25d366;
+}
+.team-social:nth-child(2) {
+  --social-brand: #2aabee;
+}
+.team-social:nth-child(3) {
+  --social-brand: #ff8a00;
+}
+.team-social:nth-child(4) {
+  --social-brand: #e1306c;
+}
+
+.team-social::before {
+  background: var(--social-brand);
+}
+
+.team-social:hover,
+.team-social:focus-visible {
+  border-color: color-mix(in srgb, var(--social-brand) 52%, transparent);
+  background: color-mix(in srgb, var(--social-brand) 9%, var(--surface));
+  color: var(--social-brand);
+}
+
+.team-social:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--social-brand) 65%, white);
+  outline-offset: 2px;
+}
+
+.team-social:active {
+  transform: translateY(0) scale(0.98);
+}
+
+@media (max-width: 720px) {
+  .team-card {
+    gap: 14px;
+    padding: 18px 15px;
+    border-radius: 20px;
+  }
+
+  .team-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+  }
+
+  .team-socials {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .team-social {
+    min-height: 64px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .team-card,
+  .team-social,
+  .team-social svg {
+    transition: none;
+  }
+}
+
 .action-menu {
   position: relative;
   display: inline-flex;
