@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { getPublishedProperty, listRelatedProperties } from "@/lib/properties";
 import { propertyHead } from "@/lib/seo";
 import { PropertyDetailView } from "@/components/hirmand/property-detail-view";
@@ -8,7 +8,7 @@ export const Route = createFileRoute("/v/$slug/$id")({
     try {
       // The UUID/id is stable; the title slug is only for readability.
       const property = await getPublishedProperty({ data: { slug: params.id } });
-      if (!property) return { property: null, related: [] };
+      if (!property) return { property: null, related: [] };\n\n      // Legacy /v/:slug/:id URLs are permanently consolidated into the canonical property URL.\n      throw redirect({\n        to: "/properties/$slug",\n        params: { slug: property.slug },\n        replace: true,\n      });
 
       const related = await listRelatedProperties({
         data: {
