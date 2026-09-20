@@ -26,11 +26,18 @@ import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
 import { areaSlug } from "@/lib/areas";
 import { propertyPath } from "@/lib/property-path";
+import { TEAM } from "@/lib/site";
 
 function money(value: string | null) {
   if (!value) return "";
   const parsed = Number(value);
   return Number.isFinite(parsed) ? formatToman(parsed) : value;
+}
+function unitPrice(value: string | null, areaM2: number | null) {
+  if (!value || !areaM2 || areaM2 <= 0) return "";
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return "";
+  return formatToman(Math.round(parsed / areaM2));
 }
 
 function mapsLink(latitude: number | null, longitude: number | null, neighborhood: string) {
@@ -376,6 +383,7 @@ function Gallery({
   );
 }
 function ConsultantCard({ property }: { property: Property }) {
+  const person = TEAM.find((item) => item.phone === property.contactPhone || item.name === property.contactName);
   return (
     <aside className="property-contact-card">
       <div className="property-contact-heading">
@@ -389,6 +397,11 @@ function ConsultantCard({ property }: { property: Property }) {
       <a href={`tel:${property.contactPhone}`} dir="ltr" className="property-contact-phone">
         <Phone size={16} /> {property.contactPhone}
       </a>
+      {person ? (
+        <a className="property-contact-profile" href={`/consultants/${person.id}`}>
+          مشاهده پروفایل مشاور
+        </a>
+      ) : null}
       <div className="property-contact-actions">
         <a
           className="btn-gold"
@@ -418,6 +431,26 @@ export function PropertyDetailView({
   property: Property | null;
   related: Property[];
 }) {
+  useEffect(() => {
+    if (!property || typeof window === "undefined") return;
+    const recentKey = "hirmand-recent-properties";
+    try {
+      const raw = localStorage.getItem(recentKey);
+      const parsed = raw ? JSON.parse(raw) : [];
+      const recent = Array.isArray(parsed)
+        ? parsed.filter((item): item is string => typeof item === "string" && item !== property.slug)
+        : [];
+      localStorage.setItem(recentKey, JSON.stringify([property.slug, ...recent].slice(0, 8)));
+    } catch {
+      // History is a convenience feature; ignore storage failures.
+    }
+    const viewKey = `hirmand-viewed:${property.slug}`;
+    if (!sessionStorage.getItem(viewKey)) {
+      trackAnalyticsEvent("property_view", property.slug);
+      sessionStorage.setItem(viewKey, "1");
+    }
+  }, [property?.slug]);
+
   if (!property) {
     return (
       <SiteChrome>
@@ -484,6 +517,11 @@ export function PropertyDetailView({
                 <strong>
                   {property.price ? `${money(property.price)} تومان` : "تماس بگیرید"}
                 </strong>
+                {property.price && property.areaM2 && (property.transactionType === "buy" || property.transactionType === "sell") ? (
+                  <small className="property-price-per-m2">
+                    قیمت تقریبی هر متر: <strong>{unitPrice(property.price, property.areaM2)} تومان</strong>
+                  </small>
+                ) : null}
                 {property.deposit || property.rent ? (
                   <small>
                     {property.deposit ? `رهن ${money(property.deposit)}` : ""}
