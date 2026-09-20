@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
-import { PROPERTY_TYPES, SITE } from "@/lib/site";
+import { SITE } from "@/lib/site";
 import { formatToman } from "@/lib/money";
 
 const COMPARE_KEY = "hirmand-compare-properties";
@@ -33,9 +33,14 @@ export const Route = createFileRoute("/compare")({
   component: ComparePage,
 });
 
-const PROPERTY_TYPE_LABEL: Record<Property["propertyType"], string> = Object.fromEntries(
-  PROPERTY_TYPES.map((item) => [item.id, item.title]),
-) as Record<Property["propertyType"], string>;
+const PROPERTY_TYPE_LABEL: Record<Property["propertyType"], string> = {
+  apartment: "آپارتمان",
+  villa: "ویلا و باغ",
+  office: "اداری",
+  heritage: "خانه اصیل",
+  land: "زمین",
+  commercial: "تجاری",
+};
 
 function valueMoney(value: string | null) {
   if (!value) return "—";
@@ -116,9 +121,9 @@ function ComparePage() {
 
             <div className="compare-grid">
               {properties.map((property) => (
-                <article key={property.id} className="compare-card">
+                <div key={property.id} className="compare-card">
                   <PropertyCard property={property} />
-                </article>
+                </div>
               ))}
             </div>
 
