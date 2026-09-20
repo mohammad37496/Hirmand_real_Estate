@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
       propertyTypes: [],
       leadDays: [],
       music: { total: 0, active: 0 },
-      visitors: { today: 0, last7: 0, last30: 0, pageviewsToday: 0, pageviewsLast7: 0, pageviewsLast30: 0 },
+      visitors: { today: 0, last7: 0, last30: 0, pageviewsToday: 0, pageviewsLast7: 0, pageviewsLast30: 0, activeNow: 0 },
       visitorDays: [],
       topPages: [],
       topProperties: [],
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const sql = await getSql();
-  const [propertyStats, leadStats, propertyTypes, leadDays, musicStats, recentLeads, visitorStats, visitorDays, topPages, topProperties, eventStats] = await Promise.all([
+  const [propertyStats, leadStats, propertyTypes, leadDays, musicStats, recentLeads, visitorStats, activeVisitorStats, visitorDays, topPages, topProperties, eventStats] = await Promise.all([
     sql.query<Record<string, unknown>>(`
       select
         count(*)::int as total,
@@ -110,6 +110,14 @@ export default defineEventHandler(async (event) => {
       return [{}];
     }),
     sql.query<Record<string, unknown>>(`
+      select count(distinct visitor_id)::int as active_now
+      from site_visitor_days
+      where last_seen_at >= current_timestamp - interval '5 minutes'
+    `).catch((error) => {
+      console.error("[admin-dashboard] active visitors unavailable", error);
+      return [{}];
+    }),
+    sql.query<Record<string, unknown>>(`
       select
         ((current_timestamp at time zone 'Asia/Tehran')::date - days.n)::date as day,
         count(site_visitor_days.visitor_id)::int as unique_visitors,
@@ -179,6 +187,7 @@ export default defineEventHandler(async (event) => {
   const l = leadStats[0] ?? {};
   const m = musicStats[0] ?? {};
   const v = (visitorStats[0] ?? {}) as Record<string, unknown>;
+  const active = (activeVisitorStats[0] ?? {}) as Record<string, unknown>;
 
   return {
     properties: {
@@ -217,6 +226,7 @@ export default defineEventHandler(async (event) => {
       pageviewsToday: Number(v.pageviews_today) || 0,
       pageviewsLast7: Number(v.pageviews_last7) || 0,
       pageviewsLast30: Number(v.pageviews_last30) || 0,
+      activeNow: Number(active.active_now) || 0,
     },
     visitorDays: visitorDays.map((row) => ({
       day: String(row.day).slice(0, 10),
