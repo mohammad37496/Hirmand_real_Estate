@@ -46,7 +46,7 @@ export type Property = {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  priceDropPercent: number | null;
+  priceDropPercent?: number | null;
 };
 
 export type PropertyCardData = Pick<
