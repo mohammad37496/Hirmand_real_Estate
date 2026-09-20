@@ -104,6 +104,7 @@ function ResilientImage({
       loading={loading}
       fetchPriority={fetchPriority}
       itemProp={itemProp}
+      fetchPriority={fetchPriority}
       referrerPolicy="no-referrer"
       decoding="async"
       onError={() => {
@@ -183,7 +184,7 @@ function Gallery({
     });
   }, [active, images]);
 
-  function touchDistance(touches: TouchList) {
+  function touchDistance(touches: TouchEvent<HTMLDivElement>["touches"]) {
     if (touches.length < 2) return 0;
     const dx = touches[0].clientX - touches[1].clientX;
     const dy = touches[0].clientY - touches[1].clientY;
