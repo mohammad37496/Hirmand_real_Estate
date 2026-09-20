@@ -301,7 +301,7 @@ export async function submitPartnerContract(input: {
 
   const partner = await getPartnerSummary(input.partnerId);
   if (!partner || partner.status !== "active") throw new Error("حساب همکاری فعال نیست.");
-  if (partner.cardComplete) {
+  if (partner.cardStamps >= 12) {
     throw new Error("کارت ۱۲ مهره شده است. برای ادامه، مدیر هیرمند باید کارت جدید صادر کند.");
   }
 
