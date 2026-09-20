@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { getPublishedProperty, listRelatedProperties } from "@/lib/properties";
+import { getPublishedProperty } from "@/lib/properties";
 import { propertyHead } from "@/lib/seo";
 import { PropertyDetailView } from "@/components/hirmand/property-detail-view";
 
@@ -8,21 +8,21 @@ export const Route = createFileRoute("/v/$slug/$id")({
     try {
       // The UUID/id is stable; the title slug is only for readability.
       const property = await getPublishedProperty({ data: { slug: params.id } });
-      if (!property) return { property: null, related: [] };\n\n      // Legacy /v/:slug/:id URLs are permanently consolidated into the canonical property URL.\n      throw redirect({\n        to: "/properties/$slug",\n        params: { slug: property.slug },\n        replace: true,\n      });
+      if (!property) return { property: null };
 
-      const related = await listRelatedProperties({
-        data: {
-          slug: property.slug,
-          neighborhood: property.neighborhood,
-          propertyType: property.propertyType,
-          limit: 6,
-        },
+      // Legacy /v/:slug/:id URLs are permanently consolidated into the canonical property URL.
+      throw redirect({
+        to: "/properties/$slug",
+        params: { slug: property.slug },
+        replace: true,
       });
-
-      return { property, related };
     } catch (error) {
+      // TanStack Router redirects are thrown values; let them propagate.
+      if (error && typeof error === "object" && "isRedirect" in error) {
+        throw error;
+      }
       console.error("[property-detail] v route loader failed", error);
-      return { property: null, related: [] };
+      return { property: null };
     }
   },
   head: ({ loaderData, params }) =>
@@ -32,5 +32,5 @@ export const Route = createFileRoute("/v/$slug/$id")({
 
 function PropertyDetailPage() {
   const data = Route.useLoaderData();
-  return <PropertyDetailView property={data.property} related={data.related} />;
+  return <PropertyDetailView property={data.property} related={[]} />;
 }
