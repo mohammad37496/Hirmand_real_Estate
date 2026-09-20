@@ -45,6 +45,7 @@ export default defineEventHandler(async (event) => {
     ...rows.map((row) => [
       row.id, row.title, row.slug, statusLabels[String(row.status)] ?? row.status,
       row.featured ? "بله" : "خیر",
+      row.featured_until ? csvDate(row.featured_until) : "",
       transactionLabels[String(row.transaction_type)] ?? row.transaction_type,
       row.property_type, row.neighborhood, row.address, row.area_m2, row.bedrooms,
       row.bathrooms, row.floor, row.total_floors, row.built_year,
