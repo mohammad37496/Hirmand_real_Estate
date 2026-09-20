@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   countPublishedProperties,
   listPublishedProperties,
+  listPublishedPropertyCards,
   type PropertySort,
   type PropertyTransaction,
   type PropertyType,
@@ -215,7 +216,7 @@ function PropertiesIndexPage() {
           0,
         );
         const [rows, count] = await Promise.all([
-          listPublishedProperties({ data }),
+          listPublishedPropertyCards({ data }),
           countPublishedProperties({ data }),
         ]);
         if (requestId.current !== currentRequest) return;
@@ -236,7 +237,7 @@ function PropertiesIndexPage() {
     const nextOffset = offset + PAGE_SIZE;
     setLoadingMore(true);
     try {
-      const rows = await listPublishedProperties({
+      const rows = await listPublishedPropertyCards({
         data: buildFilterData(
           q,
           transactionType,
