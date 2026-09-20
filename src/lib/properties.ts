@@ -62,24 +62,6 @@ export type PropertyHistoryState = {
   contactPhone: string | null;
 };
 
-function mapPropertyHistoryState(value: unknown): PropertyHistoryState | null {
-  if (!value || typeof value !== "object") return null;
-  const row = value as Record<string, unknown>;
-  return {
-    title: typeof row.title === "string" ? row.title : null,
-    status:
-      row.status === "draft" || row.status === "published" || row.status === "archived"
-        ? row.status
-        : null,
-    featured: typeof row.featured === "boolean" ? row.featured : null,
-    price: row.price == null ? null : String(row.price),
-    deposit: row.deposit == null ? null : String(row.deposit),
-    rent: row.rent == null ? null : String(row.rent),
-    contactName: typeof row.contactName === "string" ? row.contactName : null,
-    contactPhone: typeof row.contactPhone === "string" ? row.contactPhone : null,
-  };
-}
-
 export type PropertyCardData = Pick<
   Property,
   | "id"
@@ -134,6 +116,19 @@ const publicFiltersSchema = z.object({
   offset: z.number().int().min(0).max(100000).optional().default(0),
 });
 
+const nullableMoneyField = z.preprocess(
+  (value) => {
+    if (value == null) return "";
+    if (typeof value === "string") {
+      const normalized = value.trim().toLowerCase();
+      if (!normalized || normalized === "null" || normalized === "undefined") return "";
+      return value.trim();
+    }
+    return String(value);
+  },
+  z.string().max(30),
+);
+
 const propertyInputSchema = z.object({
   id: z.string().optional(),
   title: z.string().trim().min(3).max(180),
@@ -150,9 +145,9 @@ const propertyInputSchema = z.object({
   parking: z.boolean().default(false),
   elevator: z.boolean().default(false),
   storage: z.boolean().default(false),
-  price: z.coerce.string().trim().max(30).optional().default(""),
-  deposit: z.coerce.string().trim().max(30).optional().default(""),
-  rent: z.coerce.string().trim().max(30).optional().default(""),
+  price: nullableMoneyField,
+  deposit: nullableMoneyField,
+  rent: nullableMoneyField,
   description: z.string().trim().min(10).max(5000),
   features: z.array(z.string().trim().min(1).max(80)).max(20).default([]),
   images: z.array(z.string().url()).max(12).default([]),
