@@ -129,11 +129,9 @@ function formatDay(value: string) {
 }
 
 export function AdminDashboard({
-  adminKey,
   onOpenProperties,
   onOpenLeads,
 }: {
-  adminKey: string;
   onOpenProperties: () => void;
   onOpenLeads: () => void;
 }) {
