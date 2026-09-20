@@ -5,7 +5,7 @@
 import { defineEventHandler, setResponseHeader } from "h3";
 import { allAreas, areaPath } from "../../src/lib/areas";
 
-const SITE = (process.env.VITE_SITE_URL || "https://hirmand.ir").replace(/\/$/, "");
+const SITE = (process.env.VITE_SITE_URL || "https://www.hirmandrealestate.ir").replace(/\/$/, "");
 
 function escapeXml(value: string) {
   return value
