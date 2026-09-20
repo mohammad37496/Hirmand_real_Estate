@@ -47,6 +47,11 @@ function valueMoney(value: string | null) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? formatToman(parsed) + " تومان" : value;
 }
+function valuePerM2(property: Property) {
+  if ((property.transactionType !== "buy" && property.transactionType !== "sell") || !property.price || !property.areaM2 || property.areaM2 <= 0) return "—";
+  const parsed = Number(property.price);
+  return Number.isFinite(parsed) && parsed > 0 ? formatToman(Math.round(parsed / property.areaM2)) + " تومان" : "—";
+}
 
 function ComparePage() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -165,6 +170,10 @@ function ComparePage() {
                   <tr>
                     <th>انباری</th>
                     {properties.map((p) => <td key={p.id}>{p.storage ? "دارد" : "ندارد"}</td>)}
+                  </tr>
+                  <tr>
+                    <th>قیمت هر متر</th>
+                    {properties.map((p) => <td key={p.id}>{valuePerM2(p)}</td>)}
                   </tr>
                   <tr>
                     <th>قیمت فروش</th>
