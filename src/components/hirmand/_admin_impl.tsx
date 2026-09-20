@@ -22,6 +22,8 @@ import {
   Filter,
   ArrowUpDown,
   Globe2,
+  Download,
+  CheckSquare,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
@@ -196,6 +198,8 @@ export function AdminPropertiesPage() {
   const [listType, setListType] = useState<"all" | PropertyType>("all");
   const [listNeighborhood, setListNeighborhood] = useState("");
   const [listSort, setListSort] = useState<"newest" | "title" | "price_desc">("newest");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm());
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -327,6 +331,116 @@ export function AdminPropertiesPage() {
     setPropertyHasMore(false);
     setServerStats(null);
     setForm(emptyForm());
+    setSelectedIds([]);
+  }
+
+  function toggleSelected(id: string) {
+    setSelectedIds((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+    );
+  }
+
+  function toggleSelectAllVisible() {
+    const visibleIds = filtered.map((item) => item.id);
+    setSelectedIds((current) =>
+      visibleIds.length > 0 && visibleIds.every((id) => current.includes(id))
+        ? current.filter((id) => !visibleIds.includes(id))
+        : Array.from(new Set([...current, ...visibleIds])),
+    );
+  }
+
+  async function exportProperties() {
+    try {
+      const response = await fetch("/api/admin/properties-export", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: "{}",
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null) as { statusMessage?: string } | null;
+        throw new Error(body?.statusMessage || "خروجی فایل‌ها آماده نشد.");
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "hirmand-properties.csv";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      toast.success("خروجی کامل فایل‌ها دانلود شد.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "خروجی گرفتن انجام نشد.");
+    }
+  }
+
+  async function bulkSetStatus(status: PublishStatus) {
+    const targets = properties.filter((property) => selectedIds.includes(property.id));
+    if (!targets.length || bulkBusy) return;
+    if (status === "archived" && !confirm("آرشیو " + targets.length.toLocaleString("fa-IR") + " فایل انتخاب‌شده؟")) return;
+
+    setBulkBusy(true);
+    try {
+      await Promise.all(targets.map(async (property) => {
+        const base = propertyToForm(property);
+        return saveProperty({
+          data: {
+            id: base.id,
+            title: base.title,
+            transactionType: base.transactionType,
+            propertyType: base.propertyType,
+            neighborhood: base.neighborhood,
+            address: base.address || undefined,
+            areaM2: numberOrNull(base.areaM2),
+            bedrooms: numberOrNull(base.bedrooms),
+            bathrooms: numberOrNull(base.bathrooms),
+            floor: numberOrNull(base.floor),
+            totalFloors: numberOrNull(base.totalFloors),
+            builtYear: numberOrNull(base.builtYear),
+            parking: base.parking,
+            elevator: base.elevator,
+            storage: base.storage,
+            price: numberOrNull(base.price),
+            deposit: numberOrNull(base.deposit),
+            rent: numberOrNull(base.rent),
+            description: base.description,
+            features: splitLines(base.features),
+            images: parseImageUrls(base.images).valid,
+            contactName: base.contactName,
+            contactPhone: base.contactPhone,
+            status,
+            featured: base.featured,
+          },
+        });
+      }));
+      setSelectedIds([]);
+      await refresh();
+      toast.success(targets.length.toLocaleString("fa-IR") + " فایل به‌روزرسانی شد.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "عملیات گروهی کامل نشد.");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  async function bulkDelete() {
+    const targets = properties.filter((property) => selectedIds.includes(property.id));
+    if (!targets.length || bulkBusy) return;
+    if (!confirm("حذف دائمی " + targets.length.toLocaleString("fa-IR") + " فایل انتخاب‌شده؟ این عمل قابل بازگشت نیست.")) return;
+
+    setBulkBusy(true);
+    try {
+      await Promise.all(targets.map((property) => deleteProperty({ data: { id: property.id } })));
+      setSelectedIds([]);
+      await refresh();
+      toast.success(targets.length.toLocaleString("fa-IR") + " فایل حذف شد.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حذف گروهی کامل نشد.");
+    } finally {
+      setBulkBusy(false);
+    }
   }
 
 
@@ -822,6 +936,26 @@ export function AdminPropertiesPage() {
                     </select>
                     <div className="admin-results-meta"><ArrowUpDown size={14} /> {filtered.length.toLocaleString("fa-IR")} نتیجه</div>
                   </div>
+                  <div className="admin-list-toolbar" style={{ marginTop: 10, justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                      <button type="button" className="btn-ghost" onClick={toggleSelectAllVisible}>
+                        <CheckSquare size={15} />
+                        {filtered.length > 0 && filtered.every((item) => selectedIds.includes(item.id)) ? "لغو انتخاب نمایش‌داده‌شده" : "انتخاب نمایش‌داده‌شده"}
+                      </button>
+                      {selectedIds.length > 0 ? (
+                        <>
+                          <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetStatus("published")}>انتشار ({selectedIds.length.toLocaleString("fa-IR")})</button>
+                          <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetStatus("draft")}>پیش‌نویس</button>
+                          <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetStatus("archived")}>بایگانی</button>
+                          <button type="button" className="btn-ghost danger" disabled={bulkBusy} onClick={() => void bulkDelete()}><Trash2 size={15} /> حذف گروهی</button>
+                          <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => setSelectedIds([])}>پاک کردن انتخاب</button>
+                        </>
+                      ) : null}
+                    </div>
+                    <button type="button" className="btn-ghost" onClick={() => void exportProperties()}>
+                      <Download size={15} /> خروجی کامل CSV
+                    </button>
+                  </div>
                 </div>
 
                 {filtered.length === 0 ? (
@@ -838,6 +972,15 @@ export function AdminPropertiesPage() {
                   <div className="admin-property-list">
                     {filtered.map((property) => (
                       <article key={property.id} className="admin-property-card">
+                        <div style={{ display: "flex", alignItems: "center", padding: "0 8px" }}>
+                          <input
+                            type="checkbox"
+                            aria-label={"انتخاب " + property.title}
+                            checked={selectedIds.includes(property.id)}
+                            onChange={() => toggleSelected(property.id)}
+                            style={{ width: 18, height: 18, accentColor: "#c9a24a" }}
+                          />
+                        </div>
                         <div className="admin-property-thumb">
                           <img
                             src={property.images[0] || "/images/type-apartment.jpg"}
