@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-type LeadStatus = "new" | "contacted" | "closed" | "spam";
+type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 
 type DashboardData = {
   properties: {
@@ -25,6 +25,9 @@ type DashboardData = {
     total: number;
     new: number;
     contacted: number;
+    follow_up: number;
+    visited: number;
+    contract: number;
     closed: number;
     spam: number;
     today: number;
@@ -97,8 +100,11 @@ const TYPE_LABEL: Record<string, string> = {
 
 const STATUS_LABEL: Record<LeadStatus, string> = {
   new: "جدید",
-  contacted: "پیگیری",
-  closed: "بسته",
+  contacted: "تماس گرفته شد",
+  follow_up: "پیگیری",
+  visited: "بازدید",
+  contract: "قرارداد",
+  closed: "ناموفق / بسته",
   spam: "اسپم",
 };
 
@@ -240,8 +246,11 @@ export function AdminDashboard({
 
   const leadStatuses = [
     { key: "new" as const, label: "جدید", value: data.leads.new, tone: "gold" },
-    { key: "contacted" as const, label: "در حال پیگیری", value: data.leads.contacted, tone: "blue" },
-    { key: "closed" as const, label: "بسته‌شده", value: data.leads.closed, tone: "green" },
+    { key: "contacted" as const, label: "تماس گرفته شد", value: data.leads.contacted, tone: "blue" },
+    { key: "follow_up" as const, label: "پیگیری", value: data.leads.follow_up, tone: "amber" },
+    { key: "visited" as const, label: "بازدید", value: data.leads.visited, tone: "violet" },
+    { key: "contract" as const, label: "قرارداد", value: data.leads.contract, tone: "green" },
+    { key: "closed" as const, label: "ناموفق / بسته", value: data.leads.closed, tone: "red" },
     { key: "spam" as const, label: "اسپم", value: data.leads.spam, tone: "red" },
   ];
 
