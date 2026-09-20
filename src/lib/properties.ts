@@ -116,17 +116,19 @@ const publicFiltersSchema = z.object({
   offset: z.number().int().min(0).max(100000).optional().default(0),
 });
 
+function normalizeMoneyText(value: unknown): string {
+  if (value == null) return "";
+  const raw = String(value).trim();
+  if (!raw || /^(null|undefined)$/i.test(raw)) return "";
+  return raw
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+    .replace(/[,_٬\s]/g, "");
+}
+
 const nullableMoneyField = z.preprocess(
-  (value) => {
-    if (value == null) return "";
-    if (typeof value === "string") {
-      const normalized = value.trim().toLowerCase();
-      if (!normalized || normalized === "null" || normalized === "undefined") return "";
-      return value.trim();
-    }
-    return String(value);
-  },
-  z.string().max(30),
+  (value) => normalizeMoneyText(value),
+  z.union([z.literal(""), z.string().regex(/^\d{1,20}$/)]),
 );
 
 const propertyInputSchema = z.object({
@@ -201,12 +203,8 @@ function numberOrNull(value: unknown): number | null {
 }
 
 function numericStringOrNull(value: unknown): string | null {
-  if (value == null) return null;
-  const normalized = String(value).trim();
-  if (!normalized || normalized.toLowerCase() === "null" || normalized.toLowerCase() === "undefined") {
-    return null;
-  }
-  return normalized;
+  const normalized = normalizeMoneyText(value);
+  return normalized || null;
 }
 
 function parseJsonArray(value: unknown): string[] {
