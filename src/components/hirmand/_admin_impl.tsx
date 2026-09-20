@@ -39,9 +39,10 @@ import { AdminLeadManager } from "@/components/hirmand/admin-lead-manager";
 import { AdminDashboard } from "@/components/hirmand/admin-dashboard";
 import { ADMIN_CSS } from "@/components/hirmand/admin-shell-css";
 import { AdminListingAssistant } from "@/components/hirmand/admin-listing-assistant";
+import { AdminPartnerManager } from "@/components/hirmand/admin-partner-manager";
 
 type PublishStatus = "draft" | "published" | "archived";
-type ViewMode = "dashboard" | "list" | "form" | "music" | "leads";
+type ViewMode = "dashboard" | "list" | "form" | "music" | "leads" | "partners";
 
 type FormState = {
   id?: string;
@@ -661,6 +662,10 @@ export function AdminPropertiesPage() {
             <UsersRound size={18} />
             درخواست‌ها
           </button>
+          <button type="button" className={"admin-nav-btn" + (view === "partners" ? " is-active" : "")} onClick={() => setView("partners")}>
+            <UsersRound size={18} />
+            همکاران و کد رهگیری
+          </button>
         </nav>
         <div className="admin-sidebar-foot">
           <button
@@ -695,9 +700,11 @@ export function AdminPropertiesPage() {
                     ? "موسیقی سایت"
                     : view === "leads"
                       ? "درخواست‌های مشتری"
-                      : form.id
-                      ? "ویرایش فایل"
-                      : "افزودن فایل جدید"}            </h1>
+                      : view === "partners"
+                        ? "باشگاه همکاران و کد رهگیری"
+                        : form.id
+                        ? "ویرایش فایل"
+                        : "افزودن فایل جدید"}            </h1>
             <p>
               {view === "dashboard"
                 ? "نمای کلی فایل‌ها، ورودی مشتری و وضعیت پیگیری"
@@ -920,6 +927,7 @@ export function AdminPropertiesPage() {
 
           {view === "music" ? <AdminMusicManager /> : null}
           {view === "leads" ? <AdminLeadManager /> : null}
+          {view === "partners" ? <AdminPartnerManager /> : null}
 
           {view === "form" ? (
             <form className="admin-form-wrap" onSubmit={onSubmit}>
