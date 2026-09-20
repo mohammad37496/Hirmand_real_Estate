@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { BadgeCheck, Check, Copy, Gift, History, KeyRound, LogIn, LogOut, RefreshCw, Send, Ticket, UserRound } from "lucide-react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BrandLogo } from "@/components/hirmand/logo";
@@ -6,6 +6,7 @@ import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { SITE } from "@/lib/site";
 import { trackingHead } from "@/lib/seo";
 import type { PartnerContract, PartnerOverview } from "@/lib/partner-program.server";
+import { partnerPortalUrl, partnerQrImageUrl } from "@/lib/partner-links";
 
 const TX_LABEL: Record<string, string> = {
   buy: "درخواست خرید",
@@ -141,7 +142,7 @@ function TrackingPage() {
     })();
   }, []);
 
-  async function login(event: React.FormEvent) {
+  async function login(event: FormEvent) {
     event.preventDefault();
     if (!code.trim() || pin.trim().length !== 6) {
       setMessage("کد همکاری و رمز ۶ رقمی را کامل وارد کنید.");
@@ -179,7 +180,7 @@ function TrackingPage() {
     setMessage("");
   }
 
-  async function lookupTracking(event: React.FormEvent) {
+  async function lookupTracking(event: FormEvent) {
     event.preventDefault();
     if (!trackingCode.trim()) return;
     setLookupBusy(true);
@@ -217,7 +218,7 @@ function TrackingPage() {
     }
   }
 
-  async function submitContract(event: React.FormEvent) {
+  async function submitContract(event: FormEvent) {
     event.preventDefault();
     if (!partner) return;
     if (!contractForm.transactionType) {
@@ -347,6 +348,31 @@ function TrackingPage() {
               </div>
 
               <StampGrid partner={partner} />
+
+              <div className="partner-digital-access">
+                <div>
+                  <span className="kicker">کارت دیجیتال</span>
+                  <h3>ورود سریع با QR</h3>
+                  <p>
+                    این QR را می‌توانید روی کارت ویزیت املاک قرار دهید؛ با اسکن آن، صفحه همکاری باز می‌شود و کد املاک از قبل وارد شده است.
+                  </p>
+                  <a
+                    href={partnerPortalUrl(partner.partnerCode)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-link"
+                  >
+                    <Ticket size={15} /> لینک اختصاصی حساب
+                  </a>
+                </div>
+                <img
+                  src={partnerQrImageUrl(partner.partnerCode)}
+                  alt={"QR ورود " + partner.agencyName}
+                  loading="lazy"
+                  width={180}
+                  height={180}
+                />
+              </div>
 
               <div className="partner-metric-grid">
                 <div><span>کل قرارداد تأییدشده</span><strong>{partner.contractCount.toLocaleString("fa-IR")}</strong></div>
