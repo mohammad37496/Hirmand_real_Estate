@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES } from "@/lib/site";
 import { formatToman } from "@/lib/money";
-import type { PropertyCardData, PropertyType, PropertyTransaction } from "@/lib/properties";
+import type { Property, PropertyCardData, PropertyType, PropertyTransaction } from "@/lib/properties";
 import { listPublishedPropertyCards } from "@/lib/properties";
 import { PropertyActions } from "./property-actions";
 import { Reveal } from "./reveal";
@@ -30,7 +30,7 @@ function priceLabel(property: Property) {
 }
 function imageFor(property: PropertyCardData) { return property.image || FALLBACK_IMAGES[property.propertyType]; }
 
-export function PropertyCard({ property }: { property: PropertyCardData }) {
+export function PropertyCard({ property }: { property: Property | PropertyCardData }) {
   return (
     <article className="property-card">
       <Link
