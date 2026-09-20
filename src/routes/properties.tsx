@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { RotateCcw, Search, SlidersHorizontal, X } from "lucide-react";
+import { Heart, RotateCcw, Search, SlidersHorizontal, X } from "lucide-react";
 import {
   countPublishedProperties,
   listPublishedProperties,
@@ -312,7 +312,14 @@ function PropertiesIndexPage() {
           <div className="properties-result-meta">
             <span><SlidersHorizontal size={15} /> نمایش {properties.length.toLocaleString("fa-IR")} از {total.toLocaleString("fa-IR")} فایل</span>
             <div className="properties-result-actions">
-              {hasFilters ? <button type="button" className="properties-reset-btn" onClick={resetFilters}><RotateCcw size={14} /> پاک‌کردن فیلترها</button> : null}
+              {hasFilters ? (
+                <button type="button" className="properties-reset-btn" onClick={resetFilters}>
+                  <RotateCcw size={14} /> پاک‌کردن فیلترها
+                </button>
+              ) : null}
+              <Link to="/favorites" className="properties-saved-link">
+                <Heart size={14} /> ذخیره‌های من
+              </Link>
               <a href="/#inquiry">درخواست فایل اختصاصی</a>
             </div>
           </div>
