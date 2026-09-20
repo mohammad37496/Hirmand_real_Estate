@@ -46,6 +46,8 @@ export type Property = {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  latitude: number | null;
+  longitude: number | null;
   priceDropPercent?: number | null;
 };
 
@@ -213,6 +215,8 @@ function mapProperty(row: Record<string, unknown>): Property {
     publishedAt: row.published_at ? new Date(String(row.published_at)).toISOString() : null,
     createdAt: new Date(String(row.created_at)).toISOString(),
     updatedAt: new Date(String(row.updated_at)).toISOString(),
+    latitude: numberOrNull(row.latitude),
+    longitude: numberOrNull(row.longitude),
     priceDropPercent: numberOrNull(row.price_drop_percent),
   };
 }
@@ -222,7 +226,7 @@ const LIST_COLUMNS = `
   neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
   built_year, parking, elevator, storage, price, deposit, rent,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
-  price_drop_percent,
+  latitude, longitude, price_drop_percent,
   left(description, 280) as description
 `;
 
