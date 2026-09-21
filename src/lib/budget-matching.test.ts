@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateBudgetMatch, totalRahnEquivalent } from "./budget-matching";
+import { calculateBudgetMatch, totalRahnEquivalent } from "./budget-matching.ts";
 import type { Property } from "./properties";
 
 function property(overrides: Partial<Property>): Property {
