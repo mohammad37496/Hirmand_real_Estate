@@ -40,6 +40,17 @@ function unitPrice(value: string | null, areaM2: number | null) {
   if (!Number.isFinite(parsed) || parsed <= 0) return "";
   return formatToman(Math.round(parsed / areaM2));
 }
+function primaryPrice(property: Property) {
+  if (property.transactionType === "rent") {
+    if (property.deposit) return "رهن " + money(property.deposit) + " تومان";
+    if (property.rent) return "اجاره " + money(property.rent) + " تومان";
+    return "تماس بگیرید";
+  }
+  if (property.transactionType === "mortgage") {
+    return property.deposit ? "رهن " + money(property.deposit) + " تومان" : "تماس بگیرید";
+  }
+  return property.price ? "قیمت " + money(property.price) + " تومان" : "تماس بگیرید";
+}
 
 function mapsLink(latitude: number | null, longitude: number | null, neighborhood: string) {
   if (latitude != null && longitude != null) {
@@ -539,9 +550,7 @@ export function PropertyDetailView({
               </p>
               <div className="property-price-block">
                 <span>قیمت فایل</span>
-                <strong>
-                  {property.price ? `${money(property.price)} تومان` : "تماس بگیرید"}
-                </strong>
+                <strong>{primaryPrice(property)}</strong>
                 {property.price && property.areaM2 && (property.transactionType === "buy" || property.transactionType === "sell") ? (
                   <small className="property-price-per-m2">
                     قیمت تقریبی هر متر: <strong>{unitPrice(property.price, property.areaM2)} تومان</strong>
