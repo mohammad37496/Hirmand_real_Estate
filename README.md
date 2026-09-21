@@ -77,7 +77,7 @@ npm run dev
 
 ### کارهای لازم برای Google
 
-1. دامنه `hirmand.ir` را به Vercel وصل کنید و `VITE_SITE_URL=https://www.hirmandrealestate.ir` تنظیم باشد.
+1. دامنه `www.hirmandrealestate.ir` را به Vercel وصل کنید و `VITE_SITE_URL=https://www.hirmandrealestate.ir` تنظیم باشد.
 2. سایت را در Google Search Console تأیید کنید و `https://www.hirmandrealestate.ir/sitemap.xml` را Submit کنید.
 3. برای صفحه اصلی و صفحات کلیدی Request Indexing بزنید.
 4. Google Business Profile / Google Maps را با نام، تلفن و آدرس واقعی کسب‌وکار تکمیل و تأیید کنید.
