@@ -83,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/tracking': typeof TrackingRoute
   '/admin': typeof AdminRoute
   '/properties/$slug': typeof PropertySlugRoute
+  '/file/$id': typeof PropertyFileRoute
   '/v/$slug/$id': typeof VSlugIdRoute
   '/areas/$slug': typeof AreaSlugRoute
   '/properties': typeof PropertiesRoute
@@ -118,10 +119,10 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/v/$slug/$id' | '/areas/$slug' | '/properties' | '/favorites' | '/compare' | '/consultants/$id'
+  fullPaths: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/file/$id' | '/v/$slug/$id' | '/areas/$slug' | '/properties' | '/favorites' | '/compare' | '/consultants/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/v/$slug/$id' | '/areas/$slug' | '/properties' | '/favorites' | '/compare' | '/consultants/$id'
-  id: '__root__' | '/' | '/tracking' | '/admin' | '/properties/$slug' | '/v/$slug/$id' | '/areas/$slug' | '/properties' | '/favorites' | '/compare' | '/consultants/$id'
+  to: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/file/$id' | '/v/$slug/$id' | '/areas/$slug' | '/properties' | '/favorites' | '/compare' | '/consultants/$id'
+  id: '__root__' | '/' | '/tracking' | '/admin' | '/properties/$slug' | '/file/$id' | '/v/$slug/$id' | '/areas/$slug' | '/properties' | '/favorites' | '/compare' | '/consultants/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
