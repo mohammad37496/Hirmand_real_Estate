@@ -5,17 +5,17 @@
 @import "@fontsource/vazirmatn/700.css";
 
 @theme {
-  --color-bg: #07090d;
-  --color-surface: #10141a;
-  --color-surface-2: #161c24;
-  --color-fg: #f4efe6;
-  --color-muted: #b7b0a4;
-  --color-subtle: #7d766c;
-  --color-gold: #c9a24a;
-  --color-gold-soft: #e0c47a;
-  --color-ink: #1a1408;
+  --color-bg: #0b1110;
+  --color-surface: #121a18;
+  --color-surface-2: #18221f;
+  --color-fg: #f3f0e8;
+  --color-muted: #aeb8b2;
+  --color-subtle: #7d8982;
+  --color-gold: #2f8f6b;
+  --color-gold-soft: #63b892;
+  --color-ink: #07120e;
   --color-border: rgba(244, 239, 230, 0.1);
-  --color-gold-line: rgba(201, 162, 74, 0.38);
+  --color-gold-line: rgba(47, 143, 107, 0.38);
   --font-sans: "Vazirmatn", Tahoma, Arial, sans-serif;
   --radius-sm: 10px;
   --radius-md: 14px;
@@ -31,17 +31,17 @@
 }
 
 :root {
-  --bg: #07090d;
-  --surface: #10141a;
-  --surface-2: #161c24;
-  --fg: #f4efe6;
-  --muted: #b7b0a4;
-  --subtle: #7d766c;
-  --gold: #c9a24a;
-  --gold-soft: #e0c47a;
-  --ink: #1a1408;
+  --bg: #0b1110;
+  --surface: #121a18;
+  --surface-2: #18221f;
+  --fg: #f3f0e8;
+  --muted: #aeb8b2;
+  --subtle: #7d8982;
+  --gold: #2f8f6b;
+  --gold-soft: #63b892;
+  --ink: #07120e;
   --line: rgba(244, 239, 230, 0.1);
-  --gold-line: rgba(201, 162, 74, 0.38);
+  --gold-line: rgba(47, 143, 107, 0.38);
   --r-sm: 10px;
   --r-md: 14px;
   --r-lg: 22px;
@@ -193,7 +193,7 @@ p {
   color: var(--gold);
   border: 1px solid var(--gold-line);
   border-radius: var(--r-sm);
-  background: rgba(201, 162, 74, 0.08);
+  background: rgba(47, 143, 107, 0.08);
   flex-shrink: 0;
 }
 
@@ -230,7 +230,7 @@ p {
 .btn-gold {
   color: var(--ink);
   background: var(--gold-soft);
-  box-shadow: 0 8px 22px rgba(201, 162, 74, 0.18);
+  box-shadow: 0 8px 22px rgba(47, 143, 107, 0.18);
 }
 
 .btn-ghost {
@@ -246,7 +246,7 @@ p {
 
 .btn-ghost:hover {
   border-color: var(--gold-line);
-  background: rgba(201, 162, 74, 0.08);
+  background: rgba(47, 143, 107, 0.08);
 }
 
 .btn-gold:active,
@@ -278,7 +278,7 @@ p {
 .brand-logo-hero {
   height: 120px;
   margin-inline: auto;
-  filter: drop-shadow(0 18px 36px rgba(201, 162, 74, 0.22));
+  filter: drop-shadow(0 18px 36px rgba(47, 143, 107, 0.22));
 }
 
 .brand-logo-footer {
@@ -404,7 +404,7 @@ p {
   inset: 0;
   background:
     linear-gradient(180deg, rgba(7, 9, 13, 0.22) 0%, rgba(7, 9, 13, 0.48) 42%, rgba(7, 9, 13, 0.88) 78%, #07090d 100%),
-    radial-gradient(ellipse at 50% 12%, rgba(201, 162, 74, 0.14), transparent 44%);
+    radial-gradient(ellipse at 50% 12%, rgba(47, 143, 107, 0.14), transparent 44%);
 }
 
 .hero-inner {
@@ -483,7 +483,7 @@ p {
 .field textarea:focus,
 .hero-search select:focus {
   border-color: var(--gold-line);
-  box-shadow: 0 0 0 3px rgba(201, 162, 74, 0.12);
+  box-shadow: 0 0 0 3px rgba(47, 143, 107, 0.12);
 }
 
 .hero-search .search-submit {
@@ -661,7 +661,7 @@ p {
 
 .chip:hover {
   border-color: var(--gold-line);
-  background: rgba(201, 162, 74, 0.08);
+  background: rgba(47, 143, 107, 0.08);
 }
 
 .inquiry-section {
@@ -669,7 +669,7 @@ p {
   border: 1px solid var(--line);
   border-radius: 32px;
   background:
-    linear-gradient(180deg, rgba(201, 162, 74, 0.06), transparent 42%),
+    linear-gradient(180deg, rgba(47, 143, 107, 0.06), transparent 42%),
     var(--surface);
   width: min(100% - 40px, var(--wrap));
 }
@@ -1170,7 +1170,7 @@ summary:focus-visible {
   border: 1px solid var(--line);
   border-radius: var(--r-xl);
   background:
-    linear-gradient(180deg, rgba(201, 162, 74, 0.06), transparent 40%),
+    linear-gradient(180deg, rgba(47, 143, 107, 0.06), transparent 40%),
     var(--surface);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02);
 }
@@ -1219,7 +1219,7 @@ summary:focus-visible {
   padding: 18px;
   border-radius: var(--r-lg);
   border: 1px solid var(--gold-line);
-  background: rgba(201, 162, 74, 0.06);
+  background: rgba(47, 143, 107, 0.06);
 }
 
 .commission-result-head {
@@ -1370,7 +1370,7 @@ summary:focus-visible {
 
 .copy-result:hover {
   border-color: var(--gold-line);
-  background: rgba(201, 162, 74, 0.08);
+  background: rgba(47, 143, 107, 0.08);
 }
 
 .tracking-card {
@@ -1382,7 +1382,7 @@ summary:focus-visible {
   border: 1px solid var(--gold-line);
   border-radius: var(--r-xl);
   background:
-    linear-gradient(180deg, rgba(201, 162, 74, 0.1), transparent 55%),
+    linear-gradient(180deg, rgba(47, 143, 107, 0.1), transparent 55%),
     var(--surface);
   transition:
     border-color var(--fast) var(--ease),
@@ -1419,7 +1419,7 @@ summary:focus-visible {
   color: var(--gold);
   border: 1px solid var(--gold-line);
   border-radius: 28px;
-  background: rgba(201, 162, 74, 0.08);
+  background: rgba(47, 143, 107, 0.08);
 }
 
 .soon-shell {
@@ -1435,7 +1435,7 @@ summary:focus-visible {
   border: 1px solid var(--line);
   border-radius: var(--r-xl);
   background:
-    linear-gradient(180deg, rgba(201, 162, 74, 0.08), transparent 46%),
+    linear-gradient(180deg, rgba(47, 143, 107, 0.08), transparent 46%),
     var(--surface);
 }
 
@@ -1513,7 +1513,7 @@ summary:focus-visible {
   color: var(--gold-soft);
   border: 1px solid var(--gold-line);
   border-radius: 999px;
-  background: rgba(201, 162, 74, 0.1);
+  background: rgba(47, 143, 107, 0.1);
   font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -1554,7 +1554,7 @@ summary:focus-visible {
   display: grid;
   place-items: center;
   color: var(--gold);
-  background: rgba(201, 162, 74, 0.1);
+  background: rgba(47, 143, 107, 0.1);
   border: 1px solid var(--gold-line);
   border-radius: 20px;
 }
@@ -1642,7 +1642,7 @@ summary:focus-visible {
 
 .tools-switch-btn.is-active {
   border-color: var(--gold-line);
-  background: rgba(201, 162, 74, 0.1);
+  background: rgba(47, 143, 107, 0.1);
 }
 
 .tools-switch-btn.is-active .icon-box {
@@ -1727,7 +1727,7 @@ summary:focus-visible {
   overflow: hidden;
   border-radius: 12px;
   color: var(--gold);
-  background: rgba(201, 162, 74, 0.1);
+  background: rgba(47, 143, 107, 0.1);
   border: 1px solid var(--gold-line);
 }
 
@@ -1801,7 +1801,7 @@ summary:focus-visible {
 
 .chip.is-active {
   border-color: var(--gold-line);
-  background: rgba(201, 162, 74, 0.14);
+  background: rgba(47, 143, 107, 0.14);
   color: var(--gold-soft);
 }
 
@@ -1823,7 +1823,7 @@ summary:focus-visible {
   color: var(--gold);
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: rgba(201, 162, 74, 0.06);
+  background: rgba(47, 143, 107, 0.06);
   font-size: 0.68rem;
   font-weight: 600;
   transition:
@@ -1833,7 +1833,7 @@ summary:focus-visible {
 
 .team-social:hover {
   border-color: var(--gold-line);
-  background: rgba(201, 162, 74, 0.12);
+  background: rgba(47, 143, 107, 0.12);
 }
 
 /* HIRMAND TEAM / SOCIAL CONTACTS v2 */
@@ -1842,7 +1842,7 @@ summary:focus-visible {
   overflow: hidden;
   isolation: isolate;
   background:
-    radial-gradient(circle at 100% 0, rgba(201, 162, 74, 0.11), transparent 34%),
+    radial-gradient(circle at 100% 0, rgba(47, 143, 107, 0.11), transparent 34%),
     linear-gradient(145deg, rgba(255,255,255,0.025), transparent 55%),
     var(--surface);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.16);
@@ -2077,7 +2077,7 @@ summary:focus-visible {
 }
 
 .action-menu-panel a:hover {
-  background: rgba(201, 162, 74, 0.1);
+  background: rgba(47, 143, 107, 0.1);
 }
 
 .action-menu-panel strong {
@@ -2177,7 +2177,7 @@ summary:focus-visible {
   border: 3px solid var(--ink);
   border-radius: 50%;
   background: var(--gold-soft);
-  box-shadow: 0 6px 16px rgba(201, 162, 74, 0.38);
+  box-shadow: 0 6px 16px rgba(47, 143, 107, 0.38);
 }
 
 .rahn-slider::-moz-range-thumb {
@@ -2186,7 +2186,7 @@ summary:focus-visible {
   border: 3px solid var(--ink);
   border-radius: 50%;
   background: var(--gold-soft);
-  box-shadow: 0 6px 16px rgba(201, 162, 74, 0.38);
+  box-shadow: 0 6px 16px rgba(47, 143, 107, 0.38);
 }
 
 .rahn-slider-hint {
@@ -2320,7 +2320,7 @@ summary:focus-visible {
   padding: 8px 10px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: rgba(201, 162, 74, 0.06);
+  background: rgba(47, 143, 107, 0.06);
   transition: border-color var(--fast) var(--ease);
 }
 
@@ -2385,7 +2385,7 @@ summary:focus-visible {
   inset: 12% 10% auto;
   height: 220px;
   border-radius: 50%;
-  background: rgba(201, 162, 74, 0.08);
+  background: rgba(47, 143, 107, 0.08);
   filter: blur(80px);
   pointer-events: none;
   z-index: -1;
@@ -2455,7 +2455,7 @@ summary:focus-visible {
   border: 1px solid var(--line);
   border-radius: 10px;
   color: var(--gold);
-  background: rgba(201, 162, 74, 0.06);
+  background: rgba(47, 143, 107, 0.06);
   transition:
     transform var(--fast) var(--ease),
     background-color var(--fast) var(--ease),
@@ -2496,7 +2496,7 @@ summary:focus-visible {
   height: 240px;
   inset: -110px auto auto -90px;
   border-radius: 50%;
-  background: rgba(201, 162, 74, 0.1);
+  background: rgba(47, 143, 107, 0.1);
   filter: blur(12px);
   pointer-events: none;
 }
@@ -2579,7 +2579,7 @@ summary:focus-visible {
   background: var(--gold-soft);
   font-size: 0.82rem;
   font-weight: 700;
-  box-shadow: 0 8px 20px rgba(201, 162, 74, 0.14);
+  box-shadow: 0 8px 20px rgba(47, 143, 107, 0.14);
   transition: transform var(--fast) var(--ease), filter var(--fast) var(--ease);
 }
 
@@ -2628,7 +2628,7 @@ summary:focus-visible {
 .quick-action-primary {
   color: var(--ink);
   background: var(--gold-soft);
-  box-shadow: 0 8px 22px rgba(201, 162, 74, 0.16);
+  box-shadow: 0 8px 22px rgba(47, 143, 107, 0.16);
 }
 
 .quick-action-primary:hover {
@@ -2653,7 +2653,7 @@ summary:focus-visible {
   border: 1px solid var(--gold-line);
   border-radius: 999px;
   color: var(--gold-soft);
-  background: rgba(201, 162, 74, 0.08);
+  background: rgba(47, 143, 107, 0.08);
   font-size: 0.82rem;
   font-weight: 700;
   transition: background-color var(--fast) var(--ease), color var(--fast) var(--ease);
@@ -2993,7 +2993,7 @@ summary:focus-visible {
 .property-action.is-active {
   color: var(--gold-soft);
   border-color: var(--gold-line);
-  background: rgba(201, 162, 74, 0.14);
+  background: rgba(47, 143, 107, 0.14);
 }
 
 .property-actions-compact .property-action {
@@ -3159,7 +3159,7 @@ summary:focus-visible {
 
 .property-gallery-thumb.is-active {
   border-color: var(--gold);
-  box-shadow: 0 0 0 2px rgba(201, 162, 74, 0.12);
+  box-shadow: 0 0 0 2px rgba(47, 143, 107, 0.12);
 }
 
 .property-gallery-counter {
@@ -4919,7 +4919,7 @@ body {
   text-rendering: optimizeLegibility;
 }
 ::selection {
-  background: rgba(201, 162, 74, 0.24);
+  background: rgba(47, 143, 107, 0.24);
   color: var(--fg);
 }
 :where(a, button, input, select, textarea):focus-visible {
