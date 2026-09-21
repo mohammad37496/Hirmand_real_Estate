@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import {
   BedDouble,
@@ -155,7 +156,23 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
 export function PropertyShowcase({ initialProperties }: { initialProperties: PropertyCardData[] }) {
   const [properties, setProperties] = useState(initialProperties); const [transactionType, setTransactionType] = useState(""); const [propertyType, setPropertyType] = useState(""); const [neighborhood, setNeighborhood] = useState(""); const [loading, setLoading] = useState(false);
   const neighborhoods = NEIGHBORHOOD_NAMES;
-  async function applyFilters() { setLoading(true); try { const next = await listPublishedPropertyCards({ data: { transactionType: (transactionType || undefined) as PropertyTransaction | undefined, propertyType: (propertyType || undefined) as PropertyType | undefined, neighborhood: neighborhood || undefined } }); setProperties(next); } finally { setLoading(false); } }
+  async function applyFilters() {
+    setLoading(true);
+    try {
+      const next = await listPublishedPropertyCards({
+        data: {
+          transactionType: (transactionType || undefined) as PropertyTransaction | undefined,
+          propertyType: (propertyType || undefined) as PropertyType | undefined,
+          neighborhood: neighborhood || undefined,
+        },
+      });
+      setProperties(next);
+    } catch {
+      toast.error("جستجوی فایل‌ها انجام نشد. لطفاً دوباره تلاش کنید.");
+    } finally {
+      setLoading(false);
+    }
+  }
   return <Reveal as="section" className="section property-showcase" id="listings"><SectionHead kicker="فایل‌های فعال" title="ملک‌های موجود هیرمند" text="فایل‌های منتشرشده را ببینید، جزئیات را باز کنید و برای هر ملک مستقیم با مشاور تماس بگیرید." />
     <div className="property-showcase-cta">
       <Link to="/properties" className="text-link">مشاهده همه فایل‌ها</Link>
