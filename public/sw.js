@@ -1,4 +1,4 @@
-const CACHE_NAME = "hirmand-shell-v1";
+const CACHE_NAME = "hirmand-shell-v2";
 const APP_SHELL = ["/", "/properties", "/favorites"];
 
 self.addEventListener("install", (event) => {
