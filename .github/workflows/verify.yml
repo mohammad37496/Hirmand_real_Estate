@@ -35,3 +35,35 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run build
+
+      - name: Browser smoke against production preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /workspace
+          sudo chown "$USER":"$USER" /workspace
+          nohup npm run preview > /tmp/hirmand-preview.log 2>&1 &
+          echo $! > /tmp/hirmand-preview.pid
+
+          for attempt in {1..45}; do
+            if curl --silent --fail http://127.0.0.1:8081/ >/dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 45 ]; then
+              echo "::error::Vite preview did not become ready on port 8081."
+              cat /tmp/hirmand-preview.log || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+          npx playwright install --with-deps chromium
+          node scripts/browser-smoke.mjs http://127.0.0.1:8081/ /workspace/screenshots/hirmand-preview.png
+
+      - name: Upload browser smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hirmand-browser-smoke
+          path: /workspace/screenshots
+          if-no-files-found: warn
