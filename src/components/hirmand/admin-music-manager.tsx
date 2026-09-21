@@ -328,11 +328,20 @@ export function AdminMusicManager() {
               accept=".mp3,.ogg,.wav,.m4a,.aac,audio/*"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             />
-            <small>
-              {file
-                ? file.name + " · " + formatSize(file.size)
-                : "MP3 / OGG / WAV / M4A / AAC — حداکثر ۱۰۰ مگابایت"}
-            </small>
+            <span className={file ? "admin-music-file-card is-selected" : "admin-music-file-card"}>
+              <span className="admin-music-file-icon">
+                <FileAudio size={18} />
+              </span>
+              <span className="admin-music-file-copy">
+                <strong>{file ? file.name : "انتخاب فایل صوتی"}</strong>
+                <small>
+                  {file
+                    ? formatSize(file.size)
+                    : "MP3 / OGG / WAV / M4A / AAC · حداکثر ۱۰۰ مگابایت"}
+                </small>
+              </span>
+              <Upload size={16} />
+            </span>
           </label>
 
           <button type="submit" className="btn-gold" disabled={busy || !file}>
