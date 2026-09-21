@@ -1,9 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
   Clock3,
   ExternalLink,
   Filter,
+  Search,
+  SlidersHorizontal,
+  ArrowUpDown,
+  MapPin,
+  Image as ImageIcon,
   Globe2,
   Home,
   Import,
@@ -121,13 +126,18 @@ export function AdminDivarFiles() {
   const [syncing, setSyncing] = useState(false);
   const [importingId, setImportingId] = useState<string | null>(null);
   const [limit, setLimit] = useState(24);
+  const [search, setSearch] = useState("");
+  const [transactionFilter, setTransactionFilter] = useState<"all" | "sell" | "rent">("all");
+  const [propertyFilter, setPropertyFilter] = useState<"all" | "apartment" | "villa">("all");
+  const [sortBy, setSortBy] = useState<"newest" | "priceAsc" | "priceDesc" | "areaDesc">("newest");
+  const [onlyWithImages, setOnlyWithImages] = useState(false);
 
   async function load() {
     setLoading(true);
     try {
       const [acceptedRows, importedRows, nextStats] = await Promise.all([
-        listDivarFiles({ data: { status: "accepted", limit: 60 } }),
-        listDivarFiles({ data: { status: "imported", limit: 60 } }),
+        listDivarFiles({ data: { status: "accepted", limit: 100 } }),
+        listDivarFiles({ data: { status: "imported", limit: 100 } }),
         getDivarStats({ data: {} }),
       ]);
       setFiles(acceptedRows);
@@ -169,7 +179,7 @@ export function AdminDivarFiles() {
 
     setImportingId(file.id);
     try {
-      const result = await importDivarFile({ data: { id: file.id } });
+      const result = await importDivarFile({ data: { id: file.id, repair: options.repair === true } });
       if (result.imageFailures > 0) {
         toast.warning(
           `فایل منتشر شد، اما ${result.imageFailures.toLocaleString("fa-IR")} تصویر از دیوار قابل دریافت نبود؛ دوباره روی «تکمیل تصاویر» بزنید.`,
@@ -190,7 +200,50 @@ export function AdminDivarFiles() {
     }
   }
 
-  const visible = tab === "accepted" ? files : imported;
+  const sourceVisible = tab === "accepted" ? files : imported;
+
+  const visible = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const filtered = sourceVisible.filter((file) => {
+      if (transactionFilter !== "all" && file.transactionType !== transactionFilter) return false;
+      if (propertyFilter !== "all" && file.propertyType !== propertyFilter) return false;
+      if (onlyWithImages && file.images.length === 0) return false;
+      if (!query) return true;
+      const haystack = [
+        file.title,
+        file.neighborhood,
+        file.description,
+        file.sellerName ?? "",
+        ...file.features,
+      ].join(" ").toLowerCase();
+      return haystack.includes(query);
+    });
+
+    return [...filtered].sort((a, b) => {
+      if (sortBy === "areaDesc") return (b.areaM2 ?? -1) - (a.areaM2 ?? -1);
+      const aPrice = Number(a.price ?? a.deposit ?? a.rent ?? 0);
+      const bPrice = Number(b.price ?? b.deposit ?? b.rent ?? 0);
+      if (sortBy === "priceAsc") return aPrice - bPrice;
+      if (sortBy === "priceDesc") return bPrice - aPrice;
+      return new Date(b.lastSeenAt).getTime() - new Date(a.lastSeenAt).getTime();
+    });
+  }, [onlyWithImages, propertyFilter, search, sortBy, sourceVisible, transactionFilter]);
+
+  const resetFilters = () => {
+    setSearch("");
+    setTransactionFilter("all");
+    setPropertyFilter("all");
+    setSortBy("newest");
+    setOnlyWithImages(false);
+  };
+
+  const hasFilters =
+    search.trim().length > 0 ||
+    transactionFilter !== "all" ||
+    propertyFilter !== "all" ||
+    sortBy !== "newest" ||
+    onlyWithImages;
+
   const emptyText =
     tab === "accepted"
       ? "هنوز فایل شخصی جدیدی دریافت نشده. روی «دریافت فایل‌های دیوار» بزنید."
@@ -257,6 +310,64 @@ export function AdminDivarFiles() {
           </div>
         </div>
 
+        <div className="divar-smart-toolbar">
+          <label className="divar-search-box">
+            <Search size={17} />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="جستجو در عنوان، محله، توضیحات و امکانات…"
+              aria-label="جستجو در فایل‌های دیوار"
+            />
+          </label>
+
+          <div className="divar-filter-group">
+            <label className="divar-select-field">
+              <span>معامله</span>
+              <select value={transactionFilter} onChange={(event) => setTransactionFilter(event.target.value as typeof transactionFilter)}>
+                <option value="all">همه</option>
+                <option value="sell">فروش</option>
+                <option value="rent">رهن و اجاره</option>
+              </select>
+            </label>
+            <label className="divar-select-field">
+              <span>نوع ملک</span>
+              <select value={propertyFilter} onChange={(event) => setPropertyFilter(event.target.value as typeof propertyFilter)}>
+                <option value="all">همه</option>
+                <option value="apartment">آپارتمان</option>
+                <option value="villa">ویلا</option>
+              </select>
+            </label>
+            <label className="divar-select-field">
+              <span>مرتب‌سازی</span>
+              <select value={sortBy} onChange={(event) => setSortBy(event.target.value as typeof sortBy)}>
+                <option value="newest">جدیدترین</option>
+                <option value="priceAsc">قیمت کمتر</option>
+                <option value="priceDesc">قیمت بیشتر</option>
+                <option value="areaDesc">متراژ بیشتر</option>
+              </select>
+            </label>
+          </div>
+
+          <label className="divar-toggle">
+            <input
+              type="checkbox"
+              checked={onlyWithImages}
+              onChange={(event) => setOnlyWithImages(event.target.checked)}
+            />
+            <span><ImageIcon size={14} /> فقط دارای تصویر</span>
+          </label>
+
+          <div className="divar-toolbar-result">
+            <SlidersHorizontal size={14} />
+            <strong>{visible.length.toLocaleString("fa-IR")}</strong>
+            <span>مورد نمایش</span>
+            {hasFilters ? (
+              <button type="button" onClick={resetFilters}>پاک کردن فیلترها</button>
+            ) : null}
+          </div>
+        </div>
+
         {loading ? (
           <div className="admin-empty">
             <Loader2 size={26} className="admin-spin" />
@@ -295,9 +406,10 @@ export function AdminDivarFiles() {
                     <div className="divar-meta">
                       <span className="divar-chip">{transactionLabel(file)}</span>
                       <span className="divar-chip">{propertyLabel(file)}</span>
-                      <span className="divar-chip">{file.neighborhood || "اصفهان"}</span>
+                      <span className="divar-chip"><MapPin size={12} /> {file.neighborhood || "اصفهان"}</span>
                       {file.areaM2 ? <span className="divar-chip">{file.areaM2.toLocaleString("fa-IR")} متر</span> : null}
                       {file.bedrooms ? <span className="divar-chip">{file.bedrooms.toLocaleString("fa-IR")} خواب</span> : null}
+                      {file.images.length ? <span className="divar-chip"><ImageIcon size={12} /> {file.images.length.toLocaleString("fa-IR")} تصویر</span> : null}
                     </div>
                     <div className="divar-meta">
                       {file.transactionType === "rent" ? (
@@ -323,6 +435,16 @@ export function AdminDivarFiles() {
                       <a className="btn-ghost" href={file.sourceUrl} target="_blank" rel="noreferrer">
                         <ExternalLink size={15} /> مشاهده در دیوار
                       </a>
+                      {file.latitude != null && file.longitude != null ? (
+                        <a
+                          className="btn-ghost"
+                          href={`https://www.google.com/maps?q=${file.latitude},${file.longitude}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <MapPin size={15} /> نقشه
+                        </a>
+                      ) : null}
                       {tab === "accepted" ? (
                         <button
                           type="button"
