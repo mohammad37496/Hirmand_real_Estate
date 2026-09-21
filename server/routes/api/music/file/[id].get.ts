@@ -1,4 +1,4 @@
-import { createError, defineEventHandler, getRouterParam, sendRedirect } from "h3";
+import { createError, defineEventHandler, getRouterParam } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 
 function normalizeBlobUrl(raw: string): string {
@@ -102,13 +102,12 @@ export default defineEventHandler(async (event) => {
   // Do not proxy the audio body through a serverless function. Native audio
   // playback relies heavily on HTTP Range requests, and a redirect lets
   // Vercel Blob/CDN answer those requests directly and efficiently.
-  try {
-    return sendRedirect(event, target, 307);
-  } catch (error) {
-    console.error("[music-file] redirect failed", error);
-    throw createError({
-      statusCode: 502,
-      statusMessage: "فایل موسیقی از فضای ذخیره‌سازی قابل دریافت نیست.",
-    });
-  }
+  return new Response(null, {
+    status: 307,
+    headers: {
+      location: target,
+      "cache-control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
+      "content-disposition": "inline",
+    },
+  });
 });
