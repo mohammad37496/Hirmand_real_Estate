@@ -192,7 +192,11 @@ try {
   try {
     const response = await apiPage.request.get(new URL("/api/music", url).toString(), { timeout: timeoutMs });
     let payload = null;
-    try { payload = await response.json(); } catch {}
+    try {
+      payload = await response.json();
+    } catch {
+      // A non-JSON response should be reported through the structured smoke result below.
+    }
     musicApiCheck = {
       status: response.status(),
       hasTracksArray: Array.isArray(payload?.tracks),

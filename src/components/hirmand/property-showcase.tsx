@@ -14,6 +14,7 @@ import { mediaSourceCandidates } from "@/lib/media";
 import { formatToman } from "@/lib/money";
 import type { Property, PropertyCardData, PropertyType, PropertyTransaction } from "@/lib/properties";
 import { isFeaturedActive, listPublishedPropertyCards } from "@/lib/properties";
+import { propertyPath } from "@/lib/property-path";
 import { PropertyActions } from "./property-actions";
 import { Reveal } from "./reveal";
 
@@ -67,8 +68,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
   return (
     <article className="property-card">
       <Link
-        to="/properties/$slug"
-        params={{ slug: property.slug }}
+        to={propertyPath(property)}
         className="property-card-link"
         aria-label={`مشاهده جزئیات کامل فایل ${property.title}`}
       >

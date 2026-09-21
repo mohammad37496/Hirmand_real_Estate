@@ -5,24 +5,19 @@ import { PropertyDetailView } from "@/components/hirmand/property-detail-view";
 
 export const Route = createFileRoute("/properties/$slug")({
   loader: async ({ params }) => {
-    try {
-      const property = await getPublishedProperty({ data: { slug: params.slug } });
-      if (!property) return { property: null, related: [] };
+    const property = await getPublishedProperty({ data: { slug: params.slug } });
+    if (!property) return { property: null, related: [] };
 
-      const related = await listRelatedProperties({
-        data: {
-          slug: property.slug,
-          neighborhood: property.neighborhood,
-          propertyType: property.propertyType,
-          limit: 6,
-        },
-      });
+    const related = await listRelatedProperties({
+      data: {
+        slug: property.slug,
+        neighborhood: property.neighborhood,
+        propertyType: property.propertyType,
+        limit: 6,
+      },
+    });
 
-      return { property, related };
-    } catch (error) {
-      console.error("[property-detail] legacy route loader failed", error);
-      return { property: null, related: [] };
-    }
+    return { property, related };
   },
   head: ({ loaderData, params }) =>
     propertyHead(loaderData?.property ?? null, params.slug),
