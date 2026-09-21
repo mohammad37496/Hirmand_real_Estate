@@ -1,6 +1,6 @@
 import { upload } from "@vercel/blob/client";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { Loader2, Music2, Pause, Play, Trash2, Upload, Volume2, VolumeX } from "lucide-react";
+import { FileAudio, Loader2, Music2, Pause, Play, Trash2, Upload, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 
 type AdminMusicTrack = { id: string; title: string; artist: string; url: string; mimeType: string; sizeBytes: number; active: boolean; position: number; createdAt: string };
@@ -11,6 +11,40 @@ function formatSize(bytes: number) {
 
 function isAutoplayBlocked(error: unknown) {
   return error instanceof DOMException && error.name === "NotAllowedError";
+}
+
+function audioMimeType(file: File) {
+  const type = file.type.trim().toLowerCase();
+  const normalized = type === "audio/mp3" ? "audio/mpeg" : type;
+  if ([
+    "audio/mpeg",
+    "audio/ogg",
+    "audio/wav",
+    "audio/x-wav",
+    "audio/mp4",
+    "audio/x-m4a",
+    "audio/aac",
+  ].includes(normalized)) {
+    return normalized;
+  }
+
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  if (extension === "mp3") return "audio/mpeg";
+  if (extension === "ogg" || extension === "oga") return "audio/ogg";
+  if (extension === "wav") return "audio/wav";
+  if (extension === "m4a") return "audio/mp4";
+  if (extension === "aac") return "audio/aac";
+  return "";
+}
+
+function normalizedAudioFile(file: File) {
+  const mimeType = audioMimeType(file);
+  if (!mimeType) return null;
+  if (file.type === mimeType) return { file, mimeType };
+  return {
+    file: new File([file], file.name, { type: mimeType, lastModified: file.lastModified }),
+    mimeType,
+  };
 }
 
 export function AdminMusicManager() {
@@ -64,27 +98,35 @@ export function AdminMusicManager() {
       return;
     }
 
+    const normalized = normalizedAudioFile(file);
+    if (!normalized) {
+      toast.error("فرمت فایل صوتی پشتیبانی نمی‌شود. MP3، OGG، WAV، M4A یا AAC انتخاب کنید.");
+      return;
+    }
+
     setBusy(true);
     setUploadProgress(0);
 
     try {
-      const safeName = file.name
+      const uploadFile = normalized.file;
+      const uploadMimeType = normalized.mimeType;
+      const safeName = uploadFile.name
         .replace(/[^\\w.\\u0600-\\u06FF-]+/g, "-")
         .slice(0, 100);
       const pathname = "music/" + Date.now() + "-" + safeName;
 
       // Use Vercel's official browser upload client. It handles direct
       // Blob uploads, progress events and multipart/retries for large files.
-      const blob = await upload(pathname, file, {
+      const blob = await upload(pathname, uploadFile, {
         access: "public",
         handleUploadUrl: "/api/music-upload",
         clientPayload: JSON.stringify({
           title: title.trim(),
           artist: artist.trim(),
-          contentType: file.type || "audio/mpeg",
-          sizeBytes: file.size,
+          contentType: uploadMimeType,
+          sizeBytes: uploadFile.size,
         }),
-        multipart: file.size >= 5 * 1024 * 1024,
+        multipart: uploadFile.size >= 5 * 1024 * 1024,
         onUploadProgress: (event) => {
           setUploadProgress(Math.max(0, Math.min(100, event.percentage)));
         },
@@ -100,8 +142,8 @@ export function AdminMusicManager() {
           title: title.trim(),
           artist: artist.trim(),
           url: blob.url,
-          mimeType: file.type || blob.contentType || "audio/mpeg",
-          sizeBytes: file.size,
+          mimeType: uploadMimeType || blob.contentType || "audio/mpeg",
+          sizeBytes: uploadFile.size,
         }),
       });
 
