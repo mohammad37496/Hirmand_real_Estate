@@ -216,7 +216,7 @@ try {
     const propertiesUrl = new URL("/properties", url).toString();
     await propertyPage.goto(propertiesUrl, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await propertyPage.waitForTimeout(500);
-    const link = propertyPage.locator('a[href^="/properties/"]').filter({ has: propertyPage.locator("img") }).first();
+    const link = propertyPage.locator('[data-property-link="true"]').first();
     const href = await link.getAttribute("href").catch(() => null);
     propertyNavigationCheck.href = href;
     if (href) {
