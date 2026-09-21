@@ -1156,15 +1156,16 @@ export const importDivarFile = createServerFn({ method: "POST" })
         );
       } else {
         const currentImages = parseJsonArray(existingProperty.images);
+        const repairableCurrentImages = currentImages.filter(
+          (url) => !/divarcdn\.com|wsrv\.nl|weserv\.nl/i.test(url),
+        );
         const needsImageRepair =
-          currentImages.length === 0 ||
-          currentImages.some((url) => /divarcdn\.com|wsrv\.nl/i.test(url));
+          currentImages.length === 0 || repairableCurrentImages.length !== currentImages.length;
         const uploadResult = needsImageRepair
           ? await uploadDivarImages(token, images)
-          : { imported: currentImages, failures: [] as { source: string; status?: number; reason: string }[] };
-        const failedSources = uploadResult.failures.map((failure) => failure.source);
+          : { imported: repairableCurrentImages, failures: [] as { source: string; status?: number; reason: string }[] };
         const finalImages = Array.from(
-          new Set([...uploadResult.imported, ...currentImages, ...failedSources]),
+          new Set([...uploadResult.imported, ...repairableCurrentImages]),
         ).slice(0, MAX_IMAGES);
 
         await sql.query(
@@ -1204,10 +1205,9 @@ export const importDivarFile = createServerFn({ method: "POST" })
     }
 
     const importedResult = await uploadDivarImages(token, images);
-    const failedSources = importedResult.failures.map((failure) => failure.source);
-    const importedImages = Array.from(
-      new Set([...importedResult.imported, ...failedSources]),
-    ).slice(0, MAX_IMAGES);
+    // Never persist source URLs that failed to download: they are not guaranteed to
+    // remain publicly reachable and were the cause of broken Divar image grids.
+    const importedImages = Array.from(new Set(importedResult.imported)).slice(0, MAX_IMAGES);
 
     const id = existingPropertyId ? existingPropertyId : crypto.randomUUID();
     const propertyType = propertyTypeToSite(String(row.property_type) as DivarPropertyType);

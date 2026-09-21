@@ -24,7 +24,7 @@ export function absoluteUrl(path = "/"): string {
   return path.startsWith("http") ? path : `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-export function ogImageUrl(path = "/og.jpg"): string {
+export function ogImageUrl(path = "/images/isfahan-hero.jpg"): string {
   return absoluteUrl(path);
 }
 

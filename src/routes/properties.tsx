@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeftRight, Heart, List, Map, MapPinned, RotateCcw, Search, Share2, SlidersHorizontal, X } from "lucide-react";
+import { ArrowLeftRight, Heart, List, Map as MapIcon, MapPinned, RotateCcw, Search, Share2, SlidersHorizontal, X } from "lucide-react";
 import { toast } from "sonner";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import {
@@ -763,7 +763,7 @@ function PropertiesIndexPage() {
                   </button>
                 </>
               ) : null}
-              <a href="/#inquiry">درخواست فایل اختصاصی</a>
+              <Link to="/" hash="inquiry">درخواست فایل اختصاصی</Link>
             </div>
           </div>
 
@@ -792,7 +792,7 @@ function PropertiesIndexPage() {
                         }}
                       >
                         <div className="properties-map-list-image">
-                          {property.image ? <img src={property.image} alt="" loading="lazy" /> : <Map size={20} />}
+                          {property.image ? <img src={property.image} alt="" loading="lazy" /> : <MapIcon size={20} />}
                         </div>
                         <div>
                           <strong>{property.title}</strong>
@@ -838,7 +838,7 @@ function PropertiesIndexPage() {
               <p>بازه قیمت یا متراژ را بازتر کنید، فیلترهای کمتر دقیق انتخاب کنید یا برای دریافت گزینه‌های متناسب با بودجه، درخواست اختصاصی ثبت کنید.</p>
               <div className="properties-empty-actions">
                 {hasFilters ? <button type="button" className="btn-ghost" onClick={resetFilters}><X size={15} /> پاک‌کردن فیلترها</button> : null}
-                <a href="/#inquiry" className="btn-gold">ثبت درخواست</a>
+                <Link to="/" hash="inquiry" className="btn-gold">ثبت درخواست</Link>
               </div>
             </div>
           )}

@@ -895,7 +895,7 @@ export function AdminPropertiesPage() {
       <style dangerouslySetInnerHTML={{ __html: ADMIN_CSS }} />
       <aside className="admin-sidebar">
         <div className="admin-sidebar-brand">
-          <Building2 size={22} color="#c9a24a" />
+          <Building2 size={22} color="#f7f5ef" />
           <div>
             <strong>هیرمند</strong>
             <small>پنل مدیریت فایل‌ها</small>
@@ -1165,7 +1165,7 @@ export function AdminPropertiesPage() {
                             aria-label={"انتخاب " + property.title}
                             checked={selectedIds.includes(property.id)}
                             onChange={() => toggleSelected(property.id)}
-                            style={{ width: 18, height: 18, accentColor: "#c9a24a" }}
+                            style={{ width: 18, height: 18, accentColor: "#f7f5ef" }}
                           />
                         </div>
                         <div className="admin-property-thumb">
@@ -1187,9 +1187,9 @@ export function AdminPropertiesPage() {
                                 <span
                                   title={"امتیاز تکمیل اطلاعات: " + quality.score + " از 100"}
                                   style={{
-                                    border: "1px solid " + (quality.complete ? "rgba(126, 220, 173, .28)" : "rgba(224, 196, 122, .28)"),
-                                    background: quality.complete ? "rgba(126, 220, 173, .08)" : "rgba(224, 196, 122, .08)",
-                                    color: quality.complete ? "#8ee8bf" : "#e0c47a",
+                                    border: "1px solid " + (quality.complete ? "rgba(126, 220, 173, .28)" : "rgba(247, 245, 239, .28)"),
+                                    background: quality.complete ? "rgba(126, 220, 173, .08)" : "rgba(247, 245, 239, .08)",
+                                    color: quality.complete ? "#f7f5ef" : "#f7f5ef",
                                     borderRadius: 999,
                                     padding: "3px 7px",
                                     fontSize: 11,
@@ -1520,9 +1520,9 @@ export function AdminPropertiesPage() {
                         type="checkbox"
                         checked={form.featured}
                         onChange={(e) => update("featured", e.target.checked)}
-                        style={{ accentColor: "#c9a24a", width: 18, height: 18 }}
+                        style={{ accentColor: "#f7f5ef", width: 18, height: 18 }}
                       />
-                      <span style={{ display: "flex", alignItems: "center", gap: 6, color: "#e0c47a", fontWeight: 600 }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: 6, color: "#f7f5ef", fontWeight: 600 }}>
                         <Star size={15} /> فایل ویژه
                       </span>
                     </label>
@@ -1534,7 +1534,7 @@ export function AdminPropertiesPage() {
                         onChange={(e) => update("featuredUntil", e.target.value)}
                         disabled={!form.featured}
                       />
-                      <small style={{ color: "#7d766c", marginTop: 5 }}>
+                      <small style={{ color: "rgb(247 245 239 / .56)", marginTop: 5 }}>
                         خالی = بدون انقضا. بعد از این زمان، فایل خودکار از اولویت «ویژه» خارج می‌شود.
                       </small>
                     </label>
