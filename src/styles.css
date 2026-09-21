@@ -7499,3 +7499,22 @@ summary:focus-visible {
     transition: none !important;
   }
 }
+
+
+/* Home hero navigation contrast */
+.site-nav:not(.is-scrolled) .nav-links,
+.site-nav:not(.is-scrolled) .nav-brand strong,
+.site-nav:not(.is-scrolled) .nav-brand small {
+  color: rgba(255, 255, 255, 0.94);
+}
+
+.site-nav:not(.is-scrolled) .nav-links a:hover,
+.site-nav:not(.is-scrolled) .nav-links a.is-current {
+  color: #ffffff;
+}
+
+.site-nav:not(.is-scrolled) .menu-toggle {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.16);
+}
