@@ -80,7 +80,7 @@ const OFFICE_PLACE: Neighborhood = {
   lng: SITE.lng,
 };
 
-async function copyText(value: string) {
+async function copyText(value: string): Promise<boolean> {
   try {
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(value);
@@ -95,8 +95,10 @@ async function copyText(value: string) {
       area.remove();
     }
     toast.success("شماره کپی شد");
+    return true;
   } catch {
     toast.error("کپی انجام نشد");
+    return false;
   }
 }
 
@@ -110,7 +112,8 @@ function CopyButton({ value, label }: { value: string; label: string }) {
       onClick={async (event) => {
         event.preventDefault();
         event.stopPropagation();
-        await copyText(value);
+        const copied = await copyText(value);
+        if (!copied) return;
         setDone(true);
         window.setTimeout(() => setDone(false), 1600);
       }}
@@ -275,8 +278,8 @@ function Hero() {
         </div>
         <div className="hero-proof" aria-label="اطلاعات سریع هیرمند">
           <span><strong>{NEIGHBORHOODS.length}+</strong> محله اصفهان</span>
-          <span><strong>۴</strong> خدمت اصلی</span>
-          <span><strong>۲</strong> مشاور مستقیم</span>
+          <span><strong>{SERVICES.length}</strong> خدمت اصلی</span>
+          <span><strong>{TEAM.length}</strong> مشاور مستقیم</span>
         </div>
       </div>
     </section>
