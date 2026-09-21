@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 import { getPublishedProperty, listRelatedProperties } from "@/lib/properties";
 import { propertyHead } from "@/lib/seo";
 import { PropertyDetailView } from "@/components/hirmand/property-detail-view";
@@ -6,7 +6,7 @@ import { PropertyDetailView } from "@/components/hirmand/property-detail-view";
 export const Route = createFileRoute("/properties/$slug")({
   loader: async ({ params }) => {
     const property = await getPublishedProperty({ data: { slug: params.slug } });
-    if (!property) return { property: null, related: [] };
+    if (!property) throw notFound();
 
     const related = await listRelatedProperties({
       data: {
