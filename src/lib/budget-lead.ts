@@ -1,4 +1,4 @@
-import { DEFAULT_MATCH_RAHN_RATE, totalRahnEquivalent, type BudgetInput } from "./budget-matching";
+import { DEFAULT_MATCH_RAHN_RATE, totalRahnEquivalent, type BudgetInput } from "./budget-matching.ts";
 
 export type BudgetLeadMatch = {
   slug: string;
