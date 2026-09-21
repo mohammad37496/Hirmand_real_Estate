@@ -118,7 +118,7 @@ export function AdminMusicManager() {
       const uploadFile = normalized.file;
       const uploadMimeType = normalized.mimeType;
       const safeName = uploadFile.name
-        .replace(/[^\\w.\\u0600-\\u06FF-]+/g, "-")
+        .replace(/[^\w.\u0600-\u06FF-]+/g, "-")
         .slice(0, 100);
       const pathname = "music/" + Date.now() + "-" + safeName;
 
