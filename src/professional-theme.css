@@ -20,7 +20,7 @@
   --subtle:var(--hm-ink-faint);
   --gold:var(--hm-ink);
   --gold-soft:var(--hm-ink);
-  --ink:#fff;
+  --ink:var(--hm-paper);
   --line:var(--hm-line);
   --gold-line:var(--hm-line-strong);
   color-scheme:light;
@@ -53,14 +53,14 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .mobile-menu a{color:var(--hm-ink-soft)}
 .mobile-menu a:hover{background:rgb(23 23 23 / .06);color:var(--hm-ink)}
 .site-nav:not(.is-scrolled) .nav-links,.site-nav:not(.is-scrolled) .nav-brand strong,.site-nav:not(.is-scrolled) .nav-brand small{color:rgb(245 240 231 / .95)}
-.site-nav:not(.is-scrolled) .nav-links a:hover,.site-nav:not(.is-scrolled) .nav-links a.is-current{color:#fff}
-.site-nav:not(.is-scrolled) .menu-toggle{color:#fff;border-color:rgb(245 240 231 / .24);background:rgb(23 23 23 / .18)}
+.site-nav:not(.is-scrolled) .nav-links a:hover,.site-nav:not(.is-scrolled) .nav-links a.is-current{color:var(--hm-paper)}
+.site-nav:not(.is-scrolled) .menu-toggle{color:var(--hm-paper);border-color:rgb(245 240 231 / .24);background:rgb(23 23 23 / .18)}
 
 .hero{background:var(--hm-ink)}
 .hero-veil{background:linear-gradient(180deg,rgb(23 23 23 / .03) 0%,rgb(23 23 23 / .25) 40%,rgb(23 23 23 / .76) 78%,var(--hm-ink) 100%)}
-.hero h1{color:#fff;letter-spacing:-.042em}
+.hero h1{color:var(--hm-paper);letter-spacing:-.042em}
 .hero .slogan,.hero .english-name,.hero .hero-managed{color:rgb(245 240 231 / .72)}
-.hero .slogan strong{color:#fff}
+.hero .slogan strong{color:var(--hm-paper)}
 .hero-search{
   background:var(--hm-paper);
   border-color:rgb(245 240 231 / .35);
