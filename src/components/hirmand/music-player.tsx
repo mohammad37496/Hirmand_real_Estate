@@ -131,9 +131,8 @@ export function MusicPlayer() {
     const candidates = Array.from(
       new Set(
         [
-          // Start from the same-origin stream endpoint. It normalizes legacy Blob
-          // URLs and redirects to the public object, which avoids browser-side
-          // CORS/referrer differences between Blob stores.
+          // Prefer the same-origin stream endpoint. It handles legacy Blob URLs
+          // and keeps the browser-facing source stable across storage changes.
           currentTrack.stream,
           currentTrack.id
             ? `/api/music/file/${encodeURIComponent(currentTrack.id)}`
@@ -284,10 +283,16 @@ export function MusicPlayer() {
   function selectTrack(nextIndex: number, shouldPlay = true) {
     if (!tracks.length) return;
     const safeIndex = Math.max(0, Math.min(tracks.length - 1, nextIndex));
+    setIsListOpen(false);
+
+    if (safeIndex === index && shouldPlay) {
+      void playOrPause();
+      return;
+    }
+
     resumeAfterLoadRef.current = shouldPlay;
     playRequestedRef.current = shouldPlay;
     setIndex(safeIndex);
-    setIsListOpen(false);
   }
 
   function nextTrack() {
@@ -345,7 +350,11 @@ export function MusicPlayer() {
         ref={audioRef}
         preload="metadata"
         onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
-        onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
+        onLoadedMetadata={(event) => {
+          setDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0);
+          setLoadError(false);
+        }}
+        onCanPlay={() => setLoadError(false)}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onEnded={handleEnded}
