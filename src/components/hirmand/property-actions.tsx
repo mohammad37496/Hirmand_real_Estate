@@ -34,7 +34,12 @@ function toggleCompare(slug: string): { added: boolean; next: string[] } {
   }
   if (current.length >= MAX_COMPARE) return { added: false, next: current };
   const next = [...current, slug];
-  localStorage.setItem(COMPARE_KEY, JSON.stringify(next));
+  try {
+    localStorage.setItem(COMPARE_KEY, JSON.stringify(next));
+  } catch {
+    // Ignore storage failures in private browsing contexts.
+    return { added: false, next: current };
+  }
   return { added: true, next };
 }
 
