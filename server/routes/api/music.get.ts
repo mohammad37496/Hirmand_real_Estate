@@ -52,7 +52,7 @@ function getConfiguredBlobStoreId(): string | null {
 
 
 export default defineEventHandler(async (event) => {
-  setResponseHeader(event, "cache-control", "public, s-maxage=60, stale-while-revalidate=300");
+  setResponseHeader(event, "cache-control", "no-store");
   if (dbSource === "unconfigured") return { autoplay: true, tracks: [] };
   const sql = await getSql();
   const rows = await sql.query<Record<string, unknown>>(
