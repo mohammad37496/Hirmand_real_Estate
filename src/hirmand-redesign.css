@@ -4560,3 +4560,15 @@ body{
     transition:none!important;
   }
 }
+
+
+/* Finance tools — reserve safe space for the fixed music player + quick actions. */
+.tools-wrap{
+  padding-bottom:126px!important;
+}
+
+@media (max-width:640px){
+  .tools-wrap{
+    padding-bottom:158px!important;
+  }
+}
