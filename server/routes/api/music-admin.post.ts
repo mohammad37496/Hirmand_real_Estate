@@ -43,6 +43,14 @@ async function verifyPublicAudio(url: string, expectedMimeType: string) {
     });
     const contentType =
       response.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase() ?? "";
+    const canonicalExpected =
+      expectedMimeType === "audio/mp3"
+        ? "audio/mpeg"
+        : expectedMimeType === "audio/x-wav"
+          ? "audio/wav"
+          : expectedMimeType === "audio/x-m4a"
+            ? "audio/mp4"
+            : expectedMimeType;
 
     if (!response.ok && response.status !== 206) {
       throw new Error(`Blob responded with HTTP ${response.status}`);
@@ -50,12 +58,8 @@ async function verifyPublicAudio(url: string, expectedMimeType: string) {
     if (!contentType.startsWith("audio/")) {
       throw new Error(`Blob content-type is ${contentType || "missing"}`);
     }
-    if (
-      expectedMimeType &&
-      expectedMimeType !== "audio/mp3" &&
-      contentType !== expectedMimeType
-    ) {
-      throw new Error(`Blob content-type ${contentType} differs from ${expectedMimeType}`);
+    if (canonicalExpected && contentType !== canonicalExpected) {
+      throw new Error(`Blob content-type ${contentType} differs from ${canonicalExpected}`);
     }
     await response.body?.cancel();
   } finally {
