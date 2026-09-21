@@ -109,7 +109,7 @@ function createNeonSql(): Promise<Sql> {
 
 async function createPgliteSql(): Promise<Sql> {
   globalRef.__pgliteInstance__ ??= (async () => {
-    const { PGlite } = await import("@electric-sql/pglite");
+    const { PGlite, MemoryFS } = await import("@electric-sql/pglite");
     const configuredDataDir = process.env.PGLITE_DATA_DIR?.trim();
     const dataDir =
       configuredDataDir ||
@@ -121,14 +121,24 @@ async function createPgliteSql(): Promise<Sql> {
       mkdirSync(dirname(resolve(process.cwd(), dataDir)), { recursive: true });
     }
 
-    const pg = new PGlite({
-      dataDir,
-      parsers: {
-        [OID_INT8]: Number,
-        [OID_DATE]: identity,
-        [OID_INTERVAL]: identity,
-      },
-    });
+    const pg =
+      dataDir === "memory://"
+        ? new PGlite({
+            fs: new MemoryFS(),
+            parsers: {
+              [OID_INT8]: Number,
+              [OID_DATE]: identity,
+              [OID_INTERVAL]: identity,
+            },
+          })
+        : new PGlite({
+            dataDir,
+            parsers: {
+              [OID_INT8]: Number,
+              [OID_DATE]: identity,
+              [OID_INTERVAL]: identity,
+            },
+          });
     await pg.waitReady;
     await pg.exec(
       "create table if not exists _migrations (name text primary key, applied_at timestamptz not null default now())",
