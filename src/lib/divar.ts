@@ -1101,7 +1101,10 @@ export const syncDivarFiles = createServerFn({ method: "POST" })
     };
   });
 
-const idSchema = z.object({ id: z.string().min(1) });
+const idSchema = z.object({
+  id: z.string().min(1),
+  repair: z.boolean().optional().default(false),
+});
 
 export const importDivarFile = createServerFn({ method: "POST" })
   .validator(idSchema)
@@ -1159,11 +1162,13 @@ export const importDivarFile = createServerFn({ method: "POST" })
         const repairableCurrentImages = currentImages.filter(
           (url) => !/divarcdn\.com|wsrv\.nl|weserv\.nl/i.test(url),
         );
-        const needsImageRepair =
-          currentImages.length === 0 || repairableCurrentImages.length !== currentImages.length;
-        const uploadResult = needsImageRepair
+        const shouldRefreshImages =
+          data.repair === true ||
+          currentImages.length === 0 ||
+          repairableCurrentImages.length !== currentImages.length;
+        const uploadResult = shouldRefreshImages
           ? await uploadDivarImages(token, images)
-          : { imported: repairableCurrentImages, failures: [] as { source: string; status?: number; reason: string }[] };
+          : { imported: [] as string[], failures: [] as { source: string; status?: number; reason: string }[] };
         const finalImages = Array.from(
           new Set([...uploadResult.imported, ...repairableCurrentImages]),
         ).slice(0, MAX_IMAGES);
