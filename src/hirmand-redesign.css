@@ -1278,8 +1278,8 @@ body{
 
 .hero-veil{
   background:
-    linear-gradient(180deg,rgba(8,15,24,.20),rgba(8,15,24,.42) 38%,rgba(8,15,24,.88) 81%,var(--lux-navy) 100%)!important,
-    radial-gradient(ellipse at 50% 8%,rgba(183,138,74,.16),transparent 45%)!important;
+    linear-gradient(180deg,rgba(8,15,24,.20),rgba(8,15,24,.42) 38%,rgba(8,15,24,.88) 81%,var(--lux-navy) 100%),
+    radial-gradient(ellipse at 50% 8%,rgba(183,138,74,.16),transparent 45%) !important;
 }
 
 .hero-inner{
