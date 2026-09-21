@@ -221,8 +221,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-}
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   TrackingRoute: TrackingRoute,
