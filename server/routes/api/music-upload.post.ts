@@ -28,6 +28,12 @@ export default defineEventHandler(async (event) => {
   const requestBody = (await readBody(event)) as HandleUploadBody;
 
   try {
+    if (!process.env.BLOB_READ_WRITE_TOKEN?.trim()) {
+      throw createError({
+        statusCode: 503,
+        statusMessage: "فضای Vercel Blob برای موسیقی تنظیم نشده است. یک Public Blob Store به پروژه متصل کنید تا BLOB_READ_WRITE_TOKEN ساخته شود.",
+      });
+    }
     if (
       requestBody.type === "blob.generate-client-token" &&
       !await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))
@@ -100,7 +106,7 @@ export default defineEventHandler(async (event) => {
           allowedContentTypes: ALLOWED,
           maximumSizeInBytes: MAX_BYTES,
           validUntil: Date.now() + 30 * 60 * 1000,
-          addRandomSuffix: false,
+          addRandomSuffix: true,
           tokenPayload: JSON.stringify({
             title,
             artist,
