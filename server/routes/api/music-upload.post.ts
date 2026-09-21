@@ -100,7 +100,7 @@ export default defineEventHandler(async (event) => {
           allowedContentTypes: ALLOWED,
           maximumSizeInBytes: MAX_BYTES,
           validUntil: Date.now() + 30 * 60 * 1000,
-          addRandomSuffix: false,
+          addRandomSuffix: true,
           tokenPayload: JSON.stringify({
             title,
             artist,
