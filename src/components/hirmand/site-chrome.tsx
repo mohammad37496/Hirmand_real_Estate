@@ -63,7 +63,7 @@ export function SiteChrome({
       <Toaster
         dir="rtl"
         position="top-center"
-        theme="dark"
+        theme="light"
         offset={88}
         visibleToasts={2}
         toastOptions={{ className: "hirmand-toast", duration: 2400 }}
