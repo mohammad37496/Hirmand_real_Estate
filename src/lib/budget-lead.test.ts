@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildBudgetLeadNote, budgetEquivalent } from "./budget-lead";
+import { buildBudgetLeadNote, budgetEquivalent } from "./budget-lead.ts";
 
 test("calculates the stored budget equivalent", () => {
   assert.ok(Math.abs(budgetEquivalent({ depositBudget: 500_000_000, rentBudget: 10_000_000 }) - 833_333_333.3333334) < 0.01);
