@@ -1,5 +1,5 @@
 import type { ErrorComponentProps } from "@tanstack/react-router";
-import { TriangleAlert } from "lucide-react";
+import { Home, RefreshCw, TriangleAlert } from "lucide-react";
 
 const FALLBACK_MESSAGE = "خطایی در بارگذاری این صفحه رخ داد. لطفاً دوباره تلاش کنید.";
 
@@ -11,21 +11,38 @@ function errorMessage(error: unknown): string {
   return FALLBACK_MESSAGE;
 }
 
-export function AppErrorComponent({ error }: ErrorComponentProps) {
+export function AppErrorComponent({ error, reset }: ErrorComponentProps) {
   return (
-    <main
-      className={
-        "flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center " +
-        "bg-[#071113] text-[#f4f7f6]"
-      }
-    >
-      <span className="text-red-500" aria-hidden="true">
-        <TriangleAlert className="size-10" strokeWidth={2} />
-      </span>
-      <h1 className="text-lg font-semibold">خطایی رخ داد</h1>
-      <p className="max-w-md text-sm break-words text-[#aab8b7]">
-        {errorMessage(error)}
-      </p>
+    <main className="min-h-screen bg-white px-6 py-16 text-black" dir="rtl">
+      <div className="mx-auto flex min-h-[70vh] w-full max-w-xl flex-col items-center justify-center gap-5 text-center">
+        <span
+          className="grid size-16 place-items-center rounded-full border border-black/15 bg-black/[.04] text-black"
+          aria-hidden="true"
+        >
+          <TriangleAlert className="size-8" strokeWidth={1.8} />
+        </span>
+        <div>
+          <h1 className="text-2xl font-bold">خطایی رخ داد</h1>
+          <p className="mt-2 break-words text-sm leading-7 text-black/60">{errorMessage(error)}</p>
+        </div>
+        <div className="flex flex-wrap justify-center gap-2">
+          <button
+            type="button"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-black px-5 text-sm font-semibold text-white"
+            onClick={() => reset()}
+          >
+            <RefreshCw className="size-4" />
+            تلاش دوباره
+          </button>
+          <a
+            href="/"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-black/15 bg-white px-5 text-sm font-semibold text-black"
+          >
+            <Home className="size-4" />
+            بازگشت به خانه
+          </a>
+        </div>
+      </div>
     </main>
   );
 }

@@ -14,6 +14,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { toast } from "sonner";
+import { mediaSourceCandidates } from "@/lib/media";
 import {
   getDivarStats,
   importDivarFile,
@@ -71,6 +72,28 @@ function propertyLabel(file: DivarFile) {
 
 function transactionLabel(file: DivarFile) {
   return file.transactionType === "rent" ? "اجاره" : "فروش";
+}
+
+function DivarImage({ src }: { src: string }) {
+  const [attempt, setAttempt] = useState(0);
+  const candidates = mediaSourceCandidates(src);
+  const index = Math.min(attempt, Math.max(candidates.length - 1, 0));
+  const current = candidates[index] ?? src;
+
+  useEffect(() => {
+    setAttempt(0);
+  }, [src]);
+
+  return (
+    <img
+      src={current}
+      alt=""
+      loading="lazy"
+      onError={() => {
+        if (attempt < candidates.length - 1) setAttempt((value) => value + 1);
+      }}
+    />
+  );
 }
 
 function featureSummary(file: DivarFile) {
@@ -255,7 +278,7 @@ export function AdminDivarFiles() {
                 <article className="divar-card" key={file.id}>
                   <div className="divar-image">
                     {file.images[0] ? (
-                      <img src={file.images[0]} alt="" loading="lazy" />
+                      <DivarImage src={file.images[0]} />
                     ) : (
                       <div className="divar-image-placeholder"><Home size={42} /></div>
                     )}

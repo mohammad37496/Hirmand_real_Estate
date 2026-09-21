@@ -858,7 +858,13 @@ export const saveProperty = createServerFn({ method: "POST" })
     const deposit = numericStringOrNull(data.deposit);
     const rent = numericStringOrNull(data.rent);
     const featuredUntil = data.featured && data.featuredUntil
-      ? new Date(data.featuredUntil).toISOString()
+      ? (() => {
+          const parsed = new Date(data.featuredUntil!);
+          if (!Number.isFinite(parsed.getTime())) {
+            throw new Error("تاریخ پایان ویژه نامعتبر است.");
+          }
+          return parsed.toISOString();
+        })()
       : null;
 
     const existingRows = await sql.query<Record<string, unknown>>(
@@ -876,9 +882,9 @@ export const saveProperty = createServerFn({ method: "POST" })
         features, images, contact_name, contact_phone, published_at, featured_until
       ) values (
         $1, $2, $3, $4, $5, $6, $7, 'اصفهان',
-        $8, $9, $10, $11, $12, $13, $14,
-        $15, $16, $17, $18, $19, $20, $21, $22,
-        $23::jsonb, $24::jsonb, $25, $26, $27, $28
+        $8, $9, $10::integer, $11::smallint, $12::smallint, $13::smallint, $14::smallint,
+        $15::smallint, $16::boolean, $17::boolean, $18::boolean, $19::numeric, $20::numeric, $21::numeric, $22::text,
+        $23::jsonb, $24::jsonb, $25::text, $26::text, $27::timestamptz, $28::timestamptz
       )
       on conflict (id) do update set
         slug = excluded.slug,

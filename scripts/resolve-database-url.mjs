@@ -11,6 +11,28 @@ const POOLED_KEYS = [
 ];
 
 /**
+ * Remove libpq startup options that can make Neon reject the connection.
+ * In particular, some generated connection strings contain options=statement_timeout=...,
+ * which Neon may reject as an unsupported startup parameter. Query-level timeouts
+ * are configured by node-postgres.
+ *
+ * @param {string} raw
+ */
+export function sanitizePostgresConnectionString(raw) {
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== "postgres:" && url.protocol !== "postgresql:") {
+      return raw;
+    }
+    url.searchParams.delete("options");
+    url.searchParams.delete("statement_timeout");
+    return url.toString();
+  } catch {
+    return raw;
+  }
+}
+
+/**
  * @param {string[]} keys
  * @param {Record<string, string | undefined>} env
  * @returns {{ key: string | null, url: string | undefined }}

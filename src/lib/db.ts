@@ -1,10 +1,10 @@
 import { pendingMigrations } from "../../scripts/migration-plan.mjs";
+import { sanitizePostgresConnectionString } from "../../scripts/resolve-database-url.mjs";
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
 export type DbSource = "neon" | "pglite" | "unconfigured";
 
-/** Prefer pooled Neon/Vercel URLs for runtime queries. */
 function resolveDatabaseUrlFromEnv(): string | undefined {
   if (typeof process === "undefined") return undefined;
   const pooled = [
@@ -16,11 +16,11 @@ function resolveDatabaseUrlFromEnv(): string | undefined {
   const unpooled = ["DATABASE_URL_UNPOOLED", "POSTGRES_URL_NON_POOLING"] as const;
   for (const key of pooled) {
     const value = process.env[key]?.trim();
-    if (value) return value;
+    if (value) return sanitizePostgresConnectionString(value);
   }
   for (const key of unpooled) {
     const value = process.env[key]?.trim();
-    if (value) return value;
+    if (value) return sanitizePostgresConnectionString(value);
   }
   return undefined;
 }
@@ -85,7 +85,6 @@ function createNeonSql(): Promise<Sql> {
     types.setTypeParser(OID_INTERVAL, identity);
     const pool = new Pool({
       connectionString: databaseUrl!,
-      // Keep the timeout client-side so Neon pooled connections receive no unsupported startup parameters.
       query_timeout: Number(process.env.DB_QUERY_TIMEOUT_MS ?? 8_000),
       max: Number(process.env.DB_POOL_MAX ?? 5),
       idleTimeoutMillis: Number(process.env.DB_POOL_IDLE_MS ?? 10_000),

@@ -1,20 +1,25 @@
-#!/usr/bin/env node
 /**
- * Deploy-time database migrator (node-postgres, `pg`).
+ * Deploy-time database migrator (node-postgres, pg).
  * Prefers DATABASE_URL_UNPOOLED for DDL when available (Neon best practice).
  */
-import { resolveMigrationDatabaseUrl } from "./resolve-database-url.mjs";
-import { readdir, readFile } from "node:fs/promises";
+import {
+  resolveMigrationDatabaseUrl,
+  sanitizePostgresConnectionString,
+} from "./resolve-database-url.mjs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import pg from "pg";
-import { pendingMigrations } from "./migration-plan.mjs";
 
 const resolved = resolveMigrationDatabaseUrl();
-const databaseUrl = resolved.url;
+const databaseUrl = resolved.url
+  ? sanitizePostgresConnectionString(resolved.url)
+  : undefined;
+
 if (databaseUrl) {
-  console.log(`[migrate] using connection from ${resolved.key}`);
+  const masked = databaseUrl.replace(/:[^:@]+@/, ":***@");
+  console.log("[migrate] using " + resolved.key + " → " + masked);
 }
+
 if (!databaseUrl) {
   console.log(
     "[migrate] DATABASE_URL not set — skipping (the PGLite fallback migrates itself).",
@@ -23,61 +28,56 @@ if (!databaseUrl) {
 }
 
 const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), "..", "migrations");
+const migrationFiles = Object.entries(
+  import.meta.glob("../migrations/*.sql", {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }),
+).sort(([a], [b]) => a.localeCompare(b));
 
 async function main() {
-  let entries;
-  try {
-    entries = await readdir(migrationsDir);
-  } catch {
-    console.log("[migrate] no migrations/ directory — nothing to do.");
-    return;
-  }
-  if (pendingMigrations(entries, []).length === 0) {
-    console.log("[migrate] no migrations — nothing to do.");
-    return;
-  }
-
   const pool = new pg.Pool({ connectionString: databaseUrl, max: 1 });
   const client = await pool.connect();
   try {
     await client.query(
       "CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())",
     );
-    const applied = (await client.query("SELECT name FROM _migrations")).rows.map(
-      (r) => r.name,
-    );
 
-    let count = 0;
-    for (const { name } of pendingMigrations(entries, applied)) {
-      const text = await readFile(join(migrationsDir, name), "utf8");
+    const { rows: done } = await client.query("SELECT name FROM _migrations");
+    const doneSet = new Set(done.map((row) => row.name));
+
+    for (const [path, source] of migrationFiles) {
+      const name = path.split("/").at(-1) ?? path;
+      if (doneSet.has(name)) continue;
+
+      console.log("[migrate] applying " + name);
       try {
-        await client.query("BEGIN");
-        await client.query(text);
+        await client.query(source);
         await client.query("INSERT INTO _migrations (name) VALUES ($1)", [name]);
-        await client.query("COMMIT");
-      } catch (err) {
-        console.error(`[migrate] error applying ${name}`);
-        try {
-          await client.query("ROLLBACK");
-        } catch {
-          // ignore
+      } catch (error) {
+        console.error("[migrate] failed " + name);
+        if (error && typeof error === "object") {
+          const err = error;
+          for (const key of [
+            "code",
+            "detail",
+            "hint",
+            "position",
+            "routine",
+            "severity",
+          ]) {
+            if (err[key] != null) console.error("[migrate]   " + key + ": " + err[key]);
+          }
         }
-        throw err;
+        throw error;
       }
-      console.log(`[migrate] applied ${name}`);
-      count += 1;
     }
-    console.log(count ? `[migrate] done — ${count} migration(s) applied.` : "[migrate] up to date.");
+    console.log("[migrate] database is up to date.");
   } finally {
     client.release();
     await pool.end();
   }
 }
 
-main().catch((err) => {
-  console.error("[migrate] failed:", err?.message || err);
-  for (const key of ["code", "detail", "hint", "position", "where"]) {
-    if (err?.[key] != null) console.error(`[migrate]   ${key}: ${err[key]}`);
-  }
-  process.exit(1);
-});
+await main();

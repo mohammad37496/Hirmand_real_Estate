@@ -129,11 +129,12 @@ function emptyForm(): FormState {
 function toEnglishDigits(raw: string) {
   return raw.replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)));
 }
-function numberOrNull(raw: string) {
+function numberOrNull(raw: string, allowNegative = false) {
   const digits = toEnglishDigits(raw).replace(/[^\d-]/g, "");
   if (!digits.trim()) return null;
   const value = Number(digits);
-  return Number.isFinite(value) && value >= 0 ? value : null;
+  if (!Number.isFinite(value)) return null;
+  return allowNegative || value >= 0 ? value : null;
 }
 function toDateTimeLocal(value: string | null | undefined) {
   if (!value) return "";
@@ -705,7 +706,7 @@ export function AdminPropertiesPage() {
           areaM2: numberOrNull(form.areaM2),
           bedrooms: numberOrNull(form.bedrooms),
           bathrooms: numberOrNull(form.bathrooms),
-          floor: numberOrNull(form.floor),
+          floor: numberOrNull(form.floor, true),
           totalFloors: numberOrNull(form.totalFloors),
           builtYear: numberOrNull(form.builtYear),
           parking: form.parking,
@@ -721,7 +722,13 @@ export function AdminPropertiesPage() {
           contactPhone: form.contactPhone.trim(),
           status: form.status,
           featured: form.featured,
-          featuredUntil: form.featuredUntil ? new Date(form.featuredUntil).toISOString() : null,
+          featuredUntil: form.featuredUntil
+            ? (() => {
+                const date = new Date(form.featuredUntil);
+                if (!Number.isFinite(date.getTime())) throw new Error("تاریخ پایان ویژه نامعتبر است.");
+                return date.toISOString();
+              })()
+            : null,
         },
       });
       toast.success(form.id ? "فایل به‌روزرسانی شد." : "فایل جدید ذخیره شد.");
@@ -777,7 +784,7 @@ export function AdminPropertiesPage() {
           areaM2: numberOrNull(base.areaM2),
           bedrooms: numberOrNull(base.bedrooms),
           bathrooms: numberOrNull(base.bathrooms),
-          floor: numberOrNull(base.floor),
+          floor: numberOrNull(base.floor, true),
           totalFloors: numberOrNull(base.totalFloors),
           builtYear: numberOrNull(base.builtYear),
           parking: base.parking,
@@ -793,7 +800,13 @@ export function AdminPropertiesPage() {
           contactPhone: base.contactPhone,
           status,
           featured: base.featured,
-          featuredUntil: base.featuredUntil ? new Date(base.featuredUntil).toISOString() : null,
+          featuredUntil: base.featuredUntil
+            ? (() => {
+                const date = new Date(base.featuredUntil);
+                if (!Number.isFinite(date.getTime())) throw new Error("تاریخ پایان ویژه نامعتبر است.");
+                return date.toISOString();
+              })()
+            : null,
         },
       });
       setProperties((current) => current.map((item) => item.id === result.id ? result : item));
