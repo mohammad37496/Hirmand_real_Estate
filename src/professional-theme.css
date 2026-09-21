@@ -459,3 +459,113 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   .properties-quick-label{font-size:.68rem}
   .properties-quick-filters button{min-height:35px;padding:0 11px;font-size:.7rem}
 }
+
+
+/* Contrast hardening v4
+ * Keep the two-color system, but never allow foreground/background
+ * pairs to visually collapse. Opacity is used only to create hierarchy.
+ */
+:root{
+  --hm-ink-soft:rgb(23 23 23 / .78);
+  --hm-ink-faint:rgb(23 23 23 / .62);
+  --hm-line:rgb(23 23 23 / .16);
+  --hm-line-strong:rgb(23 23 23 / .24);
+}
+
+/* Global readable defaults */
+body,.page-shell,.page,main,section,article,aside,footer,header{color:var(--hm-ink)}
+p,li,dd,dt,label,small,time{color:inherit}
+input::placeholder,textarea::placeholder{color:rgb(23 23 23 / .58)!important;opacity:1}
+
+/* Light surfaces always use dark text */
+.principle-card,.service-card,.step-card,.contact-card,.social-link,.faq-item,
+.location-card,.inquiry-section,.commission-box,.property-card,.property-contact-card,
+.property-divar-specs,.property-detail-main,.property-map-card,.properties-filter-panel,
+.properties-index-hero,.property-detail-card,.property-info-card,.team-card,.type-card,
+.property-card-link,.properties-market-toolbar,.properties-market-search,
+.properties-result-meta,.properties-view-switch,.properties-map-list,.properties-map-panel,
+.music-player,.music-playlist,.music-player-panel,.site-utility-panel,.site-utility-toggle,
+.admin-topbar,.admin-stat-card,.admin-panel,.admin-section,.admin-login-card,
+.admin-smart-card,.admin-seo-preview,.admin-price-help,.admin-price-calculator,
+.admin-lead-budget,.divar-hero,.divar-card,.divar-stat{color:var(--hm-ink)}
+
+.principle-card h1,.principle-card h2,.principle-card h3,.principle-card strong,
+.service-card h1,.service-card h2,.service-card h3,.service-card strong,
+.step-card h1,.step-card h2,.step-card h3,.step-card strong,
+.contact-card h1,.contact-card h2,.contact-card h3,.contact-card strong,
+.faq-item h1,.faq-item h2,.faq-item h3,.faq-item strong,
+.team-card h1,.team-card h2,.team-card h3,.team-card strong,
+.type-card h1,.type-card h2,.type-card h3,.type-card strong,
+.property-card h1,.property-card h2,.property-card h3,.property-card strong,
+.property-detail-card h1,.property-detail-card h2,.property-detail-card h3,.property-detail-card strong,
+.property-info-card h1,.property-info-card h2,.property-info-card h3,.property-info-card strong,
+.admin-panel h1,.admin-panel h2,.admin-panel h3,.admin-panel strong,
+.divar-card h1,.divar-card h2,.divar-card h3,.divar-card strong{color:var(--hm-ink)}
+
+/* Secondary copy stays visible on ivory surfaces */
+.section-head p,.lede,.principle-card p,.service-card p,.step-card p,.type-body span,
+.faq-item p,.property-card-meta,.property-card-location,.property-card-code,
+.property-detail-meta,.property-detail-ad-meta,.footer,.social-link small,
+.contact-card small,.team-role,.team-phone,.property-breadcrumb,
+.properties-result-meta>span,.properties-result-actions a,.properties-reset-btn,
+.properties-saved-link,.properties-quick-label,.properties-quick-filters button,
+.properties-load-more small,.properties-map-list-item span,
+.music-track small,.music-meta span,.music-meta small,.music-playlist-head span,
+.admin-stat-card span,.admin-property-meta p,.admin-empty,.admin-topbar p,
+.admin-results-meta,.admin-smart-head p,.admin-seo-preview p,.admin-seo-preview small,
+.admin-section .field>span,.admin-field label,.admin-checks label,
+.divar-hero p,.divar-stat small,.divar-description,.divar-meta,.divar-mini,
+.divar-feature,.divar-note,.divar-warning{color:var(--hm-ink-soft)!important}
+
+/* Controls: never inherit an accidental low-contrast foreground */
+.properties-filter-panel>select,.properties-range-field input,.properties-sort-field select,
+.properties-filter-search,.properties-market-search input,.properties-saved-search-select,
+.field input,.field select,.field textarea,.admin-search,.admin-search input,
+.admin-section .field input,.admin-section .field select,.admin-section .field textarea,
+.admin-key-row input,.admin-filter-row select{color:var(--hm-ink)!important}
+.properties-filter-panel>select option,.properties-sort-field select option,
+.properties-saved-search-select option,.field select option,
+.admin-section .field select option,.admin-filter-row select option{
+  background:var(--hm-paper);color:var(--hm-ink);
+}
+
+/* Black surfaces always use ivory text */
+.hero,.hero-search .search-submit,.property-gallery-featured,
+.btn-gold,.property-action-primary,.quick-action-primary,.music-player .music-play,
+.properties-view-switch button.is-active,.properties-feature-toggle:has(input:checked),
+.properties-quick-filters button.is-active,.chip.is-active,.admin-sidebar,.admin-login,
+.admin-consultant-card:hover,.admin-consultant-card.is-active,.admin-nav-btn.is-active,
+.admin-lead-matches a:hover,.divar-tab.is-active,.divar-status,
+.divar-status.imported,.divar-status.accepted{color:var(--hm-paper)}
+
+.hero h1,.hero .slogan strong,
+.site-nav:not(.is-scrolled) .nav-links,.site-nav:not(.is-scrolled) .nav-brand strong,
+.site-nav:not(.is-scrolled) .nav-brand small,.site-nav:not(.is-scrolled) .nav-links a,
+.site-nav:not(.is-scrolled) .menu-toggle,.btn-gold,.property-action-primary,
+.quick-action-primary,.music-player .music-play,.properties-view-switch button.is-active,
+.properties-feature-toggle:has(input:checked),.properties-quick-filters button.is-active,
+.chip.is-active,.admin-sidebar,.admin-sidebar *,.admin-login,.admin-login *{
+  color:var(--hm-paper);
+}
+
+/* Improve muted white text on black surfaces */
+.hero .slogan,.hero .english-name,.hero .hero-managed,
+.admin-sidebar-brand small,.admin-nav-btn,
+.admin-consultant-card:hover .admin-consultant-meta small,
+.admin-sidebar-foot,.admin-mobile-nav button.is-active{
+  color:rgb(245 240 231 / .78)!important;
+}
+.site-nav:not(.is-scrolled) .nav-links a:hover,
+.site-nav:not(.is-scrolled) .nav-links a.is-current,
+.site-nav:not(.is-scrolled) .nav-brand strong{color:var(--hm-paper)!important}
+
+/* Make faint labels readable */
+.properties-view-switch::before,.properties-loading-pill,.properties-quick-label,
+.properties-load-more small,.property-breadcrumb,.property-breadcrumb a,
+.property-card-code,.divar-image-placeholder{color:var(--hm-ink-faint)}
+
+/* Hover states keep the same contrast contract */
+.properties-result-actions a:hover,.properties-reset-btn:hover,.properties-saved-link:hover,
+.properties-feature-toggle:hover,.properties-quick-filters button:hover,
+.property-card-details-link:hover,.property-contact-phone:hover,
+.property-contact-profile:hover,.text-link:hover{color:var(--hm-ink)!important}
