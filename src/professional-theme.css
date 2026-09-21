@@ -569,3 +569,67 @@ input::placeholder,textarea::placeholder{color:rgb(23 23 23 / .58)!important;opa
 .properties-feature-toggle:hover,.properties-quick-filters button:hover,
 .property-card-details-link:hover,.property-contact-phone:hover,
 .property-contact-profile:hover,.text-link:hover{color:var(--hm-ink)!important}
+
+
+/* ============================================================
+   Final UI audit — contrast, hierarchy, and legacy-color cleanup
+   Graphite + Ivory only.
+   ============================================================ */
+:root{
+  --hm-ink:#111315;
+  --hm-paper:#f7f5ef;
+  --hm-ink-soft:rgb(17 19 21 / .68);
+  --hm-ink-faint:rgb(17 19 21 / .46);
+  --hm-line:rgb(17 19 21 / .13);
+  --hm-line-strong:rgb(17 19 21 / .21);
+  --hm-shadow:0 24px 70px rgb(17 19 21 / .13);
+  --hm-shadow-soft:0 10px 32px rgb(17 19 21 / .075);
+  --bg:var(--hm-paper);--surface:var(--hm-paper);--surface-2:var(--hm-paper);
+  --fg:var(--hm-ink);--muted:var(--hm-ink-soft);--subtle:var(--hm-ink-faint);
+  --gold:var(--hm-ink);--gold-soft:var(--hm-ink);--ink:var(--hm-paper);
+  --line:var(--hm-line);--gold-line:var(--hm-line-strong);
+}
+html,body{background:var(--hm-paper);color:var(--hm-ink)}
+body{background-image:none}
+::selection{background:var(--hm-ink);color:var(--hm-paper)}
+.site-nav:not(.is-scrolled){background:rgb(17 19 21 / .10);border-bottom-color:rgb(247 245 239 / .14)}
+.site-nav:not(.is-scrolled) .nav-links,.site-nav:not(.is-scrolled) .nav-brand strong,.site-nav:not(.is-scrolled) .nav-brand small{color:rgb(247 245 239 / .96)}
+.hero-veil{background:linear-gradient(180deg,rgb(17 19 21 / .10) 0%,rgb(17 19 21 / .34) 38%,rgb(17 19 21 / .82) 76%,var(--hm-ink) 100%)}
+.brand-logo-hero{filter:drop-shadow(0 18px 34px rgb(17 19 21 / .28))}
+.icon-box{background:rgb(17 19 21 / .045);border-color:var(--hm-line-strong)}
+.copy-btn{background:rgb(247 245 239 / .96);border-color:var(--hm-line-strong);color:var(--hm-ink)}
+.copy-btn:hover{background:var(--hm-ink);color:var(--hm-paper)}
+.form-error{color:var(--hm-ink)!important}
+.inquiry-section{background:var(--hm-paper);border-color:var(--hm-line)}
+.property-card,.property-card-link,.property-detail-card,.property-info-card,.property-divar-specs,.property-contact-card,.properties-market-toolbar,.properties-result-meta,.properties-filter-panel{
+  background:var(--hm-paper)!important;border-color:var(--hm-line)!important;color:var(--hm-ink)!important;
+}
+.property-card-link:hover{border-color:var(--hm-ink)!important;box-shadow:var(--hm-shadow)!important}
+.property-card-media,.property-gallery-main,.property-gallery-thumb,.properties-map-list-image{background:rgb(17 19 21 / .07)!important}
+.property-card-specs span,.property-price-block,.property-source-badge{
+  background:rgb(17 19 21 / .045)!important;border-color:var(--hm-line)!important;color:var(--hm-ink)!important;
+}
+.properties-market-search,.properties-filter-panel .properties-filter-search,.properties-saved-search-select,.properties-feature-toggle{
+  background:var(--hm-paper)!important;color:var(--hm-ink)!important;border-color:var(--hm-line-strong)!important;
+}
+.properties-market-search input,.properties-saved-search-select,.properties-filter-panel input,.properties-filter-panel select{color:var(--hm-ink)!important}
+.properties-quick-filters button,.properties-view-switch button,.properties-reset-btn,.properties-saved-link{
+  color:var(--hm-ink-soft);border-color:var(--hm-line);background:var(--hm-paper);
+}
+.properties-quick-filters button.is-active,.properties-view-switch button.is-active,.properties-feature-toggle:has(input:checked){
+  background:var(--hm-ink)!important;color:var(--hm-paper)!important;border-color:var(--hm-ink)!important;
+}
+.admin-topbar{background:rgb(247 245 239 / .96)!important;border-bottom-color:var(--hm-line)!important;color:var(--hm-ink)!important}
+.admin-topbar p,.admin-results-meta,.admin-section .field>span{color:var(--hm-ink-soft)!important}
+.divar-note,.divar-warning{background:rgb(17 19 21 / .035)!important;border-color:var(--hm-line)!important;color:var(--hm-ink-soft)!important}
+.divar-note svg,.divar-warning svg{color:var(--hm-ink)!important}
+.quick-action{background:rgb(247 245 239 / .97);color:var(--hm-ink)}
+.quick-action-primary{background:var(--hm-ink)!important;color:var(--hm-paper)!important}
+.music-player,.music-playlist,.music-player-panel{background:var(--hm-paper);color:var(--hm-ink);border-color:var(--hm-line)}
+.music-track.is-active{background:rgb(17 19 21 / .055);color:var(--hm-ink)}
+@media (max-width:720px){
+  .site-nav:not(.is-scrolled){background:rgb(17 19 21 / .90)}
+  .property-card-link,.property-card{border-radius:18px}
+  .properties-result-actions{overflow-x:auto;scrollbar-width:none}
+  .properties-result-actions::-webkit-scrollbar{display:none}
+}
