@@ -108,7 +108,12 @@ function createNeonSql(): Promise<Sql> {
 async function createPgliteSql(): Promise<Sql> {
   globalRef.__pgliteInstance__ ??= (async () => {
     const { PGlite } = await import("@electric-sql/pglite");
+    const dataDir =
+      process.env.PGLITE_DATA_DIR?.trim() ||
+      ".grok/pglite.data";
+
     const pg = new PGlite({
+      dataDir,
       parsers: {
         [OID_INT8]: Number,
         [OID_DATE]: identity,
