@@ -5,17 +5,17 @@
 @import "@fontsource/vazirmatn/700.css";
 
 @theme {
-  --color-bg: #f6f3ed;
-  --color-surface: #ffffff;
-  --color-surface-2: #efebe4;
-  --color-fg: #17202d;
-  --color-muted: #626d7b;
-  --color-subtle: #8b94a1;
-  --color-gold: #1c587f;
-  --color-gold-soft: #c38b52;
+  --color-bg: #f4f1ea;
+  --color-surface: #fffdfa;
+  --color-surface-2: #ebe6dc;
+  --color-fg: #172033;
+  --color-muted: #687181;
+  --color-subtle: #9299a5;
+  --color-gold: #8f5d32;
+  --color-gold-soft: #b77b48;
   --color-ink: #fffaf2;
-  --color-border: rgba(244, 239, 230, 0.1);
-  --color-gold-line: rgba(28, 88, 127, 0.24);
+  --color-border: rgba(23, 32, 51, 0.12);
+  --color-gold-line: rgba(143, 93, 50, 0.28);
   --font-sans: "Vazirmatn", Tahoma, Arial, sans-serif;
   --radius-sm: 10px;
   --radius-md: 14px;
