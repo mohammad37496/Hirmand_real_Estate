@@ -3694,6 +3694,7 @@ summary:focus-visible {
   border: 1px solid rgba(214,120,120,0.28);
   border-radius: 999px;
   color: #e8b4b4;
+}
 
 /* PROPERTY GALLERY — touch, zoom, keyboard and loading polish */
 .property-lightbox-stage{
