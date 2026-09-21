@@ -1,8 +1,8 @@
-import { upload } from "@vercel/blob/client";
+import { uploadErrorMessage, uploadInChunks } from "@/lib/media-upload-client";
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { ChevronDown, ChevronUp, Film, ImagePlus, Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { isVideoUrl } from "@/lib/media";
+import { MAX_PROPERTY_MEDIA, isVideoUrl } from "@/lib/media";
 
 type Props = {
   value: string;
@@ -109,7 +109,7 @@ export function AdminMediaField({ value, onChange }: Props) {
 
   function setItems(next: string[]) {
     const unique = Array.from(new Set(next.map((item) => item.trim()).filter(Boolean)));
-    onChange(listToLines(unique.slice(0, 12)));
+    onChange(listToLines(unique.slice(0, MAX_PROPERTY_MEDIA)));
   }
 
   function moveItem(index: number, direction: -1 | 1) {
@@ -138,8 +138,8 @@ export function AdminMediaField({ value, onChange }: Props) {
   async function uploadFiles(files: FileList | File[]) {
     const list = Array.from(files);
     if (!list.length) return;
-    if (items.length + list.length > 12) {
-      toast.error("حداکثر ۱۲ فایل رسانه مجاز است.");
+    if (items.length + list.length > MAX_PROPERTY_MEDIA) {
+      toast.error(`حداکثر ${MAX_PROPERTY_MEDIA.toLocaleString("fa-IR")} فایل رسانه مجاز است.`);
       return;
     }
 
@@ -174,25 +174,17 @@ export function AdminMediaField({ value, onChange }: Props) {
         const file = optimized.file;
         optimizedBytes += optimized.savedBytes;
 
-        const safeName = file.name
-          .replace(/[^\w.\u0600-\u06FF-]+/g, "-")
-          .slice(0, 90);
-        const pathname = "properties/" + Date.now() + "-" + crypto.randomUUID() + "-" + index + "-" + safeName;
-
-        const blob = await upload(pathname, file, {
-          access: "public",
-          handleUploadUrl: "/api/upload",
-          clientPayload: JSON.stringify({
-            contentType: file.type,
-            sizeBytes: file.size,
-          }),
-          multipart: file.size >= 5 * 1024 * 1024,
-          onUploadProgress: (event) => {
-            setUploadProgress(Math.max(0, Math.min(100, event.percentage)));
-          },
+        const result = await uploadInChunks({
+          endpoint: "/api/upload",
+          file,
+          contentType: file.type,
+          rejectedMessage: "نوع یا حجم این فایل رسانه‌ای پذیرفته نشد.",
+          onProgress: (percentage) => setUploadProgress(percentage),
         });
 
-        uploaded.push(blob.url);
+        const url = typeof result.response.url === "string" ? result.response.url : "";
+        if (!url) throw new Error("نشانی فایل آپلودشده دریافت نشد.");
+        uploaded.push(url);
       }
 
       setItems([...items, ...uploaded]);
@@ -206,7 +198,7 @@ export function AdminMediaField({ value, onChange }: Props) {
           : uploaded.length.toLocaleString("fa-IR") + " فایل آپلود شد." + savedLabel,
       );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "آپلود انجام نشد.");
+      toast.error(uploadErrorMessage(err, "آپلود انجام نشد."));
     } finally {
       setUploading(false);
       setUploadProgress(0);

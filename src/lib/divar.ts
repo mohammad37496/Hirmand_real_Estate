@@ -1,9 +1,9 @@
-import { put } from "@vercel/blob";
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { SITE, TEAM } from "@/lib/site";
 import { dbSource, getSql } from "@/lib/db";
+import { storeMedia } from "@/lib/media-store.server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 
 const DIVAR_API = "https://api.divar.ir/v8";
@@ -18,7 +18,7 @@ const CATEGORIES = [
 const DEFAULT_LIMIT = 24;
 const MAX_LIMIT = 48;
 const DETAIL_BATCH = 4;
-const MAX_IMAGES = 12;
+const MAX_IMAGES = 20;
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 
 export type DivarTransaction = "sell" | "rent";
@@ -134,15 +134,43 @@ function collectStrings(value: unknown, out: string[] = [], depth = 0): string[]
   return out;
 }
 
+/** Divar serves listing photos from several hosts over time. */
+function isDivarSourceUrl(value: string): boolean {
+  const match = value.trim().match(/^https?:\/\/([^/]+)/i);
+  const host = match?.[1]?.toLowerCase().split(":")[0] ?? "";
+  return (
+    host === "divar.ir" ||
+    host.endsWith(".divar.ir") ||
+    host === "divar.com" ||
+    host.endsWith(".divar.com") ||
+    host.includes("divarcdn") ||
+    host === "wsrv.nl" ||
+    host.endsWith(".wsrv.nl") ||
+    host.endsWith("weserv.nl")
+  );
+}
+
+function isDivarMediaHost(value: string): boolean {
+  const match = value.match(/^https?:\/\/([^/]+)/i);
+  const host = match?.[1]?.toLowerCase().split(":")[0] ?? "";
+  return (
+    host === "divar.ir" ||
+    host.endsWith(".divar.ir") ||
+    host === "divar.com" ||
+    host.endsWith(".divar.com") ||
+    host.includes("divarcdn")
+  );
+}
+
 function collectMediaUrls(value: unknown, out: string[] = [], keyHint = "", depth = 0): string[] {
-  if (depth > 10 || out.length >= 48) return out;
+  if (depth > 10 || out.length >= 60) return out;
   if (typeof value === "string") {
     if (
       /^https?:\/\//i.test(value) &&
-      (value.includes("divarcdn.com") || /\.(?:jpg|jpeg|png|webp)(?:[?#].*)?$/i.test(value))
+      (isDivarMediaHost(value) || /\.(?:jpg|jpeg|png|webp|avif)(?:[?#].*)?$/i.test(value))
     ) {
       const looksMediaKey = /image|photo|picture|thumbnail|media|gallery|cover|url/i.test(keyHint);
-      if (looksMediaKey || value.includes("divarcdn.com")) out.push(value);
+      if (looksMediaKey || isDivarMediaHost(value)) out.push(value);
     }
     return out;
   }
@@ -603,7 +631,16 @@ function slugify(value: string) {
   );
 }
 
-async function uploadDivarImages(token: string, urls: string[]) {
+type DivarImageDownload = {
+  /** Final ordered list: our own hosted copy, or the Divar source as a fallback. */
+  images: string[];
+  /** How many images were copied onto our own storage. */
+  stored: number;
+  /** Original URLs that could not be downloaded, with the reason. */
+  failures: { source: string; reason: string }[];
+};
+
+async function uploadDivarImages(token: string, urls: string[]): Promise<DivarImageDownload> {
   const candidatesFor = (source: string): Array<{
     label: string;
     url: string;
@@ -662,6 +699,10 @@ async function uploadDivarImages(token: string, urls: string[]) {
     ) {
       return "image/webp";
     }
+    if (bytes.subarray(4, 8).toString("ascii") === "ftyp") {
+      const brand = bytes.subarray(8, 12).toString("ascii");
+      if (brand === "avif" || brand === "avis") return "image/avif";
+    }
     return "";
   };
 
@@ -703,12 +744,15 @@ async function uploadDivarImages(token: string, urls: string[]) {
             ? "png"
             : type === "image/webp"
               ? "webp"
-              : type === "image/gif"
-                ? "gif"
-                : "jpg";
+              : type === "image/avif"
+                ? "avif"
+                : type === "image/gif"
+                  ? "gif"
+                  : "jpg";
 
-        const blob = await put(
-          "properties/divar/" +
+        const stored = await storeMedia({
+          pathname:
+            "properties/divar/" +
             token +
             "/" +
             String(index + 1).padStart(2, "0") +
@@ -716,15 +760,11 @@ async function uploadDivarImages(token: string, urls: string[]) {
             crypto.randomUUID() +
             "." +
             extension,
-          bytes,
-          {
-            access: "public",
-            contentType: type,
-            addRandomSuffix: false,
-          },
-        );
+          data: bytes,
+          contentType: type,
+        });
 
-        return { index, url: blob.url, failure: null as null | { source: string; reason: string } };
+        return { index, url: stored.url, failure: null as null | { source: string; reason: string } };
       } catch (error) {
         lastReason =
           candidate.label +
@@ -759,10 +799,25 @@ async function uploadDivarImages(token: string, urls: string[]) {
 
   results.sort((a, b) => a.index - b.index);
 
-  return {
-    imported: results.flatMap((result) => (result.url ? [result.url] : [])),
-    failures: results.flatMap((result) => (result.failure ? [result.failure] : [])),
-  };
+  // Keep the listing complete: an image that could not be copied is still
+  // published through its original URL (served by our own image proxy), so a
+  // property never loses gallery slots to a flaky CDN.
+  const images: string[] = [];
+  let stored = 0;
+  const failures: { source: string; reason: string }[] = [];
+
+  for (const result of results) {
+    const source = safeUrls[result.index];
+    if (result.url) {
+      images.push(result.url);
+      stored += 1;
+      continue;
+    }
+    if (source) images.push(source);
+    if (result.failure) failures.push(result.failure);
+  }
+
+  return { images, stored, failures };
 }
 function parseJsonArray(value: unknown): string[] {
   if (Array.isArray(value)) return value.filter((v): v is string => typeof v === "string");
@@ -1159,18 +1214,23 @@ export const importDivarFile = createServerFn({ method: "POST" })
         );
       } else {
         const currentImages = parseJsonArray(existingProperty.images);
-        const repairableCurrentImages = currentImages.filter(
-          (url) => !/divarcdn\.com|wsrv\.nl|weserv\.nl/i.test(url),
-        );
+        const hostedCurrentImages = currentImages.filter((url) => !isDivarSourceUrl(url));
+        const missingImages = Math.max(0, images.length - currentImages.length);
         const shouldRefreshImages =
           data.repair === true ||
           currentImages.length === 0 ||
-          repairableCurrentImages.length !== currentImages.length;
+          missingImages > 0;
         const uploadResult = shouldRefreshImages
           ? await uploadDivarImages(token, images)
-          : { imported: [] as string[], failures: [] as { source: string; status?: number; reason: string }[] };
+          : { images: [] as string[], stored: 0, failures: [] as { source: string; reason: string }[] };
+        // Hosted copies first, then any source still needed to keep the gallery
+        // complete. Nothing that already worked is dropped.
         const finalImages = Array.from(
-          new Set([...uploadResult.imported, ...repairableCurrentImages]),
+          new Set([
+            ...uploadResult.images.filter((url) => !isDivarSourceUrl(url)),
+            ...hostedCurrentImages,
+            ...uploadResult.images.filter((url) => isDivarSourceUrl(url)),
+          ]),
         ).slice(0, MAX_IMAGES);
 
         await sql.query(
@@ -1203,16 +1263,17 @@ export const importDivarFile = createServerFn({ method: "POST" })
           propertyId: existingPropertyId,
           propertySlug: String(existingProperty.slug ?? ""),
           alreadyImported: true,
-          imageCount: uploadResult.imported.length,
+          imageCount: finalImages.length,
+          hostedImageCount: uploadResult.stored,
           imageFailures: uploadResult.failures.length,
         };
       }
     }
 
     const importedResult = await uploadDivarImages(token, images);
-    // Never persist source URLs that failed to download: they are not guaranteed to
-    // remain publicly reachable and were the cause of broken Divar image grids.
-    const importedImages = Array.from(new Set(importedResult.imported)).slice(0, MAX_IMAGES);
+    // Hosted copies come first; sources we could not copy keep the gallery
+    // complete and are rendered through our own image proxy.
+    const importedImages = Array.from(new Set(importedResult.images)).slice(0, MAX_IMAGES);
 
     const id = existingPropertyId ? existingPropertyId : crypto.randomUUID();
     const propertyType = propertyTypeToSite(String(row.property_type) as DivarPropertyType);
@@ -1276,7 +1337,8 @@ export const importDivarFile = createServerFn({ method: "POST" })
       propertyId: id,
       propertySlug: slug,
       alreadyImported: false,
-      imageCount: importedResult.imported.length,
+      imageCount: importedImages.length,
+      hostedImageCount: importedResult.stored,
       imageFailures: importedResult.failures.length,
     };
   });

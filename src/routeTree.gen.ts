@@ -10,25 +10,20 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as TrackingRouteImport } from './routes/tracking'
 import { Route as AdminRouteImport } from './routes/admin'
-import { Route as PropertySlugRouteImport } from './routes/properties.$slug'
-import { Route as PropertyFileRouteImport } from './routes/file.$id'
-import { Route as VSlugIdRouteImport } from './routes/v.$slug.$id'
-import { Route as AreaSlugRouteImport } from './routes/areas.$slug'
-import { Route as PropertiesRouteImport } from './routes/properties'
-import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as CompareRouteImport } from './routes/compare'
-import { Route as ConsultantIdRouteImport } from './routes/consultants.$id'
+import { Route as FavoritesRouteImport } from './routes/favorites'
+import { Route as PropertiesRouteImport } from './routes/properties'
+import { Route as TrackingRouteImport } from './routes/tracking'
+import { Route as AreasSlugRouteImport } from './routes/areas.$slug'
+import { Route as ConsultantsIdRouteImport } from './routes/consultants.$id'
+import { Route as FileIdRouteImport } from './routes/file.$id'
+import { Route as PropertiesSlugRouteImport } from './routes/properties.$slug'
+import { Route as VSlugIdRouteImport } from './routes/v.$slug.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TrackingRoute = TrackingRouteImport.update({
-  id: '/tracking',
-  path: '/tracking',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -36,29 +31,9 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PropertySlugRoute = PropertySlugRouteImport.update({
-  id: '/properties/$slug',
-  path: '/properties/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PropertyFileRoute = PropertyFileRouteImport.update({
-  id: '/file/$id',
-  path: '/file/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VSlugIdRoute = VSlugIdRouteImport.update({
-  id: '/v/$slug/$id',
-  path: '/v/$slug/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AreaSlugRoute = AreaSlugRouteImport.update({
-  id: '/areas/$slug',
-  path: '/areas/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PropertiesRoute = PropertiesRouteImport.update({
-  id: '/properties',
-  path: '/properties',
+const CompareRoute = CompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FavoritesRoute = FavoritesRouteImport.update({
@@ -66,77 +41,135 @@ const FavoritesRoute = FavoritesRouteImport.update({
   path: '/favorites',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CompareRoute = CompareRouteImport.update({
-  id: '/compare',
-  path: '/compare',
+const PropertiesRoute = PropertiesRouteImport.update({
+  id: '/properties',
+  path: '/properties',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ConsultantIdRoute = ConsultantIdRouteImport.update({
+const TrackingRoute = TrackingRouteImport.update({
+  id: '/tracking',
+  path: '/tracking',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AreasSlugRoute = AreasSlugRouteImport.update({
+  id: '/areas/$slug',
+  path: '/areas/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConsultantsIdRoute = ConsultantsIdRouteImport.update({
   id: '/consultants/$id',
   path: '/consultants/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FileIdRoute = FileIdRouteImport.update({
+  id: '/file/$id',
+  path: '/file/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PropertiesSlugRoute = PropertiesSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => PropertiesRoute,
+} as any)
+const VSlugIdRoute = VSlugIdRouteImport.update({
+  id: '/v/$slug/$id',
+  path: '/v/$slug/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/file/$id': typeof PropertyFileRoute
-  '/tracking': typeof TrackingRoute
   '/admin': typeof AdminRoute
-  '/properties/$slug': typeof PropertySlugRoute
-  '/v/$slug/$id': typeof VSlugIdRoute
-  '/areas/$slug': typeof AreaSlugRoute
-  '/properties': typeof PropertiesRoute
-  '/favorites': typeof FavoritesRoute
   '/compare': typeof CompareRoute
-  '/consultants/$id': typeof ConsultantIdRoute
+  '/favorites': typeof FavoritesRoute
+  '/properties': typeof PropertiesRouteWithChildren
+  '/tracking': typeof TrackingRoute
+  '/areas/$slug': typeof AreasSlugRoute
+  '/consultants/$id': typeof ConsultantsIdRoute
+  '/file/$id': typeof FileIdRoute
+  '/properties/$slug': typeof PropertiesSlugRoute
+  '/v/$slug/$id': typeof VSlugIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/tracking': typeof TrackingRoute
   '/admin': typeof AdminRoute
-  '/properties/$slug': typeof PropertySlugRoute
-  '/file/$id': typeof PropertyFileRoute
-  '/v/$slug/$id': typeof VSlugIdRoute
-  '/areas/$slug': typeof AreaSlugRoute
-  '/properties': typeof PropertiesRoute
-  '/favorites': typeof FavoritesRoute
   '/compare': typeof CompareRoute
-  '/consultants/$id': typeof ConsultantIdRoute
+  '/favorites': typeof FavoritesRoute
+  '/properties': typeof PropertiesRouteWithChildren
+  '/tracking': typeof TrackingRoute
+  '/areas/$slug': typeof AreasSlugRoute
+  '/consultants/$id': typeof ConsultantsIdRoute
+  '/file/$id': typeof FileIdRoute
+  '/properties/$slug': typeof PropertiesSlugRoute
+  '/v/$slug/$id': typeof VSlugIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/tracking': typeof TrackingRoute
   '/admin': typeof AdminRoute
-  '/properties/$slug': typeof PropertySlugRoute
-  '/file/$id': typeof PropertyFileRoute
-  '/v/$slug/$id': typeof VSlugIdRoute
-  '/areas/$slug': typeof AreaSlugRoute
-  '/properties': typeof PropertiesRoute
-  '/favorites': typeof FavoritesRoute
   '/compare': typeof CompareRoute
-  '/consultants/$id': typeof ConsultantIdRoute
+  '/favorites': typeof FavoritesRoute
+  '/properties': typeof PropertiesRouteWithChildren
+  '/tracking': typeof TrackingRoute
+  '/areas/$slug': typeof AreasSlugRoute
+  '/consultants/$id': typeof ConsultantsIdRoute
+  '/file/$id': typeof FileIdRoute
+  '/properties/$slug': typeof PropertiesSlugRoute
+  '/v/$slug/$id': typeof VSlugIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/file/$id' | '/v/$slug/$id' | '/areas/$slug' | '/properties' | '/favorites' | '/compare' | '/consultants/$id'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/compare'
+    | '/favorites'
+    | '/properties'
+    | '/tracking'
+    | '/areas/$slug'
+    | '/consultants/$id'
+    | '/file/$id'
+    | '/properties/$slug'
+    | '/v/$slug/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/tracking' | '/admin' | '/properties/$slug' | '/file/$id' | '/v/$slug/$id' | '/areas/$slug' | '/properties' | '/favorites' | '/compare' | '/consultants/$id'
-  id: '__root__' | '/' | '/tracking' | '/admin' | '/properties/$slug' | '/file/$id' | '/v/$slug/$id' | '/areas/$slug' | '/properties' | '/favorites' | '/compare' | '/consultants/$id'
+  to:
+    | '/'
+    | '/admin'
+    | '/compare'
+    | '/favorites'
+    | '/properties'
+    | '/tracking'
+    | '/areas/$slug'
+    | '/consultants/$id'
+    | '/file/$id'
+    | '/properties/$slug'
+    | '/v/$slug/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/compare'
+    | '/favorites'
+    | '/properties'
+    | '/tracking'
+    | '/areas/$slug'
+    | '/consultants/$id'
+    | '/file/$id'
+    | '/properties/$slug'
+    | '/v/$slug/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  TrackingRoute: typeof TrackingRoute
   AdminRoute: typeof AdminRoute
-  PropertySlugRoute: typeof PropertySlugRoute
-  PropertyFileRoute: typeof PropertyFileRoute
-  VSlugIdRoute: typeof VSlugIdRoute
-  AreaSlugRoute: typeof AreaSlugRoute
-  PropertiesRoute: typeof PropertiesRoute
-  FavoritesRoute: typeof FavoritesRoute
   CompareRoute: typeof CompareRoute
-  ConsultantIdRoute: typeof ConsultantIdRoute
+  FavoritesRoute: typeof FavoritesRoute
+  PropertiesRoute: typeof PropertiesRouteWithChildren
+  TrackingRoute: typeof TrackingRoute
+  AreasSlugRoute: typeof AreasSlugRoute
+  ConsultantsIdRoute: typeof ConsultantsIdRoute
+  FileIdRoute: typeof FileIdRoute
+  VSlugIdRoute: typeof VSlugIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -148,60 +181,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tracking': {
-      id: '/tracking'
-      path: '/tracking'
-      fullPath: '/tracking'
-      preLoaderRoute: typeof TrackingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin': {
       id: '/admin'
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/properties/$slug': {
-      id: '/properties/$slug'
-      path: '/properties/$slug'
-      fullPath: '/properties/$slug'
-      preLoaderRoute: typeof PropertySlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/file/$id': {
-      id: '/file/$id'
-      path: '/file/$id'
-      fullPath: '/file/$id'
-      preLoaderRoute: typeof PropertyFileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/v/$slug/$id': {
-      id: '/v/$slug/$id'
-      path: '/v/$slug/$id'
-      fullPath: '/v/$slug/$id'
-      preLoaderRoute: typeof VSlugIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/areas/$slug': {
-      id: '/areas/$slug'
-      path: '/areas/$slug'
-      fullPath: '/areas/$slug'
-      preLoaderRoute: typeof AreaSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/properties': {
-      id: '/properties'
-      path: '/properties'
-      fullPath: '/properties'
-      preLoaderRoute: typeof PropertiesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/favorites': {
-      id: '/favorites'
-      path: '/favorites'
-      fullPath: '/favorites'
-      preLoaderRoute: typeof FavoritesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/compare': {
@@ -211,28 +195,88 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompareRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/favorites': {
+      id: '/favorites'
+      path: '/favorites'
+      fullPath: '/favorites'
+      preLoaderRoute: typeof FavoritesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/properties': {
+      id: '/properties'
+      path: '/properties'
+      fullPath: '/properties'
+      preLoaderRoute: typeof PropertiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tracking': {
+      id: '/tracking'
+      path: '/tracking'
+      fullPath: '/tracking'
+      preLoaderRoute: typeof TrackingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/areas/$slug': {
+      id: '/areas/$slug'
+      path: '/areas/$slug'
+      fullPath: '/areas/$slug'
+      preLoaderRoute: typeof AreasSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/consultants/$id': {
       id: '/consultants/$id'
       path: '/consultants/$id'
       fullPath: '/consultants/$id'
-      preLoaderRoute: typeof ConsultantIdRouteImport
+      preLoaderRoute: typeof ConsultantsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/file/$id': {
+      id: '/file/$id'
+      path: '/file/$id'
+      fullPath: '/file/$id'
+      preLoaderRoute: typeof FileIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/properties/$slug': {
+      id: '/properties/$slug'
+      path: '/$slug'
+      fullPath: '/properties/$slug'
+      preLoaderRoute: typeof PropertiesSlugRouteImport
+      parentRoute: typeof PropertiesRoute
+    }
+    '/v/$slug/$id': {
+      id: '/v/$slug/$id'
+      path: '/v/$slug/$id'
+      fullPath: '/v/$slug/$id'
+      preLoaderRoute: typeof VSlugIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
+interface PropertiesRouteChildren {
+  PropertiesSlugRoute: typeof PropertiesSlugRoute
+}
+
+const PropertiesRouteChildren: PropertiesRouteChildren = {
+  PropertiesSlugRoute: PropertiesSlugRoute,
+}
+
+const PropertiesRouteWithChildren = PropertiesRoute._addFileChildren(
+  PropertiesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  TrackingRoute: TrackingRoute,
   AdminRoute: AdminRoute,
-  PropertySlugRoute: PropertySlugRoute,
-  PropertyFileRoute: PropertyFileRoute,
-  VSlugIdRoute: VSlugIdRoute,
-  AreaSlugRoute: AreaSlugRoute,
-  PropertiesRoute: PropertiesRoute,
-  FavoritesRoute: FavoritesRoute,
   CompareRoute: CompareRoute,
-  ConsultantIdRoute: ConsultantIdRoute,
+  FavoritesRoute: FavoritesRoute,
+  PropertiesRoute: PropertiesRouteWithChildren,
+  TrackingRoute: TrackingRoute,
+  AreasSlugRoute: AreasSlugRoute,
+  ConsultantsIdRoute: ConsultantsIdRoute,
+  FileIdRoute: FileIdRoute,
+  VSlugIdRoute: VSlugIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

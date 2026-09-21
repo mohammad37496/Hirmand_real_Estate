@@ -4,6 +4,7 @@ import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { calculateBudgetMatch, DEFAULT_MATCH_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
+import { MAX_PROPERTY_MEDIA, isAllowedMediaRef } from "@/lib/media";
 
 export type PropertyStatus = "draft" | "published" | "archived";
 export type PropertyTransaction = "buy" | "sell" | "rent" | "mortgage";
@@ -162,7 +163,17 @@ const propertyInputSchema = z.object({
   rent: nullableMoneyField,
   description: z.string().trim().min(10).max(5000),
   features: z.array(z.string().trim().min(1).max(80)).max(20).default([]),
-  images: z.array(z.string().url()).max(12).default([]),
+  images: z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1)
+        .max(2048)
+        .refine(isAllowedMediaRef, { message: "نشانی رسانه نامعتبر است." }),
+    )
+    .max(MAX_PROPERTY_MEDIA)
+    .default([]),
   contactName: z.string().trim().min(2).max(80),
   contactPhone: z.string().trim().min(8).max(30),
   status: z.enum(["draft", "published", "archived"]).default("published"),
