@@ -281,7 +281,7 @@ function PropertiesIndexPage() {
         setProperties(rows);
         setTotal(count);
       } catch {
-        // Keep the last successful result visible.
+        toast.error("جستجوی فایل‌ها انجام نشد. اتصال اینترنت یا سرویس فایل‌ها را بررسی کنید.");
       } finally {
         if (requestId.current === currentRequest) setLoading(false);
       }
