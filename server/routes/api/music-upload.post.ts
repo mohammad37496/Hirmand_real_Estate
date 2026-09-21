@@ -14,6 +14,16 @@ const ALLOWED = [
   "audio/aac",
 ];
 
+function mimeFromPathname(pathname: string) {
+  const extension = pathname.split(".").pop()?.toLowerCase();
+  if (extension === "mp3") return "audio/mpeg";
+  if (extension === "ogg" || extension === "oga") return "audio/ogg";
+  if (extension === "wav") return "audio/wav";
+  if (extension === "m4a") return "audio/mp4";
+  if (extension === "aac") return "audio/aac";
+  return "";
+}
+
 export default defineEventHandler(async (event) => {
   const requestBody = (await readBody(event)) as HandleUploadBody;
 
@@ -59,8 +69,12 @@ export default defineEventHandler(async (event) => {
 
         const title = typeof payload.title === "string" ? payload.title.trim() : "";
         const artist = typeof payload.artist === "string" ? payload.artist.trim() : "";
+        const declaredContentType =
+          typeof payload.contentType === "string" ? payload.contentType.trim().toLowerCase() : "";
         const contentType =
-          typeof payload.contentType === "string" ? payload.contentType.trim() : "";
+          ALLOWED.includes(declaredContentType)
+            ? declaredContentType
+            : mimeFromPathname(pathname);
         const sizeBytes = Number(payload.sizeBytes) || 0;
 
         if (!title || title.length > 160) {
