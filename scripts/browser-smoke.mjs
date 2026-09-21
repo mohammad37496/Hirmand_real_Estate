@@ -158,6 +158,7 @@ try {
     page.on("pageerror", (err) => routeErrors.push(`page: ${String(err?.message || err)}`));
     let routeStatus = 0;
     let routeBodyTextLen = 0;
+    let routeHorizontalOverflow = false;
     try {
       const response = await page.goto(routeUrl, {
         waitUntil: "domcontentloaded",
@@ -166,6 +167,7 @@ try {
       routeStatus = response?.status() ?? 0;
       await page.waitForTimeout(500);
       routeBodyTextLen = normalizeBodyText(await page.locator("body").innerText().catch(() => "")).length;
+      routeHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
     } finally {
       await page.close();
     }
@@ -175,7 +177,13 @@ try {
       bodyTextLen: routeBodyTextLen,
       consoleErrors: routeErrors.filter((item) => item.startsWith("console:")),
       pageErrors: routeErrors.filter((item) => item.startsWith("page:")),
-      ok: routeStatus >= 200 && routeStatus < 400 && routeBodyTextLen > 0 && routeErrors.length === 0,
+      horizontalOverflow: routeHorizontalOverflow,
+      ok:
+        routeStatus >= 200 &&
+        routeStatus < 400 &&
+        routeBodyTextLen > 0 &&
+        !routeHorizontalOverflow &&
+        routeErrors.length === 0,
     });
   }
 
