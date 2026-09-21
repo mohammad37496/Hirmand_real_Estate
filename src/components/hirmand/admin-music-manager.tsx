@@ -140,7 +140,6 @@ export function AdminMusicManager() {
           sizeBytes: uploadFile.size,
         }),
         contentType: uploadMimeType,
-        addRandomSuffix: true,
         multipart: uploadFile.size >= 5 * 1024 * 1024,
         abortSignal: uploadAbort.signal,
         onUploadProgress: (event) => {
