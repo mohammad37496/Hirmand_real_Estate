@@ -131,11 +131,13 @@ export function MusicPlayer() {
     const candidates = Array.from(
       new Set(
         [
+          // Prefer the public Blob URL so Chrome/Android/iOS can handle
+          // native range requests without a server-side proxy in the hot path.
+          currentTrack.src,
           currentTrack.stream,
           currentTrack.id
             ? `/api/music/file/${encodeURIComponent(currentTrack.id)}`
             : "",
-          currentTrack.src,
         ].filter((value): value is string => Boolean(value)),
       ),
     );
