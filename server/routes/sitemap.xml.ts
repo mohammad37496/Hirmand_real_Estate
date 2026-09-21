@@ -68,7 +68,7 @@ async function loadPropertyUrls(): Promise<{ loc: string; lastmod?: string; imag
         }
 
         return {
-          loc: `${SITE}/properties/${encodeURIComponent(String(row.slug))}`,
+          loc: `${SITE}/file/${encodeURIComponent(String(row.id))}`,
           lastmod,
           images,
         };
