@@ -23,9 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      # Live Vercel project identifiers (not credentials).
-      VERCEL_ORG_ID: team_FPapzgJx90YRyaonBmXy9lhS
-      VERCEL_PROJECT_ID: prj_ZgZjE26DjWCLeqiRfMkDSkB90Fzh
+      VERCEL_SCOPE: ${{ secrets.VERCEL_SCOPE || secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
       - name: Checkout verified commit
         uses: actions/checkout@v4
@@ -41,7 +40,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify Vercel access
+      - name: Validate Vercel deployment configuration
         shell: bash
         run: |
           set -euo pipefail
@@ -51,26 +50,27 @@ jobs:
             exit 1
           fi
 
-          if [ -z "${VERCEL_ORG_ID:-}" ] || [ -z "${VERCEL_PROJECT_ID:-}" ]; then
-            echo "::error::VERCEL_ORG_ID and VERCEL_PROJECT_ID must be configured."
+          if [ -z "${VERCEL_SCOPE:-}" ]; then
+            echo "::error::VERCEL_SCOPE (or VERCEL_ORG_ID) is not configured."
             exit 1
           fi
 
-          echo "Checking which Vercel account owns this token..."
-          npx vercel whoami --token "${VERCEL_TOKEN}"
+          if [ -z "${VERCEL_PROJECT_ID:-}" ]; then
+            echo "::error::VERCEL_PROJECT_ID is not configured."
+            exit 1
+          fi
 
-          echo "Checking projects visible to this token..."
-          npx vercel project ls --token "${VERCEL_TOKEN}"
-
-      - name: Deploy with Vercel CLI
+      - name: Link and deploy production
         shell: bash
         run: |
           set -euo pipefail
 
-          npx vercel pull --yes \
-            --environment=production \
-            --token "${VERCEL_TOKEN}"
+          VERCEL="npx --yes vercel@59.23.2"
 
-          npx vercel build --prod --token "${VERCEL_TOKEN}"
+          ${VERCEL} link --yes             --project "${VERCEL_PROJECT_ID}"             --scope "${VERCEL_SCOPE}"             --token "${VERCEL_TOKEN}"
 
-          npx vercel deploy --prebuilt --prod --token "${VERCEL_TOKEN}"
+          ${VERCEL} pull --yes             --environment=production             --scope "${VERCEL_SCOPE}"             --token "${VERCEL_TOKEN}"
+
+          ${VERCEL} build --prod             --scope "${VERCEL_SCOPE}"             --token "${VERCEL_TOKEN}"
+
+          ${VERCEL} deploy --prebuilt --prod             --scope "${VERCEL_SCOPE}"             --token "${VERCEL_TOKEN}"
