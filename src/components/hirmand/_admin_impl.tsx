@@ -637,18 +637,26 @@ export function AdminPropertiesPage() {
   async function loadMoreProperties() {
     if (!unlocked || loadingList || !propertyHasMore) return;
 
+    const requestId = propertyRequestId.current;
+    const requestedOffset = propertyOffset;
     setLoadingList(true);
     try {
       const rows = await listAdminProperties({
-        data: currentListFilters(propertyOffset, 50),
+        data: currentListFilters(requestedOffset, 50),
       });
+
+      // A filter/search change can start another request while this page is
+      // in flight. Never append the old result to the new list.
+      if (propertyRequestId.current !== requestId) return;
+
       setProperties((current) => [...current, ...rows]);
       setPropertyOffset((current) => current + rows.length);
-      setPropertyHasMore(propertyOffset + rows.length < filteredTotal);
+      setPropertyHasMore(requestedOffset + rows.length < filteredTotal);
     } catch (error) {
+      if (propertyRequestId.current !== requestId) return;
       toast.error(error instanceof Error ? error.message : "بارگذاری فایل‌های بیشتر انجام نشد.");
     } finally {
-      setLoadingList(false);
+      if (propertyRequestId.current === requestId) setLoadingList(false);
     }
   }
 
