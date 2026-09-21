@@ -6,6 +6,7 @@ import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
 import { SITE } from "@/lib/site";
 import { formatToman } from "@/lib/money";
+import { propertyPath } from "@/lib/property-path";
 
 const COMPARE_KEY = "hirmand-compare-properties";
 const MAX_COMPARE = 3;
@@ -112,7 +113,7 @@ function ComparePage() {
             <p>در صفحه فایل‌ها یا روی کارت ملک، دکمه «مقایسه» را بزنید.</p>
             <div className="properties-empty-actions">
               <Link to="/properties" className="btn-gold">مشاهده فایل‌ها</Link>
-              {properties.length ? <Link to="/properties/$slug" params={{ slug: properties[0]!.slug }} className="btn-ghost">مشاهده فایل انتخاب‌شده</Link> : null}
+              {properties.length ? <a href={propertyPath(properties[0]!)} className="btn-ghost">مشاهده فایل انتخاب‌شده</a> : null}
             </div>
           </section>
         ) : (
