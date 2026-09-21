@@ -15,7 +15,6 @@ import { formatToman } from "@/lib/money";
 import type { Property, PropertyCardData, PropertyType, PropertyTransaction } from "@/lib/properties";
 import { isFeaturedActive, listPublishedPropertyCards } from "@/lib/properties";
 import { PropertyActions } from "./property-actions";
-import { propertyPath } from "@/lib/property-path";
 import { Reveal } from "./reveal";
 
 const PROPERTY_TYPE_LABEL: Record<PropertyType, string> = {
@@ -67,8 +66,9 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
 
   return (
     <article className="property-card">
-      <a
-        href={propertyPath(property)}
+      <Link
+        to="/properties/$slug"
+        params={{ slug: property.slug }}
         className="property-card-link"
         aria-label={`مشاهده جزئیات کامل فایل ${property.title}`}
       >
@@ -141,7 +141,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
             </span>
           </div>
         </div>
-      </a>
+      </Link>
 
       <div className="property-card-actions" aria-label="عملیات فایل">
         <PropertyActions property={property} compact />
