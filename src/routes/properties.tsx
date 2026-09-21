@@ -293,6 +293,7 @@ function PropertiesIndexPage() {
   const loadMore = useCallback(async () => {
     if (loading || loadingMore || properties.length >= total) return;
     const nextOffset = offset + PAGE_SIZE;
+    const queryVersion = requestId.current;
     setLoadingMore(true);
     try {
       const rows = await listPublishedPropertyCards({
@@ -312,12 +313,24 @@ function PropertiesIndexPage() {
           nextOffset,
         ),
       });
+
+      // A filter change can finish while this older page is still in flight.
+      // Never append stale rows to the new result set.
+      if (requestId.current !== queryVersion) return;
+
+      if (!rows.length) {
+        // Prevent the intersection sentinel from hammering the same empty page.
+        setOffset(nextOffset);
+        setTotal((currentTotal) => Math.min(currentTotal, nextOffset));
+        return;
+      }
+
       setProperties((current) => [...current, ...rows]);
       setOffset(nextOffset);
     } catch {
       // Keep current page visible.
     } finally {
-      setLoadingMore(false);
+      if (requestId.current === queryVersion) setLoadingMore(false);
     }
   }, [
     loading,
