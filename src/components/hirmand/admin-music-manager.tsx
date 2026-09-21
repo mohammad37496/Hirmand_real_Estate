@@ -4,6 +4,8 @@ import { FileAudio, Loader2, Music2, Pause, Play, Trash2, Upload, Volume2, Volum
 import { toast } from "sonner";
 
 type AdminMusicTrack = { id: string; title: string; artist: string; url: string; mimeType: string; sizeBytes: number; active: boolean; position: number; createdAt: string };
+type UploadStage = "idle" | "preparing" | "uploading" | "saving";
+const MAX_BYTES = 100 * 1024 * 1024;
 
 function formatSize(bytes: number) {
   return bytes > 0 ? (bytes / 1024 / 1024).toFixed(1) + " MB" : "—";
@@ -58,7 +60,9 @@ export function AdminMusicManager() {
   const [muted, setMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStage, setUploadStage] = useState<UploadStage>("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const uploadAbortRef = useRef<AbortController | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -98,6 +102,11 @@ export function AdminMusicManager() {
       return;
     }
 
+    if (file.size > MAX_BYTES) {
+      toast.error("حجم فایل صوتی بیشتر از ۱۰۰ مگابایت است.");
+      return;
+    }
+
     const normalized = normalizedAudioFile(file);
     if (!normalized) {
       toast.error("فرمت فایل صوتی پشتیبانی نمی‌شود. MP3، OGG، WAV، M4A یا AAC انتخاب کنید.");
@@ -106,6 +115,9 @@ export function AdminMusicManager() {
 
     setBusy(true);
     setUploadProgress(0);
+    setUploadStage("preparing");
+    const uploadAbort = new AbortController();
+    uploadAbortRef.current = uploadAbort;
 
     try {
       const uploadFile = normalized.file;
@@ -115,8 +127,9 @@ export function AdminMusicManager() {
         .slice(0, 100);
       const pathname = "music/" + Date.now() + "-" + safeName;
 
-      // Use Vercel's official browser upload client. It handles direct
-      // Blob uploads, progress events and multipart/retries for large files.
+      // Direct browser-to-Blob upload keeps large files out of the
+      // serverless request body. Multipart mode adds chunking/retries.
+      setUploadStage("uploading");
       const blob = await upload(pathname, uploadFile, {
         access: "public",
         handleUploadUrl: "/api/music-upload",
@@ -126,13 +139,16 @@ export function AdminMusicManager() {
           contentType: uploadMimeType,
           sizeBytes: uploadFile.size,
         }),
+        contentType: uploadMimeType,
         multipart: uploadFile.size >= 5 * 1024 * 1024,
+        abortSignal: uploadAbort.signal,
         onUploadProgress: (event) => {
           setUploadProgress(Math.max(0, Math.min(100, event.percentage)));
         },
       });
 
       setUploadProgress(100);
+      setUploadStage("saving");
 
       const response = await fetch("/api/music-admin", {
         method: "POST",
@@ -169,13 +185,23 @@ export function AdminMusicManager() {
 
       toast.success("آهنگ با موفقیت اضافه شد.");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "آپلود آهنگ انجام نشد.",
-      );
+      if (error instanceof DOMException && error.name === "AbortError") {
+        toast.info("آپلود لغو شد.");
+      } else {
+        toast.error(
+          error instanceof Error ? error.message : "آپلود آهنگ انجام نشد.",
+        );
+      }
     } finally {
+      uploadAbortRef.current = null;
       setBusy(false);
+      setUploadStage("idle");
       setUploadProgress(0);
     }
+  }
+
+  function cancelUpload() {
+    uploadAbortRef.current?.abort();
   }
 
   function stopAudio() {
@@ -344,10 +370,23 @@ export function AdminMusicManager() {
             </span>
           </label>
 
-          <button type="submit" className="btn-gold" disabled={busy || !file}>
-            {busy ? <Loader2 size={16} className="admin-spin" /> : <Upload size={16} />}
-            {busy ? "در حال آپلود… " + uploadProgress + "%" : "آپلود آهنگ"}
-          </button>
+          <div className="admin-music-upload-actions">
+            <button type="submit" className="btn-gold" disabled={busy || !file}>
+              {busy ? <Loader2 size={16} className="admin-spin" /> : <Upload size={16} />}
+              {uploadStage === "preparing"
+                ? "در حال آماده‌سازی…"
+                : uploadStage === "uploading"
+                  ? "در حال آپلود… " + uploadProgress + "%"
+                  : uploadStage === "saving"
+                    ? "در حال ثبت…"
+                    : "آپلود آهنگ"}
+            </button>
+            {busy ? (
+              <button type="button" className="btn-ghost" onClick={cancelUpload}>
+                لغو
+              </button>
+            ) : null}
+          </div>
         </form>
       </section>
 
