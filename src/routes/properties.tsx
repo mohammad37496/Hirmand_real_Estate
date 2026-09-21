@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeftRight, Heart, List, Map, MapPinned, RotateCcw, Search, Share2, SlidersHorizontal, X } from "lucide-react";
+import { ArrowLeftRight, Heart, List, Map as MapIcon, MapPinned, RotateCcw, Search, Share2, SlidersHorizontal, X } from "lucide-react";
 import { toast } from "sonner";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import {
@@ -792,7 +792,7 @@ function PropertiesIndexPage() {
                         }}
                       >
                         <div className="properties-map-list-image">
-                          {property.image ? <img src={property.image} alt="" loading="lazy" /> : <Map size={20} />}
+                          {property.image ? <img src={property.image} alt="" loading="lazy" /> : <MapIcon size={20} />}
                         </div>
                         <div>
                           <strong>{property.title}</strong>
