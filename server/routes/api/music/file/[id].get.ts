@@ -1,4 +1,4 @@
-import { createError, defineEventHandler, getRouterParam } from "h3";
+import { createError, defineEventHandler, getRouterParam, sendRedirect } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 
 function normalizeBlobUrl(raw: string): string {
@@ -99,56 +99,16 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const range = event.req.headers.get("range");
-  let upstream: Response;
-
+  // Do not proxy the audio body through a serverless function. Native audio
+  // playback relies heavily on HTTP Range requests, and a redirect lets
+  // Vercel Blob/CDN answer those requests directly and efficiently.
   try {
-    upstream = await fetch(target, {
-      method: event.req.method === "HEAD" ? "HEAD" : "GET",
-      headers: range ? { range } : undefined,
-    });
+    return sendRedirect(event, target, 307);
   } catch (error) {
-    console.error("[music-file] blob fetch failed", error);
+    console.error("[music-file] redirect failed", error);
     throw createError({
       statusCode: 502,
       statusMessage: "فایل موسیقی از فضای ذخیره‌سازی قابل دریافت نیست.",
     });
   }
-
-  if (!upstream.ok && upstream.status !== 206) {
-    console.error("[music-file] blob response failed", upstream.status, target);
-    throw createError({
-      statusCode: upstream.status === 404 ? 404 : 502,
-      statusMessage: upstream.status === 404
-        ? "فایل موسیقی پیدا نشد."
-        : "فایل موسیقی از فضای ذخیره‌سازی قابل دریافت نیست.",
-    });
-  }
-
-  const headers = new Headers();
-  for (const name of [
-    "content-type",
-    "content-length",
-    "content-range",
-    "accept-ranges",
-    "etag",
-    "last-modified",
-  ]) {
-    const value = upstream.headers.get(name);
-    if (value) headers.set(name, value);
-  }
-
-  headers.set(
-    "cache-control",
-    "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
-  );
-  headers.set("content-disposition", "inline");
-
-  return new Response(
-    event.req.method === "HEAD" ? null : upstream.body,
-    {
-      status: upstream.status,
-      headers,
-    },
-  );
 });
