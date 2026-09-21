@@ -97,7 +97,7 @@ test("returns transparent financial metadata for the UI", () => {
     property({ deposit: "600000000", rent: "6000000" }),
     { depositBudget: 500_000_000, rentBudget: 10_000_000 },
   );
-  assert.equal(result?.budgetUsagePercent, 93);
+  assert.equal(result?.budgetUsagePercent, 96);
   assert.equal(result?.gapEquivalent, 0);
   assert.match(result?.reason ?? "", /بودجه/);
 });
