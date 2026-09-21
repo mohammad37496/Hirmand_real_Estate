@@ -162,8 +162,10 @@ export function AdminMusicManager() {
     stopAudio();
 
     const candidates = [
-      `/api/music/file/${encodeURIComponent(track.id)}`,
+      // Use the public Blob object first; keep the same-origin stream endpoint
+      // as a fallback for older records or unusual storage URLs.
       track.url,
+      `/api/music/file/${encodeURIComponent(track.id)}`,
     ].filter((value, index, list) => value && list.indexOf(value) === index);
 
     const audio = new Audio();
