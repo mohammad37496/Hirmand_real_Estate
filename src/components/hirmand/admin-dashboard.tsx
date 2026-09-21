@@ -503,7 +503,7 @@ export function AdminDashboard({
                     {item.favorites.toLocaleString("fa-IR")} ذخیره
                   </small>
                   <a
-                    href={`/properties/${encodeURIComponent(item.slug)}`}
+                    href={propertyPath({ id: item.slug, slug: item.slug })}
                     target="_blank"
                     rel="noreferrer"
                     className="text-link"

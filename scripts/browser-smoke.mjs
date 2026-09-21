@@ -208,6 +208,37 @@ try {
     await apiPage.close();
   }
 
+  // When published listings exist, exercise a real card-to-detail navigation.
+  // This is the regression test for the recurring "clicking a file does nothing" bug.
+  const propertyNavigationCheck = { attempted: false, ok: true, href: null, status: null, bodyTextLen: 0, error: null };
+  const propertyPage = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  try {
+    const propertiesUrl = new URL("/properties", url).toString();
+    await propertyPage.goto(propertiesUrl, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await propertyPage.waitForTimeout(500);
+    const link = propertyPage.locator('a[href^="/properties/"]').filter({ has: propertyPage.locator("img") }).first();
+    const href = await link.getAttribute("href").catch(() => null);
+    propertyNavigationCheck.href = href;
+    if (href) {
+      propertyNavigationCheck.attempted = true;
+      await link.click();
+      await propertyPage.waitForLoadState("domcontentloaded").catch(() => undefined);
+      await propertyPage.waitForTimeout(500);
+      propertyNavigationCheck.status = await propertyPage.evaluate(() => window.location.pathname);
+      const textValue = await propertyPage.locator("body").innerText().catch(() => "");
+      propertyNavigationCheck.bodyTextLen = normalizeBodyText(textValue).length;
+      propertyNavigationCheck.ok =
+        propertyNavigationCheck.status.startsWith("/properties/") &&
+        propertyNavigationCheck.bodyTextLen > 80 &&
+        propertyNavigationCheck.status !== "/properties/";
+    }
+  } catch (error) {
+    propertyNavigationCheck.error = String(error?.message || error);
+    propertyNavigationCheck.ok = false;
+  } finally {
+    await propertyPage.close();
+  }
+
   const routeFailures = routeChecks.filter((item) => !item.ok);
   if (routeFailures.length) {
     viewports.desktop.pageErrors.push(
@@ -216,6 +247,13 @@ try {
   }
   if (!musicApiCheck.ok) {
     viewports.desktop.pageErrors.push(`music API smoke failed: [${musicApiCheck.status}]`);
+  }
+  if (!propertyNavigationCheck.ok) {
+    viewports.desktop.pageErrors.push(
+      propertyNavigationCheck.attempted
+        ? `property detail navigation smoke failed: ${propertyNavigationCheck.status || propertyNavigationCheck.error || "unknown"}`
+        : "property detail navigation smoke could not find a published property card",
+    );
   }
 
   const brandWarnings = computeBrandWarnings({ hasCanvas: viewports.desktop.hasCanvas });
@@ -227,7 +265,7 @@ try {
       buildAuthEnabled: buildAuthEnabled(),
     }),
   );
-  const verdict = { url, viewports, routeChecks, musicApiCheck, brandWarnings, authWarnings, verdictFile: outJson };
+  const verdict = { url, viewports, routeChecks, propertyNavigationCheck, musicApiCheck, brandWarnings, authWarnings, verdictFile: outJson };
   if (baselineRequested) {
     const { divergesFromBaseline, reasons } = compareAgainstBaseline(verdict);
     verdict.divergesFromBaseline = divergesFromBaseline;

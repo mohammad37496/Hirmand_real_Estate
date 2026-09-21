@@ -26,6 +26,7 @@ import {
   CheckSquare,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
+import { propertyPath } from "@/lib/property-path";
 import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
 import {
   bulkAssignPropertyConsultant,
@@ -1241,7 +1242,7 @@ export function AdminPropertiesPage() {
                           <a
                             className="admin-icon-btn"
                             title="مشاهده عمومی"
-                            href={`/properties/${property.slug}`}
+                            href={propertyPath(property)}
                             target="_blank"
                             rel="noreferrer"
                           >
