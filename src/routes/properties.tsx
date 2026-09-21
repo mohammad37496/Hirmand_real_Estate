@@ -763,7 +763,7 @@ function PropertiesIndexPage() {
                   </button>
                 </>
               ) : null}
-              <a href="/#inquiry">درخواست فایل اختصاصی</a>
+              <Link to="/" hash="inquiry">درخواست فایل اختصاصی</Link>
             </div>
           </div>
 
@@ -838,7 +838,7 @@ function PropertiesIndexPage() {
               <p>بازه قیمت یا متراژ را بازتر کنید، فیلترهای کمتر دقیق انتخاب کنید یا برای دریافت گزینه‌های متناسب با بودجه، درخواست اختصاصی ثبت کنید.</p>
               <div className="properties-empty-actions">
                 {hasFilters ? <button type="button" className="btn-ghost" onClick={resetFilters}><X size={15} /> پاک‌کردن فیلترها</button> : null}
-                <a href="/#inquiry" className="btn-gold">ثبت درخواست</a>
+                <Link to="/" hash="inquiry" className="btn-gold">ثبت درخواست</Link>
               </div>
             </div>
           )}
