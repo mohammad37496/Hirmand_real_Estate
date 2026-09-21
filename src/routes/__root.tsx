@@ -1,4 +1,4 @@
-import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Link, Outlet, Scripts } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
@@ -17,7 +17,7 @@ export const Route = createRootRoute({
       },
       { title: SITE.title },
       { name: "description", content: SITE.description },
-      { name: "theme-color", content: "#171717" },
+      { name: "theme-color", content: "#111315" },
       { name: "color-scheme", content: "light" },
       { name: "author", content: SITE.nameFa },
       { name: "referrer", content: "strict-origin-when-cross-origin" },
@@ -37,6 +37,7 @@ export const Route = createRootRoute({
     ],
   }),
   component: RootDocument,
+  notFoundComponent: NotFoundPage,
 });
 
 function PwaRegistrar() {
@@ -64,5 +65,16 @@ function RootDocument() {
         <Scripts />
       </body>
     </html>
+  );
+}
+
+
+function NotFoundPage() {
+  return (
+    <main className="property-not-found" aria-labelledby="not-found-title">
+      <h1 id="not-found-title">صفحه موردنظر پیدا نشد</h1>
+      <p>این فایل ممکن است حذف شده باشد یا دیگر برای نمایش عمومی در دسترس نباشد.</p>
+      <Link to="/" className="btn-gold">بازگشت به صفحه اصلی</Link>
+    </main>
   );
 }
