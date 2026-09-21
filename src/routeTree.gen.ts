@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrackingRouteImport } from './routes/tracking'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as PropertySlugRouteImport } from './routes/properties.$slug'
+import { Route as PropertyFileRouteImport } from './routes/file.$id'
 import { Route as VSlugIdRouteImport } from './routes/v.$slug.$id'
 import { Route as AreaSlugRouteImport } from './routes/areas.$slug'
 import { Route as PropertiesRouteImport } from './routes/properties'
@@ -38,6 +39,11 @@ const AdminRoute = AdminRouteImport.update({
 const PropertySlugRoute = PropertySlugRouteImport.update({
   id: '/properties/$slug',
   path: '/properties/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PropertyFileRoute = PropertyFileRouteImport.update({
+  id: '/file/$id',
+  path: '/file/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VSlugIdRoute = VSlugIdRouteImport.update({
@@ -73,9 +79,12 @@ const ConsultantIdRoute = ConsultantIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/file/$id': typeof PropertyFileRoute
   '/tracking': typeof TrackingRoute
   '/admin': typeof AdminRoute
+  '/file/$id': typeof PropertyFileRoute
   '/properties/$slug': typeof PropertySlugRoute
+  '/file/$id': typeof PropertyFileRoute
   '/v/$slug/$id': typeof VSlugIdRoute
   '/areas/$slug': typeof AreaSlugRoute
   '/properties': typeof PropertiesRoute
@@ -88,6 +97,7 @@ export interface FileRoutesByTo {
   '/tracking': typeof TrackingRoute
   '/admin': typeof AdminRoute
   '/properties/$slug': typeof PropertySlugRoute
+  '/file/$id': typeof PropertyFileRoute
   '/v/$slug/$id': typeof VSlugIdRoute
   '/areas/$slug': typeof AreaSlugRoute
   '/properties': typeof PropertiesRoute
@@ -159,6 +169,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PropertySlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/file/$id': {
+      id: '/file/$id'
+      path: '/file/$id'
+      fullPath: '/file/$id'
+      preLoaderRoute: typeof PropertyFileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/v/$slug/$id': {
       id: '/v/$slug/$id'
       path: '/v/$slug/$id'
@@ -209,6 +226,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrackingRoute: TrackingRoute,
   AdminRoute: AdminRoute,
   PropertySlugRoute: PropertySlugRoute,
+  PropertyFileRoute: PropertyFileRoute,
   VSlugIdRoute: VSlugIdRoute,
   AreaSlugRoute: AreaSlugRoute,
   PropertiesRoute: PropertiesRoute,

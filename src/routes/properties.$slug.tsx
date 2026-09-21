@@ -1,5 +1,5 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
-import { getPublishedProperty, listRelatedProperties } from "@/lib/properties";
+import { createFileRoute, redirect, notFound } from "@tanstack/react-router";
+import { getPublishedProperty } from "@/lib/properties";
 import { propertyHead } from "@/lib/seo";
 import { PropertyDetailView } from "@/components/hirmand/property-detail-view";
 
@@ -7,24 +7,12 @@ export const Route = createFileRoute("/properties/$slug")({
   loader: async ({ params }) => {
     const property = await getPublishedProperty({ data: { slug: params.slug } });
     if (!property) throw notFound();
-
-    const related = await listRelatedProperties({
-      data: {
-        slug: property.slug,
-        neighborhood: property.neighborhood,
-        propertyType: property.propertyType,
-        limit: 6,
-      },
-    });
-
-    return { property, related };
+    throw redirect({ to: "/file/$id", params: { id: property.id }, replace: true });
   },
-  head: ({ loaderData, params }) =>
-    propertyHead(loaderData?.property ?? null, params.slug),
-  component: PropertyDetailPage,
+  head: ({ params }) => propertyHead(null, params.slug),
+  component: LegacyPropertyRoutePage,
 });
 
-function PropertyDetailPage() {
-  const data = Route.useLoaderData();
-  return <PropertyDetailView property={data.property} related={data.related} />;
+function LegacyPropertyRoutePage() {
+  return null;
 }

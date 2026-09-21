@@ -438,6 +438,21 @@ export const listPublishedPropertiesByContact = createServerFn({ method: "GET" }
     return rows.map(mapProperty);
   });
 
+export const getPublishedPropertyById = createServerFn({ method: "GET" })
+  .validator(z.object({ id: z.string().trim().min(1).max(120) }))
+  .handler(async ({ data }) => {
+    if (dbSource === "unconfigured") return null;
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select ${DETAIL_COLUMNS}
+       from properties
+       where status = 'published' and id::text = $1
+       limit 1`,
+      [data.id],
+    );
+    return rows[0] ? mapProperty(rows[0]) : null;
+  });
+
 export const getPublishedProperty = createServerFn({ method: "GET" })
   .validator(z.object({ slug: z.string().min(1) }))
   .handler(async ({ data }) => {
