@@ -5,6 +5,7 @@ import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { SITE } from "@/lib/site";
 import appCss from "../styles.css?url";
 import themeCss from "../theme-overrides.css?url";
+import professionalThemeCss from "../professional-theme.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -16,7 +17,7 @@ export const Route = createRootRoute({
       },
       { title: SITE.title },
       { name: "description", content: SITE.description },
-      { name: "theme-color", content: "#000000" },
+      { name: "theme-color", content: "#171717" },
       { name: "color-scheme", content: "light" },
       { name: "author", content: SITE.nameFa },
       { name: "referrer", content: "strict-origin-when-cross-origin" },
@@ -32,6 +33,7 @@ export const Route = createRootRoute({
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: themeCss },
+      { rel: "stylesheet", href: professionalThemeCss },
     ],
   }),
   component: RootDocument,
