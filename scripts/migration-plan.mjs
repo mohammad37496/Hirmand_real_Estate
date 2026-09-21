@@ -38,9 +38,14 @@ export function isMigrationFile(path) {
  */
 export function pendingMigrations(paths, applied) {
   const done = new Set(applied);
+  const seen = new Set();
   return [...paths]
     .filter(isMigrationFile)
     .map((path) => ({ name: migrationName(path), path }))
     .sort((a, b) => a.name.localeCompare(b.name))
-    .filter(({ name }) => !done.has(name));
+    .filter(({ name }) => {
+      if (done.has(name) || seen.has(name)) return false;
+      seen.add(name);
+      return true;
+    });
 }
