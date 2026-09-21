@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type TouchEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type TouchEvent } from "react";
 import {
   ArrowRight,
   Bath,
@@ -133,17 +133,20 @@ function Gallery({
   const fallback = "/images/type-apartment.jpg";
   const current = images[active] ?? images[0] ?? "";
 
-  function goTo(next: number) {
-    setActive((next + images.length) % images.length);
-    setZoomScale(1);
-  }
+  const goTo = useCallback(
+    (next: number) => {
+      setActive((next + images.length) % images.length);
+      setZoomScale(1);
+    },
+    [images.length],
+  );
 
-  function closeLightbox() {
+  const closeLightbox = useCallback(() => {
     setLightboxOpen(false);
     setZoomScale(1);
     touchStartX.current = null;
     pinchStartDistance.current = null;
-  }
+  }, []);
 
   useEffect(() => {
     if (!lightboxOpen) return;
@@ -163,7 +166,7 @@ function Gallery({
       window.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
     };
-  }, [lightboxOpen, active]);
+  }, [lightboxOpen, active, goTo, closeLightbox]);
 
   useEffect(() => {
     if (!images.length) return;
@@ -444,25 +447,30 @@ export function PropertyDetailView({
   property: Property | null;
   related: Property[];
 }) {
+  const viewedPropertySlug = property?.slug;
+
   useEffect(() => {
-    if (!property || typeof window === "undefined") return;
+    if (!viewedPropertySlug || typeof window === "undefined") return;
     const recentKey = "hirmand-recent-properties";
     try {
       const raw = localStorage.getItem(recentKey);
       const parsed = raw ? JSON.parse(raw) : [];
       const recent = Array.isArray(parsed)
-        ? parsed.filter((item): item is string => typeof item === "string" && item !== property.slug)
+        ? parsed.filter((item): item is string => typeof item === "string" && item !== viewedPropertySlug)
         : [];
-      localStorage.setItem(recentKey, JSON.stringify([property.slug, ...recent].slice(0, 8)));
+      localStorage.setItem(
+        recentKey,
+        JSON.stringify([viewedPropertySlug, ...recent].slice(0, 8)),
+      );
     } catch {
       // History is a convenience feature; ignore storage failures.
     }
-    const viewKey = `hirmand-viewed:${property.slug}`;
+    const viewKey = `hirmand-viewed:${viewedPropertySlug}`;
     if (!sessionStorage.getItem(viewKey)) {
-      trackAnalyticsEvent("property_view", property.slug);
+      trackAnalyticsEvent("property_view", viewedPropertySlug);
       sessionStorage.setItem(viewKey, "1");
     }
-  }, [property?.slug]);
+  }, [viewedPropertySlug]);
 
   if (!property) {
     return (
