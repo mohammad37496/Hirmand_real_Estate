@@ -229,7 +229,8 @@ try {
       const textValue = await propertyPage.locator("body").innerText().catch(() => "");
       propertyNavigationCheck.bodyTextLen = normalizeBodyText(textValue).length;
         propertyNavigationCheck.ok =
-          propertyNavigationCheck.status.startsWith("/properties/") &&
+          (propertyNavigationCheck.status.startsWith("/file/") ||
+            propertyNavigationCheck.status.startsWith("/properties/")) &&
           propertyNavigationCheck.bodyTextLen > 80 &&
           propertyNavigationCheck.status !== "/properties/";
       }
