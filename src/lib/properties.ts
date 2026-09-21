@@ -853,7 +853,13 @@ export const saveProperty = createServerFn({ method: "POST" })
     const sql = await getSql();
 
     const id = data.id ?? crypto.randomUUID();
-    const slug = `${slugify(data.title)}-${id.slice(0, 8)}`;
+    const existingRows = await sql.query<Record<string, unknown>>(
+      `select ${DETAIL_COLUMNS} from properties where id = $1 limit 1`,
+      [id],
+    );
+    const existing = existingRows[0] ?? null;
+    const existingSlug = typeof existing?.slug === "string" ? existing.slug.trim() : "";
+    const slug = existingSlug || `${slugify(data.title)}-${id.slice(0, 8)}`;
     const price = numericStringOrNull(data.price);
     const deposit = numericStringOrNull(data.deposit);
     const rent = numericStringOrNull(data.rent);
@@ -867,11 +873,6 @@ export const saveProperty = createServerFn({ method: "POST" })
         })()
       : null;
 
-    const existingRows = await sql.query<Record<string, unknown>>(
-      `select ${DETAIL_COLUMNS} from properties where id = $1 limit 1`,
-      [id],
-    );
-    const existing = existingRows[0] ?? null;
     const publishedAt = data.status === "published" ? new Date().toISOString() : null;
 
     await sql.query(

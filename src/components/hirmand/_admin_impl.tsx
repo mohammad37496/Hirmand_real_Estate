@@ -128,7 +128,9 @@ function emptyForm(): FormState {
 }
 
 function toEnglishDigits(raw: string) {
-  return raw.replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)));
+  return raw
+    .replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
+    .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
 }
 function numberOrNull(raw: string, allowNegative = false) {
   const digits = toEnglishDigits(raw).replace(/[^\d-]/g, "");

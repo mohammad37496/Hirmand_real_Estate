@@ -1162,8 +1162,9 @@ export const importDivarFile = createServerFn({ method: "POST" })
         const uploadResult = needsImageRepair
           ? await uploadDivarImages(token, images)
           : { imported: currentImages, failures: [] as { source: string; status?: number; reason: string }[] };
+        const failedSources = uploadResult.failures.map((failure) => failure.source);
         const finalImages = Array.from(
-          new Set([...uploadResult.imported, ...currentImages, ...images]),
+          new Set([...uploadResult.imported, ...currentImages, ...failedSources]),
         ).slice(0, MAX_IMAGES);
 
         await sql.query(
@@ -1203,8 +1204,9 @@ export const importDivarFile = createServerFn({ method: "POST" })
     }
 
     const importedResult = await uploadDivarImages(token, images);
+    const failedSources = importedResult.failures.map((failure) => failure.source);
     const importedImages = Array.from(
-      new Set([...importedResult.imported, ...images]),
+      new Set([...importedResult.imported, ...failedSources]),
     ).slice(0, MAX_IMAGES);
 
     const id = existingPropertyId ? existingPropertyId : crypto.randomUUID();
