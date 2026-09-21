@@ -33,41 +33,106 @@ const TOOLS: { id: ToolId; title: string; text: string; icon: typeof Wallet }[] 
 
 export function FinanceTools() {
   const [tool, setTool] = useState<ToolId>("rahn");
+  const activeTool = TOOLS.find((item) => item.id === tool) ?? TOOLS[0];
+  const ActiveIcon = activeTool.icon;
 
   return (
     <div className="tools-wrap">
-      <div className="tools-switch" role="tablist" aria-label="ابزارهای مالی">
-        {TOOLS.map((item) => {
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              role="tab"
-              aria-selected={tool === item.id}
-              className={cn("tools-switch-btn", tool === item.id && "is-active")}
-              onClick={() => setTool(item.id)}
-            >
-              <span className="icon-box sm">
-                <Icon size={16} strokeWidth={1.8} />
-              </span>
-              <span>
-                <strong>{item.title}</strong>
-                <small>{item.text}</small>
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      <header className="tools-header">
+        <div className="tools-eyebrow">
+          <span className="tools-eyebrow-dot" aria-hidden="true" />
+          ابزارهای مالی هیرمند
+        </div>
+        <div className="tools-heading-row">
+          <div>
+            <h3 className="tools-title">محاسبه‌گرهای کاربردی برای تصمیم‌گیری مالی ملک</h3>
+            <p className="tools-description">
+              مبلغ‌ها را وارد کنید و نتیجه را شفاف ببینید؛ از تبدیل رهن و اجاره تا کمیسیون، سود سپرده و
+              اقساط وام.
+            </p>
+          </div>
+          <div className="tools-header-badge" aria-label="نتایج تقریبی">
+            <Calculator size={16} strokeWidth={1.8} />
+            <span>نتایج تقریبی و راهنما</span>
+          </div>
+        </div>
+      </header>
 
-      {tool === "rahn" ? <RahnRentConverter /> : null}
-      {tool === "commission" ? <CommissionCalculator /> : null}
-      {tool === "deposit" ? <DepositCalculator /> : null}
-      {tool === "loan" ? <LoanCalculator /> : null}
+      <div className="tools-layout">
+        <nav className="tools-switch" role="tablist" aria-label="انتخاب ابزار مالی" aria-orientation="vertical">
+          <div className="tools-switch-heading">
+            <span>انتخاب ابزار</span>
+            <small>یکی از محاسبه‌گرها را انتخاب کنید</small>
+          </div>
+
+          {TOOLS.map((item) => {
+            const Icon = item.icon;
+            const isActive = tool === item.id;
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-controls="finance-tool-panel"
+                className={cn("tools-switch-btn", isActive && "is-active")}
+                onClick={() => setTool(item.id)}
+              >
+                <span className="tools-switch-icon">
+                  <Icon size={19} strokeWidth={1.9} />
+                </span>
+                <span className="tools-switch-copy">
+                  <strong>{item.title}</strong>
+                  <small>{item.text}</small>
+                </span>
+                <span className="tools-switch-arrow" aria-hidden="true">
+                  ←
+                </span>
+              </button>
+            );
+          })}
+
+          <div className="tools-switch-note">
+            <span className="tools-note-icon">
+              <Landmark size={16} strokeWidth={1.8} />
+            </span>
+            <p>
+              اعداد به‌صورت راهنما محاسبه می‌شوند و برای مبلغ نهایی معامله یا قرارداد، شرایط بانک و
+              دفتر باید بررسی شود.
+            </p>
+          </div>
+        </nav>
+
+        <section
+          id="finance-tool-panel"
+          className="tools-panel"
+          role="tabpanel"
+          aria-label={activeTool.title}
+          tabIndex={0}
+        >
+          <div className="tools-panel-head">
+            <div className="tools-panel-icon">
+              <ActiveIcon size={20} strokeWidth={1.9} />
+            </div>
+            <div>
+              <span>محاسبه‌گر فعال</span>
+              <strong>{activeTool.title}</strong>
+            </div>
+            <span className="tools-panel-status">آماده محاسبه</span>
+          </div>
+
+          <div className="tools-panel-body">
+            {tool === "rahn" ? <RahnRentConverter /> : null}
+            {tool === "commission" ? <CommissionCalculator /> : null}
+            {tool === "deposit" ? <DepositCalculator /> : null}
+            {tool === "loan" ? <LoanCalculator /> : null}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
-
 function DepositCalculator() {
   const [preset, setPreset] = useState<(typeof DEPOSIT_PRESETS)[number]["id"]>("y1");
   const [customRate, setCustomRate] = useState("20.5");
