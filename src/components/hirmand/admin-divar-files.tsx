@@ -6,7 +6,6 @@ import {
   Filter,
   Search,
   SlidersHorizontal,
-  ArrowUpDown,
   MapPin,
   Image as ImageIcon,
   Globe2,
