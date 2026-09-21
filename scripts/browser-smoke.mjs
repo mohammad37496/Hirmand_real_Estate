@@ -140,6 +140,72 @@ try {
     };
   }
 
+
+  // Exercise the key public routes as part of the same Chromium session.
+  // This catches client-side navigation regressions that a homepage-only smoke
+  // test cannot see, especially the property-detail route reported by users.
+  const routeChecks = [];
+  const publicRoutes = [
+    new URL("/properties", url).toString(),
+    new URL("/properties/smoke-test", url).toString(),
+  ];
+  for (const routeUrl of publicRoutes) {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    const routeErrors = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error") routeErrors.push(`console: ${msg.text()}`);
+    });
+    page.on("pageerror", (err) => routeErrors.push(`page: ${String(err?.message || err)}`));
+    let routeStatus = 0;
+    let routeBodyTextLen = 0;
+    try {
+      const response = await page.goto(routeUrl, {
+        waitUntil: "domcontentloaded",
+        timeout: timeoutMs,
+      });
+      routeStatus = response?.status() ?? 0;
+      await page.waitForTimeout(500);
+      routeBodyTextLen = normalizeBodyText(await page.locator("body").innerText().catch(() => "")).length;
+    } finally {
+      await page.close();
+    }
+    routeChecks.push({
+      url: routeUrl,
+      status: routeStatus,
+      bodyTextLen: routeBodyTextLen,
+      consoleErrors: routeErrors.filter((item) => item.startsWith("console:")),
+      pageErrors: routeErrors.filter((item) => item.startsWith("page:")),
+      ok: routeStatus >= 200 && routeStatus < 400 && routeBodyTextLen > 0 && routeErrors.length === 0,
+    });
+  }
+
+  const apiPage = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  let musicApiCheck;
+  try {
+    const response = await apiPage.request.get(new URL("/api/music", url).toString(), { timeout: timeoutMs });
+    let payload = null;
+    try { payload = await response.json(); } catch {}
+    musicApiCheck = {
+      status: response.status(),
+      hasTracksArray: Array.isArray(payload?.tracks),
+      ok: response.ok() && Array.isArray(payload?.tracks),
+    };
+  } catch (error) {
+    musicApiCheck = { status: 0, hasTracksArray: false, ok: false, error: String(error?.message || error) };
+  } finally {
+    await apiPage.close();
+  }
+
+  const routeFailures = routeChecks.filter((item) => !item.ok);
+  if (routeFailures.length) {
+    viewports.desktop.pageErrors.push(
+      ...routeFailures.map((item) => `route smoke failed: ${item.url} [${item.status}]`),
+    );
+  }
+  if (!musicApiCheck.ok) {
+    viewports.desktop.pageErrors.push(`music API smoke failed: [${musicApiCheck.status}]`);
+  }
+
   const brandWarnings = computeBrandWarnings({ hasCanvas: viewports.desktop.hasCanvas });
   // Only a dev server answers /__app-env, so smoking the built output reads as
   // indeterminate — report a divergence, never the absence of an observation.
@@ -149,7 +215,7 @@ try {
       buildAuthEnabled: buildAuthEnabled(),
     }),
   );
-  const verdict = { url, viewports, brandWarnings, authWarnings, verdictFile: outJson };
+  const verdict = { url, viewports, routeChecks, musicApiCheck, brandWarnings, authWarnings, verdictFile: outJson };
   if (baselineRequested) {
     const { divergesFromBaseline, reasons } = compareAgainstBaseline(verdict);
     verdict.divergesFromBaseline = divergesFromBaseline;
