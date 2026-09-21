@@ -83,7 +83,6 @@ export interface FileRoutesByFullPath {
   '/tracking': typeof TrackingRoute
   '/admin': typeof AdminRoute
   '/properties/$slug': typeof PropertySlugRoute
-  '/file/$id': typeof PropertyFileRoute
   '/v/$slug/$id': typeof VSlugIdRoute
   '/areas/$slug': typeof AreaSlugRoute
   '/properties': typeof PropertiesRoute
@@ -110,6 +109,7 @@ export interface FileRoutesById {
   '/tracking': typeof TrackingRoute
   '/admin': typeof AdminRoute
   '/properties/$slug': typeof PropertySlugRoute
+  '/file/$id': typeof PropertyFileRoute
   '/v/$slug/$id': typeof VSlugIdRoute
   '/areas/$slug': typeof AreaSlugRoute
   '/properties': typeof PropertiesRoute
@@ -130,6 +130,7 @@ export interface RootRouteChildren {
   TrackingRoute: typeof TrackingRoute
   AdminRoute: typeof AdminRoute
   PropertySlugRoute: typeof PropertySlugRoute
+  PropertyFileRoute: typeof PropertyFileRoute
   VSlugIdRoute: typeof VSlugIdRoute
   AreaSlugRoute: typeof AreaSlugRoute
   PropertiesRoute: typeof PropertiesRoute
@@ -218,6 +219,8 @@ declare module '@tanstack/react-router' {
       parentRoute: typeof rootRouteImport
     }
   }
+}
+
 }
 
 const rootRouteChildren: RootRouteChildren = {
