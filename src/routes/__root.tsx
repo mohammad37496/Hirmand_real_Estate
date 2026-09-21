@@ -4,6 +4,7 @@ import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { SITE } from "@/lib/site";
 import appCss from "../styles.css?url";
+import themeCss from "../theme-overrides.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -15,7 +16,7 @@ export const Route = createRootRoute({
       },
       { title: SITE.title },
       { name: "description", content: SITE.description },
-      { name: "theme-color", content: "#172033" },
+      { name: "theme-color", content: "#0f766e" },
       { name: "color-scheme", content: "light" },
       { name: "author", content: SITE.nameFa },
       { name: "referrer", content: "strict-origin-when-cross-origin" },
@@ -30,6 +31,7 @@ export const Route = createRootRoute({
       { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "stylesheet", href: appCss },
+      { rel: "stylesheet", href: themeCss },
     ],
   }),
   component: RootDocument,
