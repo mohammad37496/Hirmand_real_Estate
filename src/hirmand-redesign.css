@@ -2966,7 +2966,7 @@ body{
   padding:11px 18px calc(11px + env(safe-area-inset-bottom))!important;
   border-radius:20px 20px 0 0!important;
   border:1px solid rgba(247,245,239,.14)!important;
-  border-radius:22px!important;
+  border-radius:20px 20px 0 0!important;
   background:
     radial-gradient(circle at 12% 0%,rgba(200,148,97,.18),transparent 28%),
     linear-gradient(135deg,rgba(16,27,42,.98),rgba(24,35,51,.98))!important;
@@ -3226,7 +3226,7 @@ body{
   border-radius:18px 18px 0 0!important;
   justify-content:center;
   min-height:48px;
-  border-radius:16px!important;
+  border-radius:18px 18px 0 0!important;
   background:rgba(16,27,42,.96)!important;
   color:#f8f5ef!important;
   border-color:rgba(224,187,143,.16)!important;
