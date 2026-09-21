@@ -262,3 +262,200 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}
 }
+
+
+/* Properties marketplace v3 */
+.properties-index-heading{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:24px;
+  padding:clamp(8px,2vw,24px) 0 6px;
+}
+.properties-index-heading p{max-width:760px}
+.properties-loading-pill{
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  min-height:34px;
+  padding:0 12px;
+  border:1px solid var(--hm-line);
+  border-radius:999px;
+  color:var(--hm-ink-soft);
+  background:rgb(23 23 23 / .035);
+  font-size:.74rem;
+  font-weight:800;
+}
+.properties-market-toolbar{
+  border:1px solid var(--hm-line);
+  background:rgb(245 240 231 / .92);
+  box-shadow:var(--hm-shadow-soft);
+}
+.properties-market-search{
+  min-height:54px;
+  background:var(--hm-paper);
+  border-color:var(--hm-line-strong);
+}
+.properties-market-search:focus-within{
+  border-color:var(--hm-ink);
+  box-shadow:0 0 0 4px rgb(23 23 23 / .06);
+}
+.properties-market-search > svg{color:var(--hm-ink)}
+.properties-market-search input{color:var(--hm-ink)}
+.properties-market-search button{background:rgb(23 23 23 / .05);color:var(--hm-ink)}
+.properties-mobile-filter-button{
+  background:var(--hm-ink);
+  border-color:var(--hm-ink);
+  color:var(--hm-paper);
+}
+.properties-mobile-filter-button span{
+  background:var(--hm-paper);
+  color:var(--hm-ink);
+}
+.properties-filter-panel{
+  background:var(--hm-paper);
+  border-color:var(--hm-line);
+  box-shadow:var(--hm-shadow-soft);
+}
+.properties-filter-panel .properties-filter-search{
+  background:var(--hm-paper);
+  border-color:var(--hm-line-strong);
+}
+.properties-filter-chip{
+  background:rgb(23 23 23 / .055);
+  color:var(--hm-ink);
+  border-color:var(--hm-line-strong);
+}
+.properties-filter-chip:hover{background:rgb(23 23 23 / .09);border-color:var(--hm-ink)}
+.properties-filter-chip-clear{color:var(--hm-ink-soft);background:transparent}
+.properties-feature-toggle{
+  background:rgb(23 23 23 / .03);
+  border-color:var(--hm-line);
+  color:var(--hm-ink-soft);
+}
+.properties-feature-toggle:has(input:checked){
+  background:var(--hm-ink);
+  color:var(--hm-paper);
+  border-color:var(--hm-ink);
+}
+.properties-feature-toggle input{accent-color:var(--hm-ink)}
+.properties-result-meta{
+  background:rgb(245 240 231 / .94);
+  border-bottom-color:var(--hm-line);
+}
+.properties-result-meta > span{color:var(--hm-ink-soft)}
+.properties-result-meta > span svg{color:var(--hm-ink)}
+.properties-result-actions a,.properties-reset-btn,.properties-saved-link{color:var(--hm-ink-soft)}
+.properties-result-actions a:hover,.properties-reset-btn:hover,.properties-saved-link:hover{color:var(--hm-ink)}
+.properties-saved-search-select{
+  min-height:36px;
+  border:1px solid var(--hm-line-strong);
+  border-radius:11px;
+  padding:0 10px;
+  background:var(--hm-paper);
+  color:var(--hm-ink);
+  font:inherit;
+  font-size:.74rem;
+}
+.properties-view-switch{
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.properties-view-switch::before{
+  content:"نحوه نمایش";
+  margin-left:auto;
+  color:var(--hm-ink-faint);
+  font-size:.72rem;
+  font-weight:800;
+}
+.properties-view-switch button{
+  border-color:var(--hm-line);
+  background:var(--hm-paper);
+  color:var(--hm-ink-soft);
+}
+.properties-view-switch button:hover{
+  border-color:var(--hm-ink);
+  transform:translateY(-1px);
+}
+.properties-view-switch button.is-active{
+  background:var(--hm-ink);
+  border-color:var(--hm-ink);
+  color:var(--hm-paper);
+}
+.properties-quick-filters{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  overflow-x:auto;
+  padding:2px 0 6px;
+  margin-top:12px;
+  scrollbar-width:none;
+}
+.properties-quick-filters::-webkit-scrollbar{display:none}
+.properties-quick-label{
+  flex:0 0 auto;
+  color:var(--hm-ink-faint);
+  font-size:.72rem;
+  font-weight:800;
+  padding-left:4px;
+}
+.properties-quick-filters button{
+  flex:0 0 auto;
+  min-height:37px;
+  padding:0 13px;
+  border:1px solid var(--hm-line);
+  border-radius:999px;
+  background:var(--hm-paper);
+  color:var(--hm-ink-soft);
+  font:inherit;
+  font-size:.75rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:transform .18s ease,border-color .18s ease,background .18s ease,color .18s ease;
+}
+.properties-quick-filters button:hover{transform:translateY(-1px);border-color:var(--hm-ink);color:var(--hm-ink)}
+.properties-quick-filters button.is-active{background:var(--hm-ink);border-color:var(--hm-ink);color:var(--hm-paper)}
+.property-grid.is-list-view .property-card{
+  border-radius:22px;
+  overflow:hidden;
+}
+.property-grid.is-list-view .property-card-link{
+  border-radius:22px;
+}
+.properties-load-more{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:7px;
+  margin-top:22px;
+}
+.properties-load-more small{
+  color:var(--hm-ink-faint);
+  font-size:.72rem;
+}
+.properties-load-more-sentinel{height:1px}
+.properties-map-panel{
+  background:var(--hm-paper);
+}
+.properties-map-panel iframe{filter:grayscale(1) contrast(.94)}
+.properties-map-list{
+  background:var(--hm-paper);
+  border-color:var(--hm-line);
+}
+.properties-map-list-item{border-bottom-color:var(--hm-line);color:var(--hm-ink)}
+.properties-map-list-item:hover,.properties-map-list-item.is-active{background:rgb(23 23 23 / .045)}
+.properties-map-list-item.is-active{box-shadow:inset -3px 0 0 var(--hm-ink)}
+.properties-map-list-image{background:rgb(23 23 23 / .05);color:var(--hm-ink)}
+.properties-map-list-item span{color:var(--hm-ink-soft)}
+@media(max-width:860px){
+  .properties-index-heading{align-items:flex-start;flex-direction:column;gap:10px}
+  .properties-loading-pill{align-self:flex-start}
+  .properties-quick-filters{margin-right:-2px;margin-left:-2px}
+}
+@media(max-width:600px){
+  .properties-view-switch::before{width:100%;margin:0 0 2px}
+  .properties-quick-label{font-size:.68rem}
+  .properties-quick-filters button{min-height:35px;padding:0 11px;font-size:.7rem}
+}
