@@ -39,12 +39,6 @@ if (runtime.url) {
   console.log("[deploy] Local build: no DATABASE_URL (PGLite fallback OK).");
 }
 
-if (isVercel && !process.env.BLOB_READ_WRITE_TOKEN?.trim()) {
-  console.warn(
-    "[deploy] WARNING: BLOB_READ_WRITE_TOKEN not set — music/media uploads will fail until a Vercel Blob Store is linked to this project.",
-  );
-}
-
 if (isVercel && !process.env.HIRMAND_ADMIN_KEY?.trim()) {
   console.warn(
     "[deploy] WARNING: HIRMAND_ADMIN_KEY not set — /admin will reject keys.",
