@@ -1,7 +1,6 @@
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import { getPublishedProperty } from "@/lib/properties";
 import { propertyHead } from "@/lib/seo";
-import { PropertyDetailView } from "@/components/hirmand/property-detail-view";
 
 export const Route = createFileRoute("/v/$slug/$id")({
   loader: async ({ params }) => {
@@ -26,12 +25,11 @@ export const Route = createFileRoute("/v/$slug/$id")({
       throw notFound();
     }
   },
-  head: ({ loaderData, params }) =>
-    propertyHead(loaderData?.property ?? null, params.slug + "/" + params.id),
-  component: PropertyDetailPage,
+  head: ({ params }) => propertyHead(null, params.slug + "/" + params.id),
+  // This route is a legacy redirect only; its loader always throws redirect/notFound.
+  component: LegacyVPropertyRoutePage,
 });
 
-function PropertyDetailPage() {
-  const data = Route.useLoaderData();
-  return <PropertyDetailView property={data.property} related={[]} />;
+function LegacyVPropertyRoutePage() {
+  return null;
 }
