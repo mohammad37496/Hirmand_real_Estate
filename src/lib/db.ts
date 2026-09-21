@@ -1,4 +1,6 @@
 import { pendingMigrations } from "../../scripts/migration-plan.mjs";
+import { mkdirSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 
 export type DbSource = "neon" | "pglite" | "unconfigured";
 
@@ -108,9 +110,16 @@ function createNeonSql(): Promise<Sql> {
 async function createPgliteSql(): Promise<Sql> {
   globalRef.__pgliteInstance__ ??= (async () => {
     const { PGlite } = await import("@electric-sql/pglite");
+    const configuredDataDir = process.env.PGLITE_DATA_DIR?.trim();
     const dataDir =
-      process.env.PGLITE_DATA_DIR?.trim() ||
-      ".grok/pglite.data";
+      configuredDataDir ||
+      (process.env.CI === "true" || process.env.NODE_ENV === "production"
+        ? "memory://"
+        : ".grok/pglite.data");
+
+    if (!dataDir.startsWith("memory://") && !dataDir.startsWith("idb://")) {
+      mkdirSync(dirname(resolve(process.cwd(), dataDir)), { recursive: true });
+    }
 
     const pg = new PGlite({
       dataDir,
