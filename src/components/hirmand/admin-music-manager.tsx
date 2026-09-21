@@ -5,6 +5,8 @@ import { toast } from "sonner";
 
 type AdminMusicTrack = { id: string; title: string; artist: string; url: string; mimeType: string; sizeBytes: number; active: boolean; position: number; createdAt: string };
 
+const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
+
 function formatSize(bytes: number) {
   return bytes > 0 ? (bytes / 1024 / 1024).toFixed(1) + " MB" : "—";
 }
@@ -98,6 +100,11 @@ export function AdminMusicManager() {
       return;
     }
 
+    if (file.size > MAX_UPLOAD_BYTES) {
+      toast.error("حجم فایل بیشتر از ۱۰۰ مگابایت است.");
+      return;
+    }
+
     const normalized = normalizedAudioFile(file);
     if (!normalized) {
       toast.error("فرمت فایل صوتی پشتیبانی نمی‌شود. MP3، OGG، WAV، M4A یا AAC انتخاب کنید.");
@@ -126,7 +133,7 @@ export function AdminMusicManager() {
           contentType: uploadMimeType,
           sizeBytes: uploadFile.size,
         }),
-        multipart: uploadFile.size >= 5 * 1024 * 1024,
+        multipart: true,
         onUploadProgress: (event) => {
           setUploadProgress(Math.max(0, Math.min(100, event.percentage)));
         },
