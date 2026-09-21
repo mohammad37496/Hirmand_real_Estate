@@ -1,7 +1,6 @@
 import { createFileRoute, redirect, notFound } from "@tanstack/react-router";
 import { getPublishedProperty } from "@/lib/properties";
 import { propertyHead } from "@/lib/seo";
-import { PropertyDetailView } from "@/components/hirmand/property-detail-view";
 
 export const Route = createFileRoute("/properties/$slug")({
   loader: async ({ params }) => {

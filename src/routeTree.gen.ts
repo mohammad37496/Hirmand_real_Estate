@@ -82,9 +82,7 @@ export interface FileRoutesByFullPath {
   '/file/$id': typeof PropertyFileRoute
   '/tracking': typeof TrackingRoute
   '/admin': typeof AdminRoute
-  '/file/$id': typeof PropertyFileRoute
   '/properties/$slug': typeof PropertySlugRoute
-  '/file/$id': typeof PropertyFileRoute
   '/v/$slug/$id': typeof VSlugIdRoute
   '/areas/$slug': typeof AreaSlugRoute
   '/properties': typeof PropertiesRoute
