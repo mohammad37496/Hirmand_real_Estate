@@ -67,10 +67,8 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
 
   return (
     <article className="property-card">
-      <Link
-        to="/properties/$slug"
-        params={{ slug: property.slug }}
-        reloadDocument
+      <a
+        href={propertyPath(property)}
         className="property-card-link"
         aria-label={`مشاهده جزئیات کامل فایل ${property.title}`}
       >
@@ -143,7 +141,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
             </span>
           </div>
         </div>
-      </Link>
+      </a>
 
       <div className="property-card-actions" aria-label="عملیات فایل">
         <PropertyActions property={property} compact />
