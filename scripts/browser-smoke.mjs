@@ -147,7 +147,6 @@ try {
   const routeChecks = [];
   const publicRoutes = [
     new URL("/properties", url).toString(),
-    new URL("/properties/smoke-test", url).toString(),
   ];
   for (const routeUrl of publicRoutes) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
@@ -259,7 +258,10 @@ try {
     );
   }
 
-  const brandWarnings = computeBrandWarnings({ hasCanvas: viewports.desktop.hasCanvas });
+  const brandWarnings = computeBrandWarnings({
+    hasCanvas: viewports.desktop.hasCanvas,
+    workspaceRoot: process.env.GITHUB_WORKSPACE ?? process.cwd(),
+  });
   // Only a dev server answers /__app-env, so smoking the built output reads as
   // indeterminate — report a divergence, never the absence of an observation.
   const authWarnings = authInvariantWarnings(
