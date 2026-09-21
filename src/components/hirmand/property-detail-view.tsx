@@ -83,6 +83,7 @@ function ResilientImage({
   className,
   loading,
   itemProp,
+  fetchPriority,
 }: {
   src: string;
   alt: string;
