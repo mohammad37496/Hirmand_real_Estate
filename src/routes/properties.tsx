@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeftRight, Heart, List, Map, MapPinned, RotateCcw, Search, Share2, SlidersHorizontal, X } from "lucide-react";
 import { toast } from "sonner";
 import { trackAnalyticsEvent } from "@/lib/analytics";
@@ -83,7 +83,9 @@ export const Route = createFileRoute("/properties")({
 });
 
 function toEnglishDigits(raw: string) {
-  return raw.replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)));
+  return raw
+    .replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
+    .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
 }
 
 function parseNumber(raw: string) {
@@ -171,6 +173,8 @@ function PropertiesIndexPage() {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const skipInitialFetch = useRef(false);
   const requestId = useRef(0);
+  const queryCache = useRef(new Map<string, { rows: typeof initial.properties; count: number }>());
+  const loadMoreSentinel = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setSavedSearches(readSavedSearches());
@@ -232,27 +236,48 @@ function PropertiesIndexPage() {
       const currentRequest = ++requestId.current;
       setLoading(true);
       setOffset(0);
+
+      const data = buildFilterData(
+        q,
+        transactionType,
+        propertyType,
+        neighborhood,
+        minArea,
+        maxArea,
+        minPrice,
+        maxPrice,
+        minBedrooms,
+        parkingOnly,
+        elevatorOnly,
+        sort,
+        0,
+      );
+      const cacheKey = new URLSearchParams(
+        Object.entries(data)
+          .filter(([, value]) => value !== undefined)
+          .map(([key, value]) => [key, String(value)]),
+      ).toString();
+
+      const cached = queryCache.current.get(cacheKey);
+      if (cached) {
+        setProperties(cached.rows);
+        setTotal(cached.count);
+        setLoading(false);
+        return;
+      }
+
       try {
-        const data = buildFilterData(
-          q,
-          transactionType,
-          propertyType,
-          neighborhood,
-          minArea,
-          maxArea,
-          minPrice,
-          maxPrice,
-          minBedrooms,
-          parkingOnly,
-          elevatorOnly,
-          sort,
-          0,
-        );
         const [rows, count] = await Promise.all([
           listPublishedPropertyCards({ data }),
           countPublishedProperties({ data }),
         ]);
         if (requestId.current !== currentRequest) return;
+        const result = { rows, count };
+        queryCache.current.set(cacheKey, result);
+        if (queryCache.current.size > 24) {
+          const firstKey = queryCache.current.keys().next().value;
+          if (firstKey) queryCache.current.delete(firstKey);
+        }
         setProperties(rows);
         setTotal(count);
       } catch {
@@ -260,12 +285,12 @@ function PropertiesIndexPage() {
       } finally {
         if (requestId.current === currentRequest) setLoading(false);
       }
-    }, 250);
+    }, 320);
 
     return () => window.clearTimeout(timer);
   }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, parkingOnly, elevatorOnly, sort]);
 
-  async function loadMore() {
+  const loadMore = useCallback(async () => {
     if (loading || loadingMore || properties.length >= total) return;
     const nextOffset = offset + PAGE_SIZE;
     setLoadingMore(true);
@@ -294,7 +319,40 @@ function PropertiesIndexPage() {
     } finally {
       setLoadingMore(false);
     }
-  }
+  }, [
+    loading,
+    loadingMore,
+    properties.length,
+    total,
+    offset,
+    q,
+    transactionType,
+    propertyType,
+    neighborhood,
+    minArea,
+    maxArea,
+    minPrice,
+    maxPrice,
+    minBedrooms,
+    parkingOnly,
+    elevatorOnly,
+    sort,
+  ]);
+
+  useEffect(() => {
+    const sentinel = loadMoreSentinel.current;
+    if (!sentinel || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) void loadMore();
+      },
+      { rootMargin: "420px 0px" },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   function currentFilterParams() {
     const params = new URLSearchParams();
@@ -613,6 +671,30 @@ function PropertiesIndexPage() {
             </label>
           </div>
 
+          <div className="properties-quick-filters" aria-label="فیلترهای سریع">
+            <span className="properties-quick-label">دسترسی سریع</span>
+            {SERVICES.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={transactionType === item.id ? "is-active" : ""}
+                onClick={() => setTransactionType(transactionType === item.id ? "" : item.id as PropertyTransaction)}
+              >
+                {item.title}
+              </button>
+            ))}
+            {PROPERTY_TYPES.slice(0, 4).map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={propertyType === item.id ? "is-active" : ""}
+                onClick={() => setPropertyType(propertyType === item.id ? "" : item.id as PropertyType)}
+              >
+                {item.title}
+              </button>
+            ))}
+          </div>
+
           {filterChips.length ? (
             <div className="properties-active-filters" aria-label="فیلترهای فعال">
               <span className="properties-active-label">فیلترهای فعال:</span>
@@ -738,18 +820,22 @@ function PropertiesIndexPage() {
                 </div>
               )}
               {properties.length < total ? (
-                <div className="properties-load-more">
-                  <button type="button" className="btn-ghost" onClick={() => void loadMore()} disabled={loadingMore}>
-                    {loadingMore ? "در حال بارگذاری…" : `نمایش ${Math.min(PAGE_SIZE, total - properties.length).toLocaleString("fa-IR")} فایل بیشتر`}
-                  </button>
-                </div>
+                <>
+                  <div className="properties-load-more">
+                    <button type="button" className="btn-ghost" onClick={() => void loadMore()} disabled={loadingMore}>
+                      {loadingMore ? "در حال بارگذاری…" : `نمایش ${Math.min(PAGE_SIZE, total - properties.length).toLocaleString("fa-IR")} فایل بیشتر`}
+                    </button>
+                    <small>با اسکرول بیشتر، فایل‌های بعدی نیز خودکار بارگذاری می‌شوند.</small>
+                  </div>
+                  <div ref={loadMoreSentinel} className="properties-load-more-sentinel" aria-hidden="true" />
+                </>
               ) : null}
             </>
           ) : (
             <div className="property-empty">
               <Search size={25} />
               <strong>فایلی با این معیارها پیدا نشد.</strong>
-              <p>بازه قیمت یا متراژ را بازتر کنید یا درخواست اختصاصی ثبت کنید تا مشاوران گزینه مناسب را پیدا کنند.</p>
+              <p>بازه قیمت یا متراژ را بازتر کنید، فیلترهای کمتر دقیق انتخاب کنید یا برای دریافت گزینه‌های متناسب با بودجه، درخواست اختصاصی ثبت کنید.</p>
               <div className="properties-empty-actions">
                 {hasFilters ? <button type="button" className="btn-ghost" onClick={resetFilters}><X size={15} /> پاک‌کردن فیلترها</button> : null}
                 <a href="/#inquiry" className="btn-gold">ثبت درخواست</a>
