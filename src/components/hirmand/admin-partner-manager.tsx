@@ -313,12 +313,12 @@ export function AdminPartnerManager() {
       <!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
       <title>کارت همکاری ${partner.agencyName}</title>
       <style>
-        *{box-sizing:border-box}body{margin:0;padding:28px;background:#071113;color:#f4f7f6;font-family:Tahoma,Arial,sans-serif}
-        .card{width:860px;max-width:100%;margin:auto;padding:28px;border:2px solid #c6a56a;border-radius:28px;background:linear-gradient(145deg,#102326,#071113);page-break-inside:avoid}
-        .top{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}.brand{font-weight:800;font-size:24px}.muted{color:#aab8b7;font-size:13px;line-height:1.8}.code{font:700 16px ui-monospace,monospace;letter-spacing:.08em;color:#e3c991}
-        .qr{width:154px;height:154px;border-radius:18px;background:#fff;padding:8px}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:9px;margin:28px 0 12px}.stamp{aspect-ratio:1;display:grid;place-items:center;border:2px dashed #60706e;border-radius:12px;color:#788b89;font-weight:800}.stamp.filled{border-style:solid;background:#e3c991;color:#0a1b18;border-color:#e3c991}
-        .bottom{display:flex;justify-content:space-between;gap:18px;align-items:end;margin-top:16px}.rule{font-weight:700;color:#e3c991}.url{font:12px ui-monospace,monospace;direction:ltr;word-break:break-all;color:#aab8b7}
-        @media print{body{padding:0;background:#fff}.card{box-shadow:none;color:#111;background:#fff;border-color:#777}.muted,.url{color:#444}.code,.rule{color:#111}.stamp{border-color:#777;color:#555}.stamp.filled{background:#e3c991;color:#111;border-color:#777}}
+        *{box-sizing:border-box}body{margin:0;padding:28px;background:#000;color:#fff;font-family:Tahoma,Arial,sans-serif}
+        .card{width:860px;max-width:100%;margin:auto;padding:28px;border:2px solid #000;border-radius:28px;background:linear-gradient(145deg,#fff,#000);page-break-inside:avoid}
+        .top{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}.brand{font-weight:800;font-size:24px}.muted{color:rgb(255 255 255 / .62);font-size:13px;line-height:1.8}.code{font:700 16px ui-monospace,monospace;letter-spacing:.08em;color:#000}
+        .qr{width:154px;height:154px;border-radius:18px;background:#fff;padding:8px}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:9px;margin:28px 0 12px}.stamp{aspect-ratio:1;display:grid;place-items:center;border:2px dashed rgb(0 0 0 / .62);border-radius:12px;color:rgb(0 0 0 / .62);font-weight:800}.stamp.filled{border-style:solid;background:#000;color:#000;border-color:#000}
+        .bottom{display:flex;justify-content:space-between;gap:18px;align-items:end;margin-top:16px}.rule{font-weight:700;color:#000}.url{font:12px ui-monospace,monospace;direction:ltr;word-break:break-all;color:rgb(255 255 255 / .62)}
+        @media print{body{padding:0;background:#fff}.card{box-shadow:none;color:#000;background:#fff;border-color:rgb(0 0 0 / .52)}.muted,.url{color:rgb(0 0 0 / .68)}.code,.rule{color:#000}.stamp{border-color:rgb(0 0 0 / .52);color:rgb(0 0 0 / .62)}.stamp.filled{background:#000;color:#000;border-color:rgb(0 0 0 / .52)}}
       </style></head><body onload="setTimeout(()=>window.print(),250)">
       <div class="card">
         <div class="top"><div><div class="brand">گروه مشاورین املاک هیرمند</div><div class="muted">باشگاه همکاران · کارت ۱۲ مهر</div><div style="margin-top:18px" class="code">${partner.partnerCode}</div><div class="muted">${partner.agencyName} · ${partner.contactName}</div></div>

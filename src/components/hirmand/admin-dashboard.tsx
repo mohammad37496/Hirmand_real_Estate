@@ -10,6 +10,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { toast } from "sonner";
+import { propertyPath } from "@/lib/property-path";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { mediaSourceCandidates } from "@/lib/media";
+import { propertyPath } from "@/lib/property-path";
 import {
   getDivarStats,
   importDivarFile,
@@ -344,7 +345,7 @@ export function AdminDivarFiles() {
                           {file.importedPropertyId ? (
                             <a
                               className="btn-ghost"
-                              href={file.propertySlug ? `/properties/${file.propertySlug}` : "#"}
+                              href={file.importedPropertyId ? propertyPath({ id: file.importedPropertyId, slug: file.propertySlug ?? "" }) : "#"}
                               target="_blank"
                               rel="noreferrer"
                             >

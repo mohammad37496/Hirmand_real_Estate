@@ -504,4 +504,40 @@ export const ADMIN_CSS = `
   .admin-stats-grid{grid-template-columns:1fr}
   .admin-topbar-actions{display:grid;grid-template-columns:1fr 1fr}
 }
+/* Final monochrome enforcement: this stylesheet is injected after the global theme. */
+.admin-app,.admin-main,.admin-content{background:#fff!important;color:#000!important}
+.admin-sidebar{background:#000!important;color:#fff!important}
+.admin-sidebar-brand,.admin-sidebar-foot{border-color:rgb(255 255 255 / .14)!important}
+.admin-sidebar-brand strong{color:#fff!important}.admin-sidebar-brand small{color:rgb(255 255 255 / .62)!important}
+.admin-sidebar-brand .brand-logo-nav{filter:grayscale(1) brightness(0) invert(1)!important}
+.admin-nav-btn{color:rgb(255 255 255 / .72)!important}.admin-nav-btn:hover{background:rgb(255 255 255 / .08)!important;color:#fff!important}
+.admin-nav-btn.is-active{background:#fff!important;color:#000!important;box-shadow:inset 3px 0 0 #fff!important}
+.admin-topbar,.admin-stat-card,.admin-panel,.admin-section,.admin-login-card,.admin-smart-card,.admin-seo-preview,.admin-price-help,.admin-price-calculator,.admin-lead-budget{background:#fff!important;color:#000!important;border-color:rgb(0 0 0 / .12)!important}
+.admin-topbar,.admin-sticky-bar,.admin-mobile-nav{box-shadow:0 8px 24px rgb(0 0 0 / .06)!important}
+.admin-topbar p,.admin-stat-card span,.admin-property-meta p,.admin-empty,.admin-results-meta,.admin-smart-head p,.admin-seo-preview p,.admin-seo-preview small,.admin-section .field>span,.admin-field label,.admin-checks label{color:rgb(0 0 0 / .62)!important}
+.admin-stat-card strong,.admin-property-meta h3,.admin-panel-head h2,.admin-empty strong,.admin-seo-preview strong,.admin-seo-preview-url,.admin-section legend,.admin-panel-head .kicker,.admin-login-card .kicker{color:#000!important}
+.admin-stat-card:hover,.admin-stat-card.is-active,.admin-property-card:hover,.admin-consultant-card:hover,.admin-consultant-card.is-active{border-color:#000!important}
+.admin-stat-card.is-active,.admin-property-card:hover{background:rgb(0 0 0 / .03)!important}
+.admin-search,.admin-search input,.admin-section .field input,.admin-section .field select,.admin-section .field textarea,.admin-key-row input,.admin-filter-row select{background:#fff!important;color:#000!important;border-color:rgb(0 0 0 / .14)!important}
+.admin-search:focus-within,.admin-section .field input:focus,.admin-section .field select:focus,.admin-section .field textarea:focus,.admin-key-row input:focus,.admin-filter-row select:focus{border-color:#000!important;box-shadow:0 0 0 3px rgb(0 0 0 / .07)!important}
+.admin-icon-btn{background:#fff!important;color:#000!important;border-color:rgb(0 0 0 / .14)!important}
+.admin-icon-btn:hover,.admin-icon-btn.danger:hover{background:#000!important;color:#fff!important;border-color:#000!important}
+.btn-gold{background:#000!important;color:#fff!important;border-color:#000!important;box-shadow:0 10px 24px rgb(0 0 0 / .16)!important}
+.btn-gold:hover{background:#000!important}
+.btn-ghost{background:#fff!important;color:#000!important;border-color:rgb(0 0 0 / .14)!important}
+.btn-ghost:hover{background:rgb(0 0 0 / .045)!important;border-color:#000!important}
+.admin-property-tags span[data-status],.admin-property-tags span[data-featured],.admin-lead-status,.admin-lead-budget-badge{background:rgb(0 0 0 / .06)!important;color:#000!important;border:1px solid rgb(0 0 0 / .12)!important}
+.admin-property-tags span[data-featured]{background:#000!important;color:#fff!important}
+.admin-consultant-card{background:#fff!important;color:#000!important;border-color:rgb(0 0 0 / .12)!important}
+.admin-consultant-card:hover,.admin-consultant-card.is-active{background:#000!important;color:#fff!important;border-color:#000!important}
+.admin-consultant-meta strong,.admin-consultant-meta span{color:inherit!important}
+.admin-consultant-meta small{color:rgb(0 0 0 / .56)!important}.admin-consultant-card:hover .admin-consultant-meta small{color:rgb(255 255 255 / .62)!important}
+.admin-consultant-icon,.admin-consultant-check,.admin-media-remove,.admin-media-primary,.admin-media-move{background:#000!important;color:#fff!important}
+.admin-media-drop{border-color:rgb(0 0 0 / .30)!important;background:rgb(0 0 0 / .02)!important;color:rgb(0 0 0 / .60)!important}
+.admin-media-drop.is-over{border-color:#000!important;background:rgb(0 0 0 / .05)!important}
+.admin-music-progress span,.admin-quality-bar span,.admin-funnel-track span,.admin-breakdown-track span{background:#000!important}
+.admin-lead-budget{border-color:rgb(0 0 0 / .12)!important}.admin-lead-budget>div{background:rgb(0 0 0 / .03)!important}.admin-lead-budget span{color:rgb(0 0 0 / .62)!important}.admin-lead-budget strong{color:#000!important}
+.admin-lead-matches a{background:rgb(0 0 0 / .04)!important;color:#000!important}.admin-lead-matches a:hover{background:#000!important;color:#fff!important}
+.admin-mobile-nav{background:rgb(255 255 255 / .97)!important;border-top-color:rgb(0 0 0 / .12)!important}.admin-mobile-nav button{color:rgb(0 0 0 / .56)!important}.admin-mobile-nav button.is-active{color:#000!important}
+
 `;
