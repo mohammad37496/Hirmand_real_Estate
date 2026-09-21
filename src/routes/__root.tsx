@@ -6,6 +6,7 @@ import { SITE } from "@/lib/site";
 import appCss from "../styles.css?url";
 import themeCss from "../theme-overrides.css?url";
 import professionalThemeCss from "../professional-theme.css?url";
+import brandRefreshCss from "../brand-refresh.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -17,14 +18,14 @@ export const Route = createRootRoute({
       },
       { title: SITE.title },
       { name: "description", content: SITE.description },
-      { name: "theme-color", content: "#111315" },
+      { name: "theme-color", content: "#123f35" },
       { name: "color-scheme", content: "light" },
       { name: "author", content: SITE.nameFa },
       { name: "referrer", content: "strict-origin-when-cross-origin" },
       { name: "format-detection", content: "telephone=yes" },
       { name: "application-name", content: SITE.shortName },
       { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "apple-mobile-web-app-title", content: SITE.shortName },
     ],
     links: [
@@ -34,6 +35,7 @@ export const Route = createRootRoute({
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: themeCss },
       { rel: "stylesheet", href: professionalThemeCss },
+      { rel: "stylesheet", href: brandRefreshCss },
     ],
   }),
   component: RootDocument,
@@ -67,7 +69,6 @@ function RootDocument() {
     </html>
   );
 }
-
 
 function NotFoundPage() {
   return (
