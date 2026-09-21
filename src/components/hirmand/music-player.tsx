@@ -41,6 +41,39 @@ function isAutoplayBlocked(error: unknown) {
   return error instanceof DOMException && error.name === "NotAllowedError";
 }
 
+function waitForMediaReady(audio: HTMLAudioElement, timeoutMs = 12000): Promise<void> {
+  if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const cleanup = () => {
+      window.clearTimeout(timer);
+      audio.removeEventListener("canplay", onReady);
+      audio.removeEventListener("loadeddata", onLoadedData);
+      audio.removeEventListener("error", onError);
+    };
+    const finish = (callback: () => void) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      callback();
+    };
+    const onReady = () => finish(resolve);
+    const onLoadedData = () => {
+      if (audio.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) finish(resolve);
+    };
+    const onError = () => finish(() => reject(new Error("media-load-failed")));
+    const timer = window.setTimeout(
+      () => finish(() => reject(new Error("media-load-timeout"))),
+      timeoutMs,
+    );
+
+    audio.addEventListener("canplay", onReady);
+    audio.addEventListener("loadeddata", onLoadedData);
+    audio.addEventListener("error", onError);
+  });
+}
+
 export function MusicPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const resumeAfterLoadRef = useRef(false);
@@ -131,13 +164,13 @@ export function MusicPlayer() {
     const candidates = Array.from(
       new Set(
         [
-          // Prefer the same-origin stream endpoint. It handles legacy Blob URLs
-          // and keeps the browser-facing source stable across storage changes.
+          // Public Vercel Blob is the primary source so the browser can handle
+          // byte-range requests without a serverless proxy in the loop.
+          currentTrack.src,
           currentTrack.stream,
           currentTrack.id
             ? `/api/music/file/${encodeURIComponent(currentTrack.id)}`
             : "",
-          currentTrack.src,
         ].filter((value): value is string => Boolean(value)),
       ),
     );
@@ -165,9 +198,9 @@ export function MusicPlayer() {
           playRequestedRef.current = false;
           setIsPlaying(true);
         })
-        .catch((error) => {
+        .catch(async (error) => {
           if (switchToFallbackSource()) {
-            void audio.play().then(
+            void waitForMediaReady(audio).then(() => audio.play()).then(
               () => {
                 playRequestedRef.current = false;
                 setIsPlaying(true);
@@ -258,6 +291,7 @@ export function MusicPlayer() {
     } catch (error) {
       if (switchToFallbackSource()) {
         try {
+          await waitForMediaReady(audio);
           await audio.play();
           playRequestedRef.current = false;
           setIsPlaying(true);
@@ -362,7 +396,7 @@ export function MusicPlayer() {
           if (playRequestedRef.current && switchToFallbackSource()) {
             const fallback = audioRef.current;
             if (fallback) {
-              void fallback.play().catch((error) => {
+              void waitForMediaReady(fallback).then(() => fallback.play()).catch((error) => {
                 playRequestedRef.current = false;
                 setIsPlaying(false);
                 if (isAutoplayBlocked(error)) setAutoplayBlocked(true);
