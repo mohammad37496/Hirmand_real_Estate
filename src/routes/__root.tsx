@@ -6,6 +6,7 @@ import { SITE } from "@/lib/site";
 import appCss from "../styles.css?url";
 import themeCss from "../theme-overrides.css?url";
 import professionalThemeCss from "../professional-theme.css?url";
+import finalVisualPolishCss from "../final-visual-polish.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -34,6 +35,7 @@ export const Route = createRootRoute({
       { rel: "stylesheet", href: appCss },
       { rel: "stylesheet", href: themeCss },
       { rel: "stylesheet", href: professionalThemeCss },
+      { rel: "stylesheet", href: finalVisualPolishCss },
     ],
   }),
   component: RootDocument,
