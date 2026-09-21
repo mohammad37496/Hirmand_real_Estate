@@ -45,6 +45,15 @@ function normalizeBlobUrl(raw: string): string {
   }
 }
 
+function isPublicBlobUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname.endsWith(".public.blob.vercel-storage.com");
+  } catch {
+    return false;
+  }
+}
+
 function getConfiguredBlobStoreId(): string | null {
   const raw = process.env.BLOB_STORE_ID?.trim();
   if (!raw) return null;
@@ -93,15 +102,19 @@ export default defineEventHandler(async (event) => {
     if (artist.length > 120) {
       throw createError({ statusCode: 400, statusMessage: "نام هنرمند نامعتبر است." });
     }
-    if (!/^https:\/\//i.test(url) || !ALLOWED_MUSIC_TYPES.has(mimeType) || sizeBytes <= 0 || sizeBytes > 100 * 1024 * 1024) {
-      throw createError({ statusCode: 400, statusMessage: "اطلاعات فایل صوتی نامعتبر است." });
+    const normalizedUrl = normalizeBlobUrl(url);
+    if (!isPublicBlobUrl(normalizedUrl) || !ALLOWED_MUSIC_TYPES.has(mimeType) || sizeBytes <= 0 || sizeBytes > 100 * 1024 * 1024) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: "فایل باید روی فضای عمومی Vercel Blob قرار گرفته باشد تا در مرورگر قابل پخش باشد.",
+      });
     }
 
     const rows = await sql.query<Record<string, unknown>>(
       `insert into music_tracks (id, title, artist, url, mime_type, size_bytes, active, position)
        values ($1, $2, $3, $4, $5, $6, true, coalesce((select max(position) + 1 from music_tracks), 0))
        returning id, title, artist, url, mime_type, size_bytes, active, position, created_at`,
-      [crypto.randomUUID(), title, artist, url, mimeType, sizeBytes],
+      [crypto.randomUUID(), title, artist, normalizedUrl, mimeType, sizeBytes],
     );
     const row = rows[0];
     return {

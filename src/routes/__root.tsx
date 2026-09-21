@@ -7,6 +7,7 @@ import appCss from "../styles.css?url";
 import themeCss from "../theme-overrides.css?url";
 import professionalThemeCss from "../professional-theme.css?url";
 import finalVisualPolishCss from "../final-visual-polish.css?url";
+import hirmandRedesignCss from "../hirmand-redesign.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -18,7 +19,7 @@ export const Route = createRootRoute({
       },
       { title: SITE.title },
       { name: "description", content: SITE.description },
-      { name: "theme-color", content: "#111315" },
+      { name: "theme-color", content: "#102033" },
       { name: "color-scheme", content: "light" },
       { name: "author", content: SITE.nameFa },
       { name: "referrer", content: "strict-origin-when-cross-origin" },
@@ -36,6 +37,7 @@ export const Route = createRootRoute({
       { rel: "stylesheet", href: themeCss },
       { rel: "stylesheet", href: professionalThemeCss },
       { rel: "stylesheet", href: finalVisualPolishCss },
+      { rel: "stylesheet", href: hirmandRedesignCss },
     ],
   }),
   component: RootDocument,

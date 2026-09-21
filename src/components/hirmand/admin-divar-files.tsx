@@ -159,8 +159,10 @@ export function AdminDivarFiles() {
     }
   }
 
-  async function importFile(file: DivarFile) {
-    if (imported.some((item) => item.id === file.id)) {
+  async function importFile(file: DivarFile, options: { repair?: boolean } = {}) {
+    // Imported files can be re-processed intentionally so failed Divar images
+    // can be downloaded again. The old guard made the "تکمیل تصاویر" button inert.
+    if (!options.repair && imported.some((item) => item.id === file.id)) {
       toast.info("این فایل قبلاً وارد سایت شده است.");
       return;
     }
@@ -337,10 +339,10 @@ export function AdminDivarFiles() {
                             type="button"
                             className="btn-gold"
                             disabled={importing}
-                            onClick={() => void importFile(file)}
+                            onClick={() => void importFile(file, { repair: true })}
                           >
                             {importing ? <Loader2 size={15} className="admin-spin" /> : <UploadCloud size={15} />}
-                            {importing ? "در حال تکمیل…" : "تکمیل تصاویر / انتشار"}
+                            {importing ? "در حال تکمیل تصاویر…" : "تکمیل تصاویر / انتشار"}
                           </button>
                           {file.importedPropertyId ? (
                             <a
