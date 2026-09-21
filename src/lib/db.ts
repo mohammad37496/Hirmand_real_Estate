@@ -33,7 +33,7 @@ const isVercelRuntime =
 
 export const dbSource: DbSource = databaseUrl
   ? "neon"
-  : isVercelRuntime
+  : isVercelRuntime || process.env.CI === "true"
     ? "unconfigured"
     : "pglite";
 
