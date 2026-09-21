@@ -216,21 +216,24 @@ try {
     const propertiesUrl = new URL("/properties", url).toString();
     await propertyPage.goto(propertiesUrl, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await propertyPage.waitForTimeout(500);
-    const link = propertyPage.locator('[data-property-link="true"]').first();
-    const href = await link.getAttribute("href").catch(() => null);
-    propertyNavigationCheck.href = href;
-    if (href) {
-      propertyNavigationCheck.attempted = true;
-      await link.click();
+    const cards = propertyPage.locator('[data-property-link="true"]');
+    if (await cards.count()) {
+      const link = cards.first();
+      const href = await link.getAttribute("href").catch(() => null);
+      propertyNavigationCheck.href = href;
+      if (href) {
+        propertyNavigationCheck.attempted = true;
+        await link.click();
       await propertyPage.waitForLoadState("domcontentloaded").catch(() => undefined);
       await propertyPage.waitForTimeout(500);
       propertyNavigationCheck.status = await propertyPage.evaluate(() => window.location.pathname);
       const textValue = await propertyPage.locator("body").innerText().catch(() => "");
       propertyNavigationCheck.bodyTextLen = normalizeBodyText(textValue).length;
-      propertyNavigationCheck.ok =
-        propertyNavigationCheck.status.startsWith("/properties/") &&
-        propertyNavigationCheck.bodyTextLen > 80 &&
-        propertyNavigationCheck.status !== "/properties/";
+        propertyNavigationCheck.ok =
+          propertyNavigationCheck.status.startsWith("/properties/") &&
+          propertyNavigationCheck.bodyTextLen > 80 &&
+          propertyNavigationCheck.status !== "/properties/";
+      }
     }
   } catch (error) {
     propertyNavigationCheck.error = String(error?.message || error);
@@ -252,7 +255,7 @@ try {
     viewports.desktop.pageErrors.push(
       propertyNavigationCheck.attempted
         ? `property detail navigation smoke failed: ${propertyNavigationCheck.status || propertyNavigationCheck.error || "unknown"}`
-        : "property detail navigation smoke could not find a published property card",
+        : "property detail navigation smoke skipped: no published property card is available in this environment",
     );
   }
 
