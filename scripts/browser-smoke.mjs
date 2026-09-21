@@ -122,6 +122,16 @@ try {
       return el.scrollWidth > el.clientWidth + 1;
     });
     await page.screenshot({ path: vp.screenshot, fullPage: false });
+
+    // Isolate the finance tools section for a focused visual regression check.
+    const financeTools = page.locator(".tools-wrap").first();
+    if (await financeTools.count()) {
+      await financeTools.scrollIntoViewIfNeeded().catch(() => undefined);
+      await page.waitForTimeout(250);
+      const financePath = vp.screenshot.replace(/\.png$/i, "-finance.png");
+      await page.screenshot({ path: financePath, fullPage: false });
+    }
+
     await page.close();
 
     viewports[vp.name] = {
