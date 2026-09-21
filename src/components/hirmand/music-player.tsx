@@ -12,6 +12,7 @@ import {
   SkipForward,
   Volume2,
   VolumeX,
+  X,
 } from "lucide-react";
 
 type MusicTrack = {
@@ -59,6 +60,7 @@ export function MusicPlayer() {
   const [duration, setDuration] = useState(0);
   const [shuffle, setShuffle] = useState(false);
   const [repeat, setRepeat] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
@@ -107,6 +109,7 @@ export function MusicPlayer() {
           shuffle: boolean;
           repeat: boolean;
           expanded: boolean;
+          hidden: boolean;
         }>;
         if (Number.isInteger(saved.index)) setIndex(Math.max(0, saved.index ?? 0));
         if (typeof saved.volume === "number") setVolume(Math.min(1, Math.max(0, saved.volume)));
@@ -114,6 +117,7 @@ export function MusicPlayer() {
         if (typeof saved.shuffle === "boolean") setShuffle(saved.shuffle);
         if (typeof saved.repeat === "boolean") setRepeat(saved.repeat);
         if (typeof saved.expanded === "boolean") setIsExpanded(saved.expanded);
+        if (typeof saved.hidden === "boolean") setIsHidden(saved.hidden);
       }
     } catch {
       // Ignore malformed local state.
@@ -214,12 +218,13 @@ export function MusicPlayer() {
           shuffle,
           repeat,
           expanded: isExpanded,
+          hidden: isHidden,
         }),
       );
     } catch {
       // Storage can be unavailable in private browsing contexts.
     }
-  }, [index, isExpanded, isMuted, repeat, shuffle, volume]);
+  }, [index, isExpanded, isHidden, isMuted, repeat, shuffle, volume]);
 
   function switchToFallbackSource() {
     const audio = audioRef.current;
@@ -376,7 +381,18 @@ export function MusicPlayer() {
         }}
       />
 
-      <section className={`music-player ${isExpanded ? "is-expanded" : ""}`} aria-label="پخش‌کننده موسیقی هیرمند">
+      <button
+        type="button"
+        className={isHidden ? "music-player-launcher is-visible" : "music-player-launcher"}
+        onClick={() => setIsHidden(false)}
+        aria-label="نمایش پخش‌کننده موسیقی"
+        title="نمایش پخش‌کننده"
+      >
+        {isPlaying ? <Pause size={19} /> : <Music2 size={19} />}
+        <span>{currentTrack.title}</span>
+      </button>
+
+      <section className={`music-player ${isExpanded ? "is-expanded" : ""} ${isHidden ? "is-hidden" : ""}`} aria-label="پخش‌کننده موسیقی هیرمند">
         <div className="music-player-main">
           <button
             type="button"
@@ -414,12 +430,15 @@ export function MusicPlayer() {
             </button>
           </div>
 
-          <div className="music-compact-actions">
+          <div className="music-compact-actions" aria-label="اقدامات پخش‌کننده">
             <button type="button" onClick={() => setIsListOpen((value) => !value)} aria-expanded={isListOpen} aria-label="فهرست موسیقی" title="فهرست">
               <ListMusic size={17} />
             </button>
             <button type="button" onClick={() => setIsExpanded((value) => !value)} aria-expanded={isExpanded} aria-label="تنظیمات پخش" title="تنظیمات">
               {isExpanded ? <ChevronDown size={17} /> : <ChevronUp size={17} />}
+            </button>
+            <button type="button" onClick={() => setIsHidden(true)} aria-label="مخفی کردن پخش‌کننده" title="مخفی کردن">
+              <X size={17} />
             </button>
           </div>
         </div>
