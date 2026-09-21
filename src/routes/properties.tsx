@@ -330,7 +330,7 @@ function PropertiesIndexPage() {
     } catch {
       // Keep current page visible.
     } finally {
-      if (requestId.current === queryVersion) setLoadingMore(false);
+      setLoadingMore(false);
     }
   }, [
     loading,
