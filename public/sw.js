@@ -1,4 +1,4 @@
-const CACHE_NAME = "hirmand-shell-v2";
+const CACHE_NAME = "hirmand-shell-v3";
 const APP_SHELL = ["/", "/properties", "/favorites"];
 
 self.addEventListener("install", (event) => {
@@ -29,7 +29,7 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/admin")) return;
+  if (url.pathname === "/sw.js" || url.pathname.startsWith("/api/") || url.pathname.startsWith("/admin")) return;
 
   if (request.mode === "navigate") {
     event.respondWith(
@@ -44,7 +44,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.pathname.startsWith("/images/") || url.pathname.endsWith(".css") || url.pathname.endsWith(".js")) {
+  // Never cache CSS/JS here. Vite already fingerprints production assets and
+  // keeping them in a service-worker cache can make visual changes look like
+  // a failed deployment on devices that keep an old PWA cache.
+  if (url.pathname.startsWith("/images/")) {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
