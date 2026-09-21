@@ -42,20 +42,9 @@ jobs:
           set -euo pipefail
           sudo mkdir -p /workspace
           sudo chown "$USER":"$USER" /workspace
-          nohup npm run preview > /tmp/hirmand-preview.log 2>&1 &
-          echo $! > /tmp/hirmand-preview.pid
 
-          for attempt in {1..45}; do
-            if curl --silent --fail http://127.0.0.1:8081/ >/dev/null; then
-              break
-            fi
-            if [ "$attempt" -eq 45 ]; then
-              echo "::error::Vite preview did not become ready on port 8081."
-              cat /tmp/hirmand-preview.log || true
-              exit 1
-            fi
-            sleep 1
-          done
+          npm run preview:restart
+          trap 'npm run preview:stop >/dev/null 2>&1 || true' EXIT
 
           npx playwright install --with-deps chromium
           node scripts/browser-smoke.mjs http://127.0.0.1:8081/ /workspace/screenshots/hirmand-preview.png
