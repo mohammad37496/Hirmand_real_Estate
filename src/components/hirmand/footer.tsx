@@ -34,7 +34,7 @@ export function Footer() {
             aria-label={label}
             title={label}
           >
-            <Icon size={18} />
+            <Icon size={22} />
           </a>
         ))}
       </div>
