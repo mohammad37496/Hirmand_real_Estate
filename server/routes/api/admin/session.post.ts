@@ -13,6 +13,7 @@ import {
   isAdminKeyValid,
   verifyAdminSessionToken,
 } from "@/lib/admin-session.server";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 type Body = {
   action?: "login" | "logout";
@@ -34,6 +35,8 @@ export default defineEventHandler(async (event) => {
     });
     return { success: true };
   }
+
+  enforceRateLimit(event, "admin-login", 8, 60_000);
 
   const existing = await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE));
   if (existing) return { success: true, authenticated: true };
