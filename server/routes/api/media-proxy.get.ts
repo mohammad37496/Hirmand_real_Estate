@@ -63,19 +63,52 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  let response: Response;
+  const requestHeaders = {
+    accept: "image/avif,image/webp,image/png,image/jpeg,image/*,*/*;q=0.8",
+    "accept-language": "fa-IR,fa;q=0.9,en;q=0.7",
+    "user-agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/153.0.0.0 Safari/537.36",
+  };
+  let currentUrl = target;
+  let response: Response | null = null;
+
   try {
-    response = await fetch(target.toString(), {
-      redirect: "follow",
-      headers: {
-        accept: "image/avif,image/webp,image/png,image/jpeg,image/*,*/*;q=0.8",
-        "accept-language": "fa-IR,fa;q=0.9,en;q=0.7",
-        "user-agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/153.0.0.0 Safari/537.36",
-      },
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
-  } catch {
+    for (let redirectCount = 0; redirectCount <= 3; redirectCount += 1) {
+      response = await fetch(currentUrl.toString(), {
+        redirect: "manual",
+        headers: requestHeaders,
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+
+      if (response.status < 300 || response.status >= 400) break;
+
+      const location = response.headers.get("location");
+      if (!location) {
+        throw createError({
+          statusCode: 502,
+          statusMessage: "منبع تصویر ریدایرکت نامعتبر برگرداند.",
+        });
+      }
+
+      const nextUrl = new URL(location, currentUrl);
+      if (nextUrl.protocol !== "https:" || !isAllowedHost(nextUrl.hostname)) {
+        throw createError({
+          statusCode: 502,
+          statusMessage: "ریدایرکت تصویر به منبع غیرمجاز مسدود شد.",
+        });
+      }
+
+      currentUrl = nextUrl;
+    }
+
+    if (!response || (response.status >= 300 && response.status < 400)) {
+      throw createError({
+        statusCode: 502,
+        statusMessage: "تعداد ریدایرکت‌های تصویر بیش از حد مجاز است.",
+      });
+    }
+  } catch (error) {
+    if (error && typeof error === "object" && "statusCode" in error) throw error;
     throw createError({ statusCode: 502, statusMessage: "دریافت تصویر از منبع ممکن نشد." });
   }
 
