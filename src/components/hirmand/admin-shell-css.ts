@@ -545,4 +545,125 @@ export const ADMIN_CSS = `
 .admin-lead-matches a{background:rgb(0 0 0 / .04)!important;color:#111315!important}.admin-lead-matches a:hover{background:#111315!important;color:#f7f5ef!important}
 .admin-mobile-nav{background:rgb(255 255 255 / .97)!important;border-top-color:rgb(0 0 0 / .12)!important}.admin-mobile-nav button{color:rgb(0 0 0 / .56)!important}.admin-mobile-nav button.is-active{color:#111315!important}
 
+
+
+/* ==========================================================================
+   Final readability pass — desktop + admin
+   High-contrast, light workspace for the admin content area.
+   This block intentionally sits last because several child admin modules
+   inject their own small style tags.
+   ========================================================================== */
+.admin-main,
+.admin-content{background:#f6f8fb!important;color:#172033!important}
+.admin-topbar{background:rgba(255,255,255,.96)!important;color:#172033!important;border-bottom:1px solid #d8e0e8!important}
+.admin-topbar h1,.admin-topbar strong,.admin-panel-head h2,.admin-section legend{color:#101828!important}
+.admin-topbar p{color:#475467!important}
+.admin-stat-card,.admin-panel,.admin-section,.admin-smart-card,.admin-seo-preview,
+.admin-music-manager,.admin-lead-manager,.admin-dashboard,.divar-wrap,
+[class*="admin-partner"]{
+  background:#ffffff!important;
+  color:#172033!important;
+  border-color:#d9e1ea!important;
+  box-shadow:0 10px 30px rgba(16,24,40,.06)!important;
+}
+.admin-stat-card span,.admin-property-meta p,.admin-empty,.admin-results-meta,
+.admin-smart-head p,.admin-seo-preview p,.admin-seo-preview small,
+.admin-section .field>span,.admin-field label,.admin-checks label,
+.admin-panel-head p,.admin-panel-head small{
+  color:#475467!important;
+}
+.admin-stat-card strong,.admin-property-meta h3,.admin-empty strong,
+.admin-seo-preview strong,.admin-seo-preview-url,.admin-panel-head .kicker{
+  color:#101828!important;
+}
+.admin-panel-head,.admin-property-card,.admin-breakdown-row,.admin-dashboard-card,
+.admin-lead-card,.admin-music-track,.admin-music-row{
+  border-color:#e1e7ee!important;
+}
+.admin-search,.admin-search input,
+.admin-section .field input,.admin-section .field select,.admin-section .field textarea,
+.admin-key-row input,.admin-filter-row select,
+.admin-main input,.admin-main select,.admin-main textarea{
+  background:#ffffff!important;
+  color:#101828!important;
+  border:1px solid #cbd5e1!important;
+  box-shadow:none!important;
+}
+.admin-main input::placeholder,.admin-main textarea::placeholder{color:#667085!important}
+.admin-section .field input:focus,.admin-section .field select:focus,
+.admin-section .field textarea:focus,.admin-key-row input:focus,
+.admin-filter-row select:focus,.admin-main input:focus,.admin-main select:focus,
+.admin-main textarea:focus,.admin-search:focus-within{
+  border-color:#9a6a3a!important;
+  box-shadow:0 0 0 3px rgba(154,106,58,.14)!important;
+}
+.admin-section .field>span,.admin-field label{font-weight:700!important;color:#344054!important}
+.admin-main .admin-dashboard *,
+.admin-main .admin-music-manager *,
+.admin-main .admin-lead-manager *,
+.admin-main .divar-wrap *,
+.admin-main [class*="admin-partner"] *,
+.admin-main .admin-section *,
+.admin-main .admin-panel *{
+  color:#172033;
+}
+.admin-main .admin-dashboard h1,.admin-main .admin-dashboard h2,.admin-main .admin-dashboard h3,
+.admin-main .admin-music-manager h1,.admin-main .admin-music-manager h2,.admin-main .admin-music-manager h3,
+.admin-main .admin-lead-manager h1,.admin-main .admin-lead-manager h2,.admin-main .admin-lead-manager h3,
+.admin-main .divar-wrap h1,.admin-main .divar-wrap h2,.admin-main .divar-wrap h3,
+.admin-main [class*="admin-partner"] h1,.admin-main [class*="admin-partner"] h2,.admin-main [class*="admin-partner"] h3{
+  color:#101828!important;
+}
+.admin-main .admin-dashboard p,.admin-main .admin-dashboard small,
+.admin-main .admin-music-manager p,.admin-main .admin-music-manager small,
+.admin-main .admin-lead-manager p,.admin-main .admin-lead-manager small,
+.admin-main .divar-wrap p,.admin-main .divar-wrap small,
+.admin-main [class*="admin-partner"] p,.admin-main [class*="admin-partner"] small{
+  color:#475467!important;
+}
+.admin-main .btn-gold,
+.admin-main .admin-mobile-site,
+.admin-main .admin-icon-btn:hover,
+.admin-main .admin-icon-btn.danger:hover,
+.admin-main .admin-media-remove,
+.admin-main .admin-media-primary,
+.admin-main .admin-media-move,
+.admin-main .admin-consultant-card:hover,
+.admin-main .admin-consultant-card.is-active,
+.admin-main .admin-property-tags span[data-featured]{
+  color:#ffffff!important;
+}
+.admin-main .btn-gold{background:#101828!important;border-color:#101828!important}
+.admin-main .btn-ghost{background:#ffffff!important;color:#101828!important;border-color:#cbd5e1!important}
+.admin-main .btn-ghost:hover{background:#f2f4f7!important;border-color:#98a2b3!important}
+.admin-property-tags span[data-status],
+.admin-property-tags span[data-featured],
+.admin-lead-status,.admin-lead-budget-badge{
+  background:#f2f4f7!important;
+  color:#344054!important;
+  border:1px solid #d0d5dd!important;
+}
+.admin-property-tags span[data-status="published"]{background:#ecfdf3!important;color:#027a48!important;border-color:#abefc6!important}
+.admin-property-tags span[data-status="draft"]{background:#fffaeb!important;color:#b54708!important;border-color:#fedf89!important}
+.admin-property-tags span[data-status="archived"]{background:#f2f4f7!important;color:#475467!important}
+.admin-property-tags span[data-featured]{background:#101828!important;color:#ffffff!important;border-color:#101828!important}
+.admin-lead-status.status-follow_up,.admin-lead-status.status-visited,
+.admin-lead-status.status-contract{background:#eef4ff!important;color:#175cd3!important;border-color:#b2ccff!important}
+.admin-music-progress,.admin-quality-bar,.admin-funnel-track,.admin-breakdown-track{
+  background:#e7ecf2!important;
+}
+.admin-music-progress span,.admin-quality-bar span,.admin-funnel-track span,.admin-breakdown-track span{
+  background:#9a6a3a!important;
+}
+.admin-mobile-nav{
+  background:rgba(255,255,255,.98)!important;
+  border-top:1px solid #d0d5dd!important;
+}
+.admin-mobile-nav button{color:#475467!important}
+.admin-mobile-nav button.is-active{color:#101828!important;font-weight:800!important}
+@media (min-width:961px){
+  .admin-content{padding:30px 32px!important}
+  .admin-stats-grid{gap:16px!important}
+  .admin-stat-card{min-height:112px!important}
+}
 `;
