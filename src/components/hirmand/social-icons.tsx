@@ -12,7 +12,7 @@ const svgProps = (size: number, className?: string) => ({
   "aria-hidden": true as const,
 });
 
-export function InstagramIcon({ size = 22, className }: IconProps) {
+export function InstagramIcon({ size = 24, className }: IconProps) {
   return (
     <svg {...svgProps(size, className)}>
       <rect x="3.2" y="3.2" width="17.6" height="17.6" rx="5.2" stroke="currentColor" strokeWidth="1.7" />
@@ -22,7 +22,7 @@ export function InstagramIcon({ size = 22, className }: IconProps) {
   );
 }
 
-export function TelegramIcon({ size = 22, className }: IconProps) {
+export function TelegramIcon({ size = 24, className }: IconProps) {
   return (
     <svg {...svgProps(size, className)}>
       <path
@@ -36,7 +36,7 @@ export function TelegramIcon({ size = 22, className }: IconProps) {
   );
 }
 
-export function WhatsAppIcon({ size = 22, className }: IconProps) {
+export function WhatsAppIcon({ size = 24, className }: IconProps) {
   return (
     <svg {...svgProps(size, className)}>
       <path
@@ -52,7 +52,7 @@ export function WhatsAppIcon({ size = 22, className }: IconProps) {
   );
 }
 
-export function EitaaIcon({ size = 22, className }: IconProps) {
+export function EitaaIcon({ size = 24, className }: IconProps) {
   return (
     <svg {...svgProps(size, className)} viewBox="0 0 24 24">
       <path

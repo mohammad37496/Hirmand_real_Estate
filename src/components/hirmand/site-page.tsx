@@ -350,7 +350,7 @@ function TeamMessenger({ personId }: { personId: (typeof TEAM)[number]["id"] }) 
   ];
 
   return (
-    <div className="team-socials">
+    <div className="team-socials" role="group" aria-label={`شبکه‌های اجتماعی ${person.name}`}>
       {items.map((item) => (
         <a
           key={item.label}
@@ -362,7 +362,6 @@ function TeamMessenger({ personId }: { personId: (typeof TEAM)[number]["id"] }) 
           title={item.label}
         >
           {item.icon}
-          <span>{item.label}</span>
         </a>
       ))}
     </div>
@@ -674,7 +673,7 @@ function Contact() {
           <CopyButton value={SITE.phone.office} label="کپی تلفن دفتر" />
         </div>
       </div>
-      <div className="social-row">
+      <div className="social-row" aria-label="شبکه‌های اجتماعی هیرمند">
         {socials.map((social) => (
           <a
             key={social.title}
@@ -682,12 +681,10 @@ function Contact() {
             href={social.href}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label={`${social.title} — ${social.text}`}
+            title={`${social.title} — ${social.text}`}
           >
             <span className="social-badge">{social.icon}</span>
-            <span>
-              <strong>{social.title}</strong>
-              <small>{social.text}</small>
-            </span>
           </a>
         ))}
       </div>

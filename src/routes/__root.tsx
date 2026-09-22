@@ -8,6 +8,7 @@ import propertiesProCss from "../properties-pro.css?url";
 import themeProCss from "../theme-pro.css?url";
 import themeProPagesCss from "../theme-pro-pages.css?url";
 import mobileCss from "../mobile.css?url";
+import refinementsCss from "../refinements.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -38,6 +39,7 @@ export const Route = createRootRoute({
       { rel: "stylesheet", href: themeProCss },
       { rel: "stylesheet", href: themeProPagesCss },
       { rel: "stylesheet", href: mobileCss },
+      { rel: "stylesheet", href: refinementsCss },
     ],
   }),
   component: RootDocument,
