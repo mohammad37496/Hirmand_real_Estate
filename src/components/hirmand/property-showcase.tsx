@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import {
@@ -152,9 +152,27 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
   );
 }
 
-export function PropertyShowcase({ initialProperties }: { initialProperties: PropertyCardData[] }) {
-  const [properties, setProperties] = useState(initialProperties); const [transactionType, setTransactionType] = useState(""); const [propertyType, setPropertyType] = useState(""); const [neighborhood, setNeighborhood] = useState(""); const [loading, setLoading] = useState(false);
+export function PropertyShowcase({ initialProperties = [] }: { initialProperties?: PropertyCardData[] }) {
+  const [properties, setProperties] = useState(initialProperties);
+  const [transactionType, setTransactionType] = useState("");
+  const [propertyType, setPropertyType] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
+  const [loading, setLoading] = useState(false);
   const neighborhoods = NEIGHBORHOOD_NAMES;
+
+  useEffect(() => {
+    let cancelled = false;
+    void listPublishedPropertyCards({ data: {} })
+      .then((next) => {
+        if (!cancelled) setProperties(next);
+      })
+      .catch(() => {
+        // The public marketing page must remain usable without a database.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   async function applyFilters() {
     setLoading(true);
     try {

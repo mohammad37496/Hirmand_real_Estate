@@ -13,6 +13,7 @@ import {
   SkipForward,
   Volume2,
   VolumeX,
+  X,
 } from "lucide-react";
 
 type MusicTrack = {
@@ -108,15 +109,17 @@ export function MusicPlayer() {
   const [isBuffering, setIsBuffering] = useState(false);
   const [shuffle, setShuffle] = useState(false);
   const [repeat, setRepeat] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
-  const tracks = manifest.tracks;
-  const currentTrack = tracks[index] ?? null;
+  const tracks = Array.isArray(manifest.tracks) ? manifest.tracks : [];
+  const safeIndex = tracks.length ? Math.min(Math.max(index, 0), tracks.length - 1) : 0;
+  const currentTrack = tracks[safeIndex] ?? null;
 
   useEffect(() => {
-    if (tracks.length > 0 && index >= tracks.length) setIndex(0);
-  }, [index, tracks.length]);
+    if (index !== safeIndex) setIndex(safeIndex);
+  }, [index, safeIndex]);
 
   const progress = useMemo(
     () => (duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0),
@@ -163,6 +166,7 @@ export function MusicPlayer() {
           shuffle: boolean;
           repeat: boolean;
           expanded: boolean;
+          hidden: boolean;
         }>;
         if (Number.isInteger(saved.index)) setIndex(Math.max(0, saved.index ?? 0));
         if (typeof saved.volume === "number") setVolume(Math.min(1, Math.max(0, saved.volume)));
@@ -170,6 +174,7 @@ export function MusicPlayer() {
         if (typeof saved.shuffle === "boolean") setShuffle(saved.shuffle);
         if (typeof saved.repeat === "boolean") setRepeat(saved.repeat);
         if (typeof saved.expanded === "boolean") setIsExpanded(saved.expanded);
+        if (typeof saved.hidden === "boolean") setIsHidden(saved.hidden);
       }
     } catch {
       // Ignore malformed local state.
@@ -200,6 +205,7 @@ export function MusicPlayer() {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
 
+    if (!currentTrack) return;
     const candidates = sourceCandidatesFor(currentTrack);
     sourceCandidatesRef.current = candidates;
     sourceIndexRef.current = 0;
@@ -274,12 +280,12 @@ export function MusicPlayer() {
     try {
       window.localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ index, volume, muted: isMuted, shuffle, repeat, expanded: isExpanded }),
+        JSON.stringify({ index, volume, muted: isMuted, shuffle, repeat, expanded: isExpanded, hidden: isHidden }),
       );
     } catch {
       // Storage can be unavailable in private browsing contexts.
     }
-  }, [index, isExpanded, isMuted, repeat, shuffle, volume]);
+  }, [index, isExpanded, isHidden, isMuted, repeat, shuffle, volume]);
 
   async function playOrPause() {
     const audio = audioRef.current;
@@ -446,6 +452,7 @@ export function MusicPlayer() {
       <audio
         ref={audioRef}
         preload="metadata"
+        playsInline
         onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
         onProgress={(event) => {
           const audio = event.currentTarget;
@@ -486,8 +493,19 @@ export function MusicPlayer() {
         }}
       />
 
+      <button
+        type="button"
+        className={isHidden ? "music-player-launcher is-visible" : "music-player-launcher"}
+        onClick={() => setIsHidden(false)}
+        aria-label="نمایش پخش‌کننده موسیقی"
+        title="نمایش پخش‌کننده"
+      >
+        {isPlaying ? <Pause size={18} /> : <Music2 size={18} />}
+        <span>{currentTrack.title}</span>
+      </button>
+
       <section
-        className={`music-player${isExpanded ? " is-expanded" : ""}${isPlaying ? " is-playing" : ""}`}
+        className={`music-player${isExpanded ? " is-expanded" : ""}${isPlaying ? " is-playing" : ""}${isHidden ? " is-hidden" : ""}`}
         aria-label="پخش‌کننده موسیقی هیرمند"
       >
         <div className="music-player-main">
@@ -562,6 +580,14 @@ export function MusicPlayer() {
               title="تنظیمات"
             >
               {isExpanded ? <ChevronDown size={17} /> : <ChevronUp size={17} />}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsHidden(true)}
+              aria-label="مخفی کردن پخش‌کننده"
+              title="مخفی کردن"
+            >
+              <X size={17} />
             </button>
           </div>
         </div>
@@ -661,10 +687,10 @@ export function MusicPlayer() {
                 <button
                   type="button"
                   key={`${track.src}-${trackIndex}`}
-                  className={trackIndex === index ? "music-track is-active" : "music-track"}
+                  className={trackIndex === safeIndex ? "music-track is-active" : "music-track"}
                   onClick={() => selectTrack(trackIndex, true)}
                   role="option"
-                  aria-selected={trackIndex === index}
+                  aria-selected={trackIndex === safeIndex}
                 >
                   <span className="music-track-number">
                     {String(trackIndex + 1).padStart(2, "0")}
@@ -693,6 +719,7 @@ export function MusicPlayer() {
 }
 
 const MUSIC_PLAYER_CSS = `
+.music-player-launcher{position:fixed;inset-inline-end:18px;bottom:max(18px,env(safe-area-inset-bottom));z-index:91;display:none;align-items:center;gap:9px;max-width:min(360px,calc(100vw - 36px));min-height:48px;padding:8px 14px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(18,26,39,.92);color:#f6f3ea;box-shadow:0 16px 40px rgba(0,0,0,.26);backdrop-filter:blur(18px);cursor:pointer;font-weight:700}.music-player-launcher.is-visible{display:inline-flex}.music-player-launcher span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.music-player.is-hidden{display:none!important}@media(max-width:680px){.music-player-launcher{inset-inline-end:10px;max-width:calc(100vw - 20px);min-height:46px;padding-inline:12px}}
 .music-player .music-rail{position:relative;display:flex;align-items:center;min-width:0}
 .music-player .music-rail-buffer{position:absolute;inset-inline-start:0;top:50%;height:4px;border-radius:999px;background:rgba(255,255,255,.22);transform:translateY(-50%);pointer-events:none}
 .music-player .music-rail .music-progress{position:relative;z-index:1;width:100%;background:transparent}

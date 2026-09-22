@@ -40,6 +40,9 @@ coverage/
 playwright-report/
 test-results/
 
+# Local embedded database state
+.grok/pglite.data/
+
 # Misc
 *.tsbuildinfo
 .cache/
