@@ -452,6 +452,7 @@ export function MusicPlayer() {
       <audio
         ref={audioRef}
         preload="metadata"
+        playsInline
         onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
         onProgress={(event) => {
           const audio = event.currentTarget;

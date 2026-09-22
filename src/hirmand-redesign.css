@@ -3235,8 +3235,12 @@ body{
 @media(max-width:720px){
   .music-player{
     width:100%!important;
+    left:10px!important;
+    right:10px!important;
+    bottom:calc(64px + env(safe-area-inset-bottom))!important;
+    width:calc(100% - 20px)!important;
     padding-inline:10px!important;
-    border-radius:18px 18px 0 0!important;
+    border-radius:18px!important;
   }
   .music-player-main{
     gap:7px!important;

@@ -80,6 +80,7 @@ export default defineEventHandler(async (event) => {
 
   const headers: Record<string, string> = {
     "content-type": result.contentType,
+    "content-length": String(result.bytes.length),
     "cache-control": IMMUTABLE,
     "accept-ranges": "bytes",
     "x-content-type-options": "nosniff",
