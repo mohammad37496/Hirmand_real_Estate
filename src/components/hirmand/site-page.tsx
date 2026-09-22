@@ -25,7 +25,6 @@ import {
   mapLinks,
   NEIGHBORHOOD_GROUPS,
   NEIGHBORHOODS,
-  OFFICE_MAP,
   personChat,
   PRINCIPLES,
   PROPERTY_TYPES,
@@ -35,7 +34,7 @@ import {
   TEAM,
   type Neighborhood,
 } from "@/lib/site";
-import { CallMenu, MapMenu } from "./call-menu";
+import { CallMenu } from "./call-menu";
 import { FinanceTools } from "./finance-tools";
 import { InquiryForm, type InquiryDraft } from "./inquiry-form";
 import { BrandLogo } from "./logo";
@@ -222,24 +221,18 @@ function Hero() {
             جستجوی فایل
           </button>
         </form>
+        {/* One primary action, one secondary, one contact affordance.
+            The map shortcuts and the "services" anchor both duplicated
+            links that already live in the header and in the sections below,
+            so they were removed to give the first screen a clear hierarchy. */}
         <div className="hero-actions">
+          <Link to="/properties" className="btn-gold">
+            مشاهده فایل‌ها
+          </Link>
           <Link to="/" hash="inquiry" className="btn-ghost" onClick={(event) => scrollToId(event, "inquiry")}>
             درخواست اختصاصی
           </Link>
           <CallMenu label="تماس با مشاور" />
-          <Link to="/properties" className="btn-gold">
-            همه فایل‌ها
-          </Link>
-          <a className="btn-ghost" href="#services" onClick={(event) => scrollToId(event, "services")}>
-            خدمات
-          </a>
-          <MapMenu
-            label="موقعیت املاک"
-            google={SITE.mapUrl}
-            balad={OFFICE_MAP.balad}
-            neshan={OFFICE_MAP.neshan}
-            icon={<MapPinned size={16} strokeWidth={1.8} />}
-          />
         </div>
         <div className="hero-intents" aria-label="شروع سریع جست‌وجو">
           <button
@@ -771,24 +764,27 @@ export function SitePage({ initialProperties = [] }: { initialProperties?: Prope
 
   return (
     <SiteChrome>
+      {/* Order matters: people arrive looking for properties, so the live
+          listings come straight after the hero, and the softer brand material
+          (about, team, partner club) sits below the decision content. */}
       <main className="site-home">
         <Hero />
-      <TrustStrip />
-      <About />
-      <Team />
-      <Services onPick={(title) => goInquiry({ deal: title })} />
-      <Properties onPick={(title) => goInquiry({ propertyType: title })} />
-      <PropertyShowcase initialProperties={initialProperties} />
-      <SmartRecommendations />
-      <BudgetMatcher />
-      <Process />
-      <Tools />
-      <TrackingCta />
-      <Neighborhoods onPick={(name) => goInquiry({ neighborhood: name })} />
-      <Inquiry draft={draft} />
-      <Contact />
-      <FAQ />
-      <Location />
+        <TrustStrip />
+        <PropertyShowcase initialProperties={initialProperties} />
+        <SmartRecommendations />
+        <Services onPick={(title) => goInquiry({ deal: title })} />
+        <Properties onPick={(title) => goInquiry({ propertyType: title })} />
+        <BudgetMatcher />
+        <About />
+        <Process />
+        <Neighborhoods onPick={(name) => goInquiry({ neighborhood: name })} />
+        <Tools />
+        <Team />
+        <TrackingCta />
+        <Inquiry draft={draft} />
+        <FAQ />
+        <Contact />
+        <Location />
       </main>
     </SiteChrome>
   );

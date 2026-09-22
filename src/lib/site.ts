@@ -100,17 +100,17 @@ export const OFFICE_MAP = mapLinks({
   label: "گروه مشاورین املاک هیرمند",
 });
 
+// Primary navigation stays deliberately short: every entry is a real
+// destination, and the partner club / about pages live in the footer so the
+// header never becomes a wall of links.
 export const NAV = [
-  { id: "about", label: "درباره", to: "/", hash: "about" },
+  { id: "listings", label: "فایل‌ها", to: "/properties", hash: "" },
   { id: "services", label: "خدمات", to: "/", hash: "services" },
   { id: "properties", label: "انواع ملک", to: "/", hash: "properties" },
-  { id: "listings", label: "فایل‌ها", to: "/properties", hash: "" },
-  { id: "budget-match", label: "جستجوی بودجه", to: "/", hash: "budget-match" },
+  { id: "budget-match", label: "بودجه‌یاب", to: "/", hash: "budget-match" },
   { id: "areas", label: "محله‌ها", to: "/", hash: "areas" },
   { id: "tools", label: "ابزار مالی", to: "/", hash: "tools" },
-  { id: "tracking", label: "باشگاه همکاران", to: "/tracking", hash: "" },
-  { id: "inquiry", label: "درخواست", to: "/", hash: "inquiry" },
-  { id: "contact", label: "ارتباط", to: "/", hash: "contact" },
+  { id: "contact", label: "تماس", to: "/", hash: "contact" },
 ] as const;
 
 export const SERVICES = [

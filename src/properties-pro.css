@@ -18,7 +18,7 @@
   margin-top: 34px;
   padding: 30px 28px 26px;
   border: 1px solid var(--hr-line);
-  border-radius: 26px;
+  border-radius: var(--r-xl);
   background:
     radial-gradient(circle at 88% 0%, rgb(185 146 90 / 0.16), transparent 42%),
     var(--hr-paper-2);
@@ -29,7 +29,7 @@
   padding-inline-start: 12px;
   border-inline-start: 3px solid var(--hr-gold);
   color: var(--hr-muted);
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.1em;
 }
@@ -68,19 +68,19 @@
 .pf-stats > div {
   padding: 12px 14px;
   border: 1px solid var(--hr-line);
-  border-radius: 16px;
+  border-radius: var(--r-md);
   background: rgb(255 253 248 / 0.72);
   text-align: center;
 }
 .pf-stats dt {
   color: var(--hr-muted);
-  font-size: 0.7rem;
+  font-size: 0.6875rem;
   font-weight: 700;
 }
 .pf-stats dd {
   margin: 4px 0 0;
   color: var(--hr-ink);
-  font-size: 1.24rem;
+  font-size: 1.25rem;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
@@ -99,7 +99,7 @@
   min-height: 54px;
   padding: 0 16px;
   border: 1px solid var(--hr-line-strong);
-  border-radius: 16px;
+  border-radius: var(--r-md);
   background: var(--hr-paper-2);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -130,7 +130,7 @@
   width: 30px;
   height: 30px;
   border: 0;
-  border-radius: 9px;
+  border-radius: var(--r-xs);
   background: rgb(16 32 51 / 0.06);
   color: var(--hr-ink);
   cursor: pointer;
@@ -145,7 +145,7 @@
   min-height: 54px;
   padding: 0 18px;
   border: 1px solid var(--hr-ink);
-  border-radius: 16px;
+  border-radius: var(--r-md);
   background: var(--hr-ink);
   color: var(--hr-paper);
   font: inherit;
@@ -158,10 +158,10 @@
   min-width: 22px;
   height: 22px;
   padding: 0 6px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--hr-gold);
   color: #102033;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 900;
 }
 
@@ -185,7 +185,7 @@
   overflow: auto;
   padding: 18px;
   border: 1px solid var(--hr-line);
-  border-radius: 22px;
+  border-radius: var(--r-xl);
   background: var(--hr-paper-2);
   box-shadow: var(--pp-elev-1, 0 12px 34px rgb(16 32 51 / 0.07));
   scrollbar-width: thin;
@@ -201,14 +201,14 @@
 }
 .pf-sidebar-head strong {
   display: block;
-  font-size: 0.98rem;
+  font-size: 0.9375rem;
   font-weight: 900;
 }
 .pf-sidebar-head small {
   display: block;
   margin-top: 3px;
   color: var(--hr-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 .pf-close {
   display: grid;
@@ -217,7 +217,7 @@
   height: 40px;
   flex: none;
   border: 1px solid var(--hr-line-strong);
-  border-radius: 12px;
+  border-radius: var(--r-sm);
   background: var(--hr-paper);
   color: var(--hr-ink);
   cursor: pointer;
@@ -237,12 +237,12 @@
   gap: 8px;
   margin: 0 0 11px;
   color: var(--hr-ink);
-  font-size: 0.84rem;
+  font-size: 0.875rem;
   font-weight: 900;
 }
 .pf-group-title small {
   color: var(--hr-faint);
-  font-size: 0.68rem;
+  font-size: 0.6875rem;
   font-weight: 600;
 }
 .pf-group-body {
@@ -259,11 +259,11 @@
   min-height: 38px;
   padding: 0 13px;
   border: 1px solid var(--hr-line-strong);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--hr-paper);
   color: var(--hr-muted);
   font: inherit;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 750;
   cursor: pointer;
   transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
@@ -284,7 +284,7 @@
 }
 .pf-field > span {
   color: var(--hr-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 .pf-field input,
@@ -294,7 +294,7 @@
   min-height: 46px;
   padding: 0 13px;
   border: 1px solid var(--hr-line-strong);
-  border-radius: 12px;
+  border-radius: var(--r-sm);
   background: var(--hr-paper);
   color: var(--hr-ink);
   font: inherit;
@@ -316,7 +316,7 @@
 .pf-range i {
   color: var(--hr-faint);
   font-style: normal;
-  font-size: 0.8rem;
+  font-size: 0.8125rem;
 }
 
 .pf-switch {
@@ -327,10 +327,10 @@
   min-height: 48px;
   padding: 0 13px;
   border: 1px solid var(--hr-line-strong);
-  border-radius: 12px;
+  border-radius: var(--r-sm);
   background: var(--hr-paper);
   color: var(--hr-ink);
-  font-size: 0.82rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -358,7 +358,7 @@
   gap: 8px;
   min-height: 46px;
   border: 1px solid var(--hr-line-strong);
-  border-radius: 12px;
+  border-radius: var(--r-sm);
   background: var(--hr-paper);
   color: var(--hr-ink);
   font: inherit;
@@ -386,7 +386,7 @@
 .pf-quick > span {
   flex: none;
   color: var(--hr-faint);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 800;
 }
 .pf-quick button {
@@ -400,18 +400,18 @@
   gap: 7px;
   padding: 11px 13px;
   border: 1px dashed var(--hr-line-strong);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   background: rgb(185 146 90 / 0.07);
 }
 .pf-active-label {
   color: var(--hr-muted);
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 800;
 }
 .pf-active .pf-chip {
   min-height: 32px;
   padding: 0 11px;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   background: var(--hr-paper-2);
 }
 .pf-active .pf-chip:hover {
@@ -427,7 +427,7 @@
   gap: 12px;
   padding: 13px 16px;
   border: 1px solid var(--hr-line);
-  border-radius: 16px;
+  border-radius: var(--r-md);
   background: var(--hr-paper-2);
 }
 .pf-count {
@@ -435,20 +435,20 @@
   align-items: baseline;
   gap: 6px;
   color: var(--hr-muted);
-  font-size: 0.82rem;
+  font-size: 0.8125rem;
 }
 .pf-count strong {
   color: var(--hr-ink);
-  font-size: 1.16rem;
+  font-size: 1.125rem;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
 .pf-count em {
   padding: 3px 9px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: rgb(185 146 90 / 0.16);
   color: var(--hr-ink);
-  font-size: 0.68rem;
+  font-size: 0.6875rem;
   font-style: normal;
   font-weight: 800;
 }
@@ -462,7 +462,7 @@
   align-items: center;
   gap: 8px;
   color: var(--hr-muted);
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 .pf-sort .pf-select {
@@ -476,7 +476,7 @@
   padding: 4px;
   gap: 3px;
   border: 1px solid var(--hr-line);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   background: var(--hr-paper);
 }
 .pf-views button {
@@ -486,11 +486,11 @@
   min-height: 36px;
   padding: 0 12px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   background: transparent;
   color: var(--hr-muted);
   font: inherit;
-  font-size: 0.76rem;
+  font-size: 0.75rem;
   font-weight: 750;
   cursor: pointer;
 }
@@ -518,7 +518,7 @@
   min-height: 40px;
   padding: 0 13px;
   border: 1px solid var(--hr-line);
-  border-radius: 11px;
+  border-radius: var(--r-sm);
   background: var(--hr-paper-2);
   color: var(--hr-muted);
   font: inherit;
@@ -549,7 +549,7 @@
   min-height: 640px;
   overflow: hidden;
   border: 1px solid var(--hr-line);
-  border-radius: 20px;
+  border-radius: var(--r-lg);
   background: var(--hr-paper-2);
 }
 .pf-map-list {
@@ -585,7 +585,7 @@
   width: 78px;
   height: 60px;
   overflow: hidden;
-  border-radius: 11px;
+  border-radius: var(--r-sm);
   background: rgb(16 32 51 / 0.07);
   color: var(--hr-gold);
 }
@@ -597,7 +597,7 @@
 .pf-map-item strong {
   display: block;
   overflow: hidden;
-  font-size: 0.82rem;
+  font-size: 0.8125rem;
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -606,7 +606,7 @@
   display: block;
   margin-top: 3px;
   color: var(--hr-muted);
-  font-size: 0.7rem;
+  font-size: 0.6875rem;
 }
 .pf-map-panel {
   position: relative;
@@ -630,7 +630,7 @@
 }
 .pf-more small {
   color: var(--hr-faint);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 .pf-more .property-load-more-sentinel,
 .pf-more [aria-hidden="true"] {
@@ -643,7 +643,7 @@
   gap: 10px;
   padding: 46px 24px;
   border: 1px dashed var(--hr-line-strong);
-  border-radius: 22px;
+  border-radius: var(--r-xl);
   background: var(--hr-paper-2);
   text-align: center;
 }
@@ -652,7 +652,7 @@
 }
 .pf-empty strong {
   color: var(--hr-ink);
-  font-size: 1.06rem;
+  font-size: 1.0625rem;
   font-weight: 900;
 }
 .pf-empty p {
@@ -701,7 +701,7 @@
   }
   .pf-hero {
     padding: 22px 18px 20px;
-    border-radius: 22px;
+    border-radius: var(--r-xl);
   }
   .pf-stats {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -710,7 +710,7 @@
     padding: 10px 8px;
   }
   .pf-stats dd {
-    font-size: 1.06rem;
+    font-size: 1.0625rem;
   }
   .pf-toolbar {
     grid-template-columns: 1fr;

@@ -4,12 +4,9 @@ import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { SITE } from "@/lib/site";
 import appCss from "../styles.css?url";
-import themeCss from "../theme-overrides.css?url";
-import professionalThemeCss from "../professional-theme.css?url";
-import finalVisualPolishCss from "../final-visual-polish.css?url";
-import hirmandRedesignCss from "../hirmand-redesign.css?url";
-import professionalPolishCss from "../professional-polish.css?url";
 import propertiesProCss from "../properties-pro.css?url";
+import themeProCss from "../theme-pro.css?url";
+import themeProPagesCss from "../theme-pro-pages.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -21,7 +18,7 @@ export const Route = createRootRoute({
       },
       { title: SITE.title },
       { name: "description", content: SITE.description },
-      { name: "theme-color", content: "#102033" },
+      { name: "theme-color", content: "#0b1a2b" },
       { name: "color-scheme", content: "light" },
       { name: "author", content: SITE.nameFa },
       { name: "referrer", content: "strict-origin-when-cross-origin" },
@@ -36,12 +33,9 @@ export const Route = createRootRoute({
       { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "stylesheet", href: appCss },
-      { rel: "stylesheet", href: themeCss },
-      { rel: "stylesheet", href: professionalThemeCss },
-      { rel: "stylesheet", href: finalVisualPolishCss },
-      { rel: "stylesheet", href: hirmandRedesignCss },
-      { rel: "stylesheet", href: professionalPolishCss },
       { rel: "stylesheet", href: propertiesProCss },
+      { rel: "stylesheet", href: themeProCss },
+      { rel: "stylesheet", href: themeProPagesCss },
     ],
   }),
   component: RootDocument,

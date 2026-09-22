@@ -40,12 +40,14 @@ export function Footer() {
       </div>
 
       <div className="footer-links">
-        <Link to="/" hash="contact" onClick={(event) => { if (onHome) scrollToId(event, "contact"); }}>تماس</Link>
+        <Link to="/properties">همه فایل‌ها</Link>
+        <Link to="/" hash="about" onClick={(event) => { if (onHome) scrollToId(event, "about"); }}>درباره ما</Link>
         <Link to="/" hash="services" onClick={(event) => { if (onHome) scrollToId(event, "services"); }}>خدمات</Link>
         <Link to="/" hash="tools" onClick={(event) => { if (onHome) scrollToId(event, "tools"); }}>ابزار مالی</Link>
-        <Link to="/tracking">کد رهگیری</Link>
-        <Link to="/" hash="inquiry" onClick={(event) => { if (onHome) scrollToId(event, "inquiry"); }}>درخواست</Link>
-        <Link to="/" hash="location" onClick={(event) => { if (onHome) scrollToId(event, "location"); }}>موقعیت</Link>
+        <Link to="/tracking">باشگاه همکاران</Link>
+        <Link to="/" hash="inquiry" onClick={(event) => { if (onHome) scrollToId(event, "inquiry"); }}>درخواست ملک</Link>
+        <Link to="/favorites">نشان‌شده‌ها</Link>
+        <Link to="/" hash="contact" onClick={(event) => { if (onHome) scrollToId(event, "contact"); }}>تماس</Link>
       </div>
       <Link to="/" hash="inquiry" className="footer-cta">
         درخواست مشاوره و فایل ملک
