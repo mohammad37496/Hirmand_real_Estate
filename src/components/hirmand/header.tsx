@@ -48,16 +48,7 @@ export function Header() {
 
         <nav className="nav-links" aria-label="بخش‌های صفحه">
           {NAV.map((item) =>
-            item.to === "/tracking" ? (
-              <Link
-                key={item.id}
-                to="/tracking"
-                className={cn(pathname === "/tracking" && "is-current")}
-                onClick={closeMenu}
-              >
-                {item.label}
-              </Link>
-            ) : item.to === "/properties" ? (
+            item.to === "/properties" ? (
               <Link
                 key={item.id}
                 to="/properties"
@@ -105,11 +96,7 @@ export function Header() {
         inert={!menuOpen}
       >
         {NAV.map((item) =>
-          item.to === "/tracking" ? (
-            <Link key={item.id} to="/tracking" onClick={closeMenu}>
-              {item.label}
-            </Link>
-          ) : item.to === "/properties" ? (
+          item.to === "/properties" ? (
             <Link key={item.id} to="/properties" onClick={closeMenu}>
               {item.label}
             </Link>
