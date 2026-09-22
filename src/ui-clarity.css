@@ -992,7 +992,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   gap:7px!important;
   background:linear-gradient(180deg,#f8fafc,#f4f6f8)!important;
   border:1px solid #dfe4ea!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.9)!important,0 6px 16px rgba(15,23,42,.04)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 6px 16px rgba(15,23,42,.04)!important;
 }
 .tools-switch-heading{
   display:flex!important;
