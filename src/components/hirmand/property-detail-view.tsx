@@ -425,9 +425,9 @@ function ConsultantCard({ property }: { property: Property }) {
         <Phone size={16} /> {property.contactPhone}
       </a>
       {person ? (
-        <a className="property-contact-profile" href={`/consultants/${person.id}`}>
+        <Link className="property-contact-profile" to="/consultants/$id" params={{ id: person.id }}>
           مشاهده پروفایل مشاور
-        </a>
+        </Link>
       ) : null}
       <div className="property-contact-actions">
         <a

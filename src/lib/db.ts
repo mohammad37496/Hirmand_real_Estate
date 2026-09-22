@@ -116,32 +116,40 @@ async function createPgliteSql(): Promise<Sql> {
         ? "memory://"
         : ".grok/pglite.data");
 
-    if (!dataDir.startsWith("memory://") && !dataDir.startsWith("idb://")) {
-      mkdirSync(dirname(resolve(process.cwd(), dataDir)), { recursive: true });
-    }
+    const parsers = {
+      [OID_INT8]: Number,
+      [OID_DATE]: identity,
+      [OID_INTERVAL]: identity,
+    };
 
-    const pg =
-      dataDir === "memory://"
-        ? new PGlite({
-            fs: new MemoryFS(),
-            parsers: {
-              [OID_INT8]: Number,
-              [OID_DATE]: identity,
-              [OID_INTERVAL]: identity,
-            },
-          })
-        : new PGlite({
-            dataDir,
-            parsers: {
-              [OID_INT8]: Number,
-              [OID_DATE]: identity,
-              [OID_INTERVAL]: identity,
-            },
-          });
-    await pg.waitReady;
-    await pg.exec(
-      "create table if not exists _migrations (name text primary key, applied_at timestamptz not null default now())",
-    );
+    const open = async (dir: string) => {
+      if (dir !== "memory://" && !dir.startsWith("idb://")) {
+        mkdirSync(dirname(resolve(process.cwd(), dir)), { recursive: true });
+      }
+      const instance =
+        dir === "memory://"
+          ? new PGlite({ fs: new MemoryFS(), parsers })
+          : new PGlite({ dataDir: dir, parsers });
+      await instance.waitReady;
+      await instance.exec(
+        "create table if not exists _migrations (name text primary key, applied_at timestamptz not null default now())",
+      );
+      return instance;
+    };
+
+    let pg: import("@electric-sql/pglite").PGlite;
+    try {
+      pg = await open(dataDir);
+    } catch (err) {
+      // A stale, truncated or version-mismatched local data dir must never block
+      // the preview (it used to abort the whole dev server). Fall back to
+      // volatile in-memory data so the app always boots, and say so loudly.
+      console.error(
+        `[db] PGLite could not open "${dataDir}"; falling back to in-memory preview data.`,
+        err instanceof Error ? err.message : err,
+      );
+      pg = await open("memory://");
+    }
     return pg;
   })().catch((err) => {
     globalRef.__pgliteInstance__ = undefined;

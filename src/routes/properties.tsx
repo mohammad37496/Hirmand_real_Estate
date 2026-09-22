@@ -1,6 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeftRight, Heart, List, Map as MapIcon, MapPinned, RotateCcw, Search, Share2, SlidersHorizontal, X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  ArrowLeftRight,
+  Bookmark,
+  Heart,
+  LayoutGrid,
+  List,
+  Map as MapIcon,
+  MapPinned,
+  RotateCcw,
+  Search,
+  Share2,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import {
@@ -18,6 +31,23 @@ import { absoluteUrl, socialMeta } from "@/lib/seo";
 const PAGE_SIZE = 48;
 const SAVED_SEARCHES_KEY = "hirmand-saved-searches";
 const MAX_SAVED_SEARCHES = 10;
+
+const SORT_OPTIONS: { value: PropertySort; label: string }[] = [
+  { value: "newest", label: "جدیدترین" },
+  { value: "price_asc", label: "ارزان‌ترین" },
+  { value: "price_desc", label: "گران‌ترین" },
+  { value: "area_asc", label: "کمترین متراژ" },
+  { value: "area_desc", label: "بیشترین متراژ" },
+];
+
+/** Listing types offered in the filters (the site type list plus land/commercial). */
+const PROPERTY_TYPE_OPTIONS: { value: PropertyType; label: string }[] = [
+  ...PROPERTY_TYPES.map((item) => ({ value: item.id as PropertyType, label: item.title })),
+  { value: "land", label: "زمین" },
+  { value: "commercial", label: "تجاری" },
+];
+
+const BEDROOM_OPTIONS = ["1", "2", "3", "4"] as const;
 
 type SavedSearch = {
   id: string;
@@ -146,6 +176,18 @@ function buildFilterData(
   };
 }
 
+function FilterGroup({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
+  return (
+    <section className="pf-group">
+      <h3 className="pf-group-title">
+        {title}
+        {hint ? <small>{hint}</small> : null}
+      </h3>
+      <div className="pf-group-body">{children}</div>
+    </section>
+  );
+}
+
 function PropertiesIndexPage() {
   const initial = Route.useLoaderData();
   const [properties, setProperties] = useState(initial.properties);
@@ -182,7 +224,7 @@ function PropertiesIndexPage() {
     const tx = validTransaction(params.get("transaction") ?? "");
     const type = validPropertyType(params.get("type") ?? "");
     const sortParam = params.get("sort");
-    const validSort =
+    const validSort: PropertySort =
       sortParam === "price_asc" ||
       sortParam === "price_desc" ||
       sortParam === "area_asc" ||
@@ -521,7 +563,7 @@ function PropertiesIndexPage() {
     minBedrooms.trim() ||
     parkingOnly ||
     elevatorOnly ||
-    sort !== "newest"
+    sort !== "newest",
   );
 
   const activeFilterCount = [
@@ -540,7 +582,7 @@ function PropertiesIndexPage() {
     ? SERVICES.find((item) => item.id === transactionType)?.title ?? transactionType
     : "";
   const propertyTypeLabel = propertyType
-    ? PROPERTY_TYPES.find((item) => item.id === propertyType)?.title ?? propertyType
+    ? PROPERTY_TYPE_OPTIONS.find((item) => item.value === propertyType)?.label ?? propertyType
     : "";
 
   const filterChips = [
@@ -559,303 +601,434 @@ function PropertiesIndexPage() {
     elevatorOnly ? { label: "آسانسور", clear: () => setElevatorOnly(false) } : null,
   ].filter((item): item is { label: string; clear: () => void } => Boolean(item));
 
+  const fa = (value: number) => value.toLocaleString("fa-IR");
+
   return (
     <SiteChrome>
-      <main className="page-shell properties-index-page">
-        <section className="section properties-index-hero">
-          <div className="properties-index-heading">
-            <div>
-              <span className="kicker">فایل‌های هیرمند</span>
+      <main className="page-shell pf-page">
+        <header className="pf-hero">
+          <span className="pf-kicker">فایل‌های هیرمند</span>
+          <div className="pf-hero-row">
+            <div className="pf-hero-copy">
               <h1>فایل‌های ملکی اصفهان</h1>
-              <p>جست‌وجوی سریع بین فایل‌های فعال؛ بر اساس معامله، نوع ملک، محله، متراژ و بازه قیمت.</p>
+              <p>
+                بر اساس معامله، نوع ملک، محله، متراژ و بازه قیمت جست‌وجو کنید. فایل مناسب را باز کنید و
+                مستقیم با مشاور همان فایل تماس بگیرید.
+              </p>
             </div>
-            {loading ? <span className="properties-loading-pill">در حال جست‌وجو…</span> : null}
+            <dl className="pf-stats">
+              <div>
+                <dt>فایل فعال</dt>
+                <dd>{fa(total)}</dd>
+              </div>
+              <div>
+                <dt>محله اصفهان</dt>
+                <dd>{fa(NEIGHBORHOOD_NAMES.length)}+</dd>
+              </div>
+              <div>
+                <dt>نوع معامله</dt>
+                <dd>{fa(SERVICES.length)}</dd>
+              </div>
+            </dl>
           </div>
 
-          <div className="properties-market-toolbar">
-            <button
-              type="button"
-              className="properties-mobile-filter-button"
-              onClick={() => setMobileFiltersOpen(true)}
-              aria-haspopup="dialog"
-              aria-expanded={mobileFiltersOpen}
-            >
-              <SlidersHorizontal size={16} />
-              فیلترها
-              {activeFilterCount ? <span>{activeFilterCount.toLocaleString("fa-IR")}</span> : null}
-            </button>
-            <div className="properties-market-search">
-              <Search size={17} />
+          <div className="pf-toolbar">
+            <label className="pf-search">
+              <Search size={18} aria-hidden="true" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="دنبال چه ملکی هستید؟ محله، عنوان یا آدرس"
-                aria-label="جستجوی سریع فایل"
+                aria-label="جست‌وجوی فایل"
               />
               {q ? (
-                <button type="button" aria-label="پاک کردن جستجو" onClick={() => setQ("")}>
+                <button type="button" aria-label="پاک کردن جست‌وجو" onClick={() => setQ("")}>
                   <X size={15} />
                 </button>
               ) : null}
-            </div>
-          </div>
-
-          {mobileFiltersOpen ? (
+            </label>
             <button
               type="button"
-              className="properties-filter-backdrop"
-              aria-label="بستن فیلترها"
-              onClick={() => setMobileFiltersOpen(false)}
-            />
-          ) : null}
+              className="pf-filter-btn"
+              onClick={() => setMobileFiltersOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={mobileFiltersOpen}
+            >
+              <SlidersHorizontal size={17} />
+              فیلترها
+              {activeFilterCount ? <span>{fa(activeFilterCount)}</span> : null}
+            </button>
+          </div>
+        </header>
 
-          <div
-            className={`properties-filter-panel${mobileFiltersOpen ? " is-mobile-open" : ""}`}
+        {mobileFiltersOpen ? (
+          <button
+            type="button"
+            className="pf-backdrop"
+            aria-label="بستن فیلترها"
+            onClick={() => setMobileFiltersOpen(false)}
+          />
+        ) : null}
+
+        <div className="pf-layout">
+          <aside
+            className={`pf-sidebar${mobileFiltersOpen ? " is-open" : ""}`}
             role={mobileFiltersOpen ? "dialog" : undefined}
             aria-modal={mobileFiltersOpen ? true : undefined}
-            aria-label={mobileFiltersOpen ? "فیلترهای فایل" : undefined}
+            aria-label={mobileFiltersOpen ? "فیلترهای فایل" : "فیلترهای فایل"}
           >
-            <div className="properties-mobile-filter-head">
+            <div className="pf-sidebar-head">
               <div>
                 <strong>فیلتر و مرتب‌سازی</strong>
-                <small>فایل مناسب خود را سریع‌تر پیدا کنید.</small>
+                <small>نتایج هم‌زمان با انتخاب شما به‌روز می‌شوند.</small>
               </div>
-              <button type="button" aria-label="بستن فیلترها" onClick={() => setMobileFiltersOpen(false)}>
+              <button type="button" className="pf-close" aria-label="بستن فیلترها" onClick={() => setMobileFiltersOpen(false)}>
                 <X size={19} />
               </button>
             </div>
-            <label className="properties-filter-search">
-              <Search size={17} />
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="عنوان، محله یا آدرس…" aria-label="جستجوی فایل" />
-            </label>
-            <select value={transactionType} onChange={(e) => setTransactionType(validTransaction(e.target.value) ?? "")} aria-label="نوع معامله">
-              <option value="">همه معاملات</option>
-              {SERVICES.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
-            </select>
-            <select value={propertyType} onChange={(e) => setPropertyType(validPropertyType(e.target.value) ?? "")} aria-label="نوع ملک">
-              <option value="">همه انواع ملک</option>
-              {PROPERTY_TYPES.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
-              <option value="land">زمین</option>
-              <option value="commercial">تجاری</option>
-            </select>
-            <select value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} aria-label="محله">
-              <option value="">همه محله‌ها</option>
-              {NEIGHBORHOOD_NAMES.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
-            <label className="properties-range-field">
-              <span>حداقل متراژ</span>
-              <input inputMode="numeric" value={minArea} onChange={(e) => setMinArea(e.target.value)} placeholder="۸۰" />
-            </label>
-            <label className="properties-range-field">
-              <span>حداکثر متراژ</span>
-              <input inputMode="numeric" value={maxArea} onChange={(e) => setMaxArea(e.target.value)} placeholder="۲۵۰" />
-            </label>
-            <label className="properties-range-field">
-              <span>حداقل قیمت</span>
-              <input inputMode="numeric" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} placeholder="تومان" />
-            </label>
-            <label className="properties-range-field">
-              <span>حداکثر قیمت</span>
-              <input inputMode="numeric" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="تومان" />
-            </label>
-            <label className="properties-range-field">
-              <span>حداقل خواب</span>
-              <input inputMode="numeric" min="0" max="30" value={minBedrooms} onChange={(e) => setMinBedrooms(e.target.value)} placeholder="۲" />
-            </label>
-            <div className="properties-feature-filters" role="group" aria-label="امکانات ملک">
-              <label className="properties-feature-toggle">
-                <input type="checkbox" checked={parkingOnly} onChange={(e) => setParkingOnly(e.target.checked)} />
+
+            <FilterGroup title="نوع معامله">
+              <div className="pf-chips">
+                <button
+                  type="button"
+                  className={`pf-chip${transactionType ? "" : " is-active"}`}
+                  onClick={() => setTransactionType("")}
+                >
+                  همه
+                </button>
+                {SERVICES.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`pf-chip${transactionType === item.id ? " is-active" : ""}`}
+                    onClick={() => setTransactionType(transactionType === item.id ? "" : (item.id as PropertyTransaction))}
+                  >
+                    {item.title}
+                  </button>
+                ))}
+              </div>
+            </FilterGroup>
+
+            <FilterGroup title="نوع ملک">
+              <div className="pf-chips">
+                <button
+                  type="button"
+                  className={`pf-chip${propertyType ? "" : " is-active"}`}
+                  onClick={() => setPropertyType("")}
+                >
+                  همه
+                </button>
+                {PROPERTY_TYPE_OPTIONS.map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    className={`pf-chip${propertyType === item.value ? " is-active" : ""}`}
+                    onClick={() => setPropertyType(propertyType === item.value ? "" : item.value)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </FilterGroup>
+
+            <FilterGroup title="محله" hint={`${fa(NEIGHBORHOOD_NAMES.length)} محله`}>
+              <label className="pf-field">
+                <span className="sr-only">انتخاب محله</span>
+                <select className="pf-select" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)}>
+                  <option value="">همه محله‌ها</option>
+                  {NEIGHBORHOOD_NAMES.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </select>
+              </label>
+            </FilterGroup>
+
+            <FilterGroup title="متراژ" hint="متر مربع">
+              <div className="pf-range">
+                <label className="pf-field">
+                  <span>از</span>
+                  <input inputMode="numeric" value={minArea} onChange={(e) => setMinArea(e.target.value)} placeholder="۸۰" />
+                </label>
+                <i aria-hidden="true">—</i>
+                <label className="pf-field">
+                  <span>تا</span>
+                  <input inputMode="numeric" value={maxArea} onChange={(e) => setMaxArea(e.target.value)} placeholder="۲۵۰" />
+                </label>
+              </div>
+            </FilterGroup>
+
+            <FilterGroup title="بازه قیمت" hint="تومان">
+              <div className="pf-range">
+                <label className="pf-field">
+                  <span>از</span>
+                  <input inputMode="numeric" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} placeholder="۰" />
+                </label>
+                <i aria-hidden="true">—</i>
+                <label className="pf-field">
+                  <span>تا</span>
+                  <input inputMode="numeric" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="نامحدود" />
+                </label>
+              </div>
+            </FilterGroup>
+
+            <FilterGroup title="حداقل خواب">
+              <div className="pf-chips">
+                <button
+                  type="button"
+                  className={`pf-chip${minBedrooms ? "" : " is-active"}`}
+                  onClick={() => setMinBedrooms("")}
+                >
+                  فرقی ندارد
+                </button>
+                {BEDROOM_OPTIONS.map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={`pf-chip${minBedrooms === value ? " is-active" : ""}`}
+                    onClick={() => setMinBedrooms(minBedrooms === value ? "" : value)}
+                  >
+                    {fa(Number(value))}+
+                  </button>
+                ))}
+              </div>
+            </FilterGroup>
+
+            <FilterGroup title="امکانات">
+              <label className="pf-switch">
                 <span>فقط پارکینگ‌دار</span>
+                <input type="checkbox" checked={parkingOnly} onChange={(e) => setParkingOnly(e.target.checked)} />
               </label>
-              <label className="properties-feature-toggle">
-                <input type="checkbox" checked={elevatorOnly} onChange={(e) => setElevatorOnly(e.target.checked)} />
+              <label className="pf-switch">
                 <span>فقط آسانسوردار</span>
+                <input type="checkbox" checked={elevatorOnly} onChange={(e) => setElevatorOnly(e.target.checked)} />
               </label>
+            </FilterGroup>
+
+            <div className="pf-sidebar-foot">
+              <button type="button" className="pf-reset" onClick={resetFilters}>
+                <RotateCcw size={15} /> پاک‌کردن فیلترها
+              </button>
             </div>
-            <label className="properties-sort-field">
-              <span>مرتب‌سازی</span>
-              <select value={sort} onChange={(e) => setSort(e.target.value as PropertySort)}>
-                <option value="newest">جدیدترین</option>
-                <option value="price_asc">ارزان‌ترین</option>
-                <option value="price_desc">گران‌ترین</option>
-                <option value="area_asc">کمترین متراژ</option>
-                <option value="area_desc">بیشترین متراژ</option>
-              </select>
-            </label>
-          </div>
+          </aside>
 
-          <div className="properties-quick-filters" aria-label="فیلترهای سریع">
-            <span className="properties-quick-label">دسترسی سریع</span>
-            {SERVICES.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className={transactionType === item.id ? "is-active" : ""}
-                onClick={() => setTransactionType(transactionType === item.id ? "" : item.id as PropertyTransaction)}
-              >
-                {item.title}
-              </button>
-            ))}
-            {PROPERTY_TYPES.slice(0, 4).map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className={propertyType === item.id ? "is-active" : ""}
-                onClick={() => setPropertyType(propertyType === item.id ? "" : item.id as PropertyType)}
-              >
-                {item.title}
-              </button>
-            ))}
-          </div>
-
-          {filterChips.length ? (
-            <div className="properties-active-filters" aria-label="فیلترهای فعال">
-              <span className="properties-active-label">فیلترهای فعال:</span>
-              {filterChips.map((item) => (
-                <button key={item.label} type="button" className="properties-filter-chip" onClick={item.clear}>
-                  {item.label}
-                  <X size={12} />
+          <div className="pf-main">
+            <div className="pf-quick" aria-label="دسترسی سریع">
+              <span>دسترسی سریع</span>
+              {SERVICES.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`pf-chip${transactionType === item.id ? " is-active" : ""}`}
+                  onClick={() => setTransactionType(transactionType === item.id ? "" : (item.id as PropertyTransaction))}
+                >
+                  {item.title}
                 </button>
               ))}
-              <button type="button" className="properties-filter-chip properties-filter-chip-clear" onClick={resetFilters}>
-                پاک کردن همه
-              </button>
-            </div>
-          ) : null}
-
-          <div className="properties-result-meta">
-            <span><SlidersHorizontal size={15} /> نمایش {properties.length.toLocaleString("fa-IR")} از {total.toLocaleString("fa-IR")} فایل</span>
-            <div className="properties-result-actions">
-              {hasFilters ? (
-                <button type="button" className="properties-reset-btn" onClick={resetFilters}>
-                  <RotateCcw size={14} /> پاک‌کردن فیلترها
+              {PROPERTY_TYPE_OPTIONS.slice(0, 4).map((item) => (
+                <button
+                  key={item.value}
+                  type="button"
+                  className={`pf-chip${propertyType === item.value ? " is-active" : ""}`}
+                  onClick={() => setPropertyType(propertyType === item.value ? "" : item.value)}
+                >
+                  {item.label}
                 </button>
-              ) : null}
-              <Link to="/favorites" className="properties-saved-link">
+              ))}
+            </div>
+
+            {filterChips.length ? (
+              <div className="pf-active" aria-label="فیلترهای فعال">
+                <span className="pf-active-label">فیلترهای فعال</span>
+                {filterChips.map((item) => (
+                  <button key={item.label} type="button" className="pf-chip" onClick={item.clear}>
+                    {item.label}
+                    <X size={12} />
+                  </button>
+                ))}
+                <button type="button" className="pf-chip" onClick={resetFilters}>
+                  پاک کردن همه
+                </button>
+              </div>
+            ) : null}
+
+            <div className="pf-results-head">
+              <div className="pf-count">
+                <strong>{fa(properties.length)}</strong>
+                <span>از {fa(total)} فایل</span>
+                {loading ? <em>در حال جست‌وجو…</em> : null}
+              </div>
+              <div className="pf-head-actions">
+                <label className="pf-sort">
+                  <span>مرتب‌سازی</span>
+                  <select
+                    className="pf-select"
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value as PropertySort)}
+                    aria-label="مرتب‌سازی نتایج"
+                  >
+                    {SORT_OPTIONS.map((item) => (
+                      <option key={item.value} value={item.value}>{item.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <div className="pf-views" role="group" aria-label="نحوه نمایش فایل‌ها">
+                  <button type="button" className={viewMode === "list" ? "is-active" : ""} onClick={() => setViewMode("list")}>
+                    <List size={15} /> <span>لیستی</span>
+                  </button>
+                  <button type="button" className={viewMode === "grid" ? "is-active" : ""} onClick={() => setViewMode("grid")}>
+                    <LayoutGrid size={15} /> <span>شبکه‌ای</span>
+                  </button>
+                  <button type="button" className={viewMode === "split" ? "is-active" : ""} onClick={() => setViewMode("split")}>
+                    <MapPinned size={15} /> <span>نقشه</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="pf-tools">
+              <Link to="/favorites">
                 <Heart size={14} /> ذخیره‌های من
               </Link>
-              <Link to="/compare" className="properties-saved-link">
-                <ArrowLeftRight size={14} /> مقایسه فایل‌ها
+              <Link to="/compare">
+                <ArrowLeftRight size={14} /> مقایسه
               </Link>
-              <button
-                type="button"
-                className="properties-reset-btn"
-                onClick={saveCurrentSearch}
-                disabled={!hasFilters}
-              >
-                ذخیره جست‌وجو
+              <button type="button" onClick={saveCurrentSearch} disabled={!hasFilters}>
+                <Bookmark size={14} /> ذخیره جست‌وجو
               </button>
-              <button
-                type="button"
-                className="properties-reset-btn"
-                onClick={() => void shareCurrentSearch()}
-                disabled={!hasFilters}
-              >
+              <button type="button" onClick={() => void shareCurrentSearch()} disabled={!hasFilters}>
                 <Share2 size={14} /> اشتراک‌گذاری
               </button>
               {savedSearches.length ? (
-                <>
-                  <select
-                    className="properties-saved-search-select"
-                    value={savedSearchId}
-                    onChange={(event) => loadSavedSearch(event.target.value)}
-                    aria-label="جست‌وجوهای ذخیره‌شده"
-                  >
-                    <option value="">جست‌وجوهای ذخیره‌شده</option>
-                    {savedSearches.map((item) => (
-                      <option key={item.id} value={item.id}>{item.name}</option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    className="properties-reset-btn"
-                    onClick={deleteSavedSearch}
-                    disabled={!savedSearchId}
-                  >
-                    حذف جست‌وجوی ذخیره‌شده
-                  </button>
-                </>
+                <select
+                  value={savedSearchId}
+                  onChange={(event) => loadSavedSearch(event.target.value)}
+                  aria-label="جست‌وجوهای ذخیره‌شده"
+                >
+                  <option value="">جست‌وجوهای ذخیره‌شده</option>
+                  {savedSearches.map((item) => (
+                    <option key={item.id} value={item.id}>{item.name}</option>
+                  ))}
+                </select>
               ) : null}
-              <Link to="/" hash="inquiry">درخواست فایل اختصاصی</Link>
+              {savedSearchId ? (
+                <button type="button" onClick={deleteSavedSearch}>
+                  <X size={14} /> حذف جست‌وجوی ذخیره‌شده
+                </button>
+              ) : null}
+              <Link to="/" hash="inquiry">
+                درخواست فایل اختصاصی
+              </Link>
             </div>
-          </div>
 
-          {properties.length ? (
-            <>
-              <div className="properties-view-switch" role="group" aria-label="نحوه نمایش فایل‌ها">
-                <button type="button" className={viewMode === "list" ? "is-active" : ""} onClick={() => setViewMode("list")}>
-                  <List size={15} /> لیستی
-                </button>
-                <button type="button" className={viewMode === "grid" ? "is-active" : ""} onClick={() => setViewMode("grid")}>
-                  <span aria-hidden="true" className="properties-grid-icon">▪▪<br />▪▪</span> شبکه‌ای
-                </button>
-                <button type="button" className={viewMode === "split" ? "is-active" : ""} onClick={() => setViewMode("split")}>
-                  <MapPinned size={15} /> نقشه
-                </button>
-              </div>
-              {viewMode === "split" ? (
-                <div className="properties-split-view">
-                  <aside className="properties-map-list" aria-label="فهرست فایل‌های روی نقشه">
-                    {properties.map((property) => (
-                      <button key={property.id} type="button"
-                        className={`properties-map-list-item${selectedPropertyId === property.id ? " is-active" : ""}`}
-                        onClick={() => {
-                          setSelectedPropertyId(property.id);
-                          if (property.latitude == null || property.longitude == null) toast.info("برای این فایل مختصات نقشه ثبت نشده است.");
-                        }}
-                      >
-                        <div className="properties-map-list-image">
-                          {property.image ? <img src={property.image} alt="" loading="lazy" /> : <MapIcon size={20} />}
+            {properties.length ? (
+              <>
+                {viewMode === "split" ? (
+                  <div className="pf-map">
+                    <div className="pf-map-list" aria-label="فهرست فایل‌های روی نقشه">
+                      {properties.map((property) => (
+                        <button
+                          key={property.id}
+                          type="button"
+                          className={`pf-map-item${selectedPropertyId === property.id ? " is-active" : ""}`}
+                          onClick={() => {
+                            setSelectedPropertyId(property.id);
+                            if (property.latitude == null || property.longitude == null) {
+                              toast.info("برای این فایل مختصات نقشه ثبت نشده است.");
+                            }
+                          }}
+                        >
+                          <span className="pf-map-item-media">
+                            {property.image ? <img src={property.image} alt="" loading="lazy" /> : <MapIcon size={20} />}
+                          </span>
+                          <span>
+                            <strong>{property.title}</strong>
+                            <small>
+                              {property.neighborhood}
+                              {property.areaM2 ? ` · ${fa(property.areaM2)} متر` : ""}
+                            </small>
+                          </span>
+                          {property.latitude != null && property.longitude != null ? <MapPinned size={15} /> : null}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="pf-map-panel" aria-label="نقشه فایل انتخاب‌شده">
+                      {mapUrl ? (
+                        <iframe
+                          title={selectedProperty ? `نقشه ${selectedProperty.title}` : "نقشه فایل‌ها"}
+                          src={mapUrl}
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                        />
+                      ) : (
+                        <div className="pf-empty">
+                          <MapPinned size={28} />
+                          <strong>برای نمایش نقشه، یک فایل دارای مختصات انتخاب کنید.</strong>
+                          <p>مختصات فایل‌ها از پنل مدیریت قابل ثبت است.</p>
                         </div>
-                        <div>
-                          <strong>{property.title}</strong>
-                          <span>{property.neighborhood}{property.areaM2 ? ` · ${property.areaM2.toLocaleString("fa-IR")} متر` : ""}</span>
-                        </div>
-                        {property.latitude != null && property.longitude != null ? <MapPinned size={15} /> : null}
-                      </button>
-                    ))}
-                  </aside>
-                  <section className="properties-map-panel" aria-label="نقشه فایل انتخاب‌شده">
-                    {mapUrl ? (
-                      <iframe title={selectedProperty ? `نقشه ${selectedProperty.title}` : "نقشه فایل‌ها"} src={mapUrl} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
-                    ) : (
-                      <div className="property-empty">
-                        <MapPinned size={28} />
-                        <strong>برای نمایش نقشه، یک فایل دارای مختصات انتخاب کنید.</strong>
-                        <p>مختصات فایل‌ها از پنل مدیریت قابل ثبت است.</p>
-                      </div>
-                    )}
-                  </section>
-                </div>
-              ) : (
-                <div className={`property-grid${viewMode === "list" ? " is-list-view" : ""}`}>
-                  {properties.map((property) => <PropertyCard key={property.id} property={property} />)}
-                </div>
-              )}
-              {properties.length < total ? (
-                <>
-                  <div className="properties-load-more">
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className={`property-grid pf-grid${viewMode === "list" ? " is-list-view" : ""}`}>
+                    {properties.map((property) => <PropertyCard key={property.id} property={property} />)}
+                  </div>
+                )}
+
+                {properties.length < total ? (
+                  <div className="pf-more">
                     <button type="button" className="btn-ghost" onClick={() => void loadMore()} disabled={loadingMore}>
-                      {loadingMore ? "در حال بارگذاری…" : `نمایش ${Math.min(PAGE_SIZE, total - properties.length).toLocaleString("fa-IR")} فایل بیشتر`}
+                      {loadingMore
+                        ? "در حال بارگذاری…"
+                        : `نمایش ${fa(Math.min(PAGE_SIZE, total - properties.length))} فایل بیشتر`}
                     </button>
                     <small>با اسکرول بیشتر، فایل‌های بعدی نیز خودکار بارگذاری می‌شوند.</small>
+                    <div ref={loadMoreSentinel} aria-hidden="true" />
                   </div>
-                  <div ref={loadMoreSentinel} className="properties-load-more-sentinel" aria-hidden="true" />
-                </>
-              ) : null}
-            </>
-          ) : (
-            <div className="property-empty">
-              <Search size={25} />
-              <strong>فایلی با این معیارها پیدا نشد.</strong>
-              <p>بازه قیمت یا متراژ را بازتر کنید، فیلترهای کمتر دقیق انتخاب کنید یا برای دریافت گزینه‌های متناسب با بودجه، درخواست اختصاصی ثبت کنید.</p>
-              <div className="properties-empty-actions">
-                {hasFilters ? <button type="button" className="btn-ghost" onClick={resetFilters}><X size={15} /> پاک‌کردن فیلترها</button> : null}
-                <Link to="/" hash="inquiry" className="btn-gold">ثبت درخواست</Link>
+                ) : null}
+              </>
+            ) : (
+              <div className="pf-empty">
+                <Search size={26} />
+                <strong>فایلی با این معیارها پیدا نشد.</strong>
+                <p>
+                  بازه قیمت یا متراژ را بازتر کنید، فیلترهای کمتری انتخاب کنید، یا درخواست اختصاصی ثبت کنید تا
+                  مشاور فایل مناسب را برایتان پیدا کند.
+                </p>
+                <div className="pf-empty-actions">
+                  {hasFilters ? (
+                    <button type="button" className="btn-ghost" onClick={resetFilters}>
+                      <X size={15} /> پاک‌کردن فیلترها
+                    </button>
+                  ) : null}
+                  <Link to="/" hash="inquiry" className="btn-gold">ثبت درخواست</Link>
+                </div>
+                <div className="pf-suggest" aria-label="پیشنهاد جست‌وجو">
+                  <button
+                    type="button"
+                    className="pf-chip"
+                    onClick={() => { setTransactionType("buy"); setPropertyType("apartment"); }}
+                  >
+                    خرید آپارتمان
+                  </button>
+                  <button
+                    type="button"
+                    className="pf-chip"
+                    onClick={() => { setTransactionType("rent"); setPropertyType("apartment"); }}
+                  >
+                    اجاره آپارتمان
+                  </button>
+                  <button
+                    type="button"
+                    className="pf-chip"
+                    onClick={() => { setTransactionType("buy"); setPropertyType("villa"); }}
+                  >
+                    خرید ویلا و باغ
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        </section>
+            )}
+          </div>
+        </div>
       </main>
     </SiteChrome>
   );

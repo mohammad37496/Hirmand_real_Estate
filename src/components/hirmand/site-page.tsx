@@ -406,9 +406,9 @@ function Team() {
                 </a>
                 <CopyButton value={person.phone} label={`کپی شماره ${person.name}`} />
               </div>
-              <a className="team-profile-link" href={`/consultants/${person.id}`}>
+              <Link className="team-profile-link" to="/consultants/$id" params={{ id: person.id }}>
                 پروفایل مشاور ↗
-              </a>
+              </Link>
               <TeamMessenger personId={person.id} />
             </article>
           );

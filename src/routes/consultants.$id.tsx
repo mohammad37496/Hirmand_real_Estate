@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Briefcase, Check, Handshake, MessageCircle, Phone, ArrowRight } from "lucide-react";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
@@ -58,7 +58,7 @@ function ConsultantProfilePage() {
           <section className="empty-state">
             <h1>مشاور پیدا نشد</h1>
             <p>پروفایل درخواستی در هیرمند وجود ندارد.</p>
-            <a href="/" className="btn-gold"><ArrowRight size={15} /> بازگشت به خانه</a>
+            <Link to="/" className="btn-gold"><ArrowRight size={15} /> بازگشت به خانه</Link>
           </section>
         </main>
       </SiteChrome>
@@ -79,9 +79,9 @@ function ConsultantProfilePage() {
   return (
     <SiteChrome className="property-detail-shell">
       <main className="consultant-profile-page">
-        <a href="/" className="text-link" style={{ marginBottom: 22 }}>
+        <Link to="/" className="text-link" style={{ marginBottom: 22 }}>
           <ArrowRight size={15} /> بازگشت به سایت هیرمند
-        </a>
+        </Link>
 
         <section className="consultant-profile-hero">
           <div className="consultant-profile-avatar" aria-hidden="true">
@@ -130,7 +130,7 @@ function ConsultantProfilePage() {
             <div className="property-empty">
               <Check size={24} />
               <strong>فعلاً فایل فعال مرتبطی برای این مشاور ثبت نشده است.</strong>
-              <a href="/properties" className="btn-gold">مشاهده همه فایل‌ها</a>
+              <Link to="/properties" className="btn-gold">مشاهده همه فایل‌ها</Link>
             </div>
           )}
         </section>
@@ -138,7 +138,7 @@ function ConsultantProfilePage() {
         <section className="property-empty" style={{ marginTop: 32 }}>
           <strong>نیاز به فایل اختصاصی دارید؟</strong>
           <p>درخواستتان را ثبت کنید تا تیم هیرمند گزینه‌های متناسب را بررسی کند.</p>
-          <a href="/#inquiry" className="btn-gold">ثبت درخواست ملک</a>
+          <Link to="/" hash="inquiry" className="btn-gold">ثبت درخواست ملک</Link>
         </section>
       </main>
     </SiteChrome>

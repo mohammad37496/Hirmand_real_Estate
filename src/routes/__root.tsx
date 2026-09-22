@@ -8,6 +8,8 @@ import themeCss from "../theme-overrides.css?url";
 import professionalThemeCss from "../professional-theme.css?url";
 import finalVisualPolishCss from "../final-visual-polish.css?url";
 import hirmandRedesignCss from "../hirmand-redesign.css?url";
+import professionalPolishCss from "../professional-polish.css?url";
+import propertiesProCss from "../properties-pro.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -38,6 +40,8 @@ export const Route = createRootRoute({
       { rel: "stylesheet", href: professionalThemeCss },
       { rel: "stylesheet", href: finalVisualPolishCss },
       { rel: "stylesheet", href: hirmandRedesignCss },
+      { rel: "stylesheet", href: professionalPolishCss },
+      { rel: "stylesheet", href: propertiesProCss },
     ],
   }),
   component: RootDocument,

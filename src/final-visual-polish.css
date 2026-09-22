@@ -1,4 +1,6 @@
-/* Hirmand final visual polish — loaded last so it cleanly overrides legacy theme layers. */
+/* Hirmand visual polish — overrides the legacy theme layers.
+   NOTE: this is not the last sheet; hirmand-redesign.css and
+   professional-polish.css load after it and win on equal specificity. */
 :root{
   --hm-ink:#111315;
   --hm-paper:#f7f5ef;
