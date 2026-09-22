@@ -113,12 +113,13 @@ export function MusicPlayer() {
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
-  const tracks = manifest.tracks;
-  const currentTrack = tracks[index] ?? null;
+  const tracks = Array.isArray(manifest.tracks) ? manifest.tracks : [];
+  const safeIndex = tracks.length ? Math.min(Math.max(index, 0), tracks.length - 1) : 0;
+  const currentTrack = tracks[safeIndex] ?? null;
 
   useEffect(() => {
-    if (tracks.length > 0 && index >= tracks.length) setIndex(0);
-  }, [index, tracks.length]);
+    if (index !== safeIndex) setIndex(safeIndex);
+  }, [index, safeIndex]);
 
   const progress = useMemo(
     () => (duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0),
@@ -204,6 +205,7 @@ export function MusicPlayer() {
     const audio = audioRef.current;
     if (!audio || !currentTrack) return;
 
+    if (!currentTrack) return;
     const candidates = sourceCandidatesFor(currentTrack);
     sourceCandidatesRef.current = candidates;
     sourceIndexRef.current = 0;
@@ -684,10 +686,10 @@ export function MusicPlayer() {
                 <button
                   type="button"
                   key={`${track.src}-${trackIndex}`}
-                  className={trackIndex === index ? "music-track is-active" : "music-track"}
+                  className={trackIndex === safeIndex ? "music-track is-active" : "music-track"}
                   onClick={() => selectTrack(trackIndex, true)}
                   role="option"
-                  aria-selected={trackIndex === index}
+                  aria-selected={trackIndex === safeIndex}
                 >
                   <span className="music-track-number">
                     {String(trackIndex + 1).padStart(2, "0")}
