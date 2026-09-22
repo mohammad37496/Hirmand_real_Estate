@@ -65,7 +65,7 @@ export function FinanceTools() {
             <small>یکی از محاسبه‌گرها را انتخاب کنید</small>
           </div>
 
-          {TOOLS.map((item) => {
+          {TOOLS.map((item, index) => {
             const Icon = item.icon;
             const isActive = tool === item.id;
 
@@ -76,18 +76,21 @@ export function FinanceTools() {
                 role="tab"
                 aria-selected={isActive}
                 aria-controls="finance-tool-panel"
+                data-tool-id={item.id}
                 className={cn("tools-switch-btn", isActive && "is-active")}
                 onClick={() => setTool(item.id)}
               >
-                <span className="tools-switch-icon">
+                <span className="tools-switch-icon" aria-hidden="true">
                   <Icon size={19} strokeWidth={1.9} />
                 </span>
                 <span className="tools-switch-copy">
                   <strong>{item.title}</strong>
                   <small>{item.text}</small>
                 </span>
-                <span className="tools-switch-arrow" aria-hidden="true">
-                  ←
+                <span className="tools-switch-meta">
+                  <span className="tools-switch-index">{String(index + 1).padStart(2, "0")}</span>
+                  {isActive ? <span className="tools-switch-selected">فعال</span> : null}
+                  <span className="tools-switch-arrow" aria-hidden="true">←</span>
                 </span>
               </button>
             );
