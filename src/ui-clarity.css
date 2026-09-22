@@ -1336,3 +1336,496 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     display:none!important;
   }
 }
+/* === Android home experience ===============================================
+   Purpose: make the public home page feel native, calm and touch-first on
+   Android phones without changing any business logic.
+============================================================================= */
+@media (max-width:720px){
+  html{
+    text-rendering:optimizeLegibility!important;
+    -webkit-text-size-adjust:100%!important;
+  }
+  body{
+    overflow-x:hidden!important;
+    overscroll-behavior-x:none!important;
+    background:#f7f8fa!important;
+  }
+  .site-home{
+    overflow:clip!important;
+  }
+
+  /* First screen: less empty hero height, stronger search focus. */
+  .site-home .hero{
+    min-height:unset!important;
+    height:auto!important;
+    margin:0!important;
+    border-radius:0 0 28px 28px!important;
+    overflow:hidden!important;
+  }
+  .site-home .hero-media{
+    position:absolute!important;
+    inset:0!important;
+  }
+  .site-home .hero-image{
+    transform:scale(1.04)!important;
+    object-position:center 42%!important;
+  }
+  .site-home .hero-veil{
+    background:
+      linear-gradient(180deg,rgba(8,19,32,.28) 0%,rgba(8,19,32,.63) 55%,rgba(8,19,32,.86) 100%)!important;
+  }
+  .site-home .hero-inner{
+    position:relative!important;
+    padding:28px 14px 26px!important;
+    min-height:min(700px,calc(100svh - 62px))!important;
+    display:flex!important;
+    flex-direction:column!important;
+    justify-content:flex-end!important;
+    align-items:stretch!important;
+  }
+  .site-home .hero .brand-logo{
+    align-self:center!important;
+    transform:scale(.86)!important;
+    transform-origin:center bottom!important;
+    margin-bottom:4px!important;
+  }
+  .site-home .hero-kicker{
+    margin-top:0!important;
+    font-size:.69rem!important;
+    line-height:1.55!important;
+    text-align:center!important;
+  }
+  .site-home .hero h1{
+    margin-top:3px!important;
+    font-size:clamp(1.72rem,7vw,2.1rem)!important;
+    line-height:1.4!important;
+    text-align:center!important;
+    letter-spacing:-.02em!important;
+  }
+  .site-home .english-name{
+    margin-top:1px!important;
+    font-size:.58rem!important;
+    letter-spacing:.09em!important;
+    opacity:.86!important;
+    text-align:center!important;
+  }
+  .site-home .hero-managed{
+    margin-top:3px!important;
+    font-size:.65rem!important;
+    text-align:center!important;
+  }
+  .site-home .slogan{
+    max-width:31rem!important;
+    margin:7px auto 0!important;
+    font-size:.78rem!important;
+    line-height:1.8!important;
+    text-align:center!important;
+  }
+  .site-home .slogan strong{
+    font-size:.93rem!important;
+  }
+
+  .site-home .hero-search{
+    width:100%!important;
+    margin-top:14px!important;
+    padding:8px!important;
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:7px!important;
+    border:1px solid rgba(255,255,255,.18)!important;
+    border-radius:18px!important;
+    background:rgba(248,250,252,.95)!important;
+    box-shadow:0 18px 40px rgba(0,0,0,.26)!important;
+    backdrop-filter:blur(14px)!important;
+    -webkit-backdrop-filter:blur(14px)!important;
+  }
+  .site-home .hero-search select{
+    width:100%!important;
+    min-height:48px!important;
+    margin:0!important;
+    padding-inline:11px 30px!important;
+    border-radius:11px!important;
+    border:1px solid #dfe4ea!important;
+    background:#fff!important;
+    color:#172033!important;
+    font-size:16px!important;
+    font-weight:750!important;
+    box-shadow:0 1px 2px rgba(15,23,42,.03)!important;
+  }
+  .site-home .hero-search select:first-of-type{
+    grid-column:1 / -1!important;
+  }
+  .site-home .hero-search .search-submit{
+    grid-column:1 / -1!important;
+    min-height:50px!important;
+    margin:0!important;
+    border-radius:12px!important;
+    font-size:.9rem!important;
+    font-weight:850!important;
+    box-shadow:0 8px 18px rgba(154,106,58,.22)!important;
+  }
+
+  .site-home .hero-actions{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:7px!important;
+    margin-top:9px!important;
+  }
+  .site-home .hero-actions .btn-gold,
+  .site-home .hero-actions .btn-ghost{
+    width:100%!important;
+    min-height:48px!important;
+    margin:0!important;
+    border-radius:12px!important;
+    font-size:.78rem!important;
+    font-weight:850!important;
+  }
+  .site-home .hero-actions .floating-call,
+  .site-home .hero-actions .call-menu-trigger{
+    grid-column:1 / -1!important;
+    min-height:46px!important;
+    width:100%!important;
+    border-radius:12px!important;
+  }
+
+  .site-home .hero-intents{
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    overflow-x:auto!important;
+    gap:6px!important;
+    margin-top:9px!important;
+    padding:1px 1px 3px!important;
+    scrollbar-width:none!important;
+    -webkit-overflow-scrolling:touch!important;
+    scroll-snap-type:x proximity!important;
+  }
+  .site-home .hero-intents::-webkit-scrollbar{display:none!important}
+  .site-home .hero-intent{
+    flex:0 0 auto!important;
+    min-height:38px!important;
+    padding:0 11px!important;
+    border:1px solid rgba(255,255,255,.2)!important;
+    border-radius:999px!important;
+    background:rgba(255,255,255,.09)!important;
+    color:#fff!important;
+    font-size:.66rem!important;
+    font-weight:800!important;
+    scroll-snap-align:start!important;
+    backdrop-filter:blur(8px)!important;
+    -webkit-backdrop-filter:blur(8px)!important;
+  }
+  .site-home .hero-intent:active{
+    background:rgba(255,255,255,.18)!important;
+  }
+
+  .site-home .hero-proof{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:5px!important;
+    margin-top:10px!important;
+  }
+  .site-home .hero-proof span{
+    min-width:0!important;
+    min-height:50px!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:1px!important;
+    padding:5px!important;
+    border:1px solid rgba(255,255,255,.14)!important;
+    border-radius:11px!important;
+    background:rgba(7,18,31,.24)!important;
+    color:rgba(255,255,255,.88)!important;
+    font-size:.55rem!important;
+    line-height:1.45!important;
+    text-align:center!important;
+    backdrop-filter:blur(7px)!important;
+    -webkit-backdrop-filter:blur(7px)!important;
+  }
+  .site-home .hero-proof strong{
+    color:#fff!important;
+    font-size:.8rem!important;
+  }
+
+  /* The first stats block becomes a clean 2x2 app card. */
+  .site-home .trust-strip-wrap{
+    position:relative!important;
+    z-index:3!important;
+    margin:-18px 12px 0!important;
+  }
+  .site-home .trust-strip{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:7px!important;
+    padding:8px!important;
+    border:1px solid #e4e7ec!important;
+    border-radius:17px!important;
+    background:rgba(255,255,255,.96)!important;
+    box-shadow:0 12px 26px rgba(15,23,42,.08)!important;
+  }
+  .site-home .trust-stat{
+    min-height:60px!important;
+    padding:7px!important;
+    border:1px solid #eef1f4!important;
+    border-radius:12px!important;
+    background:#fafbfc!important;
+    text-align:center!important;
+  }
+  .site-home .trust-stat strong{
+    display:block!important;
+    color:#101828!important;
+    font-size:1.03rem!important;
+    line-height:1.35!important;
+  }
+  .site-home .trust-stat span{
+    margin-top:1px!important;
+    color:#667085!important;
+    font-size:.59rem!important;
+    line-height:1.5!important;
+  }
+
+  /* Sections: consistent breathing room and app-like cards. */
+  .site-home .section{
+    margin-top:42px!important;
+    padding-inline:12px!important;
+  }
+  .site-home .section-head{
+    margin-bottom:13px!important;
+  }
+  .site-home .section-head .kicker{
+    font-size:.68rem!important;
+  }
+  .site-home .section-head h2{
+    margin-top:4px!important;
+    font-size:1.18rem!important;
+    line-height:1.65!important;
+  }
+  .site-home .section-head p{
+    margin-top:5px!important;
+    font-size:.71rem!important;
+    line-height:1.9!important;
+    color:#667085!important;
+  }
+
+  /* Listing area: cards become single-column with stronger media hierarchy. */
+  .site-home .property-showcase{
+    margin-top:31px!important;
+  }
+  .site-home .property-showcase-cta{
+    display:flex!important;
+    gap:6px!important;
+    overflow-x:auto!important;
+    scrollbar-width:none!important;
+    padding-bottom:2px!important;
+  }
+  .site-home .property-showcase-cta::-webkit-scrollbar{display:none!important}
+  .site-home .property-showcase-cta .text-link{
+    flex:0 0 auto!important;
+    min-height:38px!important;
+    padding:0 10px!important;
+    display:inline-flex!important;
+    align-items:center!important;
+    border:1px solid #e4e7ec!important;
+    border-radius:999px!important;
+    background:#fff!important;
+    font-size:.66rem!important;
+  }
+  .site-home .property-toolbar{
+    margin-top:9px!important;
+    padding:9px!important;
+    border:1px solid #e4e7ec!important;
+    border-radius:15px!important;
+    background:#fff!important;
+    box-shadow:0 5px 14px rgba(15,23,42,.04)!important;
+  }
+  .site-home .property-toolbar-title{
+    min-height:36px!important;
+  }
+  .site-home .property-filters{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:6px!important;
+    margin-top:7px!important;
+  }
+  .site-home .property-filters label:last-of-type{
+    grid-column:1 / -1!important;
+  }
+  .site-home .property-filters select,
+  .site-home .property-filter-button{
+    width:100%!important;
+    min-height:46px!important;
+    border-radius:10px!important;
+    font-size:16px!important;
+  }
+  .site-home .property-filter-button{
+    grid-column:1 / -1!important;
+  }
+  .site-home .property-grid{
+    grid-template-columns:1fr!important;
+    gap:11px!important;
+    margin-top:11px!important;
+  }
+  .site-home .property-card{
+    border-radius:16px!important;
+    overflow:hidden!important;
+    box-shadow:0 8px 22px rgba(15,23,42,.06)!important;
+  }
+  .site-home .property-card-media{
+    height:212px!important;
+  }
+  .site-home .property-card-body{
+    padding:12px 13px 11px!important;
+  }
+  .site-home .property-card-topline{
+    gap:7px!important;
+  }
+  .site-home .property-card-meta{
+    gap:4px!important;
+    overflow:hidden!important;
+  }
+  .site-home .property-card-meta span{
+    white-space:nowrap!important;
+    font-size:.59rem!important;
+  }
+  .site-home .property-card-code{
+    font-size:.58rem!important;
+  }
+  .site-home .property-card h3{
+    margin-top:6px!important;
+    font-size:.87rem!important;
+    line-height:1.75!important;
+  }
+  .site-home .property-card-price{
+    font-size:.82rem!important;
+    line-height:1.75!important;
+  }
+  .site-home .property-card-unit-price{
+    font-size:.61rem!important;
+  }
+  .site-home .property-card-specs{
+    gap:5px!important;
+    margin-top:7px!important;
+    overflow-x:auto!important;
+    scrollbar-width:none!important;
+  }
+  .site-home .property-card-specs::-webkit-scrollbar{display:none!important}
+  .site-home .property-card-specs span{
+    flex:0 0 auto!important;
+    min-height:31px!important;
+    padding:4px 7px!important;
+    border:1px solid #e8ecf1!important;
+    border-radius:8px!important;
+    background:#f8fafc!important;
+    font-size:.59rem!important;
+  }
+  .site-home .property-card-footer{
+    margin-top:8px!important;
+    padding-top:8px!important;
+    border-top:1px solid #eef1f4!important;
+  }
+  .site-home .property-card-actions{
+    padding:8px!important;
+    background:#fbfcfd!important;
+    border-top:1px solid #eef1f4!important;
+  }
+
+  /* Service / property-type shortcuts: 2-column touch grid. */
+  .site-home .service-grid,
+  .site-home .type-grid{
+    grid-template-columns:1fr 1fr!important;
+    gap:8px!important;
+  }
+  .site-home .service-card,
+  .site-home .type-card{
+    min-width:0!important;
+    border-radius:14px!important;
+  }
+  .site-home .service-card-button{
+    min-height:94px!important;
+    padding:10px!important;
+    gap:8px!important;
+    align-items:center!important;
+  }
+  .site-home .service-card-copy{
+    min-width:0!important;
+  }
+  .site-home .service-card-title{
+    font-size:.75rem!important;
+    line-height:1.5!important;
+  }
+  .site-home .service-card-text{
+    margin-top:2px!important;
+    font-size:.59rem!important;
+    line-height:1.6!important;
+  }
+  .site-home .service-card-arrow{
+    display:none!important;
+  }
+  .site-home .type-card img{
+    height:138px!important;
+  }
+  .site-home .type-body{
+    padding:8px!important;
+  }
+  .site-home .type-body strong{
+    font-size:.72rem!important;
+  }
+  .site-home .type-body>span:last-child{
+    font-size:.59rem!important;
+    line-height:1.55!important;
+  }
+
+  /* Keep the floating dock clear of the final page content. */
+  .site-home + .footer{
+    padding-bottom:112px!important;
+  }
+}
+
+/* Android compact devices */
+@media (max-width:390px){
+  .site-home .hero-inner{
+    padding-inline:11px!important;
+    padding-bottom:21px!important;
+  }
+  .site-home .hero h1{
+    font-size:1.58rem!important;
+  }
+  .site-home .hero-search{
+    gap:6px!important;
+    padding:7px!important;
+  }
+  .site-home .hero-search select{
+    min-height:46px!important;
+  }
+  .site-home .hero-proof span{
+    min-height:46px!important;
+    font-size:.51rem!important;
+  }
+  .site-home .section{
+    padding-inline:10px!important;
+  }
+  .site-home .service-grid,
+  .site-home .type-grid{
+    gap:6px!important;
+  }
+  .site-home .service-card-button{
+    min-height:88px!important;
+    padding:8px!important;
+  }
+  .site-home .property-card-media{
+    height:198px!important;
+  }
+}
+
+/* Android landscape */
+@media (max-width:920px) and (orientation:landscape){
+  .site-home .hero-inner{
+    min-height:520px!important;
+    padding-top:22px!important;
+  }
+  .site-home .hero-proof,
+  .site-home .hero-intents{
+    display:none!important;
+  }
+}
