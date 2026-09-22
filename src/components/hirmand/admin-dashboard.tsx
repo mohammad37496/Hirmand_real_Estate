@@ -258,6 +258,7 @@ export function AdminDashboard({
 
   return (
     <div className="admin-dashboard">
+      <style>{`.admin-funnel-row{display:flex;flex-direction:column}`}</style>
       <div className="admin-dashboard-stats">
         <button type="button" className="admin-dashboard-stat" data-tone="red" onClick={onOpenLeads}>
           <span className="admin-dashboard-stat-icon"><Phone size={19} /></span>
