@@ -84,6 +84,71 @@ function StampCard({ stamps, cardNumber }: { stamps: number; cardNumber: number 
   );
 }
 
+const PARTNER_CSS = `
+.admin-partners-wrap{display:flex;flex-direction:column;gap:16px;max-width:1380px;margin:0 auto}
+.admin-partner-create .btn-gold{margin-top:14px}
+.admin-partner-create p{margin:12px 2px 14px;line-height:1.9;font-size:.82rem;color:rgb(0 0 0 / .62)}
+.admin-partner-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;padding:18px 20px}
+.admin-partner-card{display:flex;flex-direction:column;gap:12px;border:1px solid rgb(0 0 0 / .1);border-radius:16px;background:rgb(0 0 0 / .02);padding:15px;transition:border-color .15s,background .15s}
+.admin-partner-card:hover{border-color:#111315}
+.admin-partner-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.admin-partner-card-head h3{margin:5px 0 3px;font-size:.95rem;font-weight:700;color:#111315}
+.admin-partner-card-head p{margin:0;font-size:.76rem;color:rgb(0 0 0 / .56)}
+.admin-partner-code{display:inline-block;padding:2px 9px;border-radius:8px;background:#111315;color:#f7f5ef;font:700 .78rem ui-monospace,monospace;letter-spacing:.06em}
+.admin-partner-status{display:inline-flex;align-items:center;flex-shrink:0;padding:3px 9px;border-radius:999px;font-size:.68rem;font-weight:700;border:1px solid rgb(0 0 0 / .12);background:rgb(0 0 0 / .05);color:#111315}
+.admin-partner-status.status-suspended{background:rgba(150,50,50,.1);border-color:rgba(150,50,50,.3);color:#8f3232}
+.admin-partner-status.status-rejected{background:rgba(150,50,50,.1);border-color:rgba(150,50,50,.3);color:#8f3232}
+.admin-partner-status.status-approved{background:rgba(24,122,88,.1);border-color:rgba(24,122,88,.3);color:#17603f}
+.admin-partner-status.status-pending{background:rgba(154,99,47,.1);border-color:rgba(154,99,47,.32);color:#6f4318}
+.admin-partner-stamp-panel{border:1px solid rgb(0 0 0 / .1);border-radius:13px;background:rgb(0 0 0 / .02);padding:12px}
+.admin-partner-stamp-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.admin-partner-stamp-head .kicker{display:block;font-size:.64rem;color:rgb(0 0 0 / .52);font-weight:700;letter-spacing:.06em;margin-bottom:2px}
+.admin-partner-stamp-head strong{font-size:.82rem;color:#111315}
+.admin-partner-stamp-count{font-size:.7rem;font-weight:700;color:#111315}
+.admin-partner-stamp-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+.admin-partner-stamp{aspect-ratio:1;display:grid;place-items:center;border:1.5px dashed rgb(0 0 0 / .3);border-radius:10px;font-size:.68rem;font-weight:700;color:rgb(0 0 0 / .4)}
+.admin-partner-stamp.is-filled{border-style:solid;border-color:#111315;background:#111315;color:#f7f5ef}
+.admin-partner-stamp-panel small{display:block;margin-top:9px;font-size:.68rem;color:rgb(0 0 0 / .55);line-height:1.7}
+.admin-partner-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.admin-partner-metrics>div{padding:8px 10px;border-radius:10px;background:rgb(0 0 0 / .03)}
+.admin-partner-metrics span{display:block;font-size:.64rem;color:rgb(0 0 0 / .5);margin-bottom:3px}
+.admin-partner-metrics strong{font-size:.8rem;color:#111315}
+.admin-partner-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.admin-partner-credentials{margin-top:16px;border:1px solid rgba(24,122,88,.35);border-radius:14px;background:rgba(24,122,88,.07);padding:14px}
+.admin-partner-credentials>div:first-child small{display:block;font-size:.68rem;color:rgb(0 0 0 / .55)}
+.admin-partner-credentials>div:first-child strong{display:block;font-size:.92rem;margin-top:2px;color:#14503a}
+.admin-partner-credential-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:11px 0}
+.admin-partner-credential-grid button{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid rgb(0 0 0 / .12);border-radius:12px;background:#fff;padding:10px 12px;cursor:pointer;font:inherit;text-align:right;transition:border-color .15s}
+.admin-partner-credential-grid button:hover{border-color:#111315}
+.admin-partner-credential-grid button span{display:flex;align-items:center;gap:5px;font-size:.68rem;color:rgb(0 0 0 / .56)}
+.admin-partner-credential-grid button strong{font:700 .84rem ui-monospace,monospace;color:#111315}
+.admin-partner-credential-grid button svg{color:rgb(0 0 0 / .4);flex-shrink:0}
+.admin-partner-credentials p{margin:0;font-size:.68rem;color:rgb(0 0 0 / .55);line-height:1.7}
+.admin-partner-contract-list{display:flex;flex-direction:column}
+.admin-partner-contract{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 20px;border-bottom:1px solid rgb(0 0 0 / .07);flex-wrap:wrap}
+.admin-partner-contract:last-child{border-bottom:0}
+.admin-partner-contract-main{display:flex;flex-direction:column;gap:3px;min-width:220px}
+.admin-partner-contract-main strong{font-size:.88rem;color:#111315}
+.admin-partner-contract-main span{font-size:.78rem;color:rgb(0 0 0 / .6)}
+.admin-partner-contract-main small{font-size:.7rem;color:rgb(0 0 0 / .48)}
+.admin-partner-contract-code{display:inline-flex;align-items:center;gap:5px;width:max-content;padding:2px 8px;border-radius:8px;background:#111315;color:#f7f5ef;font:700 .72rem ui-monospace,monospace;letter-spacing:.05em}
+.admin-partner-contract-actions{display:flex;gap:8px;flex-wrap:wrap}
+.admin-partner-detail-head-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.admin-partner-digital-card{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:16px;padding:18px 20px}
+.admin-partner-qr{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:14px;align-items:center;border:1px solid rgb(0 0 0 / .1);border-radius:14px;background:rgb(0 0 0 / .02);padding:14px}
+.admin-partner-qr h3{margin:4px 0 6px;font-size:.92rem;color:#111315}
+.admin-partner-qr p{margin:0 0 10px;font-size:.74rem;line-height:1.8;color:rgb(0 0 0 / .58)}
+.admin-partner-qr img{width:150px;height:150px;border-radius:12px;background:#fff;border:1px solid rgb(0 0 0 / .1);justify-self:center}
+.admin-partner-history{border-top:1px solid rgb(0 0 0 / .08)}
+.admin-partner-history .admin-panel-head{padding:14px 20px}
+.admin-partner-history h3{margin:0;font-size:.92rem;font-weight:700}
+.admin-partner-audit-list{display:flex;flex-direction:column;padding:4px 20px 14px}
+.admin-partner-audit-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px dashed rgb(0 0 0 / .08);font-size:.78rem;flex-wrap:wrap}
+.admin-partner-audit-row:last-child{border-bottom:0}
+.admin-partner-audit-row strong{color:#111315;font-size:.78rem}
+.admin-partner-audit-row span{color:rgb(0 0 0 / .55);font-size:.72rem}
+`;
+
 export function AdminPartnerManager() {
   const [partners, setPartners] = useState<PartnerSummary[]>([]);
   const [pending, setPending] = useState<PartnerContract[]>([]);
@@ -343,6 +408,7 @@ export function AdminPartnerManager() {
 
   return (
     <div className="admin-partners-wrap">
+      <style>{PARTNER_CSS}</style>
       <div className="admin-dashboard-grid">
         <section className="admin-panel admin-partner-create">
           <div className="admin-panel-head">

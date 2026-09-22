@@ -1275,7 +1275,7 @@ export function AdminPropertiesPage() {
                 )}
 
                 {propertyHasMore ? (
-                  <div className="admin-properties-load-more">
+                  <div className="admin-properties-load-more" style={{ display: "flex", justifyContent: "center", padding: 18 }}>
                     <button
                       type="button"
                       className="btn-ghost"
@@ -1680,7 +1680,26 @@ export function AdminPropertiesPage() {
           <UsersRound size={20} />
           همکاران
         </button>
-        <Link to="/" className="admin-mobile-site">سایت</Link>
+        <Link
+          to="/"
+          className="admin-mobile-site"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            minHeight: 40,
+            padding: "0 14px",
+            borderRadius: 999,
+            border: "1px solid rgb(255 255 255 / .2)",
+            background: "rgb(255 255 255 / .06)",
+            color: "#f7f5ef",
+            textDecoration: "none",
+            fontSize: ".8rem",
+            fontWeight: 600,
+          }}
+        >
+          سایت
+        </Link>
       </nav>
     </div>
   );
