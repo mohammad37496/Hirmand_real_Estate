@@ -165,8 +165,10 @@ export function AdminDashboard({
         body: JSON.stringify({}),
       });
       if (!response.ok) {
-        const result = (await response.json().catch(() => null)) as { statusMessage?: string } | null;
-        throw new Error(result?.statusMessage || "بارگذاری داشبورد انجام نشد.");
+        const result = (await response.json().catch(() => null)) as
+          | { statusMessage?: string; message?: string }
+          | null;
+        throw new Error(result?.statusMessage || result?.message || "بارگذاری داشبورد انجام نشد.");
       }
       setData((await response.json()) as DashboardData);
       setLastUpdated(new Date());

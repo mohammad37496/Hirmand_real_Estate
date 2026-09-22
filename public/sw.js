@@ -1,4 +1,4 @@
-const CACHE_NAME = "hirmand-shell-v3";
+const CACHE_NAME = "hirmand-shell-v4";
 const APP_SHELL = ["/", "/properties", "/favorites"];
 
 self.addEventListener("install", (event) => {
@@ -35,8 +35,12 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          void caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          // Only cache real pages: caching an error page would serve that error
+          // offline forever, even after the problem is fixed.
+          if (response.ok) {
+            const copy = response.clone();
+            void caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
           return response;
         })
         .catch(() => caches.match(request).then((cached) => cached || caches.match("/"))),

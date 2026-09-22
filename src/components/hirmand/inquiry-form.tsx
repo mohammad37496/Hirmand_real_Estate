@@ -101,9 +101,11 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           note: payload.note,
         }),
       });
-      const result = (await response.json().catch(() => null)) as { success?: boolean; statusMessage?: string } | null;
+      const result = (await response.json().catch(() => null)) as
+        | { success?: boolean; statusMessage?: string; message?: string }
+        | null;
       if (!response.ok || !result?.success) {
-        throw new Error(result?.statusMessage || "ثبت درخواست انجام نشد.");
+        throw new Error(result?.statusMessage || result?.message || "ثبت درخواست انجام نشد.");
       }
       trackAnalyticsEvent("inquiry_submit");
       toast.success("درخواست شما با موفقیت برای تیم هیرمند ثبت شد.");

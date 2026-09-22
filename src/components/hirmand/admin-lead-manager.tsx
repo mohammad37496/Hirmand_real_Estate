@@ -75,7 +75,12 @@ export function AdminLeadManager() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "list" }),
       });
-      if (!response.ok) throw new Error("بارگذاری درخواست‌ها انجام نشد.");
+      if (!response.ok) {
+        const failure = (await response.json().catch(() => null)) as
+          | { statusMessage?: string; message?: string }
+          | null;
+        throw new Error(failure?.statusMessage || failure?.message || "بارگذاری درخواست‌ها انجام نشد.");
+      }
       const data = (await response.json()) as { leads?: Lead[] };
       setLeads(Array.isArray(data.leads) ? data.leads : []);
     } catch (error) {
@@ -97,8 +102,10 @@ export function AdminLeadManager() {
         body: JSON.stringify({ action: "status", id, status }),
       });
       if (!response.ok) {
-        const result = (await response.json().catch(() => null)) as { statusMessage?: string } | null;
-        throw new Error(result?.statusMessage || "تغییر وضعیت انجام نشد.");
+        const result = (await response.json().catch(() => null)) as
+          | { statusMessage?: string; message?: string }
+          | null;
+        throw new Error(result?.statusMessage || result?.message || "تغییر وضعیت انجام نشد.");
       }
       setLeads((prev) => prev.map((lead) => (lead.id === id ? { ...lead, status } : lead)));
     } catch (error) {
@@ -114,7 +121,12 @@ export function AdminLeadManager() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "delete", id }),
       });
-      if (!response.ok) throw new Error("حذف درخواست انجام نشد.");
+      if (!response.ok) {
+        const failure = (await response.json().catch(() => null)) as
+          | { statusMessage?: string; message?: string }
+          | null;
+        throw new Error(failure?.statusMessage || failure?.message || "حذف درخواست انجام نشد.");
+      }
       setLeads((prev) => prev.filter((lead) => lead.id !== id));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حذف درخواست انجام نشد.");
@@ -172,8 +184,10 @@ export function AdminLeadManager() {
         }),
       });
       if (!response.ok) {
-        const result = (await response.json().catch(() => null)) as { statusMessage?: string } | null;
-        throw new Error(result?.statusMessage || "خروجی CSV آماده نشد.");
+        const result = (await response.json().catch(() => null)) as
+          | { statusMessage?: string; message?: string }
+          | null;
+        throw new Error(result?.statusMessage || result?.message || "خروجی CSV آماده نشد.");
       }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);

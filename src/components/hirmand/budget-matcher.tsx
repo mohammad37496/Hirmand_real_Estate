@@ -197,9 +197,10 @@ export function BudgetMatcher() {
       const result = (await response.json().catch(() => null)) as {
         success?: boolean;
         statusMessage?: string;
+        message?: string;
       } | null;
       if (!response.ok || !result?.success) {
-        throw new Error(result?.statusMessage || "ثبت درخواست انجام نشد.");
+        throw new Error(result?.statusMessage || result?.message || "ثبت درخواست انجام نشد.");
       }
       setLeadSaved(true);
       trackAnalyticsEvent("budget_match_contact");

@@ -96,7 +96,12 @@ export function AdminMusicManager() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "list" }),
       });
-      if (!response.ok) throw new Error("بارگذاری آهنگ‌ها انجام نشد.");
+      if (!response.ok) {
+        const failure = (await response.json().catch(() => null)) as
+          | { statusMessage?: string; message?: string }
+          | null;
+        throw new Error(failure?.statusMessage || failure?.message || "بارگذاری آهنگ‌ها انجام نشد.");
+      }
       const data = (await response.json()) as { tracks?: AdminMusicTrack[] };
       setTracks(Array.isArray(data.tracks) ? data.tracks : []);
     } catch (error) {

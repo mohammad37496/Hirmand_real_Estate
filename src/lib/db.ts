@@ -31,9 +31,23 @@ const isVercelRuntime =
   typeof process !== "undefined" &&
   (process.env.VERCEL === "1" || process.env.VERCEL === "true");
 
+/**
+ * PGlite loads a compiled Postgres from its own WASM/data files
+ * (`pglite.wasm`, `pglite.data`). The bundled production server does not ship
+ * those assets, so PGlite can only initialize from source: the dev server, a
+ * CI run with CI=true (which already reports "unconfigured"), or a deployment
+ * that opts in explicitly with PGLITE_DATA_DIR.
+ *
+ * Reporting "unconfigured" there is deliberate: it makes a DATABASE_URL-less
+ * production build degrade the same way a Vercel deployment without a database
+ * does (APIs answer gracefully) instead of failing on every query.
+ */
+const pgliteUsable =
+  Boolean(process.env.PGLITE_DATA_DIR?.trim()) || process.env.NODE_ENV !== "production";
+
 export const dbSource: DbSource = databaseUrl
   ? "neon"
-  : isVercelRuntime || process.env.CI === "true"
+  : isVercelRuntime || process.env.CI === "true" || !pgliteUsable
     ? "unconfigured"
     : "pglite";
 

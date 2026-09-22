@@ -476,8 +476,10 @@ export function AdminPropertiesPage() {
         body: "{}",
       });
       if (!response.ok) {
-        const body = await response.json().catch(() => null) as { statusMessage?: string } | null;
-        throw new Error(body?.statusMessage || "خروجی فایل‌ها آماده نشد.");
+        const body = await response.json().catch(() => null) as
+          | { statusMessage?: string; message?: string }
+          | null;
+        throw new Error(body?.statusMessage || body?.message || "خروجی فایل‌ها آماده نشد.");
       }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);

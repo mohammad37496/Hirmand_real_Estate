@@ -157,8 +157,12 @@ function TrackingPage() {
         credentials: "same-origin",
         body: JSON.stringify({ action: "login", partnerCode: code, pin }),
       });
-      const data = (await response.json().catch(() => null)) as { partner?: PartnerOverview | null; statusMessage?: string } | null;
-      if (!response.ok || !data?.partner) throw new Error(data?.statusMessage || "ورود انجام نشد.");
+      const data = (await response.json().catch(() => null)) as
+        | { partner?: PartnerOverview | null; statusMessage?: string; message?: string }
+        | null;
+      if (!response.ok || !data?.partner) {
+        throw new Error(data?.statusMessage || data?.message || "ورود انجام نشد.");
+      }
       setPartner(data.partner);
       setPin("");
       setMessage("");
@@ -200,8 +204,11 @@ function TrackingPage() {
         createdAt?: string;
         approvedAt?: string | null;
         statusMessage?: string;
+        message?: string;
       } | null;
-      if (!response.ok || !data?.trackingCode) throw new Error(data?.statusMessage || "کد رهگیری پیدا نشد.");
+      if (!response.ok || !data?.trackingCode) {
+        throw new Error(data?.statusMessage || data?.message || "کد رهگیری پیدا نشد.");
+      }
       setLookup({
         trackingCode: data.trackingCode,
         transactionLabel: data.transactionLabel || "—",
@@ -234,8 +241,12 @@ function TrackingPage() {
         credentials: "same-origin",
         body: JSON.stringify({ action: "create", ...contractForm }),
       });
-      const data = (await response.json().catch(() => null)) as { contract?: PartnerContract | null; statusMessage?: string } | null;
-      if (!response.ok || !data?.contract) throw new Error(data?.statusMessage || "ثبت قرارداد انجام نشد.");
+      const data = (await response.json().catch(() => null)) as
+        | { contract?: PartnerContract | null; statusMessage?: string; message?: string }
+        | null;
+      if (!response.ok || !data?.contract) {
+        throw new Error(data?.statusMessage || data?.message || "ثبت قرارداد انجام نشد.");
+      }
 
       setContractForm({ contractReference: "", clientName: "", transactionType: "sell", note: "" });
       setMessage("قرارداد ثبت شد و برای تأیید هیرمند ارسال شد. بعد از تأیید، یک مهر روی کارت شما می‌نشیند.");

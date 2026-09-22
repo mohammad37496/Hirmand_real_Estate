@@ -48,7 +48,12 @@ import {
 } from "./preview";
 
 // Kick (and share) PGLite bootstrap as soon as the auth server module loads.
-void ensureDbReady();
+// The rejection MUST be handled: an unhandled one is fatal to the Node process,
+// which used to take the whole server down (blank site) whenever the database
+// fallback could not initialize. A failed bootstrap degrades to "no database".
+void ensureDbReady().catch((err) => {
+  console.error("[auth] database bootstrap failed; continuing without database", err);
+});
 
 /**
  * Preview secret must outlive module reloads: PGLite (and its session rows) is
