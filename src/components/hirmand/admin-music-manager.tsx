@@ -600,7 +600,7 @@ const MUSIC_ADMIN_CSS = `
 .admin-music-summary strong{font-size:1rem;color:#111315}
 .admin-music-summary small{color:rgb(0 0 0 / .58);font-size:.7rem}
 .admin-music-file-card{display:flex;align-items:center;gap:10px;min-height:62px;padding:10px 14px;border:1px dashed rgb(0 0 0 / .22);border-radius:14px;background:rgb(0 0 0 / .02);cursor:pointer;transition:border-color .15s,background .15s;color:#111315}
-.admin-music-file-card:hover{border-color:rgba(183,123,72,.55);background:rgb(0 0 0 / .045)}
+.admin-music-file-card:hover{border-color:rgba(6,98,76,.55);background:rgb(0 0 0 / .045)}
 .admin-music-file-card.is-selected{border-style:solid;border-color:#111315;background:rgb(0 0 0 / .06)}
 .admin-music-file-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:rgb(0 0 0 / .06);flex:0 0 auto}
 .admin-music-file-copy{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
@@ -635,7 +635,7 @@ const MUSIC_ADMIN_CSS = `
 .admin-music-seek span{color:rgb(0 0 0 / .5);font-size:.68rem;font-variant-numeric:tabular-nums}
 .admin-music-seek input{width:100%;accent-color:#111315}
 .admin-music-active,.admin-music-inactive{display:inline-flex;flex-shrink:0;padding:2px 8px;border-radius:999px;font-size:.68rem;font-weight:700;border:1px solid rgb(0 0 0 / .12)}
-.admin-music-active{background:#111315;color:#f7f5ef}
+.admin-music-active{background:#111315;color:#f4f6f5}
 .admin-music-inactive{background:rgb(0 0 0 / .05);color:rgb(0 0 0 / .55)}
 @media (prefers-reduced-motion:reduce){.admin-music-eq i{animation:none}}
 `;

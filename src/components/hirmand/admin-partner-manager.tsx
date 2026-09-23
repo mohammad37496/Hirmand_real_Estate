@@ -94,12 +94,12 @@ const PARTNER_CSS = `
 .admin-partner-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .admin-partner-card-head h3{margin:5px 0 3px;font-size:.95rem;font-weight:700;color:#111315}
 .admin-partner-card-head p{margin:0;font-size:.76rem;color:rgb(0 0 0 / .56)}
-.admin-partner-code{display:inline-block;padding:2px 9px;border-radius:8px;background:#111315;color:#f7f5ef;font:700 .78rem ui-monospace,monospace;letter-spacing:.06em}
+.admin-partner-code{display:inline-block;padding:2px 9px;border-radius:8px;background:#111315;color:#f4f6f5;font:700 .78rem ui-monospace,monospace;letter-spacing:.06em}
 .admin-partner-status{display:inline-flex;align-items:center;flex-shrink:0;padding:3px 9px;border-radius:999px;font-size:.68rem;font-weight:700;border:1px solid rgb(0 0 0 / .12);background:rgb(0 0 0 / .05);color:#111315}
 .admin-partner-status.status-suspended{background:rgba(150,50,50,.1);border-color:rgba(150,50,50,.3);color:#8f3232}
 .admin-partner-status.status-rejected{background:rgba(150,50,50,.1);border-color:rgba(150,50,50,.3);color:#8f3232}
 .admin-partner-status.status-approved{background:rgba(24,122,88,.1);border-color:rgba(24,122,88,.3);color:#17603f}
-.admin-partner-status.status-pending{background:rgba(154,99,47,.1);border-color:rgba(154,99,47,.32);color:#6f4318}
+.admin-partner-status.status-pending{background:rgba(154,106,0,.1);border-color:rgba(154,106,0,.32);color:#8a5a08}
 .admin-partner-stamp-panel{border:1px solid rgb(0 0 0 / .1);border-radius:13px;background:rgb(0 0 0 / .02);padding:12px}
 .admin-partner-stamp-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
 .admin-partner-stamp-head .kicker{display:block;font-size:.64rem;color:rgb(0 0 0 / .52);font-weight:700;letter-spacing:.06em;margin-bottom:2px}
@@ -107,7 +107,7 @@ const PARTNER_CSS = `
 .admin-partner-stamp-count{font-size:.7rem;font-weight:700;color:#111315}
 .admin-partner-stamp-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
 .admin-partner-stamp{aspect-ratio:1;display:grid;place-items:center;border:1.5px dashed rgb(0 0 0 / .3);border-radius:10px;font-size:.68rem;font-weight:700;color:rgb(0 0 0 / .4)}
-.admin-partner-stamp.is-filled{border-style:solid;border-color:#111315;background:#111315;color:#f7f5ef}
+.admin-partner-stamp.is-filled{border-style:solid;border-color:#111315;background:#111315;color:#f4f6f5}
 .admin-partner-stamp-panel small{display:block;margin-top:9px;font-size:.68rem;color:rgb(0 0 0 / .55);line-height:1.7}
 .admin-partner-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
 .admin-partner-metrics>div{padding:8px 10px;border-radius:10px;background:rgb(0 0 0 / .03)}
@@ -131,7 +131,7 @@ const PARTNER_CSS = `
 .admin-partner-contract-main strong{font-size:.88rem;color:#111315}
 .admin-partner-contract-main span{font-size:.78rem;color:rgb(0 0 0 / .6)}
 .admin-partner-contract-main small{font-size:.7rem;color:rgb(0 0 0 / .48)}
-.admin-partner-contract-code{display:inline-flex;align-items:center;gap:5px;width:max-content;padding:2px 8px;border-radius:8px;background:#111315;color:#f7f5ef;font:700 .72rem ui-monospace,monospace;letter-spacing:.05em}
+.admin-partner-contract-code{display:inline-flex;align-items:center;gap:5px;width:max-content;padding:2px 8px;border-radius:8px;background:#111315;color:#f4f6f5;font:700 .72rem ui-monospace,monospace;letter-spacing:.05em}
 .admin-partner-contract-actions{display:flex;gap:8px;flex-wrap:wrap}
 .admin-partner-detail-head-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .admin-partner-digital-card{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:16px;padding:18px 20px}

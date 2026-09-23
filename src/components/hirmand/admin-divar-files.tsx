@@ -33,7 +33,7 @@ const DIVAR_CSS = `
 /* The admin shell renders on a light surface, so this section uses a dark-on-cream palette. */
 .divar-wrap{display:flex;flex-direction:column;gap:18px;color:#111315}
 .divar-wrap .kicker{color:rgb(0 0 0 / .55)!important;letter-spacing:.02em}
-.divar-hero{position:relative;display:flex;justify-content:space-between;gap:20px;align-items:flex-start;padding:24px;border:1px solid rgba(183,123,72,.26);border-radius:20px;background:linear-gradient(135deg,rgba(183,123,72,.10),rgba(0,0,0,.02))}
+.divar-hero{position:relative;display:flex;justify-content:space-between;gap:20px;align-items:flex-start;padding:24px;border:1px solid rgba(6,98,76,.26);border-radius:20px;background:linear-gradient(135deg,rgba(6,98,76,.10),rgba(0,0,0,.02))}
 .divar-hero h2{margin:4px 0 8px;font-size:26px;letter-spacing:-.01em;color:#111315}
 .divar-hero p{margin:0;color:rgb(0 0 0 / .62);max-width:720px;line-height:1.9;font-size:.86rem}
 .divar-hero-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
@@ -43,15 +43,15 @@ const DIVAR_CSS = `
 .divar-stat-icon{display:grid;place-items:center;width:38px;height:38px;flex:0 0 auto;border-radius:12px;background:rgb(0 0 0 / .05)}
 .divar-stat small{display:block;color:rgb(0 0 0 / .58);margin-bottom:6px;font-size:.74rem}
 .divar-stat strong{font-size:24px;line-height:1.2;font-weight:800;color:#111315}
-.divar-stat.accepted .divar-stat-icon{color:#7a5220;background:rgba(183,123,72,.16)}
+.divar-stat.accepted .divar-stat-icon{color:#04503e;background:rgba(6,98,76,.16)}
 .divar-stat.imported .divar-stat-icon{color:#17603f;background:rgba(24,122,88,.14)}
 .divar-stat.rejected .divar-stat-icon{color:#8f3232;background:rgba(190,70,70,.13)}
 .divar-stat.synced .divar-stat-icon{color:#2f3d63;background:rgba(60,80,140,.12)}
 .divar-toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid rgb(0 0 0 / .08)}
 .divar-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .divar-tab{display:inline-flex;align-items:center;gap:6px;border:1px solid rgb(0 0 0 / .12);background:#fff;color:#111315;border-radius:12px;padding:10px 14px;cursor:pointer;font:inherit;font-size:.82rem;transition:border-color .15s,background .15s,color .15s}
-.divar-tab:hover{border-color:rgba(183,123,72,.5)}
-.divar-tab.is-active{background:#111315;border-color:#111315;color:#f7f5ef}
+.divar-tab:hover{border-color:rgba(6,98,76,.5)}
+.divar-tab.is-active{background:#111315;border-color:#111315;color:#f4f6f5}
 .divar-tab b{font-weight:800}
 .divar-smart-toolbar{display:flex;gap:12px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid rgb(0 0 0 / .08)}
 .divar-search-box{display:flex;align-items:center;gap:9px;flex:1 1 280px;min-width:0;min-height:46px;padding:0 14px;border:1px solid rgb(0 0 0 / .14);border-radius:14px;background:#fff;color:rgb(0 0 0 / .55)}
@@ -65,17 +65,17 @@ const DIVAR_CSS = `
 .divar-toggle input{accent-color:#111315}
 .divar-toolbar-result{display:flex;align-items:center;gap:7px;color:rgb(0 0 0 / .6);font-size:.8rem}
 .divar-toolbar-result strong{color:#111315}
-.divar-toolbar-result button{border:0;background:transparent;color:#7a5220;cursor:pointer;font:inherit;font-size:.78rem;text-decoration:underline}
+.divar-toolbar-result button{border:0;background:transparent;color:#04503e;cursor:pointer;font:inherit;font-size:.78rem;text-decoration:underline}
 .divar-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:18px 20px}
 .divar-card{display:flex;flex-direction:column;border:1px solid rgb(0 0 0 / .1);border-radius:18px;overflow:hidden;background:#fff;transition:border-color .18s,transform .18s}
-.divar-card:hover{border-color:rgba(183,123,72,.45)}
+.divar-card:hover{border-color:rgba(6,98,76,.45)}
 .divar-image{position:relative;aspect-ratio:16/10;background:#0f1114;overflow:hidden}
 .divar-image img{width:100%;height:100%;object-fit:cover;display:block}
 .divar-image-fallback{position:absolute;inset:0;display:grid;place-items:center;color:#6f7276}
 .divar-gallery-strip{position:absolute;inset-inline:0;bottom:0;display:flex;gap:6px;padding:8px;background:linear-gradient(to top,rgba(8,10,12,.82),transparent)}
 .divar-gallery-thumb{width:44px;height:34px;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.22);background:#15181c;padding:0;cursor:pointer;opacity:.7;transition:opacity .15s,border-color .15s}
 .divar-gallery-thumb:hover{opacity:1}
-.divar-gallery-thumb.is-active{opacity:1;border-color:#e8cd8f}
+.divar-gallery-thumb.is-active{opacity:1;border-color:#0a8064}
 .divar-gallery-thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .divar-gallery-more{display:grid;place-items:center;min-width:44px;height:34px;padding:0 8px;border-radius:8px;border:1px dashed rgba(255,255,255,.25);color:#f0e6d4;font-size:.7rem;background:rgba(8,10,12,.6)}
 .divar-status{position:absolute;top:10px;inset-inline-end:10px;display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:6px 10px;background:rgba(8,10,12,.76);font-size:.7rem;font-weight:700}
@@ -86,7 +86,7 @@ const DIVAR_CSS = `
 .divar-title{margin:0;font-size:17px;line-height:1.7;color:#111315}
 .divar-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;color:rgb(0 0 0 / .62);font-size:.78rem}
 .divar-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid rgb(0 0 0 / .12);background:rgb(0 0 0 / .03);border-radius:999px;padding:4px 9px}
-.divar-price{display:flex;gap:12px;flex-wrap:wrap;font-size:.84rem;font-weight:800;color:#7a5220}
+.divar-price{display:flex;gap:12px;flex-wrap:wrap;font-size:.84rem;font-weight:800;color:#04503e}
 .divar-features{display:flex;gap:6px;flex-wrap:wrap}
 .divar-feature{font-size:.72rem;color:rgb(0 0 0 / .68);background:rgb(0 0 0 / .05);border-radius:8px;padding:4px 8px}
 .divar-description{margin:0;color:rgb(0 0 0 / .58);line-height:1.9;font-size:.8rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
@@ -100,7 +100,7 @@ const DIVAR_CSS = `
 @keyframes divar-indeterminate{0%{margin-inline-start:-35%}100%{margin-inline-start:100%}}
 .divar-note,.divar-warning{padding:13px 15px;border-radius:14px;line-height:1.9;font-size:.8rem}
 .divar-note{background:rgba(24,122,88,.07);border:1px solid rgba(24,122,88,.18);color:#14503a}
-.divar-warning{background:rgba(154,99,47,.08);border:1px solid rgba(154,99,47,.2);color:#6f4318}
+.divar-warning{background:rgba(154,106,0,.08);border:1px solid rgba(154,106,0,.2);color:#8a5a08}
 .divar-hosted-badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 8px;font-size:.68rem;font-weight:700;background:rgba(24,122,88,.11);color:#17603f}
 @media (max-width:1080px){.divar-grid{grid-template-columns:1fr}.divar-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:760px){.divar-hero{flex-direction:column}.divar-hero-actions{justify-content:flex-start}.divar-hero h2{font-size:22px}}

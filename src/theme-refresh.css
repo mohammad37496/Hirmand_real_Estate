@@ -1,0 +1,685 @@
+/* ==========================================================================
+   HIRMAND — 2026 re-theme · "Graphite & Emerald"  (loaded LAST, authoritative)
+   --------------------------------------------------------------------------
+   The whole site has been moved off the warm paper + navy/brass system onto:
+     · Graphite ink  #101b17 / dark surfaces #0a1216…#1a2b33
+     · Emerald accent #04453a…#0a8064 (text-safe #06624c) with #6ee7c7 for
+       accents on dark surfaces
+     · Cool porcelain neutrals #f4f6f5 / #eaefed / #e3e9e7
+
+   Sections:
+     1. Tokens      — final values, the previously-undeclared --hr-* tokens of
+                      the properties page, real danger colours, tighter radii.
+     2. Global      — focus, selection, buttons, cards, hairline polish.
+     3. Legacy sweep — re-points old brass/navy literals that sit deeper in
+                      styles.css / theme-pro.css than the editor can reach, and
+                      resets the old black/red marketplace skin that styles.css
+                      scopes onto the property-detail page element.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1 · Tokens
+   -------------------------------------------------------------------------- */
+:root {
+  /* Semantic danger — refinements.css had re-pointed these to brass. */
+  --danger: #b42318;
+  --danger-bg: #fdf0ee;
+
+  /* Tailwind @theme aliases (legacy second @theme block of styles.css). */
+  --color-bg: #f4f6f5;
+  --color-surface: #ffffff;
+  --color-surface-2: #eaefed;
+  --color-fg: #101b17;
+  --color-muted: #55635e;
+  --color-subtle: #8b9792;
+  --color-gold: #06624c;
+  --color-gold-soft: #077056;
+  --color-ink: #ffffff;
+  --color-border: rgba(16, 26, 31, 0.1);
+  --color-gold-line: rgba(6, 98, 76, 0.26);
+
+  /* Properties page (properties-pro.css) — these tokens were never declared
+     anywhere, so every --hr-* value used to be dropped by the browser. */
+  --hr-ink: #101b17;
+  --hr-paper: #f4f6f5;
+  --hr-paper-2: #eaefed;
+  --hr-muted: #55635e;
+  --hr-faint: #8b9792;
+  --hr-line: #e3e9e7;
+  --hr-line-strong: #cfd8d5;
+  --hr-gold: #0a8064;
+
+  /* Tighter, more corporate radius scale. */
+  --r-xs: 8px;
+  --r-sm: 10px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-2xl: 24px;
+
+  /* Legacy aliases — final word. */
+  --gold: #06624c;
+  --gold-soft: #077056;
+  --gold-line: rgba(6, 98, 76, 0.26);
+}
+
+/* --------------------------------------------------------------------------
+   2 · Global polish
+   -------------------------------------------------------------------------- */
+:focus-visible {
+  outline: 2px solid #06624c;
+  outline-offset: 3px;
+}
+
+::selection {
+  background: #06624c;
+  color: #fff;
+}
+
+/* Primary actions — one confident emerald gradient everywhere. */
+.btn-gold {
+  color: #fff;
+  background: linear-gradient(180deg, #0a8064, #066550);
+  border-color: transparent;
+  box-shadow: 0 10px 26px rgba(10, 128, 100, 0.28);
+}
+
+.btn-gold:hover {
+  background: linear-gradient(180deg, #077056, #04503e);
+  box-shadow: 0 14px 30px rgba(10, 128, 100, 0.34);
+  transform: translateY(-1px);
+}
+
+.btn-gold:active {
+  transform: scale(0.97);
+}
+
+/* theme-pro.css gives these four a light-gold hover with higher specificity. */
+.footer .btn-gold:hover,
+.tracking-card .btn-gold:hover,
+.mobile-menu .btn-gold:hover,
+.budget-matcher-hero .btn-gold:hover {
+  background: linear-gradient(180deg, #077056, #04503e);
+  border-color: transparent;
+  box-shadow: 0 14px 30px rgba(10, 128, 100, 0.34);
+}
+
+.btn-ghost {
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(16, 26, 31, 0.12);
+}
+
+.btn-ghost:hover {
+  color: #06624c;
+  border-color: rgba(6, 98, 76, 0.35);
+  background: rgba(10, 128, 100, 0.06);
+}
+
+.header-inquiry,
+.quick-action-primary,
+.floating-call,
+.mobile-menu .mobile-call {
+  color: #fff;
+  background: linear-gradient(180deg, #0a8064, #066550);
+  border-color: transparent;
+  box-shadow: 0 10px 26px rgba(10, 128, 100, 0.28);
+}
+
+/* Cards — consistent elevation + a calm hover lift. */
+.principle-card,
+.service-card,
+.step-card,
+.contact-card,
+.social-link,
+.faq-item,
+.location-card,
+.type-card {
+  box-shadow: var(--el-1);
+}
+
+.principle-card,
+.service-card,
+.step-card,
+.type-card {
+  transition:
+    transform var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease),
+    border-color var(--fast) var(--ease);
+}
+
+.principle-card:hover,
+.service-card:hover,
+.step-card:hover,
+.type-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--el-2);
+  border-color: rgba(6, 98, 76, 0.3);
+}
+
+/* Solid hairlines instead of the dated dashed ones. */
+.tools-switch-heading,
+.commission-guide h3,
+.property-contact-heading,
+.pf-group {
+  border-bottom-style: solid;
+}
+
+.team-socials {
+  border-top-style: solid;
+}
+
+.pf-active {
+  border-style: solid;
+}
+
+.kicker::before {
+  background: linear-gradient(90deg, #0a8064, rgba(10, 128, 100, 0.18));
+}
+
+/* Kicker/icon accents that styles.css still paints crimson or brown. */
+.kicker,
+.hero-kicker,
+.step-num,
+.team-role,
+.footer-links a:hover,
+.property-card-location svg,
+.property-card-details-link,
+.property-related .section-head .kicker {
+  color: #06624c;
+}
+
+/* --------------------------------------------------------------------------
+   3 · Legacy sweep — deep sections of styles.css / theme-pro.css
+   -------------------------------------------------------------------------- */
+
+/* styles.css re-scopes an old black/red marketplace skin onto the detail page
+   element (element-level custom props beat :root) — reset it to the light
+   emerald system that the later layers design for. */
+.property-detail-page {
+  --surface: #ffffff;
+  --surface-2: #eaefed;
+  --fg: #101b17;
+  --muted: #55635e;
+  --subtle: #667469;
+  --gold: #06624c;
+  --gold-soft: #077056;
+  --ink: #ffffff;
+  --line: #e3e9e7;
+  --gold-line: rgba(6, 98, 76, 0.26);
+  color: #101b17;
+  background: #f4f6f5;
+}
+
+/* Property cards & detail leftovers */
+.property-card {
+  border-color: rgba(16, 26, 31, 0.08);
+}
+
+.property-card:hover {
+  border-color: rgba(6, 98, 76, 0.3);
+  box-shadow: 0 20px 42px rgba(16, 26, 31, 0.1);
+}
+
+.property-card-specs {
+  border-top-color: rgba(16, 26, 31, 0.07);
+}
+
+.property-card-meta span + span::before {
+  color: #06624c;
+}
+
+.property-action.is-active {
+  background: rgba(10, 128, 100, 0.14);
+}
+
+.property-price-box {
+  background: linear-gradient(180deg, rgba(10, 128, 100, 0.1), transparent 65%),
+    var(--surface);
+}
+
+.property-price-block > span,
+.property-price-block > small {
+  color: var(--muted);
+}
+
+.property-badge-featured {
+  color: #fff;
+  background: #06624c;
+}
+
+.property-gallery-main,
+.property-gallery-thumb,
+.property-lightbox {
+  background: #101a1f;
+}
+
+.property-gallery-featured {
+  background: #0a8064;
+}
+
+.property-gallery-thumb.is-active {
+  border-color: rgba(10, 128, 100, 0.72);
+  box-shadow: 0 0 0 2px rgba(10, 128, 100, 0.16);
+}
+
+/* Budget matcher */
+.budget-input-wrap:focus-within {
+  box-shadow: 0 0 0 3px rgba(10, 128, 100, 0.1);
+}
+
+.budget-presets button:hover {
+  background: rgba(10, 128, 100, 0.07);
+}
+
+.budget-live-equivalent.is-ready {
+  background: rgba(10, 128, 100, 0.05);
+}
+
+.budget-live-icon {
+  background: rgba(10, 128, 100, 0.1);
+}
+
+.budget-method-row > span {
+  background: rgba(10, 128, 100, 0.07);
+}
+
+.budget-results-count {
+  background: rgba(10, 128, 100, 0.05);
+}
+
+.budget-contact-cta {
+  background: radial-gradient(circle at 90% 0%, rgba(10, 128, 100, 0.09), transparent 42%),
+    rgba(10, 128, 100, 0.035);
+}
+
+.budget-lead-form {
+  background: linear-gradient(135deg, rgba(10, 128, 100, 0.07), transparent 55%),
+    var(--surface);
+}
+
+.budget-empty-icon {
+  background: rgba(10, 128, 100, 0.06);
+}
+
+.budget-matcher-hero-mark {
+  background: radial-gradient(circle at 50% 22%, rgba(10, 128, 100, 0.16), transparent 55%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
+  box-shadow: 0 18px 50px rgba(16, 26, 31, 0.16);
+}
+
+.budget-result-summary > div[data-tone="near"] .budget-summary-icon,
+.budget-tier-badge.tone-near,
+.budget-match-explanation[data-tier="near"] .budget-match-explanation-icon {
+  color: #06624c;
+  background: rgba(10, 128, 100, 0.1);
+}
+
+/* Team / tools */
+.team-profile-link {
+  background: rgba(10, 128, 100, 0.07);
+}
+
+.tools-switch-btn.is-active .tools-switch-icon {
+  background: rgba(10, 128, 100, 0.2);
+}
+
+/* Properties market & map view */
+.properties-market-search:focus-within {
+  border-color: rgba(10, 128, 100, 0.42);
+  box-shadow: 0 0 0 4px rgba(10, 128, 100, 0.1);
+}
+
+.properties-filter-chip {
+  color: #06624c;
+  border-color: rgba(6, 98, 76, 0.32);
+  background: rgba(10, 128, 100, 0.07);
+}
+
+.properties-filter-chip:hover {
+  color: #04453a;
+  border-color: rgba(6, 98, 76, 0.5);
+  background: rgba(10, 128, 100, 0.12);
+}
+
+.properties-view-switch button:hover {
+  border-color: rgba(10, 128, 100, 0.35);
+}
+
+.properties-map-list-item:hover,
+.properties-map-list-item.is-active {
+  background: rgba(10, 128, 100, 0.1);
+}
+
+.properties-map-list-item.is-active {
+  box-shadow: inset -3px 0 0 #6ee7c7;
+}
+
+.properties-map-list-image {
+  color: #6ee7c7;
+}
+
+.properties-map-panel {
+  background: #eaefed;
+}
+
+/* --------------------------------------------------------------------------
+   5 · Final stale-surface sweep — literals past the editor's reach.
+   -------------------------------------------------------------------------- */
+
+/* styles.css scopes its own copper focus ring to .hero-search select at a
+   higher specificity than the shared .field focus rule. */
+.hero-search select:focus {
+  border-color: rgba(6, 98, 76, 0.4) !important;
+  box-shadow: 0 0 0 4px rgba(6, 98, 76, 0.08) !important;
+}
+
+/* The last styles.css layer wins on specificity for element+pseudo focus
+   outlines — re-assert the emerald ring. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(6, 98, 76, 0.64) !important;
+  outline-offset: 2px;
+}
+
+.music-player-error {
+  color: #b42318;
+  background: rgba(180, 35, 24, 0.06);
+  border-color: rgba(180, 35, 24, 0.16);
+}
+
+/* theme-pro.css warm-gold hairlines past the editor's reach. */
+.budget-matcher-eyebrow {
+  border-color: rgba(6, 98, 76, 0.3);
+}
+
+.budget-matcher-eyebrow-dot {
+  box-shadow: 0 0 0 4px rgba(10, 128, 100, 0.22);
+}
+
+.budget-matcher-hero-mark {
+  border-color: rgba(6, 98, 76, 0.26);
+}
+
+/* Shell: header toggles, dock, forms, footer, music */
+.menu-toggle {
+  background: rgba(16, 26, 31, 0.04);
+  border-color: rgba(16, 26, 31, 0.1);
+}
+
+.mobile-menu a:hover,
+.mobile-menu a:focus-visible {
+  background: rgba(10, 128, 100, 0.07);
+}
+
+.hero-search select {
+  background-color: #f7faf9;
+}
+
+.icon-box {
+  background: rgba(10, 128, 100, 0.07);
+}
+
+.chip:hover {
+  border-color: rgba(6, 98, 76, 0.3);
+  background: rgba(10, 128, 100, 0.07);
+}
+
+.field input,
+.field select,
+.field textarea {
+  border-color: rgba(16, 26, 31, 0.1);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: rgba(6, 98, 76, 0.45) !important;
+  box-shadow: 0 0 0 4px rgba(6, 98, 76, 0.1) !important;
+}
+
+.quick-actions {
+  border-color: rgba(16, 26, 31, 0.08);
+  box-shadow: 0 14px 34px rgba(16, 26, 31, 0.1);
+}
+
+.quick-action:hover {
+  background: rgba(16, 26, 31, 0.05);
+}
+
+.quick-action-primary,
+.music-player .music-play {
+  color: #fff;
+  background: linear-gradient(135deg, #0a8064, #06624c);
+}
+
+.property-map-card,
+.properties-index-hero {
+  box-shadow: 0 12px 34px rgba(16, 26, 31, 0.06);
+}
+
+.footer {
+  border-top-color: rgba(16, 26, 31, 0.08);
+}
+
+.footer-social-chip {
+  border-color: rgba(16, 26, 31, 0.1);
+}
+
+.team-social:hover,
+.footer-social-chip:hover {
+  color: #06624c;
+  background: rgba(10, 128, 100, 0.07);
+  border-color: rgba(6, 98, 76, 0.3);
+}
+
+.music-player button:hover,
+.music-track.is-active {
+  background: rgba(10, 128, 100, 0.07);
+}
+
+.hirmand-toast {
+  background: #f7faf9 !important;
+  border-color: rgba(6, 98, 76, 0.3) !important;
+  color: #101b17 !important;
+}
+
+/* --------------------------------------------------------------------------
+   4 · Final-layer sweep — styles.css ends with two more full design layers
+   (a crimson marketplace skin, then "warm ivory / deep navy / copper").
+   They are the last words inside styles.css, so every token and shell surface
+   they own is re-asserted here, after every other sheet.
+   -------------------------------------------------------------------------- */
+:root {
+  --bg: #f4f6f5;
+  --surface: #ffffff;
+  --surface-2: #eaefed;
+  --fg: #101b17;
+  --muted: #55635e;
+  --subtle: #8b9792;
+  --gold: #06624c;
+  --gold-soft: #077056;
+  --ink: #ffffff;
+  --line: rgba(16, 26, 31, 0.1);
+  --gold-line: rgba(6, 98, 76, 0.26);
+  --shadow: 0 22px 55px rgba(16, 26, 31, 0.1);
+  /* --font is intentionally untouched: Vazirmatn stays the final word. */
+}
+
+/* The marketplace layer paints html/body near-black — re-light both. */
+html,
+body {
+  background: #f4f6f5;
+  color: #101b17;
+}
+
+/* Nav / menu glass — the final layer pours warm ivory; cool it to porcelain. */
+.site-nav {
+  background: rgba(246, 248, 247, 0.72);
+  border-bottom-color: rgba(16, 26, 31, 0.06);
+}
+
+.site-nav.is-scrolled {
+  background: rgba(246, 248, 247, 0.92);
+  border-bottom-color: var(--line);
+  box-shadow: 0 8px 30px rgba(16, 26, 31, 0.06);
+}
+
+.mobile-menu {
+  background: rgba(247, 250, 249, 0.98);
+  border-bottom-color: var(--line);
+}
+
+/* Hero veil: graphite falloff + faint emerald bloom (was navy + copper). */
+.hero-veil {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(10, 18, 22, 0.12) 0%,
+      rgba(10, 18, 22, 0.44) 45%,
+      rgba(10, 18, 22, 0.84) 78%,
+      #0a1216 100%
+    ),
+    radial-gradient(ellipse at 50% 10%, rgba(6, 98, 76, 0.16), transparent 48%);
+}
+
+/* Search + field glass — drop the ivory cast, keep crisp white inputs. */
+.hero-search {
+  background: rgba(247, 250, 249, 0.92);
+}
+
+.hero-search select,
+.field input,
+.field select,
+.field textarea {
+  background: #ffffff;
+  color: var(--fg);
+}
+
+/* Used selectors the dark marketplace layer still owns alone. */
+.properties-reset-btn {
+  color: var(--fg);
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+.properties-market-search input {
+  color: var(--fg);
+}
+
+/* Deep one-line literals below the editor's reach in styles.css. */
+.properties-view-switch button.is-active {
+  background: rgba(10, 128, 100, 0.12);
+  border-color: rgba(10, 128, 100, 0.45);
+  color: #06624c;
+}
+
+.footer-cta {
+  background: rgba(10, 128, 100, 0.08);
+}
+
+select option {
+  color: #101b17;
+}
+
+summary:focus-visible {
+  outline: 3px solid rgba(6, 98, 76, 0.64);
+  outline-offset: 2px;
+}
+
+/* theme-pro.css brass borders/eyebrows past the editor's reach. */
+.faq-item summary span {
+  border-color: rgba(6, 98, 76, 0.16);
+}
+
+.budget-matcher-eyebrow {
+  background: rgba(10, 128, 100, 0.16);
+}
+
+.budget-step {
+  border-color: rgba(6, 98, 76, 0.16);
+}
+
+.budget-matcher-footnote {
+  border-color: rgba(6, 98, 76, 0.14);
+}
+
+.budget-results-count {
+  border-color: rgba(6, 98, 76, 0.16);
+}
+
+.tools-eyebrow {
+  border-color: rgba(6, 98, 76, 0.16);
+}
+
+.tools-switch-note {
+  border-color: rgba(6, 98, 76, 0.12);
+}
+
+/* --------------------------------------------------------------------------
+   6. Budget matcher hairlines — the last warm-paper leftovers
+   `styles.css` paints these three surfaces with warm ivory hairlines
+   (rgba(244,239,230,…)) that live past the editor's reach, so they are
+   re-pointed here to the cool porcelain line used everywhere else.
+   -------------------------------------------------------------------------- */
+.budget-input-wrap {
+  border-color: rgba(244, 246, 245, 0.1);
+}
+
+.budget-presets button {
+  border-color: rgba(244, 246, 245, 0.07);
+}
+
+.budget-side-lines {
+  border-bottom-color: rgba(244, 246, 245, 0.06);
+}
+
+/* --------------------------------------------------------------------------
+   7. Interaction states — copper focus rings and gold hovers.
+   `styles.css` paints focus rings and form focus with the old copper
+   (rgba(192,138,42,…) / rgba(138,94,20,…)). Those selectors are element-qualified
+   (`button:focus-visible`, `input:focus`), so they out-specify the bare
+   `:focus-visible` rule in section 2 and must be repeated here at equal
+   specificity to win on load order.
+   -------------------------------------------------------------------------- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.btn-gold:focus-visible,
+.btn-ghost:focus-visible {
+  outline: 2px solid #06624c;
+  outline-offset: 3px;
+}
+
+/* The same rules in `styles.css` carry `!important`, so these must too. */
+input:focus,
+select:focus,
+textarea:focus,
+.hero-search select:focus,
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: #06624c !important;
+  /* `outline` is suppressed here, so this ring IS the focus indicator —
+     keep it strong enough to read as one on porcelain surfaces. */
+  box-shadow: 0 0 0 4px rgba(6, 98, 76, 0.18) !important;
+  outline: none;
+}
+
+.mobile-menu a:hover,
+.mobile-menu a:focus-visible {
+  color: #06624c;
+}
+
+/* Social chips: `styles.css` still tints these with the retired crimson. */
+.footer-social-chip:hover,
+.social-link:hover .social-badge,
+.consultant-profile-social:hover,
+.team-social:hover {
+  border-color: rgba(6, 98, 76, 0.48) !important;
+  color: #077056 !important;
+  background: rgba(6, 98, 76, 0.06) !important;
+}

@@ -22,26 +22,26 @@
 
 /* Legacy "black & crimson" block re-pointed to navy + brass */
 :root {
-  --gold: #1a3a55;
-  --gold-soft: #a8761f;
-  --gold-line: rgba(138, 94, 20, 0.26);
+  --gold: #06624c;
+  --gold-soft: #077056;
+  --gold-line: rgba(6, 98, 76, 0.26);
 }
 
 body {
   background:
-    radial-gradient(circle at 50% -10%, rgba(192, 138, 42, 0.10), transparent 30%),
+    radial-gradient(circle at 50% -10%, rgba(10, 128, 100, 0.10), transparent 30%),
     var(--bg);
 }
 
 .danger-btn {
-  border-color: rgb(138 94 20 / 28%);
+  border-color: rgb(6 98 76 / 28%);
   color: var(--brass-700);
-  background: rgb(138 94 20 / 6%);
+  background: rgb(6 98 76 / 6%);
 }
 
 .admin-property-tags span {
   color: var(--brass-700);
-  background: rgb(138 94 20 / 10%);
+  background: rgb(6 98 76 / 10%);
 }
 
 .form-error {
@@ -51,12 +51,12 @@ body {
 /* Crimson hero / surfaces → navy veils */
 .hero-veil {
   background:
-    linear-gradient(180deg, rgba(15, 23, 39, 0.12) 0%, rgba(15, 23, 39, 0.44) 45%, rgba(15, 23, 39, 0.84) 78%, #0f1727 100%),
-    radial-gradient(ellipse at 50% 10%, rgba(192, 138, 42, 0.18), transparent 48%);
+    linear-gradient(180deg, rgba(10, 18, 22, 0.12) 0%, rgba(10, 18, 22, 0.44) 45%, rgba(10, 18, 22, 0.84) 78%, #0a1216 100%),
+    radial-gradient(ellipse at 50% 10%, rgba(10, 128, 100, 0.18), transparent 48%);
 }
 
 .hero-inner::after {
-  background: radial-gradient(ellipse at 50% 8%, rgba(192, 138, 42, 0.18), transparent 44%);
+  background: radial-gradient(ellipse at 50% 8%, rgba(10, 128, 100, 0.18), transparent 44%);
 }
 
 /* Buttons, icon boxes and cards → brass */
@@ -64,8 +64,8 @@ body {
 .header-inquiry,
 .quick-action-primary,
 .floating-call {
-  background: linear-gradient(180deg, #d1a04d, var(--brass-500));
-  box-shadow: 0 10px 26px rgba(192, 138, 42, 0.28);
+  background: linear-gradient(180deg, #0a7f63, var(--brass-500));
+  box-shadow: 0 10px 26px rgba(10, 128, 100, 0.28);
 }
 
 .btn-gold:hover,
@@ -73,7 +73,7 @@ body {
 .quick-action-primary:hover,
 .floating-call:hover {
   background: linear-gradient(180deg, var(--brass-500), var(--brass-600));
-  border-color: rgb(138 94 20 / 48%);
+  border-color: rgb(6 98 76 / 48%);
 }
 
 .icon-box,
@@ -83,8 +83,8 @@ body {
 .service-card-arrow,
 .faq-item summary span {
   color: var(--brass-700);
-  background: rgba(192, 138, 42, 0.10);
-  border-color: rgba(138, 94, 20, 0.26);
+  background: rgba(10, 128, 100, 0.10);
+  border-color: rgba(6, 98, 76, 0.26);
 }
 
 .icon-box svg,
@@ -101,18 +101,18 @@ body {
 /* Interactive states that used crimson */
 .properties-view-switch button.is-active {
   color: #fff;
-  background: rgb(192 138 42 / 22%);
-  border-color: rgb(138 94 20 / 52%);
+  background: rgb(10 128 100 / 22%);
+  border-color: rgb(6 98 76 / 52%);
 }
 
 .properties-filter-chip {
   color: var(--brass-800);
   background: var(--brass-100);
-  border-color: rgb(138 94 20 / 34%);
+  border-color: rgb(6 98 76 / 34%);
 }
 
 .property-card:hover {
-  border-color: rgb(192 138 42 / 42%);
+  border-color: rgb(10 128 100 / 42%);
 }
 
 .property-badge-discount {
@@ -126,7 +126,7 @@ body {
 
 .property-detail-summary {
   background:
-    linear-gradient(180deg, rgba(192, 138, 42, 0.08), transparent 35%),
+    linear-gradient(180deg, rgba(10, 128, 100, 0.08), transparent 35%),
     var(--card);
 }
 
@@ -139,8 +139,8 @@ body {
 }
 
 .property-price-block {
-  background: rgba(192, 138, 42, 0.07);
-  border-color: rgba(138, 94, 20, 0.26);
+  background: rgba(10, 128, 100, 0.07);
+  border-color: rgba(6, 98, 76, 0.26);
 }
 
 .property-contact-heading,
@@ -150,12 +150,12 @@ body {
 
 .property-source-badge {
   background: var(--brass-100);
-  border-color: rgb(138 94 20 / 26%);
+  border-color: rgb(6 98 76 / 26%);
 }
 
 .property-gallery-thumb.is-active {
   border-color: var(--brass-600);
-  box-shadow: 0 0 0 2px rgba(192, 138, 42, 0.18);
+  box-shadow: 0 0 0 2px rgba(10, 128, 100, 0.18);
 }
 
 .property-gallery-featured {
@@ -170,7 +170,7 @@ body {
 
 .properties-map-list-item:hover,
 .properties-map-list-item.is-active {
-  background: rgba(192, 138, 42, 0.09);
+  background: rgba(10, 128, 100, 0.09);
 }
 
 .properties-map-list-item.is-active {
@@ -178,15 +178,15 @@ body {
 }
 
 .music-player-error {
-  border-color: rgb(138 94 20 / 22%);
-  background: rgb(192 138 42 / 16%);
+  border-color: rgb(6 98 76 / 22%);
+  background: rgb(10 128 100 / 16%);
   color: var(--navy-950);
 }
 
 .budget-form-badge {
   color: var(--brass-800);
   background: var(--brass-100);
-  border-color: rgb(138 94 20 / 20%);
+  border-color: rgb(6 98 76 / 20%);
 }
 
 .partner-lookup-result strong[data-status="rejected"] {
@@ -207,7 +207,7 @@ body {
   overflow: hidden;
   padding: 30px;
   background:
-    radial-gradient(circle at 88% -20%, rgb(192 138 42 / 14%), transparent 46%),
+    radial-gradient(circle at 88% -20%, rgb(10 128 100 / 14%), transparent 46%),
     linear-gradient(150deg, var(--card), var(--card-2));
   border: 1px solid var(--line);
   border-radius: var(--r-xl);
@@ -245,7 +245,7 @@ body {
 .tools-header-badge {
   padding: 10px 16px;
   background: var(--navy-100);
-  border: 1px solid rgb(38 80 111 / 18%);
+  border: 1px solid rgb(55 82 92 / 18%);
   box-shadow: var(--el-1);
 }
 
@@ -322,16 +322,16 @@ body {
   width: 40px;
   height: 40px;
   flex: 0 0 40px;
-  background: linear-gradient(150deg, var(--brass-100), rgb(192 138 42 / 20%));
-  border: 1px solid rgb(138 94 20 / 16%);
+  background: linear-gradient(150deg, var(--brass-100), rgb(10 128 100 / 20%));
+  border: 1px solid rgb(6 98 76 / 16%);
   border-radius: var(--r-sm);
   color: var(--brass-700);
   transition: color var(--fast) var(--ease);
 }
 
 .tools-switch-btn.is-active .tools-switch-icon {
-  background: rgb(192 138 42 / 26%);
-  border-color: rgb(226 196 140 / 34%);
+  background: rgb(10 128 100 / 26%);
+  border-color: rgb(110 231 199 / 34%);
   color: var(--brass-300);
 }
 
@@ -440,7 +440,7 @@ body {
   gap: 16px;
   padding: 22px;
   background:
-    linear-gradient(180deg, rgb(192 138 42 / 6%), transparent 38%),
+    linear-gradient(180deg, rgb(10 128 100 / 6%), transparent 38%),
     var(--card-2);
   border: 1px solid var(--line-2);
   border-radius: var(--r-md);
@@ -533,7 +533,7 @@ body {
 
 .split-bar {
   height: 12px;
-  box-shadow: inset 0 0 0 1px rgb(11 26 43 / 8%);
+  box-shadow: inset 0 0 0 1px rgb(16 26 31 / 8%);
 }
 
 .split-legend {
@@ -635,7 +635,7 @@ body {
 
 /* Icon-only action buttons in the compact dock */
 .music-compact-actions button {
-  color: rgb(247 237 218 / 72%);
+  color: rgb(224 245 239 / 72%);
 }
 
 .music-secondary-controls > button {
@@ -821,9 +821,9 @@ body:has(.music-player.is-hidden) .floating-call-menu {
   gap: 6px;
   padding: 18px 20px;
   background:
-    linear-gradient(135deg, rgb(192 138 42 / 14%), rgb(192 138 42 / 5%)),
+    linear-gradient(135deg, rgb(10 128 100 / 14%), rgb(10 128 100 / 5%)),
     var(--card-2);
-  border: 1px solid rgb(138 94 20 / 28%);
+  border: 1px solid rgb(6 98 76 / 28%);
   border-radius: var(--r-lg);
   box-shadow: var(--el-1);
 }
@@ -907,7 +907,7 @@ body:has(.music-player.is-hidden) .floating-call-menu {
   padding: 8px;
   box-sizing: border-box;
   background: var(--brass-100);
-  border: 1px solid rgb(138 94 20 / 16%);
+  border: 1px solid rgb(6 98 76 / 16%);
   border-radius: var(--r-xs);
   color: var(--brass-700);
 }
@@ -943,7 +943,7 @@ body:has(.music-player.is-hidden) .floating-call-menu {
   height: 20px;
   flex: 0 0 4px;
   border-radius: var(--r-pill);
-  background: linear-gradient(180deg, #d1a04d, var(--brass-600));
+  background: linear-gradient(180deg, #0a7f63, var(--brass-600));
 }
 
 .property-detail-body p,
@@ -983,7 +983,7 @@ body:has(.music-player.is-hidden) .floating-call-menu {
   gap: 10px;
   padding: 14px 16px;
   background: var(--brass-100);
-  border: 1px solid rgb(138 94 20 / 22%);
+  border: 1px solid rgb(6 98 76 / 22%);
   border-radius: var(--r-md);
   color: var(--brass-800);
 }

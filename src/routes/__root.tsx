@@ -10,6 +10,7 @@ import themeProPagesCss from "../theme-pro-pages.css?url";
 import mobileCss from "../mobile.css?url";
 import refinementsCss from "../refinements.css?url";
 import uiClarityCss from "../ui-clarity.css?url";
+import themeRefreshCss from "../theme-refresh.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -21,7 +22,7 @@ export const Route = createRootRoute({
       },
       { title: SITE.title },
       { name: "description", content: SITE.description },
-      { name: "theme-color", content: "#0b1a2b" },
+      { name: "theme-color", content: "#101a1f" },
       { name: "color-scheme", content: "light" },
       { name: "author", content: SITE.nameFa },
       { name: "referrer", content: "strict-origin-when-cross-origin" },
@@ -42,6 +43,7 @@ export const Route = createRootRoute({
       { rel: "stylesheet", href: mobileCss },
       { rel: "stylesheet", href: refinementsCss },
       { rel: "stylesheet", href: uiClarityCss },
+      { rel: "stylesheet", href: themeRefreshCss },
     ],
   }),
   component: RootDocument,
