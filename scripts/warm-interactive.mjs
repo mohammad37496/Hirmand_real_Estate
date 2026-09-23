@@ -1,6 +1,7 @@
 import { chromium } from "playwright";
 
-const BASE = "http://127.0.0.1:8080";
+// Point at the dev server by default; set QA_BASE to audit the built preview.
+const BASE = process.env.QA_BASE || "http://127.0.0.1:8080";
 const browser = await chromium.launch();
 
 const isWarm = (s) => {

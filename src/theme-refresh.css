@@ -85,6 +85,8 @@
 }
 
 .btn-gold:hover {
+  /* `styles.css` re-declares a warm white (#fffaf2) for this hover only. */
+  color: #ffffff;
   background: linear-gradient(180deg, #077056, #04503e);
   box-shadow: 0 14px 30px rgba(10, 128, 100, 0.34);
   transform: translateY(-1px);
@@ -99,6 +101,7 @@
 .tracking-card .btn-gold:hover,
 .mobile-menu .btn-gold:hover,
 .budget-matcher-hero .btn-gold:hover {
+  color: #ffffff;
   background: linear-gradient(180deg, #077056, #04503e);
   border-color: transparent;
   box-shadow: 0 14px 30px rgba(10, 128, 100, 0.34);
@@ -632,6 +635,7 @@ summary:focus-visible {
 }
 
 .budget-side-lines {
+  border-top-color: var(--line);
   border-bottom-color: rgba(244, 246, 245, 0.06);
 }
 
@@ -682,4 +686,29 @@ textarea:focus,
   border-color: rgba(6, 98, 76, 0.48) !important;
   color: #077056 !important;
   background: rgba(6, 98, 76, 0.06) !important;
+}
+
+/* --------------------------------------------------------------------------
+   8. Late styles.css literals (the block around line 6980+).
+   That block loads after the layers above and repaints a handful of surfaces
+   with warm paper values, overriding the cool tokens they were built on.
+   -------------------------------------------------------------------------- */
+.property-card-media {
+  background: var(--surface-2);
+}
+
+.budget-money-card {
+  border-color: rgba(244, 246, 245, 0.08);
+}
+
+.budget-live-equivalent {
+  border-color: rgba(244, 246, 245, 0.09);
+}
+
+.budget-live-equivalent.is-ready {
+  background: rgba(6, 98, 76, 0.05);
+}
+
+.budget-form-badge {
+  background: rgba(6, 98, 76, 0.07);
 }

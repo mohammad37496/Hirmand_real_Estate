@@ -1,7 +1,8 @@
 import { chromium } from "playwright";
 import { mkdirSync, writeFileSync } from "node:fs";
 
-const BASE = "http://127.0.0.1:8080";
+// Point at the dev server by default; set QA_BASE to audit the built preview.
+const BASE = process.env.QA_BASE || "http://127.0.0.1:8080";
 mkdirSync("screenshots", { recursive: true });
 
 function auditWarm() {
@@ -78,6 +79,22 @@ async function run(prefix, ctxOpts, routes) {
         await page.evaluate((y) => window.scrollTo(0, y), r.scroll);
         await page.waitForTimeout(600);
       }
+      // Guard against auditing an error/blank page: if the route did not
+      // actually render content, "0 warm colours" would be a false pass.
+      const health = await page.evaluate(() => {
+        const t = (document.body.innerText || "").replace(/\s+/g, " ").trim();
+        const vis = [...document.querySelectorAll("body *")].filter((el) => {
+          const r = el.getBoundingClientRect();
+          const cs = getComputedStyle(el);
+          return r.width > 4 && r.height > 4 && cs.display !== "none" && cs.visibility !== "hidden";
+        }).length;
+        return { textLen: t.length, visibleEls: vis, title: document.title };
+      });
+      e.health = health;
+      // /admin intentionally renders only a small login gate, so keep the bar low.
+      if (health.textLen < 60 || health.visibleEls < 8) {
+        out.errors.push(`${prefix} ${r.route} DID NOT RENDER (textLen=${health.textLen}, els=${health.visibleEls})`);
+      }
       e.warm = await page.evaluate(auditWarm);
     } catch (err) {
       e.error = err.message;
@@ -108,7 +125,8 @@ writeFileSync("screenshots/warm-audit.json", JSON.stringify(out, null, 2));
 
 for (const r of out.routes) {
   const keys = r.warm ? Object.keys(r.warm) : [];
-  console.log(`\n=== ${r.prefix}-${r.name} ${r.route}  warmKinds=${keys.length}`);
+  const h = r.health || {};
+  console.log(`\n=== ${r.prefix}-${r.name} ${r.route}  warmKinds=${keys.length}  [text=${h.textLen} els=${h.visibleEls}]`);
   for (const k of keys.sort((a, b) => r.warm[b].count - r.warm[a].count)) {
     const w = r.warm[k];
     console.log(`  ${String(w.count).padStart(4)}x  ${k}\n        e.g. ${w.samples.join(", ")}`);
