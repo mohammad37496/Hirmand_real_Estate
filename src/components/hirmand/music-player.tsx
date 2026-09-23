@@ -719,28 +719,28 @@ export function MusicPlayer() {
 }
 
 const MUSIC_PLAYER_CSS = `
-.music-player-launcher{position:fixed;inset-inline-end:18px;bottom:max(18px,env(safe-area-inset-bottom));z-index:91;display:none;align-items:center;gap:9px;max-width:min(360px,calc(100vw - 36px));min-height:48px;padding:8px 14px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(18,26,39,.92);color:#f6f3ea;box-shadow:0 16px 40px rgba(0,0,0,.26);backdrop-filter:blur(18px);cursor:pointer;font-weight:700}.music-player-launcher.is-visible{display:inline-flex}.music-player-launcher span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.music-player.is-hidden{display:none!important}@media(max-width:680px){.music-player-launcher{inset-inline-end:10px;max-width:calc(100vw - 20px);min-height:46px;padding-inline:12px}}
+.music-player-launcher{position:fixed;inset-inline-end:18px;bottom:max(18px,env(safe-area-inset-bottom));z-index:91;display:none;align-items:center;gap:9px;max-width:min(360px,calc(100vw - 36px));min-height:48px;padding:8px 14px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(16,26,31,.94);color:#f4f6f5;box-shadow:0 16px 40px rgba(0,0,0,.26);backdrop-filter:blur(18px);cursor:pointer;font-weight:700}.music-player-launcher.is-visible{display:inline-flex}.music-player-launcher span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.music-player.is-hidden{display:none!important}@media(max-width:680px){.music-player-launcher{inset-inline-end:10px;max-width:calc(100vw - 20px);min-height:46px;padding-inline:12px}}
 .music-player .music-rail{position:relative;display:flex;align-items:center;min-width:0}
 .music-player .music-rail-buffer{position:absolute;inset-inline-start:0;top:50%;height:4px;border-radius:999px;background:rgba(255,255,255,.22);transform:translateY(-50%);pointer-events:none}
 .music-player .music-rail .music-progress{position:relative;z-index:1;width:100%;background:transparent}
-.music-player .music-rail .music-progress::-webkit-slider-runnable-track{background:linear-gradient(90deg,#c89461 0 var(--music-progress,0%),transparent var(--music-progress,0%) 100%)!important}
+.music-player .music-rail .music-progress::-webkit-slider-runnable-track{background:linear-gradient(90deg,#0a8064 0 var(--music-progress,0%),transparent var(--music-progress,0%) 100%)!important}
 .music-player .music-rail .music-progress::-moz-range-track{background:transparent!important}
-.music-player .music-rail .music-progress::-webkit-slider-thumb{width:13px;height:13px;border-radius:50%;background:#f6e3cb;border:2px solid #b87945;box-shadow:0 2px 6px rgba(0,0,0,.35);-webkit-appearance:none;appearance:none;margin-top:-4.5px}
-.music-player .music-rail .music-progress::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:#f6e3cb;border:2px solid #b87945}
+.music-player .music-rail .music-progress::-webkit-slider-thumb{width:13px;height:13px;border-radius:50%;background:#e0f5ee;border:2px solid #06624c;box-shadow:0 2px 6px rgba(0,0,0,.35);-webkit-appearance:none;appearance:none;margin-top:-4.5px}
+.music-player .music-rail .music-progress::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:#e0f5ee;border:2px solid #06624c}
 .music-player .music-spin{animation:music-player-spin 1s linear infinite}
 @keyframes music-player-spin{to{transform:rotate(360deg)}}
 .music-player .music-cover.is-spinning img,
 .music-player .music-cover.is-spinning>span{animation:music-cover-pulse 2.4s ease-in-out infinite}
 @keyframes music-cover-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 .music-player .music-bars{display:inline-flex;align-items:flex-end;gap:2px;height:15px}
-.music-player .music-bars i{width:3px;border-radius:2px;background:#e1ba8b}
+.music-player .music-bars i{width:3px;border-radius:2px;background:#0a8064}
 .music-player.is-playing .music-bars i{animation:music-bars 1s ease-in-out infinite}
 .music-player .music-bars i:nth-child(1){height:55%;animation-delay:-.25s}
 .music-player .music-bars i:nth-child(2){height:100%}
 .music-player .music-bars i:nth-child(3){height:42%;animation-delay:-.5s}
 @keyframes music-bars{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
 .music-player .music-live-badge{display:none;align-items:center;justify-content:center;width:35px;height:35px;border-radius:11px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.05);opacity:.45}
-.music-player .music-live-badge.is-live{display:inline-flex;opacity:1;border-color:rgba(200,148,97,.34);background:rgba(200,148,97,.12)}
+.music-player .music-live-badge.is-live{display:inline-flex;opacity:1;border-color:rgba(6,98,76,.34);background:rgba(6,98,76,.12)}
 .music-player .music-track-play{color:rgba(23,32,51,.35);justify-self:center}
 @media (prefers-reduced-motion:reduce){
   .music-player .music-bars i,
