@@ -43,6 +43,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
   const [consultant, setConsultant] = useState<(typeof TEAM)[number]["id"]>(TEAM[0].id);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,6 +84,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
+    if (submitting) return;
     if (!name.trim()) {
       setError("نام را وارد کنید.");
       return;
@@ -116,6 +118,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       consultant: selected.name,
       note: note.trim(),
     };
+    setSubmitting(true);
     try {
       const response = await fetch("/api/leads", {
         method: "POST",
@@ -143,6 +146,8 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "ثبت درخواست انجام نشد.");
       return;
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -275,8 +280,8 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
         </p>
       ) : null}
       <div className="form-actions">
-        <button type="submit" className="btn-gold">
-          ثبت درخواست
+        <button type="submit" className="btn-gold" disabled={submitting} aria-busy={submitting}>
+          {submitting ? "در حال ثبت…" : "ثبت درخواست"}
         </button>
         <a
           className={cn("btn-ghost")}
