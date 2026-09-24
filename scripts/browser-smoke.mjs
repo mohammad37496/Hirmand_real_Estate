@@ -271,15 +271,15 @@ try {
 
   const routeFailures = routeChecks.filter((item) => !item.ok);
   if (routeFailures.length) {
-    viewports.desktop.pageErrors.push(
+    viewports["desktop-1920"].pageErrors.push(
       ...routeFailures.map((item) => `route smoke failed: ${item.url} [${item.status}]`),
     );
   }
   if (!musicApiCheck.ok) {
-    viewports.desktop.pageErrors.push(`music API smoke failed: [${musicApiCheck.status}]`);
+    viewports["desktop-1920"].pageErrors.push(`music API smoke failed: [${musicApiCheck.status}]`);
   }
   if (!propertyNavigationCheck.ok) {
-    viewports.desktop.pageErrors.push(
+    viewports["desktop-1920"].pageErrors.push(
       propertyNavigationCheck.attempted
         ? `property detail navigation smoke failed: ${propertyNavigationCheck.status || propertyNavigationCheck.error || "unknown"}`
         : "property detail navigation smoke skipped: no published property card is available in this environment",
