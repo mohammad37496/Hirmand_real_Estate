@@ -667,83 +667,7 @@ export function PropertyDetailView({
             <Gallery images={images} title={property.title} featured={isFeaturedActive(property)} />
           </div>
 
-          <div className="property-detail-summary">
-            <header className="property-detail-summary-head">
-              <div className="property-detail-hero-row">
-                <div className="property-status-group">
-                  <span className="property-status-badge">
-                    {TX_LABEL[property.transactionType]}
-                  </span>
-                  <span className="property-type-badge">
-                    {TYPE_LABEL[property.propertyType]}
-                  </span>
-                </div>
-                <span className="property-file-code">
-                  کد فایل {property.id.slice(-6).toLocaleUpperCase("fa-IR")}
-                </span>
-              </div>
 
-              {property.featured ? (
-                <div className="property-featured-note">فایل ویژه هیرمند</div>
-              ) : null}
-
-              <h1>{property.title}</h1>
-
-              <p className="property-detail-meta">
-                <MapPinned size={17} aria-hidden="true" />
-                <span>
-                  {property.neighborhood}
-                  {property.address ? ` · ${property.address}` : ""}
-                </span>
-              </p>
-
-              <div className="property-price-block">
-                <span>قیمت فایل</span>
-                <strong dir="rtl" className="property-price-value">{primaryPrice(property)}</strong>
-                {property.price && property.areaM2 && (property.transactionType === "buy" || property.transactionType === "sell") ? (
-                  <small className="property-price-per-m2">
-                    قیمت تقریبی هر متر: <strong>{unitPrice(property.price, property.areaM2)} تومان</strong>
-                  </small>
-                ) : null}
-                {property.deposit || property.rent ? (
-                  <small>
-                    {property.deposit ? `رهن ${money(property.deposit)}` : ""}
-                    {property.deposit && property.rent ? " · " : ""}
-                    {property.rent ? `اجاره ${money(property.rent)}` : ""}
-                  </small>
-                ) : null}
-              </div>
-
-              <div className="property-primary-contact" aria-label="تماس سریع با مشاور">
-                <a
-                  className="property-primary-contact-call"
-                  href={`tel:${property.contactPhone}`}
-                  onClick={() => trackAnalyticsEvent("call_click", property.slug)}
-                >
-                  <Phone size={18} aria-hidden="true" />
-                  <span>تماس سریع</span>
-                </a>
-                <a
-                  className="property-primary-contact-whatsapp"
-                  href={whatsappLink(property.contactPhone, property.title)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
-                >
-                  <MessageCircle size={18} aria-hidden="true" />
-                  <span>واتساپ</span>
-                </a>
-              </div>
-
-              <div className="property-tools-heading">
-                <span>ابزارهای فایل</span>
-                <span>ذخیره، اشتراک، چاپ و مقایسه</span>
-              </div>
-              <PropertyActions property={property} />
-            </header>
-
-            <ConsultantCard property={property} />
-          </div>
         </section>
 
         <section className="property-detail-content">
@@ -768,6 +692,84 @@ export function PropertyDetailView({
                 <div><Warehouse size={18} /><span><small>انباری</small><strong>{property.storage ? "دارد" : "ندارد"}</strong></span></div>
               </div>
             </section>
+
+            <div className="property-detail-summary">
+              <header className="property-detail-summary-head">
+                <div className="property-detail-hero-row">
+                  <div className="property-status-group">
+                    <span className="property-status-badge">
+                      {TX_LABEL[property.transactionType]}
+                    </span>
+                    <span className="property-type-badge">
+                      {TYPE_LABEL[property.propertyType]}
+                    </span>
+                  </div>
+                  <span className="property-file-code">
+                    کد فایل {property.id.slice(-6).toLocaleUpperCase("fa-IR")}
+                  </span>
+                </div>
+
+                {property.featured ? (
+                  <div className="property-featured-note">فایل ویژه هیرمند</div>
+                ) : null}
+
+                <h1>{property.title}</h1>
+
+                <p className="property-detail-meta">
+                  <MapPinned size={17} aria-hidden="true" />
+                  <span>
+                    {property.neighborhood}
+                    {property.address ? ` · ${property.address}` : ""}
+                  </span>
+                </p>
+
+                <div className="property-price-block">
+                  <span>قیمت فایل</span>
+                  <strong dir="rtl" className="property-price-value">{primaryPrice(property)}</strong>
+                  {property.price && property.areaM2 && (property.transactionType === "buy" || property.transactionType === "sell") ? (
+                    <small className="property-price-per-m2">
+                      قیمت تقریبی هر متر: <strong>{unitPrice(property.price, property.areaM2)} تومان</strong>
+                    </small>
+                  ) : null}
+                  {property.deposit || property.rent ? (
+                    <small>
+                      {property.deposit ? `رهن ${money(property.deposit)}` : ""}
+                      {property.deposit && property.rent ? " · " : ""}
+                      {property.rent ? `اجاره ${money(property.rent)}` : ""}
+                    </small>
+                  ) : null}
+                </div>
+
+                <div className="property-primary-contact" aria-label="تماس سریع با مشاور">
+                  <a
+                    className="property-primary-contact-call"
+                    href={`tel:${property.contactPhone}`}
+                    onClick={() => trackAnalyticsEvent("call_click", property.slug)}
+                  >
+                    <Phone size={18} aria-hidden="true" />
+                    <span>تماس سریع</span>
+                  </a>
+                  <a
+                    className="property-primary-contact-whatsapp"
+                    href={whatsappLink(property.contactPhone, property.title)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
+                  >
+                    <MessageCircle size={18} aria-hidden="true" />
+                    <span>واتساپ</span>
+                  </a>
+                </div>
+
+                <div className="property-tools-heading">
+                  <span>ابزارهای فایل</span>
+                  <span>ذخیره، اشتراک، چاپ و مقایسه</span>
+                </div>
+                <PropertyActions property={property} />
+              </header>
+
+              <ConsultantCard property={property} />
+            </div>
 
             <section className="property-detail-body" aria-labelledby="property-description-title">
               <div className="property-section-heading">
