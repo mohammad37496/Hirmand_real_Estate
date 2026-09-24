@@ -228,11 +228,36 @@ function FilterGroup({ title, hint, children }: { title: string; hint?: string; 
   return (
     <section className="pf-group">
       <h3 className="pf-group-title">
-        {title}
+        <span>{title}</span>
         {hint ? <small>{hint}</small> : null}
       </h3>
       <div className="pf-group-body">{children}</div>
     </section>
+  );
+}
+
+function FilterDisclosure({
+  title,
+  hint,
+  count,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  count?: string;
+  children: ReactNode;
+}) {
+  return (
+    <details className="pf-fold">
+      <summary>
+        <span>
+          <strong>{title}</strong>
+          {hint ? <small>{hint}</small> : null}
+        </span>
+        <b>{count ?? "بیشتر"}</b>
+      </summary>
+      <div className="pf-fold-body">{children}</div>
+    </details>
   );
 }
 
@@ -354,7 +379,7 @@ function PropertiesIndexPage() {
     if (sort !== "newest") params.set("sort", sort);
     const query = params.toString();
     window.history.replaceState({}, "", query ? `/properties?${query}` : "/properties");
-  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, parkingOnly, elevatorOnly, storageOnly, specFilters, sort]);
+  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, minBathrooms, minFloor, maxFloor, minTotalFloors, maxTotalFloors, minBuiltYear, maxBuiltYear, parkingOnly, elevatorOnly, storageOnly, specFilters, featureSearch, featuredOnly, hasImagesOnly, hasLocationOnly, sort]);
 
   useEffect(() => {
     if (!urlReady || skipInitialFetch.current) {
@@ -388,6 +413,10 @@ function PropertiesIndexPage() {
         elevatorOnly,
         storageOnly,
         specFilters,
+        featureSearch,
+        featuredOnly,
+        hasImagesOnly,
+        hasLocationOnly,
         sort,
         0,
       );
@@ -894,189 +923,264 @@ function PropertiesIndexPage() {
               </button>
             </div>
 
-            <FilterGroup title="نوع معامله">
-              <div className="pf-chips">
-                <button
-                  type="button"
-                  className={`pf-chip${transactionType ? "" : " is-active"}`}
-                  onClick={() => setTransactionType("")}
-                >
-                  همه
-                </button>
-                {SERVICES.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={`pf-chip${transactionType === item.id ? " is-active" : ""}`}
-                    onClick={() => setTransactionType(transactionType === item.id ? "" : (item.id as PropertyTransaction))}
-                  >
-                    {item.title}
-                  </button>
-                ))}
-              </div>
-            </FilterGroup>
 
-            <FilterGroup title="نوع ملک">
-              <div className="pf-chips">
-                <button
-                  type="button"
-                  className={`pf-chip${propertyType ? "" : " is-active"}`}
-                  onClick={() => setPropertyType("")}
-                >
-                  همه
-                </button>
-                {PROPERTY_TYPE_OPTIONS.map((item) => (
-                  <button
-                    key={item.value}
-                    type="button"
-                    className={`pf-chip${propertyType === item.value ? " is-active" : ""}`}
-                    onClick={() => setPropertyType(propertyType === item.value ? "" : item.value)}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+            <div className="pf-filter-overview">
+              <div>
+                <strong>فیلترهای فایل</strong>
+                <small>
+                  {activeFilterCount ? fa(activeFilterCount) + " فیلتر فعال" : "فیلترهای اصلی را انتخاب کنید"}
+                </small>
               </div>
-            </FilterGroup>
+              {activeFilterCount ? (
+                <button type="button" onClick={resetFilters}>پاک‌کردن همه</button>
+              ) : null}
+            </div>
 
-            <FilterGroup title="محله" hint={`${fa(NEIGHBORHOOD_NAMES.length)} محله`}>
-              <label className="pf-field">
-                <span className="sr-only">انتخاب محله</span>
-                <select className="pf-select" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)}>
-                  <option value="">همه محله‌ها</option>
-                  {NEIGHBORHOOD_NAMES.map((item) => (
-                    <option key={item} value={item}>{item}</option>
+            <div className="pf-filter-primary">
+              <FilterGroup title="نوع معامله">
+                <div className="pf-chips">
+                  <button
+                    type="button"
+                    className={"pf-chip" + (transactionType ? "" : " is-active")}
+                    onClick={() => setTransactionType("")}
+                  >
+                    همه
+                  </button>
+                  {SERVICES.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={"pf-chip" + (transactionType === item.id ? " is-active" : "")}
+                      onClick={() => setTransactionType(transactionType === item.id ? "" : (item.id as PropertyTransaction))}
+                    >
+                      {item.title}
+                    </button>
                   ))}
-                </select>
-              </label>
-            </FilterGroup>
+                </div>
+              </FilterGroup>
 
-            <FilterGroup title="متراژ" hint="متر مربع">
-              <div className="pf-range">
-                <label className="pf-field">
-                  <span>از</span>
-                  <input inputMode="numeric" value={minArea} onChange={(e) => setMinArea(e.target.value)} placeholder="۸۰" />
-                </label>
-                <i aria-hidden="true">—</i>
-                <label className="pf-field">
-                  <span>تا</span>
-                  <input inputMode="numeric" value={maxArea} onChange={(e) => setMaxArea(e.target.value)} placeholder="۲۵۰" />
-                </label>
-              </div>
-            </FilterGroup>
+              <FilterGroup title="نوع ملک">
+                <div className="pf-chips">
+                  <button
+                    type="button"
+                    className={"pf-chip" + (propertyType ? "" : " is-active")}
+                    onClick={() => setPropertyType("")}
+                  >
+                    همه
+                  </button>
+                  {PROPERTY_TYPE_OPTIONS.map((item) => (
+                    <button
+                      key={item.value}
+                      type="button"
+                      className={"pf-chip" + (propertyType === item.value ? " is-active" : "")}
+                      onClick={() => setPropertyType(propertyType === item.value ? "" : item.value)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </FilterGroup>
 
-            <FilterGroup title="بازه قیمت" hint="تومان">
-              <div className="pf-range">
+              <FilterGroup title="محله" hint={fa(NEIGHBORHOOD_NAMES.length) + " محله"}>
                 <label className="pf-field">
-                  <span>از</span>
-                  <input inputMode="numeric" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} placeholder="۰" />
+                  <span className="sr-only">انتخاب محله</span>
+                  <select className="pf-select" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)}>
+                    <option value="">همه محله‌ها</option>
+                    {NEIGHBORHOOD_NAMES.map((item) => (
+                      <option key={item} value={item}>{item}</option>
+                    ))}
+                  </select>
                 </label>
-                <i aria-hidden="true">—</i>
-                <label className="pf-field">
-                  <span>تا</span>
-                  <input inputMode="numeric" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="نامحدود" />
-                </label>
-              </div>
-            </FilterGroup>
+              </FilterGroup>
 
-            <FilterGroup title="اتاق‌ها و ساختمان" hint="فیلترهای دقیق‌تر">
-              <div className="pf-range">
-                <label className="pf-field">
-                  <span>حداقل خواب</span>
-                  <input inputMode="numeric" value={minBedrooms} onChange={(e) => setMinBedrooms(e.target.value)} placeholder="۲" />
-                </label>
-                <label className="pf-field">
-                  <span>حداقل حمام</span>
-                  <input inputMode="numeric" value={minBathrooms} onChange={(e) => setMinBathrooms(e.target.value)} placeholder="۱" />
-                </label>
-              </div>
-              <div className="pf-range">
-                <label className="pf-field"><span>از طبقه</span><input inputMode="numeric" value={minFloor} onChange={(e) => setMinFloor(e.target.value)} placeholder="همکف" /></label>
-                <i aria-hidden="true">—</i>
-                <label className="pf-field"><span>تا طبقه</span><input inputMode="numeric" value={maxFloor} onChange={(e) => setMaxFloor(e.target.value)} placeholder="۲۰" /></label>
-              </div>
-              <div className="pf-range">
-                <label className="pf-field"><span>از تعداد طبقات</span><input inputMode="numeric" value={minTotalFloors} onChange={(e) => setMinTotalFloors(e.target.value)} placeholder="۱" /></label>
-                <i aria-hidden="true">—</i>
-                <label className="pf-field"><span>تا تعداد طبقات</span><input inputMode="numeric" value={maxTotalFloors} onChange={(e) => setMaxTotalFloors(e.target.value)} placeholder="۱۰" /></label>
-              </div>
-              <div className="pf-range">
-                <label className="pf-field"><span>سال ساخت از</span><input inputMode="numeric" value={minBuiltYear} onChange={(e) => setMinBuiltYear(e.target.value)} placeholder="۱۳۹۵" /></label>
-                <i aria-hidden="true">—</i>
-                <label className="pf-field"><span>سال ساخت تا</span><input inputMode="numeric" value={maxBuiltYear} onChange={(e) => setMaxBuiltYear(e.target.value)} placeholder="۱۴۰۵" /></label>
-              </div>
-            </FilterGroup>
+              <div className="pf-compact-ranges">
+                <FilterGroup title="متراژ" hint="متر مربع">
+                  <div className="pf-range">
+                    <label className="pf-field">
+                      <span>از</span>
+                      <input inputMode="numeric" value={minArea} onChange={(e) => setMinArea(e.target.value)} placeholder="۸۰" />
+                    </label>
+                    <i aria-hidden="true">—</i>
+                    <label className="pf-field">
+                      <span>تا</span>
+                      <input inputMode="numeric" value={maxArea} onChange={(e) => setMaxArea(e.target.value)} placeholder="۲۵۰" />
+                    </label>
+                  </div>
+                </FilterGroup>
 
-            <FilterGroup title="ویژگی‌های فایل" hint="امکانات سفارشی ثبت‌شده توسط ادمین">
+                <FilterGroup title="قیمت" hint="تومان">
+                  <div className="pf-range">
+                    <label className="pf-field">
+                      <span>از</span>
+                      <input inputMode="numeric" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} placeholder="۰" />
+                    </label>
+                    <i aria-hidden="true">—</i>
+                    <label className="pf-field">
+                      <span>تا</span>
+                      <input inputMode="numeric" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="نامحدود" />
+                    </label>
+                  </div>
+                </FilterGroup>
+              </div>
+            </div>
+
+            <FilterDisclosure
+              title="اتاق‌ها و ساختمان"
+              hint="خواب، حمام، طبقه و سال ساخت"
+              count={(minBedrooms || minBathrooms || minFloor || maxFloor || minTotalFloors || maxTotalFloors || minBuiltYear || maxBuiltYear) ? "فعال" : "انتخاب"}
+            >
+              <div className="pf-fold-grid">
+                <div className="pf-range">
+                  <label className="pf-field">
+                    <span>حداقل خواب</span>
+                    <input inputMode="numeric" value={minBedrooms} onChange={(e) => setMinBedrooms(e.target.value)} placeholder="۲" />
+                  </label>
+                  <label className="pf-field">
+                    <span>حداقل حمام</span>
+                    <input inputMode="numeric" value={minBathrooms} onChange={(e) => setMinBathrooms(e.target.value)} placeholder="۱" />
+                  </label>
+                </div>
+                <div className="pf-range">
+                  <label className="pf-field">
+                    <span>از طبقه</span>
+                    <input inputMode="numeric" value={minFloor} onChange={(e) => setMinFloor(e.target.value)} placeholder="۰" />
+                  </label>
+                  <i aria-hidden="true">—</i>
+                  <label className="pf-field">
+                    <span>تا طبقه</span>
+                    <input inputMode="numeric" value={maxFloor} onChange={(e) => setMaxFloor(e.target.value)} placeholder="۲۰" />
+                  </label>
+                </div>
+                <div className="pf-range">
+                  <label className="pf-field">
+                    <span>از تعداد طبقات</span>
+                    <input inputMode="numeric" value={minTotalFloors} onChange={(e) => setMinTotalFloors(e.target.value)} placeholder="۱" />
+                  </label>
+                  <i aria-hidden="true">—</i>
+                  <label className="pf-field">
+                    <span>تا تعداد طبقات</span>
+                    <input inputMode="numeric" value={maxTotalFloors} onChange={(e) => setMaxTotalFloors(e.target.value)} placeholder="۱۰" />
+                  </label>
+                </div>
+                <div className="pf-range">
+                  <label className="pf-field">
+                    <span>سال ساخت از</span>
+                    <input inputMode="numeric" value={minBuiltYear} onChange={(e) => setMinBuiltYear(e.target.value)} placeholder="۱۳۹۵" />
+                  </label>
+                  <i aria-hidden="true">—</i>
+                  <label className="pf-field">
+                    <span>سال ساخت تا</span>
+                    <input inputMode="numeric" value={maxBuiltYear} onChange={(e) => setMaxBuiltYear(e.target.value)} placeholder="۱۴۰۵" />
+                  </label>
+                </div>
+              </div>
+            </FilterDisclosure>
+
+            <FilterDisclosure
+              title="امکانات سریع"
+              hint="فیلترهای پرکاربرد"
+              count={(parkingOnly || elevatorOnly || storageOnly || featuredOnly || hasImagesOnly || hasLocationOnly) ? "فعال" : "انتخاب"}
+            >
+              <div className="pf-switch-grid">
+                <label className="pf-switch"><span>پارکینگ‌دار</span><input type="checkbox" checked={parkingOnly} onChange={(e) => setParkingOnly(e.target.checked)} /></label>
+                <label className="pf-switch"><span>آسانسوردار</span><input type="checkbox" checked={elevatorOnly} onChange={(e) => setElevatorOnly(e.target.checked)} /></label>
+                <label className="pf-switch"><span>انباری‌دار</span><input type="checkbox" checked={storageOnly} onChange={(e) => setStorageOnly(e.target.checked)} /></label>
+                <label className="pf-switch"><span>فایل ویژه</span><input type="checkbox" checked={featuredOnly} onChange={(e) => setFeaturedOnly(e.target.checked)} /></label>
+                <label className="pf-switch"><span>دارای عکس</span><input type="checkbox" checked={hasImagesOnly} onChange={(e) => setHasImagesOnly(e.target.checked)} /></label>
+                <label className="pf-switch"><span>دارای موقعیت روی نقشه</span><input type="checkbox" checked={hasLocationOnly} onChange={(e) => setHasLocationOnly(e.target.checked)} /></label>
+              </div>
+            </FilterDisclosure>
+
+            <FilterDisclosure
+              title="ویژگی‌های تکمیلی"
+              hint="ویژگی‌های سفارشی ثبت‌شده برای فایل"
+              count={featureSearch.trim() ? "فعال" : "انتخاب"}
+            >
               <label className="pf-field">
-                <span>جست‌وجو در ویژگی‌های تکمیلی</span>
+                <span>جست‌وجو در ویژگی‌ها</span>
                 <input value={featureSearch} onChange={(e) => setFeatureSearch(e.target.value)} placeholder="مثلاً نورگیر، بازسازی‌شده، خوش‌نقشه" />
               </label>
-            </FilterGroup>
+            </FilterDisclosure>
 
-            <FilterGroup title="وضعیت و امکانات پایه">
-              <label className="pf-switch"><span>فقط فایل ویژه</span><input type="checkbox" checked={featuredOnly} onChange={(e) => setFeaturedOnly(e.target.checked)} /></label>
-              <label className="pf-switch"><span>فقط دارای عکس</span><input type="checkbox" checked={hasImagesOnly} onChange={(e) => setHasImagesOnly(e.target.checked)} /></label>
-              <label className="pf-switch"><span>فقط دارای موقعیت روی نقشه</span><input type="checkbox" checked={hasLocationOnly} onChange={(e) => setHasLocationOnly(e.target.checked)} /></label>
-              <label className="pf-switch"><span>فقط پارکینگ‌دار</span><input type="checkbox" checked={parkingOnly} onChange={(e) => setParkingOnly(e.target.checked)} /></label>
-              <label className="pf-switch"><span>فقط آسانسوردار</span><input type="checkbox" checked={elevatorOnly} onChange={(e) => setElevatorOnly(e.target.checked)} /></label>
-              <label className="pf-switch"><span>فقط انباری‌دار</span><input type="checkbox" checked={storageOnly} onChange={(e) => setStorageOnly(e.target.checked)} /></label>
-            </FilterGroup>
-
-            <section className={`pf-spec-filter${specFilters.length ? " has-selection" : ""}`} aria-labelledby="pf-spec-title">
-              <div className="pf-spec-filter-head">
-                <div>
-                  <strong id="pf-spec-title">همه امکانات و مشخصات فایل</strong>
-                  <small>۹۴ گزینه جزئی در ۶ گروه؛ همه گزینه‌ها همیشه قابل مشاهده و انتخاب هستند.</small>
+            <details className={"pf-fold pf-spec-fold" + (specFilters.length ? " has-selection" : "")}>
+              <summary>
+                <span>
+                  <strong>امکانات و مشخصات دقیق</strong>
+                  <small>۹۴ گزینه در ۶ گروه؛ برای کاربرانی که فیلتر دقیق‌تری می‌خواهند</small>
+                </span>
+                <b>{specFilters.length ? fa(specFilters.length) + " انتخاب" : "مشاهده"}</b>
+              </summary>
+              <div className="pf-fold-body">
+                <div className="pf-spec-toolbar">
+                  <label className="pf-spec-search">
+                    <Search size={15} aria-hidden="true" />
+                    <input
+                      value={specQuery}
+                      onChange={(event) => setSpecQuery(event.target.value)}
+                      placeholder="مثلاً تراس، استخر، MDF..."
+                      aria-label="جست‌وجو در امکانات و مشخصات"
+                    />
+                    {specQuery ? (
+                      <button type="button" aria-label="پاک کردن جست‌وجوی امکانات" onClick={() => setSpecQuery("")}>
+                        <X size={13} />
+                      </button>
+                    ) : null}
+                  </label>
+                  {specFilters.length ? (
+                    <button type="button" className="pf-spec-clear" onClick={() => setSpecFilters([])}>
+                      پاک‌کردن انتخاب‌ها
+                    </button>
+                  ) : null}
                 </div>
-                <span>{specFilters.length ? `${fa(specFilters.length)} انتخاب` : "بدون انتخاب"}</span>
+
+                <div className="pf-spec-groups">
+                  {SPEC_GROUPS.map((group) => {
+                    const allOptions = SPEC_FILTER_OPTIONS.filter((item) => item.group === group);
+                    const query = specQuery.trim().toLocaleLowerCase();
+                    const options = query
+                      ? allOptions.filter((item) => item.label.toLocaleLowerCase().includes(query))
+                      : allOptions;
+                    const selectedCount = allOptions.filter((item) => specFilters.includes(item.value)).length;
+                    return (
+                      <details className="pf-spec-subgroup" key={group} open={Boolean(query) || selectedCount > 0}>
+                        <summary>
+                          <span>{group}</span>
+                          <small>{selectedCount ? fa(selectedCount) + " انتخاب" : fa(allOptions.length) + " گزینه"}</small>
+                        </summary>
+                        {options.length ? (
+                          <div className="pf-spec-options">
+                            {options.map((item) => {
+                              const active = specFilters.includes(item.value);
+                              return (
+                                <button
+                                  key={item.value}
+                                  type="button"
+                                  className={"pf-spec-option" + (active ? " is-active" : "")}
+                                  onClick={() => toggleSpecFilter(item.value)}
+                                  aria-pressed={active}
+                                >
+                                  <span className="pf-spec-option-mark" aria-hidden="true">{active ? "✓" : ""}</span>
+                                  <span>{item.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="pf-spec-empty">موردی با این عبارت پیدا نشد.</p>
+                        )}
+                      </details>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="pf-spec-toolbar">
-                <label className="pf-spec-search">
-                  <Search size={15} aria-hidden="true" />
-                  <input
-                    value={specQuery}
-                    onChange={(event) => setSpecQuery(event.target.value)}
-                    placeholder="جست‌وجو در امکانات؛ مثلاً تراس، استخر، MDF..."
-                    aria-label="جست‌وجو در امکانات و مشخصات"
-                  />
-                  {specQuery ? <button type="button" aria-label="پاک کردن جست‌وجوی امکانات" onClick={() => setSpecQuery("")}><X size={13} /></button> : null}
-                </label>
-                {specFilters.length ? <button type="button" className="pf-spec-clear" onClick={() => setSpecFilters([])}>پاک‌کردن انتخاب‌ها</button> : null}
-              </div>
-              <div className="pf-spec-groups">
-                {SPEC_GROUPS.map((group) => {
-                  const allOptions = SPEC_FILTER_OPTIONS.filter((item) => item.group === group);
-                  const query = specQuery.trim().toLocaleLowerCase();
-                  const options = query ? allOptions.filter((item) => item.label.toLocaleLowerCase().includes(query)) : allOptions;
-                  const selectedCount = allOptions.filter((item) => specFilters.includes(item.value)).length;
-                  return (
-                    <section className="pf-spec-filter-group" key={group}>
-                      <div className="pf-spec-filter-group-title">
-                        <span>{group}</span>
-                        <small>{selectedCount ? `${fa(selectedCount)} انتخاب` : `${fa(allOptions.length)} گزینه`}</small>
-                      </div>
-                      {options.length ? (
-                        <div className="pf-spec-options">
-                          {options.map((item) => {
-                            const active = specFilters.includes(item.value);
-                            return (
-                              <button key={item.value} type="button" className={`pf-spec-option${active ? " is-active" : ""}`} onClick={() => toggleSpecFilter(item.value)} aria-pressed={active}>
-                                <span className="pf-spec-option-mark" aria-hidden="true">{active ? "✓" : ""}</span>
-                                <span>{item.label}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ) : <p className="pf-spec-empty">موردی با این عبارت پیدا نشد.</p>}
-                    </section>
-                  );
-                })}
-              </div>
-            </section>
+            </details>
 
             <div className="pf-sidebar-foot">
               <button type="button" className="pf-reset" onClick={resetFilters}>
                 <RotateCcw size={15} /> پاک‌کردن فیلترها
+              </button>
+              <button type="button" className="pf-show-results" onClick={() => setMobileFiltersOpen(false)}>
+                نمایش {fa(total)} فایل
               </button>
             </div>
           </aside>
