@@ -6,6 +6,7 @@ import {
   setCookie,
 } from "h3";
 import { dbSource, getSql } from "@/lib/db";
+import { enforceRateLimit } from "@/lib/rate-limit.server";
 
 const COOKIE_NAME = "hirmand_visitor_id";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
@@ -61,6 +62,12 @@ function normalizeAcquisition(
 
 export default defineEventHandler(async (event) => {
   if (dbSource === "unconfigured") return { ok: true, tracked: false };
+  if (!(await enforceRateLimit(event, { scope: "analytics", limit: 180, windowSeconds: 60 }))) {
+    throw createError({
+      statusCode: 429,
+      statusMessage: "تعداد درخواست‌های ثبت بازدید زیاد است. کمی بعد دوباره تلاش کنید.",
+    });
+  }
 
   const body = (await readBody(event)) as {
     path?: unknown;
