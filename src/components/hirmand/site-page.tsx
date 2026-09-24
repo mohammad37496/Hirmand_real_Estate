@@ -170,7 +170,6 @@ function Hero() {
         <p className="hero-kicker">{SITE.kicker}</p>
         <h1>{SITE.nameFa}</h1>
         <p className="english-name">{SITE.nameEn}</p>
-        <p className="hero-managed">{SITE.managedBy}</p>
         <p className="slogan">
           <strong>{SITE.sloganStrong}</strong>
           <span>{SITE.sloganRest}</span>
