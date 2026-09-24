@@ -41,7 +41,7 @@
 .property-price-block>strong{color:var(--ui-heading)!important;font-size:1.28rem!important;line-height:1.7!important;font-weight:850!important}
 .property-price-block .property-price-per-m2,.property-price-block .property-price-per-m2 strong{color:#5b6675!important}
 .property-detail-content{
-  margin-top:32px!important;display:grid!important;grid-template-columns:minmax(0,1.45fr) minmax(300px,.55fr)!important;gap:20px!important;
+  margin-top:48px!important;display:grid!important;grid-template-columns:minmax(0,1.45fr) minmax(300px,.55fr)!important;gap:20px!important;
 }
 .property-detail-main{min-width:0!important}
 .property-detail-main>section,.property-detail-body,.property-location-section{
@@ -135,6 +135,7 @@
   .property-contact-card{position:static!important}
 }
 @media (max-width:720px){
+  .property-detail-content{margin-top:28px!important}
   .property-detail-page{width:min(100% - 28px,var(--wrap))!important;padding:78px 0 60px!important}
   .property-detail-summary-head{padding:18px!important}
   .property-detail-main>section,.property-detail-body,.property-location-section{padding:16px!important}
