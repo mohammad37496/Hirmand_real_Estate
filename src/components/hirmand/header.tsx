@@ -48,17 +48,17 @@ export function Header() {
 
         <nav className="nav-links" aria-label="بخش‌های صفحه">
           {NAV.map((item) =>
-            item.to === "/properties" ? (
-              <Link
-                key={item.id}
-                to="/properties"
-                className={cn(pathname === "/properties" && "is-current")}
-                onClick={closeMenu}
-              >
+            item.to === "/" ? (
+              <Link key={item.id} to="/" hash={item.hash} onClick={(event) => goHash(event, item.hash)}>
                 {item.label}
               </Link>
             ) : (
-              <Link key={item.id} to="/" hash={item.hash} onClick={(event) => goHash(event, item.hash)}>
+              <Link
+                key={item.id}
+                to={item.to}
+                className={cn(pathname === item.to && "is-current")}
+                onClick={closeMenu}
+              >
                 {item.label}
               </Link>
             ),
@@ -96,12 +96,12 @@ export function Header() {
         inert={!menuOpen}
       >
         {NAV.map((item) =>
-          item.to === "/properties" ? (
-            <Link key={item.id} to="/properties" onClick={closeMenu}>
+          item.to === "/" ? (
+            <Link key={item.id} to="/" hash={item.hash} onClick={(event) => goHash(event, item.hash)}>
               {item.label}
             </Link>
           ) : (
-            <Link key={item.id} to="/" hash={item.hash} onClick={(event) => goHash(event, item.hash)}>
+            <Link key={item.id} to={item.to} onClick={closeMenu}>
               {item.label}
             </Link>
           ),
