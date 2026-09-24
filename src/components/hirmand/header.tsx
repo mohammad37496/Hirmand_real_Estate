@@ -42,7 +42,6 @@ export function Header() {
           <BrandLogo size="nav" />
           <span>
             <strong>{SITE.shortName}</strong>
-            <small>{SITE.managedBy}</small>
           </span>
         </Link>
 
