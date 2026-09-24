@@ -57,8 +57,7 @@ import {
   Zap,
   X,
 } from "lucide-react";
-import { breadcrumbJsonLd, propertyJsonLd, TX_LABEL, TYPE_LABEL } from "@/lib/seo";
-import { safeJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, propertyJsonLd, safeJsonLd, TX_LABEL, TYPE_LABEL } from "@/lib/seo";
 import type { Property } from "@/lib/properties";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
