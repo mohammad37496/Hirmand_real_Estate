@@ -7,6 +7,7 @@ import {
   verifyPartnerSessionToken,
 } from "@/lib/partner-session.server";
 import { authenticatePartner, getPartnerOverview } from "@/lib/partner-program.server";
+import { enforceRateLimit } from "@/lib/rate-limit.server";
 
 const bodySchema = z.object({
   action: z.enum(["login", "logout", "me"]).optional().default("me"),
@@ -59,6 +60,15 @@ export default defineEventHandler(async (event) => {
       return { success: false, authenticated: false, partner: null };
     }
     return { success: true, authenticated: true, partner: overview };
+  }
+
+  const normalizedCode = (body.partnerCode ?? "").trim().toLowerCase();
+  const authKey = normalizedCode ? `code:${normalizedCode}` : "code:empty";
+  if (!(await enforceRateLimit(event, { scope: "partner-login", limit: 8, windowSeconds: 600, identity: authKey }))) {
+    throw createError({
+      statusCode: 429,
+      statusMessage: "تعداد تلاش‌های ورود زیاد است. چند دقیقه بعد دوباره تلاش کنید.",
+    });
   }
 
   const partnerId = await authenticatePartner(body.partnerCode ?? "", body.pin ?? "");
