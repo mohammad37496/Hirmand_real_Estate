@@ -173,6 +173,7 @@ function buildFilterData(
   minBedrooms: string,
   parkingOnly: boolean,
   elevatorOnly: boolean,
+  storageOnly: boolean,
   specFilters: string[],
   sort: PropertySort,
   offset: number,
@@ -191,6 +192,7 @@ function buildFilterData(
     minBedrooms: parseNumber(minBedrooms),
     parkingOnly,
     elevatorOnly,
+    storageOnly,
     specFilters,
     sort,
     offset,
@@ -224,6 +226,7 @@ function PropertiesIndexPage() {
   const [minBedrooms, setMinBedrooms] = useState("");
   const [parkingOnly, setParkingOnly] = useState(false);
   const [elevatorOnly, setElevatorOnly] = useState(false);
+  const [storageOnly, setStorageOnly] = useState(false);
   const [specFilters, setSpecFilters] = useState<string[]>([]);
   const [sort, setSort] = useState<PropertySort>("newest");
   const [offset, setOffset] = useState(0);
@@ -265,6 +268,7 @@ function PropertiesIndexPage() {
     setMinBedrooms(params.get("bedrooms") ?? "");
     setParkingOnly(params.get("parking") === "1");
     setElevatorOnly(params.get("elevator") === "1");
+    setStorageOnly(params.get("storage") === "1");
     setSpecFilters((params.get("specs") ?? "").split(",").map((item) => item.trim()).filter(Boolean));
     setSort(validSort);
     skipInitialFetch.current = Array.from(params.keys()).length === 0;
@@ -286,11 +290,12 @@ function PropertiesIndexPage() {
     if (minBedrooms.trim()) params.set("bedrooms", minBedrooms.trim());
     if (parkingOnly) params.set("parking", "1");
     if (elevatorOnly) params.set("elevator", "1");
+    if (storageOnly) params.set("storage", "1");
     if (specFilters.length) params.set("specs", specFilters.join(","));
     if (sort !== "newest") params.set("sort", sort);
     const query = params.toString();
     window.history.replaceState({}, "", query ? `/properties?${query}` : "/properties");
-  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, parkingOnly, elevatorOnly, specFilters, sort]);
+  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, parkingOnly, elevatorOnly, storageOnly, specFilters, sort]);
 
   useEffect(() => {
     if (!urlReady || skipInitialFetch.current) {
@@ -315,6 +320,7 @@ function PropertiesIndexPage() {
         minBedrooms,
         parkingOnly,
         elevatorOnly,
+        storageOnly,
         specFilters,
         sort,
         0,
@@ -376,6 +382,7 @@ function PropertiesIndexPage() {
           minBedrooms,
           parkingOnly,
           elevatorOnly,
+          storageOnly,
           specFilters,
           sort,
           nextOffset,
@@ -449,6 +456,7 @@ function PropertiesIndexPage() {
     if (minBedrooms.trim()) params.set("bedrooms", minBedrooms.trim());
     if (parkingOnly) params.set("parking", "1");
     if (elevatorOnly) params.set("elevator", "1");
+    if (storageOnly) params.set("storage", "1");
     if (specFilters.length) params.set("specs", specFilters.join(","));
     if (sort !== "newest") params.set("sort", sort);
     return params;
@@ -499,6 +507,7 @@ function PropertiesIndexPage() {
     setMinBedrooms(params.get("bedrooms") ?? "");
     setParkingOnly(params.get("parking") === "1");
     setElevatorOnly(params.get("elevator") === "1");
+    setStorageOnly(params.get("storage") === "1");
     setSpecFilters((params.get("specs") ?? "").split(",").map((item) => item.trim()).filter(Boolean));
     const savedSort = params.get("sort");
     setSort(
@@ -537,6 +546,7 @@ function PropertiesIndexPage() {
     setMinBedrooms("");
     setParkingOnly(false);
     setElevatorOnly(false);
+    setStorageOnly(false);
     setSpecFilters([]);
     setSort("newest");
     setOffset(0);
@@ -593,6 +603,7 @@ function PropertiesIndexPage() {
     minBedrooms.trim() ||
     parkingOnly ||
     elevatorOnly ||
+    storageOnly ||
     specFilters.length > 0 ||
     sort !== "newest",
   );
@@ -607,6 +618,7 @@ function PropertiesIndexPage() {
     minBedrooms.trim(),
     parkingOnly ? "parking" : "",
     elevatorOnly ? "elevator" : "",
+    storageOnly ? "storage" : "",
     specFilters.length ? "specs" : "",
   ].filter(Boolean).length;
 
@@ -631,6 +643,7 @@ function PropertiesIndexPage() {
     minBedrooms.trim() ? { label: `${minBedrooms} خواب به بالا`, clear: () => setMinBedrooms("") } : null,
     parkingOnly ? { label: "پارکینگ", clear: () => setParkingOnly(false) } : null,
     elevatorOnly ? { label: "آسانسور", clear: () => setElevatorOnly(false) } : null,
+    storageOnly ? { label: "انباری", clear: () => setStorageOnly(false) } : null,
     specFilters.length
       ? { label: `جزئیات ملک: ${specFilters.length.toLocaleString("fa-IR")}`, clear: () => setSpecFilters([]) }
       : null,
@@ -842,6 +855,10 @@ function PropertiesIndexPage() {
               <label className="pf-switch">
                 <span>فقط آسانسوردار</span>
                 <input type="checkbox" checked={elevatorOnly} onChange={(e) => setElevatorOnly(e.target.checked)} />
+              </label>
+              <label className="pf-switch">
+                <span>فقط انباری‌دار</span>
+                <input type="checkbox" checked={storageOnly} onChange={(e) => setStorageOnly(e.target.checked)} />
               </label>
             </FilterGroup>
 
