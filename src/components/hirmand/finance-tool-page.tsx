@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowLeftRight, Landmark, PiggyBank, WalletCards } from "lucide-react";
+import { ArrowLeft, ArrowLeftRight, Landmark, PiggyBank, WalletCards, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SITE } from "@/lib/site";
 
@@ -131,7 +131,7 @@ export function FinanceToolPage({ tool, children }: FinanceToolPageProps) {
             })}
           </nav>
 
-          <Link to="/" hash="tools" className="finance-tool-back">
+          <Link to="/tools" className="finance-tool-back">
             <ArrowLeft size={16} />
             بازگشت به بخش ابزار مالی
           </Link>
