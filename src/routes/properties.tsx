@@ -35,6 +35,7 @@ import {
   PROPERTY_WALL_CLOSET_OPTIONS,
 } from "@/lib/property-options";
 import { absoluteUrl, socialMeta } from "@/lib/seo";
+import { listNeighborhoodNames } from "@/lib/neighborhoods";
 
 const PAGE_SIZE = 48;
 const SAVED_SEARCHES_KEY = "hirmand-saved-searches";
@@ -269,6 +270,7 @@ function PropertiesIndexPage() {
   const [transactionType, setTransactionType] = useState<PropertyTransaction | "">("");
   const [propertyType, setPropertyType] = useState<PropertyType | "">("");
   const [neighborhood, setNeighborhood] = useState("");
+  const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>(NEIGHBORHOOD_NAMES);
   const [minArea, setMinArea] = useState("");
   const [maxArea, setMaxArea] = useState("");
   const [minPrice, setMinPrice] = useState("");
@@ -304,6 +306,18 @@ function PropertiesIndexPage() {
   const requestId = useRef(0);
   const queryCache = useRef(new Map<string, { rows: typeof initial.properties; count: number }>());
   const loadMoreSentinel = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void listNeighborhoodNames()
+      .then((names) => {
+        if (!cancelled && names.length) setNeighborhoodOptions(names);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     setSavedSearches(readSavedSearches());
@@ -986,7 +1000,7 @@ function PropertiesIndexPage() {
                   <span className="sr-only">انتخاب محله</span>
                   <select className="pf-select" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)}>
                     <option value="">همه محله‌ها</option>
-                    {NEIGHBORHOOD_NAMES.map((item) => (
+                    {neighborhoodOptions.map((item) => (
                       <option key={item} value={item}>{item}</option>
                     ))}
                   </select>
