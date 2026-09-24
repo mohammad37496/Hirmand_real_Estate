@@ -1681,3 +1681,144 @@
   background: var(--pd-navy-soft);
   border-color: rgba(18, 58, 90, .16);
 }
+
+/* ==========================================================================
+   HIRMAND — FINAL LIGHT DETAIL OVERRIDES
+   Last-mile guard against legacy dark-theme rules.
+   ========================================================================== */
+
+body:has(.property-detail-page) {
+  background: #F7F8FA !important;
+  color: #1F2937 !important;
+}
+
+.property-detail-page {
+  background: transparent !important;
+  color: #1F2937 !important;
+}
+
+.property-detail-page .property-detail-summary,
+.property-detail-page .property-divar-specs,
+.property-detail-page .property-detail-body,
+.property-detail-page .property-location-section,
+.property-detail-page .property-related,
+.property-detail-page .property-contact-card,
+.property-detail-page .property-final-cta {
+  background: #FFFFFF !important;
+  color: #1F2937 !important;
+  border-color: #E5E7EB !important;
+  box-shadow: 0 12px 34px rgba(18, 58, 90, .07) !important;
+}
+
+.property-detail-page .property-contact-card {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F7F8FA 100%) !important;
+}
+
+.property-detail-page .property-final-cta {
+  background: linear-gradient(135deg, #FFFFFF 0%, #EAF1F6 100%) !important;
+}
+
+.property-detail-page .property-contact-name,
+.property-detail-page .property-final-cta h2,
+.property-detail-page .property-detail-summary h1,
+.property-detail-page .property-section-heading h2,
+.property-detail-page .property-spec-grid strong {
+  color: #123A5A !important;
+}
+
+.property-detail-page .property-consultant-role,
+.property-detail-page .property-contact-note,
+.property-detail-page .property-detail-meta,
+.property-detail-page .property-tools-heading,
+.property-detail-page .property-spec-grid small,
+.property-detail-page .property-final-cta p {
+  color: #6B7280 !important;
+}
+
+.property-detail-page .property-primary-contact-call,
+.property-detail-page .property-mobile-action-call {
+  background: linear-gradient(180deg, #E2C47B 0%, #C9A14A 100%) !important;
+  color: #123A5A !important;
+  box-shadow: 0 10px 22px rgba(201, 161, 74, .18) !important;
+}
+
+.property-detail-page .property-primary-contact-call:hover,
+.property-detail-page .property-mobile-action-call:hover {
+  background: linear-gradient(180deg, #E8D092 0%, #C9A14A 100%) !important;
+  color: #123A5A !important;
+}
+
+.property-detail-page .property-primary-contact-whatsapp,
+.property-detail-page .property-contact-actions .btn-ghost,
+.property-detail-page .property-final-cta-actions .btn-ghost,
+.property-detail-page .property-map-actions .btn-ghost {
+  background: #FFFFFF !important;
+  color: #123A5A !important;
+  border-color: #E5E7EB !important;
+}
+
+.property-detail-page .property-contact-phone {
+  background: #FFFFFF !important;
+  color: #123A5A !important;
+  border-color: #E5E7EB !important;
+}
+
+.property-detail-page .property-consultant-badge {
+  background: #EAF1F6 !important;
+  color: #123A5A !important;
+  border-color: rgba(18, 58, 90, .10) !important;
+}
+
+.property-detail-page .property-status-badge {
+  background: #EAF1F6 !important;
+  color: #123A5A !important;
+  border: 1px solid rgba(18, 58, 90, .10) !important;
+}
+
+.property-detail-page .property-type-badge {
+  background: #F7F1E3 !important;
+  color: #765D25 !important;
+}
+
+.property-detail-page .property-file-code,
+.property-detail-page .property-source-badge,
+.property-detail-page .property-description-meta > span {
+  background: #F7F8FA !important;
+  color: #6B7280 !important;
+  border-color: #E5E7EB !important;
+}
+
+.property-detail-page .property-gallery-main,
+.property-detail-page .property-gallery-thumb,
+.property-detail-page .property-image-fallback {
+  background: #EEF2F5 !important;
+}
+
+.property-detail-page .property-gallery-counter,
+.property-detail-page .property-gallery-thumb-number {
+  background: rgba(255, 255, 255, .94) !important;
+  color: #123A5A !important;
+  border-color: rgba(255, 255, 255, .8) !important;
+}
+
+.property-detail-page .property-gallery-featured {
+  background: linear-gradient(180deg, #E2C47B 0%, #C9A14A 100%) !important;
+  color: #123A5A !important;
+}
+
+.property-detail-page .property-action {
+  background: #FFFFFF !important;
+  color: #6B7280 !important;
+  border-color: #E5E7EB !important;
+}
+
+.property-detail-page .property-action:hover,
+.property-detail-page .property-action.is-active {
+  background: #F7F1E3 !important;
+  color: #123A5A !important;
+  border-color: rgba(201, 161, 74, .45) !important;
+}
+
+.property-detail-page .property-detail-body .property-section-heading h2::after {
+  background: #C9A14A !important;
+}
