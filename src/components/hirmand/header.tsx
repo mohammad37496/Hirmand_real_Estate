@@ -1,6 +1,6 @@
 import { useEffect, useState, type MouseEvent } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ArrowLeftRight, Landmark, PiggyBank, WalletCards, Menu, X } from "lucide-react";
+import { ArrowLeftRight, ChevronDown, Landmark, PiggyBank, WalletCards, Menu, X } from "lucide-react";
 import { NAV, SITE, TEAM } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { CallMenu } from "./call-menu";
@@ -17,6 +17,7 @@ const FINANCE_NAV = [
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [financeOpen, setFinanceOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const onHome = pathname === "/";
 
@@ -33,6 +34,10 @@ export function Header() {
   }, [menuOpen]);
 
   const closeMenu = () => setMenuOpen(false);
+
+  useEffect(() => {
+    if (pathname.startsWith("/tools/")) setFinanceOpen(true);
+  }, [pathname]);
 
   function goHash(event: MouseEvent<HTMLAnchorElement>, id: string) {
     if (onHome) {
@@ -152,11 +157,36 @@ export function Header() {
         {NAV.map((item) => {
           if (item.id === "tools") {
             return (
-              <div key={item.id} className="mobile-tools-group">
-                <Link to="/tools" onClick={closeMenu}>
-                  {item.label}
-                </Link>
-                <div className="mobile-tools-list" aria-label="ابزارهای مالی">
+              <div key={item.id} className={cn("mobile-tools-group", financeOpen && "is-open")}>
+                <button
+                  type="button"
+                  className="mobile-tools-trigger"
+                  aria-expanded={financeOpen}
+                  aria-controls="mobile-finance-tools"
+                  onClick={() => setFinanceOpen((value) => !value)}
+                >
+                  <span>{item.label}</span>
+                  <ChevronDown
+                    size={18}
+                    aria-hidden="true"
+                    className="mobile-tools-trigger-icon"
+                  />
+                </button>
+                <div
+                  id="mobile-finance-tools"
+                  className="mobile-tools-list"
+                  aria-label="ابزارهای مالی"
+                  aria-hidden={!financeOpen}
+                >
+                  <Link to="/tools" className="mobile-tool-item mobile-tool-item-all" onClick={closeMenu}>
+                    <span className="mobile-tool-item-icon" aria-hidden="true">
+                      <WalletCards size={17} strokeWidth={1.9} />
+                    </span>
+                    <span>
+                      <strong>همه ابزارهای مالی</strong>
+                      <small>مشاهده صفحه اصلی ابزارها</small>
+                    </span>
+                  </Link>
                   {FINANCE_NAV.map((tool) => {
                     const Icon = tool.icon;
                     return (
