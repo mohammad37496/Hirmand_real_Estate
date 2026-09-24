@@ -1,10 +1,12 @@
+import { useEffect, useState } from "react";
 import { Check, Handshake, Briefcase } from "lucide-react";
-import { TEAM, type TeamMember } from "@/lib/site";
+import { listConsultants, type Consultant } from "@/lib/consultants";
+import { TEAM } from "@/lib/site";
 
 type Props = {
   contactName: string;
   contactPhone: string;
-  onSelect: (member: TeamMember) => void;
+  onSelect: (member: Consultant) => void;
 };
 
 function normalizePhone(value: string) {
@@ -14,12 +16,39 @@ function normalizePhone(value: string) {
 export function AdminConsultantPicker({ contactName, contactPhone, onSelect }: Props) {
   const phoneNorm = normalizePhone(contactPhone || "");
   const nameTrim = (contactName || "").trim();
+  const [consultants, setConsultants] = useState<Consultant[]>(
+    consultants.map((person) => ({
+      id: person.id,
+      name: person.name,
+      role: person.role,
+      phone: person.phone,
+      phoneDisplay: person.phoneDisplay,
+      icon: person.icon,
+      bio: "",
+      whatsapp: "",
+      telegram: "",
+      eitaa: "",
+      instagram: "",
+      sortOrder: 0,
+      isActive: true,
+    })),
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    void listConsultants().then((items) => {
+      if (!cancelled && items.length) setConsultants(items);
+    }).catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="admin-consultant">
       <p className="admin-consultant-hint">مشاور مسئول این فایل را انتخاب کنید:</p>
       <div className="admin-consultant-grid" role="listbox" aria-label="انتخاب مشاور مسئول">
-        {TEAM.map((person) => {
+        {consultants.map((person) => {
           const active =
             normalizePhone(person.phone) === phoneNorm ||
             person.name === nameTrim ||
@@ -55,20 +84,20 @@ export function AdminConsultantPicker({ contactName, contactPhone, onSelect }: P
         <span className="sr-only">انتخاب سریع مشاور</span>
         <select
           value={
-            TEAM.find(
+            consultants.find(
               (p) =>
                 normalizePhone(p.phone) === phoneNorm || p.name === nameTrim,
             )?.id ?? ""
           }
           onChange={(e) => {
-            const member = TEAM.find((p) => p.id === e.target.value);
+            const member = consultants.find((p) => p.id === e.target.value);
             if (member) onSelect(member);
           }}
         >
           <option value="" disabled>
             انتخاب مشاور…
           </option>
-          {TEAM.map((person) => (
+          {consultants.map((person) => (
             <option key={person.id} value={person.id}>
               {person.name} — {person.role}
             </option>
