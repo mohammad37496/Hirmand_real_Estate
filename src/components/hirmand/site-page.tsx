@@ -328,8 +328,8 @@ function About() {
         </div>
         <figure className="about-photo">
           <img
-            src="/images/isfahan-hero.jpg"
-            alt="نمایی از اصفهان برای معرفی مجموعه هیرمند"
+            src="https://upload.wikimedia.org/wikipedia/commons/a/af/Naqsh-e_Jahan_Square%2C_Isfahan.jpg"
+            alt="نمایی از میدان نقش جهان اصفهان برای معرفی مجموعه هیرمند"
             loading="lazy"
             decoding="async"
           />
