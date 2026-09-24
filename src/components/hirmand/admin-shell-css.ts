@@ -781,8 +781,6 @@ export const ADMIN_CSS = `
     font-size:.62rem!important;
   }
 }
-`;
-
 /* Keep admin form actions above floating media/music players. */
 .admin-sticky-bar{
   z-index:2000!important;
@@ -793,3 +791,4 @@ export const ADMIN_CSS = `
   position:relative!important;
   z-index:2001!important;
 }
+`;
