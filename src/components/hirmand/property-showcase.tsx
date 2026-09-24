@@ -11,6 +11,7 @@ import {
   Search,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES } from "@/lib/site";
+import { listNeighborhoodNames } from "@/lib/neighborhoods";
 import { mediaSourceCandidates } from "@/lib/media";
 import { formatToman } from "@/lib/money";
 import type { Property, PropertyCardData, PropertyType, PropertyTransaction } from "@/lib/properties";
@@ -154,7 +155,19 @@ export function PropertyShowcase({ initialProperties = [] }: { initialProperties
   const [propertyType, setPropertyType] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [loading, setLoading] = useState(false);
-  const neighborhoods = NEIGHBORHOOD_NAMES;
+  const [neighborhoods, setNeighborhoods] = useState<string[]>(NEIGHBORHOOD_NAMES);
+
+  useEffect(() => {
+    let cancelled = false;
+    void listNeighborhoodNames()
+      .then((names) => {
+        if (!cancelled && names.length) setNeighborhoods(names);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
