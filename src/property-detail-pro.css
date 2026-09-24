@@ -2452,3 +2452,70 @@ body:has(.property-detail-page){
     margin-top:16px!important;
   }
 }
+
+
+/* HIRMAND — final structural spacing and dark theme */
+/* The detail view intentionally uses the site's deep navy canvas; cards stay light for contrast. */
+body:has(.property-detail-page){
+  background-color:var(--navy-950)!important;
+  background-image:
+    radial-gradient(1100px 560px at 10% -6%,rgb(38 80 111 / 18%),transparent 62%),
+    radial-gradient(900px 520px at 102% 4%,rgb(192 138 42 / 10%),transparent 60%)!important;
+  color:#fff!important;
+}
+
+.property-detail-page{
+  color:#fff!important;
+}
+
+.property-detail-top{
+  align-items:start!important;
+  margin-bottom:0!important;
+  padding-bottom:48px!important;
+  min-height:0!important;
+}
+
+.property-detail-summary{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  align-self:start!important;
+  height:auto!important;
+  min-height:0!important;
+  overflow:visible!important;
+  gap:18px!important;
+}
+
+.property-contact-card{
+  align-self:start!important;
+  height:auto!important;
+  min-height:0!important;
+  margin-top:18px!important;
+  margin-bottom:0!important;
+}
+
+.property-detail-content{
+  margin-top:0!important;
+  padding-top:0!important;
+  position:relative!important;
+  z-index:2!important;
+}
+
+.property-gallery,
+.property-gallery-main{
+  background:var(--navy-950)!important;
+}
+
+@media (max-width:720px){
+  .property-detail-top{
+    padding-bottom:28px!important;
+  }
+
+  .property-detail-content{
+    padding-top:0!important;
+  }
+
+  .property-contact-card{
+    margin-top:14px!important;
+  }
+}
