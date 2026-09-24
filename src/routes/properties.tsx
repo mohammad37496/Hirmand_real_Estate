@@ -26,6 +26,14 @@ import {
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { PROPERTY_TYPES, NEIGHBORHOOD_NAMES, SERVICES } from "@/lib/site";
+import {
+  PROPERTY_CABINET_OPTIONS,
+  PROPERTY_COOLING_OPTIONS,
+  PROPERTY_FLOORING_OPTIONS,
+  PROPERTY_HEATING_OPTIONS,
+  PROPERTY_OTHER_AMENITY_OPTIONS,
+  PROPERTY_WALL_CLOSET_OPTIONS,
+} from "@/lib/property-options";
 import { absoluteUrl, socialMeta } from "@/lib/seo";
 
 const PAGE_SIZE = 48;
@@ -48,6 +56,17 @@ const PROPERTY_TYPE_OPTIONS: { value: PropertyType; label: string }[] = [
 ];
 
 const BEDROOM_OPTIONS = ["1", "2", "3", "4"] as const;
+
+const SPEC_FILTER_OPTIONS = [
+  ...PROPERTY_CABINET_OPTIONS.map((item) => ({ value: `cabinet:${item.value}`, label: item.label, group: "کابینت" })),
+  ...PROPERTY_FLOORING_OPTIONS.map((item) => ({ value: `flooring:${item.value}`, label: item.label, group: "کف" })),
+  ...PROPERTY_WALL_CLOSET_OPTIONS.map((item) => ({ value: `closet:${item.value}`, label: item.label, group: "کمد دیواری" })),
+  ...PROPERTY_COOLING_OPTIONS.map((item) => ({ value: `cooling:${item.value}`, label: item.label, group: "سرمایش" })),
+  ...PROPERTY_HEATING_OPTIONS.map((item) => ({ value: `heating:${item.value}`, label: item.label, group: "گرمایش" })),
+  ...PROPERTY_OTHER_AMENITY_OPTIONS.map((item) => ({ value: item.value, label: item.label, group: "امکانات دیگر" })),
+] as const;
+
+const SPEC_GROUPS = ["کابینت", "کف", "کمد دیواری", "سرمایش", "گرمایش", "امکانات دیگر"] as const;
 
 type SavedSearch = {
   id: string;
@@ -154,6 +173,7 @@ function buildFilterData(
   minBedrooms: string,
   parkingOnly: boolean,
   elevatorOnly: boolean,
+  specFilters: string[],
   sort: PropertySort,
   offset: number,
 ) {
@@ -171,6 +191,7 @@ function buildFilterData(
     minBedrooms: parseNumber(minBedrooms),
     parkingOnly,
     elevatorOnly,
+    specFilters,
     sort,
     offset,
   };
@@ -203,6 +224,7 @@ function PropertiesIndexPage() {
   const [minBedrooms, setMinBedrooms] = useState("");
   const [parkingOnly, setParkingOnly] = useState(false);
   const [elevatorOnly, setElevatorOnly] = useState(false);
+  const [specFilters, setSpecFilters] = useState<string[]>([]);
   const [sort, setSort] = useState<PropertySort>("newest");
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -243,6 +265,7 @@ function PropertiesIndexPage() {
     setMinBedrooms(params.get("bedrooms") ?? "");
     setParkingOnly(params.get("parking") === "1");
     setElevatorOnly(params.get("elevator") === "1");
+    setSpecFilters((params.get("specs") ?? "").split(",").map((item) => item.trim()).filter(Boolean));
     setSort(validSort);
     skipInitialFetch.current = Array.from(params.keys()).length === 0;
     setUrlReady(true);
@@ -263,10 +286,11 @@ function PropertiesIndexPage() {
     if (minBedrooms.trim()) params.set("bedrooms", minBedrooms.trim());
     if (parkingOnly) params.set("parking", "1");
     if (elevatorOnly) params.set("elevator", "1");
+    if (specFilters.length) params.set("specs", specFilters.join(","));
     if (sort !== "newest") params.set("sort", sort);
     const query = params.toString();
     window.history.replaceState({}, "", query ? `/properties?${query}` : "/properties");
-  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, parkingOnly, elevatorOnly, sort]);
+  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, parkingOnly, elevatorOnly, specFilters, sort]);
 
   useEffect(() => {
     if (!urlReady || skipInitialFetch.current) {
@@ -291,6 +315,7 @@ function PropertiesIndexPage() {
         minBedrooms,
         parkingOnly,
         elevatorOnly,
+        specFilters,
         sort,
         0,
       );
@@ -351,6 +376,7 @@ function PropertiesIndexPage() {
           minBedrooms,
           parkingOnly,
           elevatorOnly,
+          specFilters,
           sort,
           nextOffset,
         ),
@@ -391,6 +417,7 @@ function PropertiesIndexPage() {
     minBedrooms,
     parkingOnly,
     elevatorOnly,
+    specFilters,
     sort,
   ]);
 
@@ -422,6 +449,7 @@ function PropertiesIndexPage() {
     if (minBedrooms.trim()) params.set("bedrooms", minBedrooms.trim());
     if (parkingOnly) params.set("parking", "1");
     if (elevatorOnly) params.set("elevator", "1");
+    if (specFilters.length) params.set("specs", specFilters.join(","));
     if (sort !== "newest") params.set("sort", sort);
     return params;
   }
@@ -471,6 +499,7 @@ function PropertiesIndexPage() {
     setMinBedrooms(params.get("bedrooms") ?? "");
     setParkingOnly(params.get("parking") === "1");
     setElevatorOnly(params.get("elevator") === "1");
+    setSpecFilters((params.get("specs") ?? "").split(",").map((item) => item.trim()).filter(Boolean));
     const savedSort = params.get("sort");
     setSort(
       savedSort === "price_asc" ||
@@ -508,6 +537,7 @@ function PropertiesIndexPage() {
     setMinBedrooms("");
     setParkingOnly(false);
     setElevatorOnly(false);
+    setSpecFilters([]);
     setSort("newest");
     setOffset(0);
   }
@@ -563,6 +593,7 @@ function PropertiesIndexPage() {
     minBedrooms.trim() ||
     parkingOnly ||
     elevatorOnly ||
+    specFilters.length > 0 ||
     sort !== "newest",
   );
 
@@ -576,6 +607,7 @@ function PropertiesIndexPage() {
     minBedrooms.trim(),
     parkingOnly ? "parking" : "",
     elevatorOnly ? "elevator" : "",
+    specFilters.length ? "specs" : "",
   ].filter(Boolean).length;
 
   const transactionLabel = transactionType
@@ -599,7 +631,16 @@ function PropertiesIndexPage() {
     minBedrooms.trim() ? { label: `${minBedrooms} خواب به بالا`, clear: () => setMinBedrooms("") } : null,
     parkingOnly ? { label: "پارکینگ", clear: () => setParkingOnly(false) } : null,
     elevatorOnly ? { label: "آسانسور", clear: () => setElevatorOnly(false) } : null,
+    specFilters.length
+      ? { label: `جزئیات ملک: ${fa(specFilters.length)}`, clear: () => setSpecFilters([]) }
+      : null,
   ].filter((item): item is { label: string; clear: () => void } => Boolean(item));
+
+  function toggleSpecFilter(value: string) {
+    setSpecFilters((current) =>
+      current.includes(value) ? current.filter((item) => item !== value) : [...current, value],
+    );
+  }
 
   const fa = (value: number) => value.toLocaleString("fa-IR");
 
@@ -803,6 +844,46 @@ function PropertiesIndexPage() {
                 <input type="checkbox" checked={elevatorOnly} onChange={(e) => setElevatorOnly(e.target.checked)} />
               </label>
             </FilterGroup>
+
+            <details className={`pf-spec-filter${specFilters.length ? " has-selection" : ""}`}>
+              <summary>
+                <span>
+                  <strong>امکانات و مشخصات بیشتر</strong>
+                  <small>کابینت، کف، کمد دیواری، سرمایش، گرمایش و امکانات دیگر</small>
+                </span>
+                <b>{specFilters.length ? `${fa(specFilters.length)} انتخاب` : "انتخاب"}</b>
+              </summary>
+              <div className="pf-spec-filter-body">
+                {SPEC_GROUPS.map((group) => {
+                  const options = SPEC_FILTER_OPTIONS.filter((item) => item.group === group);
+                  return (
+                    <section className="pf-spec-filter-group" key={group}>
+                      <div className="pf-spec-filter-group-title">
+                        <span>{group}</span>
+                        <small>{fa(options.filter((item) => specFilters.includes(item.value)).length)} انتخاب</small>
+                      </div>
+                      <div className="pf-spec-options">
+                        {options.map((item) => {
+                          const active = specFilters.includes(item.value);
+                          return (
+                            <button
+                              key={item.value}
+                              type="button"
+                              className={`pf-spec-option${active ? " is-active" : ""}`}
+                              onClick={() => toggleSpecFilter(item.value)}
+                              aria-pressed={active}
+                            >
+                              <span className="pf-spec-option-mark" aria-hidden="true">{active ? "✓" : ""}</span>
+                              <span>{item.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  );
+                })}
+              </div>
+            </details>
 
             <div className="pf-sidebar-foot">
               <button type="button" className="pf-reset" onClick={resetFilters}>
