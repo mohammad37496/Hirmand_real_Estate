@@ -1904,3 +1904,29 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     font-size: .68rem !important;
   }
 }
+
+/* === Gallery aligns with the full property summary / consultant card =========== */
+@media (min-width: 1025px) {
+  .property-detail-page .property-detail-top {
+    align-items: stretch !important;
+  }
+  .property-detail-page .property-detail-summary {
+    align-self: start !important;
+  }
+  .property-detail-page .property-detail-top-gallery,
+  .property-detail-page .property-gallery-wrap,
+  .property-detail-page .property-gallery {
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+  .property-detail-page .property-gallery-main,
+  .property-detail-page .property-gallery-main img,
+  .property-detail-page .property-gallery-main video {
+    min-height: 0 !important;
+    max-height: none !important;
+    height: 100% !important;
+  }
+  .property-detail-page .property-gallery-rail {
+    height: 100% !important;
+  }
+}
