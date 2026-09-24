@@ -3,6 +3,7 @@ import { Phone, Send } from "lucide-react";
 import { toast } from "sonner";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SERVICES, SITE, TEAM } from "@/lib/site";
 import { cn } from "@/lib/utils";
+import { listNeighborhoodNames } from "@/lib/neighborhoods";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 
 export type InquiryDraft = {
@@ -38,9 +39,22 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
   const [deal, setDeal] = useState(draft.deal);
   const [propertyType, setPropertyType] = useState(draft.propertyType);
   const [neighborhood, setNeighborhood] = useState(draft.neighborhood);
+  const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>(NEIGHBORHOOD_NAMES);
   const [consultant, setConsultant] = useState<(typeof TEAM)[number]["id"]>(TEAM[0].id);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    void listNeighborhoodNames()
+      .then((names) => {
+        if (!cancelled && names.length) setNeighborhoodOptions(names);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (draft.deal) setDeal(draft.deal);
@@ -224,7 +238,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           onChange={(event) => setNeighborhood(event.target.value)}
         >
           <option value="">فرقی ندارد / بعداً مشخص می‌شود</option>
-          {NEIGHBORHOOD_NAMES.map((item) => (
+          {neighborhoodOptions.map((item) => (
             <option key={item} value={item}>
               {item}
             </option>
