@@ -2319,6 +2319,14 @@ body:has(.property-detail-page) {
   transform:translate(-50%,-50%) scale(1.06)!important;
   background:rgba(12,33,49,.78)!important;
 }
+.property-video-player.is-playing .property-video-center-play{
+  opacity:0!important;
+  pointer-events:none!important;
+}
+.property-video-player.is-paused .property-video-center-play{
+  opacity:1!important;
+  pointer-events:auto!important;
+}
 .property-video-player:has(video:not([data-ready])){
   background:#07131d!important;
 }
