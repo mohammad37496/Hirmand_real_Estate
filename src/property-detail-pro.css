@@ -2519,3 +2519,22 @@ body:has(.property-detail-page){
     margin-top:14px!important;
   }
 }
+
+
+/* HIRMAND — return detail page canvas to original light theme */
+body:has(.property-detail-page){
+  background-color:var(--paper)!important;
+  background-image:
+    radial-gradient(1100px 560px at 10% -6%,rgb(192 138 42 / 8%),transparent 62%),
+    radial-gradient(900px 520px at 102% 4%,rgb(11 26 43 / 5%),transparent 60%)!important;
+  color:var(--fg)!important;
+}
+
+.property-detail-page{
+  color:var(--fg)!important;
+}
+
+.property-gallery,
+.property-gallery-main{
+  background:var(--paper-2)!important;
+}
