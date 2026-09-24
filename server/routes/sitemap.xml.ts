@@ -97,6 +97,7 @@ export default defineEventHandler(async (event) => {
   entries.push(urlEntry(`${SITE}/properties`, "daily", "0.9", today));
   entries.push(urlEntry(`${SITE}/tools`, "monthly", "0.7", today));
   entries.push(urlEntry(`${SITE}/consultants`, "weekly", "0.7", today));
+  entries.push(urlEntry(`${SITE}/budget-match`, "daily", "0.8", today));
 
   for (const path of FINANCE_TOOL_PATHS) {
     entries.push(urlEntry(`${SITE}${path}`, "monthly", "0.6", today));
