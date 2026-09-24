@@ -17,7 +17,7 @@ export function AdminConsultantPicker({ contactName, contactPhone, onSelect }: P
   const phoneNorm = normalizePhone(contactPhone || "");
   const nameTrim = (contactName || "").trim();
   const [consultants, setConsultants] = useState<Consultant[]>(
-    consultants.map((person) => ({
+    TEAM.map((person) => ({
       id: person.id,
       name: person.name,
       role: person.role,
