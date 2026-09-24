@@ -136,7 +136,7 @@ export function FinanceTools() {
     </div>
   );
 }
-function DepositCalculator() {
+export function DepositCalculator() {
   const [preset, setPreset] = useState<(typeof DEPOSIT_PRESETS)[number]["id"]>("y1");
   const [customRate, setCustomRate] = useState("20.5");
   const [amount, setAmount] = useState("");
@@ -278,7 +278,7 @@ function DepositCalculator() {
   );
 }
 
-function LoanCalculator() {
+export function LoanCalculator() {
   const [amount, setAmount] = useState("");
   const [rate, setRate] = useState("23");
   const [months, setMonths] = useState("36");
