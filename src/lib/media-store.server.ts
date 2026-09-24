@@ -121,19 +121,36 @@ export async function storeAssembledUpload(input: {
   const id = crypto.randomUUID();
   const contentType = input.contentType || "application/octet-stream";
 
-  // The chunks are concatenated inside Postgres, so a large file never has to
-  // be assembled by the function itself.
-  await sql.query(
-    `insert into media_objects (id, pathname, content_type, size_bytes, data)
-     select $1, $2, $3, coalesce(sum(octet_length(data)), 0), string_agg(data, ''::bytea order by chunk_index)
-     from media_upload_chunks
-     where session_id = $4`,
+  // Claim the upload session and persist its media in one database statement.
+  // The row lock makes concurrent upload-completion requests idempotent: exactly
+  // one request can see the session and produce the media object before the
+  // session is deleted (which also cascades the chunk rows).
+  const claimed = await sql.query<{ id: string }>(
+    `with locked_session as (
+       select id
+       from media_upload_sessions
+       where id = $4
+       for update
+     ),
+     inserted as (
+       insert into media_objects (id, pathname, content_type, size_bytes, data)
+       select $1, $2, $3,
+              coalesce(sum(octet_length(c.data)), 0),
+              string_agg(c.data, ''::bytea order by c.chunk_index)
+       from media_upload_chunks c
+       where c.session_id = (select id from locked_session)
+       returning id
+     ),
+     deleted as (
+       delete from media_upload_sessions
+       where id = (select id from locked_session)
+     )
+     select id from inserted`,
     [id, input.pathname, contentType, input.sessionId],
   );
-
-  await sql.query("delete from media_upload_sessions where id = $1", [
-    input.sessionId,
-  ]);
+  if (!claimed[0]?.id) {
+    throw new Error("نشست آپلود قبلاً تکمیل شده یا پیدا نشد.");
+  }
 
   // With an object store configured, move the finished file to the CDN and drop
   // the database copy; if that fails the stored row still serves the media.
