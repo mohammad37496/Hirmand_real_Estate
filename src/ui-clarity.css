@@ -2003,16 +2003,16 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   grid-column: 1 / -1 !important;
 }
 
-/* === Desktop music player: compact left dock ================================== */
+/* === Desktop music player: compact right dock ================================= */
 @media (min-width: 721px) {
   .music-player {
-    left: 18px !important;
-    right: auto !important;
+    left: auto !important;
+    right: 18px !important;
     inset-inline-start: auto !important;
-    inset-inline-end: auto !important;
+    inset-inline-end: 18px !important;
     bottom: 18px !important;
-    width: min(410px, calc(100vw - 36px)) !important;
-    max-width: 410px !important;
+    width: min(400px, calc(100vw - 36px)) !important;
+    max-width: 400px !important;
     min-height: 58px !important;
     padding: 8px 10px 12px !important;
     border-radius: 16px !important;
