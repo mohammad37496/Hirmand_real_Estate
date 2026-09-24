@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Maximize2,
   MessageCircle,
+  Share2,
   BedDouble,
   Building2,
   CalendarDays,
@@ -80,6 +81,27 @@ function whatsappLink(phone: string, title: string) {
   const intl = digits.startsWith("98") ? digits : digits.startsWith("0") ? "98" + digits.slice(1) : digits;
   const text = encodeURIComponent(`سلام، درباره فایل «${title}» از سایت هیرمند پیام می‌دهم.`);
   return `https://wa.me/${intl}?text=${text}`;
+}
+
+async function shareCurrentProperty(property: Pick<Property, "id" | "slug" | "title">) {
+  if (typeof window === "undefined") return;
+  const url = new URL(propertyPath(property), window.location.origin).toString();
+  const data = {
+    title: property.title,
+    text: `فایل «${property.title}» در هیرمند`,
+    url,
+  };
+
+  try {
+    if (navigator.share) {
+      await navigator.share(data);
+    } else if (navigator.clipboard) {
+      await navigator.clipboard.writeText(url);
+    }
+    trackAnalyticsEvent("property_share", property.slug);
+  } catch {
+    // Native sharing may be cancelled by the visitor.
+  }
 }
 
 function formatAdDate(value: string | null | undefined) {
@@ -499,31 +521,65 @@ function Gallery({
 
 function ConsultantCard({ property }: { property: Property }) {
   const person = TEAM.find((item) => item.phone === property.contactPhone || item.name === property.contactName);
+  const displayName = property.contactName || person?.name || "مشاور هیرمند";
+  const role = person?.role ?? "مشاور املاک";
+  const initial = displayName.replace(/^آقای\s+/, "").trim().slice(0, 1) || "ه";
+  const whatsapp = person?.wa || whatsappLink(property.contactPhone, property.title);
+
   return (
-    <aside className="property-contact-card">
-      <div className="property-contact-heading">
-        <div>
-          <span className="kicker">تماس با مشاور</span>
-          <h2>مشاور این فایل</h2>
+    <aside className="property-contact-card" aria-label="اطلاعات مشاور فایل">
+      <div className="property-consultant-main">
+        <div className="property-consultant-avatar" aria-hidden="true">{initial}</div>
+        <div className="property-consultant-copy">
+          <span className="kicker">مشاور فایل</span>
+          <strong className="property-contact-name">{displayName}</strong>
+          <span className="property-consultant-role">{role}</span>
         </div>
-        <Phone size={18} />
+        <div className="property-consultant-badge" aria-hidden="true">
+          <Phone size={18} />
+        </div>
       </div>
-      <strong className="property-contact-name">{property.contactName}</strong>
+
       <a href={`tel:${property.contactPhone}`} dir="ltr" className="property-contact-phone">
-        <Phone size={16} /> {property.contactPhone}
+        <Phone size={16} aria-hidden="true" />
+        <span>{property.contactPhone}</span>
       </a>
+
+      <p className="property-contact-note">
+        برای هماهنگی بازدید، دریافت اطلاعات تکمیلی و بررسی شرایط معامله با این مشاور در تماس باشید.
+      </p>
+
+      <div className="property-contact-actions">
+        <a
+          href={`tel:${property.contactPhone}`}
+          className="btn-gold"
+          onClick={() => trackAnalyticsEvent("call_click", property.slug)}
+        >
+          <Phone size={16} aria-hidden="true" />
+          تماس مستقیم
+        </a>
+        <a
+          href={whatsapp}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-ghost"
+          onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
+        >
+          <MessageCircle size={16} aria-hidden="true" />
+          واتساپ
+        </a>
+      </div>
+
       {person ? (
         <Link
           className="property-contact-profile"
           to="/consultants/$id"
           params={{ id: person.id }}
         >
-          مشاهده پروفایل مشاور
+          مشاهده پروفایل کامل مشاور
+          <ChevronLeft size={15} aria-hidden="true" />
         </Link>
       ) : null}
-      <p className="property-contact-note">
-        برای هماهنگی بازدید، دریافت اطلاعات تکمیلی و بررسی شرایط معامله با این مشاور در تماس باشید.
-      </p>
     </aside>
   );
 }
@@ -613,18 +669,34 @@ export function PropertyDetailView({
 
           <div className="property-detail-summary">
             <header className="property-detail-summary-head">
-              <span className="kicker">
-                {TX_LABEL[property.transactionType]} · {TYPE_LABEL[property.propertyType]}
-              </span>
-              <div className="property-detail-ad-meta">
-                <span>کد آگهی {property.id.slice(-6).toUpperCase()}</span>
-                {property.updatedAt ? <span>به‌روزرسانی {formatAdDate(property.updatedAt)}</span> : null}
+              <div className="property-detail-hero-row">
+                <div className="property-status-group">
+                  <span className="property-status-badge">
+                    {TX_LABEL[property.transactionType]}
+                  </span>
+                  <span className="property-type-badge">
+                    {TYPE_LABEL[property.propertyType]}
+                  </span>
+                </div>
+                <span className="property-file-code">
+                  کد فایل {property.id.slice(-6).toLocaleUpperCase("fa-IR")}
+                </span>
               </div>
+
+              {property.featured ? (
+                <div className="property-featured-note">فایل ویژه هیرمند</div>
+              ) : null}
+
               <h1>{property.title}</h1>
+
               <p className="property-detail-meta">
-                <MapPinned size={16} /> {property.neighborhood}
-                {property.address ? ` · ${property.address}` : ""}
+                <MapPinned size={17} aria-hidden="true" />
+                <span>
+                  {property.neighborhood}
+                  {property.address ? ` · ${property.address}` : ""}
+                </span>
               </p>
+
               <div className="property-price-block">
                 <span>قیمت فایل</span>
                 <strong dir="rtl" className="property-price-value">{primaryPrice(property)}</strong>
@@ -641,6 +713,7 @@ export function PropertyDetailView({
                   </small>
                 ) : null}
               </div>
+
               <div className="property-primary-contact" aria-label="تماس سریع با مشاور">
                 <a
                   className="property-primary-contact-call"
@@ -648,7 +721,7 @@ export function PropertyDetailView({
                   onClick={() => trackAnalyticsEvent("call_click", property.slug)}
                 >
                   <Phone size={18} aria-hidden="true" />
-                  <span>تماس با مشاور</span>
+                  <span>تماس سریع</span>
                 </a>
                 <a
                   className="property-primary-contact-whatsapp"
@@ -658,8 +731,13 @@ export function PropertyDetailView({
                   onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
                 >
                   <MessageCircle size={18} aria-hidden="true" />
-                  <span>پیام در واتساپ</span>
+                  <span>واتساپ</span>
                 </a>
+              </div>
+
+              <div className="property-tools-heading">
+                <span>ابزارهای فایل</span>
+                <span>ذخیره، اشتراک، چاپ و مقایسه</span>
               </div>
               <PropertyActions property={property} />
             </header>
@@ -825,6 +903,35 @@ export function PropertyDetailView({
             </Link>
           </article>
         </section>
+
+        <div className="property-mobile-actions" role="group" aria-label="اقدام‌های سریع فایل">
+          <a
+            href={`tel:${property.contactPhone}`}
+            className="property-mobile-action property-mobile-action-call"
+            onClick={() => trackAnalyticsEvent("call_click", property.slug)}
+          >
+            <Phone size={18} aria-hidden="true" />
+            <span>تماس</span>
+          </a>
+          <a
+            href={whatsappLink(property.contactPhone, property.title)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="property-mobile-action"
+            onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
+          >
+            <MessageCircle size={18} aria-hidden="true" />
+            <span>واتساپ</span>
+          </a>
+          <button
+            type="button"
+            className="property-mobile-action"
+            onClick={() => void shareCurrentProperty(property)}
+          >
+            <Share2 size={18} aria-hidden="true" />
+            <span>اشتراک</span>
+          </button>
+        </div>
 
         {related.length ? (
           <section className="property-related" aria-labelledby="related-properties-title">
