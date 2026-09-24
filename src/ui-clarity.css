@@ -3479,35 +3479,24 @@ body{
 }
 .mobile-tools-list{
   display:grid;
-  grid-template-rows:0fr;
-  gap:0;
-  margin:0 0 0;
-  padding:0 7px;
-  border:1px solid transparent;
-  border-radius:14px;
-  background:transparent;
-  overflow:hidden;
-  opacity:0;
-  visibility:hidden;
-  transition:grid-template-rows .24s ease, padding .24s ease, margin .24s ease, opacity .18s ease, border-color .24s ease, background .24s ease;
-}
-.mobile-tools-list::after{
-  content:"";
-  min-height:0;
-}
-.mobile-tools-list > *{
-  min-height:0;
-  overflow:hidden;
-}
-.mobile-tools-group.is-open .mobile-tools-list{
-  grid-template-rows:1fr;
   gap:6px;
   margin:0 0 4px;
   padding:7px;
-  border-color:#e1e7ee;
+  border:1px solid #e1e7ee;
+  border-radius:14px;
   background:#f8fafc;
+  max-height:0;
+  overflow:hidden;
+  opacity:0;
+  visibility:hidden;
+  transform:translateY(-4px);
+  transition:max-height .28s ease, opacity .2s ease, transform .28s ease, padding .28s ease, margin .28s ease, border-color .28s ease;
+}
+.mobile-tools-group.is-open .mobile-tools-list{
+  max-height:430px;
   opacity:1;
   visibility:visible;
+  transform:translateY(0);
 }
 .mobile-tool-item{
   min-height:58px!important;
