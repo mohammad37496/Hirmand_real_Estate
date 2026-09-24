@@ -554,6 +554,10 @@ function PropertiesIndexPage() {
     if (elevatorOnly) params.set("elevator", "1");
     if (storageOnly) params.set("storage", "1");
     if (specFilters.length) params.set("specs", specFilters.join(","));
+    if (featureSearch.trim()) params.set("features", featureSearch.trim());
+    if (featuredOnly) params.set("featured", "1");
+    if (hasImagesOnly) params.set("images", "1");
+    if (hasLocationOnly) params.set("location", "1");
     if (sort !== "newest") params.set("sort", sort);
     return params;
   }
@@ -601,10 +605,21 @@ function PropertiesIndexPage() {
     setMinPrice(params.get("minPrice") ?? "");
     setMaxPrice(params.get("maxPrice") ?? "");
     setMinBedrooms(params.get("bedrooms") ?? "");
+    setMinBathrooms(params.get("bathrooms") ?? "");
+    setMinFloor(params.get("minFloor") ?? "");
+    setMaxFloor(params.get("maxFloor") ?? "");
+    setMinTotalFloors(params.get("minFloors") ?? "");
+    setMaxTotalFloors(params.get("maxFloors") ?? "");
+    setMinBuiltYear(params.get("minYear") ?? "");
+    setMaxBuiltYear(params.get("maxYear") ?? "");
     setParkingOnly(params.get("parking") === "1");
     setElevatorOnly(params.get("elevator") === "1");
     setStorageOnly(params.get("storage") === "1");
     setSpecFilters((params.get("specs") ?? "").split(",").map((item) => item.trim()).filter(Boolean));
+    setFeatureSearch(params.get("features") ?? "");
+    setFeaturedOnly(params.get("featured") === "1");
+    setHasImagesOnly(params.get("images") === "1");
+    setHasLocationOnly(params.get("location") === "1");
     const savedSort = params.get("sort");
     setSort(
       savedSort === "price_asc" ||
