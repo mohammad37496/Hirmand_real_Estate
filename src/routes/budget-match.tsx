@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { BudgetMatcher } from "@/components/hirmand/budget-matcher";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { absoluteUrl, socialMeta } from "@/lib/seo";
@@ -29,7 +29,7 @@ function BudgetMatchPage() {
       <main className="budget-match-page" id="top">
         <div className="budget-match-page-head">
           <div className="budget-match-page-breadcrumb">
-            <a href="/">صفحه اصلی</a>
+            <Link to="/">صفحه اصلی</Link>
             <span aria-hidden="true">/</span>
             <strong>بودجه‌یاب</strong>
           </div>
