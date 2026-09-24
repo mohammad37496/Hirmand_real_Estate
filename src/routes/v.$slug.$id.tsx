@@ -4,7 +4,9 @@ import { getPublishedProperty } from "@/lib/properties";
 export const Route = createFileRoute("/v/$slug/$id")({
   loader: async ({ params }) => {
     try {
-      const property = await getPublishedProperty({ data: { slug: params.id } });
+      const property =
+        (await getPublishedProperty({ data: { slug: params.slug } })) ??
+        (await getPublishedProperty({ data: { slug: params.id } }));
       if (!property) throw notFound();
 
       throw redirect({
