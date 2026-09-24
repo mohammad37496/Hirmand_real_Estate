@@ -65,7 +65,7 @@ const screenshotBase = outPng.replace(/\.png$/i, "");
 const VIEWPORTS = [
   { name: "desktop-1920", width: 1920, height: 1080, screenshot: checkedOutputPath(`${screenshotBase}-desktop-1920.png`, ["/workspace"]) },
   { name: "desktop-1440", width: 1440, height: 900, screenshot: checkedOutputPath(`${screenshotBase}-desktop-1440.png`, ["/workspace"]) },
-  { name: "desktop-1280", width: 1280, height: 800, screenshot: outPng },
+  { name: "desktop", width: 1280, height: 800, screenshot: outPng },
   { name: "tablet-1024", width: 1024, height: 768, screenshot: checkedOutputPath(`${screenshotBase}-tablet-1024.png`, ["/workspace"]) },
   { name: "tablet-768", width: 768, height: 1024, screenshot: checkedOutputPath(`${screenshotBase}-tablet-768.png`, ["/workspace"]) },
   { name: "mobile-430", width: 430, height: 932, screenshot: checkedOutputPath(`${screenshotBase}-mobile-430.png`, ["/workspace"]) },
