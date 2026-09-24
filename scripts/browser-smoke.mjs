@@ -61,9 +61,16 @@ if (baselineRequested) {
 
 const timeoutMs = Number(process.env.BROWSER_SMOKE_TIMEOUT_MS || 45000);
 
+const screenshotBase = outPng.replace(/\.png$/i, "");
 const VIEWPORTS = [
-  { name: "desktop", width: 1280, height: 800, screenshot: outPng },
-  { name: "mobile", width: 390, height: 844, screenshot: mobilePng },
+  { name: "desktop-1920", width: 1920, height: 1080, screenshot: checkedOutputPath(`${screenshotBase}-desktop-1920.png`, ["/workspace"]) },
+  { name: "desktop-1440", width: 1440, height: 900, screenshot: checkedOutputPath(`${screenshotBase}-desktop-1440.png`, ["/workspace"]) },
+  { name: "desktop-1280", width: 1280, height: 800, screenshot: outPng },
+  { name: "tablet-1024", width: 1024, height: 768, screenshot: checkedOutputPath(`${screenshotBase}-tablet-1024.png`, ["/workspace"]) },
+  { name: "tablet-768", width: 768, height: 1024, screenshot: checkedOutputPath(`${screenshotBase}-tablet-768.png`, ["/workspace"]) },
+  { name: "mobile-430", width: 430, height: 932, screenshot: checkedOutputPath(`${screenshotBase}-mobile-430.png`, ["/workspace"]) },
+  { name: "mobile-390", width: 390, height: 844, screenshot: mobilePng },
+  { name: "mobile-375", width: 375, height: 812, screenshot: checkedOutputPath(`${screenshotBase}-mobile-375.png`, ["/workspace"]) },
 ];
 
 mkdirSync(dirname(outPng), { recursive: true });
@@ -156,8 +163,22 @@ try {
   // test cannot see, especially the property-detail route reported by users.
   const routeChecks = [];
   const publicRoutes = [
-    new URL("/properties", url).toString(),
-  ];
+    "/",
+    "/properties",
+    "/favorites",
+    "/compare",
+    "/tracking",
+    "/consultants",
+    "/consultants/sheikh",
+    "/budget-match",
+    "/areas/%D8%AC%D9%84%D9%81%D8%A7",
+    "/tools",
+    "/tools/commission",
+    "/tools/deposit",
+    "/tools/loan",
+    "/tools/rahn-rent",
+    "/admin",
+  ].map((path) => new URL(path, url).toString());
   for (const routeUrl of publicRoutes) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     const routeErrors = [];
