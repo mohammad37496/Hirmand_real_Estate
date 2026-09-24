@@ -1067,8 +1067,8 @@ export function PropertyDetailView({
                         </span>
                       </div>
                     ) : null}
-                    {property.otherAmenities.map((value) => (
-                      <div className="property-spec-amenity-item" key={value}>
+                    {property.otherAmenities.map((value, index) => (
+                      <div className="property-spec-amenity-item" key={`${value}-${index}`}>
                         {propertyAmenityIcon(value)}
                         <span>
                           <small>امکانات</small>
@@ -1097,7 +1097,7 @@ export function PropertyDetailView({
                   </span>
                 </div>
 
-                {property.featured ? (
+                {isFeaturedActive(property) ? (
                   <div className="property-featured-note">فایل ویژه هیرمند</div>
                 ) : null}
 
@@ -1196,8 +1196,8 @@ export function PropertyDetailView({
                     <span>{property.features.length.toLocaleString("fa-IR")} مورد</span>
                   </div>
                   <ul>
-                    {property.features.map((f) => (
-                      <li key={f}>
+                    {property.features.map((f, index) => (
+                      <li key={`${f}-${index}`}>
                         <Check size={15} aria-hidden="true" />
                         <span>{f}</span>
                       </li>

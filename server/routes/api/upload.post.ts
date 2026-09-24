@@ -8,7 +8,6 @@ const ALLOWED = new Set([
   "image/png",
   "image/webp",
   "image/gif",
-  "image/svg+xml",
   "image/avif",
   "video/mp4",
   "video/webm",

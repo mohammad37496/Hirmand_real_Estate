@@ -138,11 +138,14 @@ function toEnglishDigits(raw: string) {
     .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
 }
 
-function parseNumber(raw: string) {
-  const cleaned = toEnglishDigits(raw).replace(/[^\d.-]/g, "");
-  if (!cleaned) return undefined;
+function parseNumber(raw: string, allowNegative = false) {
+  const cleaned = toEnglishDigits(raw)
+    .replace(/[−–—]/g, "-")
+    .replace(/[^\d.-]/g, "");
+  if (!cleaned || cleaned === "-") return undefined;
   const value = Number(cleaned);
-  return Number.isFinite(value) && value >= 0 ? value : undefined;
+  if (!Number.isFinite(value)) return undefined;
+  return value >= 0 || allowNegative ? value : undefined;
 }
 
 function validTransaction(value: string): PropertyTransaction | undefined {
@@ -160,6 +163,11 @@ function normalizeBounds(a: string, b: string) {
   const second = parseNumber(b);
   if (first == null || second == null || first <= second) return [first, second] as const;
   return [second, first] as const;
+}
+
+function normalizeBoundsSigned(a: number | undefined, b: number | undefined) {
+  if (a == null || b == null || a <= b) return [a, b] as const;
+  return [b, a] as const;
 }
 
 function buildFilterData(
@@ -192,7 +200,9 @@ function buildFilterData(
 ) {
   const [nextMinArea, nextMaxArea] = normalizeBounds(minArea, maxArea);
   const [nextMinPrice, nextMaxPrice] = normalizeBounds(minPrice, maxPrice);
-  const [nextMinFloor, nextMaxFloor] = normalizeBounds(minFloor, maxFloor);
+  const nextMinFloor = parseNumber(minFloor, true);
+  const nextMaxFloor = parseNumber(maxFloor, true);
+  const [normalizedMinFloor, normalizedMaxFloor] = normalizeBoundsSigned(nextMinFloor, nextMaxFloor);
   const [nextMinTotalFloors, nextMaxTotalFloors] = normalizeBounds(minTotalFloors, maxTotalFloors);
   const [nextMinBuiltYear, nextMaxBuiltYear] = normalizeBounds(minBuiltYear, maxBuiltYear);
   return {
@@ -206,8 +216,8 @@ function buildFilterData(
     maxPrice: nextMaxPrice,
     minBedrooms: parseNumber(minBedrooms),
     minBathrooms: parseNumber(minBathrooms),
-    minFloor: nextMinFloor,
-    maxFloor: nextMaxFloor,
+    minFloor: normalizedMinFloor,
+    maxFloor: normalizedMaxFloor,
     minTotalFloors: nextMinTotalFloors,
     maxTotalFloors: nextMaxTotalFloors,
     minBuiltYear: nextMinBuiltYear,

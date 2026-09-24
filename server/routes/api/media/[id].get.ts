@@ -46,7 +46,9 @@ function parseRangeHeader(
 function disposition(pathname: string, contentType: string): string {
   const name = pathname.split("/").pop()?.trim() || "media";
   const ascii = name.replace(/[^\w.-]+/g, "_").slice(0, 80) || "media";
-  const inline = contentType.startsWith("audio/") || contentType.startsWith("image/");
+  const inline =
+    contentType.startsWith("audio/") ||
+    (contentType.startsWith("image/") && contentType !== "image/svg+xml");
   return `${inline ? "inline" : "attachment"}; filename="${ascii}"`;
 }
 

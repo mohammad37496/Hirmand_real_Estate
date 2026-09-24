@@ -953,7 +953,7 @@ export const bulkSetPropertyFeatured = createServerFn({ method: "POST" })
     const rows = await sql.query<{ id: string }>(
       `update properties
        set featured = $1,
-           featured_until = case when $1 then null else null end,
+           featured_until = case when $1 then featured_until else null end,
            updated_at = current_timestamp
        where id = any($2::text[])
        returning id`,
@@ -1003,7 +1003,15 @@ export const bulkDeleteProperties = createServerFn({ method: "POST" })
     await requireAdmin();
     const sql = await getSql();
     const rows = await sql.query<{ id: string }>(
-      "delete from properties where id = any($1::text[]) returning id",
+      `with deleted as (
+         delete from properties
+         where id = any($1::text[])
+         returning id, to_jsonb(properties) as before_state
+       )
+       insert into property_change_history (property_id, action, before_state, after_state)
+       select id, 'deleted', before_state, null
+       from deleted
+       returning property_id as id`,
       [data.ids],
     );
     return { success: true, deleted: rows.length };
@@ -1320,20 +1328,17 @@ export const deleteProperty = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAdmin();
     const sql = await getSql();
-    const existingRows = await sql.query<Record<string, unknown>>(
-      `select ${DETAIL_COLUMNS} from properties where id = $1 limit 1`,
+    const rows = await sql.query<{ id: string }>(
+      `with deleted as (
+         delete from properties
+         where id = $1
+         returning id, to_jsonb(properties) as before_state
+       )
+       insert into property_change_history (property_id, action, before_state, after_state)
+       select id, 'deleted', before_state, null
+       from deleted
+       returning property_id as id`,
       [data.id],
     );
-    const existing = existingRows[0] ?? null;
-    await sql.query("delete from properties where id = $1", [data.id]);
-
-    if (existing) {
-      await sql.query(
-        `insert into property_change_history (property_id, action, before_state, after_state)
-         values ($1, 'deleted', $2::jsonb, null)`,
-        [data.id, JSON.stringify(mapProperty(existing))],
-      );
-    }
-
-    return { success: true };
+    return { success: true, deleted: rows.length === 1 };
   });

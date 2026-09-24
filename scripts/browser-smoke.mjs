@@ -62,8 +62,14 @@ if (baselineRequested) {
 const timeoutMs = Number(process.env.BROWSER_SMOKE_TIMEOUT_MS || 45000);
 
 const VIEWPORTS = [
-  { name: "desktop", width: 1280, height: 800, screenshot: outPng },
+  { name: "desktop-1920", width: 1920, height: 1080, screenshot: outPng },
+  { name: "desktop-1440", width: 1440, height: 900, screenshot: outPng.replace(/\.png$/i, "-1440.png") },
+  { name: "desktop-1280", width: 1280, height: 800, screenshot: outPng.replace(/\.png$/i, "-1280.png") },
+  { name: "tablet-1024", width: 1024, height: 768, screenshot: outPng.replace(/\.png$/i, "-1024.png") },
+  { name: "tablet-768", width: 768, height: 1024, screenshot: outPng.replace(/\.png$/i, "-768.png") },
+  { name: "mobile-430", width: 430, height: 932, screenshot: outPng.replace(/\.png$/i, "-430.png") },
   { name: "mobile", width: 390, height: 844, screenshot: mobilePng },
+  { name: "mobile-375", width: 375, height: 812, screenshot: outPng.replace(/\.png$/i, "-375.png") },
 ];
 
 mkdirSync(dirname(outPng), { recursive: true });
@@ -156,8 +162,19 @@ try {
   // test cannot see, especially the property-detail route reported by users.
   const routeChecks = [];
   const publicRoutes = [
-    new URL("/properties", url).toString(),
-  ];
+    "/",
+    "/properties",
+    "/favorites",
+    "/compare",
+    "/tracking",
+    "/consultants",
+    "/budget-match",
+    "/tools",
+    "/tools/commission",
+    "/tools/deposit",
+    "/tools/loan",
+    "/tools/rahn-rent",
+  ].map((path) => new URL(path, url).toString());
   for (const routeUrl of publicRoutes) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     const routeErrors = [];
@@ -254,15 +271,15 @@ try {
 
   const routeFailures = routeChecks.filter((item) => !item.ok);
   if (routeFailures.length) {
-    viewports.desktop.pageErrors.push(
+    viewports["desktop-1920"].pageErrors.push(
       ...routeFailures.map((item) => `route smoke failed: ${item.url} [${item.status}]`),
     );
   }
   if (!musicApiCheck.ok) {
-    viewports.desktop.pageErrors.push(`music API smoke failed: [${musicApiCheck.status}]`);
+    viewports["desktop-1920"].pageErrors.push(`music API smoke failed: [${musicApiCheck.status}]`);
   }
   if (!propertyNavigationCheck.ok) {
-    viewports.desktop.pageErrors.push(
+    viewports["desktop-1920"].pageErrors.push(
       propertyNavigationCheck.attempted
         ? `property detail navigation smoke failed: ${propertyNavigationCheck.status || propertyNavigationCheck.error || "unknown"}`
         : "property detail navigation smoke skipped: no published property card is available in this environment",
