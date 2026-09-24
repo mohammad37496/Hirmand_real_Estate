@@ -2304,3 +2304,75 @@
 }
 
 /* second-review-validation: keep the reviewed property-detail stylesheet in the verified mainline */
+
+
+/* HIRMAND — final detail spacing/theme correction */
+.property-detail-top{
+  align-items:start!important;
+  grid-auto-rows:auto!important;
+  min-height:0!important;
+  margin-bottom:8px!important;
+}
+
+.property-detail-summary{
+  align-self:start!important;
+  height:auto!important;
+  min-height:0!important;
+  overflow:visible!important;
+  align-content:start!important;
+}
+
+.property-contact-card{
+  position:static!important;
+  margin-top:18px!important;
+  margin-bottom:0!important;
+  width:100%!important;
+}
+
+.property-detail-content{
+  margin-top:32px!important;
+  position:relative!important;
+  z-index:1!important;
+  clear:both;
+}
+
+.property-divar-specs,
+.property-detail-body,
+.property-location-section{
+  position:relative!important;
+  z-index:1!important;
+}
+
+.property-gallery-main{
+  background:var(--paper-2)!important;
+}
+
+.property-gallery-main img,
+.property-gallery-main video{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  background:var(--paper-2)!important;
+}
+
+.property-gallery-main::after{
+  background:linear-gradient(180deg,transparent 62%,rgb(8 19 32 / 14%))!important;
+}
+
+.property-price-value{
+  white-space:nowrap;
+}
+
+@media (max-width:720px){
+  .property-detail-top{
+    margin-bottom:4px!important;
+  }
+
+  .property-contact-card{
+    margin-top:14px!important;
+  }
+
+  .property-detail-content{
+    margin-top:22px!important;
+  }
+}
