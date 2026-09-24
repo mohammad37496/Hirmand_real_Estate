@@ -1136,3 +1136,25 @@
     padding-bottom:5px!important;
   }
 }
+
+
+/* Mobile filter sheet: solid, non-glass background */
+@media (max-width:979px){
+  .pf-sidebar{
+    background:#F7F8FA!important;
+    background-image:none!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+    opacity:1!important;
+  }
+
+  .pf-sidebar-head,
+  .pf-sidebar-foot{
+    background:#F7F8FA!important;
+    background-image:none!important;
+  }
+
+  .pf-spec-filter-body{
+    background:#FFFFFF!important;
+  }
+}
