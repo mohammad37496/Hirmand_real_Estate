@@ -953,7 +953,7 @@ export const bulkSetPropertyFeatured = createServerFn({ method: "POST" })
     const rows = await sql.query<{ id: string }>(
       `update properties
        set featured = $1,
-           featured_until = case when $1 then null else null end,
+           featured_until = case when $1 then featured_until else null end,
            updated_at = current_timestamp
        where id = any($2::text[])
        returning id`,
@@ -1003,7 +1003,15 @@ export const bulkDeleteProperties = createServerFn({ method: "POST" })
     await requireAdmin();
     const sql = await getSql();
     const rows = await sql.query<{ id: string }>(
-      "delete from properties where id = any($1::text[]) returning id",
+      `with deleted as (
+         delete from properties
+         where id = any($1::text[])
+         returning id, to_jsonb(properties) as before_state
+       )
+       insert into property_change_history (property_id, action, before_state, after_state)
+       select id, 'deleted', before_state, null
+       from deleted
+       returning property_id as id`,
       [data.ids],
     );
     return { success: true, deleted: rows.length };
