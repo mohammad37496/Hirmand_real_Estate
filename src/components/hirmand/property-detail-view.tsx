@@ -516,6 +516,11 @@ function Gallery({
   const activeRef = useRef(0);
 
   const fallback = "/images/type-apartment.jpg";
+
+  useEffect(() => {
+    setActive((currentIndex) => Math.min(currentIndex, Math.max(0, images.length - 1)));
+    setZoomScale(1);
+  }, [images.length]);
   const current = images[active] ?? images[0] ?? "";
 
   useEffect(() => {
