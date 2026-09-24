@@ -1,4 +1,4 @@
-import type { ComponentType } from "react";
+import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ArrowLeftRight, Landmark, PiggyBank, WalletCards } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -8,7 +8,7 @@ export type FinanceToolId = "rahn" | "commission" | "deposit" | "loan";
 
 type FinanceToolPageProps = {
   tool: FinanceToolId;
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 const TOOLS: {
@@ -16,7 +16,7 @@ const TOOLS: {
   title: string;
   text: string;
   href: "/tools/rahn-rent" | "/tools/commission" | "/tools/deposit" | "/tools/loan";
-  icon: ComponentType<{ size?: number; strokeWidth?: number }>;
+  icon: LucideIcon;
 }[] = [
   {
     id: "rahn",
