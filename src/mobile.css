@@ -616,3 +616,157 @@
     min-height: 480px;
   }
 }
+/* === Mobile header: persistent navigation + visible menu sheet ================= */
+@media (max-width: 720px) {
+  .site-nav {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+    isolation: isolate !important;
+    width: 100% !important;
+    background: rgba(247,244,238,.97) !important;
+    box-shadow: 0 4px 18px rgba(11,26,43,.08) !important;
+  }
+
+  .site-nav.is-scrolled {
+    background: rgba(247,244,238,.99) !important;
+    box-shadow: 0 6px 20px rgba(11,26,43,.1) !important;
+  }
+
+  .site-nav-inner {
+    min-height: 62px !important;
+    width: min(100% - 20px, var(--wrap)) !important;
+    padding: 7px 0 !important;
+  }
+
+  .nav-brand {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  .nav-brand span {
+    min-width: 0 !important;
+  }
+
+  .nav-brand strong {
+    color: var(--navy-900) !important;
+  }
+
+  .nav-brand small {
+    display: block !important;
+    color: var(--subtle) !important;
+  }
+
+  .nav-actions {
+    flex: 0 0 auto !important;
+  }
+
+  .header-inquiry {
+    display: none !important;
+  }
+
+  .nav-call {
+    min-height: 42px !important;
+    padding: 0 11px !important;
+    font-size: .72rem !important;
+  }
+
+  .menu-toggle {
+    display: inline-grid !important;
+    width: 42px !important;
+    height: 42px !important;
+    flex: 0 0 42px !important;
+    background: #fff !important;
+    border: 1px solid var(--line-2) !important;
+    color: var(--navy-900) !important;
+    box-shadow: 0 3px 10px rgba(11,26,43,.06) !important;
+  }
+
+  .menu-toggle:hover,
+  .menu-toggle:focus-visible {
+    background: var(--brass-100) !important;
+    border-color: var(--brass-300) !important;
+    color: var(--navy-950) !important;
+  }
+
+  .mobile-menu {
+    position: fixed !important;
+    top: 62px !important;
+    right: 10px !important;
+    left: 10px !important;
+    bottom: auto !important;
+    z-index: 995 !important;
+    width: auto !important;
+    max-height: calc(100svh - 76px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 12px !important;
+    overflow-y: auto !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 18px !important;
+    background: rgba(255,255,255,.98) !important;
+    box-shadow: 0 18px 48px rgba(11,26,43,.16) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transform: translateY(-8px) scale(.985) !important;
+    transform-origin: top center !important;
+  }
+
+  .mobile-menu.is-open {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    transform: none !important;
+  }
+
+  .mobile-menu a {
+    min-height: 50px !important;
+    margin: 0 0 5px !important;
+    padding: 11px 14px !important;
+    border: 1px solid #e8ecf1 !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    color: var(--navy-900) !important;
+    font-size: .9rem !important;
+    font-weight: 700 !important;
+  }
+
+  .mobile-menu a:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  .mobile-menu a:active,
+  .mobile-menu a:focus-visible {
+    background: var(--brass-100) !important;
+    border-color: var(--brass-300) !important;
+  }
+
+  .mobile-menu .mobile-call-list {
+    margin-top: 8px !important;
+    padding-top: 10px !important;
+    border-top: 1px solid #e8ecf1 !important;
+  }
+
+  .mobile-menu .mobile-call {
+    justify-content: center !important;
+    min-height: 46px !important;
+    background: linear-gradient(180deg, var(--brass-300), var(--brass-500)) !important;
+    color: var(--navy-950) !important;
+    border: 0 !important;
+  }
+
+  /* Keep the open sheet and its close button in the same predictable stack. */
+  .site-nav:has(.mobile-menu.is-open) {
+    z-index: 1000 !important;
+  }
+
+  .site-nav:has(.mobile-menu.is-open) .site-nav-inner {
+    position: relative !important;
+    z-index: 1001 !important;
+  }
+
+  body.menu-open {
+    overflow: hidden !important;
+  }
+}
