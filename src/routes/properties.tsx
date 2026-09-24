@@ -200,7 +200,9 @@ function buildFilterData(
 ) {
   const [nextMinArea, nextMaxArea] = normalizeBounds(minArea, maxArea);
   const [nextMinPrice, nextMaxPrice] = normalizeBounds(minPrice, maxPrice);
-  const [nextMinFloor, nextMaxFloor] = normalizeBounds(minFloor, maxFloor);
+  const nextMinFloor = parseNumber(minFloor, true);
+  const nextMaxFloor = parseNumber(maxFloor, true);
+  const [normalizedMinFloor, normalizedMaxFloor] = normalizeBoundsSigned(nextMinFloor, nextMaxFloor);
   const [nextMinTotalFloors, nextMaxTotalFloors] = normalizeBounds(minTotalFloors, maxTotalFloors);
   const [nextMinBuiltYear, nextMaxBuiltYear] = normalizeBounds(minBuiltYear, maxBuiltYear);
   return {
