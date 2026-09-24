@@ -694,34 +694,21 @@ function Contact() {
 
 function FAQ() {
   const orderedFaqs = useMemo(
-    () => [...FAQS].sort((a, b) => a.a.length - b.a.length),
+    () => [...FAQS].sort((a, b) => a.q.length - b.q.length),
     [],
   );
 
   return (
-    <Reveal as="section" className="section faq-section">
-      <SectionHead
-        kicker="راهنما"
-        title="پرسش‌های متداول"
-        text="پاسخ‌ها از کوتاه‌ترین توضیح تا کامل‌ترین راهنما مرتب شده‌اند تا مرورشان سریع و خوانا باشد."
-      />
+    <Reveal as="section" className="section">
+      <SectionHead kicker="راهنما" title="پرسش‌های متداول" />
       <div className="faq-list">
-        {orderedFaqs.map((item, index) => (
+        {orderedFaqs.map((item) => (
           <details key={item.q} className="faq-item">
             <summary>
-              <span className="faq-question-content">
-                <span className="faq-index" aria-hidden="true">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <span className="faq-question">{item.q}</span>
-              </span>
-              <span className="faq-toggle" aria-hidden="true">
-                +
-              </span>
+              {item.q}
+              <span aria-hidden="true">+</span>
             </summary>
-            <div className="faq-answer">
-              <p>{item.a}</p>
-            </div>
+            <p>{item.a}</p>
           </details>
         ))}
       </div>
