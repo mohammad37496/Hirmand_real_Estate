@@ -37,8 +37,7 @@ export function SiteChrome({
           <span>درخواست ملک</span>
         </Link>
         <Link
-          to="/"
-          hash="tools"
+          to="/tools"
           className="quick-action"
         >
           <Calculator size={17} />
