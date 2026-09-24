@@ -3158,3 +3158,22 @@ body {
 .property-card-specs span svg{
   color:var(--ui-brass)!important;
 }
+
+/* Sticky footer layout: footer reaches the bottom on short pages,
+   while long pages keep the footer naturally after the content. */
+html,
+body{
+  min-height:100%!important;
+}
+body{
+  min-height:100vh!important;
+  display:flex!important;
+  flex-direction:column!important;
+}
+.page{
+  flex:1 0 auto!important;
+  width:100%!important;
+}
+.footer{
+  margin-top:auto!important;
+}
