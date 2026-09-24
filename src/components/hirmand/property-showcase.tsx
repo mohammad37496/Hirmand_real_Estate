@@ -69,8 +69,8 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
   return (
     <article className="property-card">
       <Link
-        to="/file/$id"
-        params={{ id: property.id }}
+        to="/properties/$slug"
+        params={{ slug: property.slug }}
         className="property-card-link"
         data-property-link="true"
         aria-label={`مشاهده جزئیات کامل فایل ${property.title}`}
