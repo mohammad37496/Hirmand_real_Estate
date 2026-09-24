@@ -1550,3 +1550,134 @@
     break-before: page;
   }
 }
+
+/* ==========================================================================
+   HIRMAND — light luxury contact/CTA pass
+   Keeps navy + brass identity without large near-black surfaces.
+   ========================================================================== */
+
+.property-contact-card {
+  background:
+    radial-gradient(260px 180px at 100% 0%, rgba(201, 161, 74, .10), transparent 70%),
+    linear-gradient(180deg, #FFFFFF 0%, #F7F8FA 100%);
+  border: 1px solid var(--pd-line);
+  color: var(--pd-ink);
+  box-shadow: var(--pd-shadow-lg);
+}
+
+.property-consultant-main {
+  padding-bottom: 2px;
+}
+
+.property-consultant-avatar {
+  background: linear-gradient(145deg, #E7C978, #C9A14A);
+  color: var(--pd-navy-deep);
+  box-shadow: 0 8px 18px rgba(18, 58, 90, .10);
+}
+
+.property-consultant-copy .kicker {
+  color: var(--pd-gold);
+}
+
+.property-contact-name {
+  color: var(--pd-navy);
+}
+
+.property-consultant-role {
+  color: var(--pd-muted);
+}
+
+.property-consultant-badge {
+  background: var(--pd-navy-soft);
+  color: var(--pd-navy);
+  border: 1px solid rgba(18, 58, 90, .08);
+}
+
+.property-contact-phone {
+  background: #FFFFFF;
+  border: 1px solid var(--pd-line);
+  color: var(--pd-navy);
+  box-shadow: 0 4px 14px rgba(18, 58, 90, .04);
+}
+
+.property-contact-phone:hover {
+  background: var(--pd-navy-soft);
+}
+
+.property-contact-note {
+  color: var(--pd-muted);
+}
+
+.property-contact-actions .btn-gold {
+  background: linear-gradient(180deg, #E2C47B, #C9A14A);
+  color: var(--pd-navy-deep);
+  box-shadow: 0 8px 18px rgba(201, 161, 74, .14);
+}
+
+.property-contact-actions .btn-ghost {
+  background: #FFFFFF;
+  border: 1px solid var(--pd-line);
+  color: var(--pd-navy);
+}
+
+.property-contact-actions .btn-ghost:hover {
+  background: var(--pd-navy-soft);
+  border-color: rgba(18, 58, 90, .16);
+}
+
+.property-contact-profile {
+  color: var(--pd-navy);
+}
+
+.property-contact-profile:hover {
+  color: var(--pd-gold);
+}
+
+.property-final-cta {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(420px 220px at 100% 0%, rgba(201, 161, 74, .12), transparent 70%),
+    linear-gradient(135deg, #F7F8FA 0%, #EAF1F6 100%);
+  border: 1px solid var(--pd-line);
+  color: var(--pd-ink);
+  box-shadow: var(--pd-shadow-lg);
+}
+
+.property-final-cta::before {
+  content: "";
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block: 18px;
+  width: 4px;
+  border-radius: 99px;
+  background: linear-gradient(180deg, #C9A14A, #E2C47B);
+}
+
+.property-final-cta .kicker {
+  color: var(--pd-gold);
+}
+
+.property-final-cta h2 {
+  color: var(--pd-navy);
+}
+
+.property-final-cta p {
+  color: var(--pd-muted);
+}
+
+.property-final-cta-actions .btn-gold {
+  background: linear-gradient(180deg, #E2C47B, #C9A14A);
+  color: var(--pd-navy-deep);
+}
+
+.property-final-cta-actions .btn-ghost {
+  background: #FFFFFF;
+  border: 1px solid var(--pd-line);
+  color: var(--pd-navy);
+}
+
+.property-final-cta-actions .btn-ghost:hover {
+  background: var(--pd-navy-soft);
+  border-color: rgba(18, 58, 90, .16);
+}
