@@ -8,7 +8,6 @@ const ALLOWED = new Set([
   "image/png",
   "image/webp",
   "image/gif",
-  "image/svg+xml",
   "image/avif",
   "video/mp4",
   "video/webm",
@@ -22,7 +21,6 @@ function mimeFromFilename(filename: string): string {
   if (extension === "webp") return "image/webp";
   if (extension === "gif") return "image/gif";
   if (extension === "avif") return "image/avif";
-  if (extension === "svg") return "image/svg+xml";
   if (extension === "mp4") return "video/mp4";
   if (extension === "webm") return "video/webm";
   if (extension === "mov") return "video/quicktime";
