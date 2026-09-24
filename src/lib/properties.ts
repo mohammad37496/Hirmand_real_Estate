@@ -121,10 +121,20 @@ export type PropertyFilters = {
   minPrice?: number;
   maxPrice?: number;
   minBedrooms?: number;
+  minBathrooms?: number;
+  minFloor?: number;
+  maxFloor?: number;
+  minTotalFloors?: number;
+  maxTotalFloors?: number;
+  minBuiltYear?: number;
+  maxBuiltYear?: number;
   parkingOnly?: boolean;
   elevatorOnly?: boolean;
   storageOnly?: boolean;
   specFilters?: string[];
+  featureSearch?: string;
+  hasImagesOnly?: boolean;
+  hasLocationOnly?: boolean;
   sort?: PropertySort;
   offset?: number;
 };
@@ -142,10 +152,20 @@ const publicFiltersSchema = z.object({
   minPrice: z.number().int().min(0).max(999999999999999).optional(),
   maxPrice: z.number().int().min(0).max(999999999999999).optional(),
   minBedrooms: z.number().int().min(0).max(30).optional(),
+  minBathrooms: z.number().int().min(0).max(30).optional(),
+  minFloor: z.number().int().min(-5).max(200).optional(),
+  maxFloor: z.number().int().min(-5).max(200).optional(),
+  minTotalFloors: z.number().int().min(0).max(200).optional(),
+  maxTotalFloors: z.number().int().min(0).max(200).optional(),
+  minBuiltYear: z.number().int().min(1200).max(2500).optional(),
+  maxBuiltYear: z.number().int().min(1200).max(2500).optional(),
   parkingOnly: z.boolean().optional(),
   elevatorOnly: z.boolean().optional(),
   storageOnly: z.boolean().optional(),
-  specFilters: z.array(z.string().trim().min(1).max(100)).max(60).optional(),
+  specFilters: z.array(z.string().trim().min(1).max(100)).max(120).optional(),
+  featureSearch: z.string().trim().max(80).optional(),
+  hasImagesOnly: z.boolean().optional(),
+  hasLocationOnly: z.boolean().optional(),
   sort: z.enum(["newest", "price_asc", "price_desc", "area_asc", "area_desc"]).optional().default("newest"),
   offset: z.number().int().min(0).max(100000).optional().default(0),
 });
@@ -406,10 +426,20 @@ function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
     data.minPrice ?? null,
     data.maxPrice ?? null,
     data.minBedrooms ?? null,
+    data.minBathrooms ?? null,
+    data.minFloor ?? null,
+    data.maxFloor ?? null,
+    data.minTotalFloors ?? null,
+    data.maxTotalFloors ?? null,
+    data.minBuiltYear ?? null,
+    data.maxBuiltYear ?? null,
     data.parkingOnly ?? false,
     data.elevatorOnly ?? false,
     data.storageOnly ?? false,
     data.specFilters?.length ? data.specFilters : null,
+    data.featureSearch?.trim() || null,
+    data.hasImagesOnly ?? false,
+    data.hasLocationOnly ?? false,
     data.offset ?? 0,
   ];
 }
@@ -431,16 +461,26 @@ function publicPropertyWhereSql() {
     "and ($9::numeric is null or " + PRICE_EXPR + " >= $9)",
     "and ($10::numeric is null or " + PRICE_EXPR + " <= $10)",
     "and ($11::int is null or bedrooms >= $11)",
-    "and ($12::boolean is false or parking = true)",
-    "and ($13::boolean is false or elevator = true)",
-    "and ($14::boolean is false or storage = true)",
-    "and ($15::text[] is null or cardinality($15::text[]) = 0 or exists (select 1 from unnest($15::text[]) as selected(value) where " +
+    "and ($12::int is null or bathrooms >= $12)",
+    "and ($13::int is null or floor >= $13)",
+    "and ($14::int is null or floor <= $14)",
+    "and ($15::int is null or total_floors >= $15)",
+    "and ($16::int is null or total_floors <= $16)",
+    "and ($17::int is null or built_year >= $17)",
+    "and ($18::int is null or built_year <= $18)",
+    "and ($19::boolean is false or parking = true)",
+    "and ($20::boolean is false or elevator = true)",
+    "and ($21::boolean is false or storage = true)",
+    "and ($22::text[] is null or cardinality($22::text[]) = 0 or exists (select 1 from unnest($22::text[]) as selected(value) where " +
       "(selected.value like 'cabinet:%' and cabinet_type = substring(selected.value from 9)) or " +
       "(selected.value like 'flooring:%' and flooring_type = substring(selected.value from 10)) or " +
       "(selected.value like 'cooling:%' and cooling_system = substring(selected.value from 9)) or " +
       "(selected.value like 'heating:%' and heating_system = substring(selected.value from 9)) or " +
       "(selected.value like 'closet:%' and wall_closet_type = substring(selected.value from 8)) or " +
       "coalesce(other_amenities, '[]'::jsonb) ? selected.value))",
+    "and ($23::text is null or exists (select 1 from jsonb_array_elements_text(coalesce(features, '[]'::jsonb)) as feature(value) where feature.value ilike '%' || $23 || '%'))",
+    "and ($24::boolean is false or (jsonb_typeof(coalesce(images, '[]'::jsonb)) = 'array' and jsonb_array_length(coalesce(images, '[]'::jsonb)) > 0))",
+    "and ($25::boolean is false or (latitude is not null and longitude is not null))",
   ].join(" ");
 }
 
@@ -454,13 +494,13 @@ export const listPublishedPropertyCards = createServerFn({ method: "GET" })
       [
         "select " + CARD_COLUMNS,
         "from properties where " + publicPropertyWhereSql(),
-        "order by case when $17 = 'newest' then case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end else 0 end,",
-        "case when $17 = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
-        "case when $17 = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
-        "case when $17 = 'area_asc' then area_m2 end asc nulls last,",
-        "case when $17 = 'area_desc' then area_m2 end desc nulls last,",
+        "order by case when $27 = 'newest' then case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end else 0 end,",
+        "case when $27 = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
+        "case when $27 = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
+        "case when $27 = 'area_asc' then area_m2 end asc nulls last,",
+        "case when $27 = 'area_desc' then area_m2 end desc nulls last,",
         "published_at desc nulls last, created_at desc",
-        "limit 48 offset $16",
+        "limit 48 offset $26",
       ].join(" "),
       [...params, data.sort],
     );
@@ -477,13 +517,13 @@ export const listPublishedProperties = createServerFn({ method: "GET" })
       [
         "select " + LIST_COLUMNS,
         "from properties where " + publicPropertyWhereSql(),
-        "order by case when $17 = 'newest' then case when featured then 0 else 1 end else 0 end,",
-        "case when $17 = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
-        "case when $17 = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
-        "case when $17 = 'area_asc' then area_m2 end asc nulls last,",
-        "case when $17 = 'area_desc' then area_m2 end desc nulls last,",
+        "order by case when $27 = 'newest' then case when featured then 0 else 1 end else 0 end,",
+        "case when $27 = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
+        "case when $27 = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
+        "case when $27 = 'area_asc' then area_m2 end asc nulls last,",
+        "case when $27 = 'area_desc' then area_m2 end desc nulls last,",
         "published_at desc nulls last, created_at desc",
-        "limit 48 offset $16",
+        "limit 48 offset $26",
       ].join(" "),
       [...params, data.sort],
     );
@@ -495,7 +535,7 @@ export const countPublishedProperties = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     if (dbSource === "unconfigured") return 0;
     const sql = await getSql();
-    const params = publicFilterParams(data).slice(0, 15);
+    const params = publicFilterParams(data).slice(0, 25);
     const rows = await sql.query<{ count: number }>(
       "select count(*)::int as count from properties where " + publicPropertyWhereSql(),
       params,
