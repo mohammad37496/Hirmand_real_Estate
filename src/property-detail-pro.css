@@ -2074,3 +2074,231 @@
     color:#111;
   }
 }
+
+/* ==========================================================================
+   HIRMAND — second review corrections
+   ========================================================================== */
+
+.property-detail-summary{
+  position:static;
+}
+
+.property-price-value{
+  direction:rtl;
+  unicode-bidi:plaintext;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em;
+}
+
+.property-contact-note{
+  margin:0;
+  color:rgb(255 255 255 / 70%);
+  font-size:.78rem;
+  line-height:1.9;
+  max-width:46ch;
+}
+
+.property-contact-actions{
+  display:none;
+}
+
+.property-gallery,
+.property-gallery-main{
+  min-height:clamp(420px,38vw,560px);
+}
+
+.property-gallery-rail{
+  max-height:clamp(420px,38vw,560px);
+}
+
+.property-section-heading{
+  flex-wrap:wrap;
+}
+
+.property-source-badge{
+  margin-inline-start:auto;
+}
+
+.property-detail-meta{
+  overflow-wrap:anywhere;
+}
+
+.property-detail-summary-head h1{
+  overflow-wrap:anywhere;
+}
+
+.property-description-copy{
+  width:100%;
+}
+
+.property-lightbox{
+  outline:none;
+}
+
+.property-lightbox[tabindex="-1"]:focus{
+  outline:none;
+}
+
+@media (max-width:900px){
+  .property-spec-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .property-related .property-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media (max-width:720px){
+  .property-gallery,
+  .property-gallery-main,
+  .property-gallery-rail{
+    min-height:0;
+    max-height:none;
+  }
+
+  .property-detail-summary{
+    position:static;
+  }
+
+  .property-section-heading{
+    align-items:flex-start;
+  }
+
+  .property-source-badge{
+    margin-inline-start:0;
+  }
+
+  .property-contact-note{
+    font-size:.75rem;
+  }
+}
+
+@media (max-width:480px){
+  .property-primary-contact{
+    gap:8px;
+  }
+
+  .property-primary-contact a{
+    min-height:50px;
+    font-size:.78rem;
+  }
+
+  .property-actions:not(.property-actions-compact) .property-action{
+    min-height:48px;
+    padding-inline:9px;
+  }
+
+  .property-price-block{
+    gap:6px;
+  }
+
+  .property-price-value{
+    font-size:clamp(1.22rem,6vw,1.5rem);
+  }
+
+  .property-description-copy p{
+    font-size:.94rem;
+    line-height:2.08;
+  }
+}
+
+@keyframes property-skeleton-pulse{
+  0%,100%{opacity:.58}
+  50%{opacity:1}
+}
+
+.property-detail-skeleton{
+  padding-top:24px;
+}
+
+.property-skeleton-breadcrumb,
+.property-skeleton-gallery,
+.property-skeleton-summary,
+.property-skeleton-section,
+.property-skeleton-line,
+.property-skeleton-price,
+.property-skeleton-actions,
+.property-skeleton-contact,
+.property-skeleton-specs{
+  background:linear-gradient(100deg,#e8eee9 20%,#f6f8f6 40%,#e8eee9 60%);
+  background-size:200% 100%;
+  animation:property-skeleton-pulse 1.2s ease-in-out infinite;
+}
+
+.property-skeleton-breadcrumb{
+  width:min(220px,42vw);
+  height:34px;
+  border-radius:12px;
+  margin-bottom:16px;
+}
+
+.property-skeleton-gallery{
+  min-height:clamp(420px,38vw,560px);
+  border-radius:20px;
+}
+
+.property-skeleton-summary{
+  min-height:clamp(420px,38vw,560px);
+  padding:22px;
+  border:1px solid #e1e7e2;
+  border-radius:20px;
+  background:#fff;
+  display:grid;
+  align-content:start;
+  gap:14px;
+}
+
+.property-skeleton-line{
+  display:block;
+  height:16px;
+  border-radius:999px;
+}
+
+.property-skeleton-line-short{width:34%}
+.property-skeleton-line-medium{width:62%}
+.property-skeleton-line-long{width:92%}
+.property-skeleton-line-title{width:86%;height:42px}
+.property-skeleton-price{height:88px;border-radius:16px}
+.property-skeleton-actions{height:52px;border-radius:14px}
+.property-skeleton-contact{height:132px;border-radius:17px}
+.property-skeleton-section{
+  margin-top:18px;
+  min-height:260px;
+  border-radius:20px;
+  background:#fff;
+  border:1px solid #e1e7e2;
+}
+.property-skeleton-specs{
+  height:86px;
+  margin:16px 0;
+  border-radius:14px;
+}
+
+@media (max-width:720px){
+  .property-skeleton-gallery,
+  .property-skeleton-summary{
+    min-height:0;
+  }
+
+  .property-skeleton-gallery{
+    aspect-ratio:4 / 3;
+  }
+
+  .property-skeleton-summary{
+    margin-top:10px;
+    padding:15px;
+  }
+
+  .property-skeleton-section{
+    min-height:300px;
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .property-detail-skeleton *,
+  .property-detail-skeleton *::before,
+  .property-detail-skeleton *::after{
+    animation:none !important;
+  }
+}
