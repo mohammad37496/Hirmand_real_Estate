@@ -171,15 +171,29 @@ function buildFilterData(
   minPrice: string,
   maxPrice: string,
   minBedrooms: string,
+  minBathrooms: string,
+  minFloor: string,
+  maxFloor: string,
+  minTotalFloors: string,
+  maxTotalFloors: string,
+  minBuiltYear: string,
+  maxBuiltYear: string,
   parkingOnly: boolean,
   elevatorOnly: boolean,
   storageOnly: boolean,
   specFilters: string[],
+  featureSearch: string,
+  featuredOnly: boolean,
+  hasImagesOnly: boolean,
+  hasLocationOnly: boolean,
   sort: PropertySort,
   offset: number,
 ) {
   const [nextMinArea, nextMaxArea] = normalizeBounds(minArea, maxArea);
   const [nextMinPrice, nextMaxPrice] = normalizeBounds(minPrice, maxPrice);
+  const [nextMinFloor, nextMaxFloor] = normalizeBounds(minFloor, maxFloor);
+  const [nextMinTotalFloors, nextMaxTotalFloors] = normalizeBounds(minTotalFloors, maxTotalFloors);
+  const [nextMinBuiltYear, nextMaxBuiltYear] = normalizeBounds(minBuiltYear, maxBuiltYear);
   return {
     search: q.trim() || undefined,
     transactionType: transactionType || undefined,
@@ -190,10 +204,21 @@ function buildFilterData(
     minPrice: nextMinPrice,
     maxPrice: nextMaxPrice,
     minBedrooms: parseNumber(minBedrooms),
+    minBathrooms: parseNumber(minBathrooms),
+    minFloor: nextMinFloor,
+    maxFloor: nextMaxFloor,
+    minTotalFloors: nextMinTotalFloors,
+    maxTotalFloors: nextMaxTotalFloors,
+    minBuiltYear: nextMinBuiltYear,
+    maxBuiltYear: nextMaxBuiltYear,
     parkingOnly,
     elevatorOnly,
     storageOnly,
     specFilters,
+    featureSearch: featureSearch.trim() || undefined,
+    featuredOnly,
+    hasImagesOnly,
+    hasLocationOnly,
     sort,
     offset,
   };
@@ -224,10 +249,22 @@ function PropertiesIndexPage() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [minBedrooms, setMinBedrooms] = useState("");
+  const [minBathrooms, setMinBathrooms] = useState("");
+  const [minFloor, setMinFloor] = useState("");
+  const [maxFloor, setMaxFloor] = useState("");
+  const [minTotalFloors, setMinTotalFloors] = useState("");
+  const [maxTotalFloors, setMaxTotalFloors] = useState("");
+  const [minBuiltYear, setMinBuiltYear] = useState("");
+  const [maxBuiltYear, setMaxBuiltYear] = useState("");
   const [parkingOnly, setParkingOnly] = useState(false);
   const [elevatorOnly, setElevatorOnly] = useState(false);
   const [storageOnly, setStorageOnly] = useState(false);
   const [specFilters, setSpecFilters] = useState<string[]>([]);
+  const [specQuery, setSpecQuery] = useState("");
+  const [featureSearch, setFeatureSearch] = useState("");
+  const [featuredOnly, setFeaturedOnly] = useState(false);
+  const [hasImagesOnly, setHasImagesOnly] = useState(false);
+  const [hasLocationOnly, setHasLocationOnly] = useState(false);
   const [sort, setSort] = useState<PropertySort>("newest");
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -266,10 +303,21 @@ function PropertiesIndexPage() {
     setMinPrice(params.get("minPrice") ?? "");
     setMaxPrice(params.get("maxPrice") ?? "");
     setMinBedrooms(params.get("bedrooms") ?? "");
+    setMinBathrooms(params.get("bathrooms") ?? "");
+    setMinFloor(params.get("minFloor") ?? "");
+    setMaxFloor(params.get("maxFloor") ?? "");
+    setMinTotalFloors(params.get("minFloors") ?? "");
+    setMaxTotalFloors(params.get("maxFloors") ?? "");
+    setMinBuiltYear(params.get("minYear") ?? "");
+    setMaxBuiltYear(params.get("maxYear") ?? "");
     setParkingOnly(params.get("parking") === "1");
     setElevatorOnly(params.get("elevator") === "1");
     setStorageOnly(params.get("storage") === "1");
     setSpecFilters((params.get("specs") ?? "").split(",").map((item) => item.trim()).filter(Boolean));
+    setFeatureSearch(params.get("features") ?? "");
+    setFeaturedOnly(params.get("featured") === "1");
+    setHasImagesOnly(params.get("images") === "1");
+    setHasLocationOnly(params.get("location") === "1");
     setSort(validSort);
     skipInitialFetch.current = Array.from(params.keys()).length === 0;
     setUrlReady(true);
@@ -288,10 +336,21 @@ function PropertiesIndexPage() {
     if (minPrice.trim()) params.set("minPrice", minPrice.trim());
     if (maxPrice.trim()) params.set("maxPrice", maxPrice.trim());
     if (minBedrooms.trim()) params.set("bedrooms", minBedrooms.trim());
+    if (minBathrooms.trim()) params.set("bathrooms", minBathrooms.trim());
+    if (minFloor.trim()) params.set("minFloor", minFloor.trim());
+    if (maxFloor.trim()) params.set("maxFloor", maxFloor.trim());
+    if (minTotalFloors.trim()) params.set("minFloors", minTotalFloors.trim());
+    if (maxTotalFloors.trim()) params.set("maxFloors", maxTotalFloors.trim());
+    if (minBuiltYear.trim()) params.set("minYear", minBuiltYear.trim());
+    if (maxBuiltYear.trim()) params.set("maxYear", maxBuiltYear.trim());
     if (parkingOnly) params.set("parking", "1");
     if (elevatorOnly) params.set("elevator", "1");
     if (storageOnly) params.set("storage", "1");
     if (specFilters.length) params.set("specs", specFilters.join(","));
+    if (featureSearch.trim()) params.set("features", featureSearch.trim());
+    if (featuredOnly) params.set("featured", "1");
+    if (hasImagesOnly) params.set("images", "1");
+    if (hasLocationOnly) params.set("location", "1");
     if (sort !== "newest") params.set("sort", sort);
     const query = params.toString();
     window.history.replaceState({}, "", query ? `/properties?${query}` : "/properties");
@@ -318,6 +377,13 @@ function PropertiesIndexPage() {
         minPrice,
         maxPrice,
         minBedrooms,
+        minBathrooms,
+        minFloor,
+        maxFloor,
+        minTotalFloors,
+        maxTotalFloors,
+        minBuiltYear,
+        maxBuiltYear,
         parkingOnly,
         elevatorOnly,
         storageOnly,
@@ -361,7 +427,7 @@ function PropertiesIndexPage() {
     }, 320);
 
     return () => window.clearTimeout(timer);
-  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, parkingOnly, elevatorOnly, sort]);
+  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, minBathrooms, minFloor, maxFloor, minTotalFloors, maxTotalFloors, minBuiltYear, maxBuiltYear, parkingOnly, elevatorOnly, storageOnly, specFilters, featureSearch, featuredOnly, hasImagesOnly, hasLocationOnly, sort]);
 
   const loadMore = useCallback(async () => {
     if (loading || loadingMore || properties.length >= total) return;
@@ -380,10 +446,21 @@ function PropertiesIndexPage() {
           minPrice,
           maxPrice,
           minBedrooms,
+          minBathrooms,
+          minFloor,
+          maxFloor,
+          minTotalFloors,
+          maxTotalFloors,
+          minBuiltYear,
+          maxBuiltYear,
           parkingOnly,
           elevatorOnly,
           storageOnly,
           specFilters,
+          featureSearch,
+          featuredOnly,
+          hasImagesOnly,
+          hasLocationOnly,
           sort,
           nextOffset,
         ),
@@ -422,9 +499,21 @@ function PropertiesIndexPage() {
     minPrice,
     maxPrice,
     minBedrooms,
+    minBathrooms,
+    minFloor,
+    maxFloor,
+    minTotalFloors,
+    maxTotalFloors,
+    minBuiltYear,
+    maxBuiltYear,
     parkingOnly,
     elevatorOnly,
+    storageOnly,
     specFilters,
+    featureSearch,
+    featuredOnly,
+    hasImagesOnly,
+    hasLocationOnly,
     sort,
   ]);
 
@@ -454,6 +543,13 @@ function PropertiesIndexPage() {
     if (minPrice.trim()) params.set("minPrice", minPrice.trim());
     if (maxPrice.trim()) params.set("maxPrice", maxPrice.trim());
     if (minBedrooms.trim()) params.set("bedrooms", minBedrooms.trim());
+    if (minBathrooms.trim()) params.set("bathrooms", minBathrooms.trim());
+    if (minFloor.trim()) params.set("minFloor", minFloor.trim());
+    if (maxFloor.trim()) params.set("maxFloor", maxFloor.trim());
+    if (minTotalFloors.trim()) params.set("minFloors", minTotalFloors.trim());
+    if (maxTotalFloors.trim()) params.set("maxFloors", maxTotalFloors.trim());
+    if (minBuiltYear.trim()) params.set("minYear", minBuiltYear.trim());
+    if (maxBuiltYear.trim()) params.set("maxYear", maxBuiltYear.trim());
     if (parkingOnly) params.set("parking", "1");
     if (elevatorOnly) params.set("elevator", "1");
     if (storageOnly) params.set("storage", "1");
@@ -544,10 +640,22 @@ function PropertiesIndexPage() {
     setMinPrice("");
     setMaxPrice("");
     setMinBedrooms("");
+    setMinBathrooms("");
+    setMinFloor("");
+    setMaxFloor("");
+    setMinTotalFloors("");
+    setMaxTotalFloors("");
+    setMinBuiltYear("");
+    setMaxBuiltYear("");
     setParkingOnly(false);
     setElevatorOnly(false);
     setStorageOnly(false);
     setSpecFilters([]);
+    setSpecQuery("");
+    setFeatureSearch("");
+    setFeaturedOnly(false);
+    setHasImagesOnly(false);
+    setHasLocationOnly(false);
     setSort("newest");
     setOffset(0);
   }
@@ -601,10 +709,21 @@ function PropertiesIndexPage() {
     minPrice.trim() ||
     maxPrice.trim() ||
     minBedrooms.trim() ||
+    minBathrooms.trim() ||
+    minFloor.trim() ||
+    maxFloor.trim() ||
+    minTotalFloors.trim() ||
+    maxTotalFloors.trim() ||
+    minBuiltYear.trim() ||
+    maxBuiltYear.trim() ||
     parkingOnly ||
     elevatorOnly ||
     storageOnly ||
     specFilters.length > 0 ||
+    featureSearch.trim() ||
+    featuredOnly ||
+    hasImagesOnly ||
+    hasLocationOnly ||
     sort !== "newest",
   );
 
@@ -616,10 +735,15 @@ function PropertiesIndexPage() {
     minArea.trim() || maxArea.trim(),
     minPrice.trim() || maxPrice.trim(),
     minBedrooms.trim(),
+    minBathrooms.trim() || minFloor.trim() || maxFloor.trim() || minTotalFloors.trim() || maxTotalFloors.trim() || minBuiltYear.trim() || maxBuiltYear.trim(),
     parkingOnly ? "parking" : "",
     elevatorOnly ? "elevator" : "",
     storageOnly ? "storage" : "",
     specFilters.length ? "specs" : "",
+    featureSearch.trim(),
+    featuredOnly ? "featured" : "",
+    hasImagesOnly ? "images" : "",
+    hasLocationOnly ? "location" : "",
   ].filter(Boolean).length;
 
   const transactionLabel = transactionType
@@ -641,12 +765,26 @@ function PropertiesIndexPage() {
       ? { label: `قیمت ${minPrice || "۰"} تا ${maxPrice || "∞"}`, clear: () => { setMinPrice(""); setMaxPrice(""); } }
       : null,
     minBedrooms.trim() ? { label: `${minBedrooms} خواب به بالا`, clear: () => setMinBedrooms("") } : null,
+    minBathrooms.trim() ? { label: `${minBathrooms} حمام به بالا`, clear: () => setMinBathrooms("") } : null,
+    minFloor.trim() || maxFloor.trim()
+      ? { label: `طبقه ${minFloor || "همه"} تا ${maxFloor || "همه"}`, clear: () => { setMinFloor(""); setMaxFloor(""); } }
+      : null,
+    minTotalFloors.trim() || maxTotalFloors.trim()
+      ? { label: `تعداد طبقات ${minTotalFloors || "همه"} تا ${maxTotalFloors || "همه"}`, clear: () => { setMinTotalFloors(""); setMaxTotalFloors(""); } }
+      : null,
+    minBuiltYear.trim() || maxBuiltYear.trim()
+      ? { label: `ساخت ${minBuiltYear || "همه"} تا ${maxBuiltYear || "همه"}`, clear: () => { setMinBuiltYear(""); setMaxBuiltYear(""); } }
+      : null,
     parkingOnly ? { label: "پارکینگ", clear: () => setParkingOnly(false) } : null,
     elevatorOnly ? { label: "آسانسور", clear: () => setElevatorOnly(false) } : null,
     storageOnly ? { label: "انباری", clear: () => setStorageOnly(false) } : null,
     specFilters.length
       ? { label: `جزئیات ملک: ${specFilters.length.toLocaleString("fa-IR")}`, clear: () => setSpecFilters([]) }
       : null,
+    featureSearch.trim() ? { label: `ویژگی: ${featureSearch.trim()}`, clear: () => setFeatureSearch("") } : null,
+    featuredOnly ? { label: "فایل ویژه", clear: () => setFeaturedOnly(false) } : null,
+    hasImagesOnly ? { label: "دارای عکس", clear: () => setHasImagesOnly(false) } : null,
+    hasLocationOnly ? { label: "دارای موقعیت", clear: () => setHasLocationOnly(false) } : null,
   ].filter((item): item is { label: string; clear: () => void } => Boolean(item));
 
   function toggleSpecFilter(value: string) {
@@ -825,82 +963,101 @@ function PropertiesIndexPage() {
               </div>
             </FilterGroup>
 
-            <FilterGroup title="حداقل خواب">
-              <div className="pf-chips">
-                <button
-                  type="button"
-                  className={`pf-chip${minBedrooms ? "" : " is-active"}`}
-                  onClick={() => setMinBedrooms("")}
-                >
-                  فرقی ندارد
-                </button>
-                {BEDROOM_OPTIONS.map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    className={`pf-chip${minBedrooms === value ? " is-active" : ""}`}
-                    onClick={() => setMinBedrooms(minBedrooms === value ? "" : value)}
-                  >
-                    {fa(Number(value))}+
-                  </button>
-                ))}
+            <FilterGroup title="اتاق‌ها و ساختمان" hint="فیلترهای دقیق‌تر">
+              <div className="pf-range">
+                <label className="pf-field">
+                  <span>حداقل خواب</span>
+                  <input inputMode="numeric" value={minBedrooms} onChange={(e) => setMinBedrooms(e.target.value)} placeholder="۲" />
+                </label>
+                <label className="pf-field">
+                  <span>حداقل حمام</span>
+                  <input inputMode="numeric" value={minBathrooms} onChange={(e) => setMinBathrooms(e.target.value)} placeholder="۱" />
+                </label>
+              </div>
+              <div className="pf-range">
+                <label className="pf-field"><span>از طبقه</span><input inputMode="numeric" value={minFloor} onChange={(e) => setMinFloor(e.target.value)} placeholder="همکف" /></label>
+                <i aria-hidden="true">—</i>
+                <label className="pf-field"><span>تا طبقه</span><input inputMode="numeric" value={maxFloor} onChange={(e) => setMaxFloor(e.target.value)} placeholder="۲۰" /></label>
+              </div>
+              <div className="pf-range">
+                <label className="pf-field"><span>از تعداد طبقات</span><input inputMode="numeric" value={minTotalFloors} onChange={(e) => setMinTotalFloors(e.target.value)} placeholder="۱" /></label>
+                <i aria-hidden="true">—</i>
+                <label className="pf-field"><span>تا تعداد طبقات</span><input inputMode="numeric" value={maxTotalFloors} onChange={(e) => setMaxTotalFloors(e.target.value)} placeholder="۱۰" /></label>
+              </div>
+              <div className="pf-range">
+                <label className="pf-field"><span>سال ساخت از</span><input inputMode="numeric" value={minBuiltYear} onChange={(e) => setMinBuiltYear(e.target.value)} placeholder="۱۳۹۵" /></label>
+                <i aria-hidden="true">—</i>
+                <label className="pf-field"><span>سال ساخت تا</span><input inputMode="numeric" value={maxBuiltYear} onChange={(e) => setMaxBuiltYear(e.target.value)} placeholder="۱۴۰۵" /></label>
               </div>
             </FilterGroup>
 
-            <FilterGroup title="امکانات">
-              <label className="pf-switch">
-                <span>فقط پارکینگ‌دار</span>
-                <input type="checkbox" checked={parkingOnly} onChange={(e) => setParkingOnly(e.target.checked)} />
-              </label>
-              <label className="pf-switch">
-                <span>فقط آسانسوردار</span>
-                <input type="checkbox" checked={elevatorOnly} onChange={(e) => setElevatorOnly(e.target.checked)} />
-              </label>
-              <label className="pf-switch">
-                <span>فقط انباری‌دار</span>
-                <input type="checkbox" checked={storageOnly} onChange={(e) => setStorageOnly(e.target.checked)} />
+            <FilterGroup title="ویژگی‌های فایل" hint="امکانات سفارشی ثبت‌شده توسط ادمین">
+              <label className="pf-field">
+                <span>جست‌وجو در ویژگی‌های تکمیلی</span>
+                <input value={featureSearch} onChange={(e) => setFeatureSearch(e.target.value)} placeholder="مثلاً نورگیر، بازسازی‌شده، خوش‌نقشه" />
               </label>
             </FilterGroup>
 
-            <details defaultOpen className={`pf-spec-filter${specFilters.length ? " has-selection" : ""}`}>
-              <summary>
-                <span>
-                  <strong>همه امکانات و مشخصات فایل</strong>
-                  <small>۹۴ گزینه جزئی در ۶ گروه + پارکینگ، آسانسور و انباری</small>
-                </span>
-                <b>{specFilters.length ? `${fa(specFilters.length)} انتخاب` : "انتخاب"}</b>
-              </summary>
-              <div className="pf-spec-filter-body">
+            <FilterGroup title="وضعیت و امکانات پایه">
+              <label className="pf-switch"><span>فقط فایل ویژه</span><input type="checkbox" checked={featuredOnly} onChange={(e) => setFeaturedOnly(e.target.checked)} /></label>
+              <label className="pf-switch"><span>فقط دارای عکس</span><input type="checkbox" checked={hasImagesOnly} onChange={(e) => setHasImagesOnly(e.target.checked)} /></label>
+              <label className="pf-switch"><span>فقط دارای موقعیت روی نقشه</span><input type="checkbox" checked={hasLocationOnly} onChange={(e) => setHasLocationOnly(e.target.checked)} /></label>
+              <label className="pf-switch"><span>فقط پارکینگ‌دار</span><input type="checkbox" checked={parkingOnly} onChange={(e) => setParkingOnly(e.target.checked)} /></label>
+              <label className="pf-switch"><span>فقط آسانسوردار</span><input type="checkbox" checked={elevatorOnly} onChange={(e) => setElevatorOnly(e.target.checked)} /></label>
+              <label className="pf-switch"><span>فقط انباری‌دار</span><input type="checkbox" checked={storageOnly} onChange={(e) => setStorageOnly(e.target.checked)} /></label>
+            </FilterGroup>
+
+            <section className={`pf-spec-filter${specFilters.length ? " has-selection" : ""}`} aria-labelledby="pf-spec-title">
+              <div className="pf-spec-filter-head">
+                <div>
+                  <strong id="pf-spec-title">همه امکانات و مشخصات فایل</strong>
+                  <small>۹۴ گزینه جزئی در ۶ گروه؛ همه گزینه‌ها همیشه قابل مشاهده و انتخاب هستند.</small>
+                </div>
+                <span>{specFilters.length ? `${fa(specFilters.length)} انتخاب` : "بدون انتخاب"}</span>
+              </div>
+              <div className="pf-spec-toolbar">
+                <label className="pf-spec-search">
+                  <Search size={15} aria-hidden="true" />
+                  <input
+                    value={specQuery}
+                    onChange={(event) => setSpecQuery(event.target.value)}
+                    placeholder="جست‌وجو در امکانات؛ مثلاً تراس، استخر، MDF..."
+                    aria-label="جست‌وجو در امکانات و مشخصات"
+                  />
+                  {specQuery ? <button type="button" aria-label="پاک کردن جست‌وجوی امکانات" onClick={() => setSpecQuery("")}><X size={13} /></button> : null}
+                </label>
+                {specFilters.length ? <button type="button" className="pf-spec-clear" onClick={() => setSpecFilters([])}>پاک‌کردن انتخاب‌ها</button> : null}
+              </div>
+              <div className="pf-spec-groups">
                 {SPEC_GROUPS.map((group) => {
-                  const options = SPEC_FILTER_OPTIONS.filter((item) => item.group === group);
+                  const allOptions = SPEC_FILTER_OPTIONS.filter((item) => item.group === group);
+                  const query = specQuery.trim().toLocaleLowerCase();
+                  const options = query ? allOptions.filter((item) => item.label.toLocaleLowerCase().includes(query)) : allOptions;
+                  const selectedCount = allOptions.filter((item) => specFilters.includes(item.value)).length;
                   return (
                     <section className="pf-spec-filter-group" key={group}>
                       <div className="pf-spec-filter-group-title">
                         <span>{group}</span>
-                        <small>{fa(options.filter((item) => specFilters.includes(item.value)).length)} انتخاب</small>
+                        <small>{selectedCount ? `${fa(selectedCount)} انتخاب` : `${fa(allOptions.length)} گزینه`}</small>
                       </div>
-                      <div className="pf-spec-options">
-                        {options.map((item) => {
-                          const active = specFilters.includes(item.value);
-                          return (
-                            <button
-                              key={item.value}
-                              type="button"
-                              className={`pf-spec-option${active ? " is-active" : ""}`}
-                              onClick={() => toggleSpecFilter(item.value)}
-                              aria-pressed={active}
-                            >
-                              <span className="pf-spec-option-mark" aria-hidden="true">{active ? "✓" : ""}</span>
-                              <span>{item.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
+                      {options.length ? (
+                        <div className="pf-spec-options">
+                          {options.map((item) => {
+                            const active = specFilters.includes(item.value);
+                            return (
+                              <button key={item.value} type="button" className={`pf-spec-option${active ? " is-active" : ""}`} onClick={() => toggleSpecFilter(item.value)} aria-pressed={active}>
+                                <span className="pf-spec-option-mark" aria-hidden="true">{active ? "✓" : ""}</span>
+                                <span>{item.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : <p className="pf-spec-empty">موردی با این عبارت پیدا نشد.</p>}
                     </section>
                   );
                 })}
               </div>
-            </details>
+            </section>
 
             <div className="pf-sidebar-foot">
               <button type="button" className="pf-reset" onClick={resetFilters}>
