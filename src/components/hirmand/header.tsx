@@ -106,6 +106,17 @@ export function Header() {
             </Link>
           ),
         )}
+        <Link
+          to="/"
+          hash="inquiry"
+          className="mobile-menu-inquiry"
+          onClick={(event) => {
+            if (onHome) scrollToId(event, "inquiry", closeMenu);
+            else closeMenu();
+          }}
+        >
+          درخواست ملک
+        </Link>
         <div className="mobile-call-list">
           {TEAM.map((person) => (
             <a key={person.id} className="mobile-call" href={`tel:${person.phone}`} onClick={closeMenu}>
