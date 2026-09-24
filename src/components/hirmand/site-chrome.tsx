@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { FileKey, MessageCircle, Phone } from "lucide-react";
+import { Calculator, FileKey, WalletCards } from "lucide-react";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 import { SITE } from "@/lib/site";
@@ -37,24 +37,24 @@ export function SiteChrome({
           <FileKey size={17} />
           <span>درخواست ملک</span>
         </Link>
-        <a
-          href={SITE.whatsappDirect}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          to="/"
+          hash="budget-match"
           className="quick-action"
-          onClick={() => trackAnalyticsEvent("whatsapp_click")}
+          onClick={() => trackAnalyticsEvent("budget_match_click")}
         >
-          <MessageCircle size={17} />
-          <span>واتساپ</span>
-        </a>
-        <a
-          href={`tel:${SITE.phone.mobile}`}
+          <WalletCards size={17} />
+          <span>بودجه‌یاب</span>
+        </Link>
+        <Link
+          to="/"
+          hash="tools"
           className="quick-action"
-          onClick={() => trackAnalyticsEvent("call_click")}
+          onClick={() => trackAnalyticsEvent("finance_tools_click")}
         >
-          <Phone size={17} />
-          <span>تماس</span>
-        </a>
+          <Calculator size={17} />
+          <span>ابزار مالی</span>
+        </Link>
       </div>
       <SiteUtilities />
       <CallMenu className="floating-call-menu" buttonClassName="floating-call" label="تماس" />
