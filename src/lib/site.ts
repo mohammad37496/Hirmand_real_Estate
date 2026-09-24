@@ -109,7 +109,7 @@ export const NAV = [
   { id: "listings", label: "فایل‌ها", to: "/properties", hash: "" },
   { id: "services", label: "خدمات", to: "/", hash: "services" },
   { id: "properties", label: "انواع ملک", to: "/", hash: "properties" },
-  { id: "budget-match", label: "بودجه‌یاب", to: "/", hash: "budget-match" },
+  { id: "budget-match", label: "بودجه‌یاب", to: "/budget-match", hash: "" },
   { id: "areas", label: "محله‌ها", to: "/", hash: "areas" },
   { id: "consultants", label: "مشاورین", to: "/consultants", hash: "" },
   { id: "tools", label: "ابزار مالی", to: "/", hash: "tools" },
