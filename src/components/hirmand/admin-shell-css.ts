@@ -791,4 +791,40 @@ export const ADMIN_CSS = `
   position:relative!important;
   z-index:2001!important;
 }
+/* Consultant management */
+.admin-consultants-manager{display:grid;gap:18px}
+.admin-consultants-summary{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:18px;padding:22px!important}
+.admin-consultants-summary h2{margin-top:3px;color:#101828!important;font-size:1.15rem}
+.admin-consultants-summary p{margin-top:5px;color:#667085!important;font-size:.76rem;line-height:1.8}
+.admin-consultants-count{min-width:88px;display:grid;gap:2px;justify-items:center;padding:11px 14px;border:1px solid #e1e7ee;border-radius:14px;background:#f8fafc}
+.admin-consultants-count strong{color:#101828;font-size:1.2rem}.admin-consultants-count span{color:#667085;font-size:.65rem}
+.admin-consultants-layout{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(320px,.92fr);gap:18px;align-items:start}
+.admin-consultant-form,.admin-consultant-list{padding:20px!important;background:#fff!important;border:1px solid #d9e1ea!important;border-radius:18px!important}
+.admin-consultant-form .admin-panel-head,.admin-consultant-list .admin-panel-head{margin-bottom:16px}
+.admin-consultant-form .admin-form-grid{gap:12px}
+.admin-consultant-socials{margin-top:16px;padding:14px;border:1px solid #e1e7ee;border-radius:15px;background:#f8fafc}
+.admin-consultant-socials legend{padding:0 6px;color:#101828;font-size:.75rem;font-weight:800}
+.admin-consultant-active-toggle{min-width:0}
+.admin-consultant-status-toggle{min-height:48px;display:flex;align-items:center;justify-content:flex-start;gap:9px;padding:0 12px;border:1px solid #cbd5e1;border-radius:11px;background:#fff;color:#475467;font:inherit;font-size:.74rem;cursor:pointer}
+.admin-consultant-status-toggle span{width:10px;height:10px;border-radius:50%;background:#98a2b3}
+.admin-consultant-status-toggle.is-active{border-color:#abefc6;background:#f0fdf4;color:#027a48}.admin-consultant-status-toggle.is-active span{background:#12b76a}
+.admin-consultant-list-count{padding:5px 9px;border-radius:999px;background:#f2f4f7;color:#475467;font-size:.66rem;font-weight:800}
+.admin-consultant-records{display:grid;gap:8px}
+.admin-consultant-record{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:11px;border:1px solid #e5e9ef;border-radius:13px;background:#fff}
+.admin-consultant-record.is-inactive{opacity:.58;background:#f8fafc}
+.admin-consultant-record-icon{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;background:#f7efe6;color:#8a5c31}
+.admin-consultant-record-main{min-width:0;display:grid;gap:2px}.admin-consultant-record-main strong{color:#101828;font-size:.77rem}.admin-consultant-record-main span{color:#475467;font-size:.67rem}.admin-consultant-record-main small{color:#667085;font-size:.64rem}
+.admin-consultant-record-actions{display:flex;gap:5px}
+@media(max-width:960px){
+  .admin-consultants-summary{grid-template-columns:1fr auto}
+  .admin-consultants-summary .btn-gold{grid-column:1/-1}
+  .admin-consultants-layout{grid-template-columns:1fr}
+}
+@media(max-width:720px){
+  .admin-consultants-summary{grid-template-columns:1fr;padding:16px!important}
+  .admin-consultants-count{justify-self:start}
+  .admin-consultant-form,.admin-consultant-list{padding:14px!important}
+  .admin-consultant-form .admin-form-grid{grid-template-columns:1fr}
+  .admin-consultant-form .admin-span-2{grid-column:1}
+}
 `;
