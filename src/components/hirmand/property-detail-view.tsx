@@ -58,6 +58,7 @@ import {
   X,
 } from "lucide-react";
 import { breadcrumbJsonLd, propertyJsonLd, TX_LABEL, TYPE_LABEL } from "@/lib/seo";
+import { safeJsonLd } from "@/lib/seo";
 import type { Property } from "@/lib/properties";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
@@ -973,11 +974,11 @@ export function PropertyDetailView({
     <SiteChrome>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(propertyJsonLd(property)) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(propertyJsonLd(property)) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(crumbs)) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbJsonLd(crumbs)) }}
       />
 
       <main className="property-detail-page">
