@@ -91,9 +91,6 @@ function ConsultantProfilePage() {
             <span className="consultant-profile-role">{person.role}</span>
             <h1>{person.name}</h1>
             <a className="consultant-profile-phone" href={`tel:${person.phone}`} dir="ltr">
-              <span className="consultant-profile-phone-icon" aria-hidden="true">
-                <Phone size={17} />
-              </span>
               <bdi>{person.phoneDisplay.replace(/[0-9]/g, (digit) => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)])}</bdi>
             </a>
             <p className="consultant-profile-description">
