@@ -203,7 +203,10 @@ function Gallery({
       if (event.key === "Tab") {
         const focusable = Array.from(
           lightboxRef.current?.querySelectorAll("button:not([disabled]), a[href], video[controls]") ?? [],
-        ).filter((element) => element instanceof HTMLElement && element.offsetParent !== null);
+        ).filter(
+          (element): element is HTMLElement =>
+            element instanceof HTMLElement && element.offsetParent !== null,
+        );
         if (!focusable.length) return;
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
