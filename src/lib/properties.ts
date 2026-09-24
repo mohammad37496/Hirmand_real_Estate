@@ -1328,20 +1328,17 @@ export const deleteProperty = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAdmin();
     const sql = await getSql();
-    const existingRows = await sql.query<Record<string, unknown>>(
-      `select ${DETAIL_COLUMNS} from properties where id = $1 limit 1`,
+    const rows = await sql.query<{ id: string }>(
+      `with deleted as (
+         delete from properties
+         where id = $1
+         returning id, to_jsonb(properties) as before_state
+       )
+       insert into property_change_history (property_id, action, before_state, after_state)
+       select id, 'deleted', before_state, null
+       from deleted
+       returning property_id as id`,
       [data.id],
     );
-    const existing = existingRows[0] ?? null;
-    await sql.query("delete from properties where id = $1", [data.id]);
-
-    if (existing) {
-      await sql.query(
-        `insert into property_change_history (property_id, action, before_state, after_state)
-         values ($1, 'deleted', $2::jsonb, null)`,
-        [data.id, JSON.stringify(mapProperty(existing))],
-      );
-    }
-
-    return { success: true };
+    return { success: true, deleted: rows.length === 1 };
   });
