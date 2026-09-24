@@ -3,6 +3,10 @@ import { useCallback, useEffect, useRef, useState, type TouchEvent } from "react
 import {
   ArrowRight,
   Bath,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  MessageCircle,
   BedDouble,
   Building2,
   CalendarDays,
@@ -107,7 +111,16 @@ function ResilientImage({
 }) {
   const candidates = mediaSourceCandidates(src, fallback);
   const [attempt, setAttempt] = useState(0);
-  const current = candidates[Math.min(attempt, candidates.length - 1)];
+  const [failed, setFailed] = useState(false);
+  const current = candidates[Math.min(attempt, Math.max(0, candidates.length - 1))] ?? fallback;
+
+  if (failed) {
+    return (
+      <span className="property-image-fallback" role="img" aria-label={alt}>
+        <span>تصویر در دسترس نیست</span>
+      </span>
+    );
+  }
 
   return (
     <img
@@ -120,7 +133,11 @@ function ResilientImage({
       referrerPolicy="no-referrer"
       decoding="async"
       onError={() => {
-        setAttempt((value) => Math.min(value + 1, candidates.length - 1));
+        if (attempt < candidates.length - 1) {
+          setAttempt((value) => Math.min(value + 1, candidates.length - 1));
+        } else {
+          setFailed(true);
+        }
       }}
     />
   );
@@ -141,12 +158,20 @@ function Gallery({
   const touchStartX = useRef<number | null>(null);
   const pinchStartDistance = useRef<number | null>(null);
   const pinchStartScale = useRef(1);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
+  const activeRef = useRef(0);
 
   const fallback = "/images/type-apartment.jpg";
   const current = images[active] ?? images[0] ?? "";
 
+  useEffect(() => {
+    activeRef.current = active;
+  }, [active]);
+
   const goTo = useCallback(
     (next: number) => {
+      if (!images.length) return;
       setActive((next + images.length) % images.length);
       setZoomScale(1);
     },
@@ -164,21 +189,26 @@ function Gallery({
     if (!lightboxOpen) return;
 
     const previousOverflow = document.body.style.overflow;
+    lastFocusedRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     document.body.style.overflow = "hidden";
 
+    const focusTimer = window.setTimeout(() => closeButtonRef.current?.focus(), 0);
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") closeLightbox();
-      if (event.key === "ArrowLeft") goTo(active - 1);
-      if (event.key === "ArrowRight") goTo(active + 1);
+      if (event.key === "ArrowLeft") goTo(activeRef.current - 1);
+      if (event.key === "ArrowRight") goTo(activeRef.current + 1);
       if (event.key === "0") setZoomScale(1);
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => {
+      window.clearTimeout(focusTimer);
       window.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = previousOverflow;
+      lastFocusedRef.current?.focus({ preventScroll: true });
+      lastFocusedRef.current = null;
     };
-  }, [lightboxOpen, active, goTo, closeLightbox]);
+  }, [lightboxOpen, goTo, closeLightbox]);
 
   useEffect(() => {
     if (!images.length) return;
@@ -247,58 +277,89 @@ function Gallery({
   }
 
   return (
-    <div className="property-gallery-wrap">
+    <div className="property-gallery-wrap" role="region" aria-label={"گالری تصاویر " + title}>
       <div className="property-gallery">
         <div className="property-gallery-main">
           {isVideoUrl(current) ? (
-            <video src={current} controls playsInline preload="metadata" />
+            <video src={current} controls playsInline preload="metadata" aria-label={title} />
           ) : (
             <ResilientImage
               src={current}
               fallback={fallback}
-              alt={title}
+              alt={title + " - تصویر " + (active + 1).toLocaleString("fa-IR")}
               itemProp="image"
               loading="eager"
               fetchPriority="high"
             />
           )}
-          {!isVideoUrl(current) ? (
-            <button
-              type="button"
-              className="property-gallery-open"
-              onClick={() => {
-                setZoomScale(1);
-                setLightboxOpen(true);
-              }}
-              aria-label="باز کردن تصویر در اندازه بزرگ"
-            >
-              مشاهده تمام‌صفحه
-            </button>
-          ) : null}
-          {featured ? <span className="property-gallery-featured">فایل ویژه</span> : null}
-          {images.length > 1 ? (
-            <span className="property-gallery-counter">
-              {(active + 1).toLocaleString("fa-IR")} / {images.length.toLocaleString("fa-IR")}
+
+          <button
+            type="button"
+            className="property-gallery-open"
+            onClick={() => {
+              setZoomScale(1);
+              setLightboxOpen(true);
+            }}
+            aria-label="باز کردن گالری تصاویر در اندازه بزرگ"
+          >
+            <span>
+              <Maximize2 size={16} aria-hidden="true" />
+              تمام‌صفحه
             </span>
+          </button>
+
+          <div className="property-gallery-overlays">
+            {featured ? <span className="property-gallery-featured">فایل ویژه</span> : null}
+            {images.length > 1 ? (
+              <span className="property-gallery-counter" aria-live="polite">
+                تصویر {(active + 1).toLocaleString("fa-IR")} از {images.length.toLocaleString("fa-IR")}
+              </span>
+            ) : null}
+          </div>
+
+          {images.length > 1 ? (
+            <>
+              <button
+                type="button"
+                className="property-gallery-nav property-gallery-prev"
+                onClick={() => goTo(active - 1)}
+                aria-label="تصویر قبلی"
+              >
+                <ChevronRight size={20} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="property-gallery-nav property-gallery-next"
+                onClick={() => goTo(active + 1)}
+                aria-label="تصویر بعدی"
+              >
+                <ChevronLeft size={20} aria-hidden="true" />
+              </button>
+            </>
           ) : null}
         </div>
 
-        {images.slice(0, 4).map((src, index) => (
-          <button
-            key={src}
-            type="button"
-            className={`property-gallery-thumb${index === active ? " is-active" : ""}`}
-            onClick={() => setActive(index)}
-            aria-label={`نمایش تصویر ${(index + 1).toLocaleString("fa-IR")}`}
-            aria-pressed={index === active}
-          >
-            {isVideoUrl(src) ? (
-              <video src={src} muted playsInline preload="none" />
-            ) : (
-              <ResilientImage src={src} fallback={fallback} alt="" loading="lazy" />
-            )}
-          </button>
-        ))}
+        <div className="property-gallery-rail" aria-label="انتخاب تصویر">
+          {images.map((src, index) => (
+            <button
+              key={src + "-" + index}
+              type="button"
+              className={"property-gallery-thumb" + (index === active ? " is-active" : "")}
+              onClick={() => goTo(index)}
+              aria-label={"نمایش تصویر " + (index + 1).toLocaleString("fa-IR") + " از " + images.length.toLocaleString("fa-IR")}
+              aria-current={index === active ? "true" : undefined}
+            >
+              {isVideoUrl(src) ? (
+                <video src={src} muted playsInline preload="none" aria-hidden="true" />
+              ) : (
+                <ResilientImage src={src} fallback={fallback} alt="" loading="lazy" />
+              )}
+              <span className="property-gallery-thumb-number">
+                {(index + 1).toLocaleString("fa-IR")}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {lightboxOpen ? (
@@ -306,15 +367,16 @@ function Gallery({
           className="property-lightbox"
           role="dialog"
           aria-modal="true"
-          aria-label="نمایش تصاویر فایل"
+          aria-label={"نمایش تصاویر " + title}
           onClick={closeLightbox}
         >
           <button
+            ref={closeButtonRef}
             type="button"
             className="property-lightbox-close"
             onClick={closeLightbox}
-            aria-label="بستن بزرگنمایی تصویر"
-            title="بستن بزرگنمایی (Esc)"
+            aria-label="بستن نمایش تصاویر"
+            title="بستن نمایش تصاویر (Esc)"
           >
             <X size={21} strokeWidth={2.4} aria-hidden="true" />
           </button>
@@ -328,7 +390,7 @@ function Gallery({
             }}
             aria-label="تصویر قبلی"
           >
-            ‹
+            <ChevronRight size={26} aria-hidden="true" />
           </button>
 
           <div
@@ -343,7 +405,7 @@ function Gallery({
             ) : (
               <button
                 type="button"
-                className={`property-lightbox-media-button${zoomScale > 1.05 ? " is-zoomed" : ""}`}
+                className={"property-lightbox-media-button" + (zoomScale > 1.05 ? " is-zoomed" : "")}
                 onDoubleClick={(event) => {
                   event.stopPropagation();
                   toggleZoom();
@@ -354,13 +416,13 @@ function Gallery({
                 <ResilientImage
                   src={current}
                   fallback={fallback}
-                  alt={title}
+                  alt={title + " - تصویر " + (active + 1).toLocaleString("fa-IR")}
                   loading="eager"
                 />
               </button>
             )}
-            <div className="property-lightbox-count">
-              {(active + 1).toLocaleString("fa-IR")} / {images.length.toLocaleString("fa-IR")}
+            <div className="property-lightbox-count" aria-live="polite">
+              تصویر {(active + 1).toLocaleString("fa-IR")} از {images.length.toLocaleString("fa-IR")}
             </div>
             {!isVideoUrl(current) ? (
               <button
@@ -370,7 +432,7 @@ function Gallery({
                   event.stopPropagation();
                   toggleZoom();
                 }}
-                aria-label={zoomScale > 1.05 ? "خروج از بزرگ‌نمایی" : "بزرگ‌نمایی"}
+                aria-label={zoomScale > 1.05 ? "خروج از بزرگ‌نمایی" : "بزرگ‌نمایی تصویر"}
               >
                 {zoomScale > 1.05 ? "بازگشت به اندازه عادی" : "دو بار کلیک / لمس برای زوم"}
               </button>
@@ -386,20 +448,21 @@ function Gallery({
             }}
             aria-label="تصویر بعدی"
           >
-            ›
+            <ChevronLeft size={26} aria-hidden="true" />
           </button>
 
           <div className="property-lightbox-strip" onClick={(event) => event.stopPropagation()}>
             {images.map((src, index) => (
               <button
-                key={src}
+                key={src + "-" + index}
                 type="button"
-                className={`property-lightbox-thumb${index === active ? " is-active" : ""}`}
+                className={"property-lightbox-thumb" + (index === active ? " is-active" : "")}
                 onClick={() => setActive(index)}
-                aria-label={`تصویر ${(index + 1).toLocaleString("fa-IR")}`}
+                aria-label={"تصویر " + (index + 1).toLocaleString("fa-IR")}
+                aria-current={index === active ? "true" : undefined}
               >
                 {isVideoUrl(src) ? (
-                  <video src={src} muted playsInline preload="metadata" />
+                  <video src={src} muted playsInline preload="metadata" aria-hidden="true" />
                 ) : (
                   <ResilientImage src={src} fallback={fallback} alt="" loading="lazy" />
                 )}
@@ -411,6 +474,7 @@ function Gallery({
     </div>
   );
 }
+
 function ConsultantCard({ property }: { property: Property }) {
   const person = TEAM.find((item) => item.phone === property.contactPhone || item.name === property.contactName);
   return (
@@ -566,6 +630,26 @@ export function PropertyDetailView({
                   </small>
                 ) : null}
               </div>
+              <div className="property-primary-contact" aria-label="تماس سریع با مشاور">
+                <a
+                  className="property-primary-contact-call"
+                  href={`tel:${property.contactPhone}`}
+                  onClick={() => trackAnalyticsEvent("call_click", property.slug)}
+                >
+                  <Phone size={18} aria-hidden="true" />
+                  <span>تماس با مشاور</span>
+                </a>
+                <a
+                  className="property-primary-contact-whatsapp"
+                  href={whatsappLink(property.contactPhone, property.title)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
+                >
+                  <MessageCircle size={18} aria-hidden="true" />
+                  <span>پیام در واتساپ</span>
+                </a>
+              </div>
               <PropertyActions property={property} />
             </header>
 
@@ -596,16 +680,53 @@ export function PropertyDetailView({
               </div>
             </section>
 
-            <div className="property-detail-body">
-              <h2>توضیحات</h2>
-              <p style={{ whiteSpace: "pre-wrap" }}>{property.description}</p>
+            <section className="property-detail-body" aria-labelledby="property-description-title">
+              <div className="property-section-heading">
+                <div>
+                  <span className="kicker">توضیحات فایل</span>
+                  <h2 id="property-description-title">شرح کامل ملک</h2>
+                </div>
+                <span className="property-source-badge">متن اصلی آگهی</span>
+              </div>
+
+              <div className="property-description-meta" aria-label="زمان انتشار و به‌روزرسانی">
+                {property.publishedAt ? (
+                  <span>
+                    <strong>انتشار</strong>
+                    <time dateTime={property.publishedAt}>{formatAdDate(property.publishedAt)}</time>
+                  </span>
+                ) : null}
+                {property.updatedAt ? (
+                  <span>
+                    <strong>آخرین به‌روزرسانی</strong>
+                    <time dateTime={property.updatedAt}>{formatAdDate(property.updatedAt)}</time>
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="property-description-copy">
+                {property.description.split(/\n\s*\n/).map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
+              </div>
+
               {property.features.length ? (
-                <>
-                  <h2>ویژگی‌ها</h2>
-                  <ul>{property.features.map((f) => <li key={f}><Check size={14} /> {f}</li>)}</ul>
-                </>
+                <div className="property-features">
+                  <div className="property-section-subheading">
+                    <h3>ویژگی‌ها و امکانات</h3>
+                    <span>{property.features.length.toLocaleString("fa-IR")} مورد</span>
+                  </div>
+                  <ul>
+                    {property.features.map((f) => (
+                      <li key={f}>
+                        <Check size={15} aria-hidden="true" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ) : null}
-            </div>
+            </section>
 
             {(property.latitude != null && property.longitude != null) || property.neighborhood ? (
               <section className="property-location-section" aria-labelledby="property-location-title">
@@ -655,6 +776,34 @@ export function PropertyDetailView({
                 )}
               </section>
             ) : null}
+
+            <section className="property-final-cta" aria-label="درخواست بازدید و اطلاعات بیشتر">
+              <div>
+                <span className="kicker">قدم بعدی</span>
+                <h2>برای بازدید یا اطلاعات بیشتر با مشاور فایل در ارتباط باشید.</h2>
+                <p>برای هماهنگی بازدید، دریافت توضیحات تکمیلی یا بررسی شرایط معامله تماس بگیرید.</p>
+              </div>
+              <div className="property-final-cta-actions">
+                <a
+                  href={`tel:${property.contactPhone}`}
+                  onClick={() => trackAnalyticsEvent("call_click", property.slug)}
+                  className="btn-gold"
+                >
+                  <Phone size={17} aria-hidden="true" />
+                  تماس تلفنی
+                </a>
+                <a
+                  href={whatsappLink(property.contactPhone, property.title)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
+                  className="btn-ghost"
+                >
+                  <MessageCircle size={17} aria-hidden="true" />
+                  واتساپ
+                </a>
+              </div>
+            </section>
 
             <Link
               to="/properties"
