@@ -9,6 +9,8 @@ type Lead = {
   id: string;
   name: string;
   phone: string;
+  peopleCount: number | null;
+  job: string;
   deal: string;
   propertyType: string;
   neighborhood: string;
@@ -140,7 +142,7 @@ export function AdminLeadManager() {
     return leads.filter((lead) => {
       if (statusFilter !== "all" && lead.status !== statusFilter) return false;
       if (!q) return true;
-      return [lead.name, lead.phone, lead.deal, lead.propertyType, lead.neighborhood, lead.consultant, lead.note]
+      return [lead.name, lead.phone, lead.peopleCount == null ? "" : String(lead.peopleCount), lead.job, lead.deal, lead.propertyType, lead.neighborhood, lead.consultant, lead.note]
         .join(" ")
         .toLowerCase()
         .includes(q);
@@ -278,6 +280,8 @@ export function AdminLeadManager() {
                     <Phone size={15} /> {lead.phone}
                   </a>
                   <p>
+                    {lead.peopleCount ? "تعداد نفرات: " + lead.peopleCount.toLocaleString("fa-IR") + " · " : ""}
+                    {lead.job ? "شغل: " + lead.job + " · " : ""}
                     {lead.deal}
                     {lead.propertyType ? " · " + lead.propertyType : ""}
                     {lead.neighborhood ? " · " + lead.neighborhood : ""}
