@@ -1324,3 +1324,274 @@
   .pf-spec-filter-group{padding:9px}
   .pf-spec-option{min-height:44px;font-size:.60rem}
 }
+
+
+/* ------------------------------------------------------ filter UX v3 ----
+   Cleaner hierarchy: primary filters are visible, advanced filters are grouped,
+   and the 94 detailed options stay accessible without overwhelming the user.
+*/
+.pf-filter-overview{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:0 0 2px;
+  padding:12px 13px;
+  border:1px solid var(--hr-line);
+  border-radius:14px;
+  background:var(--hr-paper);
+}
+.pf-filter-overview > div{min-width:0;display:grid;gap:2px}
+.pf-filter-overview strong{
+  color:var(--hr-ink);
+  font-size:.78rem;
+  font-weight:950;
+}
+.pf-filter-overview small{
+  color:var(--hr-muted);
+  font-size:.60rem;
+}
+.pf-filter-overview > button{
+  flex:none;
+  border:0;
+  background:transparent;
+  color:var(--hr-muted);
+  font:inherit;
+  font-size:.61rem;
+  font-weight:850;
+  cursor:pointer;
+}
+.pf-filter-overview > button:hover{color:var(--hr-ink)}
+
+.pf-filter-primary{
+  padding-bottom:2px;
+}
+.pf-filter-primary .pf-group{
+  padding:12px 2px;
+}
+.pf-filter-primary .pf-group + .pf-group{
+  border-top:1px solid var(--hr-line);
+}
+.pf-compact-ranges{
+  display:grid;
+  grid-template-columns:1fr;
+}
+.pf-compact-ranges .pf-group{
+  padding-block:11px;
+}
+
+.pf-fold{
+  margin-top:8px;
+  border:1px solid var(--hr-line);
+  border-radius:14px;
+  background:var(--hr-paper);
+  overflow:hidden;
+}
+.pf-fold > summary{
+  list-style:none;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto 16px;
+  align-items:center;
+  gap:8px;
+  min-height:58px;
+  padding:10px 12px;
+  cursor:pointer;
+  user-select:none;
+}
+.pf-fold > summary::-webkit-details-marker,
+.pf-spec-subgroup > summary::-webkit-details-marker{display:none}
+.pf-fold > summary > span{
+  min-width:0;
+  display:grid;
+  gap:3px;
+}
+.pf-fold > summary strong{
+  color:var(--hr-ink);
+  font-size:.74rem;
+  font-weight:950;
+}
+.pf-fold > summary small{
+  color:var(--hr-muted);
+  font-size:.58rem;
+  line-height:1.65;
+}
+.pf-fold > summary b{
+  padding:5px 8px;
+  border:1px solid var(--hr-line-strong);
+  border-radius:999px;
+  background:var(--hr-paper-2);
+  color:var(--hr-muted);
+  font-size:.56rem;
+  font-weight:850;
+  white-space:nowrap;
+}
+.pf-fold > summary::after{
+  content:"⌄";
+  width:16px;
+  color:var(--hr-faint);
+  font-size:.85rem;
+  text-align:center;
+  transition:transform .18s ease;
+}
+.pf-fold[open] > summary{
+  background:linear-gradient(180deg,rgb(185 146 90 / .07),transparent);
+  border-bottom:1px solid var(--hr-line);
+}
+.pf-fold[open] > summary::after{transform:rotate(180deg)}
+.pf-fold.has-selection > summary b,
+.pf-spec-fold.has-selection > summary b{
+  border-color:var(--hr-gold);
+  background:rgb(185 146 90 / .13);
+  color:var(--hr-ink);
+}
+.pf-fold-body{
+  display:grid;
+  gap:10px;
+  padding:11px;
+}
+.pf-fold-grid{display:grid;gap:10px}
+.pf-switch-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:7px;
+}
+.pf-switch{
+  min-height:44px;
+  padding-inline:11px;
+  font-size:.70rem;
+}
+.pf-switch input{
+  width:19px;
+  height:19px;
+}
+
+.pf-spec-fold{margin-top:8px}
+.pf-spec-fold > summary{grid-template-columns:minmax(0,1fr) auto 16px}
+.pf-spec-fold .pf-fold-body{
+  padding:0;
+}
+.pf-spec-toolbar{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:7px;
+  padding:10px;
+  background:var(--hr-paper-2);
+  border-bottom:1px solid var(--hr-line);
+}
+.pf-spec-groups{
+  display:grid;
+  gap:7px;
+  padding:9px;
+  background:#fff;
+}
+.pf-spec-subgroup{
+  border:1px solid var(--hr-line);
+  border-radius:11px;
+  background:var(--hr-paper-2);
+  overflow:hidden;
+}
+.pf-spec-subgroup > summary{
+  list-style:none;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  min-height:44px;
+  padding:8px 10px;
+  cursor:pointer;
+}
+.pf-spec-subgroup > summary span{
+  color:var(--hr-ink);
+  font-size:.66rem;
+  font-weight:900;
+}
+.pf-spec-subgroup > summary small{
+  color:var(--hr-faint);
+  font-size:.54rem;
+  font-weight:750;
+}
+.pf-spec-subgroup > summary::after{
+  content:"⌄";
+  order:-1;
+  color:var(--hr-faint);
+  font-size:.75rem;
+  transition:transform .18s ease;
+}
+.pf-spec-subgroup[open] > summary{
+  border-bottom:1px solid var(--hr-line);
+  background:rgb(185 146 90 / .05);
+}
+.pf-spec-subgroup[open] > summary::after{transform:rotate(180deg)}
+.pf-spec-subgroup .pf-spec-options{
+  padding:8px;
+}
+.pf-spec-option{
+  min-height:38px;
+  font-size:.60rem;
+}
+.pf-spec-clear{
+  min-height:42px;
+  font-size:.59rem;
+}
+
+.pf-sidebar-foot{
+  display:grid;
+  grid-template-columns:1fr 1.25fr;
+  gap:7px;
+}
+.pf-show-results{
+  min-height:46px;
+  border:1px solid var(--hr-ink);
+  border-radius:var(--r-sm);
+  background:var(--hr-ink);
+  color:var(--hr-paper);
+  font:inherit;
+  font-size:.70rem;
+  font-weight:900;
+  cursor:pointer;
+}
+.pf-show-results:hover{background:#182b42}
+
+@media (min-width:980px){
+  .pf-sidebar{
+    width:100%;
+    padding:15px;
+  }
+  .pf-filter-overview{margin-bottom:4px}
+  .pf-filter-primary .pf-group-title{font-size:.79rem}
+  .pf-fold > summary{min-height:55px}
+}
+
+@media (max-width:979px){
+  .pf-filter-overview{
+    position:sticky;
+    top:0;
+    z-index:3;
+  }
+  .pf-fold > summary{min-height:56px}
+  .pf-fold-body{padding:10px}
+  .pf-sidebar-foot{
+    grid-template-columns:1fr 1.35fr;
+    padding-top:10px!important;
+  }
+  .pf-show-results{min-height:48px}
+}
+
+@media (max-width:560px){
+  .pf-filter-primary .pf-group{padding-block:10px}
+  .pf-chips{gap:5px}
+  .pf-chip{
+    min-height:39px;
+    padding-inline:10px;
+    font-size:.63rem;
+  }
+  .pf-fold > summary{
+    min-height:54px;
+    padding-inline:10px;
+  }
+  .pf-fold > summary strong{font-size:.69rem}
+  .pf-fold > summary small{font-size:.55rem}
+  .pf-fold > summary b{font-size:.53rem}
+  .pf-range{gap:6px}
+  .pf-field input,.pf-field select,.pf-select{min-height:45px}
+}
