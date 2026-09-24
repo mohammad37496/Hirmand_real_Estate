@@ -79,8 +79,22 @@ import {
   labelForOption,
 } from "@/lib/property-options";
 
+function propertyAmenityLabel(value: string) {
+  if (value.startsWith("cooling:")) {
+    return labelForOption(PROPERTY_COOLING_OPTIONS, value.slice("cooling:".length));
+  }
+  if (value.startsWith("heating:")) {
+    return labelForOption(PROPERTY_HEATING_OPTIONS, value.slice("heating:".length));
+  }
+  return labelForOption(PROPERTY_OTHER_AMENITY_OPTIONS, value);
+}
+
 function propertyAmenityIcon(value: string) {
   switch (value) {
+    case "cooling":
+      return <Wind size={18} aria-hidden="true" />;
+    case "heating":
+      return <Flame size={18} aria-hidden="true" />;
     case "balcony":
       return <Home size={18} aria-hidden="true" />;
     case "terrace":
@@ -1013,17 +1027,11 @@ export function PropertyDetailView({
                 {property.flooringType ? (
                   <div><Layers3 size={18} /><span><small>کف</small><strong>{labelForOption(PROPERTY_FLOORING_OPTIONS, property.flooringType)}</strong></span></div>
                 ) : null}
-                {property.coolingSystem ? (
-                  <div><Navigation size={18} /><span><small>سیستم سرمایش</small><strong>{labelForOption(PROPERTY_COOLING_OPTIONS, property.coolingSystem)}</strong></span></div>
-                ) : null}
-                {property.heatingSystem ? (
-                  <div><Warehouse size={18} /><span><small>سیستم گرمایش</small><strong>{labelForOption(PROPERTY_HEATING_OPTIONS, property.heatingSystem)}</strong></span></div>
-                ) : null}
                 {property.wallClosetType ? (
                   <div><Building2 size={18} /><span><small>کمد دیواری</small><strong>{labelForOption(PROPERTY_WALL_CLOSET_OPTIONS, property.wallClosetType)}</strong></span></div>
                 ) : null}
               </div>
-              {property.otherAmenities.length ? (
+              {property.otherAmenities.length || property.coolingSystem || property.heatingSystem ? (
                 <details className="property-spec-amenities">
                   <summary>
                     <span className="property-spec-amenities-title">
@@ -1034,17 +1042,37 @@ export function PropertyDetailView({
                       </span>
                     </span>
                     <span className="property-spec-amenities-toggle">
-                      <small>{property.otherAmenities.length.toLocaleString("fa-IR")} مورد</small>
+                      <small>
+                        {(property.otherAmenities.length + (property.coolingSystem ? 1 : 0) + (property.heatingSystem ? 1 : 0)).toLocaleString("fa-IR")} مورد
+                      </small>
                       <ChevronDown size={19} aria-hidden="true" />
                     </span>
                   </summary>
                   <div className="property-spec-amenities-body">
+                    {property.coolingSystem ? (
+                      <div className="property-spec-amenity-item" key={"cooling:" + property.coolingSystem}>
+                        {propertyAmenityIcon("cooling")}
+                        <span>
+                          <small>سیستم سرمایش</small>
+                          <strong>{labelForOption(PROPERTY_COOLING_OPTIONS, property.coolingSystem)}</strong>
+                        </span>
+                      </div>
+                    ) : null}
+                    {property.heatingSystem ? (
+                      <div className="property-spec-amenity-item" key={"heating:" + property.heatingSystem}>
+                        {propertyAmenityIcon("heating")}
+                        <span>
+                          <small>سیستم گرمایش</small>
+                          <strong>{labelForOption(PROPERTY_HEATING_OPTIONS, property.heatingSystem)}</strong>
+                        </span>
+                      </div>
+                    ) : null}
                     {property.otherAmenities.map((value) => (
                       <div className="property-spec-amenity-item" key={value}>
                         {propertyAmenityIcon(value)}
                         <span>
                           <small>امکانات</small>
-                          <strong>{labelForOption(PROPERTY_OTHER_AMENITY_OPTIONS, value)}</strong>
+                          <strong>{propertyAmenityLabel(value)}</strong>
                         </span>
                       </div>
                     ))}
