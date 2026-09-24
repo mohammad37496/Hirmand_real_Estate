@@ -9,7 +9,7 @@ import themeProCss from "../theme-pro.css?url";
 import themeProPagesCss from "../theme-pro-pages.css?url";
 import mobileCss from "../mobile.css?url";
 import refinementsCss from "../refinements.css?url";
-import uiClarityCss from "../ui-clarity.css?url";
+import uiClarityCss from "../ui-clarity.css?url";\nimport propertyDetailProCss from "../property-detail-pro.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -41,7 +41,7 @@ export const Route = createRootRoute({
       { rel: "stylesheet", href: themeProPagesCss },
       { rel: "stylesheet", href: mobileCss },
       { rel: "stylesheet", href: refinementsCss },
-      { rel: "stylesheet", href: uiClarityCss },
+      { rel: "stylesheet", href: uiClarityCss },\n      { rel: "stylesheet", href: propertyDetailProCss },
     ],
   }),
   component: RootDocument,
