@@ -2170,3 +2170,21 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     order: -1 !important;
   }
 }
+
+/* === Sticky footer layout ===================================================== */
+html,
+body {
+  min-height: 100% !important;
+}
+body {
+  min-height: 100dvh !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.page {
+  flex: 1 0 auto !important;
+  width: 100% !important;
+}
+.footer {
+  flex: 0 0 auto !important;
+}
