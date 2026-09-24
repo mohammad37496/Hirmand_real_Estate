@@ -118,7 +118,7 @@ function FinanceToolsHubPage() {
           </div>
           <div className="finance-tools-hub-bottom-actions">
             <Link to="/properties" className="btn-gold">مشاهده فایل‌های ملک</Link>
-            <Link to="/" hash="budget-match" className="btn-ghost">رفتن به بودجه‌یاب</Link>
+            <Link to="/budget-match" className="btn-ghost">رفتن به بودجه‌یاب</Link>
           </div>
         </section>
 
