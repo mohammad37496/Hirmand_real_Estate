@@ -1158,3 +1158,169 @@
     background:#FFFFFF!important;
   }
 }
+
+
+/* ----------------------------------------------------- filter UX v2 ---- */
+@media (min-width: 980px){
+  .pf-layout{grid-template-columns:330px minmax(0,1fr)}
+  .pf-sidebar{padding:20px}
+}
+
+.pf-spec-filter{
+  margin-top:8px;
+  border:1px solid var(--hr-line);
+  border-radius:16px;
+  background:var(--hr-paper-2);
+  overflow:visible;
+}
+.pf-spec-filter-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px;
+  border-bottom:1px solid var(--hr-line);
+  background:
+    linear-gradient(135deg,rgb(185 146 90 / .10),transparent 58%),
+    var(--hr-paper-2);
+}
+.pf-spec-filter-head > div{min-width:0;display:grid;gap:4px}
+.pf-spec-filter-head strong{
+  color:var(--hr-ink);
+  font-size:.78rem;
+  font-weight:950;
+}
+.pf-spec-filter-head small{
+  color:var(--hr-muted);
+  font-size:.61rem;
+  line-height:1.75;
+}
+.pf-spec-filter-head > span{
+  flex:none;
+  padding:6px 9px;
+  border:1px solid var(--hr-line-strong);
+  border-radius:999px;
+  background:var(--hr-paper);
+  color:var(--hr-muted);
+  font-size:.59rem;
+  font-weight:850;
+  white-space:nowrap;
+}
+.pf-spec-filter.has-selection .pf-spec-filter-head > span{
+  border-color:var(--hr-gold);
+  background:rgb(185 146 90 / .12);
+  color:var(--hr-ink);
+}
+.pf-spec-toolbar{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:8px;
+  padding:10px;
+  border-bottom:1px solid var(--hr-line);
+  background:var(--hr-paper);
+}
+.pf-spec-search{
+  min-width:0;
+  min-height:44px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:0 10px;
+  border:1px solid var(--hr-line-strong);
+  border-radius:11px;
+  background:var(--hr-paper-2);
+  color:var(--hr-muted);
+}
+.pf-spec-search:focus-within{
+  border-color:var(--hr-gold);
+  box-shadow:0 0 0 3px rgb(185 146 90 / .15);
+}
+.pf-spec-search input{
+  min-width:0;
+  flex:1;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:var(--hr-ink);
+  font:inherit;
+  font-size:.67rem;
+}
+.pf-spec-search input::placeholder{color:var(--hr-faint)}
+.pf-spec-search button{
+  width:24px;
+  height:24px;
+  display:grid;
+  place-items:center;
+  border:0;
+  border-radius:7px;
+  background:rgb(16 32 51 / .06);
+  color:var(--hr-muted);
+  cursor:pointer;
+}
+.pf-spec-clear{
+  min-height:44px;
+  padding:0 11px;
+  border:1px solid var(--hr-line-strong);
+  border-radius:11px;
+  background:var(--hr-paper-2);
+  color:var(--hr-ink);
+  font:inherit;
+  font-size:.63rem;
+  font-weight:850;
+  cursor:pointer;
+}
+.pf-spec-clear:hover{border-color:var(--hr-gold)}
+.pf-spec-groups{
+  display:grid;
+  gap:10px;
+  padding:10px;
+  background:var(--hr-paper);
+}
+.pf-spec-filter-group{
+  margin:0;
+  padding:10px;
+  border:1px solid var(--hr-line);
+  border-radius:13px;
+  background:var(--hr-paper-2);
+}
+.pf-spec-filter-group-title{margin:0 0 8px}
+.pf-spec-filter-group-title span{font-size:.69rem;font-weight:950}
+.pf-spec-filter-group-title small{font-size:.57rem}
+.pf-spec-options{gap:6px}
+.pf-spec-option{
+  min-height:40px;
+  padding:6px 8px;
+  border-radius:10px;
+  background:var(--hr-paper);
+}
+.pf-spec-option:hover{
+  border-color:var(--hr-gold);
+  color:var(--hr-ink);
+  transform:translateY(-1px);
+}
+.pf-spec-option.is-active{
+  border-color:var(--hr-ink);
+  background:var(--hr-ink);
+  color:var(--hr-paper);
+  box-shadow:0 5px 12px rgb(16 32 51 / .10);
+}
+.pf-spec-empty{
+  margin:0;
+  padding:13px 8px;
+  border:1px dashed var(--hr-line-strong);
+  border-radius:10px;
+  color:var(--hr-muted);
+  font-size:.63rem;
+  text-align:center;
+}
+.pf-group:has(.pf-range) .pf-range + .pf-range{margin-top:8px}
+.pf-sidebar .pf-field input::placeholder{color:var(--hr-faint)}
+@media(max-width:979px){
+  .pf-spec-toolbar{grid-template-columns:1fr}
+  .pf-spec-filter-head{padding:13px 12px}
+  .pf-spec-filter-head small{font-size:.59rem}
+  .pf-spec-search{min-height:46px}
+  .pf-spec-clear{width:100%}
+  .pf-spec-filter-group{padding:9px}
+  .pf-spec-option{min-height:44px;font-size:.60rem}
+}
