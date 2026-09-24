@@ -91,10 +91,6 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
               ٪{property.priceDropPercent.toLocaleString("fa-IR")} کاهش
             </span>
           ) : null}
-          <span className="property-card-image-count" aria-label={`${type} · ${property.neighborhood}`}>
-            <span>{type}</span>
-            <span>اصفهان، {property.neighborhood}</span>
-          </span>
           <span className="property-card-arrow" aria-hidden="true">
             <ChevronLeft size={16} />
           </span>
