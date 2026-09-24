@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { createPortal } from "react-dom";
 import { useCallback, useEffect, useRef, useState, type TouchEvent } from "react";
 import {
   ArrowRight,
@@ -404,10 +405,11 @@ function Gallery({
         </div>
       </div>
 
-      {lightboxOpen ? (
-        <div
-          ref={lightboxRef}
-          className="property-lightbox"
+      {lightboxOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={lightboxRef}
+              className="property-lightbox"
           role="dialog"
           aria-modal="true"
           aria-label={"نمایش تصاویر " + title}
@@ -512,9 +514,10 @@ function Gallery({
                 )}
               </button>
             ))}
-          </div>
-        </div>
-      ) : null}
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
