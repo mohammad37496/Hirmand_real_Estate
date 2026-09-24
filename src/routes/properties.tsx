@@ -632,7 +632,7 @@ function PropertiesIndexPage() {
     parkingOnly ? { label: "پارکینگ", clear: () => setParkingOnly(false) } : null,
     elevatorOnly ? { label: "آسانسور", clear: () => setElevatorOnly(false) } : null,
     specFilters.length
-      ? { label: `جزئیات ملک: ${fa(specFilters.length)}`, clear: () => setSpecFilters([]) }
+      ? { label: `جزئیات ملک: ${specFilters.length.toLocaleString("fa-IR")}`, clear: () => setSpecFilters([]) }
       : null,
   ].filter((item): item is { label: string; clear: () => void } => Boolean(item));
 
