@@ -60,7 +60,7 @@ export default defineEventHandler(async (event) => {
       const index = params.length;
       conditions.push(
         "(" +
-          ["name", "phone", "deal", "property_type", "neighborhood", "consultant", "note"]
+          ["name", "phone", "deal", "property_type", "neighborhood", "consultant", "job", "note"]
             .map((column) => column + " ilike $" + index)
             .join(" or ") +
           ")",
@@ -68,7 +68,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const rows = await sql.query<Record<string, unknown>>(
-      "select name, phone, deal, property_type, neighborhood, consultant, status, note, source, " +
+      "select name, phone, people_count, job, deal, property_type, neighborhood, consultant, status, note, source, " +
         "acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, follow_up_at, last_contacted_at, " +
         "budget_deposit, budget_rent, budget_equivalent, budget_bedrooms, match_count, created_at " +
         "from leads where " + conditions.join(" and ") +
@@ -85,13 +85,15 @@ export default defineEventHandler(async (event) => {
       closed: "ناموفق / بسته‌شده",
       spam: "اسپم",
     };
-    const header = ["نام", "تلفن", "معامله", "نوع ملک", "محله", "مشاور", "وضعیت", "منبع جذب", "رهن بودجه", "اجاره بودجه", "معادل رهنی", "خواب", "تعداد فایل پیشنهادی", "توضیحات", "تاریخ"];
+    const header = ["نام", "تلفن", "تعداد نفرات", "شغل", "معامله", "نوع ملک", "محله", "مشاور", "وضعیت", "منبع جذب", "رهن بودجه", "اجاره بودجه", "معادل رهنی", "خواب", "تعداد فایل پیشنهادی", "توضیحات", "تاریخ"];
     const lines = [
       header.map(csvCell).join(","),
       ...rows.map((row) =>
         [
           row.name,
           row.phone,
+          row.people_count,
+          row.job,
           row.deal,
           row.property_type,
           row.neighborhood,
@@ -117,7 +119,7 @@ export default defineEventHandler(async (event) => {
 
   if ((body.action ?? "list") === "list") {
     const rows = await sql.query<Record<string, unknown>>(
-      "select id,name,phone,deal,property_type,neighborhood,consultant,note,status,source, " +
+      "select id,name,phone,people_count,job,deal,property_type,neighborhood,consultant,note,status,source, " +
         "acquisition_source,acquisition_medium,acquisition_campaign,acquisition_referrer,follow_up_at,last_contacted_at, " +
         "budget_deposit,budget_rent,budget_equivalent,budget_bedrooms,budget_rate,matched_properties,match_count,created_at " +
         "from leads order by created_at desc limit 300",
@@ -127,6 +129,8 @@ export default defineEventHandler(async (event) => {
         id: String(row.id),
         name: String(row.name),
         phone: String(row.phone),
+        peopleCount: row.people_count == null ? null : Number(row.people_count),
+        job: String(row.job ?? ""),
         deal: String(row.deal),
         propertyType: String(row.property_type ?? ""),
         neighborhood: String(row.neighborhood ?? ""),
