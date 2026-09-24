@@ -40,7 +40,7 @@ const TOOLS = [
   },
 ] as const;
 
-export const Route = createFileRoute("/tools/")({
+export const Route = createFileRoute("/tools")({
   head: () => {
     const title = `ابزارهای مالی املاک هیرمند | محاسبه‌گرهای رهن، کمیسیون، سود و وام`;
     const description =
