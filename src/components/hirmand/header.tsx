@@ -64,7 +64,7 @@ export function Header() {
                     className={cn("nav-tools-trigger", isFinanceCurrent && "is-current")}
                     aria-haspopup="true"
                     aria-expanded={isFinanceCurrent ? "true" : undefined}
-                    onClick={(event) => goHash(event, "tools")}
+                    onClick={closeMenu}
                   >
                     {item.label}
                     <span className="nav-tools-caret" aria-hidden="true">⌄</span>
