@@ -459,7 +459,6 @@ function TrackingPage() {
 
         <footer className="partner-portal-footer">
           <span>{SITE.nameFa}</span>
-          <span>{SITE.managedBy}</span>
           <Link to="/">بازگشت به سایت</Link>
         </footer>
       </main>
