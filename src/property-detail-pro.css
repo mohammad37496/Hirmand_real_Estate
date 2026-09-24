@@ -2376,3 +2376,79 @@
     margin-top:22px!important;
   }
 }
+
+
+/* HIRMAND — final visual correction pass */
+/* Keep the public detail route on the site's light paper theme. */
+body:has(.property-detail-page){
+  background-color:var(--paper)!important;
+  background-image:
+    radial-gradient(1100px 560px at 10% -6%,rgb(192 138 42 / 8%),transparent 62%),
+    radial-gradient(900px 520px at 102% 4%,rgb(11 26 43 / 5%),transparent 60%)!important;
+  color:var(--fg)!important;
+}
+
+/* Give the gallery a definite height so the image cannot leave a dark empty block. */
+.property-gallery{
+  height:clamp(420px,38vw,560px)!important;
+  min-height:0!important;
+  background:var(--paper)!important;
+}
+
+.property-gallery-main{
+  height:100%!important;
+  min-height:0!important;
+  background:var(--paper-2)!important;
+}
+
+.property-gallery-main img,
+.property-gallery-main video{
+  width:100%!important;
+  height:100%!important;
+  min-height:100%!important;
+  object-fit:cover!important;
+  background:var(--paper-2)!important;
+}
+
+/* Clear breathing room between the top summary/consultant block and specifications. */
+.property-detail-content{
+  margin-top:0!important;
+  padding-top:44px!important;
+}
+
+.property-contact-card{
+  margin-top:22px!important;
+}
+
+/* Persian year digits, no thousands separators. */
+.property-spec-grid strong{
+  font-variant-numeric:normal;
+}
+
+@media (max-width:720px){
+  .property-gallery{
+    height:auto!important;
+    min-height:0!important;
+    background:transparent!important;
+  }
+
+  .property-gallery-main{
+    height:auto!important;
+    min-height:0!important;
+    aspect-ratio:4 / 3;
+  }
+
+  .property-gallery-main img,
+  .property-gallery-main video{
+    height:100%!important;
+    min-height:0!important;
+  }
+
+  .property-detail-content{
+    padding-top:24px!important;
+  }
+
+  .property-contact-card{
+    margin-top:16px!important;
+  }
+}
