@@ -1,6 +1,5 @@
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import { getPublishedProperty } from "@/lib/properties";
-import { propertyHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/v/$slug/$id")({
   loader: async ({ params }) => {
@@ -21,7 +20,7 @@ export const Route = createFileRoute("/v/$slug/$id")({
       throw notFound();
     }
   },
-  head: ({ params }) => propertyHead(null, params.slug),
+  head: () => ({ title: "انتقال فایل | هیرمند", meta: [{ name: "robots", content: "noindex, nofollow" }] }),
   component: LegacyVPropertyRoutePage,
 });
 
