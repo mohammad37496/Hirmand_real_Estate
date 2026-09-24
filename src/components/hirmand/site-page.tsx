@@ -267,11 +267,6 @@ function Hero() {
             خرید ویلا و باغ
           </button>
         </div>
-        <div className="hero-proof" aria-label="اطلاعات سریع هیرمند">
-          <span><strong>{NEIGHBORHOODS.length}+</strong> محله اصفهان</span>
-          <span><strong>{SERVICES.length}</strong> خدمت اصلی</span>
-          <span><strong>{TEAM.length}</strong> مشاور مستقیم</span>
-        </div>
       </div>
     </section>
   );
