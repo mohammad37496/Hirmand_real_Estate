@@ -7,6 +7,13 @@ import { allAreas, areaPath } from "../../src/lib/areas";
 import { TEAM } from "../../src/lib/site";
 import { resolveDatabaseUrl } from "../../scripts/resolve-database-url.mjs";
 
+const FINANCE_TOOL_PATHS = [
+  "/tools/rahn-rent",
+  "/tools/commission",
+  "/tools/deposit",
+  "/tools/loan",
+] as const;
+
 const SITE = (process.env.VITE_SITE_URL || "https://www.hirmandrealestate.ir").replace(/\/$/, "");
 
 function escapeXml(value: string) {
@@ -88,6 +95,10 @@ export default defineEventHandler(async (event) => {
 
   entries.push(urlEntry(`${SITE}/`, "daily", "1.0", today));
   entries.push(urlEntry(`${SITE}/properties`, "daily", "0.9", today));
+
+  for (const path of FINANCE_TOOL_PATHS) {
+    entries.push(urlEntry(`${SITE}${path}`, "monthly", "0.6", today));
+  }
 
   for (const person of TEAM) {
     entries.push(urlEntry(`${SITE}/consultants/${encodeURIComponent(person.id)}`, "weekly", "0.6", today));
