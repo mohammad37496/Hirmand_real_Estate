@@ -328,8 +328,8 @@ function About() {
         </div>
         <figure className="about-photo">
           <img
-            src="/images/isfahan-arch.jpg"
-            alt="نمایی از معماری اصفهان در شب"
+            src="/images/isfahan-hero.jpg"
+            alt="نمایی از اصفهان برای معرفی مجموعه هیرمند"
             loading="lazy"
             decoding="async"
           />
