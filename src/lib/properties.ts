@@ -615,6 +615,7 @@ export const getPublishedProperty = createServerFn({ method: "GET" })
            slug = any($1::text[])
            or id::text = any($1::text[])
            or lower(left(id::text, 8)) = any($4::text[])
+           or lower(right(id::text, 8)) = any($4::text[])
          )
        order by
          case
@@ -622,7 +623,8 @@ export const getPublishedProperty = createServerFn({ method: "GET" })
            when slug = $3 then 1
            when id::text = any($1::text[]) then 2
            when lower(left(id::text, 8)) = any($4::text[]) then 3
-           else 4
+           when lower(right(id::text, 8)) = any($4::text[]) then 4
+           else 5
          end
        limit 1`,
       [
