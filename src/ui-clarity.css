@@ -2073,3 +2073,100 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     min-width: 0 !important;
   }
 }
+
+/* === Tracking card: match the current light Hirmand theme ====================== */
+.tracking-card {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 22px !important;
+  align-items: center !important;
+  padding: 24px !important;
+  background: linear-gradient(145deg, #ffffff 0%, #fbfaf8 100%) !important;
+  border: 1px solid var(--ui-line) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 10px 28px rgba(15,23,42,.06) !important;
+  color: var(--ui-ink) !important;
+  text-decoration: none !important;
+  overflow: hidden !important;
+}
+.tracking-card::before {
+  content: "" !important;
+  position: absolute !important;
+  inset-inline-end: 0 !important;
+  inset-block: 18px !important;
+  width: 4px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, #c69a6d, #9a6a3a) !important;
+}
+.tracking-card:hover {
+  border-color: rgba(154,106,58,.34) !important;
+  background: linear-gradient(145deg, #ffffff 0%, #faf7f3 100%) !important;
+  box-shadow: 0 14px 34px rgba(15,23,42,.08) !important;
+  transform: translateY(-2px) !important;
+}
+.tracking-card-copy {
+  display: grid !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+.tracking-card-copy .kicker {
+  color: var(--ui-brass) !important;
+  font-size: .72rem !important;
+  font-weight: 800 !important;
+}
+.tracking-card h2 {
+  margin: 0 !important;
+  color: var(--ui-heading) !important;
+  font-size: clamp(1.15rem, 1rem + .5vw, 1.55rem) !important;
+  line-height: 1.65 !important;
+  font-weight: 800 !important;
+}
+.tracking-card p {
+  margin: 0 !important;
+  max-width: 52rem !important;
+  color: #475467 !important;
+  font-size: .86rem !important;
+  line-height: 2 !important;
+}
+.tracking-card .tracking-cta {
+  justify-self: start !important;
+  margin-top: 8px !important;
+  min-height: 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 9px 15px !important;
+  border-radius: 12px !important;
+  background: linear-gradient(180deg, #c79b6d, #9a6a3a) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 18px rgba(154,106,58,.18) !important;
+}
+.tracking-card-icon {
+  width: 76px !important;
+  height: 76px !important;
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 76px !important;
+  color: var(--ui-brass) !important;
+  background: var(--ui-brass-soft) !important;
+  border: 1px solid rgba(154,106,58,.24) !important;
+  border-radius: 18px !important;
+}
+.tracking-card-icon svg {
+  width: 36px !important;
+  height: 36px !important;
+}
+@media (max-width: 720px) {
+  .tracking-card {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding: 20px !important;
+  }
+  .tracking-card-icon {
+    width: 60px !important;
+    height: 60px !important;
+    flex-basis: 60px !important;
+    order: -1 !important;
+  }
+}
