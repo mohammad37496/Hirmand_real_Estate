@@ -967,8 +967,8 @@ export const saveProperty = createServerFn({ method: "POST" })
         $1, $2, $3, $4, $5, $6, $7, 'اصفهان',
         $8, $9, $10::integer, $11::smallint, $12::smallint, $13::smallint, $14::smallint,
         $15::smallint, $16::boolean, $17::boolean, $18::boolean, $19::text, $20::text, $21::text,
-        $22::text, $23::text, $24::text, $25::jsonb, $26::numeric, $27::numeric, $28::numeric, $29::text,
-        $30::jsonb, $31::jsonb, $32::text, $33::text, $34::timestamptz, $35::timestamptz
+        $22::text, $23::text, $24::jsonb, $25::numeric, $26::numeric, $27::numeric, $28::text,
+        $29::jsonb, $30::jsonb, $31::text, $32::text, $33::timestamptz, $34::timestamptz
       )
       on conflict (id) do update set
         slug = excluded.slug,
