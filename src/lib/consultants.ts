@@ -117,7 +117,7 @@ const safeExternalUrl = (label: string) =>
     .trim()
     .max(500)
     .refine(
-      (value) => !value || /^https?:\\/\\//i.test(value),
+      (value) => !value || /^https?:\/\//i.test(value),
       `${label} باید با https:// یا http:// شروع شود.`,
     );
 
