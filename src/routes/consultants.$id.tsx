@@ -5,7 +5,8 @@ import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { EitaaIcon, TelegramIcon, WhatsAppIcon, InstagramIcon } from "@/components/hirmand/social-icons";
 import { listPublishedPropertiesByContact } from "@/lib/properties";
 import { absoluteUrl, socialMeta } from "@/lib/seo";
-import { personChat, SITE, TEAM } from "@/lib/site";
+import { SITE } from "@/lib/site";
+import { listConsultants } from "@/lib/consultants";
 
 const ICONS = {
   briefcase: Briefcase,
@@ -14,7 +15,8 @@ const ICONS = {
 
 export const Route = createFileRoute("/consultants/$id")({
   loader: async ({ params }) => {
-    const person = TEAM.find((item) => item.id === params.id) ?? null;
+    const people = await listConsultants();
+    const person = people.find((item) => item.id === params.id) ?? null;
     if (!person) return { person: null, properties: [] };
     try {
       const properties = await listPublishedPropertiesByContact({ data: { phone: person.phone } });
@@ -67,14 +69,13 @@ function ConsultantProfilePage() {
 
   const person = data.person;
   const Icon = ICONS[person.icon];
-  const chat = personChat(person);
 
   const socials = [
-    { href: chat.whatsapp, label: "واتساپ", icon: <WhatsAppIcon size={19} /> },
-    { href: chat.telegram, label: "تلگرام", icon: <TelegramIcon size={19} /> },
-    { href: chat.eitaa, label: "ایتا", icon: <EitaaIcon size={19} /> },
-    { href: chat.instagram, label: "اینستاگرام", icon: <InstagramIcon size={19} /> },
-  ];
+    { href: person.whatsapp, label: "واتساپ", icon: <WhatsAppIcon size={19} /> },
+    { href: person.telegram, label: "تلگرام", icon: <TelegramIcon size={19} /> },
+    { href: person.eitaa, label: "ایتا", icon: <EitaaIcon size={19} /> },
+    { href: person.instagram, label: "اینستاگرام", icon: <InstagramIcon size={19} /> },
+  ].filter((item) => item.href.trim());
 
   return (
     <SiteChrome className="property-detail-shell">
