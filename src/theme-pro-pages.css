@@ -1867,3 +1867,35 @@
     justify-content:center;
   }
 }
+
+
+/* Keep the public tracking cards perfectly aligned on desktop. */
+@media (min-width: 1025px) {
+  .partner-portal-grid > .partner-portal-card {
+    min-height: 292px;
+  }
+
+  .partner-portal-grid > .partner-portal-card .partner-muted {
+    align-self: end;
+    margin-top: auto;
+    min-height: 42px;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .partner-lookup-form,
+  .partner-login-form {
+    align-content: start;
+  }
+
+  .partner-lookup-form > .btn-gold,
+  .partner-login-form > .btn-gold {
+    align-self: end;
+  }
+}
+
+@media (max-width: 1024px) {
+  .partner-portal-card {
+    height: auto;
+  }
+}
