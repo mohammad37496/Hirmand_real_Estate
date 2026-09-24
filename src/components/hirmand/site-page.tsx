@@ -532,11 +532,14 @@ function Neighborhoods({ onPick }: { onPick: (name: string) => void }) {
 
   const groups = useMemo(() => {
     const q = query.trim();
-    if (!q) return NEIGHBORHOOD_GROUPS;
-    return NEIGHBORHOOD_GROUPS.map((group) => ({
-      ...group,
-      items: group.items.filter((item) => item.name.includes(q)),
-    })).filter((group) => group.items.length > 0);
+    return NEIGHBORHOOD_GROUPS
+      .map((group) => ({
+        ...group,
+        items: [...group.items]
+          .filter((item) => !q || item.name.includes(q))
+          .sort((a, b) => a.name.localeCompare(b.name, "fa", { sensitivity: "base", numeric: true })),
+      }))
+      .filter((group) => group.items.length > 0);
   }, [query]);
 
   const target = { lat: selected.lat, lng: selected.lng, label: selected.name };
@@ -547,7 +550,7 @@ function Neighborhoods({ onPick }: { onPick: (name: string) => void }) {
       <SectionHead
         kicker="اصفهان"
         title="محله‌هایی که در آن‌ها فعالیم"
-        text={`بیش از ${NEIGHBORHOODS.length} محله اصفهان. روی نام محله بزنید تا روی نقشه گوگل دیده شود؛ مسیر را می‌توانید در بلد یا نشان هم باز کنید.`}
+        text={`بیش از ${NEIGHBORHOODS.length} محله و محدوده در اصفهان. هر ناحیه را باز کنید، محله را انتخاب کنید و مقصد همان نام را در Google Maps ببینید.`}
       />
       <div className="area-layout">
         <div className="area-groups">
@@ -557,30 +560,49 @@ function Neighborhoods({ onPick }: { onPick: (name: string) => void }) {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="مثلاً مرداویج، جلفا، حکیم نظامی"
+              autoComplete="off"
             />
           </label>
+
           {groups.length === 0 ? (
             <p className="commission-hint">محله‌ای با این نام پیدا نشد.</p>
           ) : (
-            groups.map((group) => (
-              <div key={group.title} className="area-group">
-                <h3>{group.title}</h3>
-                <div className="chip-row">
-                  {group.items.map((item) => (
-                    <button
-                      key={item.name}
-                      type="button"
-                      className={selected.name === item.name ? "chip is-active" : "chip"}
-                      onClick={() => setSelected(item)}
-                    >
-                      {item.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))
+            <div className="area-dropdowns">
+              {groups.map((group) => {
+                const isSelectedInGroup = group.items.some((item) => item.name === selected.name);
+                return (
+                  <details
+                    key={group.title}
+                    className={"area-dropdown" + (isSelectedInGroup ? " is-active" : "")}
+                    open={Boolean(query)}
+                  >
+                    <summary className="area-dropdown-summary">
+                      <span>
+                        <strong>{group.title}</strong>
+                        <small>{isSelectedInGroup ? `محله انتخاب‌شده: ${selected.name}` : "انتخاب محله"}</small>
+                      </span>
+                      <span className="area-dropdown-caret" aria-hidden="true">⌄</span>
+                    </summary>
+                    <div className="area-dropdown-options">
+                      {group.items.map((item) => (
+                        <button
+                          key={item.name}
+                          type="button"
+                          className={selected.name === item.name ? "area-neighborhood-option is-active" : "area-neighborhood-option"}
+                          onClick={() => setSelected(item)}
+                        >
+                          <span>{item.name}</span>
+                          {selected.name === item.name ? <Check size={15} aria-hidden="true" /> : null}
+                        </button>
+                      ))}
+                    </div>
+                  </details>
+                );
+              })}
+            </div>
           )}
         </div>
+
         <aside className="area-map">
           <div className="area-map-head">
             <div className="icon-box">
@@ -588,11 +610,11 @@ function Neighborhoods({ onPick }: { onPick: (name: string) => void }) {
             </div>
             <div>
               <h3>{selected.name}</h3>
-              <p>اصفهان — نمایش روی نقشه</p>
+              <p>Google Maps — مقصد بر اساس نام دقیق محله</p>
             </div>
           </div>
-          <MapEmbed target={target} title={`نقشه ${selected.name}`} />
-          <MapAppButtons target={target} googleHref={links.google} />
+          <MapEmbed target={target} title={`نقشه ${selected.name} در اصفهان`} />
+          <MapAppButtons target={target} googleHref={links.google} googleOnly />
           {selected.name !== OFFICE_PLACE.name ? (
             <button type="button" className="btn-gold area-request" onClick={() => onPick(selected.name)}>
               درخواست ملک در {selected.name}
@@ -607,7 +629,6 @@ function Neighborhoods({ onPick }: { onPick: (name: string) => void }) {
     </Reveal>
   );
 }
-
 function Inquiry({ draft }: { draft: InquiryDraft }) {
   return (
     <Reveal as="section" className="section inquiry-section" id="inquiry">
