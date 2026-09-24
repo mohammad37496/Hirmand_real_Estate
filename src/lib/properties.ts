@@ -5,6 +5,19 @@ import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { calculateBudgetMatch, DEFAULT_MATCH_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
 import { MAX_PROPERTY_MEDIA, isAllowedMediaRef } from "@/lib/media";
+import {
+  PROPERTY_CABINET_OPTIONS,
+  PROPERTY_COOLING_OPTIONS,
+  PROPERTY_FLOORING_OPTIONS,
+  PROPERTY_HEATING_OPTIONS,
+  PROPERTY_WALL_CLOSET_OPTIONS,
+  type PropertyCabinetType,
+  type PropertyCoolingSystem,
+  type PropertyFlooringType,
+  type PropertyHeatingSystem,
+  type PropertyOtherAmenity,
+  type PropertyWallClosetType,
+} from "@/lib/property-options";
 
 export type PropertyStatus = "draft" | "published" | "archived";
 export type PropertyTransaction = "buy" | "sell" | "rent" | "mortgage";
@@ -37,6 +50,12 @@ export type Property = {
   parking: boolean;
   elevator: boolean;
   storage: boolean;
+  cabinetType: PropertyCabinetType | null;
+  flooringType: PropertyFlooringType | null;
+  coolingSystem: PropertyCoolingSystem | null;
+  heatingSystem: PropertyHeatingSystem | null;
+  wallClosetType: PropertyWallClosetType | null;
+  otherAmenities: PropertyOtherAmenity[];
   price: string | null;
   deposit: string | null;
   rent: string | null;
@@ -142,6 +161,29 @@ const nullableMoneyField = z.preprocess(
   z.union([z.literal(""), z.string().regex(/^\d{1,20}$/)]),
 );
 
+
+
+const CABINET_VALUES = PROPERTY_CABINET_OPTIONS.map((item) => item.value) as [
+  PropertyCabinetType,
+  ...PropertyCabinetType[],
+];
+const FLOORING_VALUES = PROPERTY_FLOORING_OPTIONS.map((item) => item.value) as [
+  PropertyFlooringType,
+  ...PropertyFlooringType[],
+];
+const COOLING_VALUES = PROPERTY_COOLING_OPTIONS.map((item) => item.value) as [
+  PropertyCoolingSystem,
+  ...PropertyCoolingSystem[],
+];
+const HEATING_VALUES = PROPERTY_HEATING_OPTIONS.map((item) => item.value) as [
+  PropertyHeatingSystem,
+  ...PropertyHeatingSystem[],
+];
+const WALL_CLOSET_VALUES = PROPERTY_WALL_CLOSET_OPTIONS.map((item) => item.value) as [
+  PropertyWallClosetType,
+  ...PropertyWallClosetType[],
+];
+
 const propertyInputSchema = z.object({
   id: z.string().optional(),
   title: z.string().trim().min(3).max(180),
@@ -158,6 +200,12 @@ const propertyInputSchema = z.object({
   parking: z.boolean().default(false),
   elevator: z.boolean().default(false),
   storage: z.boolean().default(false),
+  cabinetType: z.enum(CABINET_VALUES).nullable().optional().default(null),
+  flooringType: z.enum(FLOORING_VALUES).nullable().optional().default(null),
+  coolingSystem: z.enum(COOLING_VALUES).nullable().optional().default(null),
+  heatingSystem: z.enum(HEATING_VALUES).nullable().optional().default(null),
+  wallClosetType: z.enum(WALL_CLOSET_VALUES).nullable().optional().default(null),
+  otherAmenities: z.array(z.string().trim().min(1).max(80)).max(80).default([]),
   price: nullableMoneyField,
   deposit: nullableMoneyField,
   rent: nullableMoneyField,
@@ -262,6 +310,12 @@ function mapProperty(row: Record<string, unknown>): Property {
     parking: Boolean(row.parking),
     elevator: Boolean(row.elevator),
     storage: Boolean(row.storage),
+    cabinetType: (row.cabinet_type as PropertyCabinetType | null) ?? null,
+    flooringType: (row.flooring_type as PropertyFlooringType | null) ?? null,
+    coolingSystem: (row.cooling_system as PropertyCoolingSystem | null) ?? null,
+    heatingSystem: (row.heating_system as PropertyHeatingSystem | null) ?? null,
+    wallClosetType: (row.wall_closet_type as PropertyWallClosetType | null) ?? null,
+    otherAmenities: parseJsonArray(row.other_amenities) as PropertyOtherAmenity[],
     price: row.price == null ? null : String(row.price),
     deposit: row.deposit == null ? null : String(row.deposit),
     rent: row.rent == null ? null : String(row.rent),
@@ -282,7 +336,8 @@ function mapProperty(row: Record<string, unknown>): Property {
 const LIST_COLUMNS = `
   id, slug, status, featured, featured_until, title, transaction_type, property_type, city,
   neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
-  built_year, parking, elevator, storage, price, deposit, rent,
+  built_year, parking, elevator, storage, cabinet_type, flooring_type, cooling_system,
+  heating_system, wall_closet_type, other_amenities, price, deposit, rent,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
   latitude, longitude, price_drop_percent,
   left(description, 280) as description
@@ -905,13 +960,15 @@ export const saveProperty = createServerFn({ method: "POST" })
       `insert into properties (
         id, slug, status, featured, title, transaction_type, property_type, city,
         neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
-        built_year, parking, elevator, storage, price, deposit, rent, description,
+        built_year, parking, elevator, storage, cabinet_type, flooring_type, cooling_system,
+        heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
         features, images, contact_name, contact_phone, published_at, featured_until
       ) values (
         $1, $2, $3, $4, $5, $6, $7, 'اصفهان',
         $8, $9, $10::integer, $11::smallint, $12::smallint, $13::smallint, $14::smallint,
-        $15::smallint, $16::boolean, $17::boolean, $18::boolean, $19::numeric, $20::numeric, $21::numeric, $22::text,
-        $23::jsonb, $24::jsonb, $25::text, $26::text, $27::timestamptz, $28::timestamptz
+        $15::smallint, $16::boolean, $17::boolean, $18::boolean, $19::text, $20::text, $21::text,
+        $22::text, $23::text, $24::text, $25::jsonb, $26::numeric, $27::numeric, $28::numeric, $29::text,
+        $30::jsonb, $31::jsonb, $32::text, $33::text, $34::timestamptz, $35::timestamptz
       )
       on conflict (id) do update set
         slug = excluded.slug,
@@ -932,6 +989,12 @@ export const saveProperty = createServerFn({ method: "POST" })
         parking = excluded.parking,
         elevator = excluded.elevator,
         storage = excluded.storage,
+        cabinet_type = excluded.cabinet_type,
+        flooring_type = excluded.flooring_type,
+        cooling_system = excluded.cooling_system,
+        heating_system = excluded.heating_system,
+        wall_closet_type = excluded.wall_closet_type,
+        other_amenities = excluded.other_amenities,
         price = excluded.price,
         deposit = excluded.deposit,
         rent = excluded.rent,
@@ -1050,6 +1113,12 @@ export const saveProperty = createServerFn({ method: "POST" })
         data.parking,
         data.elevator,
         data.storage,
+        data.cabinetType,
+        data.flooringType,
+        data.coolingSystem,
+        data.heatingSystem,
+        data.wallClosetType,
+        JSON.stringify(data.otherAmenities),
         price,
         deposit,
         rent,
