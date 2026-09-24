@@ -27,6 +27,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
+import { listNeighborhoodNames } from "@/lib/neighborhoods";
 import { propertyPath } from "@/lib/property-path";
 import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
 import {
@@ -297,6 +298,21 @@ export function AdminPropertiesPage() {
     afterContactPhone: string | null;
   }>>([]);
   const [form, setForm] = useState<FormState>(emptyForm());
+  const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>(NEIGHBORHOOD_NAMES);
+
+  useEffect(() => {
+    let cancelled = false;
+    void listNeighborhoodNames()
+      .then((names) => {
+        if (!cancelled && names.length) setNeighborhoodOptions(names);
+      })
+      .catch(() => {
+        // Keep the bundled catalog as a graceful fallback.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -1141,7 +1157,7 @@ export function AdminPropertiesPage() {
                     </select>
                     <select value={listNeighborhood} onChange={(e) => setListNeighborhood(e.target.value)} aria-label="فیلتر محله">
                       <option value="">همه محله‌ها</option>
-                      {NEIGHBORHOOD_NAMES.map((name) => <option key={name} value={name}>{name}</option>)}
+                      {neighborhoodOptions.map((name) => <option key={name} value={name}>{name}</option>)}
                     </select>
                     <select value={listSort} onChange={(e) => setListSort(e.target.value as typeof listSort)} aria-label="مرتب‌سازی">
                       <option value="newest">آخرین تغییر</option>
@@ -1389,7 +1405,7 @@ export function AdminPropertiesPage() {
                         required
                       />
                       <datalist id="neighborhood-list">
-                        {NEIGHBORHOOD_NAMES.map((name) => (
+                        {neighborhoodOptions.map((name) => (
                           <option key={name} value={name} />
                         ))}
                       </datalist>
