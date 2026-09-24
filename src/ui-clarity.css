@@ -1930,3 +1930,54 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     height: 100% !important;
   }
 }
+
+/* === Property detail: gallery follows summary card without inflating the row === */
+@media (min-width: 1025px) {
+  .property-detail-page .property-detail-top {
+    display: grid !important;
+    align-items: start !important;
+    grid-auto-rows: max-content !important;
+  }
+  .property-detail-page .property-detail-summary {
+    align-self: start !important;
+    position: relative !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  .property-detail-page .property-detail-top-gallery {
+    align-self: start !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+  .property-detail-page .property-gallery-wrap {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  .property-detail-page .property-gallery {
+    height: 420px !important;
+    min-height: 420px !important;
+    max-height: 420px !important;
+  }
+  .property-detail-page .property-gallery-main,
+  .property-detail-page .property-gallery-main img,
+  .property-detail-page .property-gallery-main video {
+    height: 420px !important;
+    min-height: 0 !important;
+    max-height: 420px !important;
+  }
+  .property-detail-page .property-gallery-rail {
+    height: 420px !important;
+    max-height: 420px !important;
+    overflow: hidden !important;
+  }
+}
+@media (min-width: 1280px) {
+  .property-detail-page .property-gallery,
+  .property-detail-page .property-gallery-main,
+  .property-detail-page .property-gallery-main img,
+  .property-detail-page .property-gallery-main video,
+  .property-detail-page .property-gallery-rail {
+    height: 400px !important;
+    max-height: 400px !important;
+  }
+}
