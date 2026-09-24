@@ -24,7 +24,11 @@ function sanitizeErrorMessage(value: string): string {
 
 function getDiagnostic(error: unknown) {
   const raw = rawErrorMessage(error);
-  const message = sanitizeErrorMessage(raw) || FALLBACK_MESSAGE;
+  const isDevelopment =
+    typeof import.meta !== "undefined" ? Boolean(import.meta.env?.DEV) : false;
+  const message = isDevelopment
+    ? sanitizeErrorMessage(raw) || FALLBACK_MESSAGE
+    : FALLBACK_MESSAGE;
   const name = error instanceof Error && error.name ? error.name : "UnknownError";
   const path =
     typeof window !== "undefined"
