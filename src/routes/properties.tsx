@@ -165,6 +165,11 @@ function normalizeBounds(a: string, b: string) {
   return [second, first] as const;
 }
 
+function normalizeBoundsSigned(a: number | undefined, b: number | undefined) {
+  if (a == null || b == null || a <= b) return [a, b] as const;
+  return [b, a] as const;
+}
+
 function buildFilterData(
   q: string,
   transactionType: PropertyTransaction | "",
