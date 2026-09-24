@@ -54,7 +54,7 @@ function primaryPrice(property: Property) {
   if (property.transactionType === "mortgage") {
     return property.deposit ? "رهن " + money(property.deposit) + " تومان" : "تماس بگیرید";
   }
-  return property.price ? "قیمت " + money(property.price) + " تومان" : "تماس بگیرید";
+  return property.price ? money(property.price) + " تومان" : "تماس بگیرید";
 }
 
 function mapsLink(latitude: number | null, longitude: number | null, neighborhood: string) {
@@ -76,7 +76,8 @@ function osmEmbedUrl(latitude: number, longitude: number) {
 }
 
 function whatsappLink(phone: string, title: string) {
-  const intl = phone.replace(/^0/, "98");
+  const digits = phone.replace(/\D/g, "");
+  const intl = digits.startsWith("98") ? digits : digits.startsWith("0") ? "98" + digits.slice(1) : digits;
   const text = encodeURIComponent(`سلام، درباره فایل «${title}» از سایت هیرمند پیام می‌دهم.`);
   return `https://wa.me/${intl}?text=${text}`;
 }
@@ -159,6 +160,7 @@ function Gallery({
   const pinchStartDistance = useRef<number | null>(null);
   const pinchStartScale = useRef(1);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const lightboxRef = useRef<HTMLDivElement | null>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const activeRef = useRef(0);
 
@@ -198,6 +200,21 @@ function Gallery({
       if (event.key === "ArrowLeft") goTo(activeRef.current - 1);
       if (event.key === "ArrowRight") goTo(activeRef.current + 1);
       if (event.key === "0") setZoomScale(1);
+      if (event.key === "Tab") {
+        const focusable = Array.from(
+          lightboxRef.current?.querySelectorAll("button:not([disabled]), a[href], video[controls]") ?? [],
+        ).filter((element) => element instanceof HTMLElement && element.offsetParent !== null);
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -364,10 +381,12 @@ function Gallery({
 
       {lightboxOpen ? (
         <div
+          ref={lightboxRef}
           className="property-lightbox"
           role="dialog"
           aria-modal="true"
           aria-label={"نمایش تصاویر " + title}
+          tabIndex={-1}
           onClick={closeLightbox}
         >
           <button
@@ -491,28 +510,17 @@ function ConsultantCard({ property }: { property: Property }) {
         <Phone size={16} /> {property.contactPhone}
       </a>
       {person ? (
-        <Link className="property-contact-profile" to="/consultants/$id" params={{ id: person.id }}>
+        <Link
+          className="property-contact-profile"
+          to="/consultants/$id"
+          params={{ id: person.id }}
+        >
           مشاهده پروفایل مشاور
         </Link>
       ) : null}
-      <div className="property-contact-actions">
-        <a
-          className="btn-gold"
-          href={whatsappLink(property.contactPhone, property.title)}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
-        >
-          پیام در واتساپ
-        </a>
-        <a
-          className="btn-ghost"
-          href={`tel:${property.contactPhone}`}
-          onClick={() => trackAnalyticsEvent("call_click", property.slug)}
-        >
-          تماس تلفنی
-        </a>
-      </div>
+      <p className="property-contact-note">
+        برای هماهنگی بازدید، دریافت اطلاعات تکمیلی و بررسی شرایط معامله با این مشاور در تماس باشید.
+      </p>
     </aside>
   );
 }
@@ -616,7 +624,7 @@ export function PropertyDetailView({
               </p>
               <div className="property-price-block">
                 <span>قیمت فایل</span>
-                <strong>{primaryPrice(property)}</strong>
+                <strong dir="rtl" className="property-price-value">{primaryPrice(property)}</strong>
                 {property.price && property.areaM2 && (property.transactionType === "buy" || property.transactionType === "sell") ? (
                   <small className="property-price-per-m2">
                     قیمت تقریبی هر متر: <strong>{unitPrice(property.price, property.areaM2)} تومان</strong>
