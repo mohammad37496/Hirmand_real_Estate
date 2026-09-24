@@ -33,7 +33,13 @@ export function mediaIdFromUrl(value: string | null | undefined): string | null 
   if (!isDatabaseMediaUrl(value)) return null;
   const raw = value!.slice(DB_MEDIA_PATH.length).split(/[?#]/)[0] ?? "";
   const id = raw.trim();
-  return id ? decodeURIComponent(id) : null;
+  if (!id) return null;
+  try {
+    return decodeURIComponent(id);
+  } catch {
+    // Malformed percent-encoded media ids should resolve as missing resources.
+    return null;
+  }
 }
 
 export function requireDatabase(): void {
