@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Maximize2,
   MessageCircle,
+  Play,
   Share2,
   BedDouble,
   Building2,
@@ -15,11 +16,16 @@ import {
   CarFront,
   Check,
   ExternalLink,
+  FastForward,
   Layers3,
   MapPinned,
   Navigation,
+  Pause,
   Phone,
+  Rewind,
   Ruler,
+  Volume2,
+  VolumeX,
   Warehouse,
   X,
 } from "lucide-react";
@@ -114,6 +120,165 @@ function formatAdDate(value: string | null | undefined) {
     month: "long",
     day: "numeric",
   }).format(date);
+}
+
+function formatVideoTime(value: number) {
+  if (!Number.isFinite(value) || value < 0) return "۰۱";
+  const total = Math.floor(value);
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${minutes.toLocaleString("fa-IR")}:${seconds.toLocaleString("fa-IR", {
+    minimumIntegerDigits: 2,
+    useGrouping: false,
+  })}`;
+}
+
+function VideoPlayer({
+  src,
+  title,
+  autoPlay = false,
+  className = "",
+}: {
+  src: string;
+  title: string;
+  autoPlay?: boolean;
+  className?: string;
+}) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [playing, setPlaying] = useState(autoPlay);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [muted, setMuted] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const sync = () => {
+      setCurrentTime(video.currentTime || 0);
+      setDuration(Number.isFinite(video.duration) ? video.duration : 0);
+      setPlaying(!video.paused && !video.ended);
+      setMuted(video.muted);
+    };
+
+    video.addEventListener("loadedmetadata", sync);
+    video.addEventListener("durationchange", sync);
+    video.addEventListener("timeupdate", sync);
+    video.addEventListener("play", sync);
+    video.addEventListener("pause", sync);
+    video.addEventListener("ended", sync);
+    video.addEventListener("volumechange", sync);
+
+    sync();
+    return () => {
+      video.removeEventListener("loadedmetadata", sync);
+      video.removeEventListener("durationchange", sync);
+      video.removeEventListener("timeupdate", sync);
+      video.removeEventListener("play", sync);
+      video.removeEventListener("pause", sync);
+      video.removeEventListener("ended", sync);
+      video.removeEventListener("volumechange", sync);
+    };
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !autoPlay) return;
+    void video.play().catch(() => setPlaying(false));
+  }, [autoPlay, src]);
+
+  function togglePlay() {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused || video.ended) {
+      void video.play().catch(() => setPlaying(false));
+    } else {
+      video.pause();
+    }
+  }
+
+  function seekBy(seconds: number) {
+    const video = videoRef.current;
+    if (!video) return;
+    const max = Number.isFinite(video.duration) ? video.duration : duration;
+    video.currentTime = Math.min(Math.max((video.currentTime || 0) + seconds, 0), max || Number.MAX_SAFE_INTEGER);
+  }
+
+  function seekTo(next: number) {
+    const video = videoRef.current;
+    if (!video || !Number.isFinite(next)) return;
+    video.currentTime = Math.min(Math.max(next, 0), duration || 0);
+  }
+
+  function toggleMute() {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+  }
+
+  return (
+    <div
+      className={`property-video-player ${className}`}
+      onClick={(event) => event.stopPropagation()}
+    >
+      <div className="property-video-frame">
+        <video
+          ref={videoRef}
+          src={src}
+          playsInline
+          preload="metadata"
+          autoPlay={autoPlay}
+          aria-label={title}
+          onDoubleClick={togglePlay}
+        />
+        <button
+          type="button"
+          className="property-video-center-play"
+          onClick={togglePlay}
+          aria-label={playing ? "توقف ویدیو" : "پخش ویدیو"}
+          title={playing ? "توقف ویدیو" : "پخش ویدیو"}
+        >
+          {playing ? <Pause size={26} aria-hidden="true" /> : <Play size={26} fill="currentColor" aria-hidden="true" />}
+        </button>
+      </div>
+
+      <div
+        className="property-video-controls"
+        dir="ltr"
+        onClick={(event) => event.stopPropagation()}
+        onTouchStart={(event) => event.stopPropagation()}
+        onTouchMove={(event) => event.stopPropagation()}
+        onTouchEnd={(event) => event.stopPropagation()}
+      >
+        <button type="button" onClick={togglePlay} aria-label={playing ? "توقف ویدیو" : "پخش ویدیو"} title={playing ? "توقف" : "پخش"}>
+          {playing ? <Pause size={17} aria-hidden="true" /> : <Play size={17} fill="currentColor" aria-hidden="true" />}
+        </button>
+        <button type="button" onClick={() => seekBy(-10)} aria-label="۱۰ ثانیه عقب" title="۱۰ ثانیه عقب">
+          <Rewind size={17} aria-hidden="true" />
+        </button>
+        <button type="button" onClick={() => seekBy(10)} aria-label="۱۰ ثانیه جلو" title="۱۰ ثانیه جلو">
+          <FastForward size={17} aria-hidden="true" />
+        </button>
+        <span className="property-video-time" aria-label="زمان ویدیو">
+          {formatVideoTime(currentTime)} / {formatVideoTime(duration)}
+        </span>
+        <input
+          className="property-video-progress"
+          type="range"
+          min={0}
+          max={duration || 0}
+          step={0.1}
+          value={Math.min(currentTime, duration || 0)}
+          onChange={(event) => seekTo(Number(event.currentTarget.value))}
+          aria-label="نوار زمان ویدیو"
+          style={{ "--video-progress": duration ? `${(currentTime / duration) * 100}%` : "0%" } as Record<string, string>}
+        />
+        <button type="button" onClick={toggleMute} aria-label={muted ? "فعال کردن صدا" : "بی‌صدا کردن"} title={muted ? "فعال کردن صدا" : "بی‌صدا کردن"}>
+          {muted ? <VolumeX size={17} aria-hidden="true" /> : <Volume2 size={17} aria-hidden="true" />}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function ResilientImage({
@@ -324,7 +489,7 @@ function Gallery({
       <div className="property-gallery">
         <div className="property-gallery-main">
           {isVideoUrl(current) ? (
-            <video src={current} controls playsInline preload="metadata" aria-label={title} />
+            <VideoPlayer src={current} title={title} className="is-gallery" />
           ) : (
             <ResilientImage
               src={current}
@@ -447,7 +612,7 @@ function Gallery({
                 onTouchEnd={handleTouchEnd}
               >
                 {isVideoUrl(current) ? (
-                  <video src={current} controls playsInline autoPlay />
+                  <VideoPlayer src={current} title={title} autoPlay className="is-lightbox" />
                 ) : (
                   <button
                     type="button"
