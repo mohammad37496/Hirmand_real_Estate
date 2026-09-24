@@ -62,11 +62,11 @@ const SPEC_FILTER_OPTIONS = [
   ...PROPERTY_FLOORING_OPTIONS.map((item) => ({ value: `flooring:${item.value}`, label: item.label, group: "کف" })),
   ...PROPERTY_WALL_CLOSET_OPTIONS.map((item) => ({ value: `closet:${item.value}`, label: item.label, group: "کمد دیواری" })),
   ...PROPERTY_COOLING_OPTIONS.map((item) => ({ value: `cooling:${item.value}`, label: item.label, group: "سرمایش" })),
-  ...PROPERTY_HEATING_OPTIONS.map((item) => ({ value: `heating:${item.value}`, label: item.label, group: "گرمایش" })),
   ...PROPERTY_OTHER_AMENITY_OPTIONS.map((item) => ({ value: item.value, label: item.label, group: "امکانات دیگر" })),
+  ...PROPERTY_HEATING_OPTIONS.map((item) => ({ value: `heating:${item.value}`, label: item.label, group: "گرمایش" })),
 ] as const;
 
-const SPEC_GROUPS = ["کابینت", "کف", "کمد دیواری", "سرمایش", "گرمایش", "امکانات دیگر"] as const;
+const SPEC_GROUPS = ["کابینت", "کف", "کمد دیواری", "سرمایش", "امکانات دیگر", "گرمایش"] as const;
 
 type SavedSearch = {
   id: string;
