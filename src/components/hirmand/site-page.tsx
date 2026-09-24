@@ -556,7 +556,7 @@ function Neighborhoods({ onPick }: { onPick: (name: string) => void }) {
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="مثلاً مرداویج، جلفا، خوراسگان"
+              placeholder="مثلاً مرداویج، جلفا، حکیم نظامی"
             />
           </label>
           {groups.length === 0 ? (
