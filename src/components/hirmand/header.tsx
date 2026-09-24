@@ -66,6 +66,7 @@ export function Header() {
                 <div key={item.id} className="nav-tools-menu">
                   <Link
                     to="/tools"
+                    params={{}}
                     className={cn("nav-tools-trigger", isFinanceCurrent && "is-current")}
                     aria-haspopup="true"
                     aria-expanded={isFinanceCurrent ? "true" : undefined}
@@ -178,7 +179,7 @@ export function Header() {
                   aria-label="ابزارهای مالی"
                   aria-hidden={!financeOpen}
                 >
-                  <Link to="/tools" className="mobile-tool-item mobile-tool-item-all" onClick={closeMenu}>
+                  <Link to="/tools" params={{}} className="mobile-tool-item mobile-tool-item-all" onClick={closeMenu}>
                     <span className="mobile-tool-item-icon" aria-hidden="true">
                       <WalletCards size={17} strokeWidth={1.9} />
                     </span>
