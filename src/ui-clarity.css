@@ -2188,3 +2188,12 @@ body {
 .footer {
   flex: 0 0 auto !important;
 }
+/* === Property card specs: match the primary light theme ========================= */
+.site-home .property-card-specs span {
+  background: var(--ui-surface) !important;
+  color: var(--ui-ink) !important;
+  border-color: var(--ui-line) !important;
+}
+.site-home .property-card-specs span svg {
+  color: var(--ui-brass) !important;
+}
