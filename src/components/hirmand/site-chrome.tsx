@@ -38,6 +38,7 @@ export function SiteChrome({
         </Link>
         <Link
           to="/tools"
+          params={{}}
           className="quick-action"
         >
           <Calculator size={17} />
