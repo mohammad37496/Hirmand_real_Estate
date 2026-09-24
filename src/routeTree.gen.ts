@@ -147,18 +147,17 @@ export interface FileRoutesByTo {
   '/favorites': typeof FavoritesRoute
   '/properties': typeof PropertiesRouteWithChildren
   '/tracking': typeof TrackingRoute
-  '/areas/$slug': typeof AreasSlugRoute
-  '/consultants/$id': typeof ConsultantsIdRoute
-  '/file/$id': typeof FileIdRoute
-  '/properties/$slug': typeof PropertiesSlugRoute
-  '/v/$slug/$id': typeof VSlugIdRoute
-}
   '/consultants': typeof ConsultantsRoute
   '/tools': typeof ToolsIndexRoute
   '/tools/commission': typeof ToolsCommissionRoute
   '/tools/deposit': typeof ToolsDepositRoute
   '/tools/loan': typeof ToolsLoanRoute
   '/tools/rahn-rent': typeof ToolsRahnRentRoute
+  '/areas/$slug': typeof AreasSlugRoute
+  '/consultants/$id': typeof ConsultantsIdRoute
+  '/file/$id': typeof FileIdRoute
+  '/properties/$slug': typeof PropertiesSlugRoute
+  '/v/$slug/$id': typeof VSlugIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
