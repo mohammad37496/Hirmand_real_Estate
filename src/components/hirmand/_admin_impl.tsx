@@ -52,6 +52,7 @@ import { AdminDashboard } from "@/components/hirmand/admin-dashboard";
 import { ADMIN_CSS } from "@/components/hirmand/admin-shell-css";
 import { AdminListingAssistant } from "@/components/hirmand/admin-listing-assistant";
 import { AdminPartnerManager } from "@/components/hirmand/admin-partner-manager";
+import { AdminConsultantManager } from "@/components/hirmand/admin-consultant-manager";
 import { AdminDivarFiles } from "@/components/hirmand/admin-divar-files";
 import {
   PROPERTY_CABINET_OPTIONS,
@@ -63,7 +64,7 @@ import {
 } from "@/lib/property-options";
 
 type PublishStatus = "draft" | "published" | "archived";
-type ViewMode = "dashboard" | "list" | "form" | "music" | "leads" | "partners" | "divar";
+type ViewMode = "dashboard" | "list" | "form" | "music" | "leads" | "partners" | "divar" | "consultants";
 
 type FormState = {
   id?: string;
@@ -1013,6 +1014,10 @@ export function AdminPropertiesPage() {
             <UsersRound size={18} />
             همکاران و کد رهگیری
           </button>
+          <button type="button" className={"admin-nav-btn" + (view === "consultants" ? " is-active" : "")} onClick={() => setView("consultants")}>
+            <UsersRound size={18} />
+            مشاورین و اعضای بنگاه
+          </button>
           <button type="button" className={"admin-nav-btn" + (view === "divar" ? " is-active" : "")} onClick={() => setView("divar")}>
             <Globe2 size={18} />
             فایل‌های دیوار
@@ -1053,7 +1058,9 @@ export function AdminPropertiesPage() {
                       ? "درخواست‌های مشتری"
                       : view === "partners"
                         ? "باشگاه همکاران و کد رهگیری"
-                        : view === "divar"
+                        : view === "consultants"
+                          ? "مشاورین و اعضای بنگاه"
+                          : view === "divar"
                           ? "فایل‌های دیوار"
                           : form.id
                         ? "ویرایش فایل"
@@ -1352,6 +1359,7 @@ export function AdminPropertiesPage() {
           {view === "music" ? <AdminMusicManager /> : null}
           {view === "leads" ? <AdminLeadManager /> : null}
           {view === "partners" ? <AdminPartnerManager /> : null}
+          {view === "consultants" ? <AdminConsultantManager /> : null}
           {view === "divar" ? <AdminDivarFiles /> : null}
 
           {view === "form" ? (
