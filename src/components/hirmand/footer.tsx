@@ -19,7 +19,6 @@ export function Footer() {
     <footer className="footer">
       <BrandLogo size="footer" />
       <h3>{SITE.nameFa}</h3>
-      <p className="footer-managed">{SITE.managedBy}</p>
       <p>{SITE.tagline}</p>
       <p className="footer-address">{SITE.address}</p>
 
