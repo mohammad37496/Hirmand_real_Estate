@@ -10,6 +10,7 @@ import {
   MessageCircle,
   Play,
   Share2,
+  Sparkles,
   BedDouble,
   Building2,
   CalendarDays,
@@ -41,6 +42,14 @@ import { areaSlug } from "@/lib/areas";
 import { propertyPath } from "@/lib/property-path";
 import { TEAM } from "@/lib/site";
 import { isFeaturedActive } from "@/lib/properties";
+import {
+  PROPERTY_CABINET_OPTIONS,
+  PROPERTY_COOLING_OPTIONS,
+  PROPERTY_FLOORING_OPTIONS,
+  PROPERTY_HEATING_OPTIONS,
+  PROPERTY_WALL_CLOSET_OPTIONS,
+  labelForOption,
+} from "@/lib/property-options";
 
 function money(value: string | null) {
   if (!value) return "";
@@ -859,7 +868,97 @@ export function PropertyDetailView({
                 <div><CarFront size={18} /><span><small>پارکینگ</small><strong>{property.parking ? "دارد" : "ندارد"}</strong></span></div>
                 <div><Navigation size={18} /><span><small>آسانسور</small><strong>{property.elevator ? "دارد" : "ندارد"}</strong></span></div>
                 <div><Warehouse size={18} /><span><small>انباری</small><strong>{property.storage ? "دارد" : "ندارد"}</strong></span></div>
+                {property.cabinetType ? (
+                  <div><Building2 size={18} /><span><small>نوع کابینت</small><strong>{labelForOption(PROPERTY_CABINET_OPTIONS, property.cabinetType)}</strong></span></div>
+                ) : null}
+                {property.flooringType ? (
+                  <div><Layers3 size={18} /><span><small>کف</small><strong>{labelForOption(PROPERTY_FLOORING_OPTIONS, property.flooringType)}</strong></span></div>
+                ) : null}
+                {property.coolingSystem ? (
+                  <div><Navigation size={18} /><span><small>سیستم سرمایش</small><strong>{labelForOption(PROPERTY_COOLING_OPTIONS, property.coolingSystem)}</strong></span></div>
+                ) : null}
+                {property.heatingSystem ? (
+                  <div><Warehouse size={18} /><span><small>سیستم گرمایش</small><strong>{labelForOption(PROPERTY_HEATING_OPTIONS, property.heatingSystem)}</strong></span></div>
+                ) : null}
+                {property.wallClosetType ? (
+                  <div><Building2 size={18} /><span><small>کمد دیواری</small><strong>{labelForOption(PROPERTY_WALL_CLOSET_OPTIONS, property.wallClosetType)}</strong></span></div>
+                ) : null}
               </div>
+              {property.otherAmenities.length ? (
+                <div className="property-other-amenities">
+                  <div className="property-other-amenities-head">
+                    <span>
+                      <Sparkles size={16} aria-hidden="true" />
+                      <strong>امکانات دیگر</strong>
+                    </span>
+                    <small>{property.otherAmenities.length.toLocaleString("fa-IR")} مورد</small>
+                  </div>
+                  <div className="property-other-amenities-list">
+                    {property.otherAmenities.map((value) => (
+                      <span key={value}>
+                        <Check size={13} aria-hidden="true" />
+                        {labelForOption(
+                          [
+                            { value: "balcony", label: "بالکن" },
+                            { value: "terrace", label: "تراس" },
+                            { value: "roof_garden", label: "روف‌گاردن" },
+                            { value: "yard", label: "حیاط" },
+                            { value: "private_yard", label: "حیاط اختصاصی" },
+                            { value: "patio", label: "حیاط خلوت" },
+                            { value: "roof_access", label: "پشت‌بام قابل استفاده" },
+                            { value: "master_bedroom", label: "اتاق مستر" },
+                            { value: "walk_in_closet", label: "کلوزت‌روم" },
+                            { value: "guest_room", label: "اتاق مهمان" },
+                            { value: "laundry", label: "رختشویی / لاندری" },
+                            { value: "maid_room", label: "اتاق سرایداری / خدمتکار" },
+                            { value: "storage_room", label: "اتاق انباری" },
+                            { value: "double_glazed", label: "پنجره دوجداره" },
+                            { value: "soundproof", label: "عایق صوتی" },
+                            { value: "thermal_insulation", label: "عایق حرارتی" },
+                            { value: "security_door", label: "درب ضدسرقت" },
+                            { value: "video_intercom", label: "آیفون تصویری" },
+                            { value: "smart_home", label: "خانه هوشمند" },
+                            { value: "central_vacuum", label: "جاروبرقی مرکزی" },
+                            { value: "water_purifier", label: "دستگاه تصفیه آب" },
+                            { value: "water_tank", label: "منبع آب" },
+                            { value: "pressure_pump", label: "پمپ آب" },
+                            { value: "generator", label: "برق اضطراری / ژنراتور" },
+                            { value: "solar", label: "سیستم خورشیدی" },
+                            { value: "fire_alarm", label: "اعلام حریق" },
+                            { value: "security_system", label: "سیستم امنیتی" },
+                            { value: "cctv", label: "دوربین مداربسته" },
+                            { value: "doorman", label: "نگهبان / سرایدار" },
+                            { value: "lobby", label: "لابی" },
+                            { value: "gym", label: "سالن ورزشی" },
+                            { value: "pool", label: "استخر" },
+                            { value: "sauna", label: "سونا" },
+                            { value: "jacuzzi", label: "جکوزی" },
+                            { value: "sport_ground", label: "زمین ورزشی" },
+                            { value: "children_playground", label: "فضای بازی کودک" },
+                            { value: "coworking", label: "فضای کار مشترک" },
+                            { value: "meeting_room", label: "اتاق جلسه" },
+                            { value: "commercial_permission", label: "مجوز اداری / تجاری" },
+                            { value: "separate_entrance", label: "ورودی مستقل" },
+                            { value: "reception", label: "پذیرایی / لابی اختصاصی" },
+                            { value: "open_kitchen", label: "آشپزخانه اپن" },
+                            { value: "island_kitchen", label: "جزیره آشپزخانه" },
+                            { value: "dirty_kitchen", label: "آشپزخانه کثیف" },
+                            { value: "roof_storage", label: "انباری پشت‌بام" },
+                            { value: "private_park", label: "پارکینگ اختصاصی" },
+                            { value: "guest_park", label: "پارکینگ مهمان" },
+                            { value: "mechanized_park", label: "پارکینگ مکانیزه" },
+                            { value: "ev_charger", label: "شارژر خودروی برقی" },
+                            { value: "pet_friendly", label: "مناسب نگهداری حیوان خانگی" },
+                            { value: "wheelchair_access", label: "دسترسی مناسب ویلچر" },
+                            { value: "elevator_private", label: "آسانسور اختصاصی" },
+                          ],
+                          value,
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </section>
 
             <div className="property-detail-summary">
