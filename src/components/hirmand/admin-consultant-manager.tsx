@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Briefcase, Handshake, Pencil, Plus, Save, Trash2, UserRound, X } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -78,7 +78,7 @@ export function AdminConsultantManager() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async function submit(event: React.FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
     const id = form.id.trim();
     if (!id || !form.name.trim() || !form.phone.trim()) {
