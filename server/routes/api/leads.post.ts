@@ -3,6 +3,7 @@ import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { buildBudgetLeadNote, budgetEquivalent } from "@/lib/budget-lead";
 import { DEFAULT_MATCH_RAHN_RATE } from "@/lib/budget-matching";
+import { enforceRateLimit } from "@/lib/rate-limit.server";
 
 const VISITOR_COOKIE = "hirmand_visitor_id";
 
@@ -42,6 +43,12 @@ export default defineEventHandler(async (event) => {
   const parsed = schema.safeParse(await readBody(event));
   if (!parsed.success) throw createError({ statusCode: 422, statusMessage: "اطلاعات درخواست ناقص یا نامعتبر است." });
   if (dbSource === "unconfigured") throw createError({ statusCode: 503, statusMessage: "ثبت آنلاین درخواست در حال حاضر فعال نیست." });
+  if (!(await enforceRateLimit(event, { scope: "lead-create", limit: 8, windowSeconds: 600 }))) {
+    throw createError({
+      statusCode: 429,
+      statusMessage: "تعداد درخواست‌ها در این بازه زیاد است. چند دقیقه بعد دوباره تلاش کنید.",
+    });
+  }
   const sql = await getSql();
   const visitorId = getCookie(event, VISITOR_COOKIE);
   let acquisition: {
@@ -87,6 +94,40 @@ export default defineEventHandler(async (event) => {
       console.error("[leads] acquisition lookup unavailable", error);
     }
   }
+  const requestToken = crypto.randomUUID();
+  const guardRows = await sql.query<{ acquired: boolean }>(
+    `insert into lead_dedupe_guard (phone, request_token, last_submitted_at)
+     values ($1, $2, current_timestamp)
+     on conflict (phone) do update set
+       request_token = case
+         when lead_dedupe_guard.last_submitted_at <= current_timestamp - interval '10 minutes'
+         then excluded.request_token
+         else lead_dedupe_guard.request_token
+       end,
+       last_submitted_at = case
+         when lead_dedupe_guard.last_submitted_at <= current_timestamp - interval '10 minutes'
+         then excluded.last_submitted_at
+         else lead_dedupe_guard.last_submitted_at
+       end
+     returning request_token = $2 as acquired`,
+    [parsed.data.phone, requestToken],
+  );
+  if (!guardRows[0]?.acquired) {
+    const duplicateRows = await sql.query<{ id: string }>(
+      `select id from leads
+       where phone = $1
+         and created_at > current_timestamp - interval '10 minutes'
+       order by created_at desc
+       limit 1`,
+      [parsed.data.phone],
+    );
+    return {
+      success: true,
+      duplicate: true,
+      id: duplicateRows[0]?.id ?? null,
+    };
+  }
+
   const existing = await sql.query<{ id: string }>(
     `select id from leads where phone = $1 and created_at > current_timestamp - interval '10 minutes' limit 1`,
     [parsed.data.phone],
@@ -150,7 +191,9 @@ export default defineEventHandler(async (event) => {
     return { success: true, duplicate: true, id: existing[0].id };
   }
 
-  const rows = await sql.query<{ id: string }>(
+  let rows: { id: string }[] = [];
+  try {
+    rows = await sql.query<{ id: string }>(
     `insert into leads (
       id, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source,
       acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, acquisition_landing_path,
@@ -184,6 +227,15 @@ export default defineEventHandler(async (event) => {
       JSON.stringify(matchedProperties),
       matchedProperties.length,
     ],
-  );
+    );
+  } catch (error) {
+    await sql.query(
+      `delete from lead_dedupe_guard
+       where phone = $1 and request_token = $2`,
+      [parsed.data.phone, requestToken],
+    ).catch(() => undefined);
+    throw error;
+  }
+
   return { success: true, id: rows[0]?.id ?? null, duplicate: false };
 });
