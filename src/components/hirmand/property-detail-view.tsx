@@ -10,6 +10,7 @@ import {
   BriefcaseBusiness,
   Camera,
   CarFront,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Maximize2,
