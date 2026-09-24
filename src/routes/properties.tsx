@@ -1142,36 +1142,45 @@ function PropertiesIndexPage() {
                     : allOptions;
                   const selectedCount = allOptions.filter((item) => specFilters.includes(item.value)).length;
                   return (
-                    <section className="pf-spec-subgroup" key={group} aria-label={group}>
-                      <div className="pf-spec-subgroup-head">
-                        <span>{group}</span>
-                        <small>
-                          {selectedCount ? fa(selectedCount) + " انتخاب از " : ""}
-                          {fa(allOptions.length)} گزینه
-                        </small>
+                    <details
+                      className={"pf-spec-subgroup" + (selectedCount ? " has-selection" : "")}
+                      key={group}
+                      open={Boolean(query) || selectedCount > 0}
+                    >
+                      <summary className="pf-spec-subgroup-summary">
+                        <span className="pf-spec-subgroup-head">
+                          <span>{group}</span>
+                          <small>
+                            {selectedCount ? fa(selectedCount) + " انتخاب از " : ""}
+                            {fa(allOptions.length)} گزینه
+                          </small>
+                        </span>
+                        <span className="pf-spec-subgroup-chevron" aria-hidden="true">⌄</span>
+                      </summary>
+                      <div className="pf-spec-subgroup-content">
+                        {options.length ? (
+                          <div className="pf-spec-options">
+                            {options.map((item) => {
+                              const active = specFilters.includes(item.value);
+                              return (
+                                <button
+                                  key={item.value}
+                                  type="button"
+                                  className={"pf-spec-option" + (active ? " is-active" : "")}
+                                  onClick={() => toggleSpecFilter(item.value)}
+                                  aria-pressed={active}
+                                >
+                                  <span className="pf-spec-option-mark" aria-hidden="true">{active ? "✓" : ""}</span>
+                                  <span>{item.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="pf-spec-empty">موردی با این عبارت پیدا نشد.</p>
+                        )}
                       </div>
-                      {options.length ? (
-                        <div className="pf-spec-options">
-                          {options.map((item) => {
-                            const active = specFilters.includes(item.value);
-                            return (
-                              <button
-                                key={item.value}
-                                type="button"
-                                className={"pf-spec-option" + (active ? " is-active" : "")}
-                                onClick={() => toggleSpecFilter(item.value)}
-                                aria-pressed={active}
-                              >
-                                <span className="pf-spec-option-mark" aria-hidden="true">{active ? "✓" : ""}</span>
-                                <span>{item.label}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="pf-spec-empty">موردی با این عبارت پیدا نشد.</p>
-                      )}
-                    </section>
+                    </details>
                   );
                 })}
               </div>
