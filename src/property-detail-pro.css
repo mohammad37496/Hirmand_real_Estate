@@ -2911,3 +2911,44 @@ body:has(.property-detail-page) {
     grid-template-columns:repeat(2,minmax(0,1fr))!important;
   }
 }
+
+
+/* Mobile: make property specification icons clearly visible */
+@media (max-width:760px){
+  .property-detail-page .property-spec-grid > div > svg{
+    width:20px!important;
+    height:20px!important;
+    min-width:20px!important;
+    min-height:20px!important;
+    flex:0 0 20px!important;
+    color:#A97924!important;
+    stroke-width:2.2!important;
+    padding:4px!important;
+    box-sizing:content-box!important;
+    border-radius:10px!important;
+    background:#F5EAD3!important;
+    border:1px solid #E8D5AE!important;
+  }
+
+  .property-detail-page .property-spec-amenity-item > svg{
+    width:20px!important;
+    height:20px!important;
+    min-width:20px!important;
+    min-height:20px!important;
+    flex:0 0 20px!important;
+    color:#A97924!important;
+    stroke-width:2.2!important;
+    padding:4px!important;
+    box-sizing:content-box!important;
+    border-radius:10px!important;
+    background:#F5EAD3!important;
+    border:1px solid #E8D5AE!important;
+  }
+
+  .property-detail-page .property-other-amenities-list svg{
+    color:#A97924!important;
+    width:18px!important;
+    height:18px!important;
+    min-width:18px!important;
+  }
+}
