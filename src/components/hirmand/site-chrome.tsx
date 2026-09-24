@@ -38,19 +38,19 @@ export function SiteChrome({
         </Link>
         <Link
           to="/"
-          hash="budget-match"
-          className="quick-action"
-        >
-          <WalletCards size={17} />
-          <span>بودجه‌یاب</span>
-        </Link>
-        <Link
-          to="/"
           hash="tools"
           className="quick-action"
         >
           <Calculator size={17} />
           <span>ابزار مالی</span>
+        </Link>
+        <Link
+          to="/"
+          hash="budget-match"
+          className="quick-action"
+        >
+          <WalletCards size={17} />
+          <span>بودجه‌یاب</span>
         </Link>
       </div>
       <SiteUtilities />
