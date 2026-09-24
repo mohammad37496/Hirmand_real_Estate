@@ -379,7 +379,8 @@ function mapPropertyCard(row: Record<string, unknown>): PropertyCardData {
 const DETAIL_COLUMNS = `
   id, slug, status, featured, featured_until, title, transaction_type, property_type, city,
   neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
-  built_year, parking, elevator, storage, price, deposit, rent, description,
+  built_year, parking, elevator, storage, cabinet_type, flooring_type, cooling_system,
+  heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
   latitude, longitude, price_drop_percent
 `;
