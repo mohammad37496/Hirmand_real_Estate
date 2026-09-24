@@ -24,6 +24,7 @@ import {
   Globe2,
   Download,
   CheckSquare,
+  ChevronDown,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import { propertyPath } from "@/lib/property-path";
@@ -51,6 +52,14 @@ import { ADMIN_CSS } from "@/components/hirmand/admin-shell-css";
 import { AdminListingAssistant } from "@/components/hirmand/admin-listing-assistant";
 import { AdminPartnerManager } from "@/components/hirmand/admin-partner-manager";
 import { AdminDivarFiles } from "@/components/hirmand/admin-divar-files";
+import {
+  PROPERTY_CABINET_OPTIONS,
+  PROPERTY_COOLING_OPTIONS,
+  PROPERTY_FLOORING_OPTIONS,
+  PROPERTY_HEATING_OPTIONS,
+  PROPERTY_OTHER_AMENITY_OPTIONS,
+  PROPERTY_WALL_CLOSET_OPTIONS,
+} from "@/lib/property-options";
 
 type PublishStatus = "draft" | "published" | "archived";
 type ViewMode = "dashboard" | "list" | "form" | "music" | "leads" | "partners" | "divar";
@@ -71,6 +80,12 @@ type FormState = {
   parking: boolean;
   elevator: boolean;
   storage: boolean;
+  cabinetType: Property["cabinetType"];
+  flooringType: Property["flooringType"];
+  coolingSystem: Property["coolingSystem"];
+  heatingSystem: Property["heatingSystem"];
+  wallClosetType: Property["wallClosetType"];
+  otherAmenities: string[];
   price: string;
   deposit: string;
   rent: string;
@@ -113,6 +128,12 @@ function emptyForm(): FormState {
     parking: true,
     elevator: true,
     storage: false,
+    cabinetType: null,
+    flooringType: null,
+    coolingSystem: null,
+    heatingSystem: null,
+    wallClosetType: null,
+    otherAmenities: [],
     price: "",
     deposit: "",
     rent: "",
@@ -207,6 +228,12 @@ function propertyToForm(property: Property): FormState {
     parking: property.parking,
     elevator: property.elevator,
     storage: property.storage,
+    cabinetType: property.cabinetType ?? null,
+    flooringType: property.flooringType ?? null,
+    coolingSystem: property.coolingSystem ?? null,
+    heatingSystem: property.heatingSystem ?? null,
+    wallClosetType: property.wallClosetType ?? null,
+    otherAmenities: [...(property.otherAmenities ?? [])],
     price: property.price != null ? String(property.price) : "",
     deposit: property.deposit != null ? String(property.deposit) : "",
     rent: property.rent != null ? String(property.rent) : "",
@@ -725,6 +752,12 @@ export function AdminPropertiesPage() {
           parking: form.parking,
           elevator: form.elevator,
           storage: form.storage,
+          cabinetType: form.cabinetType,
+          flooringType: form.flooringType,
+          coolingSystem: form.coolingSystem,
+          heatingSystem: form.heatingSystem,
+          wallClosetType: form.wallClosetType,
+          otherAmenities: form.otherAmenities,
           price: numberOrNull(form.price),
           deposit: numberOrNull(form.deposit),
           rent: numberOrNull(form.rent),
@@ -803,6 +836,12 @@ export function AdminPropertiesPage() {
           parking: base.parking,
           elevator: base.elevator,
           storage: base.storage,
+          cabinetType: base.cabinetType,
+          flooringType: base.flooringType,
+          coolingSystem: base.coolingSystem,
+          heatingSystem: base.heatingSystem,
+          wallClosetType: base.wallClosetType,
+          otherAmenities: base.otherAmenities,
           price: numberOrNull(base.price),
           deposit: numberOrNull(base.deposit),
           rent: numberOrNull(base.rent),
@@ -1423,7 +1462,109 @@ export function AdminPropertiesPage() {
                       <input value={form.builtYear} onChange={(e) => update("builtYear", e.target.value)} />
                     </label>
                   </div>
-                  <div className="admin-checks">
+                  <div className="admin-form-grid admin-form-grid-dense admin-property-finish-grid">
+                  <label className="field">
+                    <span>نوع کابینت</span>
+                    <select
+                      value={form.cabinetType ?? ""}
+                      onChange={(e) => update("cabinetType", e.target.value ? e.target.value as Property["cabinetType"] : null)}
+                    >
+                      <option value="">انتخاب کنید</option>
+                      {PROPERTY_CABINET_OPTIONS.map((item) => (
+                        <option key={item.value} value={item.value}>{item.label}</option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="field">
+                    <span>کف</span>
+                    <select
+                      value={form.flooringType ?? ""}
+                      onChange={(e) => update("flooringType", e.target.value ? e.target.value as Property["flooringType"] : null)}
+                    >
+                      <option value="">انتخاب کنید</option>
+                      {PROPERTY_FLOORING_OPTIONS.map((item) => (
+                        <option key={item.value} value={item.value}>{item.label}</option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="field">
+                    <span>سیستم سرمایش</span>
+                    <select
+                      value={form.coolingSystem ?? ""}
+                      onChange={(e) => update("coolingSystem", e.target.value ? e.target.value as Property["coolingSystem"] : null)}
+                    >
+                      <option value="">انتخاب کنید</option>
+                      {PROPERTY_COOLING_OPTIONS.map((item) => (
+                        <option key={item.value} value={item.value}>{item.label}</option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="field">
+                    <span>سیستم گرمایش</span>
+                    <select
+                      value={form.heatingSystem ?? ""}
+                      onChange={(e) => update("heatingSystem", e.target.value ? e.target.value as Property["heatingSystem"] : null)}
+                    >
+                      <option value="">انتخاب کنید</option>
+                      {PROPERTY_HEATING_OPTIONS.map((item) => (
+                        <option key={item.value} value={item.value}>{item.label}</option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="field">
+                    <span>کمد دیواری</span>
+                    <select
+                      value={form.wallClosetType ?? ""}
+                      onChange={(e) => update("wallClosetType", e.target.value ? e.target.value as Property["wallClosetType"] : null)}
+                    >
+                      <option value="">انتخاب کنید</option>
+                      {PROPERTY_WALL_CLOSET_OPTIONS.map((item) => (
+                        <option key={item.value} value={item.value}>{item.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <details className="admin-other-amenities">
+                  <summary>
+                    <span>
+                      <strong>امکانات دیگر</strong>
+                      <small>ویژگی‌های تکمیلی خانه را انتخاب کنید</small>
+                    </span>
+                    <span className="admin-other-amenities-summary-meta">
+                      {form.otherAmenities.length.toLocaleString("fa-IR")} انتخاب
+                      <ChevronDown size={17} aria-hidden="true" />
+                    </span>
+                  </summary>
+                  <div className="admin-other-amenities-grid">
+                    {PROPERTY_OTHER_AMENITY_OPTIONS.map((item) => {
+                      const checked = form.otherAmenities.includes(item.value);
+                      return (
+                        <label key={item.value} className={checked ? "is-selected" : ""}>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) =>
+                              setForm((prev) => ({
+                                ...prev,
+                                otherAmenities: e.target.checked
+                                  ? Array.from(new Set([...prev.otherAmenities, item.value]))
+                                  : prev.otherAmenities.filter((value) => value !== item.value),
+                              }))
+                            }
+                          />
+                          <span>{item.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </details>
+
+                <div className="admin-checks">
                     <label>
                       <input
                         type="checkbox"
