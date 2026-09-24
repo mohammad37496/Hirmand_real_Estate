@@ -209,7 +209,7 @@ const WALL_CLOSET_VALUES = PROPERTY_WALL_CLOSET_OPTIONS.map((item) => item.value
 ];
 
 const propertyInputSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().trim().min(1).max(120).optional(),
   title: z.string().trim().min(3).max(180),
   transactionType: z.enum(["buy", "sell", "rent", "mortgage"]),
   propertyType: z.enum(["apartment", "villa", "office", "heritage", "land", "commercial"]),
