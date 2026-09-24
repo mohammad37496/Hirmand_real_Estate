@@ -123,6 +123,7 @@ export type PropertyFilters = {
   minBedrooms?: number;
   parkingOnly?: boolean;
   elevatorOnly?: boolean;
+  storageOnly?: boolean;
   specFilters?: string[];
   sort?: PropertySort;
   offset?: number;
@@ -143,6 +144,7 @@ const publicFiltersSchema = z.object({
   minBedrooms: z.number().int().min(0).max(30).optional(),
   parkingOnly: z.boolean().optional(),
   elevatorOnly: z.boolean().optional(),
+  storageOnly: z.boolean().optional(),
   specFilters: z.array(z.string().trim().min(1).max(100)).max(60).optional(),
   sort: z.enum(["newest", "price_asc", "price_desc", "area_asc", "area_desc"]).optional().default("newest"),
   offset: z.number().int().min(0).max(100000).optional().default(0),
@@ -406,6 +408,7 @@ function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
     data.minBedrooms ?? null,
     data.parkingOnly ?? false,
     data.elevatorOnly ?? false,
+    data.storageOnly ?? false,
     data.specFilters?.length ? data.specFilters : null,
     data.offset ?? 0,
   ];
@@ -430,7 +433,8 @@ function publicPropertyWhereSql() {
     "and ($11::int is null or bedrooms >= $11)",
     "and ($12::boolean is false or parking = true)",
     "and ($13::boolean is false or elevator = true)",
-    "and ($14::text[] is null or cardinality($14::text[]) = 0 or exists (select 1 from unnest($14::text[]) as selected(value) where " +
+    "and ($14::boolean is false or storage = true)",
+    "and ($15::text[] is null or cardinality($15::text[]) = 0 or exists (select 1 from unnest($15::text[]) as selected(value) where " +
       "(selected.value like 'cabinet:%' and cabinet_type = substring(selected.value from 9)) or " +
       "(selected.value like 'flooring:%' and flooring_type = substring(selected.value from 10)) or " +
       "(selected.value like 'cooling:%' and cooling_system = substring(selected.value from 9)) or " +
@@ -450,13 +454,13 @@ export const listPublishedPropertyCards = createServerFn({ method: "GET" })
       [
         "select " + CARD_COLUMNS,
         "from properties where " + publicPropertyWhereSql(),
-        "order by case when $16 = 'newest' then case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end else 0 end,",
-        "case when $16 = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
-        "case when $16 = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
-        "case when $16 = 'area_asc' then area_m2 end asc nulls last,",
-        "case when $16 = 'area_desc' then area_m2 end desc nulls last,",
+        "order by case when $17 = 'newest' then case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end else 0 end,",
+        "case when $17 = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
+        "case when $17 = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
+        "case when $17 = 'area_asc' then area_m2 end asc nulls last,",
+        "case when $17 = 'area_desc' then area_m2 end desc nulls last,",
         "published_at desc nulls last, created_at desc",
-        "limit 48 offset $15",
+        "limit 48 offset $16",
       ].join(" "),
       [...params, data.sort],
     );
@@ -491,7 +495,7 @@ export const countPublishedProperties = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     if (dbSource === "unconfigured") return 0;
     const sql = await getSql();
-    const params = publicFilterParams(data).slice(0, 14);
+    const params = publicFilterParams(data).slice(0, 15);
     const rows = await sql.query<{ count: number }>(
       "select count(*)::int as count from properties where " + publicPropertyWhereSql(),
       params,
