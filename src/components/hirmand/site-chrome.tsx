@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { SITE } from "@/lib/site";
 import { CallMenu } from "./call-menu";
 import { Footer } from "./footer";
-import { MusicPlayer } from "./music-player";
 import { Header } from "./header";
 import { scrollToId } from "./scroll";
 import { VisitorTracker } from "./visitor-tracker";
@@ -59,7 +58,6 @@ export function SiteChrome({
       </div>
       <SiteUtilities />
       <CallMenu className="floating-call-menu" buttonClassName="floating-call" label="تماس" />
-      <MusicPlayer />
       <Toaster
         dir="rtl"
         position="top-center"
