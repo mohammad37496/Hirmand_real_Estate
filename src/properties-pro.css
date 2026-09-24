@@ -1087,3 +1087,52 @@
     font-size:.57rem!important;
   }
 }
+
+
+/* Mobile filters: full-height, internally scrollable sheet */
+@media (max-width:979px){
+  .pf-sidebar{
+    top:max(68px, calc(env(safe-area-inset-top) + 62px))!important;
+    bottom:8px!important;
+    max-height:none!important;
+    height:auto!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch!important;
+    overscroll-behavior:contain!important;
+    scrollbar-gutter:stable!important;
+    padding-bottom:6px!important;
+  }
+
+  .pf-sidebar::after{
+    content:"";
+    display:block;
+    flex:0 0 2px;
+    height:2px;
+  }
+
+  .pf-sidebar-head{
+    flex:0 0 auto!important;
+  }
+
+  .pf-group,
+  .pf-spec-filter,
+  .pf-sidebar-foot{
+    flex:0 0 auto!important;
+  }
+
+  .pf-sidebar-foot{
+    position:sticky!important;
+    bottom:-1px!important;
+  }
+}
+
+@media (max-width:420px){
+  .pf-sidebar{
+    top:max(64px, calc(env(safe-area-inset-top) + 58px))!important;
+    bottom:5px!important;
+    max-height:none!important;
+    padding-bottom:5px!important;
+  }
+}
