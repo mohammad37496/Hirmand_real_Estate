@@ -33,6 +33,8 @@ function isMobile(value: string) {
 export function InquiryForm({ draft }: { draft: InquiryDraft }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [peopleCount, setPeopleCount] = useState("");
+  const [job, setJob] = useState("");
   const [deal, setDeal] = useState(draft.deal);
   const [propertyType, setPropertyType] = useState(draft.propertyType);
   const [neighborhood, setNeighborhood] = useState(draft.neighborhood);
@@ -53,6 +55,8 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       `سلام، درخواست مشاوره از وب‌سایت ${SITE.nameFa}`,
       name ? `نام: ${name}` : "",
       phone ? `تلفن: ${normalizePhone(phone)}` : "",
+      peopleCount ? `تعداد نفرات: ${peopleCount}` : "",
+      job.trim() ? `شغل: ${job.trim()}` : "",
       deal ? `نوع معامله: ${deal}` : "",
       propertyType ? `نوع ملک: ${propertyType}` : "",
       neighborhood ? `محله: ${neighborhood}` : "",
@@ -73,6 +77,15 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       setError("شماره موبایل را به‌صورت ۰۹۱۲۱۲۳۴۵۶۷ وارد کنید.");
       return;
     }
+    const parsedPeopleCount = Number(peopleCount);
+    if (!Number.isInteger(parsedPeopleCount) || parsedPeopleCount < 1 || parsedPeopleCount > 20) {
+      setError("تعداد نفرات را بین ۱ تا ۲۰ نفر مشخص کنید.");
+      return;
+    }
+    if (!job.trim()) {
+      setError("شغل خود را وارد کنید.");
+      return;
+    }
     if (!deal) {
       setError("نوع معامله را انتخاب کنید.");
       return;
@@ -81,6 +94,8 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
     const payload = {
       name: name.trim(),
       phone: normalizePhone(phone),
+      peopleCount: parsedPeopleCount,
+      job: job.trim(),
       deal,
       propertyType,
       neighborhood,
@@ -94,6 +109,8 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
         body: JSON.stringify({
           name: payload.name,
           phone: payload.phone,
+          peopleCount: payload.peopleCount,
+          job: payload.job,
           deal: payload.deal,
           propertyType: payload.propertyType,
           neighborhood: payload.neighborhood,
@@ -147,6 +164,32 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       <p id="inq-phone-hint" className="form-hint field-span">
         شماره با ارقام فارسی یا انگلیسی قابل وارد کردن است؛ درخواست شما در سامانه هیرمند ثبت می‌شود و اطلاعات فقط برای پیگیری همین درخواست استفاده خواهد شد.
       </p>
+      <div className="field">
+        <label htmlFor="inq-people-count">تعداد نفرات</label>
+        <input
+          id="inq-people-count"
+          name="peopleCount"
+          type="number"
+          min={1}
+          max={20}
+          step={1}
+          inputMode="numeric"
+          value={peopleCount}
+          onChange={(event) => setPeopleCount(event.target.value)}
+          placeholder="مثلاً ۴ نفر"
+        />
+      </div>
+      <div className="field">
+        <label htmlFor="inq-job">شغل</label>
+        <input
+          id="inq-job"
+          name="job"
+          autoComplete="organization-title"
+          value={job}
+          onChange={(event) => setJob(event.target.value)}
+          placeholder="مثلاً کارمند، پزشک، دانشجو…"
+        />
+      </div>
       <div className="field">
         <label htmlFor="inq-deal">نوع معامله</label>
         <select id="inq-deal" value={deal} onChange={(event) => setDeal(event.target.value)}>
