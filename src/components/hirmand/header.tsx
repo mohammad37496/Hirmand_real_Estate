@@ -60,8 +60,7 @@ export function Header() {
               return (
                 <div key={item.id} className="nav-tools-menu">
                   <Link
-                    to="/"
-                    hash="tools"
+                    to="/tools"
                     className={cn("nav-tools-trigger", isFinanceCurrent && "is-current")}
                     aria-haspopup="true"
                     aria-expanded={isFinanceCurrent ? "true" : undefined}
@@ -154,7 +153,7 @@ export function Header() {
           if (item.id === "tools") {
             return (
               <div key={item.id} className="mobile-tools-group">
-                <Link to="/" hash="tools" onClick={(event) => goHash(event, "tools")}>
+                <Link to="/tools" onClick={closeMenu}>
                   {item.label}
                 </Link>
                 <div className="mobile-tools-list" aria-label="ابزارهای مالی">
