@@ -1829,3 +1829,34 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     display:none!important;
   }
 }
+
+/* === Gallery light-theme lock ================================================= */
+.property-detail-page .property-gallery,
+.property-detail-page .property-gallery-rail,
+.property-detail-page .property-gallery-thumb {
+  color-scheme: light !important;
+}
+.property-detail-page .property-gallery {
+  background: var(--ui-surface) !important;
+}
+.property-detail-page .property-gallery-rail {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.property-detail-page .property-gallery-thumb {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background: var(--ui-surface-2) !important;
+  border: 1px solid var(--ui-line) !important;
+  box-shadow: 0 4px 14px rgba(15,23,42,.05) !important;
+  color: var(--ui-ink) !important;
+}
+.property-detail-page .property-gallery-thumb.is-active {
+  background: var(--ui-surface-2) !important;
+  border-color: var(--ui-brass) !important;
+  box-shadow: 0 0 0 2px rgba(154,106,58,.16) !important;
+}
+.property-detail-page .property-gallery-thumb img,
+.property-detail-page .property-gallery-thumb video {
+  background: transparent !important;
+}
