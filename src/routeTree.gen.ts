@@ -10,11 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BudgetMatchRouteImport } from './routes/budget-match'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as PropertiesRouteImport } from './routes/properties'
 import { Route as TrackingRouteImport } from './routes/tracking'
+import { Route as ConsultantsRouteImport } from './routes/consultants'
+import { Route as ToolsIndexRouteImport } from './routes/tools/index'
+import { Route as ToolsCommissionRouteImport } from './routes/tools/commission'
+import { Route as ToolsDepositRouteImport } from './routes/tools/deposit'
+import { Route as ToolsLoanRouteImport } from './routes/tools/loan'
+import { Route as ToolsRahnRentRouteImport } from './routes/tools/rahn-rent'
 import { Route as AreasSlugRouteImport } from './routes/areas.$slug'
 import { Route as ConsultantsIdRouteImport } from './routes/consultants.$id'
 import { Route as FileIdRouteImport } from './routes/file.$id'
@@ -24,6 +31,11 @@ import { Route as VSlugIdRouteImport } from './routes/v.$slug.$id'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BudgetMatchRoute = BudgetMatchRouteImport.update({
+  id: '/budget-match',
+  path: '/budget-match',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -44,6 +56,36 @@ const FavoritesRoute = FavoritesRouteImport.update({
 const PropertiesRoute = PropertiesRouteImport.update({
   id: '/properties',
   path: '/properties',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConsultantsRoute = ConsultantsRouteImport.update({
+  id: '/consultants',
+  path: '/consultants',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsIndexRoute = ToolsIndexRouteImport.update({
+  id: '/tools/',
+  path: '/tools',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsCommissionRoute = ToolsCommissionRouteImport.update({
+  id: '/tools/commission',
+  path: '/tools/commission',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsDepositRoute = ToolsDepositRouteImport.update({
+  id: '/tools/deposit',
+  path: '/tools/deposit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsLoanRoute = ToolsLoanRouteImport.update({
+  id: '/tools/loan',
+  path: '/tools/loan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsRahnRentRoute = ToolsRahnRentRouteImport.update({
+  id: '/tools/rahn-rent',
+  path: '/tools/rahn-rent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TrackingRoute = TrackingRouteImport.update({
@@ -79,11 +121,18 @@ const VSlugIdRoute = VSlugIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/budget-match': typeof BudgetMatchRoute
   '/admin': typeof AdminRoute
   '/compare': typeof CompareRoute
   '/favorites': typeof FavoritesRoute
   '/properties': typeof PropertiesRouteWithChildren
   '/tracking': typeof TrackingRoute
+  '/consultants': typeof ConsultantsRoute
+  '/tools': typeof ToolsIndexRoute
+  '/tools/commission': typeof ToolsCommissionRoute
+  '/tools/deposit': typeof ToolsDepositRoute
+  '/tools/loan': typeof ToolsLoanRoute
+  '/tools/rahn-rent': typeof ToolsRahnRentRoute
   '/areas/$slug': typeof AreasSlugRoute
   '/consultants/$id': typeof ConsultantsIdRoute
   '/file/$id': typeof FileIdRoute
@@ -92,6 +141,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/budget-match': typeof BudgetMatchRoute
   '/admin': typeof AdminRoute
   '/compare': typeof CompareRoute
   '/favorites': typeof FavoritesRoute
@@ -103,17 +153,31 @@ export interface FileRoutesByTo {
   '/properties/$slug': typeof PropertiesSlugRoute
   '/v/$slug/$id': typeof VSlugIdRoute
 }
+  '/consultants': typeof ConsultantsRoute
+  '/tools': typeof ToolsIndexRoute
+  '/tools/commission': typeof ToolsCommissionRoute
+  '/tools/deposit': typeof ToolsDepositRoute
+  '/tools/loan': typeof ToolsLoanRoute
+  '/tools/rahn-rent': typeof ToolsRahnRentRoute
+}
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/budget-match': typeof BudgetMatchRoute
   '/admin': typeof AdminRoute
   '/compare': typeof CompareRoute
   '/favorites': typeof FavoritesRoute
   '/properties': typeof PropertiesRouteWithChildren
   '/tracking': typeof TrackingRoute
   '/areas/$slug': typeof AreasSlugRoute
+  '/consultants': typeof ConsultantsRoute
   '/consultants/$id': typeof ConsultantsIdRoute
   '/file/$id': typeof FileIdRoute
+  '/tools': typeof ToolsIndexRoute
+  '/tools/commission': typeof ToolsCommissionRoute
+  '/tools/deposit': typeof ToolsDepositRoute
+  '/tools/loan': typeof ToolsLoanRoute
+  '/tools/rahn-rent': typeof ToolsRahnRentRoute
   '/properties/$slug': typeof PropertiesSlugRoute
   '/v/$slug/$id': typeof VSlugIdRoute
 }
@@ -121,57 +185,118 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/budget-match'
     | '/admin'
     | '/compare'
     | '/favorites'
     | '/properties'
     | '/tracking'
     | '/areas/$slug'
+    | '/consultants'
     | '/consultants/$id'
     | '/file/$id'
+    | '/tools'
+    | '/tools/commission'
+    | '/tools/deposit'
+    | '/tools/loan'
+    | '/tools/rahn-rent'
     | '/properties/$slug'
     | '/v/$slug/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/budget-match'
     | '/admin'
     | '/compare'
     | '/favorites'
     | '/properties'
     | '/tracking'
     | '/areas/$slug'
+    | '/consultants'
     | '/consultants/$id'
     | '/file/$id'
+    | '/tools'
+    | '/tools/commission'
+    | '/tools/deposit'
+    | '/tools/loan'
+    | '/tools/rahn-rent'
     | '/properties/$slug'
     | '/v/$slug/$id'
   id:
     | '__root__'
     | '/'
+    | '/budget-match'
     | '/admin'
     | '/compare'
     | '/favorites'
     | '/properties'
     | '/tracking'
     | '/areas/$slug'
+    | '/consultants'
     | '/consultants/$id'
     | '/file/$id'
+    | '/tools/'
+    | '/tools/commission'
+    | '/tools/deposit'
+    | '/tools/loan'
+    | '/tools/rahn-rent'
     | '/properties/$slug'
     | '/v/$slug/$id'
   fileRoutesById: FileRoutesById
 }
-export interface RootRouteChildren {
+
+interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BudgetMatchRoute: typeof BudgetMatchRoute
   AdminRoute: typeof AdminRoute
   CompareRoute: typeof CompareRoute
   FavoritesRoute: typeof FavoritesRoute
   PropertiesRoute: typeof PropertiesRouteWithChildren
   TrackingRoute: typeof TrackingRoute
   AreasSlugRoute: typeof AreasSlugRoute
+  ConsultantsRoute: typeof ConsultantsRoute
   ConsultantsIdRoute: typeof ConsultantsIdRoute
   FileIdRoute: typeof FileIdRoute
+  ToolsIndexRoute: typeof ToolsIndexRoute
+  ToolsCommissionRoute: typeof ToolsCommissionRoute
+  ToolsDepositRoute: typeof ToolsDepositRoute
+  ToolsLoanRoute: typeof ToolsLoanRoute
+  ToolsRahnRentRoute: typeof ToolsRahnRentRoute
   VSlugIdRoute: typeof VSlugIdRoute
 }
 
+const PropertiesRouteChildren: PropertiesRouteChildren = {
+  PropertiesSlugRoute: PropertiesSlugRoute,
+}
+
+const PropertiesRouteWithChildren = PropertiesRoute._addFileChildren(
+  PropertiesRouteChildren,
+)
+
+const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
+  BudgetMatchRoute: BudgetMatchRoute,
+  AdminRoute: AdminRoute,
+  CompareRoute: CompareRoute,
+  FavoritesRoute: FavoritesRoute,
+  PropertiesRoute: PropertiesRouteWithChildren,
+  TrackingRoute: TrackingRoute,
+  AreasSlugRoute: AreasSlugRoute,
+  ConsultantsRoute: ConsultantsRoute,
+  ConsultantsIdRoute: ConsultantsIdRoute,
+  FileIdRoute: FileIdRoute,
+  ToolsIndexRoute: ToolsIndexRoute,
+  ToolsCommissionRoute: ToolsCommissionRoute,
+  ToolsDepositRoute: ToolsDepositRoute,
+  ToolsLoanRoute: ToolsLoanRoute,
+  ToolsRahnRentRoute: ToolsRahnRentRoute,
+  VSlugIdRoute: VSlugIdRoute,
+}
+export const routeTree = rootRouteImport
+  ._addFileChildren(rootRouteChildren)
+  ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/': {
@@ -179,6 +304,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/budget-match': {
+      id: '/budget-match'
+      path: '/budget-match'
+      fullPath: '/budget-match'
+      preLoaderRoute: typeof BudgetMatchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -223,6 +355,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AreasSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/consultants': {
+      id: '/consultants'
+      path: '/consultants'
+      fullPath: '/consultants'
+      preLoaderRoute: typeof ConsultantsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/consultants/$id': {
       id: '/consultants/$id'
       path: '/consultants/$id'
@@ -235,6 +374,41 @@ declare module '@tanstack/react-router' {
       path: '/file/$id'
       fullPath: '/file/$id'
       preLoaderRoute: typeof FileIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools': {
+      id: '/tools/'
+      path: '/tools'
+      fullPath: '/tools'
+      preLoaderRoute: typeof ToolsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/commission': {
+      id: '/tools/commission'
+      path: '/tools/commission'
+      fullPath: '/tools/commission'
+      preLoaderRoute: typeof ToolsCommissionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/deposit': {
+      id: '/tools/deposit'
+      path: '/tools/deposit'
+      fullPath: '/tools/deposit'
+      preLoaderRoute: typeof ToolsDepositRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/loan': {
+      id: '/tools/loan'
+      path: '/tools/loan'
+      fullPath: '/tools/loan'
+      preLoaderRoute: typeof ToolsLoanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/rahn-rent': {
+      id: '/tools/rahn-rent'
+      path: '/tools/rahn-rent'
+      fullPath: '/tools/rahn-rent'
+      preLoaderRoute: typeof ToolsRahnRentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/properties/$slug': {
@@ -254,36 +428,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface PropertiesRouteChildren {
-  PropertiesSlugRoute: typeof PropertiesSlugRoute
-}
-
-const PropertiesRouteChildren: PropertiesRouteChildren = {
-  PropertiesSlugRoute: PropertiesSlugRoute,
-}
-
-const PropertiesRouteWithChildren = PropertiesRoute._addFileChildren(
-  PropertiesRouteChildren,
-)
-
-const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
-  CompareRoute: CompareRoute,
-  FavoritesRoute: FavoritesRoute,
-  PropertiesRoute: PropertiesRouteWithChildren,
-  TrackingRoute: TrackingRoute,
-  AreasSlugRoute: AreasSlugRoute,
-  ConsultantsIdRoute: ConsultantsIdRoute,
-  FileIdRoute: FileIdRoute,
-  VSlugIdRoute: VSlugIdRoute,
-}
-export const routeTree = rootRouteImport
-  ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
