@@ -100,9 +100,8 @@ export const OFFICE_MAP = mapLinks({
   label: "گروه مشاورین املاک هیرمند",
 });
 
-// Primary navigation stays deliberately short: every entry is a real
-// destination, and the partner club / about pages live in the footer so the
-// header never becomes a wall of links.
+// Primary navigation stays focused while keeping the partner club directly
+// accessible from both desktop and mobile navigation.
 export const NAV = [
   { id: "listings", label: "فایل‌ها", to: "/properties", hash: "" },
   { id: "services", label: "خدمات", to: "/", hash: "services" },
@@ -111,6 +110,7 @@ export const NAV = [
   { id: "areas", label: "محله‌ها", to: "/", hash: "areas" },
   { id: "tools", label: "ابزار مالی", to: "/", hash: "tools" },
   { id: "contact", label: "تماس", to: "/", hash: "contact" },
+  { id: "partners", label: "باشگاه همکاران", to: "/tracking", hash: "" },
 ] as const;
 
 export const SERVICES = [
