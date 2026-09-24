@@ -27,6 +27,7 @@ import {
   ExternalLink,
   Flame,
   Flower2,
+  Gauge,
   FastForward,
   Layers3,
   MapPinned,
@@ -52,6 +53,7 @@ import {
   Waves,
   Wind,
   Wifi,
+  Zap,
   X,
 } from "lucide-react";
 import { breadcrumbJsonLd, propertyJsonLd, TX_LABEL, TYPE_LABEL } from "@/lib/seo";
@@ -123,9 +125,9 @@ function propertyAmenityIcon(value: string) {
     case "water_tank":
       return <Droplets size={18} aria-hidden="true" />;
     case "pressure_pump":
-      return <GaugeIcon size={18} aria-hidden="true" />;
+      return <Gauge size={18} aria-hidden="true" />;
     case "generator":
-      return <ZapIcon size={18} aria-hidden="true" />;
+      return <Zap size={18} aria-hidden="true" />;
     case "solar":
       return <Sun size={18} aria-hidden="true" />;
     case "fire_alarm":
@@ -175,7 +177,7 @@ function propertyAmenityIcon(value: string) {
     case "mechanized_park":
       return <CarFront size={18} aria-hidden="true" />;
     case "ev_charger":
-      return <ZapIcon size={18} aria-hidden="true" />;
+      return <Zap size={18} aria-hidden="true" />;
     case "pet_friendly":
       return <PawPrint size={18} aria-hidden="true" />;
     case "wheelchair_access":
