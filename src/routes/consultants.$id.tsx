@@ -15,8 +15,9 @@ const ICONS = {
 
 export const Route = createFileRoute("/consultants/$id")({
   loader: async ({ params }) => {
+    const requestedId = params.id.trim().toLowerCase();
     const people = await listConsultants();
-    const person = people.find((item) => item.id === params.id) ?? null;
+    const person = people.find((item) => item.id.trim().toLowerCase() === requestedId) ?? null;
     if (!person) return { person: null, properties: [] };
     try {
       const properties = await listPublishedPropertiesByContact({ data: { phone: person.phone } });
@@ -80,9 +81,10 @@ function ConsultantProfilePage() {
   return (
     <SiteChrome className="property-detail-shell">
       <main className="consultant-profile-page">
-        <Link to="/" className="text-link" style={{ marginBottom: 22 }}>
-          <ArrowRight size={15} /> بازگشت به سایت هیرمند
-        </Link>
+        <div className="consultant-profile-single" data-consultant-id={person.id}>
+          <Link to="/" className="text-link" style={{ marginBottom: 22 }}>
+            <ArrowRight size={15} /> بازگشت به سایت هیرمند
+          </Link>
 
         <section className="consultant-profile-hero">
           <div className="consultant-profile-avatar" aria-hidden="true">
@@ -138,6 +140,7 @@ function ConsultantProfilePage() {
           <p>درخواستتان را ثبت کنید تا تیم هیرمند گزینه‌های متناسب را بررسی کند.</p>
           <Link to="/" hash="inquiry" className="btn-gold">ثبت درخواست ملک</Link>
         </section>
+        </div>
       </main>
     </SiteChrome>
   );
