@@ -23,6 +23,7 @@ import {
 import { dbSource, getSql } from "@/lib/db";
 import {
   pruneStaleUploadSessions,
+  deleteStoredMedia,
   storeAssembledUpload,
   type StoredMedia,
 } from "@/lib/media-store.server";
@@ -245,23 +246,36 @@ export async function handleChunkedUpload(
       );
     }
 
-    const stored = await storeAssembledUpload({
-      pathname: String(session.pathname),
-      contentType: String(session.content_type),
-      sessionId: uploadId,
-    });
+    let stored: StoredMedia | null = null;
+    try {
+      stored = await storeAssembledUpload({
+        pathname: String(session.pathname),
+        contentType: String(session.content_type),
+        sessionId: uploadId,
+      });
 
-    const result = await config.finish({
-      stored,
-      session,
-      text: {
-        title: String(session.title ?? ""),
-        artist: String(session.artist ?? ""),
-      },
-      totalBytes: receivedBytes,
-    });
+      const result = await config.finish({
+        stored,
+        session,
+        text: {
+          title: String(session.title ?? ""),
+          artist: String(session.artist ?? ""),
+        },
+        totalBytes: receivedBytes,
+      });
 
-    return { ...(result as Record<string, unknown>), storage: stored.storage };
+      return { ...(result as Record<string, unknown>), storage: stored.storage };
+    } catch (error) {
+      // The media object is already durable at this point. If persisting the
+      // business record fails, remove that object so retries do not accumulate
+      // orphaned bytes in the database or object store.
+      if (stored) {
+        await deleteStoredMedia(stored.url).catch((cleanupError) => {
+          console.warn("[upload] cleanup after completion failure failed", cleanupError);
+        });
+      }
+      throw error;
+    }
   }
 
   if (action === "abort") {
