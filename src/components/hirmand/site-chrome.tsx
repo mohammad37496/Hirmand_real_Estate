@@ -3,7 +3,6 @@ import { Link } from "@tanstack/react-router";
 import { Calculator, FileKey, WalletCards } from "lucide-react";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
-import { SITE } from "@/lib/site";
 import { CallMenu } from "./call-menu";
 import { Footer } from "./footer";
 import { Header } from "./header";
@@ -41,7 +40,6 @@ export function SiteChrome({
           to="/"
           hash="budget-match"
           className="quick-action"
-          onClick={() => trackAnalyticsEvent("budget_match_click")}
         >
           <WalletCards size={17} />
           <span>بودجه‌یاب</span>
@@ -50,7 +48,6 @@ export function SiteChrome({
           to="/"
           hash="tools"
           className="quick-action"
-          onClick={() => trackAnalyticsEvent("finance_tools_click")}
         >
           <Calculator size={17} />
           <span>ابزار مالی</span>
