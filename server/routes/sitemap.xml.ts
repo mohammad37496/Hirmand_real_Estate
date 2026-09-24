@@ -5,6 +5,7 @@
 import { defineEventHandler, setResponseHeader } from "h3";
 import { allAreas, areaPath } from "../../src/lib/areas";
 import { TEAM } from "../../src/lib/site";
+import { propertyPath } from "../../src/lib/property-path";
 import { resolveDatabaseUrl } from "../../scripts/resolve-database-url.mjs";
 
 const FINANCE_TOOL_PATHS = [
@@ -75,7 +76,7 @@ async function loadPropertyUrls(): Promise<{ loc: string; lastmod?: string; imag
         }
 
         return {
-          loc: `${SITE}/file/${encodeURIComponent(String(row.id))}`,
+          loc: `${SITE}${propertyPath({ id: String(row.id), slug: String(row.slug) })}`,
           lastmod,
           images,
         };
