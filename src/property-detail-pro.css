@@ -2453,3 +2453,104 @@ body:has(.property-detail-page) {
     bottom:10px!important;
   }
 }
+
+
+/* Extended property specification cards */
+.property-spec-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+.property-spec-grid > div{
+  min-width:0;
+  background:linear-gradient(180deg,#fff,#f8fafc);
+}
+.property-spec-grid > div > span{
+  min-width:0;
+}
+.property-spec-grid strong{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.property-other-amenities{
+  margin-top:12px;
+  padding:14px;
+  border:1px solid var(--pd-line);
+  border-radius:var(--pd-radius-md);
+  background:linear-gradient(180deg,#fff,#fafbfc);
+}
+.property-other-amenities-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+.property-other-amenities-head > span{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  color:var(--pd-ink);
+  font-size:.76rem;
+  font-weight:800;
+}
+.property-other-amenities-head svg{
+  color:var(--pd-gold);
+}
+.property-other-amenities-head small{
+  color:var(--pd-muted);
+  font-size:.64rem;
+  font-weight:700;
+}
+.property-other-amenities-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+.property-other-amenities-list > span{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  min-height:30px;
+  padding:5px 9px;
+  border:1px solid rgba(201,161,74,.22);
+  border-radius:999px;
+  background:#fbf7ef;
+  color:var(--pd-ink);
+  font-size:.64rem;
+  font-weight:750;
+}
+.property-other-amenities-list svg{
+  flex:0 0 auto;
+  color:var(--pd-gold);
+}
+@media (max-width:760px){
+  .property-spec-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+  .property-spec-grid > div{
+    min-height:72px!important;
+    padding:10px!important;
+  }
+  .property-spec-grid > div > svg{
+    width:17px!important;
+    height:17px!important;
+  }
+  .property-spec-grid small{
+    font-size:.61rem!important;
+  }
+  .property-spec-grid strong{
+    font-size:.77rem!important;
+  }
+  .property-other-amenities{
+    padding:11px!important;
+  }
+  .property-other-amenities-list{
+    gap:6px!important;
+  }
+  .property-other-amenities-list > span{
+    font-size:.59rem!important;
+    min-height:28px!important;
+    padding:4px 7px!important;
+  }
+}
