@@ -333,12 +333,6 @@ function About() {
             loading="lazy"
             decoding="async"
           />
-          <figcaption className="about-photo-credit">
-            عکس: Erfan Ghofrani ·
-            <a href="https://commons.wikimedia.org/wiki/File:Naqsh-e_Jahan_Square,_Isfahan.jpg" target="_blank" rel="noopener noreferrer">
-              Wikimedia Commons · CC BY-SA 4.0
-            </a>
-          </figcaption>
         </figure>
       </div>
     </Reveal>
