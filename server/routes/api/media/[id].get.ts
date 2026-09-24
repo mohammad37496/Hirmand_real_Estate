@@ -61,6 +61,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "رسانه پیدا نشد." });
   }
 
+  // Legacy uploads may contain SVG objects from before the upload allowlist
+  // was tightened. Never serve those objects from our application origin.
+  if (meta.contentType.trim().toLowerCase() === "image/svg+xml") {
+    throw createError({ statusCode: 415, statusMessage: "این نوع رسانه برای نمایش مستقیم مجاز نیست." });
+  }
+
   const size = meta.sizeBytes;
   const rangeHeader = getHeader(event, "range");
 
