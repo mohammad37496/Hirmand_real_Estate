@@ -3106,16 +3106,27 @@ body {
 @media (min-width:721px){
   .music-player{
     left:auto!important;
-    right:18px!important;
+    right:14px!important;
     inset-inline-start:auto!important;
-    inset-inline-end:18px!important;
-    bottom:18px!important;
-    width:min(400px,calc(100vw - 36px))!important;
-    max-width:400px!important;
-    min-height:58px!important;
-    padding:8px 10px 12px!important;
-    border-radius:16px!important;
+    inset-inline-end:14px!important;
+    bottom:14px!important;
+    width:min(330px,calc(100vw - 28px))!important;
+    max-width:330px!important;
+    min-height:50px!important;
+    padding:6px 8px 10px!important;
+    border-radius:14px!important;
   }
+  .music-player-main{gap:6px!important;min-height:44px!important}
+  .music-cover{width:30px!important;height:30px!important;min-width:30px!important;border-radius:8px!important}
+  .music-meta{min-width:48px!important;flex-basis:62px!important;gap:0!important}
+  .music-meta strong{font-size:.7rem!important;line-height:1.25!important}
+  .music-meta>span,.music-meta small{font-size:.58rem!important;line-height:1.2!important}
+  .music-transport{gap:1px!important}
+  .music-transport button,.music-compact-actions button{width:24px!important;height:24px!important;border-radius:7px!important}
+  .music-player .music-play{width:28px!important;height:28px!important}
+  .music-live-badge{width:24px!important;height:24px!important;border-radius:7px!important}
+  .music-player:not(.is-expanded) .music-progress-row{left:9px!important;right:9px!important;bottom:3px!important;gap:4px!important}
+  .music-player:not(.is-expanded) .music-progress-row>span{font-size:.52rem!important}
 }
 @media (max-width:720px){
   .music-player{
@@ -3124,7 +3135,14 @@ body {
     inset-inline-start:8px!important;
     inset-inline-end:8px!important;
     bottom:calc(72px + env(safe-area-inset-bottom))!important;
-    padding:7px 10px!important;
-    border-radius:var(--r-md)!important;
+    padding:6px 8px!important;
+    border-radius:12px!important;
   }
+  .music-player-main{gap:6px!important;min-height:40px!important}
+  .music-cover{width:34px!important;height:34px!important}
+  .music-meta{max-width:34vw!important}
+  .music-meta strong{font-size:.68rem!important}
+  .music-meta>span,.music-meta small{font-size:.56rem!important}
+  .music-transport button,.music-compact-actions button{width:24px!important;height:24px!important}
+  .music-player .music-play{width:28px!important;height:28px!important}
 }
