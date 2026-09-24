@@ -1776,3 +1776,94 @@
 .budget-input-wrap > span {
   color: var(--muted);
 }
+
+
+/* Consultant profile hero polish */
+.consultant-profile-hero{
+  grid-template-columns:88px minmax(0,1fr);
+  align-items:start;
+  gap:24px;
+  padding:30px;
+}
+.consultant-profile-avatar{
+  width:88px;
+  height:88px;
+  border-radius:24px;
+}
+.consultant-profile-hero > div:last-child{
+  min-width:0;
+}
+.consultant-profile-role{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:4px 10px;
+  border-radius:999px;
+  background:var(--brass-100);
+}
+.consultant-profile-hero h1{
+  margin:8px 0 0;
+}
+.consultant-profile-phone{
+  width:max-content;
+  max-width:100%;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  margin-top:16px;
+  padding:8px 12px;
+  border:1px solid var(--line-2);
+  border-radius:12px;
+  background:var(--card-2);
+  font-variant-numeric:tabular-nums;
+  direction:ltr;
+  unicode-bidi:isolate;
+}
+.consultant-profile-phone-icon{
+  display:grid;
+  place-items:center;
+  width:30px;
+  height:30px;
+  border-radius:9px;
+  background:var(--brass-100);
+  color:var(--brass-700);
+  flex:0 0 auto;
+}
+.consultant-profile-phone bdi{
+  font-family:inherit;
+  font-size:1.05rem;
+  font-weight:800;
+  letter-spacing:.03em;
+}
+.consultant-profile-description{
+  max-width:680px;
+  margin:14px 0 0;
+  color:var(--muted);
+  line-height:1.9;
+}
+.consultant-profile-actions{
+  margin-top:18px;
+}
+.consultant-profile-actions .btn-gold{
+  min-height:46px;
+  padding-inline:20px;
+}
+@media (max-width:760px){
+  .consultant-profile-hero{
+    grid-template-columns:1fr;
+    gap:16px;
+    padding:22px 18px;
+  }
+  .consultant-profile-phone{
+    margin-top:14px;
+    width:100%;
+    justify-content:flex-start;
+  }
+  .consultant-profile-actions{
+    justify-content:stretch;
+  }
+  .consultant-profile-actions .btn-gold{
+    width:100%;
+    justify-content:center;
+  }
+}
