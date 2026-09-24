@@ -15,6 +15,7 @@ import {
   Phone,
   Ruler,
   Warehouse,
+  X,
 } from "lucide-react";
 import { breadcrumbJsonLd, propertyJsonLd, TX_LABEL, TYPE_LABEL } from "@/lib/seo";
 import type { Property } from "@/lib/properties";
@@ -312,9 +313,10 @@ function Gallery({
             type="button"
             className="property-lightbox-close"
             onClick={closeLightbox}
-            aria-label="بستن"
+            aria-label="بستن بزرگنمایی تصویر"
+            title="بستن بزرگنمایی (Esc)"
           >
-            ×
+            <X size={21} strokeWidth={2.4} aria-hidden="true" />
           </button>
 
           <button
