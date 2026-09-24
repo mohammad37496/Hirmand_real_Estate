@@ -4,17 +4,21 @@ import { mapLinks, type MapTarget } from "@/lib/site";
 export function MapAppButtons({
   target,
   googleHref,
+  googleOnly = false,
 }: {
   target: MapTarget;
   googleHref?: string;
+  googleOnly?: boolean;
 }) {
   const links = mapLinks(target);
   const google = googleHref ?? links.google;
-  const apps = [
-    { href: google, title: "گوگل مپ", text: "Google Maps" },
-    { href: links.balad, title: "بلد", text: "اپلیکیشن بلد" },
-    { href: links.neshan, title: "نشان", text: "اپلیکیشن نشان" },
-  ];
+  const apps = googleOnly
+    ? [{ href: google, title: "گوگل مپ", text: "جستجوی دقیق محله" }]
+    : [
+        { href: google, title: "گوگل مپ", text: "Google Maps" },
+        { href: links.balad, title: "بلد", text: "اپلیکیشن بلد" },
+        { href: links.neshan, title: "نشان", text: "اپلیکیشن نشان" },
+      ];
 
   return (
     <div className="map-app-row">
@@ -49,7 +53,7 @@ export function MapEmbed({ target, title }: { target: MapTarget; title: string }
     <div className="map-embed">
       <iframe
         title={title}
-        src={links.osm}
+        src={links.googleEmbed}
         loading="lazy"
         referrerPolicy="no-referrer-when-downgrade"
       />
