@@ -1102,78 +1102,80 @@ function PropertiesIndexPage() {
               </label>
             </FilterDisclosure>
 
-            <details className={"pf-fold pf-spec-fold" + (specFilters.length ? " has-selection" : "")}>
-              <summary>
-                <span>
-                  <strong>امکانات و مشخصات دقیق</strong>
-                  <small>۹۴ گزینه در ۶ گروه؛ برای کاربرانی که فیلتر دقیق‌تری می‌خواهند</small>
-                </span>
-                <b>{specFilters.length ? fa(specFilters.length) + " انتخاب" : "مشاهده"}</b>
-              </summary>
-              <div className="pf-fold-body">
-                <div className="pf-spec-toolbar">
-                  <label className="pf-spec-search">
-                    <Search size={15} aria-hidden="true" />
-                    <input
-                      value={specQuery}
-                      onChange={(event) => setSpecQuery(event.target.value)}
-                      placeholder="مثلاً تراس، استخر، MDF..."
-                      aria-label="جست‌وجو در امکانات و مشخصات"
-                    />
-                    {specQuery ? (
-                      <button type="button" aria-label="پاک کردن جست‌وجوی امکانات" onClick={() => setSpecQuery("")}>
-                        <X size={13} />
-                      </button>
-                    ) : null}
-                  </label>
-                  {specFilters.length ? (
-                    <button type="button" className="pf-spec-clear" onClick={() => setSpecFilters([])}>
-                      پاک‌کردن انتخاب‌ها
+            <section className={"pf-fold pf-spec-fold" + (specFilters.length ? " has-selection" : "")} aria-labelledby="pf-spec-title">
+              <div className="pf-spec-head">
+                <div>
+                  <strong id="pf-spec-title">تمام امکانات و مشخصات فایل</strong>
+                  <small>همان گزینه‌هایی که در بخش «مشخصات ملک» و «امکانات دیگر» صفحه فایل نمایش داده می‌شوند.</small>
+                </div>
+                <b>{specFilters.length ? fa(specFilters.length) + " انتخاب" : fa(SPEC_FILTER_OPTIONS.length) + " گزینه"}</b>
+              </div>
+
+              <div className="pf-spec-toolbar">
+                <label className="pf-spec-search">
+                  <Search size={15} aria-hidden="true" />
+                  <input
+                    value={specQuery}
+                    onChange={(event) => setSpecQuery(event.target.value)}
+                    placeholder="جست‌وجوی امکانات؛ مثلاً تراس، استخر، MDF، نور..."
+                    aria-label="جست‌وجو در تمام امکانات و مشخصات"
+                  />
+                  {specQuery ? (
+                    <button type="button" aria-label="پاک کردن جست‌وجوی امکانات" onClick={() => setSpecQuery("")}>
+                      <X size={13} />
                     </button>
                   ) : null}
-                </div>
-
-                <div className="pf-spec-groups">
-                  {SPEC_GROUPS.map((group) => {
-                    const allOptions = SPEC_FILTER_OPTIONS.filter((item) => item.group === group);
-                    const query = specQuery.trim().toLocaleLowerCase();
-                    const options = query
-                      ? allOptions.filter((item) => item.label.toLocaleLowerCase().includes(query))
-                      : allOptions;
-                    const selectedCount = allOptions.filter((item) => specFilters.includes(item.value)).length;
-                    return (
-                      <details className="pf-spec-subgroup" key={group} open={Boolean(query) || selectedCount > 0}>
-                        <summary>
-                          <span>{group}</span>
-                          <small>{selectedCount ? fa(selectedCount) + " انتخاب" : fa(allOptions.length) + " گزینه"}</small>
-                        </summary>
-                        {options.length ? (
-                          <div className="pf-spec-options">
-                            {options.map((item) => {
-                              const active = specFilters.includes(item.value);
-                              return (
-                                <button
-                                  key={item.value}
-                                  type="button"
-                                  className={"pf-spec-option" + (active ? " is-active" : "")}
-                                  onClick={() => toggleSpecFilter(item.value)}
-                                  aria-pressed={active}
-                                >
-                                  <span className="pf-spec-option-mark" aria-hidden="true">{active ? "✓" : ""}</span>
-                                  <span>{item.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <p className="pf-spec-empty">موردی با این عبارت پیدا نشد.</p>
-                        )}
-                      </details>
-                    );
-                  })}
-                </div>
+                </label>
+                {specFilters.length ? (
+                  <button type="button" className="pf-spec-clear" onClick={() => setSpecFilters([])}>
+                    پاک‌کردن انتخاب‌ها
+                  </button>
+                ) : null}
               </div>
-            </details>
+
+              <div className="pf-spec-groups">
+                {SPEC_GROUPS.map((group) => {
+                  const allOptions = SPEC_FILTER_OPTIONS.filter((item) => item.group === group);
+                  const query = specQuery.trim().toLocaleLowerCase();
+                  const options = query
+                    ? allOptions.filter((item) => item.label.toLocaleLowerCase().includes(query))
+                    : allOptions;
+                  const selectedCount = allOptions.filter((item) => specFilters.includes(item.value)).length;
+                  return (
+                    <section className="pf-spec-subgroup" key={group} aria-label={group}>
+                      <div className="pf-spec-subgroup-head">
+                        <span>{group}</span>
+                        <small>
+                          {selectedCount ? fa(selectedCount) + " انتخاب از " : ""}
+                          {fa(allOptions.length)} گزینه
+                        </small>
+                      </div>
+                      {options.length ? (
+                        <div className="pf-spec-options">
+                          {options.map((item) => {
+                            const active = specFilters.includes(item.value);
+                            return (
+                              <button
+                                key={item.value}
+                                type="button"
+                                className={"pf-spec-option" + (active ? " is-active" : "")}
+                                onClick={() => toggleSpecFilter(item.value)}
+                                aria-pressed={active}
+                              >
+                                <span className="pf-spec-option-mark" aria-hidden="true">{active ? "✓" : ""}</span>
+                                <span>{item.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="pf-spec-empty">موردی با این عبارت پیدا نشد.</p>
+                      )}
+                    </section>
+                  );
+                })}
+              </div>
+            </section>
 
             <div className="pf-sidebar-foot">
               <button type="button" className="pf-reset" onClick={resetFilters}>
