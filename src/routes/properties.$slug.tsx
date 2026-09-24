@@ -1,4 +1,4 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import { getPublishedProperty, listRelatedProperties } from "@/lib/properties";
 import { propertyHead } from "@/lib/seo";
 import { PropertyDetailView } from "@/components/hirmand/property-detail-view";
@@ -7,6 +7,21 @@ export const Route = createFileRoute("/properties/$slug")({
   loader: async ({ params }) => {
     const property = await getPublishedProperty({ data: { slug: params.slug } });
     if (!property) throw notFound();
+
+    let requestedSlug = params.slug;
+    try {
+      requestedSlug = decodeURIComponent(requestedSlug);
+    } catch {
+      // TanStack Router normally provides a decoded param; keep the original on malformed input.
+    }
+
+    if (requestedSlug !== property.slug) {
+      throw redirect({
+        to: "/properties/$slug",
+        params: { slug: property.slug },
+        replace: true,
+      });
+    }
 
     const related = await listRelatedProperties({
       data: {
