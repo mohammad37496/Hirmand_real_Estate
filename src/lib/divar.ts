@@ -684,7 +684,15 @@ async function uploadDivarImages(token: string, urls: string[]): Promise<DivarIm
   ];
 
   const detectImageType = (bytes: Buffer, headerType: string) => {
-    if (/^image\//i.test(headerType)) return headerType.split(";")[0].toLowerCase();
+    const normalizedHeader = headerType.split(";")[0].trim().toLowerCase();
+    const allowedHeaderTypes = new Set([
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+      "image/avif",
+    ]);
+    if (allowedHeaderTypes.has(normalizedHeader)) return normalizedHeader;
     if (bytes.subarray(0, 8).toString("hex").startsWith("89504e47")) return "image/png";
     if (bytes.subarray(0, 3).toString("hex") === "ffd8ff") return "image/jpeg";
     if (
