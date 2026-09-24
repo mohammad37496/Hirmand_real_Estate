@@ -3,7 +3,13 @@ import { createPortal } from "react-dom";
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type TouchEvent } from "react";
 import {
   ArrowRight,
+  Accessibility,
+  Armchair,
+  Baby,
   Bath,
+  BriefcaseBusiness,
+  Camera,
+  CarFront,
   ChevronLeft,
   ChevronRight,
   Maximize2,
@@ -14,20 +20,38 @@ import {
   BedDouble,
   Building2,
   CalendarDays,
-  CarFront,
   Check,
+  DoorOpen,
+  Droplets,
+  Dumbbell,
   ExternalLink,
+  Flame,
+  Flower2,
   FastForward,
   Layers3,
   MapPinned,
+  Home,
+  KeyRound,
+  Leaf,
+  LockKeyhole,
+  MonitorSmartphone,
   Navigation,
+  PawPrint,
   Pause,
   Phone,
   Rewind,
   Ruler,
+  ShieldCheck,
+  Sofa,
+  Sun,
+  Trees,
+  Utensils,
   Volume2,
   VolumeX,
   Warehouse,
+  Waves,
+  Wind,
+  Wifi,
   X,
 } from "lucide-react";
 import { breadcrumbJsonLd, propertyJsonLd, TX_LABEL, TYPE_LABEL } from "@/lib/seo";
@@ -51,6 +75,117 @@ import {
   PROPERTY_WALL_CLOSET_OPTIONS,
   labelForOption,
 } from "@/lib/property-options";
+
+function propertyAmenityIcon(value: string) {
+  switch (value) {
+    case "balcony":
+      return <Home size={18} aria-hidden="true" />;
+    case "terrace":
+      return <Armchair size={18} aria-hidden="true" />;
+    case "roof_garden":
+      return <Trees size={18} aria-hidden="true" />;
+    case "yard":
+      return <Flower2 size={18} aria-hidden="true" />;
+    case "private_yard":
+      return <Leaf size={18} aria-hidden="true" />;
+    case "patio":
+      return <DoorOpen size={18} aria-hidden="true" />;
+    case "roof_access":
+      return <KeyRound size={18} aria-hidden="true" />;
+    case "master_bedroom":
+      return <Sofa size={18} aria-hidden="true" />;
+    case "walk_in_closet":
+      return <Warehouse size={18} aria-hidden="true" />;
+    case "guest_room":
+      return <BedDouble size={18} aria-hidden="true" />;
+    case "laundry":
+      return <Droplets size={18} aria-hidden="true" />;
+    case "maid_room":
+      return <Home size={18} aria-hidden="true" />;
+    case "storage_room":
+      return <Warehouse size={18} aria-hidden="true" />;
+    case "double_glazed":
+      return <Layers3 size={18} aria-hidden="true" />;
+    case "soundproof":
+      return <VolumeX size={18} aria-hidden="true" />;
+    case "thermal_insulation":
+      return <Wind size={18} aria-hidden="true" />;
+    case "security_door":
+      return <LockKeyhole size={18} aria-hidden="true" />;
+    case "video_intercom":
+      return <MonitorSmartphone size={18} aria-hidden="true" />;
+    case "smart_home":
+      return <Wifi size={18} aria-hidden="true" />;
+    case "central_vacuum":
+      return <Wind size={18} aria-hidden="true" />;
+    case "water_purifier":
+      return <Droplets size={18} aria-hidden="true" />;
+    case "water_tank":
+      return <Droplets size={18} aria-hidden="true" />;
+    case "pressure_pump":
+      return <GaugeIcon size={18} aria-hidden="true" />;
+    case "generator":
+      return <ZapIcon size={18} aria-hidden="true" />;
+    case "solar":
+      return <Sun size={18} aria-hidden="true" />;
+    case "fire_alarm":
+      return <Flame size={18} aria-hidden="true" />;
+    case "security_system":
+      return <ShieldCheck size={18} aria-hidden="true" />;
+    case "cctv":
+      return <Camera size={18} aria-hidden="true" />;
+    case "doorman":
+      return <KeyRound size={18} aria-hidden="true" />;
+    case "lobby":
+      return <Building2 size={18} aria-hidden="true" />;
+    case "gym":
+      return <Dumbbell size={18} aria-hidden="true" />;
+    case "pool":
+      return <Waves size={18} aria-hidden="true" />;
+    case "sauna":
+      return <Flame size={18} aria-hidden="true" />;
+    case "jacuzzi":
+      return <Bath size={18} aria-hidden="true" />;
+    case "sport_ground":
+      return <Dumbbell size={18} aria-hidden="true" />;
+    case "children_playground":
+      return <Baby size={18} aria-hidden="true" />;
+    case "coworking":
+      return <BriefcaseBusiness size={18} aria-hidden="true" />;
+    case "meeting_room":
+      return <BriefcaseBusiness size={18} aria-hidden="true" />;
+    case "commercial_permission":
+      return <BriefcaseBusiness size={18} aria-hidden="true" />;
+    case "separate_entrance":
+      return <DoorOpen size={18} aria-hidden="true" />;
+    case "reception":
+      return <Sofa size={18} aria-hidden="true" />;
+    case "open_kitchen":
+      return <Utensils size={18} aria-hidden="true" />;
+    case "island_kitchen":
+      return <Utensils size={18} aria-hidden="true" />;
+    case "dirty_kitchen":
+      return <Utensils size={18} aria-hidden="true" />;
+    case "roof_storage":
+      return <Warehouse size={18} aria-hidden="true" />;
+    case "private_park":
+      return <CarFront size={18} aria-hidden="true" />;
+    case "guest_park":
+      return <CarFront size={18} aria-hidden="true" />;
+    case "mechanized_park":
+      return <CarFront size={18} aria-hidden="true" />;
+    case "ev_charger":
+      return <ZapIcon size={18} aria-hidden="true" />;
+    case "pet_friendly":
+      return <PawPrint size={18} aria-hidden="true" />;
+    case "wheelchair_access":
+      return <Accessibility size={18} aria-hidden="true" />;
+    case "elevator_private":
+      return <Navigation size={18} aria-hidden="true" />;
+    default:
+      return <Sparkles size={18} aria-hidden="true" />;
+  }
+}
 
 function money(value: string | null) {
   if (!value) return "";
@@ -886,23 +1021,32 @@ export function PropertyDetailView({
                 ) : null}
               </div>
               {property.otherAmenities.length ? (
-                <div className="property-other-amenities">
-                  <div className="property-other-amenities-head">
-                    <span>
-                      <Sparkles size={16} aria-hidden="true" />
-                      <strong>امکانات دیگر</strong>
-                    </span>
-                    <small>{property.otherAmenities.length.toLocaleString("fa-IR")} مورد</small>
-                  </div>
-                  <div className="property-other-amenities-list">
-                    {property.otherAmenities.map((value) => (
-                      <span key={value}>
-                        <Check size={13} aria-hidden="true" />
-                        {labelForOption(PROPERTY_OTHER_AMENITY_OPTIONS, value)}
+                <details className="property-spec-amenities">
+                  <summary>
+                    <span className="property-spec-amenities-title">
+                      <Sparkles size={18} aria-hidden="true" />
+                      <span>
+                        <small>امکانات تکمیلی</small>
+                        <strong>امکانات دیگر</strong>
                       </span>
+                    </span>
+                    <span className="property-spec-amenities-toggle">
+                      <small>{property.otherAmenities.length.toLocaleString("fa-IR")} مورد</small>
+                      <ChevronDown size={19} aria-hidden="true" />
+                    </span>
+                  </summary>
+                  <div className="property-spec-amenities-body">
+                    {property.otherAmenities.map((value) => (
+                      <div className="property-spec-amenity-item" key={value}>
+                        {propertyAmenityIcon(value)}
+                        <span>
+                          <small>امکانات</small>
+                          <strong>{labelForOption(PROPERTY_OTHER_AMENITY_OPTIONS, value)}</strong>
+                        </span>
+                      </div>
                     ))}
                   </div>
-                </div>
+                </details>
               ) : null}
             </section>
 
