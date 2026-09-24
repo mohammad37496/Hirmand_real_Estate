@@ -64,7 +64,7 @@ const ConsultantsRoute = ConsultantsRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ToolsIndexRoute = ToolsIndexRouteImport.update({
-  id: '/tools/',
+  id: '/tools',
   path: '/tools',
   getParentRoute: () => rootRouteImport,
 } as any)
