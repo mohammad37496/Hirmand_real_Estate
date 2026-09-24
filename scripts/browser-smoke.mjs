@@ -254,16 +254,25 @@ try {
       if (href) {
         propertyNavigationCheck.attempted = true;
         await link.click();
-      await propertyPage.waitForLoadState("domcontentloaded").catch(() => undefined);
-      await propertyPage.waitForTimeout(500);
-      propertyNavigationCheck.status = await propertyPage.evaluate(() => window.location.pathname);
-      const textValue = await propertyPage.locator("body").innerText().catch(() => "");
-      propertyNavigationCheck.bodyTextLen = normalizeBodyText(textValue).length;
+        await propertyPage.waitForLoadState("domcontentloaded").catch(() => undefined);
+        await propertyPage.waitForTimeout(500);
+        propertyNavigationCheck.status = await propertyPage.evaluate(() => window.location.pathname);
+        const textValue = await propertyPage.locator("body").innerText().catch(() => "");
+        propertyNavigationCheck.bodyTextLen = normalizeBodyText(textValue).length;
+        const detailPath = propertyNavigationCheck.status;
+        let backForwardOk = false;
+        await propertyPage.goBack({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => undefined);
+        const backPath = await propertyPage.evaluate(() => window.location.pathname);
+        if (backPath === "/properties" || backPath === "/properties/") {
+          await propertyPage.goForward({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => undefined);
+          const forwardPath = await propertyPage.evaluate(() => window.location.pathname);
+          backForwardOk = forwardPath === detailPath;
+        }
         propertyNavigationCheck.ok =
-          (propertyNavigationCheck.status.startsWith("/file/") ||
-            propertyNavigationCheck.status.startsWith("/properties/")) &&
+          (detailPath.startsWith("/file/") || detailPath.startsWith("/properties/")) &&
+          detailPath !== "/properties/" &&
           propertyNavigationCheck.bodyTextLen > 80 &&
-          propertyNavigationCheck.status !== "/properties/";
+          backForwardOk;
       }
     }
   } catch (error) {
@@ -302,7 +311,49 @@ try {
       buildAuthEnabled: buildAuthEnabled(),
     }),
   );
-  const verdict = { url, viewports, routeChecks, propertyNavigationCheck, musicApiCheck, brandWarnings, authWarnings, verdictFile: outJson };
+  const filterInteractionCheck = { attempted: false, ok: true, error: null };
+  const interactionPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await interactionPage.goto(new URL("/properties", url).toString(), {
+      waitUntil: "domcontentloaded",
+      timeout: timeoutMs,
+    });
+    const searchInput = interactionPage.locator('input[aria-label="جست‌وجوی فایل"]').first();
+    if (await searchInput.count()) {
+      filterInteractionCheck.attempted = true;
+      await searchInput.fill("جلفا");
+      await searchInput.press("Enter").catch(() => undefined);
+      await interactionPage.waitForTimeout(600);
+      const value = await searchInput.inputValue().catch(() => "");
+      const bodyLen = normalizeBodyText(await interactionPage.locator("body").innerText().catch(() => "")).length;
+      filterInteractionCheck.ok = value === "جلفا" && bodyLen > 80;
+    }
+  } catch (error) {
+    filterInteractionCheck.error = String(error?.message || error);
+    filterInteractionCheck.ok = false;
+  } finally {
+    await interactionPage.close();
+  }
+
+  if (!filterInteractionCheck.ok) {
+    viewports.desktop.pageErrors.push(
+      filterInteractionCheck.attempted
+        ? "property search interaction smoke failed"
+        : "property search interaction smoke skipped: search input not available",
+    );
+  }
+
+  const verdict = {
+    url,
+    viewports,
+    routeChecks,
+    propertyNavigationCheck,
+    filterInteractionCheck,
+    musicApiCheck,
+    brandWarnings,
+    authWarnings,
+    verdictFile: outJson,
+  };
   if (baselineRequested) {
     const { divergesFromBaseline, reasons } = compareAgainstBaseline(verdict);
     verdict.divergesFromBaseline = divergesFromBaseline;
