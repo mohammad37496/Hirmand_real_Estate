@@ -1150,10 +1150,6 @@ function PropertiesIndexPage() {
                       <summary className="pf-spec-subgroup-summary">
                         <span className="pf-spec-subgroup-head">
                           <span>{group}</span>
-                          <small>
-                            {selectedCount ? fa(selectedCount) + " انتخاب از " : ""}
-                            {fa(allOptions.length)} گزینه
-                          </small>
                         </span>
                         <span className="pf-spec-subgroup-chevron" aria-hidden="true">⌄</span>
                       </summary>
