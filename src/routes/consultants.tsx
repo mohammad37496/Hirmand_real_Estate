@@ -153,7 +153,7 @@ function ConsultantsPage() {
           </div>
           <Link to="/properties" className="text-link">
             مشاهده فایل‌های فعال
-            <ArrowLeftLeft size={15} />
+            <ArrowLeft size={15} />
           </Link>
         </section>
       </main>
