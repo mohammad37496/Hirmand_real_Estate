@@ -243,7 +243,8 @@ export async function handleChunkedUpload(
       throw httpError("نشست آپلود پیدا نشد یا منقضی شده است. دوباره تلاش کنید.", 404);
     }
 
-    const totals = await sql.query<SessionRow>(
+    try {
+            const totals = await sql.query<SessionRow>(
       `select count(*) as chunks, coalesce(sum(octet_length(data)), 0) as bytes
        from media_upload_chunks where session_id = $1`,
       [uploadId],
@@ -251,21 +252,21 @@ export async function handleChunkedUpload(
     const receivedChunks = Number(totals[0]?.chunks) || 0;
     const receivedBytes = Number(totals[0]?.bytes) || 0;
     const totalChunks = Number(session.total_chunks) || 0;
-    const totalBytes = Number(session.total_bytes) || 0;
+      const totalBytes = Number(session.total_bytes) || 0;
 
-    if (receivedChunks !== totalChunks || (totalBytes > 0 && receivedBytes !== totalBytes)) {
+      if (receivedChunks !== totalChunks || (totalBytes > 0 && receivedBytes !== totalBytes)) {
       throw httpError(
         `فایل کامل دریافت نشد (${receivedChunks.toLocaleString("fa-IR")} از ${totalChunks.toLocaleString("fa-IR")} قطعه). دوباره آپلود کنید.`,
       );
     }
 
-    const stored = await storeAssembledUpload({
+      const stored = await storeAssembledUpload({
       pathname: String(session.pathname),
       contentType: String(session.content_type),
       sessionId: uploadId,
     });
 
-    const result = await config.finish({
+      const result = await config.finish({
       stored,
       session,
       text: {
@@ -275,7 +276,16 @@ export async function handleChunkedUpload(
       totalBytes: receivedBytes,
     });
 
-    return { ...(result as Record<string, unknown>), storage: stored.storage };
+      return { ...(result as Record<string, unknown>), storage: stored.storage };
+    } catch (error) {
+      await sql.query(
+        `update media_upload_sessions
+         set status = 'uploading'
+         where id = $1 and status = 'completing'`,
+        [uploadId],
+      ).catch(() => undefined);
+      throw error;
+    }
   }
 
   if (action === "abort") {
