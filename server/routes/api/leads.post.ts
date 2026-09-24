@@ -20,6 +20,8 @@ const matchSchema = z.object({
 const schema = z.object({
   name: z.string().trim().min(2).max(80),
   phone: z.string().trim().regex(/^09\d{9}$/),
+  peopleCount: z.number().int().min(1).max(20).optional(),
+  job: z.string().trim().max(100).default(""),
   deal: z.string().trim().min(1).max(40),
   propertyType: z.string().trim().max(80).default(""),
   neighborhood: z.string().trim().max(80).default(""),
@@ -113,14 +115,16 @@ export default defineEventHandler(async (event) => {
     if (parsed.data.source === "budget_match") {
       await sql.query(
         `update leads
-         set name=$2, deal=$3, property_type=$4, neighborhood=$5, consultant=$6, note=$7,
-             source=$8, follow_up_at=current_timestamp + interval '24 hours', acquisition_source=$16, acquisition_medium=$17, acquisition_campaign=$18, acquisition_referrer=$19, acquisition_landing_path=$20, budget_deposit=$9, budget_rent=$10, budget_rate=$11,
-             budget_equivalent=$12, budget_bedrooms=$13, matched_properties=$14::jsonb,
-             match_count=$15, updated_at=current_timestamp
+         set name=$2, people_count=$3, job=$4, deal=$5, property_type=$6, neighborhood=$7, consultant=$8, note=$9,
+             source=$10, follow_up_at=current_timestamp + interval '24 hours', acquisition_source=$18, acquisition_medium=$19, acquisition_campaign=$20, acquisition_referrer=$21, acquisition_landing_path=$22, budget_deposit=$11, budget_rent=$12, budget_rate=$13,
+             budget_equivalent=$14, budget_bedrooms=$15, matched_properties=$16::jsonb,
+             match_count=$17, updated_at=current_timestamp
          where id=$1`,
         [
           existing[0].id,
           parsed.data.name,
+          parsed.data.peopleCount ?? null,
+          parsed.data.job,
           parsed.data.deal,
           parsed.data.propertyType,
           parsed.data.neighborhood,
@@ -148,17 +152,19 @@ export default defineEventHandler(async (event) => {
 
   const rows = await sql.query<{ id: string }>(
     `insert into leads (
-      id, name, phone, deal, property_type, neighborhood, consultant, note, source,
+      id, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source,
       acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, acquisition_landing_path,
       follow_up_at, budget_deposit, budget_rent, budget_rate, budget_equivalent, budget_bedrooms,
       matched_properties, match_count
     )
-    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,current_timestamp + interval '24 hours',$15,$16,$17,$18,$19,$20::jsonb,$21)
+    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,current_timestamp + interval '24 hours',$17,$18,$19,$20,$21,$22::jsonb,$23)
     returning id`,
     [
       crypto.randomUUID(),
       parsed.data.name,
       parsed.data.phone,
+      parsed.data.peopleCount ?? null,
+      parsed.data.job,
       parsed.data.deal,
       parsed.data.propertyType,
       parsed.data.neighborhood,
