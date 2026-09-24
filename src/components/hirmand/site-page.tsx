@@ -231,7 +231,6 @@ function Hero() {
           <Link to="/" hash="inquiry" className="btn-ghost" onClick={(event) => scrollToId(event, "inquiry")}>
             درخواست اختصاصی
           </Link>
-          <CallMenu label="تماس با مشاور" />
         </div>
         <div className="hero-intents" aria-label="شروع سریع جست‌وجو">
           <button
