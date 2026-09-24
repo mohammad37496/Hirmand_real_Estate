@@ -64,7 +64,18 @@ export default defineEventHandler(async (event) => {
 
   const normalizedCode = (body.partnerCode ?? "").trim().toLowerCase();
   const authKey = normalizedCode ? `code:${normalizedCode}` : "code:empty";
-  if (!(await enforceRateLimit(event, { scope: "partner-login", limit: 8, windowSeconds: 600, identity: authKey }))) {
+  const ipAllowed = await enforceRateLimit(event, {
+    scope: "partner-login-ip",
+    limit: 8,
+    windowSeconds: 600,
+  });
+  const codeAllowed = await enforceRateLimit(event, {
+    scope: "partner-login-code",
+    limit: 8,
+    windowSeconds: 600,
+    identity: authKey,
+  });
+  if (!ipAllowed || !codeAllowed) {
     throw createError({
       statusCode: 429,
       statusMessage: "تعداد تلاش‌های ورود زیاد است. چند دقیقه بعد دوباره تلاش کنید.",
