@@ -2,6 +2,7 @@ import { createRootRoute, HeadContent, Link, Outlet, Scripts } from "@tanstack/r
 import { useEffect } from "react";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
+import { MusicPlayer } from "@/components/hirmand/music-player";
 import { SITE } from "@/lib/site";
 import appCss from "../styles.css?url";
 import propertiesProCss from "../properties-pro.css?url";
@@ -71,6 +72,7 @@ function RootDocument() {
         <PreviewHostBridge />
         <AuthProvider>
           <Outlet />
+          <MusicPlayer />
         </AuthProvider>
         <Scripts />
       </body>
