@@ -240,7 +240,18 @@ try {
 
   // When published listings exist, exercise a real card-to-detail navigation.
   // This is the regression test for the recurring "clicking a file does nothing" bug.
-  const propertyNavigationCheck = { attempted: false, ok: true, href: null, status: null, bodyTextLen: 0, error: null };
+  const propertyNavigationCheck = {
+    attempted: false,
+    ok: true,
+    href: null,
+    status: null,
+    bodyTextLen: 0,
+    fileRouteStatus: null,
+    fileRouteOk: true,
+    vRouteStatus: null,
+    vRouteOk: true,
+    error: null,
+  };
   const propertyPage = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   try {
     const propertiesUrl = new URL("/properties", url).toString();
@@ -250,6 +261,7 @@ try {
     if (await cards.count()) {
       const link = cards.first();
       const href = await link.getAttribute("href").catch(() => null);
+      const propertyId = await link.getAttribute("data-property-id").catch(() => null);
       propertyNavigationCheck.href = href;
       if (href) {
         propertyNavigationCheck.attempted = true;
@@ -272,7 +284,34 @@ try {
           (detailPath.startsWith("/file/") || detailPath.startsWith("/properties/")) &&
           detailPath !== "/properties/" &&
           propertyNavigationCheck.bodyTextLen > 80 &&
-          backForwardOk;
+          backForwardOk &&
+          propertyNavigationCheck.fileRouteOk &&
+          propertyNavigationCheck.vRouteOk;
+
+        if (propertyId) {
+          const fileResponse = await propertyPage.goto(
+            new URL("/file/" + encodeURIComponent(propertyId), url).toString(),
+            { waitUntil: "domcontentloaded", timeout: timeoutMs },
+          ).catch(() => null);
+          propertyNavigationCheck.fileRouteStatus = fileResponse?.status() ?? 0;
+          const filePath = await propertyPage.evaluate(() => window.location.pathname);
+          propertyNavigationCheck.fileRouteOk =
+            propertyNavigationCheck.fileRouteStatus >= 200 &&
+            propertyNavigationCheck.fileRouteStatus < 400 &&
+            (filePath.startsWith("/properties/") || filePath.startsWith("/file/"));
+
+          const vUrl = new URL("/v/" + encodeURIComponent((href.split("/").pop() || "")) + "/" + encodeURIComponent(propertyId), url).toString();
+          const vResponse = await propertyPage.goto(vUrl, {
+            waitUntil: "domcontentloaded",
+            timeout: timeoutMs,
+          }).catch(() => null);
+          propertyNavigationCheck.vRouteStatus = vResponse?.status() ?? 0;
+          const vPath = await propertyPage.evaluate(() => window.location.pathname);
+          propertyNavigationCheck.vRouteOk =
+            propertyNavigationCheck.vRouteStatus >= 200 &&
+            propertyNavigationCheck.vRouteStatus < 400 &&
+            vPath.startsWith("/properties/");
+        }
       }
     }
   } catch (error) {
