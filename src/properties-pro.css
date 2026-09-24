@@ -840,3 +840,250 @@
     transition-duration: 0.001ms;
   }
 }
+
+
+/* ---------------------------------------------------------- advanced specs */
+.pf-spec-filter{
+  margin-top:4px;
+  border:1px solid var(--hr-line);
+  border-radius:var(--r-md);
+  background:linear-gradient(180deg,var(--hr-paper),var(--hr-paper-2));
+  overflow:hidden;
+}
+.pf-spec-filter > summary{
+  list-style:none;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-height:64px;
+  padding:11px 12px;
+  cursor:pointer;
+  user-select:none;
+}
+.pf-spec-filter > summary::-webkit-details-marker{display:none}
+.pf-spec-filter > summary > span{
+  min-width:0;
+  display:grid;
+  gap:4px;
+}
+.pf-spec-filter > summary strong{
+  color:var(--hr-ink);
+  font-size:.78rem;
+  font-weight:900;
+}
+.pf-spec-filter > summary small{
+  color:var(--hr-muted);
+  font-size:.62rem;
+  line-height:1.7;
+}
+.pf-spec-filter > summary b{
+  flex:none;
+  padding:6px 9px;
+  border-radius:999px;
+  border:1px solid var(--hr-line-strong);
+  background:var(--hr-paper);
+  color:var(--hr-muted);
+  font-size:.62rem;
+  font-weight:850;
+}
+.pf-spec-filter.has-selection > summary b{
+  border-color:var(--hr-gold);
+  background:rgb(185 146 90 / .12);
+  color:var(--hr-ink);
+}
+.pf-spec-filter-body{
+  display:grid;
+  gap:12px;
+  padding:10px;
+  border-top:1px solid var(--hr-line);
+  background:rgb(255 255 255 / .42);
+}
+.pf-spec-filter-group{min-width:0}
+.pf-spec-filter-group-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin:2px 2px 7px;
+}
+.pf-spec-filter-group-title span{
+  color:var(--hr-ink);
+  font-size:.68rem;
+  font-weight:900;
+}
+.pf-spec-filter-group-title small{
+  color:var(--hr-faint);
+  font-size:.58rem;
+  font-weight:700;
+}
+.pf-spec-options{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+}
+.pf-spec-option{
+  min-width:0;
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:6px 8px;
+  border:1px solid var(--hr-line-strong);
+  border-radius:10px;
+  background:var(--hr-paper);
+  color:var(--hr-muted);
+  font:inherit;
+  font-size:.63rem;
+  font-weight:750;
+  text-align:right;
+  cursor:pointer;
+  transition:background .16s ease,border-color .16s ease,color .16s ease,transform .16s ease;
+}
+.pf-spec-option:hover{
+  border-color:var(--hr-gold);
+  color:var(--hr-ink);
+  transform:translateY(-1px);
+}
+.pf-spec-option.is-active{
+  border-color:var(--hr-ink);
+  background:var(--hr-ink);
+  color:var(--hr-paper);
+}
+.pf-spec-option-mark{
+  width:19px;
+  height:19px;
+  flex:0 0 19px;
+  display:grid;
+  place-items:center;
+  border:1px solid var(--hr-line-strong);
+  border-radius:6px;
+  background:var(--hr-paper);
+  color:var(--hr-ink);
+  font-size:.67rem;
+  font-weight:950;
+}
+.pf-spec-option.is-active .pf-spec-option-mark{
+  border-color:var(--hr-gold);
+  background:var(--hr-gold);
+  color:#fff;
+}
+.pf-spec-filter[open] > summary{
+  background:rgb(185 146 90 / .055);
+}
+@media(max-width:979px){
+  .pf-sidebar{
+    inset-inline:8px!important;
+    bottom:8px!important;
+    max-height:calc(100svh - 64px)!important;
+    padding:14px!important;
+    border-radius:20px!important;
+  }
+  .pf-sidebar-head{
+    position:sticky!important;
+    top:-14px!important;
+    z-index:4!important;
+    min-height:58px!important;
+    margin:0 -2px 3px!important;
+    padding:5px 2px 10px!important;
+    background:var(--hr-paper-2)!important;
+  }
+  .pf-sidebar-head strong{font-size:.88rem!important}
+  .pf-sidebar-head small{font-size:.66rem!important;line-height:1.7!important}
+  .pf-close{
+    width:42px!important;
+    height:42px!important;
+    border-radius:12px!important;
+  }
+  .pf-group{padding:13px 0!important}
+  .pf-group-title{
+    margin-bottom:9px!important;
+    font-size:.78rem!important;
+  }
+  .pf-group-body{gap:7px!important}
+  .pf-chips{gap:6px!important}
+  .pf-chip{
+    min-height:42px!important;
+    padding-inline:11px!important;
+    font-size:.67rem!important;
+  }
+  .pf-field input,
+  .pf-field select,
+  .pf-select{
+    min-height:48px!important;
+    font-size:.70rem!important;
+  }
+  .pf-switch{
+    min-height:50px!important;
+    padding-inline:11px!important;
+    font-size:.70rem!important;
+  }
+  .pf-switch input{
+    width:21px!important;
+    height:21px!important;
+  }
+  .pf-sidebar-foot{
+    position:sticky!important;
+    bottom:0!important;
+    z-index:5!important;
+    margin-top:3px!important;
+    padding:10px 0 2px!important;
+    background:linear-gradient(180deg,transparent 0%,var(--hr-paper-2) 28%)!important;
+  }
+  .pf-reset{
+    min-height:48px!important;
+    font-size:.70rem!important;
+  }
+  .pf-spec-filter > summary{
+    min-height:70px!important;
+    padding:11px 10px!important;
+  }
+  .pf-spec-filter > summary strong{font-size:.71rem!important}
+  .pf-spec-filter > summary small{
+    font-size:.58rem!important;
+    line-height:1.65!important;
+  }
+  .pf-spec-filter > summary b{
+    font-size:.58rem!important;
+    padding:5px 8px!important;
+  }
+  .pf-spec-filter-body{
+    gap:11px!important;
+    padding:9px!important;
+  }
+  .pf-spec-filter-group-title span{font-size:.64rem!important}
+  .pf-spec-filter-group-title small{font-size:.54rem!important}
+  .pf-spec-options{gap:6px!important}
+  .pf-spec-option{
+    min-height:46px!important;
+    padding:7px!important;
+    font-size:.60rem!important;
+    line-height:1.45!important;
+  }
+  .pf-spec-option-mark{
+    width:20px!important;
+    height:20px!important;
+    flex-basis:20px!important;
+  }
+}
+@media(max-width:420px){
+  .pf-page{
+    width:min(100% - 14px, 760px)!important;
+  }
+  .pf-hero{padding:17px 13px 15px!important}
+  .pf-toolbar{gap:7px!important}
+  .pf-search{min-height:49px!important}
+  .pf-filter-btn{min-height:48px!important}
+  .pf-sidebar{
+    inset-inline:5px!important;
+    bottom:5px!important;
+    max-height:calc(100svh - 52px)!important;
+    padding:12px!important;
+    border-radius:18px!important;
+  }
+  .pf-spec-options{grid-template-columns:1fr 1fr!important}
+  .pf-spec-option{
+    min-height:44px!important;
+    font-size:.57rem!important;
+  }
+}
