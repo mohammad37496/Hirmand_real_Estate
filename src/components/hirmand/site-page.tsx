@@ -693,10 +693,50 @@ function Contact() {
 }
 
 function FAQ() {
-  const orderedFaqs = useMemo(
-    () => [FAQS[2], FAQS[3], FAQS[4], FAQS[5], FAQS[6], FAQS[7], FAQS[8], FAQS[0], FAQS[1]],
-    [],
-  );
+  const [orderedFaqs, setOrderedFaqs] = useState<typeof FAQS>([...FAQS]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const measureAndSort = () => {
+      if (cancelled) return;
+
+      const sample = document.querySelector(".faq-item summary");
+      if (!sample) return;
+
+      const styles = window.getComputedStyle(sample);
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      if (!context) return;
+
+      context.font = [
+        styles.fontStyle,
+        styles.fontVariant,
+        styles.fontWeight,
+        styles.fontSize,
+        styles.fontFamily,
+      ].join(" ");
+
+      const measured = [...FAQS].sort(
+        (a, b) => context.measureText(a.q).width - context.measureText(b.q).width,
+      );
+
+      setOrderedFaqs(measured);
+    };
+
+    const fontsReady = document.fonts?.ready;
+    if (fontsReady) {
+      fontsReady.then(measureAndSort).catch(measureAndSort);
+    } else {
+      measureAndSort();
+    }
+
+    window.addEventListener("resize", measureAndSort);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("resize", measureAndSort);
+    };
+  }, []);
 
   return (
     <Reveal as="section" className="section">
