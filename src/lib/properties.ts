@@ -595,6 +595,18 @@ export const getPublishedProperty = createServerFn({ method: "GET" })
       }
     }
 
+    // Old public links were generated from /file/:id and then promoted to
+    // slug URLs such as "عنوان-345555d4". Keep those links resolvable even if
+    // the title/slug has changed later: the final 8 hex characters are the
+    // same short id fragment used by saveProperty().
+    const legacyIdPrefixes = Array.from(
+      new Set(
+        decodedCandidates
+          .map((value) => value.match(/-([0-9a-f]{8})$/i)?.[1]?.toLowerCase())
+          .filter((value): value is string => Boolean(value)),
+      ),
+    );
+
     const rows = await sql.query<Record<string, unknown>>(
       `select ${DETAIL_COLUMNS}
        from properties
@@ -602,10 +614,23 @@ export const getPublishedProperty = createServerFn({ method: "GET" })
          and (
            slug = any($1::text[])
            or id::text = any($1::text[])
+           or lower(left(id::text, 8)) = any($4::text[])
          )
-       order by case when slug = $2 then 0 when slug = $3 then 1 else 2 end
+       order by
+         case
+           when slug = $2 then 0
+           when slug = $3 then 1
+           when id::text = any($1::text[]) then 2
+           when lower(left(id::text, 8)) = any($4::text[]) then 3
+           else 4
+         end
        limit 1`,
-      [decodedCandidates, decodedCandidates[0], decodedCandidates[1] ?? decodedCandidates[0]],
+      [
+        decodedCandidates,
+        decodedCandidates[0],
+        decodedCandidates[1] ?? decodedCandidates[0],
+        legacyIdPrefixes,
+      ],
     );
 
     return rows[0] ? mapProperty(rows[0]) : null;
