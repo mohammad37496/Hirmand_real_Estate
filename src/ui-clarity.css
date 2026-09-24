@@ -2249,3 +2249,82 @@ body {
     min-height: 0 !important;
   }
 }
+/* === Extra compact property list cards ======================================== */
+@media (min-width: 721px) {
+  .property-grid.is-list-view .property-card {
+    grid-template-columns: 180px minmax(0, 1fr) !important;
+    min-height: 148px !important;
+    max-height: 148px !important;
+  }
+  .property-grid.is-list-view .property-card-link {
+    grid-template-columns: 180px minmax(0, 1fr) !important;
+    min-height: 148px !important;
+    max-height: 148px !important;
+  }
+  .property-grid.is-list-view .property-card-media {
+    width: 180px !important;
+    height: 148px !important;
+    min-height: 148px !important;
+    max-height: 148px !important;
+  }
+  .property-grid.is-list-view .property-card-body {
+    min-height: 148px !important;
+    max-height: 148px !important;
+    padding: 11px 15px !important;
+    overflow: hidden !important;
+  }
+  .property-grid.is-list-view .property-card-topline {
+    gap: 5px !important;
+  }
+  .property-grid.is-list-view .property-card-meta span,
+  .property-grid.is-list-view .property-card-code {
+    font-size: .62rem !important;
+  }
+  .property-grid.is-list-view .property-card-body h3 {
+    margin-top: 3px !important;
+    font-size: .9rem !important;
+    line-height: 1.55 !important;
+  }
+  .property-grid.is-list-view .property-card-price-row {
+    margin-top: 3px !important;
+    gap: 6px !important;
+  }
+  .property-grid.is-list-view .property-card-price {
+    font-size: .76rem !important;
+    line-height: 1.55 !important;
+  }
+  .property-grid.is-list-view .property-card-unit-price {
+    font-size: .58rem !important;
+  }
+  .property-grid.is-list-view .property-card-specs {
+    margin-top: 4px !important;
+    gap: 4px !important;
+  }
+  .property-grid.is-list-view .property-card-specs span {
+    min-height: 25px !important;
+    padding: 3px 6px !important;
+    font-size: .56rem !important;
+  }
+  .property-grid.is-list-view .property-card-footer {
+    margin-top: 4px !important;
+    font-size: .58rem !important;
+  }
+  .property-grid.is-list-view .property-card-actions {
+    left: 9px !important;
+    bottom: 9px !important;
+  }
+}
+@media (max-width: 720px) {
+  .property-grid.is-list-view .property-card-media {
+    height: 165px !important;
+    min-height: 165px !important;
+    max-height: 165px !important;
+  }
+  .property-grid.is-list-view .property-card-body {
+    padding: 10px 12px !important;
+  }
+  .property-grid.is-list-view .property-card-body h3 {
+    font-size: .82rem !important;
+    line-height: 1.6 !important;
+  }
+}
