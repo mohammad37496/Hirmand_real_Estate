@@ -73,6 +73,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
         params={{ slug: property.slug }}
         className="property-card-link"
         data-property-link="true"
+        data-property-id={property.id}
         aria-label={`مشاهده جزئیات کامل فایل ${property.title}`}
       >
         <div className="property-card-media">

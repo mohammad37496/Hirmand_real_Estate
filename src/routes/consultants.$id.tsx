@@ -20,7 +20,7 @@ export const Route = createFileRoute("/consultants/$id")({
     const person = people.find((item) => item.id.trim().toLowerCase() === requestedId) ?? null;
     if (!person) return { person: null, properties: [] };
     try {
-      const properties = await listPublishedPropertiesByContact({ data: { phone: person.phone } });
+      const properties = await listPublishedPropertiesByContact({ data: { consultantId: person.id } });
       return { person, properties };
     } catch (error) {
       console.error("[consultant-profile] listings loader failed", error);

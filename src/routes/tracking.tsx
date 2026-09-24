@@ -144,6 +144,7 @@ function TrackingPage() {
 
   async function login(event: FormEvent) {
     event.preventDefault();
+    if (loginBusy) return;
     if (!code.trim() || pin.trim().length !== 6) {
       setMessage("کد همکاری و رمز ۶ رقمی را کامل وارد کنید.");
       return;
@@ -186,7 +187,7 @@ function TrackingPage() {
 
   async function lookupTracking(event: FormEvent) {
     event.preventDefault();
-    if (!trackingCode.trim()) return;
+    if (lookupBusy || !trackingCode.trim()) return;
     setLookupBusy(true);
     setLookup(null);
     try {
@@ -227,7 +228,7 @@ function TrackingPage() {
 
   async function submitContract(event: FormEvent) {
     event.preventDefault();
-    if (!partner) return;
+    if (contractBusy || !partner) return;
     if (!contractForm.transactionType) {
       setMessage("نوع قرارداد را انتخاب کنید.");
       return;

@@ -34,7 +34,13 @@ export function allAreas(): AreaInfo[] {
 }
 
 export function findAreaBySlug(slug: string): AreaInfo | null {
-  const normalized = areaSlug(decodeURIComponent(slug));
+  let decoded = slug;
+  try {
+    decoded = decodeURIComponent(slug);
+  } catch {
+    // Malformed percent-encoded URLs should resolve to an unknown area, not 500.
+  }
+  const normalized = areaSlug(decoded);
   return allAreas().find((a) => a.slug === normalized) ?? null;
 }
 

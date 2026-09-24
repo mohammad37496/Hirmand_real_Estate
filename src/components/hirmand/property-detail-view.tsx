@@ -57,7 +57,7 @@ import {
   Zap,
   X,
 } from "lucide-react";
-import { breadcrumbJsonLd, propertyJsonLd, TX_LABEL, TYPE_LABEL } from "@/lib/seo";
+import { breadcrumbJsonLd, propertyJsonLd, safeJsonLd, TX_LABEL, TYPE_LABEL } from "@/lib/seo";
 import type { Property } from "@/lib/properties";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
@@ -515,6 +515,11 @@ function Gallery({
   const activeRef = useRef(0);
 
   const fallback = "/images/type-apartment.jpg";
+
+  useEffect(() => {
+    setActive((currentIndex) => Math.min(currentIndex, Math.max(0, images.length - 1)));
+    setZoomScale(1);
+  }, [images.length]);
   const current = images[active] ?? images[0] ?? "";
 
   useEffect(() => {
@@ -973,11 +978,11 @@ export function PropertyDetailView({
     <SiteChrome>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(propertyJsonLd(property)) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(propertyJsonLd(property)) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd(crumbs)) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbJsonLd(crumbs)) }}
       />
 
       <main className="property-detail-page">

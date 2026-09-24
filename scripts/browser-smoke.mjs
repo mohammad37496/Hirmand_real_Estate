@@ -61,9 +61,16 @@ if (baselineRequested) {
 
 const timeoutMs = Number(process.env.BROWSER_SMOKE_TIMEOUT_MS || 45000);
 
+const screenshotBase = outPng.replace(/\.png$/i, "");
 const VIEWPORTS = [
+  { name: "desktop-1920", width: 1920, height: 1080, screenshot: checkedOutputPath(`${screenshotBase}-desktop-1920.png`, ["/workspace"]) },
+  { name: "desktop-1440", width: 1440, height: 900, screenshot: checkedOutputPath(`${screenshotBase}-desktop-1440.png`, ["/workspace"]) },
   { name: "desktop", width: 1280, height: 800, screenshot: outPng },
-  { name: "mobile", width: 390, height: 844, screenshot: mobilePng },
+  { name: "tablet-1024", width: 1024, height: 768, screenshot: checkedOutputPath(`${screenshotBase}-tablet-1024.png`, ["/workspace"]) },
+  { name: "tablet-768", width: 768, height: 1024, screenshot: checkedOutputPath(`${screenshotBase}-tablet-768.png`, ["/workspace"]) },
+  { name: "mobile-430", width: 430, height: 932, screenshot: checkedOutputPath(`${screenshotBase}-mobile-430.png`, ["/workspace"]) },
+  { name: "mobile-390", width: 390, height: 844, screenshot: mobilePng },
+  { name: "mobile-375", width: 375, height: 812, screenshot: checkedOutputPath(`${screenshotBase}-mobile-375.png`, ["/workspace"]) },
 ];
 
 mkdirSync(dirname(outPng), { recursive: true });
@@ -156,8 +163,22 @@ try {
   // test cannot see, especially the property-detail route reported by users.
   const routeChecks = [];
   const publicRoutes = [
-    new URL("/properties", url).toString(),
-  ];
+    "/",
+    "/properties",
+    "/favorites",
+    "/compare",
+    "/tracking",
+    "/consultants",
+    "/consultants/sheikh",
+    "/budget-match",
+    "/areas/%D8%AC%D9%84%D9%81%D8%A7",
+    "/tools",
+    "/tools/commission",
+    "/tools/deposit",
+    "/tools/loan",
+    "/tools/rahn-rent",
+    "/admin",
+  ].map((path) => new URL(path, url).toString());
   for (const routeUrl of publicRoutes) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     const routeErrors = [];
@@ -219,7 +240,18 @@ try {
 
   // When published listings exist, exercise a real card-to-detail navigation.
   // This is the regression test for the recurring "clicking a file does nothing" bug.
-  const propertyNavigationCheck = { attempted: false, ok: true, href: null, status: null, bodyTextLen: 0, error: null };
+  const propertyNavigationCheck = {
+    attempted: false,
+    ok: true,
+    href: null,
+    status: null,
+    bodyTextLen: 0,
+    fileRouteStatus: null,
+    fileRouteOk: true,
+    vRouteStatus: null,
+    vRouteOk: true,
+    error: null,
+  };
   const propertyPage = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   try {
     const propertiesUrl = new URL("/properties", url).toString();
@@ -229,20 +261,57 @@ try {
     if (await cards.count()) {
       const link = cards.first();
       const href = await link.getAttribute("href").catch(() => null);
+      const propertyId = await link.getAttribute("data-property-id").catch(() => null);
       propertyNavigationCheck.href = href;
       if (href) {
         propertyNavigationCheck.attempted = true;
         await link.click();
-      await propertyPage.waitForLoadState("domcontentloaded").catch(() => undefined);
-      await propertyPage.waitForTimeout(500);
-      propertyNavigationCheck.status = await propertyPage.evaluate(() => window.location.pathname);
-      const textValue = await propertyPage.locator("body").innerText().catch(() => "");
-      propertyNavigationCheck.bodyTextLen = normalizeBodyText(textValue).length;
+        await propertyPage.waitForLoadState("domcontentloaded").catch(() => undefined);
+        await propertyPage.waitForTimeout(500);
+        propertyNavigationCheck.status = await propertyPage.evaluate(() => window.location.pathname);
+        const textValue = await propertyPage.locator("body").innerText().catch(() => "");
+        propertyNavigationCheck.bodyTextLen = normalizeBodyText(textValue).length;
+        const detailPath = propertyNavigationCheck.status;
+        let backForwardOk = false;
+        await propertyPage.goBack({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => undefined);
+        const backPath = await propertyPage.evaluate(() => window.location.pathname);
+        if (backPath === "/properties" || backPath === "/properties/") {
+          await propertyPage.goForward({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => undefined);
+          const forwardPath = await propertyPage.evaluate(() => window.location.pathname);
+          backForwardOk = forwardPath === detailPath;
+        }
         propertyNavigationCheck.ok =
-          (propertyNavigationCheck.status.startsWith("/file/") ||
-            propertyNavigationCheck.status.startsWith("/properties/")) &&
+          (detailPath.startsWith("/file/") || detailPath.startsWith("/properties/")) &&
+          detailPath !== "/properties/" &&
           propertyNavigationCheck.bodyTextLen > 80 &&
-          propertyNavigationCheck.status !== "/properties/";
+          backForwardOk &&
+          propertyNavigationCheck.fileRouteOk &&
+          propertyNavigationCheck.vRouteOk;
+
+        if (propertyId) {
+          const fileResponse = await propertyPage.goto(
+            new URL("/file/" + encodeURIComponent(propertyId), url).toString(),
+            { waitUntil: "domcontentloaded", timeout: timeoutMs },
+          ).catch(() => null);
+          propertyNavigationCheck.fileRouteStatus = fileResponse?.status() ?? 0;
+          const filePath = await propertyPage.evaluate(() => window.location.pathname);
+          propertyNavigationCheck.fileRouteOk =
+            propertyNavigationCheck.fileRouteStatus >= 200 &&
+            propertyNavigationCheck.fileRouteStatus < 400 &&
+            (filePath.startsWith("/properties/") || filePath.startsWith("/file/"));
+
+          const vUrl = new URL("/v/" + encodeURIComponent((href.split("/").pop() || "")) + "/" + encodeURIComponent(propertyId), url).toString();
+          const vResponse = await propertyPage.goto(vUrl, {
+            waitUntil: "domcontentloaded",
+            timeout: timeoutMs,
+          }).catch(() => null);
+          propertyNavigationCheck.vRouteStatus = vResponse?.status() ?? 0;
+          const vPath = await propertyPage.evaluate(() => window.location.pathname);
+          propertyNavigationCheck.vRouteOk =
+            propertyNavigationCheck.vRouteStatus >= 200 &&
+            propertyNavigationCheck.vRouteStatus < 400 &&
+            vPath.startsWith("/properties/");
+        }
       }
     }
   } catch (error) {
@@ -281,7 +350,49 @@ try {
       buildAuthEnabled: buildAuthEnabled(),
     }),
   );
-  const verdict = { url, viewports, routeChecks, propertyNavigationCheck, musicApiCheck, brandWarnings, authWarnings, verdictFile: outJson };
+  const filterInteractionCheck = { attempted: false, ok: true, error: null };
+  const interactionPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await interactionPage.goto(new URL("/properties", url).toString(), {
+      waitUntil: "domcontentloaded",
+      timeout: timeoutMs,
+    });
+    const searchInput = interactionPage.locator('input[aria-label="جست‌وجوی فایل"]').first();
+    if (await searchInput.count()) {
+      filterInteractionCheck.attempted = true;
+      await searchInput.fill("جلفا");
+      await searchInput.press("Enter").catch(() => undefined);
+      await interactionPage.waitForTimeout(600);
+      const value = await searchInput.inputValue().catch(() => "");
+      const bodyLen = normalizeBodyText(await interactionPage.locator("body").innerText().catch(() => "")).length;
+      filterInteractionCheck.ok = value === "جلفا" && bodyLen > 80;
+    }
+  } catch (error) {
+    filterInteractionCheck.error = String(error?.message || error);
+    filterInteractionCheck.ok = false;
+  } finally {
+    await interactionPage.close();
+  }
+
+  if (!filterInteractionCheck.ok) {
+    viewports.desktop.pageErrors.push(
+      filterInteractionCheck.attempted
+        ? "property search interaction smoke failed"
+        : "property search interaction smoke skipped: search input not available",
+    );
+  }
+
+  const verdict = {
+    url,
+    viewports,
+    routeChecks,
+    propertyNavigationCheck,
+    filterInteractionCheck,
+    musicApiCheck,
+    brandWarnings,
+    authWarnings,
+    verdictFile: outJson,
+  };
   if (baselineRequested) {
     const { divergesFromBaseline, reasons } = compareAgainstBaseline(verdict);
     verdict.divergesFromBaseline = divergesFromBaseline;

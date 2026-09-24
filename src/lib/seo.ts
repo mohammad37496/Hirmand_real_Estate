@@ -18,6 +18,20 @@ const TYPE_LABEL: Record<string, string> = {
   commercial: "تجاری",
 };
 
+/**
+ * Serialize JSON-LD safely for an HTML <script> context.
+ * JSON.stringify alone can emit "</script>" when content comes from persisted
+ * property fields, which lets untrusted text terminate the script element.
+ */
+export function safeJsonLd(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
 export function absoluteUrl(path = "/"): string {
   const base = SITE.url.replace(/\/$/, "");
   if (!path || path === "/") return base + "/";

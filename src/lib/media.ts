@@ -36,7 +36,7 @@ export function isDivarRemoteHost(value: string): boolean {
     host.endsWith(".divar.ir") ||
     host === "divar.com" ||
     host.endsWith(".divar.com") ||
-    host.includes("divarcdn")
+    host === "divarcdn.com" || host.endsWith(".divarcdn.com")
   );
 }
 

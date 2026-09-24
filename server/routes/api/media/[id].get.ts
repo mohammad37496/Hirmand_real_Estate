@@ -61,8 +61,25 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: "رسانه پیدا نشد." });
   }
 
+  // Legacy uploads may contain SVG objects from before the upload allowlist
+  // was tightened. Never serve those objects from our application origin.
+  if (meta.contentType.trim().toLowerCase() === "image/svg+xml") {
+    throw createError({ statusCode: 415, statusMessage: "این نوع رسانه برای نمایش مستقیم مجاز نیست." });
+  }
+
   const size = meta.sizeBytes;
-  const range = parseRangeHeader(getHeader(event, "range"), size);
+  const rangeHeader = getHeader(event, "range");
+
+  // RFC 9110: a Range request against an empty representation has no
+  // satisfiable byte range. Returning 206 with "bytes 0--1/0" is malformed
+  // and breaks some media clients.
+  if (size === 0 && rangeHeader) {
+    setResponseHeader(event, "content-range", "bytes */0");
+    setResponseHeader(event, "accept-ranges", "bytes");
+    throw createError({ statusCode: 416, statusMessage: "فایل خالی است و بازه‌ای برای آن وجود ندارد." });
+  }
+
+  const range = parseRangeHeader(rangeHeader, size);
 
   if (range === "unsatisfiable") {
     setResponseHeader(event, "content-range", `bytes */${size}`);

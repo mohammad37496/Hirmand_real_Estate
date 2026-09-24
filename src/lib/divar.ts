@@ -143,7 +143,7 @@ function isDivarSourceUrl(value: string): boolean {
     host.endsWith(".divar.ir") ||
     host === "divar.com" ||
     host.endsWith(".divar.com") ||
-    host.includes("divarcdn") ||
+    host === "divarcdn.com" || host.endsWith(".divarcdn.com") ||
     host === "wsrv.nl" ||
     host.endsWith(".wsrv.nl") ||
     host.endsWith("weserv.nl")
@@ -158,7 +158,7 @@ function isDivarMediaHost(value: string): boolean {
     host.endsWith(".divar.ir") ||
     host === "divar.com" ||
     host.endsWith(".divar.com") ||
-    host.includes("divarcdn")
+    host === "divarcdn.com" || host.endsWith(".divarcdn.com")
   );
 }
 
@@ -684,7 +684,19 @@ async function uploadDivarImages(token: string, urls: string[]): Promise<DivarIm
   ];
 
   const detectImageType = (bytes: Buffer, headerType: string) => {
-    if (/^image\//i.test(headerType)) return headerType.split(";")[0].toLowerCase();
+    // Never persist active image formats such as SVG. A strict allowlist plus
+    // magic-byte fallback prevents a misleading Content-Type from becoming
+    // stored executable content.
+    const declared = headerType.split(";")[0].trim().toLowerCase();
+    if (
+      declared === "image/png" ||
+      declared === "image/jpeg" ||
+      declared === "image/gif" ||
+      declared === "image/webp" ||
+      declared === "image/avif"
+    ) {
+      return declared;
+    }
     if (bytes.subarray(0, 8).toString("hex").startsWith("89504e47")) return "image/png";
     if (bytes.subarray(0, 3).toString("hex") === "ffd8ff") return "image/jpeg";
     if (
