@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useRef, useState, type TouchEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type TouchEvent } from "react";
 import {
   ArrowRight,
   Bath,
@@ -123,7 +123,7 @@ function formatAdDate(value: string | null | undefined) {
 }
 
 function formatVideoTime(value: number) {
-  if (!Number.isFinite(value) || value < 0) return "۰۱";
+  if (!Number.isFinite(value) || value < 0) return "۰:۰۰";
   const total = Math.floor(value);
   const minutes = Math.floor(total / 60);
   const seconds = total % 60;
@@ -218,7 +218,7 @@ function VideoPlayer({
 
   return (
     <div
-      className={`property-video-player ${className}`}
+      className={`property-video-player ${className} ${playing ? "is-playing" : "is-paused"}`}
       onClick={(event) => event.stopPropagation()}
     >
       <div className="property-video-frame">
