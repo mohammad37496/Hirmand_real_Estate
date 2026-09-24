@@ -35,7 +35,14 @@ async function main() {
   const pool = new pg.Pool({ connectionString: databaseUrl, max: 1 });
   const client = await pool.connect();
 
+  let migrationLockAcquired = false;
   try {
+    // Only one deployment may apply migrations at a time. Without a
+    // connection-level advisory lock, two concurrent Vercel builds can both
+    // observe the same pending migration and race the DDL / _migrations row.
+    await client.query("SELECT pg_advisory_lock(hashtext($1))", ["hirmand:migrations"]);
+    migrationLockAcquired = true;
+
     await client.query(
       "CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())",
     );
@@ -72,6 +79,11 @@ async function main() {
 
     console.log("[migrate] database is up to date.");
   } finally {
+    if (migrationLockAcquired) {
+      await client
+        .query("SELECT pg_advisory_unlock(hashtext($1))", ["hirmand:migrations"])
+        .catch(() => undefined);
+    }
     client.release();
     await pool.end();
   }
