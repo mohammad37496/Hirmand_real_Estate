@@ -410,110 +410,111 @@ function Gallery({
             <div
               ref={lightboxRef}
               className="property-lightbox"
-          role="dialog"
-          aria-modal="true"
-          aria-label={"نمایش تصاویر " + title}
-          tabIndex={-1}
-          onClick={closeLightbox}
-        >
-          <button
-            ref={closeButtonRef}
-            type="button"
-            className="property-lightbox-close"
-            onClick={closeLightbox}
-            aria-label="بستن نمایش تصاویر"
-            title="بستن نمایش تصاویر (Esc)"
-          >
-            <X size={21} strokeWidth={2.4} aria-hidden="true" />
-          </button>
-
-          <button
-            type="button"
-            className="property-lightbox-nav property-lightbox-prev"
-            onClick={(event) => {
-              event.stopPropagation();
-              goTo(active - 1);
-            }}
-            aria-label="تصویر قبلی"
-          >
-            <ChevronRight size={26} aria-hidden="true" />
-          </button>
-
-          <div
-            className="property-lightbox-stage"
-            onClick={(event) => event.stopPropagation()}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-          >
-            {isVideoUrl(current) ? (
-              <video src={current} controls playsInline autoPlay />
-            ) : (
+              role="dialog"
+              aria-modal="true"
+              aria-label={"نمایش تصاویر " + title}
+              tabIndex={-1}
+              onClick={closeLightbox}
+            >
               <button
+                ref={closeButtonRef}
                 type="button"
-                className={"property-lightbox-media-button" + (zoomScale > 1.05 ? " is-zoomed" : "")}
-                onDoubleClick={(event) => {
-                  event.stopPropagation();
-                  toggleZoom();
-                }}
-                onClick={(event) => event.stopPropagation()}
-                aria-label={zoomScale > 1.05 ? "بازگرداندن اندازه تصویر" : "بزرگ‌نمایی تصویر"}
+                className="property-lightbox-close"
+                onClick={closeLightbox}
+                aria-label="بستن نمایش تصاویر"
+                title="بستن نمایش تصاویر (Esc)"
               >
-                <ResilientImage
-                  src={current}
-                  fallback={fallback}
-                  alt={title + " - تصویر " + (active + 1).toLocaleString("fa-IR")}
-                  loading="eager"
-                />
+                <X size={21} strokeWidth={2.4} aria-hidden="true" />
               </button>
-            )}
-            <div className="property-lightbox-count" aria-live="polite">
-              تصویر {(active + 1).toLocaleString("fa-IR")} از {images.length.toLocaleString("fa-IR")}
-            </div>
-            {!isVideoUrl(current) ? (
+
               <button
                 type="button"
-                className="property-lightbox-zoom-hint"
+                className="property-lightbox-nav property-lightbox-prev"
                 onClick={(event) => {
                   event.stopPropagation();
-                  toggleZoom();
+                  goTo(active - 1);
                 }}
-                aria-label={zoomScale > 1.05 ? "خروج از بزرگ‌نمایی" : "بزرگ‌نمایی تصویر"}
+                aria-label="تصویر قبلی"
               >
-                {zoomScale > 1.05 ? "بازگشت به اندازه عادی" : "دو بار کلیک / لمس برای زوم"}
+                <ChevronRight size={26} aria-hidden="true" />
               </button>
-            ) : null}
-          </div>
 
-          <button
-            type="button"
-            className="property-lightbox-nav property-lightbox-next"
-            onClick={(event) => {
-              event.stopPropagation();
-              goTo(active + 1);
-            }}
-            aria-label="تصویر بعدی"
-          >
-            <ChevronLeft size={26} aria-hidden="true" />
-          </button>
-
-          <div className="property-lightbox-strip" onClick={(event) => event.stopPropagation()}>
-            {images.map((src, index) => (
-              <button
-                key={src + "-" + index}
-                type="button"
-                className={"property-lightbox-thumb" + (index === active ? " is-active" : "")}
-                onClick={() => setActive(index)}
-                aria-label={"تصویر " + (index + 1).toLocaleString("fa-IR")}
-                aria-current={index === active ? "true" : undefined}
+              <div
+                className="property-lightbox-stage"
+                onClick={(event) => event.stopPropagation()}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
               >
-                {isVideoUrl(src) ? (
-                  <video src={src} muted playsInline preload="metadata" aria-hidden="true" />
+                {isVideoUrl(current) ? (
+                  <video src={current} controls playsInline autoPlay />
                 ) : (
-                  <ResilientImage src={src} fallback={fallback} alt="" loading="lazy" />
+                  <button
+                    type="button"
+                    className={"property-lightbox-media-button" + (zoomScale > 1.05 ? " is-zoomed" : "")}
+                    onDoubleClick={(event) => {
+                      event.stopPropagation();
+                      toggleZoom();
+                    }}
+                    onClick={(event) => event.stopPropagation()}
+                    aria-label={zoomScale > 1.05 ? "بازگرداندن اندازه تصویر" : "بزرگ‌نمایی تصویر"}
+                  >
+                    <ResilientImage
+                      src={current}
+                      fallback={fallback}
+                      alt={title + " - تصویر " + (active + 1).toLocaleString("fa-IR")}
+                      loading="eager"
+                    />
+                  </button>
                 )}
+                <div className="property-lightbox-count" aria-live="polite">
+                  تصویر {(active + 1).toLocaleString("fa-IR")} از {images.length.toLocaleString("fa-IR")}
+                </div>
+                {!isVideoUrl(current) ? (
+                  <button
+                    type="button"
+                    className="property-lightbox-zoom-hint"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      toggleZoom();
+                    }}
+                    aria-label={zoomScale > 1.05 ? "خروج از بزرگ‌نمایی" : "بزرگ‌نمایی تصویر"}
+                  >
+                    {zoomScale > 1.05 ? "بازگشت به اندازه عادی" : "دو بار کلیک / لمس برای زوم"}
+                  </button>
+                ) : null}
+              </div>
+
+              <button
+                type="button"
+                className="property-lightbox-nav property-lightbox-next"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  goTo(active + 1);
+                }}
+                aria-label="تصویر بعدی"
+              >
+                <ChevronLeft size={26} aria-hidden="true" />
               </button>
-            ))}
+
+              <div className="property-lightbox-strip" onClick={(event) => event.stopPropagation()}>
+                {images.map((src, index) => (
+                  <button
+                    key={src + "-" + index}
+                    type="button"
+                    className={"property-lightbox-thumb" + (index === active ? " is-active" : "")}
+                    onClick={() => setActive(index)}
+                    aria-label={"تصویر " + (index + 1).toLocaleString("fa-IR")}
+                    aria-current={index === active ? "true" : undefined}
+                  >
+                    {isVideoUrl(src) ? (
+                      <video src={src} muted playsInline preload="metadata" aria-hidden="true" />
+                    ) : (
+                      <ResilientImage src={src} fallback={fallback} alt="" loading="lazy" />
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>,
             document.body,
           )
