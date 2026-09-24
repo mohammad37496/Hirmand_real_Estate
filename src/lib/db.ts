@@ -1,5 +1,5 @@
 import { pendingMigrations } from "../../scripts/migration-plan.mjs";
-import { sanitizePostgresConnectionString } from "../../scripts/resolve-database-url.mjs";
+import { resolveDatabaseUrl, sanitizePostgresConnectionString } from "../../scripts/resolve-database-url.mjs";
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
@@ -25,7 +25,7 @@ function resolveDatabaseUrlFromEnv(): string | undefined {
   return undefined;
 }
 
-const databaseUrl = resolveDatabaseUrlFromEnv();
+const databaseUrl = resolveDatabaseUrl(process.env).url;
 
 const isVercelRuntime =
   typeof process !== "undefined" &&
