@@ -693,7 +693,7 @@ function Contact() {
 }
 
 function FAQ() {
-  const [orderedFaqs, setOrderedFaqs] = useState<typeof FAQS>([...FAQS]);
+  const [orderedFaqs, setOrderedFaqs] = useState<Array<(typeof FAQS)[number]>>([...FAQS]);
 
   useEffect(() => {
     let cancelled = false;
