@@ -84,7 +84,7 @@ export function FinanceToolPage({ tool, children }: FinanceToolPageProps) {
       <div className="finance-tool-breadcrumb">
         <Link to="/">صفحه اصلی</Link>
         <span aria-hidden="true">/</span>
-        <Link to="/#tools">ابزار مالی</Link>
+        <Link to="/" hash="tools">ابزار مالی</Link>
         <span aria-hidden="true">/</span>
         <strong>{current.title}</strong>
       </div>
@@ -131,7 +131,7 @@ export function FinanceToolPage({ tool, children }: FinanceToolPageProps) {
             })}
           </nav>
 
-          <Link to="/tools" className="finance-tool-back">
+          <Link to="/tools" params={{}} className="finance-tool-back">
             <ArrowLeft size={16} />
             بازگشت به بخش ابزار مالی
           </Link>
