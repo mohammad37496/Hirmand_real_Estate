@@ -2269,6 +2269,7 @@ body:has(.property-detail-page) {
 /* Professional custom video controls */
 .property-video-player{
   position:relative!important;
+  z-index:1!important;
   width:100%!important;
   height:100%!important;
   min-width:0!important;
