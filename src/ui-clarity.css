@@ -1982,3 +1982,23 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     max-height: 400px !important;
   }
 }
+
+/* === Property detail flow: summary directly follows specifications ============= */
+.property-detail-page .property-detail-top {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+.property-detail-page .property-detail-top-gallery {
+  grid-column: 1 / -1 !important;
+}
+.property-detail-page .property-detail-main {
+  display: grid !important;
+  gap: 16px !important;
+}
+.property-detail-page .property-detail-main > .property-detail-summary {
+  position: static !important;
+  top: auto !important;
+  width: 100% !important;
+  margin: 0 !important;
+  align-self: stretch !important;
+  grid-column: 1 / -1 !important;
+}
