@@ -162,8 +162,19 @@ try {
   // test cannot see, especially the property-detail route reported by users.
   const routeChecks = [];
   const publicRoutes = [
-    new URL("/properties", url).toString(),
-  ];
+    "/",
+    "/properties",
+    "/favorites",
+    "/compare",
+    "/tracking",
+    "/consultants",
+    "/budget-match",
+    "/tools",
+    "/tools/commission",
+    "/tools/deposit",
+    "/tools/loan",
+    "/tools/rahn-rent",
+  ].map((path) => new URL(path, url).toString());
   for (const routeUrl of publicRoutes) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     const routeErrors = [];
