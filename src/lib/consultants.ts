@@ -111,6 +111,16 @@ export const listConsultants = createServerFn({ method: "GET" }).handler(async (
   return staticConsultants();
 });
 
+const safeExternalUrl = (label: string) =>
+  z
+    .string()
+    .trim()
+    .max(500)
+    .refine(
+      (value) => !value || /^https?:\\/\\//i.test(value),
+      `${label} باید با https:// یا http:// شروع شود.`,
+    );
+
 const consultantInput = z.object({
   id: z.string().trim().min(2).max(80),
   name: z.string().trim().min(2).max(80),
@@ -119,10 +129,10 @@ const consultantInput = z.object({
   phoneDisplay: z.string().trim().min(7).max(40),
   icon: z.enum(["briefcase", "handshake"]),
   bio: z.string().trim().max(500),
-  whatsapp: z.string().trim().max(500),
-  telegram: z.string().trim().max(500),
-  eitaa: z.string().trim().max(500),
-  instagram: z.string().trim().max(500),
+  whatsapp: safeExternalUrl("لینک واتساپ"),
+  telegram: safeExternalUrl("لینک تلگرام"),
+  eitaa: safeExternalUrl("لینک ایتا"),
+  instagram: safeExternalUrl("لینک اینستاگرام"),
   sortOrder: z.number().int().min(0).max(100000),
   isActive: z.boolean(),
 });
