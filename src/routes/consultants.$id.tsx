@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Briefcase, Check, Handshake, MessageCircle, Phone, ArrowRight } from "lucide-react";
+import { Briefcase, Check, Handshake, Phone, ArrowRight } from "lucide-react";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { EitaaIcon, TelegramIcon, WhatsAppIcon, InstagramIcon } from "@/components/hirmand/social-icons";
@@ -91,17 +91,17 @@ function ConsultantProfilePage() {
             <span className="consultant-profile-role">{person.role}</span>
             <h1>{person.name}</h1>
             <a className="consultant-profile-phone" href={`tel:${person.phone}`} dir="ltr">
-              <Phone size={16} /> {person.phoneDisplay}
+              <span className="consultant-profile-phone-icon" aria-hidden="true">
+                <Phone size={17} />
+              </span>
+              <bdi>{person.phoneDisplay.replace(/[0-9]/g, (digit) => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)])}</bdi>
             </a>
-            <p style={{ marginTop: 8, color: "var(--muted)" }}>
+            <p className="consultant-profile-description">
               ارتباط مستقیم برای فایل‌ها و پیگیری درخواست‌های ملکی در هیرمند.
             </p>
             <div className="consultant-profile-actions">
               <a className="btn-gold" href={`tel:${person.phone}`}>
                 <Phone size={16} /> تماس مستقیم
-              </a>
-              <a className="btn-ghost" href={chat.whatsapp} target="_blank" rel="noopener noreferrer">
-                <MessageCircle size={16} /> واتساپ
               </a>
             </div>
           </div>
