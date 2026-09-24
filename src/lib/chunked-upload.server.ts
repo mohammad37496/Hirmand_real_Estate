@@ -244,37 +244,37 @@ export async function handleChunkedUpload(
     }
 
     try {
-            const totals = await sql.query<SessionRow>(
-      `select count(*) as chunks, coalesce(sum(octet_length(data)), 0) as bytes
-       from media_upload_chunks where session_id = $1`,
-      [uploadId],
-    );
-    const receivedChunks = Number(totals[0]?.chunks) || 0;
-    const receivedBytes = Number(totals[0]?.bytes) || 0;
-    const totalChunks = Number(session.total_chunks) || 0;
+      const totals = await sql.query<SessionRow>(
+        `select count(*) as chunks, coalesce(sum(octet_length(data)), 0) as bytes
+         from media_upload_chunks where session_id = $1`,
+        [uploadId],
+      );
+      const receivedChunks = Number(totals[0]?.chunks) || 0;
+      const receivedBytes = Number(totals[0]?.bytes) || 0;
+      const totalChunks = Number(session.total_chunks) || 0;
       const totalBytes = Number(session.total_bytes) || 0;
 
       if (receivedChunks !== totalChunks || (totalBytes > 0 && receivedBytes !== totalBytes)) {
-      throw httpError(
-        `فایل کامل دریافت نشد (${receivedChunks.toLocaleString("fa-IR")} از ${totalChunks.toLocaleString("fa-IR")} قطعه). دوباره آپلود کنید.`,
-      );
-    }
+        throw httpError(
+          `فایل کامل دریافت نشد (${receivedChunks.toLocaleString("fa-IR")} از ${totalChunks.toLocaleString("fa-IR")} قطعه). دوباره آپلود کنید.`,
+        );
+      }
 
       const stored = await storeAssembledUpload({
-      pathname: String(session.pathname),
-      contentType: String(session.content_type),
-      sessionId: uploadId,
-    });
+        pathname: String(session.pathname),
+        contentType: String(session.content_type),
+        sessionId: uploadId,
+      });
 
       const result = await config.finish({
-      stored,
-      session,
-      text: {
-        title: String(session.title ?? ""),
-        artist: String(session.artist ?? ""),
-      },
-      totalBytes: receivedBytes,
-    });
+        stored,
+        session,
+        text: {
+          title: String(session.title ?? ""),
+          artist: String(session.artist ?? ""),
+        },
+        totalBytes: receivedBytes,
+      });
 
       return { ...(result as Record<string, unknown>), storage: stored.storage };
     } catch (error) {
@@ -285,8 +285,7 @@ export async function handleChunkedUpload(
         [uploadId],
       ).catch(() => undefined);
       throw error;
-    }
-  }
+    }  }
 
   if (action === "abort") {
     const uploadId = typeof body?.uploadId === "string" ? body.uploadId.trim() : "";
