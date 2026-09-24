@@ -2328,3 +2328,276 @@ body {
     line-height: 1.6 !important;
   }
 }
+/* === Rebuilt property list view ================================================ */
+@media (min-width: 721px) {
+  .property-grid.is-list-view {
+    gap: 12px !important;
+  }
+
+  .property-grid.is-list-view .property-card {
+    display: grid !important;
+    grid-template-columns: 156px minmax(0, 1fr) 96px !important;
+    align-items: stretch !important;
+    min-height: 132px !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: hidden !important;
+    border-radius: 16px !important;
+  }
+
+  .property-grid.is-list-view .property-card-link {
+    display: grid !important;
+    grid-column: 1 / 3 !important;
+    grid-row: 1 !important;
+    grid-template-columns: 156px minmax(0, 1fr) !important;
+    min-width: 0 !important;
+    min-height: 132px !important;
+    height: auto !important;
+  }
+
+  .property-grid.is-list-view .property-card-media {
+    width: 156px !important;
+    height: 132px !important;
+    min-height: 132px !important;
+    max-height: 132px !important;
+    align-self: start !important;
+    aspect-ratio: auto !important;
+  }
+
+  .property-grid.is-list-view .property-card-media img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  .property-grid.is-list-view .property-card-body {
+    display: grid !important;
+    grid-template-rows: auto auto auto auto !important;
+    align-content: center !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+    min-height: 132px !important;
+    padding: 10px 14px !important;
+    overflow: hidden !important;
+  }
+
+  .property-grid.is-list-view .property-card-topline {
+    min-width: 0 !important;
+    gap: 8px !important;
+  }
+
+  .property-grid.is-list-view .property-card-meta {
+    min-width: 0 !important;
+    flex-wrap: nowrap !important;
+    overflow: hidden !important;
+    gap: 3px 8px !important;
+    white-space: nowrap !important;
+    font-size: .62rem !important;
+  }
+
+  .property-grid.is-list-view .property-card-meta span {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .property-grid.is-list-view .property-card-code {
+    flex: 0 0 auto !important;
+    font-size: .58rem !important;
+  }
+
+  .property-grid.is-list-view .property-card-body h3 {
+    margin: 0 !important;
+    color: var(--ui-heading) !important;
+    font-size: .88rem !important;
+    line-height: 1.5 !important;
+    font-weight: 800 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .property-grid.is-list-view .property-card-price-row {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  .property-grid.is-list-view .property-card-price {
+    min-width: 0 !important;
+    margin: 0 !important;
+    color: var(--ui-heading) !important;
+    font-size: .72rem !important;
+    line-height: 1.5 !important;
+    font-weight: 800 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .property-grid.is-list-view .property-card-unit-price {
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    font-size: .56rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .property-grid.is-list-view .property-card-specs {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 5px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+  }
+
+  .property-grid.is-list-view .property-card-specs span {
+    flex: 0 0 auto !important;
+    min-height: 24px !important;
+    padding: 3px 6px !important;
+    border: 1px solid var(--ui-line) !important;
+    border-radius: 8px !important;
+    background: var(--ui-surface) !important;
+    color: var(--ui-ink) !important;
+    font-size: .55rem !important;
+    white-space: nowrap !important;
+  }
+
+  .property-grid.is-list-view .property-card-specs span svg {
+    width: 12px !important;
+    height: 12px !important;
+    color: var(--ui-brass) !important;
+  }
+
+  .property-grid.is-list-view .property-card-footer {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding-top: 4px !important;
+    border-top: 1px solid #eef1f4 !important;
+    font-size: .57rem !important;
+  }
+
+  .property-grid.is-list-view .property-card-location,
+  .property-grid.is-list-view .property-card-details-link {
+    min-width: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .property-grid.is-list-view .property-card-actions {
+    position: static !important;
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    padding: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-inline-start: 1px solid #eef1f4 !important;
+    background: #fbfcfd !important;
+  }
+
+  .property-grid.is-list-view .property-card-actions .property-actions-compact {
+    position: static !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, 34px) !important;
+    gap: 6px !important;
+    margin: 0 !important;
+  }
+
+  .property-grid.is-list-view .property-card-actions .property-action {
+    width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+    background: var(--ui-surface) !important;
+    color: var(--ui-muted) !important;
+    border: 1px solid var(--ui-line) !important;
+    border-radius: 9px !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .property-grid.is-list-view .property-card-actions .property-action:hover,
+  .property-grid.is-list-view .property-card-actions .property-action.is-active {
+    color: var(--ui-brass) !important;
+    border-color: rgba(154,106,58,.32) !important;
+    background: var(--ui-brass-soft) !important;
+  }
+
+  .property-grid.is-list-view .property-card-arrow {
+    width: 28px !important;
+    height: 28px !important;
+    left: 8px !important;
+    bottom: 8px !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .property-grid.is-list-view .property-card {
+    display: block !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  .property-grid.is-list-view .property-card-link {
+    display: grid !important;
+    grid-template-columns: 112px minmax(0, 1fr) !important;
+    min-height: 112px !important;
+  }
+
+  .property-grid.is-list-view .property-card-media {
+    width: 112px !important;
+    height: 112px !important;
+    min-height: 112px !important;
+    max-height: 112px !important;
+  }
+
+  .property-grid.is-list-view .property-card-body {
+    min-height: 112px !important;
+    padding: 9px 10px !important;
+    gap: 3px !important;
+  }
+
+  .property-grid.is-list-view .property-card-body h3 {
+    margin: 0 !important;
+    font-size: .78rem !important;
+    line-height: 1.5 !important;
+  }
+
+  .property-grid.is-list-view .property-card-price {
+    font-size: .68rem !important;
+  }
+
+  .property-grid.is-list-view .property-card-specs span {
+    font-size: .52rem !important;
+  }
+
+  .property-grid.is-list-view .property-card-actions {
+    position: static !important;
+    padding: 7px 10px !important;
+    border-top: 1px solid #eef1f4 !important;
+    background: #fbfcfd !important;
+  }
+
+  .property-grid.is-list-view .property-card-actions .property-actions-compact {
+    position: static !important;
+    display: flex !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+  }
+}
