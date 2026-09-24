@@ -694,7 +694,12 @@ function Contact() {
 
 function FAQ() {
   const orderedFaqs = useMemo(
-    () => [...FAQS].sort((a, b) => a.q.length - b.q.length),
+    () =>
+      [...FAQS].sort(
+        (a, b) =>
+          a.q.replace(/[\\s\\u200c]+/g, "").length -
+          b.q.replace(/[\\s\\u200c]+/g, "").length,
+      ),
     [],
   );
 
