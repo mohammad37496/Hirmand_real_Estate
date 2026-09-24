@@ -544,17 +544,40 @@ export const countPublishedProperties = createServerFn({ method: "GET" })
   });
 
 export const listPublishedPropertiesByContact = createServerFn({ method: "GET" })
-  .validator(z.object({ phone: z.string().trim().min(8).max(30) }))
+  .validator(z.object({ consultantId: z.string().trim().min(2).max(80) }))
   .handler(async ({ data }) => {
     if (dbSource === "unconfigured") return [];
     const sql = await getSql();
+
+    // Resolve the public consultant id server-side. The old API accepted an
+    // arbitrary phone number, which allowed callers to enumerate properties
+    // belonging to any contact number. Only active consultant profiles may be
+    // used to load their public listings.
+    let phone: string | null = null;
+    const consultantRows = await sql.query<{ phone: string }>(
+      `select phone
+       from consultants
+       where is_active = true and lower(id) = lower($1)
+       limit 1`,
+      [data.consultantId],
+    );
+    if (consultantRows[0]?.phone) {
+      phone = String(consultantRows[0].phone);
+    } else {
+      const bundled = [
+        ...TEAM.map((person) => ({ id: person.id, phone: person.phone })),
+      ].find((item) => item.id.trim().toLowerCase() === data.consultantId.trim().toLowerCase());
+      phone = bundled?.phone ?? null;
+    }
+    if (!phone) return [];
+
     const rows = await sql.query<Record<string, unknown>>(
       `select ${DETAIL_COLUMNS}
        from properties
        where status = 'published' and contact_phone = $1
        order by featured desc, published_at desc nulls last, created_at desc
        limit 48`,
-      [data.phone],
+      [phone],
     );
     return rows.map(mapProperty);
   });
