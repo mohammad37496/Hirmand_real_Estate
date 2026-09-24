@@ -69,7 +69,7 @@ export const ADMIN_CSS = `
 .admin-checks label{display:flex;align-items:center;gap:8px;font-size:.9rem;cursor:pointer;color:rgb(247 245 239 / .68)}
 .admin-checks input{accent-color:#f7f5ef;width:16px;height:16px}
 .admin-money-hint{display:block;margin-top:4px;color:#f7f5ef;font-size:.78rem}
-.admin-sticky-bar{position:fixed;bottom:0;left:0;right:0;z-index:40;padding:12px 24px;background:rgba(7,9,13,.92);backdrop-filter:blur(16px);border-top:1px solid rgba(244,239,230,.1);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.admin-sticky-bar{position:fixed;bottom:0;left:0;right:0;z-index:2000;padding:12px 24px;background:rgba(7,9,13,.92);backdrop-filter:blur(16px);border-top:1px solid rgba(244,239,230,.1);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .admin-sticky-bar-info{color:rgb(247 245 239 / .56);font-size:.85rem}
 .admin-sticky-bar-info strong{color:#f7f5ef}
 .admin-sticky-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -81,7 +81,7 @@ export const ADMIN_CSS = `
 .admin-key-row{display:flex;gap:8px}
 .admin-key-row input{flex:1;min-height:48px;padding:10px 14px;border:1px solid rgba(244,239,230,.12);border-radius:12px;background:rgba(255,255,255,.03);outline:none;font:inherit}
 .admin-key-row input:focus{border-color:rgba(247,245,239,.45);box-shadow:0 0 0 3px rgba(247,245,239,.12)}
-.admin-mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:35;background:rgba(7,9,13,.95);backdrop-filter:blur(14px);border-top:1px solid rgba(244,239,230,.1);padding:6px 8px calc(6px + env(safe-area-inset-bottom));justify-content:space-around}
+.admin-mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:2001;background:rgba(7,9,13,.95);backdrop-filter:blur(14px);border-top:1px solid rgba(244,239,230,.1);padding:6px 8px calc(6px + env(safe-area-inset-bottom));justify-content:space-around}
 .admin-mobile-nav button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 12px;border:0;background:transparent;color:rgb(247 245 239 / .56);font:inherit;font-size:.68rem;cursor:pointer}
 .admin-mobile-nav button.is-active{color:#f7f5ef}
 @keyframes admin-spin{to{transform:rotate(360deg)}}
@@ -782,3 +782,14 @@ export const ADMIN_CSS = `
   }
 }
 `;
+
+/* Keep admin form actions above floating media/music players. */
+.admin-sticky-bar{
+  z-index:2000!important;
+  isolation:isolate!important;
+}
+.admin-sticky-actions,
+.admin-sticky-bar-info{
+  position:relative!important;
+  z-index:2001!important;
+}
