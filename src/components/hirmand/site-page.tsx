@@ -694,12 +694,7 @@ function Contact() {
 
 function FAQ() {
   const orderedFaqs = useMemo(
-    () =>
-      [...FAQS].sort(
-        (a, b) =>
-          a.q.replace(/[\\s\\u200c]+/g, "").length -
-          b.q.replace(/[\\s\\u200c]+/g, "").length,
-      ),
+    () => [FAQS[2], FAQS[3], FAQS[4], FAQS[5], FAQS[6], FAQS[7], FAQS[8], FAQS[0], FAQS[1]],
     [],
   );
 
