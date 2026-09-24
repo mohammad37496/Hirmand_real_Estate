@@ -1,11 +1,16 @@
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
-import { getPublishedProperty } from "@/lib/properties";
+import { getPublishedProperty, getPublishedPropertyById } from "@/lib/properties";
 import { propertyHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/v/$slug/$id")({
   loader: async ({ params }) => {
     try {
-      const property = await getPublishedProperty({ data: { slug: params.id } });
+      // Legacy URLs have appeared in both /v/<slug>/<id> and /v/<anything>/<slug>
+      // forms over time. Resolve the stable id first, then fall back to the slug
+      // so old shared links do not silently become 404s.
+      const property =
+        (await getPublishedPropertyById({ data: { id: params.id } }).catch(() => null)) ??
+        (await getPublishedProperty({ data: { slug: params.slug } }).catch(() => null));
       if (!property) throw notFound();
 
       throw redirect({
