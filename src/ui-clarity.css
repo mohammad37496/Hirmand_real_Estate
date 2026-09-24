@@ -2849,3 +2849,254 @@ body {
     font-size: .47rem !important;
   }
 }
+/* === Mobile list cards: single-piece, clean and readable ====================== */
+@media (max-width: 720px) {
+  .property-grid.is-list-view .property-card {
+    display: block !important;
+    position: relative !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: hidden !important;
+    border-radius: 16px !important;
+    background: var(--ui-surface) !important;
+    border: 1px solid var(--ui-line) !important;
+    box-shadow: 0 8px 20px rgba(15,23,42,.06) !important;
+  }
+
+  .property-grid.is-list-view .property-card-link {
+    display: block !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  .property-grid.is-list-view .property-card-media {
+    width: 100% !important;
+    height: 164px !important;
+    min-height: 164px !important;
+    max-height: 164px !important;
+    border-radius: 0 !important;
+  }
+
+  .property-grid.is-list-view .property-card-media img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  .property-grid.is-list-view .property-card-badges {
+    top: 9px !important;
+    right: 9px !important;
+  }
+
+  .property-grid.is-list-view .property-badge {
+    min-height: 25px !important;
+    padding: 3px 8px !important;
+    font-size: .56rem !important;
+  }
+
+  .property-grid.is-list-view .property-card-arrow {
+    left: 9px !important;
+    bottom: 9px !important;
+    width: 28px !important;
+    height: 28px !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .property-grid.is-list-view .property-card-body {
+    display: block !important;
+    min-height: 0 !important;
+    padding: 11px 12px 12px !important;
+    overflow: visible !important;
+  }
+
+  .property-grid.is-list-view .property-card-topline {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 7px !important;
+    margin: 0 !important;
+  }
+
+  .property-grid.is-list-view .property-card-meta {
+    min-width: 0 !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 3px 7px !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    font-size: .61rem !important;
+  }
+
+  .property-grid.is-list-view .property-card-meta span {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .property-grid.is-list-view .property-card-code {
+    flex: 0 0 auto !important;
+    font-size: .54rem !important;
+  }
+
+  .property-grid.is-list-view .property-card-body h3 {
+    margin: 7px 0 0 !important;
+    color: var(--ui-heading) !important;
+    font-size: .88rem !important;
+    line-height: 1.65 !important;
+    font-weight: 800 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .property-grid.is-list-view .property-card-price-row {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 6px !important;
+    margin-top: 5px !important;
+  }
+
+  .property-grid.is-list-view .property-card-price {
+    min-width: 0 !important;
+    margin: 0 !important;
+    color: var(--ui-heading) !important;
+    font-size: .76rem !important;
+    line-height: 1.65 !important;
+    font-weight: 850 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .property-grid.is-list-view .property-card-unit-price {
+    display: none !important;
+  }
+
+  .property-grid.is-list-view .property-card-specs {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 10px !important;
+    margin: 7px 0 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .property-grid.is-list-view .property-card-specs span {
+    flex: 0 0 auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    min-height: 22px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: var(--ui-muted) !important;
+    font-size: .58rem !important;
+  }
+
+  .property-grid.is-list-view .property-card-specs span svg {
+    width: 12px !important;
+    height: 12px !important;
+    color: var(--ui-brass) !important;
+  }
+
+  .property-grid.is-list-view .property-card-footer {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    margin-top: 8px !important;
+    padding-top: 7px !important;
+    border-top: 1px solid #eef1f4 !important;
+    font-size: .59rem !important;
+  }
+
+  .property-grid.is-list-view .property-card-location,
+  .property-grid.is-list-view .property-card-details-link {
+    min-width: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Actions float over the image instead of creating another visual section. */
+  .property-grid.is-list-view .property-card-actions {
+    position: absolute !important;
+    top: 9px !important;
+    left: 9px !important;
+    z-index: 5 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    border: 0 !important;
+    background: transparent !important;
+    pointer-events: none !important;
+  }
+
+  .property-grid.is-list-view .property-card-actions .property-actions-compact {
+    position: static !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    margin: 0 !important;
+    pointer-events: auto !important;
+  }
+
+  .property-grid.is-list-view .property-card-actions .property-action {
+    width: 29px !important;
+    height: 29px !important;
+    min-height: 29px !important;
+    padding: 0 !important;
+    border-radius: 9px !important;
+    border: 1px solid rgba(255,255,255,.45) !important;
+    background: rgba(255,255,255,.92) !important;
+    color: var(--ui-muted) !important;
+    box-shadow: 0 5px 14px rgba(15,23,42,.12) !important;
+    backdrop-filter: blur(8px) !important;
+  }
+
+  .property-grid.is-list-view .property-card-actions .property-action svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  .property-grid.is-list-view .property-card-actions .property-action:hover,
+  .property-grid.is-list-view .property-card-actions .property-action.is-active {
+    color: var(--ui-brass) !important;
+    background: #fff !important;
+    border-color: rgba(154,106,58,.35) !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .property-grid.is-list-view .property-card-media {
+    height: 150px !important;
+    min-height: 150px !important;
+    max-height: 150px !important;
+  }
+
+  .property-grid.is-list-view .property-card-body {
+    padding: 10px 11px 11px !important;
+  }
+
+  .property-grid.is-list-view .property-card-body h3 {
+    font-size: .82rem !important;
+  }
+
+  .property-grid.is-list-view .property-card-price {
+    font-size: .7rem !important;
+  }
+
+  .property-grid.is-list-view .property-card-specs {
+    gap: 8px !important;
+  }
+
+  .property-grid.is-list-view .property-card-specs span {
+    font-size: .54rem !important;
+  }
+}
