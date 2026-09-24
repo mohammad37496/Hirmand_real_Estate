@@ -82,15 +82,18 @@ export type MapTarget = {
 };
 
 export function mapLinks(target: MapTarget = { lat: SITE.lat, lng: SITE.lng, label: SITE.shortName }) {
-  const q = encodeURIComponent(`${target.label} اصفهان`);
+  const q = encodeURIComponent(`${target.label}، اصفهان، ایران`);
+  const googleSearch = `https://www.google.com/maps/search/?api=1&query=${q}`;
+  const googleEmbed = `https://maps.google.com/maps?q=${q}&z=15&hl=fa&output=embed`;
   return {
-    google: `https://www.google.com/maps/search/?api=1&query=${target.lat},${target.lng}`,
-    googlePlace: `https://www.google.com/maps/place/${target.lat},${target.lng}/@${target.lat},${target.lng},17z`,
+    google: googleSearch,
+    googlePlace: googleSearch,
+    googleEmbed,
     balad: `https://balad.ir/location?latitude=${target.lat}&longitude=${target.lng}`,
     neshan: `https://neshan.org/maps/@${target.lat},${target.lng},17z`,
-    embed: `https://maps.google.com/maps?q=${target.lat},${target.lng}&z=16&hl=fa&output=embed`,
+    embed: googleEmbed,
     osm: `https://www.openstreetmap.org/export/embed.html?bbox=${target.lng - 0.012},${target.lat - 0.008},${target.lng + 0.012},${target.lat + 0.008}&layer=mapnik&marker=${target.lat},${target.lng}`,
-    search: `https://www.google.com/maps/search/?api=1&query=${q}`,
+    search: googleSearch,
   };
 }
 
