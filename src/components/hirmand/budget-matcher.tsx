@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   ArrowLeftRight,
   BedDouble,
@@ -21,6 +21,7 @@ import { PROPERTY_TYPES, NEIGHBORHOOD_NAMES, SITE, TEAM } from "@/lib/site";
 import { DEFAULT_RAHN_RATE, RAHN_RATE_PRESETS } from "@/lib/finance";
 import { formatToman, parseAmount } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import { listNeighborhoodNames } from "@/lib/neighborhoods";
 import {
   matchPublishedPropertiesByBudget,
   type PropertyBudgetMatch,
@@ -94,6 +95,7 @@ export function BudgetMatcher() {
   const [consultant, setConsultant] = useState<(typeof TEAM)[number]["id"]>(TEAM[0].id);
   const [propertyType, setPropertyType] = useState<PropertyType | "">("");
   const [neighborhood, setNeighborhood] = useState("");
+  const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>(NEIGHBORHOOD_NAMES);
   const [bedrooms, setBedrooms] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [matches, setMatches] = useState<PropertyBudgetMatch[]>([]);
@@ -101,6 +103,18 @@ export function BudgetMatcher() {
   const [searched, setSearched] = useState(false);
   const [leadSaving, setLeadSaving] = useState(false);
   const [leadSaved, setLeadSaved] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void listNeighborhoodNames()
+      .then((names) => {
+        if (!cancelled && names.length) setNeighborhoodOptions(names);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const depositNumber = useMemo(() => parseAmount(deposit), [deposit]);
   const rentNumber = useMemo(() => parseAmount(rent), [rent]);
@@ -354,7 +368,7 @@ export function BudgetMatcher() {
                     <span><MapPin size={14} /> محله</span>
                     <select value={neighborhood} onChange={(event) => setNeighborhood(event.target.value)}>
                       <option value="">همه محله‌ها</option>
-                      {NEIGHBORHOOD_NAMES.map((item) => <option key={item} value={item}>{item}</option>)}
+                      {neighborhoodOptions.map((item) => <option key={item} value={item}>{item}</option>)}
                     </select>
                   </label>
 
