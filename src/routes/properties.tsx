@@ -862,11 +862,11 @@ function PropertiesIndexPage() {
               </label>
             </FilterGroup>
 
-            <details className={`pf-spec-filter${specFilters.length ? " has-selection" : ""}`}>
+            <details defaultOpen className={`pf-spec-filter${specFilters.length ? " has-selection" : ""}`}>
               <summary>
                 <span>
-                  <strong>امکانات و مشخصات بیشتر</strong>
-                  <small>کابینت، کف، کمد دیواری، سرمایش، گرمایش و امکانات دیگر</small>
+                  <strong>همه امکانات و مشخصات فایل</strong>
+                  <small>۹۴ گزینه جزئی در ۶ گروه + پارکینگ، آسانسور و انباری</small>
                 </span>
                 <b>{specFilters.length ? `${fa(specFilters.length)} انتخاب` : "انتخاب"}</b>
               </summary>
