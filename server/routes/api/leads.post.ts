@@ -94,6 +94,25 @@ export default defineEventHandler(async (event) => {
       console.error("[leads] acquisition lookup unavailable", error);
     }
   }
+  const budgetDeposit = parsed.data.budgetDeposit ?? 0;
+  const budgetRent = parsed.data.budgetRent ?? 0;
+  const matchedProperties = parsed.data.matches.slice(0, 12);
+  const budgetPayload = {
+    name: parsed.data.name,
+    phone: parsed.data.phone,
+    depositBudget: budgetDeposit,
+    rentBudget: budgetRent,
+    propertyType: parsed.data.propertyType,
+    neighborhood: parsed.data.neighborhood,
+    bedrooms: parsed.data.budgetBedrooms,
+    matches: matchedProperties,
+    note: parsed.data.note,
+  };
+  const equivalent = parsed.data.source === "budget_match" ? budgetEquivalent(budgetPayload) : 0;
+  const note = parsed.data.source === "budget_match"
+    ? buildBudgetLeadNote(budgetPayload)
+    : parsed.data.note;
+
   const requestToken = crypto.randomUUID();
   const guardRows = await sql.query<{ acquired: boolean }>(
     `insert into lead_dedupe_guard (phone, request_token, last_submitted_at)
@@ -121,10 +140,48 @@ export default defineEventHandler(async (event) => {
        limit 1`,
       [parsed.data.phone],
     );
+    const duplicate = duplicateRows[0];
+    if (duplicate && parsed.data.source === "budget_match") {
+      await sql.query(
+        `update leads
+         set name=$2, people_count=$3, job=$4, deal=$5, property_type=$6, neighborhood=$7, consultant=$8, note=$9,
+             source=$10, follow_up_at=current_timestamp + interval '24 hours',
+             acquisition_source=$18, acquisition_medium=$19, acquisition_campaign=$20,
+             acquisition_referrer=$21, acquisition_landing_path=$22, budget_deposit=$11,
+             budget_rent=$12, budget_rate=$13, budget_equivalent=$14, budget_bedrooms=$15,
+             matched_properties=$16::jsonb, match_count=$17, updated_at=current_timestamp
+         where id=$1`,
+        [
+          duplicate.id,
+          parsed.data.name,
+          parsed.data.peopleCount ?? null,
+          parsed.data.job,
+          parsed.data.deal,
+          parsed.data.propertyType,
+          parsed.data.neighborhood,
+          parsed.data.consultant,
+          note,
+          parsed.data.source,
+          budgetDeposit || null,
+          budgetRent || null,
+          DEFAULT_MATCH_RAHN_RATE,
+          equivalent || null,
+          parsed.data.budgetBedrooms ?? null,
+          JSON.stringify(matchedProperties),
+          matchedProperties.length,
+          acquisition.source,
+          acquisition.medium,
+          acquisition.campaign,
+          acquisition.referrer,
+          acquisition.landingPath,
+        ],
+      );
+      return { success: true, duplicate: true, updated: true, id: duplicate.id };
+    }
     return {
       success: true,
       duplicate: true,
-      id: duplicateRows[0]?.id ?? null,
+      id: duplicate?.id ?? null,
     };
   }
 
@@ -132,25 +189,6 @@ export default defineEventHandler(async (event) => {
     `select id from leads where phone = $1 and created_at > current_timestamp - interval '10 minutes' limit 1`,
     [parsed.data.phone],
   );
-
-  const budgetDeposit = parsed.data.budgetDeposit ?? 0;
-  const budgetRent = parsed.data.budgetRent ?? 0;
-  const matchedProperties = parsed.data.matches.slice(0, 12);
-  const budgetPayload = {
-    name: parsed.data.name,
-    phone: parsed.data.phone,
-    depositBudget: budgetDeposit,
-    rentBudget: budgetRent,
-    propertyType: parsed.data.propertyType,
-    neighborhood: parsed.data.neighborhood,
-    bedrooms: parsed.data.budgetBedrooms,
-    matches: matchedProperties,
-    note: parsed.data.note,
-  };
-  const equivalent = parsed.data.source === "budget_match" ? budgetEquivalent(budgetPayload) : 0;
-  const note = parsed.data.source === "budget_match"
-    ? buildBudgetLeadNote(budgetPayload)
-    : parsed.data.note;
 
   if (existing[0]) {
     if (parsed.data.source === "budget_match") {
