@@ -770,3 +770,19 @@
     overflow: hidden !important;
   }
 }
+@media (max-width: 720px) {
+  .mobile-menu .mobile-menu-inquiry {
+    justify-content: center !important;
+    margin-top: 3px !important;
+    background: var(--navy-900) !important;
+    border-color: var(--navy-900) !important;
+    color: #fff !important;
+  }
+
+  .mobile-menu .mobile-menu-inquiry:active,
+  .mobile-menu .mobile-menu-inquiry:focus-visible {
+    background: var(--navy-800) !important;
+    border-color: var(--navy-800) !important;
+    color: #fff !important;
+  }
+}
