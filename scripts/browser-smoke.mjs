@@ -278,7 +278,7 @@ try {
         const canonicalUrl = new URL(href, propertiesUrl);
         const pathParts = canonicalUrl.pathname.split("/").filter(Boolean);
         const canonicalSlug = pathParts[pathParts.length - 1]
-          ? decodeURIComponent(pathParts[pathParts.length - 1]!)
+          ? decodeURIComponent(pathParts[pathParts.length - 1])
           : "";
         propertyNavigationCheck.hrefDecodedSlug = canonicalSlug;
         propertyNavigationCheck.hrefMatchesExpectedSlug =
