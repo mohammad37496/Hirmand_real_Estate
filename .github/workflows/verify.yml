@@ -23,6 +23,9 @@ jobs:
       BROWSER_SMOKE_PROPERTY_SLUG: آپارتمان-تست-ناوبری-۱۴۰۵-browser-smoke
       BROWSER_SMOKE_PROPERTY_TITLE: فایل تست ناوبری جزئیات هیرمند
       REQUIRE_PROPERTY_SMOKE: "1"
+      HIRMAND_ADMIN_KEY: browser-smoke-admin-key
+      ADMIN_SMOKE_PROPERTY_TITLE: فایل تست mutation ادمین هیرمند
+      ADMIN_SMOKE_PROPERTY_PRICE: "12345678901"
     services:
       postgres:
         image: postgres:16
@@ -101,6 +104,7 @@ jobs:
           npx playwright install --with-deps chromium
           curl --silent --fail http://127.0.0.1:8081/ >/dev/null
           node scripts/browser-smoke.mjs http://127.0.0.1:8081/ /workspace/screenshots/hirmand-preview.png
+          node scripts/admin-mutation-smoke.mjs http://127.0.0.1:8081
 
       - name: Cleanup property-detail fixture
         if: always()
