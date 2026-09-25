@@ -33,3 +33,17 @@ test("malformed money and NaN are rejected instead of being silently nulled", ()
   assert.throws(() => nullableMoneyFieldSchema.parse("NaN"), /Invalid|regex|expected/i);
   assert.throws(() => nullableMoneyFieldSchema.parse(NaN), /Invalid|expected/i);
 });
+
+test("integer input contract rejects malformed non-empty values", async () => {
+  const { isInvalidIntegerInput, nullableIntegerInput } = await import("./property-input-normalization.ts");
+  assert.equal(isInvalidIntegerInput("۱۲۳٬۴۵۶"), false);
+  assert.equal(nullableIntegerInput("۱۲۳٬۴۵۶"), 123456);
+  assert.equal(isInvalidIntegerInput(""), false);
+  assert.equal(nullableIntegerInput(""), null);
+  assert.equal(isInvalidIntegerInput("null"), false);
+  assert.equal(nullableIntegerInput("null"), null);
+  assert.equal(isInvalidIntegerInput("NaN"), true);
+  assert.equal(isInvalidIntegerInput("12.5"), true);
+  assert.equal(isInvalidIntegerInput("-2"), true);
+  assert.equal(isInvalidIntegerInput("-2", true), false);
+});
