@@ -1,5 +1,6 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import { getPublishedProperty, listRelatedProperties } from "@/lib/properties";
+import { isCanonicalSlug } from "@/lib/property-slug";
 import { propertyHead } from "@/lib/seo";
 import { PropertyDetailView } from "@/components/hirmand/property-detail-view";
 
@@ -7,6 +8,21 @@ export const Route = createFileRoute("/properties/$slug")({
   loader: async ({ params }) => {
     const property = await getPublishedProperty({ data: { slug: params.slug } });
     if (!property) throw notFound();
+
+    // The lookup is deliberately tolerant: legacy links carry an older title,
+    // an id-based path, or a percent-encoded slug. Those all resolve to the
+    // same row, so the URL has to be rewritten to the property's own slug —
+    // otherwise one file answers on several URLs (stale shares keep working
+    // forever, and search engines index duplicates). `isCanonicalSlug` reads the
+    // same decode chain as `getPublishedProperty`, so an encoded param still
+    // compares equal (see src/lib/property-slug.ts).
+    if (!isCanonicalSlug(params.slug, property.slug)) {
+      throw redirect({
+        to: "/properties/$slug",
+        params: { slug: property.slug },
+        replace: true,
+      });
+    }
 
     let related: Awaited<ReturnType<typeof listRelatedProperties>> = [];
     try {
