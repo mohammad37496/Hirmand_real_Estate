@@ -250,16 +250,21 @@ export async function authenticatePartner(partnerCode: string, pin: string) {
   );
 
   if (!valid) {
-    const failures = (Number(row.failed_login_count) || 0) + 1;
+    // Let PostgreSQL serialize concurrent failures. A read/increment/write in
+    // application code let parallel requests overwrite each other and bypass
+    // the five-attempt lock.
     await sql.query(
       `
         update partner_accounts
-        set failed_login_count = $2,
-            locked_until = case when $2 >= 5 then current_timestamp + interval '15 minutes' else null end,
+        set failed_login_count = failed_login_count + 1,
+            locked_until = case
+              when failed_login_count + 1 >= 5 then current_timestamp + interval '15 minutes'
+              else null
+            end,
             updated_at = current_timestamp
         where id = $1
       `,
-      [String(row.id), failures],
+      [String(row.id)],
     );
     return null;
   }

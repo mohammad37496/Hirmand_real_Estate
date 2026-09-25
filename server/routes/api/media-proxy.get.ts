@@ -1,4 +1,5 @@
 import { createError, defineEventHandler, getQuery } from "h3";
+import { detectRasterImageType, isDivarRemoteHost } from "@/lib/media";
 
 /**
  * Same-origin image proxy for classifieds CDNs that block hotlinking.
@@ -12,33 +13,46 @@ import { createError, defineEventHandler, getQuery } from "h3";
 const MAX_BYTES = 12 * 1024 * 1024;
 const TIMEOUT_MS = 12_000;
 
-const ALLOWED_HOSTS = [
-  "divar.ir",
-  "divar.com",
-  "divarcdn.com",
-  "i.divar.ir",
-  "sin.divar.ir",
-  "cdn.divar.ir",
-  "images.divar.ir",
-  "media.divar.ir",
-];
-
-function isAllowedHost(hostname: string): boolean {
-  const host = hostname.toLowerCase();
-  return ALLOWED_HOSTS.some((allowed) => host === allowed || host.endsWith("." + allowed));
+function isAllowedTarget(target: URL): boolean {
+  return target.protocol === "https:" && isDivarRemoteHost(target.toString());
 }
 
-function detectImageType(bytes: Uint8Array, headerType: string): string {
-  if (/^image\/(jpeg|png|webp|gif|avif)/i.test(headerType)) {
-    return headerType.split(";")[0]!.trim().toLowerCase();
+async function readBoundedImage(response: Response): Promise<Uint8Array> {
+  const declaredLength = Number(response.headers.get("content-length") ?? 0);
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_BYTES) {
+    throw createError({ statusCode: 502, statusMessage: "حجم تصویر نامعتبر است." });
   }
-  const hex = Buffer.from(bytes.subarray(0, 8)).toString("hex");
-  if (hex.startsWith("89504e47")) return "image/png";
-  if (hex.startsWith("ffd8ff")) return "image/jpeg";
-  if (hex.startsWith("47494638")) return "image/gif";
-  const ascii = Buffer.from(bytes.subarray(0, 12)).toString("ascii");
-  if (ascii.startsWith("RIFF") && ascii.slice(8, 12) === "WEBP") return "image/webp";
-  return "";
+
+  if (!response.body) {
+    throw createError({ statusCode: 502, statusMessage: "محتوای دریافتی تصویر نیست." });
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      total += value.byteLength;
+      if (total > MAX_BYTES) {
+        await reader.cancel();
+        throw createError({ statusCode: 502, statusMessage: "حجم تصویر نامعتبر است." });
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
 }
 
 export default defineEventHandler(async (event) => {
@@ -56,7 +70,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "نشانی تصویر نامعتبر است." });
   }
 
-  if (target.protocol !== "https:" || !isAllowedHost(target.hostname)) {
+  if (!isAllowedTarget(target)) {
     throw createError({
       statusCode: 400,
       statusMessage: "پروکسی تصویر فقط برای منابع مجاز فعال است.",
@@ -91,7 +105,7 @@ export default defineEventHandler(async (event) => {
       }
 
       const nextUrl = new URL(location, currentUrl);
-      if (nextUrl.protocol !== "https:" || !isAllowedHost(nextUrl.hostname)) {
+      if (!isAllowedTarget(nextUrl)) {
         throw createError({
           statusCode: 502,
           statusMessage: "ریدایرکت تصویر به منبع غیرمجاز مسدود شد.",
@@ -119,22 +133,23 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  if (!bytes.length || bytes.length > MAX_BYTES) {
+  const bytes = await readBoundedImage(response);
+  if (!bytes.length) {
     throw createError({ statusCode: 502, statusMessage: "حجم تصویر نامعتبر است." });
   }
 
-  const contentType = detectImageType(bytes, response.headers.get("content-type") ?? "");
+  const contentType = detectRasterImageType(bytes);
   if (!contentType) {
     throw createError({ statusCode: 502, statusMessage: "محتوای دریافتی تصویر نیست." });
   }
 
-  return new Response(bytes, {
+  return new Response(bytes.buffer as ArrayBuffer, {
     status: 200,
     headers: {
       "content-type": contentType,
       "cache-control": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800",
       "x-content-type-options": "nosniff",
+      "content-security-policy": "sandbox; default-src 'none'; style-src 'unsafe-inline'",
     },
   });
 });

@@ -9,28 +9,39 @@ import { SITE } from "@/lib/site";
 const FAVORITES_KEY = "hirmand-favorite-properties";
 const RECENT_PROPERTIES_KEY = "hirmand-recent-properties";
 
+function cleanSlugs(value: unknown, limit: number): string[] {
+  if (!Array.isArray(value)) return [];
+  return Array.from(new Set(
+    value.filter(
+      (item): item is string =>
+        typeof item === "string" && item.trim().length > 0 && item.length <= 220,
+    ).map((item) => item.trim()),
+  )).slice(0, limit);
+}
+
 function readFavorites() {
   try {
     const raw = localStorage.getItem(FAVORITES_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed)
-      ? parsed.filter((item): item is string => typeof item === "string").slice(0, 100)
-      : [];
+    return cleanSlugs(raw ? JSON.parse(raw) : [], 100);
   } catch {
     return [];
   }
 }
 
-
 function readRecent() {
   try {
     const raw = localStorage.getItem(RECENT_PROPERTIES_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed)
-      ? parsed.filter((item): item is string => typeof item === "string").slice(0, 8)
-      : [];
+    return cleanSlugs(raw ? JSON.parse(raw) : [], 8);
   } catch {
     return [];
+  }
+}
+
+function persistSlugs(key: string, slugs: string[]) {
+  try {
+    localStorage.setItem(key, JSON.stringify(slugs));
+  } catch {
+    // Storage can be unavailable in private browsing; the current page still works.
   }
 }
 
@@ -52,26 +63,51 @@ function FavoritesPage() {
   const [recentLoading, setRecentLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     const favoriteSlugs = readFavorites();
     const recentSlugs = readRecent();
 
     if (favoriteSlugs.length) {
       void listPublishedPropertiesBySlugs({ data: { slugs: favoriteSlugs } })
-        .then(setProperties)
-        .catch(() => setProperties([]))
-        .finally(() => setLoading(false));
+        .then((rows) => {
+          if (cancelled) return;
+          setProperties(rows);
+          const valid = new Set(rows.map((property) => property.slug));
+          const retained = favoriteSlugs.filter((slug) => valid.has(slug));
+          if (retained.length !== favoriteSlugs.length) persistSlugs(FAVORITES_KEY, retained);
+        })
+        .catch(() => {
+          if (!cancelled) setProperties([]);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
     } else {
       setLoading(false);
     }
 
     if (recentSlugs.length) {
       void listPublishedPropertiesBySlugs({ data: { slugs: recentSlugs } })
-        .then(setRecentProperties)
-        .catch(() => setRecentProperties([]))
-        .finally(() => setRecentLoading(false));
+        .then((rows) => {
+          if (cancelled) return;
+          setRecentProperties(rows);
+          const valid = new Set(rows.map((property) => property.slug));
+          const retained = recentSlugs.filter((slug) => valid.has(slug));
+          if (retained.length !== recentSlugs.length) persistSlugs(RECENT_PROPERTIES_KEY, retained);
+        })
+        .catch(() => {
+          if (!cancelled) setRecentProperties([]);
+        })
+        .finally(() => {
+          if (!cancelled) setRecentLoading(false);
+        });
     } else {
       setRecentLoading(false);
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

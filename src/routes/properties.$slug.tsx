@@ -8,14 +8,21 @@ export const Route = createFileRoute("/properties/$slug")({
     const property = await getPublishedProperty({ data: { slug: params.slug } });
     if (!property) throw notFound();
 
-    const related = await listRelatedProperties({
-      data: {
-        slug: property.slug,
-        neighborhood: property.neighborhood,
-        propertyType: property.propertyType,
-        limit: 6,
-      },
-    });
+    let related: Awaited<ReturnType<typeof listRelatedProperties>> = [];
+    try {
+      related = await listRelatedProperties({
+        data: {
+          slug: property.slug,
+          neighborhood: property.neighborhood,
+          propertyType: property.propertyType,
+          limit: 6,
+        },
+      });
+    } catch (error) {
+      // A recommendation query is optional; a failure must not hide the main
+      // property the visitor explicitly asked for.
+      console.error("[property-detail] related properties loader failed", error);
+    }
 
     return { property, related };
   },

@@ -148,7 +148,6 @@ export function AdminMediaField({ value, onChange }: Props) {
       "image/png",
       "image/webp",
       "image/gif",
-      "image/svg+xml",
       "video/mp4",
       "video/webm",
       "video/quicktime",
@@ -235,7 +234,7 @@ export function AdminMediaField({ value, onChange }: Props) {
         <input
           ref={inputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,video/mp4,video/webm,video/quicktime"
+          accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime"
           multiple
           hidden
           onChange={onPick}
@@ -250,7 +249,7 @@ export function AdminMediaField({ value, onChange }: Props) {
             <Upload size={22} />
             <strong>آپلود از گالری یا کامپیوتر</strong>
             <span>تصویر یا ویدیو را بکشید و رها کنید · یا کلیک کنید</span>
-            <small>jpg / png / webp / gif / svg / mp4 / webm · تصاویر به WebP و حداکثر ۲۵۶۰px بهینه می‌شوند · حداکثر ۲۵ مگابایت · تا ۱۲ فایل</small>
+            <small>jpg / png / webp / gif / avif / mp4 / webm · تصاویر به WebP و حداکثر ۲۵۶۰px بهینه می‌شوند · حداکثر ۲۵ مگابایت · تا {MAX_PROPERTY_MEDIA.toLocaleString("fa-IR")} فایل</small>
           </>
         )}
       </div>
@@ -258,7 +257,7 @@ export function AdminMediaField({ value, onChange }: Props) {
       {items.length ? (
         <>
           <div className="admin-media-toolbar">
-            <strong>{items.length.toLocaleString("fa-IR")} رسانه از ۱۲</strong>
+            <strong>{items.length.toLocaleString("fa-IR")} رسانه از {MAX_PROPERTY_MEDIA.toLocaleString("fa-IR")}</strong>
             <span>اولین مورد کاور اصلی است · برای جابه‌جایی، رسانه را بکشید و روی جای جدید رها کنید.</span>
           </div>
           <div className="admin-media-grid">

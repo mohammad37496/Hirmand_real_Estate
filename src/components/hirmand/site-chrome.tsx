@@ -37,6 +37,7 @@ export function SiteChrome({
           <span>درخواست ملک</span>
         </Link>
         <Link
+          from="/tools/"
           to="/tools"
           className="quick-action"
         >

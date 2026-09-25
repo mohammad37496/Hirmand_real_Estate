@@ -1,7 +1,10 @@
 import { createHash, randomBytes, randomInt, scryptSync, timingSafeEqual } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 
-export const PARTNER_SESSION_COOKIE = "__Host-hirmand-partner";
+export const PARTNER_SESSION_COOKIE =
+  process.env.NODE_ENV === "production" || process.env.VERCEL === "1"
+    ? "__Host-hirmand-partner"
+    : "hirmand-partner";
 export const PARTNER_SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 
 function sessionSecret() {
@@ -41,7 +44,9 @@ export function normalizePartnerCode(value: string) {
 }
 
 export function normalizeDigits(value: string) {
-  return value.replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)));
+  return value
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
 }
 
 export function normalizePhone(value: string) {

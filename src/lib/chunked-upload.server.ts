@@ -113,6 +113,9 @@ export async function handleChunkedUpload(
     if (!session) {
       throw httpError("نشست آپلود پیدا نشد یا منقضی شده است. دوباره تلاش کنید.", 404);
     }
+    if (String(session.completion_state ?? "pending") !== "pending") {
+      throw httpError("این آپلود در مرحله نهایی‌سازی است و قطعه جدیدی نمی‌پذیرد.", 409);
+    }
     if (index >= (Number(session.total_chunks) || 0)) {
       throw httpError("شماره قطعه ارسالی نامعتبر است.");
     }
@@ -223,12 +226,38 @@ export async function handleChunkedUpload(
     const uploadId = typeof body?.uploadId === "string" ? body.uploadId.trim() : "";
     if (!uploadId) throw httpError("شناسه آپلود مشخص نیست.");
 
-    const session = await loadSession(uploadId);
+    const sql = await getSql();
+    // Claim completion atomically. A second request can read the session, but
+    // only one UPDATE can win; the other receives a retryable 409 instead of
+    // assembling a duplicate object.
+    const claimed = await sql.query<SessionRow>(
+      `update media_upload_sessions
+       set completion_state = 'completing', completion_started_at = current_timestamp
+       where id = $1
+         and (
+           completion_state = 'pending'
+           or (
+             completion_state in ('completing', 'assembled')
+             and (completion_started_at is null or completion_started_at < current_timestamp - interval '10 minutes')
+           )
+         )
+       returning *`,
+      [uploadId],
+    );
+    const session = claimed[0];
     if (!session) {
-      throw httpError("نشست آپلود پیدا نشد یا منقضی شده است. دوباره تلاش کنید.", 404);
+      throw httpError("این آپلود در حال نهایی‌سازی است؛ کمی بعد دوباره تلاش کنید.", 409);
     }
 
-    const sql = await getSql();
+    if (session.completion_result && typeof session.completion_result === "object") {
+      const result = session.completion_result as Record<string, unknown>;
+      await sql.query("delete from media_upload_sessions where id = $1", [uploadId]);
+      return {
+        ...result,
+        storage: String(session.stored_storage ?? "database"),
+      };
+    }
+
     const totals = await sql.query<SessionRow>(
       `select count(*) as chunks, coalesce(sum(octet_length(data)), 0) as bytes
        from media_upload_chunks where session_id = $1`,
@@ -240,35 +269,65 @@ export async function handleChunkedUpload(
     const totalBytes = Number(session.total_bytes) || 0;
 
     if (receivedChunks !== totalChunks || (totalBytes > 0 && receivedBytes !== totalBytes)) {
+      await sql.query(
+        `update media_upload_sessions
+         set completion_state = 'pending', completion_started_at = null
+         where id = $1`,
+        [uploadId],
+      );
       throw httpError(
         `فایل کامل دریافت نشد (${receivedChunks.toLocaleString("fa-IR")} از ${totalChunks.toLocaleString("fa-IR")} قطعه). دوباره آپلود کنید.`,
       );
     }
 
-    const stored = await storeAssembledUpload({
-      pathname: String(session.pathname),
-      contentType: String(session.content_type),
-      sessionId: uploadId,
-    });
+    try {
+      const stored = await storeAssembledUpload({
+        pathname: String(session.pathname),
+        contentType: String(session.content_type),
+        sessionId: uploadId,
+      });
 
-    const result = await config.finish({
-      stored,
-      session,
-      text: {
-        title: String(session.title ?? ""),
-        artist: String(session.artist ?? ""),
-      },
-      totalBytes: receivedBytes,
-    });
+      const result = await config.finish({
+        stored,
+        session,
+        text: {
+          title: String(session.title ?? ""),
+          artist: String(session.artist ?? ""),
+        },
+        totalBytes: receivedBytes,
+      });
 
-    return { ...(result as Record<string, unknown>), storage: stored.storage };
+      const resultObject = (result && typeof result === "object" ? result : {}) as Record<string, unknown>;
+      await sql.query(
+        `update media_upload_sessions
+         set completion_result = $2::jsonb
+         where id = $1`,
+        [uploadId, JSON.stringify(resultObject)],
+      );
+      await sql.query("delete from media_upload_sessions where id = $1", [uploadId]);
+      return { ...resultObject, storage: stored.storage };
+    } catch (error) {
+      // Leave an assembled object retryable, but do not leave a permanently
+      // locked session if a transient database/network error occurred.
+      await sql.query(
+        `update media_upload_sessions
+         set completion_state = case when stored_url is null then 'pending' else 'assembled' end,
+             completion_started_at = case when stored_url is null then null else current_timestamp - interval '10 minutes' end
+         where id = $1`,
+        [uploadId],
+      ).catch(() => undefined);
+      throw error;
+    }
   }
 
   if (action === "abort") {
     const uploadId = typeof body?.uploadId === "string" ? body.uploadId.trim() : "";
     if (uploadId) {
       const sql = await getSql();
-      await sql.query("delete from media_upload_sessions where id = $1", [uploadId]);
+      await sql.query(
+        "delete from media_upload_sessions where id = $1 and completion_state = 'pending'",
+        [uploadId],
+      );
     }
     return { aborted: true };
   }

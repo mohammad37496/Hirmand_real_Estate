@@ -4,6 +4,7 @@ import { z } from "zod";
 import { SITE, TEAM } from "@/lib/site";
 import { dbSource, getSql } from "@/lib/db";
 import { storeMedia } from "@/lib/media-store.server";
+import { detectRasterImageType, isAllowedDivarImageUrl, isDivarRemoteHost } from "@/lib/media";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 
 const DIVAR_API = "https://api.divar.ir/v8";
@@ -134,43 +135,22 @@ function collectStrings(value: unknown, out: string[] = [], depth = 0): string[]
   return out;
 }
 
-/** Divar serves listing photos from several hosts over time. */
+/** Divar serves listing photos from several rotating first-party CDN hosts. */
 function isDivarSourceUrl(value: string): boolean {
-  const match = value.trim().match(/^https?:\/\/([^/]+)/i);
-  const host = match?.[1]?.toLowerCase().split(":")[0] ?? "";
-  return (
-    host === "divar.ir" ||
-    host.endsWith(".divar.ir") ||
-    host === "divar.com" ||
-    host.endsWith(".divar.com") ||
-    host.includes("divarcdn") ||
-    host === "wsrv.nl" ||
-    host.endsWith(".wsrv.nl") ||
-    host.endsWith("weserv.nl")
-  );
+  return isDivarRemoteHost(value);
 }
 
+
 function isDivarMediaHost(value: string): boolean {
-  const match = value.match(/^https?:\/\/([^/]+)/i);
-  const host = match?.[1]?.toLowerCase().split(":")[0] ?? "";
-  return (
-    host === "divar.ir" ||
-    host.endsWith(".divar.ir") ||
-    host === "divar.com" ||
-    host.endsWith(".divar.com") ||
-    host.includes("divarcdn")
-  );
+  return isAllowedDivarImageUrl(value);
 }
 
 function collectMediaUrls(value: unknown, out: string[] = [], keyHint = "", depth = 0): string[] {
   if (depth > 10 || out.length >= 60) return out;
   if (typeof value === "string") {
-    if (
-      /^https?:\/\//i.test(value) &&
-      (isDivarMediaHost(value) || /\.(?:jpg|jpeg|png|webp|avif)(?:[?#].*)?$/i.test(value))
-    ) {
+    if (isDivarMediaHost(value)) {
       const looksMediaKey = /image|photo|picture|thumbnail|media|gallery|cover|url/i.test(keyHint);
-      if (looksMediaKey || isDivarMediaHost(value)) out.push(value);
+      if (looksMediaKey) out.push(value);
     }
     return out;
   }
@@ -645,14 +625,16 @@ async function uploadDivarImages(token: string, urls: string[]): Promise<DivarIm
     label: string;
     url: string;
     timeoutMs: number;
+    direct: boolean;
     headers: Record<string, string>;
   }> => [
     {
       label: "direct",
       url: source,
       timeoutMs: 6_000,
+      direct: true,
       headers: {
-        accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        accept: "image/avif,image/webp,image/apng,image/png,image/jpeg,image/*;q=0.8",
         "accept-language": "fa-IR,fa;q=0.9,en;q=0.8",
         referer: DIVAR_WEB + "/v/" + token,
         "user-agent":
@@ -663,6 +645,7 @@ async function uploadDivarImages(token: string, urls: string[]): Promise<DivarIm
       label: "proxy",
       url: "https://wsrv.nl/?url=" + encodeURIComponent(source),
       timeoutMs: 12_000,
+      direct: false,
       headers: {
         accept: "image/avif,image/webp,image/png,image/jpeg,image/*,*/*;q=0.8",
         "accept-language": "fa-IR,fa;q=0.9,en;q=0.8",
@@ -674,6 +657,7 @@ async function uploadDivarImages(token: string, urls: string[]): Promise<DivarIm
       label: "proxy2",
       url: "https://images.weserv.nl/?url=" + encodeURIComponent(source),
       timeoutMs: 12_000,
+      direct: false,
       headers: {
         accept: "image/avif,image/webp,image/png,image/jpeg,image/*,*/*;q=0.8",
         "accept-language": "fa-IR,fa;q=0.9,en;q=0.8",
@@ -683,27 +667,64 @@ async function uploadDivarImages(token: string, urls: string[]): Promise<DivarIm
     },
   ];
 
-  const detectImageType = (bytes: Buffer, headerType: string) => {
-    if (/^image\//i.test(headerType)) return headerType.split(";")[0].toLowerCase();
-    if (bytes.subarray(0, 8).toString("hex").startsWith("89504e47")) return "image/png";
-    if (bytes.subarray(0, 3).toString("hex") === "ffd8ff") return "image/jpeg";
-    if (
-      bytes.subarray(0, 6).toString("ascii") === "GIF89a" ||
-      bytes.subarray(0, 6).toString("ascii") === "GIF87a"
-    ) {
-      return "image/gif";
+  const detectImageType = (bytes: Buffer, _headerType: string) =>
+    detectRasterImageType(bytes);
+
+  const readBoundedResponse = async (response: Response): Promise<Buffer> => {
+    const declaredLength = Number(response.headers.get("content-length") ?? 0);
+    if (Number.isFinite(declaredLength) && declaredLength > MAX_IMAGE_BYTES) {
+      throw new Error("حجم اعلام‌شده تصویر بیش از ۱۲ مگابایت بود");
     }
-    if (
-      bytes.subarray(0, 4).toString("ascii") === "RIFF" &&
-      bytes.subarray(8, 12).toString("ascii") === "WEBP"
-    ) {
-      return "image/webp";
+    if (!response.body) throw new Error("پاسخ تصویر بدون بدنه بود");
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (!value) continue;
+        total += value.byteLength;
+        if (total > MAX_IMAGE_BYTES) {
+          await reader.cancel();
+          throw new Error("حجم تصویر بیش از ۱۲ مگابایت بود");
+        }
+        chunks.push(value);
+      }
+    } finally {
+      reader.releaseLock();
     }
-    if (bytes.subarray(4, 8).toString("ascii") === "ftyp") {
-      const brand = bytes.subarray(8, 12).toString("ascii");
-      if (brand === "avif" || brand === "avis") return "image/avif";
+    return Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)), total);
+  };
+
+  const fetchCandidate = async (
+    candidate: { url: string; headers: Record<string, string>; timeoutMs: number; direct: boolean },
+  ): Promise<Response> => {
+    const initial = new URL(candidate.url);
+    const initialHost = initial.hostname.toLowerCase();
+    const isAllowedRedirect = (next: URL) => {
+      if (next.protocol !== "https:") return false;
+      if (candidate.direct) return isAllowedDivarImageUrl(next.toString());
+      const host = next.hostname.toLowerCase();
+      return host === initialHost || host === "wsrv.nl" || host.endsWith(".wsrv.nl") ||
+        host === "weserv.nl" || host.endsWith(".weserv.nl");
+    };
+
+    let current = initial;
+    for (let redirects = 0; redirects <= 3; redirects += 1) {
+      const response = await fetch(current.toString(), {
+        redirect: "manual",
+        headers: candidate.headers,
+        signal: AbortSignal.timeout(candidate.timeoutMs),
+      });
+      if (response.status < 300 || response.status >= 400) return response;
+      const location = response.headers.get("location");
+      if (!location) throw new Error("ریدایرکت بدون مقصد");
+      const next = new URL(location, current);
+      if (!isAllowedRedirect(next)) throw new Error("ریدایرکت به میزبان غیرمجاز");
+      current = next;
     }
-    return "";
+    throw new Error("تعداد ریدایرکت بیش از حد مجاز");
   };
 
   const downloadOne = async (source: string, index: number) => {
@@ -711,25 +732,16 @@ async function uploadDivarImages(token: string, urls: string[]): Promise<DivarIm
 
     for (const candidate of candidatesFor(source)) {
       try {
-        const response = await fetch(candidate.url, {
-          redirect: "follow",
-          headers: candidate.headers,
-          signal: AbortSignal.timeout(candidate.timeoutMs),
-        });
+        const response = await fetchCandidate(candidate);
 
         if (!response.ok) {
           lastReason = candidate.label + ": HTTP " + response.status;
           continue;
         }
 
-        const bytes = Buffer.from(await response.arrayBuffer());
+        const bytes = await readBoundedResponse(response);
         if (!bytes.length) {
           lastReason = candidate.label + ": فایل خالی بود";
-          continue;
-        }
-
-        if (bytes.length > MAX_IMAGE_BYTES) {
-          lastReason = candidate.label + ": حجم تصویر بیش از ۱۲ مگابایت بود";
           continue;
         }
 
@@ -786,7 +798,9 @@ async function uploadDivarImages(token: string, urls: string[]): Promise<DivarIm
     failure: { source: string; reason: string } | null;
   }> = [];
 
-  const safeUrls = urls.slice(0, MAX_IMAGES);
+  const safeUrls = urls
+    .filter(isAllowedDivarImageUrl)
+    .slice(0, MAX_IMAGES);
   const concurrency = 6;
 
   for (let startIndex = 0; startIndex < safeUrls.length; startIndex += concurrency) {

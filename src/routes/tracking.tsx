@@ -20,6 +20,12 @@ const STATUS_LABEL: Record<string, string> = {
   rejected: "ردشده",
 };
 
+function toEnglishDigits(value: string) {
+  return value
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
+}
+
 function faDate(value: string | null | undefined) {
   if (!value) return "—";
   try {
@@ -123,11 +129,12 @@ function TrackingPage() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
     void (async () => {
       try {
         const params = new URLSearchParams(window.location.search);
         const prefilled = params.get("code");
-        if (prefilled) setCode(prefilled.toUpperCase());
+        if (prefilled && !cancelled) setCode(prefilled.trim().toUpperCase());
         const response = await fetch("/api/partner/session", {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -135,16 +142,23 @@ function TrackingPage() {
           body: JSON.stringify({ action: "me" }),
         });
         const data = (await response.json().catch(() => null)) as { partner?: PartnerOverview | null; authenticated?: boolean } | null;
-        if (response.ok && data?.authenticated && data.partner) setPartner(data.partner);
+        if (!cancelled && response.ok && data?.authenticated && data.partner) setPartner(data.partner);
+      } catch {
+        if (!cancelled) setMessage("بررسی نشست همکاری انجام نشد. دوباره تلاش کنید.");
       } finally {
-        setChecking(false);
+        if (!cancelled) setChecking(false);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function login(event: FormEvent) {
     event.preventDefault();
-    if (!code.trim() || pin.trim().length !== 6) {
+    if (loginBusy) return;
+    const normalizedPin = toEnglishDigits(pin).replace(/\D/g, "").slice(0, 6);
+    if (!code.trim() || normalizedPin.length !== 6) {
       setMessage("کد همکاری و رمز ۶ رقمی را کامل وارد کنید.");
       return;
     }
@@ -155,7 +169,7 @@ function TrackingPage() {
         method: "POST",
         headers: { "content-type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ action: "login", partnerCode: code, pin }),
+        body: JSON.stringify({ action: "login", partnerCode: code, pin: normalizedPin }),
       });
       const data = (await response.json().catch(() => null)) as
         | { partner?: PartnerOverview | null; statusMessage?: string; message?: string }
@@ -186,6 +200,7 @@ function TrackingPage() {
 
   async function lookupTracking(event: FormEvent) {
     event.preventDefault();
+    if (lookupBusy) return;
     if (!trackingCode.trim()) return;
     setLookupBusy(true);
     setLookup(null);
@@ -227,6 +242,7 @@ function TrackingPage() {
 
   async function submitContract(event: FormEvent) {
     event.preventDefault();
+    if (contractBusy) return;
     if (!partner) return;
     if (!contractForm.transactionType) {
       setMessage("نوع قرارداد را انتخاب کنید.");
@@ -278,7 +294,7 @@ function TrackingPage() {
           </p>
         </header>
 
-        {message ? <div className="partner-alert">{message}</div> : null}
+        {message ? <div className="partner-alert" role="status" aria-live="polite">{message}</div> : null}
 
         <section className="partner-portal-grid">
           <section className="partner-portal-card">
@@ -334,7 +350,7 @@ function TrackingPage() {
                 </label>
                 <label className="field">
                   <span>رمز ۶ رقمی</span>
-                  <input value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="••••••" inputMode="numeric" dir="ltr" autoComplete="current-password" />
+                  <input value={pin} onChange={(event) => setPin(toEnglishDigits(event.target.value).replace(/\D/g, "").slice(0, 6))} placeholder="••••••" inputMode="numeric" dir="ltr" autoComplete="current-password" />
                 </label>
                 <button className="btn-gold" type="submit" disabled={loginBusy}>
                   {loginBusy ? <RefreshCw size={16} className="admin-spin" /> : <KeyRound size={16} />}
@@ -400,7 +416,7 @@ function TrackingPage() {
                   </div>
                   <Send size={20} />
                 </div>
-                <form className="partner-submit-form" onSubmit={submitContract}>
+                <form className="partner-submit-form" onSubmit={submitContract} aria-busy={contractBusy}>
                   <label className="field">
                     <span>نوع قرارداد</span>
                     <select value={contractForm.transactionType} onChange={(event) => setContractForm({ ...contractForm, transactionType: event.target.value })}>

@@ -1,10 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowLeftRight, Briefcase, Handshake, Phone, Search } from "lucide-react";
+import { ArrowLeft, Briefcase, Handshake, Phone, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listConsultants, type Consultant } from "@/lib/consultants";
 import { absoluteUrl, socialMeta } from "@/lib/seo";
-import { SITE } from "@/lib/site";
 
 export const Route = createFileRoute("/consultants")({
   head: () => {

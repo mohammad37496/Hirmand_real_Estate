@@ -13,9 +13,13 @@ function readCompare(): string[] {
   try {
     const raw = localStorage.getItem(COMPARE_KEY);
     const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed)
-      ? parsed.filter((item): item is string => typeof item === "string").slice(0, MAX_COMPARE)
-      : [];
+    if (!Array.isArray(parsed)) return [];
+    return Array.from(new Set(
+      parsed.filter(
+        (item): item is string =>
+          typeof item === "string" && item.trim().length > 0 && item.length <= 220,
+      ).map((item) => item.trim()),
+    )).slice(0, MAX_COMPARE);
   } catch {
     return [];
   }
@@ -47,15 +51,19 @@ function readFavorites(): string[] {
   try {
     const raw = localStorage.getItem(FAVORITES_KEY);
     const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed)
-      ? parsed.filter((item): item is string => typeof item === "string")
-      : [];
+    if (!Array.isArray(parsed)) return [];
+    return Array.from(new Set(
+      parsed.filter(
+        (item): item is string =>
+          typeof item === "string" && item.trim().length > 0 && item.length <= 220,
+      ).map((item) => item.trim()),
+    )).slice(-100);
   } catch {
     return [];
   }
 }
 
-function toggleFavorite(slug: string): boolean {
+function toggleFavorite(slug: string): { added: boolean; persisted: boolean } {
   const current = readFavorites();
   const exists = current.includes(slug);
   const next = exists
@@ -64,11 +72,10 @@ function toggleFavorite(slug: string): boolean {
 
   try {
     localStorage.setItem(FAVORITES_KEY, JSON.stringify(next.slice(-100)));
+    return { added: !exists, persisted: true };
   } catch {
-    // Optional convenience feature; ignore storage failures.
+    return { added: !exists, persisted: false };
   }
-
-  return !exists;
 }
 
 async function shareProperty(property: Pick<PropertyCardData, "id" | "slug" | "title">) {
@@ -114,10 +121,14 @@ export function PropertyActions({
   function onFavorite(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
-    const next = toggleFavorite(property.slug);
-    setFavorite(next);
+    const result = toggleFavorite(property.slug);
+    if (!result.persisted) {
+      toast.error("ذخیره‌سازی در این مرورگر ممکن نشد.");
+      return;
+    }
+    setFavorite(result.added);
     trackAnalyticsEvent("property_favorite", property.slug);
-    toast.success(next ? "فایل در ذخیره‌ها قرار گرفت." : "فایل از ذخیره‌ها حذف شد.");
+    toast.success(result.added ? "فایل در ذخیره‌ها قرار گرفت." : "فایل از ذخیره‌ها حذف شد.");
   }
 
   function onShare(event: MouseEvent<HTMLButtonElement>) {

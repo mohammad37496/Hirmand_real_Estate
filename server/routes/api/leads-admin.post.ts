@@ -164,25 +164,34 @@ export default defineEventHandler(async (event) => {
   }
 
   if (body.action === "status") {
-    if (!body.status) {
+    if (!body.status || !["new", "contacted", "follow_up", "visited", "contract", "closed", "spam"].includes(body.status)) {
       throw createError({
         statusCode: 400,
-        statusMessage: "وضعیت مشخص نیست.",
+        statusMessage: "وضعیت درخواست معتبر نیست.",
       });
     }
-    await sql.query(
-      "update leads set status=$2, follow_up_at=$3, last_contacted_at=case when $2='contacted' then current_timestamp else last_contacted_at end, updated_at=current_timestamp where id=$1",
+    const rows = await sql.query<{ id: string }>(
+      "update leads set status=$2, follow_up_at=$3, last_contacted_at=case when $2='contacted' then current_timestamp else last_contacted_at end, updated_at=current_timestamp where id=$1 returning id",
       [
         body.id,
         body.status,
         ["new", "contacted", "follow_up", "visited"].includes(body.status) ? new Date(Date.now() + (body.status === "new" ? 24 : body.status === "visited" ? 72 : 48) * 60 * 60 * 1000).toISOString() : null,
       ],
     );
+    if (!rows[0]) {
+      throw createError({ statusCode: 404, statusMessage: "درخواست پیدا نشد." });
+    }
     return { success: true };
   }
 
   if (body.action === "delete") {
-    await sql.query("delete from leads where id=$1", [body.id]);
+    const rows = await sql.query<{ id: string }>(
+      "delete from leads where id=$1 returning id",
+      [body.id],
+    );
+    if (!rows[0]) {
+      throw createError({ statusCode: 404, statusMessage: "درخواست پیدا نشد." });
+    }
     return { success: true };
   }
 

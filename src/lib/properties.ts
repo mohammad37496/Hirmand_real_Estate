@@ -574,8 +574,8 @@ export const getPublishedPropertyById = createServerFn({ method: "GET" })
     return rows[0] ? mapProperty(rows[0]) : null;
   });
 
-export const getPublishedProperty = createServerFn({ method: "GET" })
-  .validator(z.object({ slug: z.string().min(1) }))
+export const  getPublishedProperty = createServerFn({ method: "GET" })
+  .validator(z.object({ slug: z.string().min(1).max(220) }))
   .handler(async ({ data }) => {
     if (dbSource === "unconfigured") return null;
     const sql = await getSql();
@@ -712,7 +712,7 @@ export const listRelatedProperties = createServerFn({ method: "GET" })
          )
        order by
          case when neighborhood = $2 then 0 else 1 end,
-         case when featured then 0 else 1 end,
+         case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end,
          published_at desc nulls last,
          created_at desc
        limit $4`,

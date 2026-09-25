@@ -112,9 +112,29 @@ export async function storeAssembledUpload(input: {
 }): Promise<StoredMedia> {
   requireDatabase();
   const sql = await getSql();
-  const id = crypto.randomUUID();
   const contentType = input.contentType || "application/octet-stream";
 
+  // Completion can be retried after the business insert or the final cleanup
+  // failed. Reuse the already assembled object instead of creating a second
+  // copy of a large upload.
+  const existing = await sql.query<{
+    stored_url: string | null;
+    stored_storage: string | null;
+    stored_media_id: string | null;
+  }>(
+    `select stored_url, stored_storage, stored_media_id
+     from media_upload_sessions where id = $1 limit 1`,
+    [input.sessionId],
+  );
+  if (existing[0]?.stored_url) {
+    return {
+      url: existing[0].stored_url,
+      storage: existing[0].stored_storage === "object-store" ? "object-store" : "database",
+      id: existing[0].stored_media_id,
+    };
+  }
+
+  const id = crypto.randomUUID();
   // The chunks are concatenated inside Postgres, so a large file never has to
   // be assembled by the function itself.
   await sql.query(
@@ -125,28 +145,33 @@ export async function storeAssembledUpload(input: {
     [id, input.pathname, contentType, input.sessionId],
   );
 
-  await sql.query("delete from media_upload_sessions where id = $1", [
-    input.sessionId,
-  ]);
-
   // With an object store configured, move the finished file to the CDN and drop
   // the database copy; if that fails the stored row still serves the media.
+  let stored: StoredMedia = {
+    url: `${DB_MEDIA_PATH}${id}`,
+    storage: "database",
+    id,
+  };
   if (blobConfigured()) {
     const assembled = await readMediaRange(id, 0, null);
     if (assembled && assembled.size > 0 && assembled.size <= MAX_OFFLOAD_BYTES) {
       const url = await putToObjectStore(input.pathname, assembled.bytes, contentType);
       if (url) {
         await sql.query("delete from media_objects where id = $1", [id]);
-        return { url, storage: "object-store", id: null };
+        stored = { url, storage: "object-store", id: null };
       }
     }
   }
 
-  return {
-    url: `${DB_MEDIA_PATH}${id}`,
-    storage: "database",
-    id,
-  };
+  // Keep the session until the caller's business record is committed. This
+  // makes a retry observable and lets us return the same URL/result.
+  await sql.query(
+    `update media_upload_sessions
+     set completion_state = 'assembled', stored_url = $2, stored_storage = $3, stored_media_id = $4
+     where id = $1`,
+    [input.sessionId, stored.url, stored.storage, stored.id],
+  );
+  return stored;
 }
 
 export async function deleteStoredMedia(

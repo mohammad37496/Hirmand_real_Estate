@@ -43,10 +43,21 @@ function parseRangeHeader(
   return { start, end };
 }
 
+const SAFE_INLINE_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/avif",
+]);
+
 function disposition(pathname: string, contentType: string): string {
   const name = pathname.split("/").pop()?.trim() || "media";
   const ascii = name.replace(/[^\w.-]+/g, "_").slice(0, 80) || "media";
-  const inline = contentType.startsWith("audio/") || contentType.startsWith("image/");
+  const inline =
+    contentType.startsWith("audio/") ||
+    contentType.startsWith("video/") ||
+    SAFE_INLINE_IMAGE_TYPES.has(contentType);
   return `${inline ? "inline" : "attachment"}; filename="${ascii}"`;
 }
 
@@ -85,6 +96,7 @@ export default defineEventHandler(async (event) => {
     "accept-ranges": "bytes",
     "x-content-type-options": "nosniff",
     "content-disposition": disposition(meta.pathname, result.contentType),
+    "content-security-policy": "sandbox; default-src 'none'; style-src 'unsafe-inline'; media-src 'self' blob: data:",
   };
 
   if (range) {

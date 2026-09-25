@@ -56,8 +56,6 @@ const PROPERTY_TYPE_OPTIONS: { value: PropertyType; label: string }[] = [
   { value: "commercial", label: "تجاری" },
 ];
 
-const BEDROOM_OPTIONS = ["1", "2", "3", "4"] as const;
-
 const SPEC_FILTER_OPTIONS = [
   ...PROPERTY_CABINET_OPTIONS.map((item) => ({ value: `cabinet:${item.value}`, label: item.label, group: "کابینت" })),
   ...PROPERTY_FLOORING_OPTIONS.map((item) => ({ value: `flooring:${item.value}`, label: item.label, group: "کف" })),
@@ -142,7 +140,7 @@ function parseNumber(raw: string) {
   const cleaned = toEnglishDigits(raw).replace(/[^\d.-]/g, "");
   if (!cleaned) return undefined;
   const value = Number(cleaned);
-  return Number.isFinite(value) && value >= 0 ? value : undefined;
+  return Number.isFinite(value) && Number.isInteger(value) && value >= 0 ? value : undefined;
 }
 
 function validTransaction(value: string): PropertyTransaction | undefined {
@@ -392,17 +390,26 @@ function PropertiesIndexPage() {
     if (hasLocationOnly) params.set("location", "1");
     if (sort !== "newest") params.set("sort", sort);
     const query = params.toString();
-    window.history.replaceState({}, "", query ? `/properties?${query}` : "/properties");
+    // Preserve TanStack Router's history state; replacing it with `{}` breaks
+    // browser back/forward for deep links and restores.
+    window.history.replaceState(
+      window.history.state,
+      "",
+      query ? `/properties?${query}` : "/properties",
+    );
   }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, minBathrooms, minFloor, maxFloor, minTotalFloors, maxTotalFloors, minBuiltYear, maxBuiltYear, parkingOnly, elevatorOnly, storageOnly, specFilters, featureSearch, featuredOnly, hasImagesOnly, hasLocationOnly, sort]);
 
   useEffect(() => {
-    if (!urlReady || skipInitialFetch.current) {
-      if (urlReady) skipInitialFetch.current = false;
+    if (!urlReady) return;
+    // Invalidate older requests immediately, not only after the debounce fires;
+    // otherwise a slow page request can append stale rows during the 320ms gap.
+    const currentRequest = ++requestId.current;
+    if (skipInitialFetch.current) {
+      skipInitialFetch.current = false;
       return;
     }
 
     const timer = window.setTimeout(async () => {
-      const currentRequest = ++requestId.current;
       setLoading(true);
       setOffset(0);
 

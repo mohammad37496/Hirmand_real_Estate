@@ -15,9 +15,13 @@ function readCompare(): string[] {
   try {
     const raw = localStorage.getItem(COMPARE_KEY);
     const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed)
-      ? parsed.filter((item): item is string => typeof item === "string").slice(0, MAX_COMPARE)
-      : [];
+    if (!Array.isArray(parsed)) return [];
+    return Array.from(new Set(
+      parsed.filter(
+        (item): item is string =>
+          typeof item === "string" && item.trim().length > 0 && item.length <= 220,
+      ).map((item) => item.trim()),
+    )).slice(0, MAX_COMPARE);
   } catch {
     return [];
   }
@@ -69,16 +73,39 @@ function ComparePage() {
   }
 
   useEffect(() => {
+    let cancelled = false;
     const slugs = readCompare();
     if (!slugs.length) {
       setLoading(false);
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
 
-    listPublishedPropertiesBySlugs({ data: { slugs } })
-      .then(setProperties)
-      .catch(() => setProperties([]))
-      .finally(() => setLoading(false));
+    void listPublishedPropertiesBySlugs({ data: { slugs } })
+      .then((rows) => {
+        if (cancelled) return;
+        setProperties(rows);
+        const valid = new Set(rows.map((property) => property.slug));
+        const retained = slugs.filter((slug) => valid.has(slug));
+        if (retained.length !== slugs.length) {
+          try {
+            localStorage.setItem(COMPARE_KEY, JSON.stringify(retained));
+          } catch {
+            // Ignore storage failures; the fetched rows remain usable.
+          }
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setProperties([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function clearCompare() {

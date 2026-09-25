@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type TouchEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type TouchEvent } from "react";
 import {
   ArrowRight,
   Accessibility,
