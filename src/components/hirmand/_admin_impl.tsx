@@ -167,11 +167,12 @@ function numberOrNull(raw: string, allowNegative = false) {
 
 function moneyOrNull(raw: string) {
   const normalized = normalizeMoneyText(raw);
-  if (!normalized) return null;
-  if (!/^\d{1,20}$/.test(normalized)) {
-    throw new Error("مبلغ باید فقط شامل رقم باشد و حداکثر ۲۰ رقم داشته باشد.");
-  }
-  return normalized;
+  return normalized && /^\d{1,20}$/.test(normalized) ? normalized : null;
+}
+
+function hasInvalidMoney(raw: string) {
+  const normalized = normalizeMoneyText(raw);
+  return Boolean(normalized) && !/^\d{1,20}$/.test(normalized);
 }
 function toDateTimeLocal(value: string | null | undefined) {
   if (!value) return "";
@@ -739,6 +740,10 @@ export function AdminPropertiesPage() {
       toast.error("توضیحات فایل را کامل‌تر بنویسید.");
       return;
     }
+    if ([form.price, form.deposit, form.rent].some(hasInvalidMoney)) {
+      toast.error("مبلغ باید فقط شامل رقم باشد و حداکثر ۲۰ رقم داشته باشد.");
+      return;
+    }
     const price = moneyOrNull(form.price);
     const deposit = moneyOrNull(form.deposit);
     const rent = moneyOrNull(form.rent);
@@ -847,6 +852,9 @@ export function AdminPropertiesPage() {
     try {
       setSaving(true);
       const base = propertyToForm(property);
+      if ([base.price, base.deposit, base.rent].some(hasInvalidMoney)) {
+        throw new Error("مبلغ ذخیره‌شده برای این فایل نامعتبر است؛ ابتدا آن را اصلاح کنید.");
+      }
       const result = await saveProperty({
         data: {
           id: base.id,
