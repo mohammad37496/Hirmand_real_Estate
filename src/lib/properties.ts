@@ -3,6 +3,7 @@ import { getCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { nullableMoneyFieldSchema } from "@/lib/property-input-normalization";
 import { calculateBudgetMatch, DEFAULT_MATCH_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
 import { MAX_PROPERTY_MEDIA, isAllowedMediaRef } from "@/lib/media";
 import {
@@ -170,20 +171,7 @@ const publicFiltersSchema = z.object({
   offset: z.number().int().min(0).max(100000).optional().default(0),
 });
 
-function normalizeMoneyText(value: unknown): string {
-  if (value == null) return "";
-  const raw = String(value).trim();
-  if (!raw || /^(null|undefined)$/i.test(raw)) return "";
-  return raw
-    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
-    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
-    .replace(/[,_٬\s]/g, "");
-}
-
-const nullableMoneyField = z.preprocess(
-  (value) => normalizeMoneyText(value),
-  z.union([z.literal(""), z.string().regex(/^\d{1,20}$/)]),
-);
+const nullableMoneyField = nullableMoneyFieldSchema;
 
 
 
@@ -208,7 +196,7 @@ const WALL_CLOSET_VALUES = PROPERTY_WALL_CLOSET_OPTIONS.map((item) => item.value
   ...PropertyWallClosetType[],
 ];
 
-const propertyInputSchema = z.object({
+export const propertyInputSchema = z.object({
   id: z.string().optional(),
   title: z.string().trim().min(3).max(180),
   transactionType: z.enum(["buy", "sell", "rent", "mortgage"]),
@@ -298,11 +286,6 @@ function numberOrNull(value: unknown): number | null {
 
 export function isFeaturedActive(property: { featured: boolean; featuredUntil?: string | null }) {
   return property.featured && (!property.featuredUntil || new Date(property.featuredUntil).getTime() >= Date.now());
-}
-
-function numericStringOrNull(value: unknown): string | null {
-  const normalized = normalizeMoneyText(value);
-  return normalized || null;
 }
 
 function parseJsonArray(value: unknown): string[] {
@@ -1023,9 +1006,6 @@ export const saveProperty = createServerFn({ method: "POST" })
     const existing = existingRows[0] ?? null;
     const existingSlug = typeof existing?.slug === "string" ? existing.slug.trim() : "";
     const slug = existingSlug || `${slugify(data.title)}-${id.slice(0, 8)}`;
-    const price = numericStringOrNull(data.price);
-    const deposit = numericStringOrNull(data.deposit);
-    const rent = numericStringOrNull(data.rent);
     const featuredUntil = data.featured && data.featuredUntil
       ? (() => {
           const parsed = new Date(data.featuredUntil!);
@@ -1201,9 +1181,9 @@ export const saveProperty = createServerFn({ method: "POST" })
         data.heatingSystem,
         data.wallClosetType,
         JSON.stringify(data.otherAmenities),
-        price,
-        deposit,
-        rent,
+        data.price,
+        data.deposit,
+        data.rent,
         data.description,
         JSON.stringify(data.features),
         JSON.stringify(data.images),

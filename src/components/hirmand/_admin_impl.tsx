@@ -27,6 +27,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
+import { normalizeMoneyText } from "@/lib/property-input-normalization";
 import { listNeighborhoodNames } from "@/lib/neighborhoods";
 import { propertyPath } from "@/lib/property-path";
 import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
@@ -156,11 +157,22 @@ function toEnglishDigits(raw: string) {
     .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
 }
 function numberOrNull(raw: string, allowNegative = false) {
-  const digits = toEnglishDigits(raw).replace(/[^\d-]/g, "");
-  if (!digits.trim()) return null;
+  const digits = toEnglishDigits(raw).trim().replace(/[٬،,\s]/g, "");
+  if (!digits) return null;
+  if (!/^-?\d+$/.test(digits)) return null;
   const value = Number(digits);
-  if (!Number.isFinite(value)) return null;
+  if (!Number.isInteger(value) || !Number.isFinite(value)) return null;
   return allowNegative || value >= 0 ? value : null;
+}
+
+function moneyOrNull(raw: string) {
+  const normalized = normalizeMoneyText(raw);
+  return normalized && /^\d{1,20}$/.test(normalized) ? normalized : null;
+}
+
+function hasInvalidMoney(raw: string) {
+  const normalized = normalizeMoneyText(raw);
+  return Boolean(normalized) && !/^\d{1,20}$/.test(normalized);
 }
 function toDateTimeLocal(value: string | null | undefined) {
   if (!value) return "";
@@ -728,9 +740,13 @@ export function AdminPropertiesPage() {
       toast.error("توضیحات فایل را کامل‌تر بنویسید.");
       return;
     }
-    const price = numberOrNull(form.price);
-    const deposit = numberOrNull(form.deposit);
-    const rent = numberOrNull(form.rent);
+    if ([form.price, form.deposit, form.rent].some(hasInvalidMoney)) {
+      toast.error("مبلغ باید فقط شامل رقم باشد و حداکثر ۲۰ رقم داشته باشد.");
+      return;
+    }
+    const price = moneyOrNull(form.price);
+    const deposit = moneyOrNull(form.deposit);
+    const rent = moneyOrNull(form.rent);
     if (form.transactionType === "sell" && price == null) {
       toast.error("برای فایل فروش، قیمت فروش را وارد کنید.");
       return;
@@ -775,9 +791,9 @@ export function AdminPropertiesPage() {
           heatingSystem: form.heatingSystem,
           wallClosetType: form.wallClosetType,
           otherAmenities: form.otherAmenities,
-          price: numberOrNull(form.price),
-          deposit: numberOrNull(form.deposit),
-          rent: numberOrNull(form.rent),
+          price,
+          deposit,
+          rent,
           description: form.description.trim(),
           features: splitLines(form.features),
           images,
@@ -836,6 +852,9 @@ export function AdminPropertiesPage() {
     try {
       setSaving(true);
       const base = propertyToForm(property);
+      if ([base.price, base.deposit, base.rent].some(hasInvalidMoney)) {
+        throw new Error("مبلغ ذخیره‌شده برای این فایل نامعتبر است؛ ابتدا آن را اصلاح کنید.");
+      }
       const result = await saveProperty({
         data: {
           id: base.id,
@@ -859,9 +878,9 @@ export function AdminPropertiesPage() {
           heatingSystem: base.heatingSystem,
           wallClosetType: base.wallClosetType,
           otherAmenities: base.otherAmenities,
-          price: numberOrNull(base.price),
-          deposit: numberOrNull(base.deposit),
-          rent: numberOrNull(base.rent),
+          price: moneyOrNull(base.price),
+          deposit: moneyOrNull(base.deposit),
+          rent: moneyOrNull(base.rent),
           description: base.description,
           features: splitLines(base.features),
           images: parseImageUrls(base.images).valid,
