@@ -43,6 +43,9 @@ test-results/
 # Local embedded database state
 .grok/pglite.data/
 
+# Runtime files written by scripts/preview.mjs
+.grok/preview.pid
+
 # Misc
 *.tsbuildinfo
 .cache/
