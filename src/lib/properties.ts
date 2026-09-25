@@ -4,6 +4,7 @@ import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { nullableMoneyFieldSchema } from "@/lib/property-input-normalization";
+import { decodeSlugCandidates, legacyIdFragments } from "@/lib/property-slug";
 import { calculateBudgetMatch, DEFAULT_MATCH_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
 import { MAX_PROPERTY_MEDIA, isAllowedMediaRef } from "@/lib/media";
 import {
@@ -569,38 +570,21 @@ export const getPublishedPropertyById = createServerFn({ method: "GET" })
     return rows[0] ? mapProperty(rows[0]) : null;
   });
 
-export const  getPublishedProperty = createServerFn({ method: "GET" })
+export const getPublishedProperty = createServerFn({ method: "GET" })
   .validator(z.object({ slug: z.string().min(1).max(220) }))
   .handler(async ({ data }) => {
     if (dbSource === "unconfigured") return null;
     const sql = await getSql();
 
-    const decodedCandidates = [data.slug];
-    for (let i = 0; i < 2; i += 1) {
-      const current = decodedCandidates[decodedCandidates.length - 1];
-      try {
-        const decoded = decodeURIComponent(current);
-        if (decoded !== current && !decodedCandidates.includes(decoded)) {
-          decodedCandidates.push(decoded);
-        } else {
-          break;
-        }
-      } catch {
-        break;
-      }
-    }
+    // Shared with the detail route so the lookup and the canonical-URL check
+    // always agree on what a slug means (see src/lib/property-slug.ts).
+    const decodedCandidates = decodeSlugCandidates(data.slug);
 
     // Old public links were generated from /file/:id and then promoted to
     // slug URLs such as "عنوان-345555d4". Keep those links resolvable even if
     // the title/slug has changed later: the final 8 hex characters are the
     // same short id fragment used by saveProperty().
-    const legacyIdPrefixes = Array.from(
-      new Set(
-        decodedCandidates
-          .map((value) => value.match(/-([0-9a-f]{8})$/i)?.[1]?.toLowerCase())
-          .filter((value): value is string => Boolean(value)),
-      ),
-    );
+    const legacyIdPrefixes = legacyIdFragments(decodedCandidates);
 
     const rows = await sql.query<Record<string, unknown>>(
       `select ${DETAIL_COLUMNS}
