@@ -999,88 +999,6 @@ export function PropertyDetailView({
           </div>
 
 
-        </section>
-
-        <section className="property-detail-content">
-          <article className="property-detail-main">
-            <section className="property-divar-specs" aria-labelledby="property-specs-title">
-              <div className="property-section-heading">
-                <div>
-                  <span className="kicker">جزئیات فایل</span>
-                  <h2 id="property-specs-title">مشخصات ملک</h2>
-                </div>
-                <span className="property-source-badge">اطلاعات آگهی</span>
-              </div>
-              <div className="property-spec-grid">
-                {property.areaM2 != null ? <div><Ruler size={18} /><span><small>متراژ</small><strong>{property.areaM2.toLocaleString("fa-IR")} متر</strong></span></div> : null}
-                {property.bedrooms != null ? <div><BedDouble size={18} /><span><small>اتاق خواب</small><strong>{property.bedrooms.toLocaleString("fa-IR")}</strong></span></div> : null}
-                {property.bathrooms != null ? <div><Bath size={18} /><span><small>سرویس</small><strong>{property.bathrooms.toLocaleString("fa-IR")}</strong></span></div> : null}
-                {property.floor != null ? <div><Building2 size={18} /><span><small>طبقه</small><strong>{property.floor.toLocaleString("fa-IR")}</strong></span></div> : null}
-                {property.totalFloors != null ? <div><Layers3 size={18} /><span><small>تعداد طبقات</small><strong>{property.totalFloors.toLocaleString("fa-IR")}</strong></span></div> : null}
-                {property.builtYear != null ? <div><CalendarDays size={18} /><span><small>سال ساخت</small><strong>{property.builtYear.toLocaleString("fa-IR", { useGrouping: false })}</strong></span></div> : null}
-                <div><CarFront size={18} /><span><small>پارکینگ</small><strong>{property.parking ? "دارد" : "ندارد"}</strong></span></div>
-                <div><Navigation size={18} /><span><small>آسانسور</small><strong>{property.elevator ? "دارد" : "ندارد"}</strong></span></div>
-                <div><Warehouse size={18} /><span><small>انباری</small><strong>{property.storage ? "دارد" : "ندارد"}</strong></span></div>
-                {property.cabinetType ? (
-                  <div><Building2 size={18} /><span><small>نوع کابینت</small><strong>{labelForOption(PROPERTY_CABINET_OPTIONS, property.cabinetType)}</strong></span></div>
-                ) : null}
-                {property.flooringType ? (
-                  <div><Layers3 size={18} /><span><small>کف</small><strong>{labelForOption(PROPERTY_FLOORING_OPTIONS, property.flooringType)}</strong></span></div>
-                ) : null}
-                {property.wallClosetType ? (
-                  <div><Building2 size={18} /><span><small>کمد دیواری</small><strong>{labelForOption(PROPERTY_WALL_CLOSET_OPTIONS, property.wallClosetType)}</strong></span></div>
-                ) : null}
-              </div>
-              {property.otherAmenities.length || property.coolingSystem || property.heatingSystem ? (
-                <details className="property-spec-amenities">
-                  <summary>
-                    <span className="property-spec-amenities-title">
-                      <Sparkles size={18} aria-hidden="true" />
-                      <span>
-                        <small>امکانات تکمیلی</small>
-                        <strong>امکانات دیگر</strong>
-                      </span>
-                    </span>
-                    <span className="property-spec-amenities-toggle">
-                      <small>
-                        {(property.otherAmenities.length + (property.coolingSystem ? 1 : 0) + (property.heatingSystem ? 1 : 0)).toLocaleString("fa-IR")} مورد
-                      </small>
-                      <ChevronDown size={19} aria-hidden="true" />
-                    </span>
-                  </summary>
-                  <div className="property-spec-amenities-body">
-                    {property.coolingSystem ? (
-                      <div className="property-spec-amenity-item" key={"cooling:" + property.coolingSystem}>
-                        {propertyAmenityIcon("cooling")}
-                        <span>
-                          <small>سیستم سرمایش</small>
-                          <strong>{labelForOption(PROPERTY_COOLING_OPTIONS, property.coolingSystem)}</strong>
-                        </span>
-                      </div>
-                    ) : null}
-                    {property.heatingSystem ? (
-                      <div className="property-spec-amenity-item" key={"heating:" + property.heatingSystem}>
-                        {propertyAmenityIcon("heating")}
-                        <span>
-                          <small>سیستم گرمایش</small>
-                          <strong>{labelForOption(PROPERTY_HEATING_OPTIONS, property.heatingSystem)}</strong>
-                        </span>
-                      </div>
-                    ) : null}
-                    {property.otherAmenities.map((value) => (
-                      <div className="property-spec-amenity-item" key={value}>
-                        {propertyAmenityIcon(value)}
-                        <span>
-                          <small>امکانات</small>
-                          <strong>{propertyAmenityLabel(value)}</strong>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              ) : null}
-            </section>
-
             <div className="property-detail-summary">
               <header className="property-detail-summary-head">
                 <div className="property-detail-hero-row">
@@ -1158,6 +1076,89 @@ export function PropertyDetailView({
 
               <ConsultantCard property={property} />
             </div>
+        </section>
+
+        <section className="property-detail-content">
+          <article className="property-detail-main">
+            <section className="property-divar-specs" aria-labelledby="property-specs-title">
+              <div className="property-section-heading">
+                <div>
+                  <span className="kicker">جزئیات فایل</span>
+                  <h2 id="property-specs-title">مشخصات ملک</h2>
+                </div>
+                <span className="property-source-badge">اطلاعات آگهی</span>
+              </div>
+              <div className="property-spec-grid">
+                {property.areaM2 != null ? <div><Ruler size={18} /><span><small>متراژ</small><strong>{property.areaM2.toLocaleString("fa-IR")} متر</strong></span></div> : null}
+                {property.bedrooms != null ? <div><BedDouble size={18} /><span><small>اتاق خواب</small><strong>{property.bedrooms.toLocaleString("fa-IR")}</strong></span></div> : null}
+                {property.bathrooms != null ? <div><Bath size={18} /><span><small>سرویس</small><strong>{property.bathrooms.toLocaleString("fa-IR")}</strong></span></div> : null}
+                {property.floor != null ? <div><Building2 size={18} /><span><small>طبقه</small><strong>{property.floor.toLocaleString("fa-IR")}</strong></span></div> : null}
+                {property.totalFloors != null ? <div><Layers3 size={18} /><span><small>تعداد طبقات</small><strong>{property.totalFloors.toLocaleString("fa-IR")}</strong></span></div> : null}
+                {property.builtYear != null ? <div><CalendarDays size={18} /><span><small>سال ساخت</small><strong>{property.builtYear.toLocaleString("fa-IR", { useGrouping: false })}</strong></span></div> : null}
+                <div><CarFront size={18} /><span><small>پارکینگ</small><strong>{property.parking ? "دارد" : "ندارد"}</strong></span></div>
+                <div><Navigation size={18} /><span><small>آسانسور</small><strong>{property.elevator ? "دارد" : "ندارد"}</strong></span></div>
+                <div><Warehouse size={18} /><span><small>انباری</small><strong>{property.storage ? "دارد" : "ندارد"}</strong></span></div>
+                {property.cabinetType ? (
+                  <div><Building2 size={18} /><span><small>نوع کابینت</small><strong>{labelForOption(PROPERTY_CABINET_OPTIONS, property.cabinetType)}</strong></span></div>
+                ) : null}
+                {property.flooringType ? (
+                  <div><Layers3 size={18} /><span><small>کف</small><strong>{labelForOption(PROPERTY_FLOORING_OPTIONS, property.flooringType)}</strong></span></div>
+                ) : null}
+                {property.wallClosetType ? (
+                  <div><Building2 size={18} /><span><small>کمد دیواری</small><strong>{labelForOption(PROPERTY_WALL_CLOSET_OPTIONS, property.wallClosetType)}</strong></span></div>
+                ) : null}
+              </div>
+              {property.otherAmenities.length || property.coolingSystem || property.heatingSystem ? (
+                <details className="property-spec-amenities">
+                  <summary>
+                    <span className="property-spec-amenities-title">
+                      <Sparkles size={18} aria-hidden="true" />
+                      <span>
+                        <small>امکانات تکمیلی</small>
+                        <strong>امکانات دیگر</strong>
+                      </span>
+                    </span>
+                    <span className="property-spec-amenities-toggle">
+                      <small>
+                        {(property.otherAmenities.length + (property.coolingSystem ? 1 : 0) + (property.heatingSystem ? 1 : 0)).toLocaleString("fa-IR")} مورد
+                      </small>
+                      <ChevronDown size={19} aria-hidden="true" />
+                    </span>
+                  </summary>
+                  <div className="property-spec-amenities-body">
+                    {property.coolingSystem ? (
+                      <div className="property-spec-amenity-item" key={"cooling:" + property.coolingSystem}>
+                        {propertyAmenityIcon("cooling")}
+                        <span>
+                          <small>سیستم سرمایش</small>
+                          <strong>{labelForOption(PROPERTY_COOLING_OPTIONS, property.coolingSystem)}</strong>
+                        </span>
+                      </div>
+                    ) : null}
+                    {property.heatingSystem ? (
+                      <div className="property-spec-amenity-item" key={"heating:" + property.heatingSystem}>
+                        {propertyAmenityIcon("heating")}
+                        <span>
+                          <small>سیستم گرمایش</small>
+                          <strong>{labelForOption(PROPERTY_HEATING_OPTIONS, property.heatingSystem)}</strong>
+                        </span>
+                      </div>
+                    ) : null}
+                    {property.otherAmenities.map((value, index) => (
+                      <div className="property-spec-amenity-item" key={value + "-" + index}>
+                        {propertyAmenityIcon(value)}
+                        <span>
+                          <small>امکانات</small>
+                          <strong>{propertyAmenityLabel(value)}</strong>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              ) : null}
+            </section>
+
+
 
             <section className="property-detail-body" aria-labelledby="property-description-title">
               <div className="property-section-heading">
@@ -1196,8 +1197,8 @@ export function PropertyDetailView({
                     <span>{property.features.length.toLocaleString("fa-IR")} مورد</span>
                   </div>
                   <ul>
-                    {property.features.map((f) => (
-                      <li key={f}>
+                    {property.features.map((f, index) => (
+                      <li key={f + "-" + index}>
                         <Check size={15} aria-hidden="true" />
                         <span>{f}</span>
                       </li>
