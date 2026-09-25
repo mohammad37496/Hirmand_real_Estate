@@ -18,8 +18,10 @@ import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as PropertiesRouteImport } from './routes/properties'
 import { Route as TrackingRouteImport } from './routes/tracking'
 import { Route as AreasSlugRouteImport } from './routes/areas.$slug'
+import { Route as ConsultantsIndexRouteImport } from './routes/consultants.index'
 import { Route as ConsultantsIdRouteImport } from './routes/consultants.$id'
 import { Route as FileIdRouteImport } from './routes/file.$id'
+import { Route as PropertiesIndexRouteImport } from './routes/properties.index'
 import { Route as PropertiesSlugRouteImport } from './routes/properties.$slug'
 import { Route as ToolsIndexRouteImport } from './routes/tools.index'
 import { Route as ToolsCommissionRouteImport } from './routes/tools/commission'
@@ -73,6 +75,11 @@ const AreasSlugRoute = AreasSlugRouteImport.update({
   path: '/areas/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConsultantsIndexRoute = ConsultantsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ConsultantsRoute,
+} as any)
 const ConsultantsIdRoute = ConsultantsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -82,6 +89,11 @@ const FileIdRoute = FileIdRouteImport.update({
   id: '/file/$id',
   path: '/file/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PropertiesIndexRoute = PropertiesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PropertiesRoute,
 } as any)
 const PropertiesSlugRoute = PropertiesSlugRouteImport.update({
   id: '/$slug',
@@ -136,6 +148,8 @@ export interface FileRoutesByFullPath {
   '/tools/deposit': typeof ToolsDepositRoute
   '/tools/loan': typeof ToolsLoanRoute
   '/tools/rahn-rent': typeof ToolsRahnRentRoute
+  '/consultants/': typeof ConsultantsIndexRoute
+  '/properties/': typeof PropertiesIndexRoute
   '/tools/': typeof ToolsIndexRoute
   '/v/$slug/$id': typeof VSlugIdRoute
 }
@@ -144,9 +158,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
-  '/consultants': typeof ConsultantsRouteWithChildren
   '/favorites': typeof FavoritesRoute
-  '/properties': typeof PropertiesRouteWithChildren
   '/tracking': typeof TrackingRoute
   '/areas/$slug': typeof AreasSlugRoute
   '/consultants/$id': typeof ConsultantsIdRoute
@@ -156,6 +168,8 @@ export interface FileRoutesByTo {
   '/tools/deposit': typeof ToolsDepositRoute
   '/tools/loan': typeof ToolsLoanRoute
   '/tools/rahn-rent': typeof ToolsRahnRentRoute
+  '/consultants': typeof ConsultantsIndexRoute
+  '/properties': typeof PropertiesIndexRoute
   '/tools': typeof ToolsIndexRoute
   '/v/$slug/$id': typeof VSlugIdRoute
 }
@@ -177,6 +191,8 @@ export interface FileRoutesById {
   '/tools/deposit': typeof ToolsDepositRoute
   '/tools/loan': typeof ToolsLoanRoute
   '/tools/rahn-rent': typeof ToolsRahnRentRoute
+  '/consultants/': typeof ConsultantsIndexRoute
+  '/properties/': typeof PropertiesIndexRoute
   '/tools/': typeof ToolsIndexRoute
   '/v/$slug/$id': typeof VSlugIdRoute
 }
@@ -199,6 +215,8 @@ export interface FileRouteTypes {
     | '/tools/deposit'
     | '/tools/loan'
     | '/tools/rahn-rent'
+    | '/consultants/'
+    | '/properties/'
     | '/tools/'
     | '/v/$slug/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -207,9 +225,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/budget-match'
     | '/compare'
-    | '/consultants'
     | '/favorites'
-    | '/properties'
     | '/tracking'
     | '/areas/$slug'
     | '/consultants/$id'
@@ -219,6 +235,8 @@ export interface FileRouteTypes {
     | '/tools/deposit'
     | '/tools/loan'
     | '/tools/rahn-rent'
+    | '/consultants'
+    | '/properties'
     | '/tools'
     | '/v/$slug/$id'
   id:
@@ -239,6 +257,8 @@ export interface FileRouteTypes {
     | '/tools/deposit'
     | '/tools/loan'
     | '/tools/rahn-rent'
+    | '/consultants/'
+    | '/properties/'
     | '/tools/'
     | '/v/$slug/$id'
   fileRoutesById: FileRoutesById
@@ -327,6 +347,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AreasSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/consultants/': {
+      id: '/consultants/'
+      path: '/'
+      fullPath: '/consultants/'
+      preLoaderRoute: typeof ConsultantsIndexRouteImport
+      parentRoute: typeof ConsultantsRoute
+    }
     '/consultants/$id': {
       id: '/consultants/$id'
       path: '/$id'
@@ -340,6 +367,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/file/$id'
       preLoaderRoute: typeof FileIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/properties/': {
+      id: '/properties/'
+      path: '/'
+      fullPath: '/properties/'
+      preLoaderRoute: typeof PropertiesIndexRouteImport
+      parentRoute: typeof PropertiesRoute
     }
     '/properties/$slug': {
       id: '/properties/$slug'
@@ -395,10 +429,12 @@ declare module '@tanstack/react-router' {
 
 interface ConsultantsRouteChildren {
   ConsultantsIdRoute: typeof ConsultantsIdRoute
+  ConsultantsIndexRoute: typeof ConsultantsIndexRoute
 }
 
 const ConsultantsRouteChildren: ConsultantsRouteChildren = {
   ConsultantsIdRoute: ConsultantsIdRoute,
+  ConsultantsIndexRoute: ConsultantsIndexRoute,
 }
 
 const ConsultantsRouteWithChildren = ConsultantsRoute._addFileChildren(
@@ -407,10 +443,12 @@ const ConsultantsRouteWithChildren = ConsultantsRoute._addFileChildren(
 
 interface PropertiesRouteChildren {
   PropertiesSlugRoute: typeof PropertiesSlugRoute
+  PropertiesIndexRoute: typeof PropertiesIndexRoute
 }
 
 const PropertiesRouteChildren: PropertiesRouteChildren = {
   PropertiesSlugRoute: PropertiesSlugRoute,
+  PropertiesIndexRoute: PropertiesIndexRoute,
 }
 
 const PropertiesRouteWithChildren = PropertiesRoute._addFileChildren(
