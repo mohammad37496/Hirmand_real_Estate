@@ -17,6 +17,20 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: hirmand_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d hirmand_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
 
     steps:
       - name: Checkout
@@ -44,3 +58,4 @@ jobs:
         run: npm run build
         env:
           VITE_SITE_URL: https://www.hirmandrealestate.ir
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/hirmand_ci

@@ -61,9 +61,24 @@ if (baselineRequested) {
 
 const timeoutMs = Number(process.env.BROWSER_SMOKE_TIMEOUT_MS || 45000);
 
+const screenshotFor = (name, fallback) =>
+  name === "desktop-1280"
+    ? outPng
+    : name === "mobile-390"
+      ? fallback
+      : checkedOutputPath(
+          outPng.replace(/\.png$/i, "-" + name + ".png"),
+          ["/workspace"],
+          name + " screenshot",
+        );
+
 const VIEWPORTS = [
-  { name: "desktop", width: 1280, height: 800, screenshot: outPng },
-  { name: "mobile", width: 390, height: 844, screenshot: mobilePng },
+  { name: "desktop-1920", width: 1920, height: 900, screenshot: screenshotFor("desktop-1920", mobilePng) },
+  { name: "desktop-1280", width: 1280, height: 800, screenshot: outPng },
+  { name: "tablet-1024", width: 1024, height: 820, screenshot: screenshotFor("tablet-1024", mobilePng) },
+  { name: "mobile-430", width: 430, height: 900, screenshot: screenshotFor("mobile-430", mobilePng) },
+  { name: "mobile-390", width: 390, height: 844, screenshot: mobilePng },
+  { name: "mobile-375", width: 375, height: 812, screenshot: screenshotFor("mobile-375", mobilePng) },
 ];
 
 mkdirSync(dirname(outPng), { recursive: true });
@@ -156,8 +171,19 @@ try {
   // test cannot see, especially the property-detail route reported by users.
   const routeChecks = [];
   const publicRoutes = [
-    new URL("/properties", url).toString(),
-  ];
+    "/",
+    "/properties",
+    "/favorites",
+    "/compare",
+    "/tracking",
+    "/consultants",
+    "/budget-match",
+    "/tools",
+    "/tools/commission",
+    "/tools/deposit",
+    "/tools/loan",
+    "/tools/rahn-rent",
+  ].map((path) => new URL(path, url).toString());
   for (const routeUrl of publicRoutes) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
     const routeErrors = [];
@@ -232,17 +258,53 @@ try {
       propertyNavigationCheck.href = href;
       if (href) {
         propertyNavigationCheck.attempted = true;
+        const propertyId = await link.getAttribute("data-property-id").catch(() => null);
         await link.click();
-      await propertyPage.waitForLoadState("domcontentloaded").catch(() => undefined);
-      await propertyPage.waitForTimeout(500);
-      propertyNavigationCheck.status = await propertyPage.evaluate(() => window.location.pathname);
-      const textValue = await propertyPage.locator("body").innerText().catch(() => "");
-      propertyNavigationCheck.bodyTextLen = normalizeBodyText(textValue).length;
+        await propertyPage.waitForLoadState("domcontentloaded").catch(() => undefined);
+        await propertyPage.waitForTimeout(500);
+        propertyNavigationCheck.status = await propertyPage.evaluate(() => window.location.pathname);
+        const textValue = await propertyPage.locator("body").innerText().catch(() => "");
+        propertyNavigationCheck.bodyTextLen = normalizeBodyText(textValue).length;
         propertyNavigationCheck.ok =
-          (propertyNavigationCheck.status.startsWith("/file/") ||
-            propertyNavigationCheck.status.startsWith("/properties/")) &&
-          propertyNavigationCheck.bodyTextLen > 80 &&
-          propertyNavigationCheck.status !== "/properties/";
+          propertyNavigationCheck.status.startsWith("/properties/") &&
+          propertyNavigationCheck.status !== "/properties/" &&
+          propertyNavigationCheck.bodyTextLen > 80;
+
+        if (propertyNavigationCheck.ok) {
+          await propertyPage.reload({ waitUntil: "domcontentloaded" });
+          const refreshPath = await propertyPage.evaluate(() => window.location.pathname);
+          const refreshBody = normalizeBodyText(
+            await propertyPage.locator("body").innerText().catch(() => ""),
+          );
+          propertyNavigationCheck.ok =
+            refreshPath === propertyNavigationCheck.status && refreshBody.length > 80;
+        }
+
+        if (propertyNavigationCheck.ok && propertyId) {
+          await propertyPage.goto(
+            new URL("/file/" + encodeURIComponent(propertyId), url).toString(),
+            { waitUntil: "domcontentloaded", timeout: timeoutMs },
+          );
+          await propertyPage.waitForTimeout(300);
+          const legacyPath = await propertyPage.evaluate(() => window.location.pathname);
+          propertyNavigationCheck.ok =
+            legacyPath.startsWith("/properties/") && legacyPath !== "/properties/";
+        }
+
+        if (propertyNavigationCheck.ok && propertyId) {
+          const slug = href.split("/").pop() ?? "";
+          await propertyPage.goto(
+            new URL(
+              "/v/" + encodeURIComponent(slug) + "/" + encodeURIComponent(propertyId),
+              url,
+            ).toString(),
+            { waitUntil: "domcontentloaded", timeout: timeoutMs },
+          );
+          await propertyPage.waitForTimeout(300);
+          const legacyVPath = await propertyPage.evaluate(() => window.location.pathname);
+          propertyNavigationCheck.ok =
+            legacyVPath.startsWith("/properties/") && legacyVPath !== "/properties/";
+        }
       }
     }
   } catch (error) {
@@ -254,15 +316,15 @@ try {
 
   const routeFailures = routeChecks.filter((item) => !item.ok);
   if (routeFailures.length) {
-    viewports.desktop.pageErrors.push(
+    viewports["desktop-1280"].pageErrors.push(
       ...routeFailures.map((item) => `route smoke failed: ${item.url} [${item.status}]`),
     );
   }
   if (!musicApiCheck.ok) {
-    viewports.desktop.pageErrors.push(`music API smoke failed: [${musicApiCheck.status}]`);
+    viewports["desktop-1280"].pageErrors.push(`music API smoke failed: [${musicApiCheck.status}]`);
   }
   if (!propertyNavigationCheck.ok) {
-    viewports.desktop.pageErrors.push(
+    viewports["desktop-1280"].pageErrors.push(
       propertyNavigationCheck.attempted
         ? `property detail navigation smoke failed: ${propertyNavigationCheck.status || propertyNavigationCheck.error || "unknown"}`
         : "property detail navigation smoke skipped: no published property card is available in this environment",
@@ -270,7 +332,7 @@ try {
   }
 
   const brandWarnings = computeBrandWarnings({
-    hasCanvas: viewports.desktop.hasCanvas,
+    hasCanvas: viewports["desktop-1280"].hasCanvas,
     workspaceRoot: process.env.GITHUB_WORKSPACE ?? process.cwd(),
   });
   // Only a dev server answers /__app-env, so smoking the built output reads as

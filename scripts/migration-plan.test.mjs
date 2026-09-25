@@ -56,6 +56,23 @@ test("non-.sql entries are dropped (readdir also yields the auth/ directory)", (
   assert.deepEqual(pendingMigrations(["auth", "README.md"], []), []);
 });
 
+test("duplicate migration basenames fail closed instead of silently dropping one", () => {
+  assert.throws(
+    () =>
+      pendingMigrations(
+        ["/migrations/0019_featured_expiry.sql", "/migrations/0019_featured_expiry.sql"],
+        [],
+      ),
+    /Duplicate migration basename/,
+  );
+});
+
+test("this workspace contains no duplicate migration basenames", () => {
+  const migrationsDir = join(projectRoot(), "migrations");
+  const names = readdirSync(migrationsDir).filter(isMigrationFile);
+  assert.doesNotThrow(() => pendingMigrations(names, []));
+});
+
 test("the auth schema ships outside the globbed directory", () => {
   const migrationsDir = join(projectRoot(), "migrations");
   const pending = pendingMigrations(readdirSync(migrationsDir), []);

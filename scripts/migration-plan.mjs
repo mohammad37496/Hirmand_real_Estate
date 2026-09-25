@@ -30,7 +30,7 @@ export function isMigrationFile(path) {
 }
 
 /**
- * Migrations in `paths` that are not yet in `applied`, in apply order.
+ * Migrations in `paths` that are not yet in `applied`, in apply order. Duplicate basenames fail closed because basename is the database key.
  * Non-`.sql` entries (a `readdir` also yields `migrations/auth/`) are dropped.
  * @param {Iterable<string>} paths
  * @param {Iterable<string>} applied
@@ -38,14 +38,21 @@ export function isMigrationFile(path) {
  */
 export function pendingMigrations(paths, applied) {
   const done = new Set(applied);
-  const seen = new Set();
-  return [...paths]
+  const migrations = [...paths]
     .filter(isMigrationFile)
     .map((path) => ({ name: migrationName(path), path }))
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .filter(({ name }) => {
-      if (done.has(name) || seen.has(name)) return false;
-      seen.add(name);
-      return true;
-    });
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const seen = new Set();
+  for (const { name, path } of migrations) {
+    if (seen.has(name)) {
+      throw new Error(
+        `Duplicate migration basename "${name}" detected (including "${path}"). ` +
+          "Migration basenames are the database keys and must be unique.",
+      );
+    }
+    seen.add(name);
+  }
+
+  return migrations.filter(({ name }) => !done.has(name));
 }
