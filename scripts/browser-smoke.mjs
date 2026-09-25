@@ -332,7 +332,7 @@ try {
   }
 
   const brandWarnings = computeBrandWarnings({
-    hasCanvas: viewports.desktop.hasCanvas,
+    hasCanvas: viewports["desktop-1280"].hasCanvas,
     workspaceRoot: process.env.GITHUB_WORKSPACE ?? process.cwd(),
   });
   // Only a dev server answers /__app-env, so smoking the built output reads as
