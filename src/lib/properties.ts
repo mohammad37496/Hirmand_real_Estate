@@ -199,7 +199,7 @@ const WALL_CLOSET_VALUES = PROPERTY_WALL_CLOSET_OPTIONS.map((item) => item.value
   ...PropertyWallClosetType[],
 ];
 
-const propertyInputSchema = z.object({
+export const propertyInputSchema = z.object({
   id: z.string().optional(),
   title: z.string().trim().min(3).max(180),
   transactionType: z.enum(["buy", "sell", "rent", "mortgage"]),
