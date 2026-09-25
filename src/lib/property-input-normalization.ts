@@ -53,6 +53,33 @@ export function isMoneyText(value: unknown): value is string {
   return typeof value === "string" && /^\d{1,20}$/.test(value);
 }
 
+function normalizeIntegerText(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value !== "string") return String(value);
+  const raw = value.trim();
+  if (!raw || /^(null|undefined)$/i.test(raw)) return "";
+  return raw
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+    .replace(/[٬،,\s]/g, "");
+}
+
+export function isInvalidIntegerInput(value: unknown, allowNegative = false): boolean {
+  const normalized = normalizeIntegerText(value);
+  if (!normalized) return false;
+  if (!/^-?\d+$/.test(normalized)) return true;
+  const parsed = Number(normalized);
+  if (!Number.isInteger(parsed) || !Number.isFinite(parsed)) return true;
+  return !allowNegative && parsed < 0;
+}
+
+export function nullableIntegerInput(value: unknown, allowNegative = false): number | null {
+  const normalized = normalizeIntegerText(value);
+  if (!normalized) return null;
+  if (isInvalidIntegerInput(value, allowNegative)) return null;
+  return Number(normalized);
+}
+
 /**
  * Boundary normalization for legacy/imported rows that are expected to map to
  * PostgreSQL integer columns. Invalid non-null values become null only at a
