@@ -6,6 +6,7 @@ import { dbSource, getSql } from "@/lib/db";
 import { storeMedia } from "@/lib/media-store.server";
 import { detectRasterImageType, isAllowedDivarImageUrl, isDivarRemoteHost } from "@/lib/media";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { isMoneyText, normalizeMoneyText } from "@/lib/property-input-normalization";
 
 const DIVAR_API = "https://api.divar.ir/v8";
 const DIVAR_WEB = "https://divar.ir";
@@ -279,6 +280,16 @@ export function getDivarAgencyReason(value: unknown): string | null {
   }
 
   return null;
+}
+
+
+function strictNullableMoney(value: unknown): string | null {
+  const normalized = normalizeMoneyText(value);
+  if (!normalized) return null;
+  if (!isMoneyText(normalized)) {
+    throw new Error("داده مالی دیوار نامعتبر است.");
+  }
+  return normalized;
 }
 
 function parseNumber(value: unknown): number | null {
@@ -1143,9 +1154,9 @@ export const syncDivarFiles = createServerFn({ method: "POST" })
           item.parking,
           item.elevator,
           item.storage,
-          item.price,
-          item.deposit,
-          item.rent,
+          strictNullableMoney(item.price),
+          strictNullableMoney(item.deposit),
+          strictNullableMoney(item.rent),
           item.description,
           JSON.stringify(item.features),
           JSON.stringify(item.images),
@@ -1324,9 +1335,9 @@ export const importDivarFile = createServerFn({ method: "POST" })
         Boolean(row.parking),
         Boolean(row.elevator),
         Boolean(row.storage),
-        row.price == null ? null : String(row.price),
-        row.deposit == null ? null : String(row.deposit),
-        row.rent == null ? null : String(row.rent),
+        strictNullableMoney(row.price),
+        strictNullableMoney(row.deposit),
+        strictNullableMoney(row.rent),
         description,
         JSON.stringify(parseJsonArray(row.features)),
         JSON.stringify(importedImages),
