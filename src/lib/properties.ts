@@ -858,8 +858,8 @@ export const listAdminProperties = createServerFn({ method: "POST" })
        from properties
        where ${adminPropertyWhereSql()}
        order by
-         case when $7 = 'title' then title end asc nulls last,
-         case when $7 = 'price_desc' then ${ADMIN_PRICE_EXPR} end desc nulls last,
+         case when $7::text = 'title' then title end asc nulls last,
+         case when $7::text = 'price_desc' then ${ADMIN_PRICE_EXPR} end desc nulls last,
          updated_at desc,
          created_at desc
        limit $8 offset $9`,
