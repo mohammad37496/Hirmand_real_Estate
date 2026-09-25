@@ -258,9 +258,31 @@ try {
     status: null,
     bodyTextLen: 0,
     bodyContainsExpectedTitle: true,
+    detailRendered: false,
+    detailHeading: null,
     error: null,
   };
   const propertyPage = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  /**
+   * The file page is the only place `PropertyDetailView` mounts, and the
+   * listing never renders that class — so this is what separates "the file
+   * opened" from "the URL changed but the listing stayed". The old check only
+   * looked at the URL plus body text, and the card carrying the property title
+   * satisfies the title assertion on the listing, which is how a section-wide
+   * routing dead end stayed green.
+   */
+  const readDetailState = async () => {
+    await propertyPage
+      .waitForSelector(".property-detail-page:not(.property-detail-skeleton)", { timeout: 10_000 })
+      .catch(() => undefined);
+    return propertyPage.evaluate(() => {
+      const root = document.querySelector(".property-detail-page");
+      return {
+        rendered: Boolean(root) && !root.classList.contains("property-detail-skeleton"),
+        heading: root?.querySelector("h1")?.textContent?.trim() ?? "",
+      };
+    });
+  };
   try {
     const propertiesUrl = new URL("/properties", url).toString();
     await propertyPage.goto(propertiesUrl, { waitUntil: "domcontentloaded", timeout: timeoutMs });
@@ -293,12 +315,19 @@ try {
         propertyNavigationCheck.bodyTextLen = normalizedText.length;
         propertyNavigationCheck.bodyContainsExpectedTitle =
           !expectedPropertyTitle || normalizedText.includes(normalizeBodyText(expectedPropertyTitle));
+        const clickedDetail = await readDetailState();
+        propertyNavigationCheck.detailRendered = clickedDetail.rendered;
+        propertyNavigationCheck.detailHeading = clickedDetail.heading || null;
         propertyNavigationCheck.ok =
           propertyNavigationCheck.status.startsWith("/properties/") &&
           propertyNavigationCheck.status !== "/properties/" &&
           propertyNavigationCheck.bodyTextLen > 80 &&
           propertyNavigationCheck.hrefMatchesExpectedSlug &&
-          propertyNavigationCheck.bodyContainsExpectedTitle;
+          propertyNavigationCheck.bodyContainsExpectedTitle &&
+          propertyNavigationCheck.detailRendered;
+        if (!propertyNavigationCheck.ok && !propertyNavigationCheck.detailRendered) {
+          propertyNavigationCheck.error = `detail view never mounted for ${propertyNavigationCheck.status}`;
+        }
 
         if (propertyNavigationCheck.ok) {
           await propertyPage.reload({ waitUntil: "domcontentloaded" });
@@ -306,11 +335,20 @@ try {
           const refreshBody = normalizeBodyText(
             await propertyPage.locator("body").innerText().catch(() => ""),
           );
+          const refreshDetail = await readDetailState();
+          propertyNavigationCheck.detailRendered = refreshDetail.rendered;
+          propertyNavigationCheck.detailHeading = refreshDetail.heading || null;
           propertyNavigationCheck.ok =
             refreshPath === propertyNavigationCheck.status &&
             refreshBody.length > 80 &&
+            refreshDetail.rendered &&
             (!expectedPropertyTitle ||
               refreshBody.includes(normalizeBodyText(expectedPropertyTitle)));
+          if (!propertyNavigationCheck.ok) {
+            propertyNavigationCheck.error = refreshDetail.rendered
+              ? `detail URL changed after a direct refresh: ${refreshPath}`
+              : `detail view never mounted after a direct refresh of ${refreshPath}`;
+          }
         }
 
         if (propertyNavigationCheck.ok && propertyId) {
@@ -320,8 +358,16 @@ try {
           );
           await propertyPage.waitForTimeout(300);
           const legacyPath = await propertyPage.evaluate(() => window.location.pathname);
+          const legacyDetail = await readDetailState();
           propertyNavigationCheck.ok =
-            legacyPath.startsWith("/properties/") && legacyPath !== "/properties/";
+            legacyPath.startsWith("/properties/") &&
+            legacyPath !== "/properties/" &&
+            legacyDetail.rendered;
+          if (!propertyNavigationCheck.ok) {
+            propertyNavigationCheck.error = legacyDetail.rendered
+              ? `/file/:id did not land on a file page: ${legacyPath}`
+              : `/file/:id landed on ${legacyPath} without the detail view`;
+          }
         }
 
         if (propertyNavigationCheck.ok && propertyId) {
@@ -334,8 +380,16 @@ try {
           );
           await propertyPage.waitForTimeout(300);
           const legacyVPath = await propertyPage.evaluate(() => window.location.pathname);
+          const legacyVDetail = await readDetailState();
           propertyNavigationCheck.ok =
-            legacyVPath.startsWith("/properties/") && legacyVPath !== "/properties/";
+            legacyVPath.startsWith("/properties/") &&
+            legacyVPath !== "/properties/" &&
+            legacyVDetail.rendered;
+          if (!propertyNavigationCheck.ok) {
+            propertyNavigationCheck.error = legacyVDetail.rendered
+              ? `/v/:slug/:id did not land on a file page: ${legacyVPath}`
+              : `/v/:slug/:id landed on ${legacyVPath} without the detail view`;
+          }
         }
 
         if (propertyNavigationCheck.ok && expectedPropertyId && propertyId !== expectedPropertyId) {
@@ -366,7 +420,8 @@ try {
   if (!propertyNavigationCheck.ok) {
     viewports["desktop-1280"].pageErrors.push(
       propertyNavigationCheck.attempted
-        ? `property detail navigation smoke failed: ${propertyNavigationCheck.status || propertyNavigationCheck.error || "unknown"}`
+        ? `property detail navigation smoke failed: ${propertyNavigationCheck.status || propertyNavigationCheck.error || "unknown"}` +
+          (propertyNavigationCheck.error ? ` (${propertyNavigationCheck.error})` : "")
         : `property detail navigation smoke skipped: ${propertyNavigationCheck.error || "no published property card is available in this environment"}`,
     );
   }
