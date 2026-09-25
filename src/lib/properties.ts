@@ -547,12 +547,24 @@ export const getPublishedPropertyById = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     if (dbSource === "unconfigured") return null;
     const sql = await getSql();
+    const id = data.id.trim();
+    // Legacy /file/:id links circulate with the full uuid AND with the visible
+    // 8-hex fragment (the same fragment the slug suffix and the card code are
+    // built from). Mirror getPublishedProperty's tolerance so a fragment also
+    // resolves and redirects to the canonical slug page instead of 404.
+    const fragment = /^[0-9a-f]{8}$/i.test(id) ? id.toLowerCase() : "";
     const rows = await sql.query<Record<string, unknown>>(
       `select ${DETAIL_COLUMNS}
        from properties
-       where status = 'published' and id::text = $1
+       where status = 'published'
+         and (
+           id::text = $1
+           or ($2 <> '' and lower(left(id::text, 8)) = $2)
+           or ($2 <> '' and lower(right(id::text, 8)) = $2)
+         )
+       order by case when id::text = $1 then 0 else 1 end
        limit 1`,
-      [data.id],
+      [id, fragment],
     );
     return rows[0] ? mapProperty(rows[0]) : null;
   });
