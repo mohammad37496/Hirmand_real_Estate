@@ -3,7 +3,7 @@ import { getCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
-import { normalizeMoneyInput } from "@/lib/property-input-normalization";
+import { nullableMoneyFieldSchema } from "@/lib/property-input-normalization";
 import { calculateBudgetMatch, DEFAULT_MATCH_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
 import { MAX_PROPERTY_MEDIA, isAllowedMediaRef } from "@/lib/media";
 import {
@@ -171,10 +171,7 @@ const publicFiltersSchema = z.object({
   offset: z.number().int().min(0).max(100000).optional().default(0),
 });
 
-const nullableMoneyField = z.preprocess(
-  (value) => normalizeMoneyInput(value),
-  z.union([z.null(), z.string().regex(/^\d{1,20}$/)]),
-);
+const nullableMoneyField = nullableMoneyFieldSchema;
 
 
 
