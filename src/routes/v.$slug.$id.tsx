@@ -17,7 +17,7 @@ export const Route = createFileRoute("/v/$slug/$id")({
         replace: true,
       });
     } catch (error) {
-      if (error && typeof error === "object" && "isRedirect" in error) {
+      if (error instanceof Response && error.status >= 300 && error.status < 400) {
         throw error;
       }
       console.error("[property-detail] v route loader failed", error);
