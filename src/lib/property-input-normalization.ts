@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /**
  * Shared normalization for property money values.
  *
@@ -41,6 +43,11 @@ export function nullableMoneyValue(value: unknown): string | null {
   const normalized = normalizeMoneyText(value);
   return normalized ? normalized : null;
 }
+
+export const nullableMoneyFieldSchema = z.preprocess(
+  (value) => normalizeMoneyInput(value),
+  z.union([z.null(), z.string().regex(/^\d{1,20}$/)]),
+);
 
 export function isMoneyText(value: unknown): value is string {
   return typeof value === "string" && /^\d{1,20}$/.test(value);
