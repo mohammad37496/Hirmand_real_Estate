@@ -98,17 +98,13 @@ function readSavedSearches(): SavedSearch[] {
 
 export const Route = createFileRoute("/properties")({
   loader: async () => {
-    try {
-      const [properties, total] = await Promise.all([
-        listPublishedPropertyCards({ data: {} }),
-        countPublishedProperties({ data: {} }),
-      ]);
-      return { properties, total };
-    } catch (error) {
-      console.error("[properties] loader failed", error);
-      return { properties: [], total: 0 };
-    }
+    const [properties, total] = await Promise.all([
+      listPublishedPropertyCards({ data: {} }),
+      countPublishedProperties({ data: {} }),
+    ]);
+    return { properties, total };
   },
+  errorComponent: PropertiesPageError,
   head: () => {
     const title = "فایل‌های ملکی اصفهان | خرید، فروش، رهن و اجاره | هیرمند";
     const description = "فایل‌های منتشرشده خرید، فروش، رهن و اجاره ملک در اصفهان از گروه مشاورین املاک هیرمند.";
@@ -257,6 +253,22 @@ function FilterDisclosure({
       </summary>
       <div className="pf-fold-body">{children}</div>
     </details>
+  );
+}
+
+function PropertiesPageError({
+  reset,
+}: {
+  reset: () => void;
+}) {
+  return (
+    <main className="properties-page pf-page">
+      <section className="pf-empty" role="alert">
+        <strong>دریافت فایل‌های ملکی با مشکل روبه‌رو شد.</strong>
+        <p>اتصال به اطلاعات فایل‌ها موقتاً در دسترس نیست. دوباره تلاش کنید.</p>
+        <button type="button" className="btn-gold" onClick={reset}>تلاش مجدد</button>
+      </section>
+    </main>
   );
 }
 
