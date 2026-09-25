@@ -245,7 +245,21 @@ try {
 
   // When published listings exist, exercise a real card-to-detail navigation.
   // This is the regression test for the recurring "clicking a file does nothing" bug.
-  const propertyNavigationCheck = { attempted: false, ok: true, href: null, status: null, bodyTextLen: 0, error: null };
+  const requirePropertySmoke = process.env.REQUIRE_PROPERTY_SMOKE === "1";
+  const expectedPropertyId = process.env.BROWSER_SMOKE_PROPERTY_ID?.trim() || "";
+  const expectedPropertySlug = process.env.BROWSER_SMOKE_PROPERTY_SLUG?.trim() || "";
+  const expectedPropertyTitle = process.env.BROWSER_SMOKE_PROPERTY_TITLE?.trim() || "";
+  const propertyNavigationCheck = {
+    attempted: false,
+    ok: true,
+    href: null,
+    hrefDecodedSlug: null,
+    hrefMatchesExpectedSlug: true,
+    status: null,
+    bodyTextLen: 0,
+    bodyContainsExpectedTitle: true,
+    error: null,
+  };
   const propertyPage = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   try {
     const propertiesUrl = new URL("/properties", url).toString();
@@ -256,19 +270,35 @@ try {
       const link = cards.first();
       const href = await link.getAttribute("href").catch(() => null);
       propertyNavigationCheck.href = href;
+
       if (href) {
         propertyNavigationCheck.attempted = true;
         const propertyId = await link.getAttribute("data-property-id").catch(() => null);
+        const propertiesUrl = new URL("/properties", url);
+        const canonicalUrl = new URL(href, propertiesUrl);
+        const pathParts = canonicalUrl.pathname.split("/").filter(Boolean);
+        const canonicalSlug = pathParts[pathParts.length - 1]
+          ? decodeURIComponent(pathParts[pathParts.length - 1]!)
+          : "";
+        propertyNavigationCheck.hrefDecodedSlug = canonicalSlug;
+        propertyNavigationCheck.hrefMatchesExpectedSlug =
+          !expectedPropertySlug || canonicalSlug === expectedPropertySlug;
+
         await link.click();
         await propertyPage.waitForLoadState("domcontentloaded").catch(() => undefined);
         await propertyPage.waitForTimeout(500);
         propertyNavigationCheck.status = await propertyPage.evaluate(() => window.location.pathname);
         const textValue = await propertyPage.locator("body").innerText().catch(() => "");
-        propertyNavigationCheck.bodyTextLen = normalizeBodyText(textValue).length;
+        const normalizedText = normalizeBodyText(textValue);
+        propertyNavigationCheck.bodyTextLen = normalizedText.length;
+        propertyNavigationCheck.bodyContainsExpectedTitle =
+          !expectedPropertyTitle || normalizedText.includes(normalizeBodyText(expectedPropertyTitle));
         propertyNavigationCheck.ok =
           propertyNavigationCheck.status.startsWith("/properties/") &&
           propertyNavigationCheck.status !== "/properties/" &&
-          propertyNavigationCheck.bodyTextLen > 80;
+          propertyNavigationCheck.bodyTextLen > 80 &&
+          propertyNavigationCheck.hrefMatchesExpectedSlug &&
+          propertyNavigationCheck.bodyContainsExpectedTitle;
 
         if (propertyNavigationCheck.ok) {
           await propertyPage.reload({ waitUntil: "domcontentloaded" });
@@ -277,7 +307,10 @@ try {
             await propertyPage.locator("body").innerText().catch(() => ""),
           );
           propertyNavigationCheck.ok =
-            refreshPath === propertyNavigationCheck.status && refreshBody.length > 80;
+            refreshPath === propertyNavigationCheck.status &&
+            refreshBody.length > 80 &&
+            (!expectedPropertyTitle ||
+              refreshBody.includes(normalizeBodyText(expectedPropertyTitle)));
         }
 
         if (propertyNavigationCheck.ok && propertyId) {
@@ -292,10 +325,9 @@ try {
         }
 
         if (propertyNavigationCheck.ok && propertyId) {
-          const slug = href.split("/").pop() ?? "";
           await propertyPage.goto(
             new URL(
-              "/v/" + encodeURIComponent(slug) + "/" + encodeURIComponent(propertyId),
+              "/v/" + encodeURIComponent(canonicalSlug) + "/" + encodeURIComponent(propertyId),
               url,
             ).toString(),
             { waitUntil: "domcontentloaded", timeout: timeoutMs },
@@ -305,7 +337,15 @@ try {
           propertyNavigationCheck.ok =
             legacyVPath.startsWith("/properties/") && legacyVPath !== "/properties/";
         }
+
+        if (propertyNavigationCheck.ok && expectedPropertyId && propertyId !== expectedPropertyId) {
+          propertyNavigationCheck.ok = false;
+          propertyNavigationCheck.error = `unexpected property id ${propertyId}; expected ${expectedPropertyId}`;
+        }
       }
+    } else if (requirePropertySmoke) {
+      propertyNavigationCheck.ok = false;
+      propertyNavigationCheck.error = "no published property card available in required smoke environment";
     }
   } catch (error) {
     propertyNavigationCheck.error = String(error?.message || error);
@@ -327,7 +367,7 @@ try {
     viewports["desktop-1280"].pageErrors.push(
       propertyNavigationCheck.attempted
         ? `property detail navigation smoke failed: ${propertyNavigationCheck.status || propertyNavigationCheck.error || "unknown"}`
-        : "property detail navigation smoke skipped: no published property card is available in this environment",
+        : `property detail navigation smoke skipped: ${propertyNavigationCheck.error || "no published property card is available in this environment"}`,
     );
   }
 
