@@ -27,7 +27,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
-import { normalizeMoneyText } from "@/lib/property-input-normalization";
+import { isInvalidIntegerInput, normalizeMoneyText } from "@/lib/property-input-normalization";
 import { listNeighborhoodNames } from "@/lib/neighborhoods";
 import { propertyPath } from "@/lib/property-path";
 import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
@@ -173,6 +173,20 @@ function moneyOrNull(raw: string) {
 function hasInvalidMoney(raw: string) {
   const normalized = normalizeMoneyText(raw);
   return Boolean(normalized) && !/^\d{1,20}$/.test(normalized);
+}
+
+function hasInvalidPropertyIntegerInputs(form: Pick<
+  FormState,
+  "areaM2" | "bedrooms" | "bathrooms" | "floor" | "totalFloors" | "builtYear"
+>) {
+  return (
+    isInvalidIntegerInput(form.areaM2) ||
+    isInvalidIntegerInput(form.bedrooms) ||
+    isInvalidIntegerInput(form.bathrooms) ||
+    isInvalidIntegerInput(form.floor, true) ||
+    isInvalidIntegerInput(form.totalFloors) ||
+    isInvalidIntegerInput(form.builtYear)
+  );
 }
 function toDateTimeLocal(value: string | null | undefined) {
   if (!value) return "";
@@ -744,6 +758,10 @@ export function AdminPropertiesPage() {
       toast.error("مبلغ باید فقط شامل رقم باشد و حداکثر ۲۰ رقم داشته باشد.");
       return;
     }
+    if (hasInvalidPropertyIntegerInputs(form)) {
+      toast.error("متراژ، خواب، سرویس، طبقه، تعداد طبقات و سال ساخت باید عدد صحیح باشند.");
+      return;
+    }
     const price = moneyOrNull(form.price);
     const deposit = moneyOrNull(form.deposit);
     const rent = moneyOrNull(form.rent);
@@ -854,6 +872,9 @@ export function AdminPropertiesPage() {
       const base = propertyToForm(property);
       if ([base.price, base.deposit, base.rent].some(hasInvalidMoney)) {
         throw new Error("مبلغ ذخیره‌شده برای این فایل نامعتبر است؛ ابتدا آن را اصلاح کنید.");
+      }
+      if (hasInvalidPropertyIntegerInputs(base)) {
+        throw new Error("یکی از مقادیر عددی ذخیره‌شده برای این فایل نامعتبر است؛ ابتدا آن را اصلاح کنید.");
       }
       const result = await saveProperty({
         data: {
