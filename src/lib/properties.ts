@@ -562,74 +562,88 @@ export const getPublishedPropertyById = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.string().trim().min(1).max(120) }))
   .handler(async ({ data }) => {
     if (dbSource === "unconfigured") return null;
-    const sql = await getSql();
-    const id = data.id.trim();
-    // Legacy /file/:id links circulate with the full uuid AND with the visible
-    // 8-hex fragment (the same fragment the slug suffix and the card code are
-    // built from). Mirror getPublishedProperty's tolerance so a fragment also
-    // resolves and redirects to the canonical slug page instead of 404.
-    const fragment = /^[0-9a-f]{8}$/i.test(id) ? id.toLowerCase() : "";
-    const rows = await sql.query<Record<string, unknown>>(
-      `select ${DETAIL_COLUMNS}
-       from properties
-       where status = 'published'
-         and (
-           id::text = $1
-           or ($2 <> '' and lower(left(id::text, 8)) = $2)
-           or ($2 <> '' and lower(right(id::text, 8)) = $2)
-         )
-       order by case when id::text = $1 then 0 else 1 end
-       limit 1`,
-      [id, fragment],
+    setResponseHeader("cache-control", "public, max-age=30, s-maxage=120, stale-while-revalidate=600");
+    return cachedPropertyRead(
+      `property-id:${data.id.trim()}`,
+      60_000,
+      async () => {
+      const sql = await getSql();
+      const id = data.id.trim();
+      // Legacy /file/:id links circulate with the full uuid AND with the visible
+      // 8-hex fragment (the same fragment the slug suffix and the card code are
+      // built from). Mirror getPublishedProperty's tolerance so a fragment also
+      // resolves and redirects to the canonical slug page instead of 404.
+      const fragment = /^[0-9a-f]{8}$/i.test(id) ? id.toLowerCase() : "";
+      const rows = await sql.query<Record<string, unknown>>(
+        `select ${DETAIL_COLUMNS}
+         from properties
+         where status = 'published'
+           and (
+             id::text = $1
+             or ($2 <> '' and lower(left(id::text, 8)) = $2)
+             or ($2 <> '' and lower(right(id::text, 8)) = $2)
+           )
+         order by case when id::text = $1 then 0 else 1 end
+         limit 1`,
+        [id, fragment],
+      );
+      return rows[0] ? mapProperty(rows[0]) : null;
+      },
     );
-    return rows[0] ? mapProperty(rows[0]) : null;
   });
 
 export const getPublishedProperty = createServerFn({ method: "GET" })
   .validator(z.object({ slug: z.string().min(1).max(220) }))
   .handler(async ({ data }) => {
     if (dbSource === "unconfigured") return null;
-    const sql = await getSql();
+    setResponseHeader("cache-control", "public, max-age=30, s-maxage=120, stale-while-revalidate=600");
+    return cachedPropertyRead(
+      `property-slug:${data.slug}`,
+      60_000,
+      async () => {
+      const sql = await getSql();
 
-    // Shared with the detail route so the lookup and the canonical-URL check
-    // always agree on what a slug means (see src/lib/property-slug.ts).
-    const decodedCandidates = decodeSlugCandidates(data.slug);
+      // Shared with the detail route so the lookup and the canonical-URL check
+      // always agree on what a slug means (see src/lib/property-slug.ts).
+      const decodedCandidates = decodeSlugCandidates(data.slug);
 
-    // Old public links were generated from /file/:id and then promoted to
-    // slug URLs such as "عنوان-345555d4". Keep those links resolvable even if
-    // the title/slug has changed later: the final 8 hex characters are the
-    // same short id fragment used by saveProperty().
-    const legacyIdPrefixes = legacyIdFragments(decodedCandidates);
+      // Old public links were generated from /file/:id and then promoted to
+      // slug URLs such as "عنوان-345555d4". Keep those links resolvable even if
+      // the title/slug has changed later: the final 8 hex characters are the
+      // same short id fragment used by saveProperty().
+      const legacyIdPrefixes = legacyIdFragments(decodedCandidates);
 
-    const rows = await sql.query<Record<string, unknown>>(
-      `select ${DETAIL_COLUMNS}
-       from properties
-       where status = 'published'
-         and (
-           slug = any($1::text[])
-           or id::text = any($1::text[])
-           or lower(left(id::text, 8)) = any($4::text[])
-           or lower(right(id::text, 8)) = any($4::text[])
-         )
-       order by
-         case
-           when slug = $2 then 0
-           when slug = $3 then 1
-           when id::text = any($1::text[]) then 2
-           when lower(left(id::text, 8)) = any($4::text[]) then 3
-           when lower(right(id::text, 8)) = any($4::text[]) then 4
-           else 5
-         end
-       limit 1`,
-      [
-        decodedCandidates,
-        decodedCandidates[0],
-        decodedCandidates[1] ?? decodedCandidates[0],
-        legacyIdPrefixes,
-      ],
+      const rows = await sql.query<Record<string, unknown>>(
+        `select ${DETAIL_COLUMNS}
+         from properties
+         where status = 'published'
+           and (
+             slug = any($1::text[])
+             or id::text = any($1::text[])
+             or lower(left(id::text, 8)) = any($4::text[])
+             or lower(right(id::text, 8)) = any($4::text[])
+           )
+         order by
+           case
+             when slug = $2 then 0
+             when slug = $3 then 1
+             when id::text = any($1::text[]) then 2
+             when lower(left(id::text, 8)) = any($4::text[]) then 3
+             when lower(right(id::text, 8)) = any($4::text[]) then 4
+             else 5
+           end
+         limit 1`,
+        [
+          decodedCandidates,
+          decodedCandidates[0],
+          decodedCandidates[1] ?? decodedCandidates[0],
+          legacyIdPrefixes,
+        ],
+      );
+
+      return rows[0] ? mapProperty(rows[0]) : null;
+      },
     );
-
-    return rows[0] ? mapProperty(rows[0]) : null;
   });
 
 export const listPublishedPropertyCardsBySlugs = createServerFn({ method: "GET" })
@@ -694,25 +708,32 @@ export const listRelatedProperties = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     if (dbSource === "unconfigured") return [];
-    const sql = await getSql();
-    const rows = await sql.query<Record<string, unknown>>(
-      `select ${LIST_COLUMNS}
-       from properties
-       where status = 'published'
-         and slug <> $1
-         and (
-           neighborhood = $2
-           or property_type = $3
-         )
-       order by
-         case when neighborhood = $2 then 0 else 1 end,
-         case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end,
-         published_at desc nulls last,
-         created_at desc
-       limit $4`,
-      [data.slug, data.neighborhood, data.propertyType, data.limit],
+    setResponseHeader("cache-control", "public, max-age=20, s-maxage=90, stale-while-revalidate=300");
+    return cachedPropertyRead(
+      `property-related:${JSON.stringify(data)}`,
+      30_000,
+      async () => {
+      const sql = await getSql();
+      const rows = await sql.query<Record<string, unknown>>(
+        `select ${LIST_COLUMNS}
+         from properties
+         where status = 'published'
+           and slug <> $1
+           and (
+             neighborhood = $2
+             or property_type = $3
+           )
+         order by
+           case when neighborhood = $2 then 0 else 1 end,
+           case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end,
+           published_at desc nulls last,
+           created_at desc
+         limit $4`,
+        [data.slug, data.neighborhood, data.propertyType, data.limit],
+      );
+      return rows.map(mapProperty);
+      },
     );
-    return rows.map(mapProperty);
   });
 
 export type PropertyBudgetMatch = BudgetMatchDetails & {
@@ -723,66 +744,73 @@ export const matchPublishedPropertiesByBudget = createServerFn({ method: "GET" }
   .validator(budgetMatchSchema)
   .handler(async ({ data }) => {
     if (dbSource === "unconfigured") return [];
+    setResponseHeader("cache-control", "public, max-age=10, s-maxage=30, stale-while-revalidate=120");
+    return cachedPropertyRead(
+      `property-budget:${JSON.stringify(data)}`,
+      10_000,
+      async () => {
 
-    const sql = await getSql();
-    const rate = DEFAULT_MATCH_RAHN_RATE;
-    const budgetTotal = data.depositBudget + (data.rentBudget * 1_000_000) / rate;
-    const totalExpr =
-      "(coalesce(deposit, 0)::numeric + (coalesce(rent, 0)::numeric * 1000000 / $1::numeric))";
+      const sql = await getSql();
+      const rate = DEFAULT_MATCH_RAHN_RATE;
+      const budgetTotal = data.depositBudget + (data.rentBudget * 1_000_000) / rate;
+      const totalExpr =
+        "(coalesce(deposit, 0)::numeric + (coalesce(rent, 0)::numeric * 1000000 / $1::numeric))";
 
-    const rows = await sql.query<Record<string, unknown>>(
-      [
-        "select " + DETAIL_COLUMNS,
-        "from properties",
-        "where status = 'published'",
-        "and transaction_type in ('rent', 'mortgage')",
-        "and (coalesce(deposit, 0) > 0 or coalesce(rent, 0) > 0)",
-        "and ($5::text is null or property_type = $5)",
-        "and ($6::text is null or neighborhood = $6 or neighborhood ilike '%' || $6 || '%')",
-        "and ($7::int is null or bedrooms >= $7)",
-        "and " + totalExpr + " <= $4::numeric * 1.15",
-        "order by",
-        "case",
-        "  when coalesce(deposit, 0) <= $2 and coalesce(rent, 0) <= $3 then 0",
-        "  when " + totalExpr + " <= $4::numeric then 1",
-        "  else 2",
-        "end asc,",
-        "case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end asc,",
-        "abs(" + totalExpr + " - $4::numeric) asc,",
-        "published_at desc nulls last, created_at desc",
-        "limit greatest($8, 36)",
-      ].join(" "),
-      [
-        rate,
-        data.depositBudget,
-        data.rentBudget,
-        budgetTotal,
-        data.propertyType ?? null,
-        data.neighborhood?.trim() || null,
-        data.bedrooms ?? null,
-        data.limit,
-      ],
+      const rows = await sql.query<Record<string, unknown>>(
+        [
+          "select " + DETAIL_COLUMNS,
+          "from properties",
+          "where status = 'published'",
+          "and transaction_type in ('rent', 'mortgage')",
+          "and (coalesce(deposit, 0) > 0 or coalesce(rent, 0) > 0)",
+          "and ($5::text is null or property_type = $5)",
+          "and ($6::text is null or neighborhood = $6 or neighborhood ilike '%' || $6 || '%')",
+          "and ($7::int is null or bedrooms >= $7)",
+          "and " + totalExpr + " <= $4::numeric * 1.15",
+          "order by",
+          "case",
+          "  when coalesce(deposit, 0) <= $2 and coalesce(rent, 0) <= $3 then 0",
+          "  when " + totalExpr + " <= $4::numeric then 1",
+          "  else 2",
+          "end asc,",
+          "case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end asc,",
+          "abs(" + totalExpr + " - $4::numeric) asc,",
+          "published_at desc nulls last, created_at desc",
+          "limit greatest($8, 36)",
+        ].join(" "),
+        [
+          rate,
+          data.depositBudget,
+          data.rentBudget,
+          budgetTotal,
+          data.propertyType ?? null,
+          data.neighborhood?.trim() || null,
+          data.bedrooms ?? null,
+          data.limit,
+        ],
+      );
+
+      const budget: BudgetInput = {
+        depositBudget: data.depositBudget,
+        rentBudget: data.rentBudget,
+      };
+
+      return rows
+        .map(mapProperty)
+        .map((property) => {
+          const details = calculateBudgetMatch(property, budget, rate);
+          return details ? { property, ...details } : null;
+        })
+        .filter((match): match is PropertyBudgetMatch => Boolean(match))
+        .sort((a, b) => {
+          const tierOrder = { within: 0, convertible: 1, near: 2 } as const;
+          return tierOrder[a.tier] - tierOrder[b.tier]
+            || b.score - a.score
+            || a.gapEquivalent - b.gapEquivalent;
+        })
+        .slice(0, data.limit);
+      },
     );
-
-    const budget: BudgetInput = {
-      depositBudget: data.depositBudget,
-      rentBudget: data.rentBudget,
-    };
-
-    return rows
-      .map(mapProperty)
-      .map((property) => {
-        const details = calculateBudgetMatch(property, budget, rate);
-        return details ? { property, ...details } : null;
-      })
-      .filter((match): match is PropertyBudgetMatch => Boolean(match))
-      .sort((a, b) => {
-        const tierOrder = { within: 0, convertible: 1, near: 2 } as const;
-        return tierOrder[a.tier] - tierOrder[b.tier]
-          || b.score - a.score
-          || a.gapEquivalent - b.gapEquivalent;
-      })
-      .slice(0, data.limit);
   });
 
 const adminListSchema = z.object({
