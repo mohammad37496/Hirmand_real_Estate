@@ -1213,7 +1213,7 @@ export function PropertyDetailView({
                 <div className="property-section-heading">
                   <div>
                     <span className="kicker">موقعیت</span>
-                    <h2 id="property-location-title">موقعیت فایل روی نقشه</h2>
+                    <h2 id="property-location-title">موقعیت تقریبی فایل روی نقشه</h2>
                   </div>
                   <MapPinned size={20} />
                 </div>
@@ -1226,7 +1226,7 @@ export function PropertyDetailView({
                       referrerPolicy="no-referrer-when-downgrade"
                     />
                     <div className="property-map-actions">
-                      <span>اصفهان · {property.neighborhood}</span>
+                      <span>اصفهان · {property.neighborhood} · موقعیت تقریبی</span>
                       <a
                         href={mapsLink(property.latitude, property.longitude, property.neighborhood)}
                         target="_blank"
@@ -1241,7 +1241,7 @@ export function PropertyDetailView({
                   <div className="property-location-fallback">
                     <MapPinned size={20} />
                     <div>
-                      <strong>محدوده فایل</strong>
+                      <strong>محدوده تقریبی فایل</strong>
                       <p>اصفهان، {property.neighborhood}</p>
                     </div>
                     <a
