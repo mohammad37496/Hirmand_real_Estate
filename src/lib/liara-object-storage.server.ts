@@ -28,7 +28,12 @@ function readConfig(): LiaraConfig | null {
   if (!endpointRaw || !bucket || !accessKey || !secretKey) return null;
 
   try {
-    const endpoint = new URL(endpointRaw);
+    // Accept both "storage.example" and "https://storage.example" so a
+    // dashboard-copied Liara hostname does not silently disable Object Storage.
+    const endpointInput = /^https?:\/\//i.test(endpointRaw)
+      ? endpointRaw
+      : "https://" + endpointRaw;
+    const endpoint = new URL(endpointInput);
     if (endpoint.protocol !== "https:") {
       throw new Error("LIARA_ENDPOINT must use HTTPS.");
     }
