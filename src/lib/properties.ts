@@ -3,7 +3,7 @@ import { getCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
-import { nullableMoneyFieldSchema } from "@/lib/property-input-normalization";
+import { nullableMoneyFieldSchema, nullableNumericValue } from "@/lib/property-input-normalization";
 import { decodeSlugCandidates, legacyIdFragments } from "@/lib/property-slug";
 import { calculateBudgetMatch, DEFAULT_MATCH_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
 import { MAX_PROPERTY_MEDIA, isAllowedMediaRef } from "@/lib/media";
@@ -281,10 +281,6 @@ function slugify(value: string): string {
   return normalized || "property";
 }
 
-function numberOrNull(value: unknown): number | null {
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
-}
-
 export function isFeaturedActive(property: { featured: boolean; featuredUntil?: string | null }) {
   return property.featured && (!property.featuredUntil || new Date(property.featuredUntil).getTime() >= Date.now());
 }
@@ -309,12 +305,12 @@ function mapProperty(row: Record<string, unknown>): Property {
     city: String(row.city),
     neighborhood: String(row.neighborhood),
     address: row.address ? String(row.address) : null,
-    areaM2: numberOrNull(row.area_m2),
-    bedrooms: numberOrNull(row.bedrooms),
-    bathrooms: numberOrNull(row.bathrooms),
-    floor: numberOrNull(row.floor),
-    totalFloors: numberOrNull(row.total_floors),
-    builtYear: numberOrNull(row.built_year),
+    areaM2: nullableNumericValue(row.area_m2),
+    bedrooms: nullableNumericValue(row.bedrooms),
+    bathrooms: nullableNumericValue(row.bathrooms),
+    floor: nullableNumericValue(row.floor),
+    totalFloors: nullableNumericValue(row.total_floors),
+    builtYear: nullableNumericValue(row.built_year),
     parking: Boolean(row.parking),
     elevator: Boolean(row.elevator),
     storage: Boolean(row.storage),
@@ -335,9 +331,9 @@ function mapProperty(row: Record<string, unknown>): Property {
     publishedAt: row.published_at ? new Date(String(row.published_at)).toISOString() : null,
     createdAt: new Date(String(row.created_at)).toISOString(),
     updatedAt: new Date(String(row.updated_at)).toISOString(),
-    latitude: numberOrNull(row.latitude),
-    longitude: numberOrNull(row.longitude),
-    priceDropPercent: numberOrNull(row.price_drop_percent),
+    latitude: nullableNumericValue(row.latitude),
+    longitude: nullableNumericValue(row.longitude),
+    priceDropPercent: nullableNumericValue(row.price_drop_percent),
   };
 }
 
@@ -370,17 +366,17 @@ function mapPropertyCard(row: Record<string, unknown>): PropertyCardData {
     transactionType: row.transaction_type as PropertyTransaction,
     propertyType: row.property_type as PropertyType,
     neighborhood: String(row.neighborhood),
-    areaM2: numberOrNull(row.area_m2),
-    bedrooms: numberOrNull(row.bedrooms),
+    areaM2: nullableNumericValue(row.area_m2),
+    bedrooms: nullableNumericValue(row.bedrooms),
     parking: Boolean(row.parking),
     elevator: Boolean(row.elevator),
     price: row.price == null ? null : String(row.price),
     deposit: row.deposit == null ? null : String(row.deposit),
     rent: row.rent == null ? null : String(row.rent),
     image: row.image ? String(row.image) : null,
-    priceDropPercent: numberOrNull(row.price_drop_percent),
-    latitude: numberOrNull(row.latitude),
-    longitude: numberOrNull(row.longitude),
+    priceDropPercent: nullableNumericValue(row.price_drop_percent),
+    latitude: nullableNumericValue(row.latitude),
+    longitude: nullableNumericValue(row.longitude),
   };
 }
 

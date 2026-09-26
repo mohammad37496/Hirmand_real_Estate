@@ -9,6 +9,11 @@
  *
  *   node scripts/local-pglite-fixture.mjs           # seed
  *   node scripts/local-pglite-fixture.mjs --cleanup # remove the main row
+ *
+ * Run it while the dev server is stopped, or restart the preview afterwards.
+ * PGlite reads the data directory into the running instance, so rows written by
+ * a second process stay invisible to an already-running `npm run dev` — the
+ * fixture appears to succeed while the site keeps serving stale data.
  */
 import { PGlite } from "@electric-sql/pglite";
 import { mkdirSync, readdirSync, readFileSync } from "node:fs";
