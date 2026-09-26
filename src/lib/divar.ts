@@ -652,30 +652,6 @@ async function uploadDivarImages(token: string, urls: string[]): Promise<DivarIm
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/153.0.0.0 Safari/537.36",
       },
     },
-    {
-      label: "proxy",
-      url: "https://wsrv.nl/?url=" + encodeURIComponent(source),
-      timeoutMs: 12_000,
-      direct: false,
-      headers: {
-        accept: "image/avif,image/webp,image/png,image/jpeg,image/*,*/*;q=0.8",
-        "accept-language": "fa-IR,fa;q=0.9,en;q=0.8",
-        "user-agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/153.0.0.0 Safari/537.36",
-      },
-    },
-    {
-      label: "proxy2",
-      url: "https://images.weserv.nl/?url=" + encodeURIComponent(source),
-      timeoutMs: 12_000,
-      direct: false,
-      headers: {
-        accept: "image/avif,image/webp,image/png,image/jpeg,image/*,*/*;q=0.8",
-        "accept-language": "fa-IR,fa;q=0.9,en;q=0.8",
-        "user-agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/153.0.0.0 Safari/537.36",
-      },
-    },
   ];
 
   const detectImageType = (bytes: Buffer, _headerType: string) =>
@@ -717,8 +693,7 @@ async function uploadDivarImages(token: string, urls: string[]): Promise<DivarIm
       if (next.protocol !== "https:") return false;
       if (candidate.direct) return isAllowedDivarImageUrl(next.toString());
       const host = next.hostname.toLowerCase();
-      return host === initialHost || host === "wsrv.nl" || host.endsWith(".wsrv.nl") ||
-        host === "weserv.nl" || host.endsWith(".weserv.nl");
+      return host === initialHost || isDivarRemoteHost(next.toString());
     };
 
     let current = initial;
@@ -824,9 +799,9 @@ async function uploadDivarImages(token: string, urls: string[]): Promise<DivarIm
 
   results.sort((a, b) => a.index - b.index);
 
-  // Keep the listing complete: an image that could not be copied is still
-  // published through its original URL (served by our own image proxy), so a
-  // property never loses gallery slots to a flaky CDN.
+  // Only keep media that was successfully copied to Hirmand storage.
+  // Publishing a foreign Divar URL would make the public gallery dependent on
+  // an international/external request path.
   const images: string[] = [];
   let stored = 0;
   const failures: { source: string; reason: string }[] = [];
@@ -838,7 +813,6 @@ async function uploadDivarImages(token: string, urls: string[]): Promise<DivarIm
       stored += 1;
       continue;
     }
-    if (source) images.push(source);
     if (result.failure) failures.push(result.failure);
   }
 
@@ -1254,7 +1228,6 @@ export const importDivarFile = createServerFn({ method: "POST" })
           new Set([
             ...uploadResult.images.filter((url) => !isDivarSourceUrl(url)),
             ...hostedCurrentImages,
-            ...uploadResult.images.filter((url) => isDivarSourceUrl(url)),
           ]),
         ).slice(0, MAX_IMAGES);
 
@@ -1298,7 +1271,9 @@ export const importDivarFile = createServerFn({ method: "POST" })
     const importedResult = await uploadDivarImages(token, images);
     // Hosted copies come first; sources we could not copy keep the gallery
     // complete and are rendered through our own image proxy.
-    const importedImages = Array.from(new Set(importedResult.images)).slice(0, MAX_IMAGES);
+    const importedImages = Array.from(
+      new Set(importedResult.images.filter((url) => !isDivarSourceUrl(url))),
+    ).slice(0, MAX_IMAGES);
 
     const id = existingPropertyId ? existingPropertyId : crypto.randomUUID();
     const propertyType = propertyTypeToSite(String(row.property_type) as DivarPropertyType);
