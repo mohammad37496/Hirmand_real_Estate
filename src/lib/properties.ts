@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
+import { getCookie, setResponseHeader } from "@tanstack/react-start/server";
+import { cachedPropertyRead, clearPropertyReadCache } from "@/lib/property-read-cache.server";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
@@ -472,23 +473,30 @@ export const listPublishedPropertyCards = createServerFn({ method: "GET" })
   .validator(publicFiltersSchema)
   .handler(async ({ data }) => {
     if (dbSource === "unconfigured") return [];
-    const sql = await getSql();
-    const params = publicFilterParams(data);
-    const rows = await sql.query<Record<string, unknown>>(
-      [
-        "select " + CARD_COLUMNS,
-        "from properties where " + publicPropertyWhereSql(),
-        "order by case when $27::text = 'newest' then case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end else 0 end,",
-        "case when $27::text = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
-        "case when $27::text = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
-        "case when $27::text = 'area_asc' then area_m2 end asc nulls last,",
-        "case when $27::text = 'area_desc' then area_m2 end desc nulls last,",
-        "published_at desc nulls last, created_at desc",
-        "limit 48 offset $26",
-      ].join(" "),
-      [...params, data.sort],
+    setResponseHeader("cache-control", "public, max-age=15, s-maxage=60, stale-while-revalidate=300");
+    return cachedPropertyRead(
+      `property-cards:${JSON.stringify(data)}`,
+      15_000,
+      async () => {
+        const sql = await getSql();
+        const params = publicFilterParams(data);
+        const rows = await sql.query<Record<string, unknown>>(
+          [
+            "select " + CARD_COLUMNS,
+            "from properties where " + publicPropertyWhereSql(),
+            "order by case when $27::text = 'newest' then case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end else 0 end,",
+            "case when $27::text = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
+            "case when $27::text = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
+            "case when $27::text = 'area_asc' then area_m2 end asc nulls last,",
+            "case when $27::text = 'area_desc' then area_m2 end desc nulls last,",
+            "published_at desc nulls last, created_at desc",
+            "limit 48 offset $26",
+          ].join(" "),
+          [...params, data.sort],
+        );
+        return rows.map(mapPropertyCard);
+      },
     );
-    return rows.map(mapPropertyCard);
   });
 
 export const listPublishedProperties = createServerFn({ method: "GET" })
@@ -518,13 +526,20 @@ export const countPublishedProperties = createServerFn({ method: "GET" })
   .validator(publicFiltersSchema)
   .handler(async ({ data }) => {
     if (dbSource === "unconfigured") return 0;
-    const sql = await getSql();
-    const params = publicFilterParams(data).slice(0, 25);
-    const rows = await sql.query<{ count: number }>(
-      "select count(*)::int as count from properties where " + publicPropertyWhereSql(),
-      params,
+    setResponseHeader("cache-control", "public, max-age=15, s-maxage=60, stale-while-revalidate=300");
+    return cachedPropertyRead(
+      `property-count:${JSON.stringify(data)}`,
+      20_000,
+      async () => {
+        const sql = await getSql();
+        const params = publicFilterParams(data).slice(0, 25);
+        const rows = await sql.query<{ count: number }>(
+          "select count(*)::int as count from properties where " + publicPropertyWhereSql(),
+          params,
+        );
+        return Number(rows[0]?.count) || 0;
+      },
     );
-    return Number(rows[0]?.count) || 0;
   });
 
 export const listPublishedPropertiesByContact = createServerFn({ method: "GET" })
