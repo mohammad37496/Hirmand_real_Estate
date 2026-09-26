@@ -28,9 +28,7 @@ function readConfig(): LiaraConfig | null {
   if (!endpointRaw || !bucket || !accessKey || !secretKey) return null;
 
   try {
-    // Accept both "storage.example" and "https://storage.example" so a
-    // dashboard-copied Liara hostname does not silently disable Object Storage.
-    const endpointInput = /^https?:\/\//i.test(endpointRaw)
+    const endpointInput = /^https?:\/\/i.test(endpointRaw)
       ? endpointRaw
       : "https://" + endpointRaw;
     const endpoint = new URL(endpointInput);
@@ -95,7 +93,7 @@ function hmacSigningKey(secret: string, dateStamp: string): Buffer {
 }
 
 function signedRequest(input: {
-  method: "PUT" | "DELETE";
+  method: "GET" | "PUT" | "DELETE";
   url: URL;
   accessKey: string;
   secretKey: string;
@@ -173,7 +171,7 @@ function signedRequest(input: {
   return {
     method: input.method,
     headers,
-    body: requestBody,
+    ...(requestBody ? { body: requestBody } : {}),
   };
 }
 
@@ -230,6 +228,41 @@ export async function putLiaraObject(input: {
     contentType: input.contentType || "application/octet-stream",
   });
   return ok ? objectUrl(config, input.key).toString() : null;
+}
+
+/**
+ * Fetches a private Liara object with a server-side Signature V4 request.
+ * The optional Range header is forwarded after signing so browsers can seek
+ * inside an audio file without exposing storage credentials.
+ */
+export async function getLiaraObject(input: {
+  key: string;
+  range?: string;
+}): Promise<Response | null> {
+  const config = readConfig();
+  if (!config) return null;
+
+  const url = objectUrl(config, input.key);
+  const request = signedRequest({
+    method: "GET",
+    url,
+    accessKey: config.accessKey,
+    secretKey: config.secretKey,
+  });
+
+  if (input.range) {
+    (request.headers as Record<string, string>).range = input.range;
+  }
+
+  try {
+    return await fetch(url, request);
+  } catch (error) {
+    console.warn(
+      "[liara-storage] GET request failed:",
+      error instanceof Error ? error.message : error,
+    );
+    return null;
+  }
 }
 
 export async function deleteLiaraObject(key: string): Promise<void> {
