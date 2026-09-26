@@ -28,4 +28,4 @@ jobs:
           LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
           http_proxy: http://proxy.liara.ir:6666
           https_proxy: http://proxy.liara.ir:6666
-        run: liara deploy --app="hirmand" --api-token="$LIARA_TOKEN" --build-location="iran" --no-cache --no-app-logs --debug
+        run: liara deploy --app="hirmand" --api-token="$LIARA_TOKEN" --build-location="germany" --no-cache --no-app-logs --debug
