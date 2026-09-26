@@ -81,9 +81,17 @@ export const ADMIN_CSS = `
 .admin-key-row{display:flex;gap:8px}
 .admin-key-row input{flex:1;min-height:48px;padding:10px 14px;border:1px solid rgba(244,239,230,.12);border-radius:12px;background:rgba(255,255,255,.03);outline:none;font:inherit}
 .admin-key-row input:focus{border-color:rgba(247,245,239,.45);box-shadow:0 0 0 3px rgba(247,245,239,.12)}
-.admin-mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:2001;background:rgba(7,9,13,.95);backdrop-filter:blur(14px);border-top:1px solid rgba(244,239,230,.1);padding:6px 8px calc(6px + env(safe-area-inset-bottom));justify-content:space-around}
-.admin-mobile-nav button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 12px;border:0;background:transparent;color:rgb(247 245 239 / .56);font:inherit;font-size:.68rem;cursor:pointer}
-.admin-mobile-nav button.is-active{color:#f7f5ef}
+.admin-mobile-nav{display:none;position:fixed;left:10px;right:10px;bottom:10px;z-index:2001;min-height:64px;box-sizing:border-box;align-items:stretch;gap:5px;padding:6px;border:1px solid rgba(244,239,230,.12);border-radius:18px;background:linear-gradient(180deg,rgba(20,24,31,.96),rgba(9,12,17,.96));box-shadow:0 18px 48px rgba(0,0,0,.34),0 5px 16px rgba(0,0,0,.2);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);overflow-x:auto;overflow-y:hidden;justify-content:flex-start;scrollbar-width:none;direction:rtl;overscroll-behavior-x:contain}
+.admin-mobile-nav::-webkit-scrollbar{display:none}
+.admin-mobile-nav button,.admin-mobile-site{position:relative;flex:0 0 68px;min-width:68px;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 5px;border:1px solid transparent;border-radius:13px;background:transparent;color:rgb(247 245 239 / .56);font:inherit;font-size:.65rem;font-weight:600;line-height:1.2;cursor:pointer;white-space:nowrap;text-decoration:none;transition:background .16s ease,border-color .16s ease,color .16s ease,transform .16s ease}
+.admin-mobile-nav button svg,.admin-mobile-site svg{flex:0 0 auto;opacity:.82}
+.admin-mobile-nav button:hover,.admin-mobile-site:hover{background:rgba(255,255,255,.055);color:#f7f5ef}
+.admin-mobile-nav button:active,.admin-mobile-site:active{transform:scale(.97)}
+.admin-mobile-nav button.is-active{color:#f7f5ef;background:linear-gradient(180deg,rgba(247,245,239,.13),rgba(247,245,239,.07));border-color:rgba(247,245,239,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.admin-mobile-nav button.is-active::after{content:"";position:absolute;left:50%;bottom:4px;width:4px;height:4px;border-radius:999px;background:#f7f5ef;transform:translateX(-50%);opacity:.9}
+.admin-mobile-site{color:rgb(247 245 239 / .72)!important;background:rgba(255,255,255,.045);border-color:rgba(255,255,255,.1)}
+.admin-mobile-site span{display:block}
+.admin-mobile-nav span{overflow:hidden;text-overflow:ellipsis;max-width:100%}
 @keyframes admin-spin{to{transform:rotate(360deg)}}
 .admin-spin{animation:admin-spin .8s linear infinite}
 .admin-field label,.admin-section .field>span{display:block;color:rgb(247 245 239 / .68);font-size:.8rem;font-weight:600;margin-bottom:6px}
@@ -175,7 +183,7 @@ export const ADMIN_CSS = `
   .admin-property-actions{grid-column:1/-1;justify-content:flex-start;padding-top:4px}
   .admin-form-grid{grid-template-columns:1fr}
   .admin-mobile-nav{display:flex}
-  .admin-content{padding:16px 14px 88px}
+  .admin-content{padding:16px 14px 96px}
   .admin-topbar{padding:12px 14px}
   .admin-sticky-bar{padding:10px 14px calc(10px + env(safe-area-inset-bottom))}
 }
