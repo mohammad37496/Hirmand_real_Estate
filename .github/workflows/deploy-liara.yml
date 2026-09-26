@@ -6,7 +6,7 @@ on:
       - main
 
 concurrency:
-  group: liara-deploy-${{ github.ref }}
+  group: liara-deploy-${{ github.sha }}
   cancel-in-progress: true
 
 jobs:
