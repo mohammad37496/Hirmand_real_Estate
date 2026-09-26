@@ -9,6 +9,12 @@
 
 import { dbSource, getSql } from "@/lib/db";
 import { DB_MEDIA_PATH } from "@/lib/media";
+import {
+  deleteLiaraObject,
+  liaraObjectKeyFromUrl,
+  liaraStorageConfigured,
+  putLiaraObject,
+} from "@/lib/liara-object-storage.server";
 
 /** Largest assembled file we will hand to the object store from memory. */
 const MAX_OFFLOAD_BYTES = 32 * 1024 * 1024;
@@ -83,6 +89,16 @@ export async function storeMedia(input: {
   const bytes = toBytes(input.data);
   const contentType = input.contentType || "application/octet-stream";
 
+  if (liaraStorageConfigured()) {
+    const url = await putLiaraObject({
+      key: input.pathname,
+      body: bytes,
+      contentType,
+    });
+    if (url) return { url, storage: "object-store", id: null };
+  }
+
+  // Legacy Vercel Blob remains a compatibility path for existing deployments.
   if (blobConfigured()) {
     const url = await putToObjectStore(input.pathname, bytes, contentType);
     if (url) return { url, storage: "object-store", id: null };
@@ -152,9 +168,19 @@ export async function storeAssembledUpload(input: {
     storage: "database",
     id,
   };
-  if (blobConfigured()) {
-    const assembled = await readMediaRange(id, 0, null);
-    if (assembled && assembled.size > 0 && assembled.size <= MAX_OFFLOAD_BYTES) {
+  const assembled = await readMediaRange(id, 0, null);
+  if (assembled && assembled.size > 0 && assembled.size <= MAX_OFFLOAD_BYTES) {
+    if (liaraStorageConfigured()) {
+      const url = await putLiaraObject({
+        key: input.pathname,
+        body: assembled.bytes,
+        contentType,
+      });
+      if (url) {
+        await sql.query("delete from media_objects where id = $1", [id]);
+        stored = { url, storage: "object-store", id: null };
+      }
+    } else if (blobConfigured()) {
       const url = await putToObjectStore(input.pathname, assembled.bytes, contentType);
       if (url) {
         await sql.query("delete from media_objects where id = $1", [id]);
@@ -178,6 +204,16 @@ export async function deleteStoredMedia(
   url: string | null | undefined,
 ): Promise<void> {
   if (!url) return;
+
+  const liaraKey = liaraObjectKeyFromUrl(url);
+  if (liaraKey) {
+    try {
+      await deleteLiaraObject(liaraKey);
+    } catch (error) {
+      console.warn("[media] Liara Object Storage delete failed", error);
+    }
+    return;
+  }
 
   if (isDatabaseMediaUrl(url)) {
     const id = mediaIdFromUrl(url);

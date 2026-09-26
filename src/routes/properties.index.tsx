@@ -375,6 +375,13 @@ function PropertiesIndexPage() {
   useEffect(() => {
     if (!urlReady) return;
 
+    // Do not let the listing's URL-sync effect overwrite a navigation that is
+    // already leaving /properties. TanStack Router owns the URL during route
+    // transitions; this effect only owns query-string updates while the index
+    // route is actually mounted.
+    const pathname = window.location.pathname.replace(/\/+$/, "") || "/";
+    if (pathname !== "/properties") return;
+
     const params = new URLSearchParams();
     if (q.trim()) params.set("q", q.trim());
     if (transactionType) params.set("transaction", transactionType);
