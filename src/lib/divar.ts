@@ -623,7 +623,7 @@ function slugify(value: string) {
 }
 
 type DivarImageDownload = {
-  /** Final ordered list: our own hosted copy, or the Divar source as a fallback. */
+  /** Final ordered list of media hosted by Hirmand storage. */
   images: string[];
   /** How many images were copied onto our own storage. */
   stored: number;
@@ -807,7 +807,6 @@ async function uploadDivarImages(token: string, urls: string[]): Promise<DivarIm
   const failures: { source: string; reason: string }[] = [];
 
   for (const result of results) {
-    const source = safeUrls[result.index];
     if (result.url) {
       images.push(result.url);
       stored += 1;
