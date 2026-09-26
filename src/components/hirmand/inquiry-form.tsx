@@ -217,7 +217,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
             const amount = parseAmount(budgetDeposit);
             setBudgetDeposit(amount ? formatToman(amount) : "");
           }}
-          placeholder="مثلاً ۵۰۰ میلیون تومان"
+          placeholder="مثلاً ۵۰۰٬۰۰۰٬۰۰۰"
           aria-describedby="inq-budget-deposit-hint"
         />
         <small id="inq-budget-deposit-hint" className="form-hint">مبلغ رهن به تومان</small>
@@ -235,7 +235,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
             const amount = parseAmount(budgetRent);
             setBudgetRent(amount ? formatToman(amount) : "");
           }}
-          placeholder="مثلاً ۱۰ میلیون تومان"
+          placeholder="مثلاً ۱۰٬۰۰۰٬۰۰۰"
           aria-describedby="inq-budget-rent-hint"
         />
         <small id="inq-budget-rent-hint" className="form-hint">مبلغ اجاره ماهانه به تومان</small>
