@@ -138,13 +138,19 @@ export function mediaSourceCandidates(src: string, fallback = ""): string[] {
 
   const isDivarRemote = isDivarRemoteHost(value);
 
-  const proxies = isDivarRemote
-    ? [
-        `/api/media-proxy?url=${encodeURIComponent(value)}`,
-        `https://wsrv.nl/?url=${encodeURIComponent(value)}`,
-        `https://images.weserv.nl/?url=${encodeURIComponent(value)}`,
-      ]
-    : [];
+  if (isDivarRemote) {
+    // Imported classifieds media should never make the visitor's browser call
+    // Divar or a foreign image proxy directly. The same-origin route fetches
+    // the image server-side and keeps the browser request on Hirmand's domain.
+    return Array.from(
+      new Set(
+        [
+          `/api/media-proxy?url=${encodeURIComponent(value)}`,
+          fallback,
+        ].filter(Boolean),
+      ),
+    );
+  }
 
-  return Array.from(new Set([value, ...proxies, fallback].filter(Boolean)));
+  return Array.from(new Set([value, fallback].filter(Boolean)));
 }
