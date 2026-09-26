@@ -39,7 +39,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test:template": "node --test 'scripts/**/*.test.mjs'",
-    "start": "node .output/server/index.mjs"
+    "start": "node scripts/migrate.mjs && node .output/server/index.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.4",
