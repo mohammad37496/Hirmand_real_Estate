@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   isMoneyText,
   nullableMoneyFieldSchema,
+  nullableNumericValue,
   normalizeMoneyInput,
   normalizeMoneyText,
 } from "./property-input-normalization.ts";
@@ -46,4 +47,44 @@ test("integer input contract rejects malformed non-empty values", async () => {
   assert.equal(isInvalidIntegerInput("12.5"), true);
   assert.equal(isInvalidIntegerInput("-2"), true);
   assert.equal(isInvalidIntegerInput("-2", true), false);
+});
+
+// `pg` and PGlite return PostgreSQL `numeric` columns as strings. A mapping
+// helper that only accepts numbers silently nulls them, which is how
+// price_drop_percent became permanently null and the price-drop badge never
+// rendered. This pins the numeric read boundary.
+test("nullableNumericValue keeps numeric columns that arrive as strings", () => {
+  assert.equal(nullableNumericValue("12.50"), 12.5);
+  assert.equal(nullableNumericValue("0"), 0);
+  assert.equal(nullableNumericValue(" -3.25 "), -3.25);
+  assert.equal(nullableNumericValue("1e3"), 1000);
+  assert.equal(nullableNumericValue("۱۲٫۵"), 12.5);
+});
+
+test("nullableNumericValue still passes real numbers straight through", () => {
+  assert.equal(nullableNumericValue(12.5), 12.5);
+  assert.equal(nullableNumericValue(0), 0);
+  assert.equal(nullableNumericValue(-7), -7);
+});
+
+test("nullableNumericValue nulls anything that is not a finite number", () => {
+  for (const value of [
+    null,
+    undefined,
+    "",
+    "   ",
+    "null",
+    "abc",
+    "1,5",
+    "12.5%",
+    "1 000",
+    NaN,
+    Infinity,
+    -Infinity,
+    {},
+    [],
+    true,
+  ]) {
+    assert.equal(nullableNumericValue(value), null, `expected null for ${JSON.stringify(value)}`);
+  }
 });
