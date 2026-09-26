@@ -49,14 +49,37 @@ export function MapAppButtons({
 
 export function MapEmbed({ target, title }: { target: MapTarget; title: string }) {
   const links = mapLinks(target);
+
   return (
-    <div className="map-embed">
-      <iframe
-        title={title}
-        src={links.googleEmbed}
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-      />
+    <div className="map-embed" role="img" aria-label={title}>
+      <div className="map-local-preview">
+        <div className="map-grid" aria-hidden="true" />
+        <div className="map-route map-route-a" aria-hidden="true" />
+        <div className="map-route map-route-b" aria-hidden="true" />
+        <div className="map-route map-route-c" aria-hidden="true" />
+        <div className="map-pin" aria-hidden="true">
+          <MapPinned size={22} strokeWidth={1.9} />
+        </div>
+        <div className="map-local-card">
+          <strong>{target.label}</strong>
+          <span>اصفهان</span>
+          <small>{target.lat.toFixed(6)}، {target.lng.toFixed(6)}</small>
+          <div className="map-local-actions">
+            <a href={links.neshan} target="_blank" rel="noopener noreferrer">
+              <Navigation size={14} />
+              نشان
+            </a>
+            <a href={links.balad} target="_blank" rel="noopener noreferrer">
+              <Navigation size={14} />
+              بلد
+            </a>
+            <a href={links.google} target="_blank" rel="noopener noreferrer">
+              <MapPinned size={14} />
+              Google Maps
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
