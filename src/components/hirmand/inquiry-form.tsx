@@ -39,6 +39,8 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
   const [job, setJob] = useState("");
   const [budgetDeposit, setBudgetDeposit] = useState("");
   const [budgetRent, setBudgetRent] = useState("");
+  const [budgetPurchase, setBudgetPurchase] = useState("");
+  const [budgetSale, setBudgetSale] = useState("");
   const [deal, setDeal] = useState(draft.deal);
   const [propertyType, setPropertyType] = useState(draft.propertyType);
   const [neighborhood, setNeighborhood] = useState(draft.neighborhood);
@@ -65,6 +67,35 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
     if (draft.neighborhood) setNeighborhood(draft.neighborhood);
   }, [draft]);
 
+  const isRentLikeDeal = deal === "رهن" || deal === "اجاره";
+  const isBuyDeal = deal === "خرید";
+  const isSellDeal = deal === "فروش";
+
+  function handleDealChange(value: string) {
+    setDeal(value);
+    if (value === "خرید") {
+      setBudgetDeposit("");
+      setBudgetRent("");
+      setBudgetSale("");
+      return;
+    }
+    if (value === "فروش") {
+      setBudgetDeposit("");
+      setBudgetRent("");
+      setBudgetPurchase("");
+      return;
+    }
+    if (value === "رهن" || value === "اجاره") {
+      setBudgetPurchase("");
+      setBudgetSale("");
+      return;
+    }
+    setBudgetDeposit("");
+    setBudgetRent("");
+    setBudgetPurchase("");
+    setBudgetSale("");
+  }
+
   const selected = TEAM.find((person) => person.id === consultant) ?? TEAM[0];
 
   function buildMessage() {
@@ -74,8 +105,10 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       phone ? `تلفن: ${normalizePhone(phone)}` : "",
       peopleCount ? `تعداد نفرات: ${peopleCount}` : "",
       job.trim() ? `شغل: ${job.trim()}` : "",
-      parseAmount(budgetDeposit) > 0 ? `قیمت رهن: ${formatToman(parseAmount(budgetDeposit))} تومان` : "",
-      parseAmount(budgetRent) > 0 ? `قیمت اجاره: ${formatToman(parseAmount(budgetRent))} تومان` : "",
+      isRentLikeDeal && parseAmount(budgetDeposit) > 0 ? `قیمت رهن: ${formatToman(parseAmount(budgetDeposit))} تومان` : "",
+      isRentLikeDeal && parseAmount(budgetRent) > 0 ? `قیمت اجاره: ${formatToman(parseAmount(budgetRent))} تومان` : "",
+      isBuyDeal && parseAmount(budgetPurchase) > 0 ? `مبلغ خرید: ${formatToman(parseAmount(budgetPurchase))} تومان` : "",
+      isSellDeal && parseAmount(budgetSale) > 0 ? `مبلغ فروش: ${formatToman(parseAmount(budgetSale))} تومان` : "",
       deal ? `نوع معامله: ${deal}` : "",
       propertyType ? `نوع ملک: ${propertyType}` : "",
       neighborhood ? `محله: ${neighborhood}` : "",
@@ -110,8 +143,10 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       return;
     }
     setError("");
-    const budgetDepositNumber = parseAmount(budgetDeposit);
-    const budgetRentNumber = parseAmount(budgetRent);
+    const budgetDepositNumber = isRentLikeDeal ? parseAmount(budgetDeposit) : 0;
+    const budgetRentNumber = isRentLikeDeal ? parseAmount(budgetRent) : 0;
+    const budgetPurchaseNumber = isBuyDeal ? parseAmount(budgetPurchase) : 0;
+    const budgetSaleNumber = isSellDeal ? parseAmount(budgetSale) : 0;
     const payload = {
       name: name.trim(),
       phone: normalizePhone(phone),
@@ -119,6 +154,8 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       job: job.trim(),
       budgetDeposit: budgetDepositNumber || undefined,
       budgetRent: budgetRentNumber || undefined,
+      budgetPurchase: budgetPurchaseNumber || undefined,
+      budgetSale: budgetSaleNumber || undefined,
       deal,
       propertyType,
       neighborhood,
@@ -136,6 +173,8 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           job: payload.job,
           budgetDeposit: payload.budgetDeposit,
           budgetRent: payload.budgetRent,
+          budgetPurchase: payload.budgetPurchase,
+          budgetSale: payload.budgetSale,
           deal: payload.deal,
           propertyType: payload.propertyType,
           neighborhood: payload.neighborhood,
@@ -204,42 +243,84 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           placeholder="مثلاً ۴ نفر"
         />
       </div>
-      <div className="field">
-        <label htmlFor="inq-budget-deposit">قیمت رهن</label>
-        <input
-          id="inq-budget-deposit"
-          name="budgetDeposit"
-          inputMode="numeric"
-          dir="rtl"
-          value={budgetDeposit}
-          onChange={(event) => setBudgetDeposit(event.target.value)}
-          onBlur={() => {
-            const amount = parseAmount(budgetDeposit);
-            setBudgetDeposit(amount ? formatToman(amount) : "");
-          }}
-          placeholder="مثلاً ۵۰۰٬۰۰۰٬۰۰۰"
-          aria-describedby="inq-budget-deposit-hint"
-        />
-        <small id="inq-budget-deposit-hint" className="form-hint">مبلغ رهن به تومان</small>
-      </div>
-      <div className="field">
-        <label htmlFor="inq-budget-rent">قیمت اجاره</label>
-        <input
-          id="inq-budget-rent"
-          name="budgetRent"
-          inputMode="numeric"
-          dir="rtl"
-          value={budgetRent}
-          onChange={(event) => setBudgetRent(event.target.value)}
-          onBlur={() => {
-            const amount = parseAmount(budgetRent);
-            setBudgetRent(amount ? formatToman(amount) : "");
-          }}
-          placeholder="مثلاً ۱۰٬۰۰۰٬۰۰۰"
-          aria-describedby="inq-budget-rent-hint"
-        />
-        <small id="inq-budget-rent-hint" className="form-hint">مبلغ اجاره ماهانه به تومان</small>
-      </div>
+      {isRentLikeDeal ? (
+        <>
+          <div className="field">
+            <label htmlFor="inq-budget-deposit">قیمت رهن</label>
+            <input
+              id="inq-budget-deposit"
+              name="budgetDeposit"
+              inputMode="numeric"
+              dir="rtl"
+              value={budgetDeposit}
+              onChange={(event) => setBudgetDeposit(event.target.value)}
+              onBlur={() => {
+                const amount = parseAmount(budgetDeposit);
+                setBudgetDeposit(amount ? formatToman(amount) : "");
+              }}
+              placeholder="مثلاً ۵۰۰٬۰۰۰٬۰۰۰"
+              aria-describedby="inq-budget-deposit-hint"
+            />
+            <small id="inq-budget-deposit-hint" className="form-hint">مبلغ رهن به تومان</small>
+          </div>
+          <div className="field">
+            <label htmlFor="inq-budget-rent">قیمت اجاره</label>
+            <input
+              id="inq-budget-rent"
+              name="budgetRent"
+              inputMode="numeric"
+              dir="rtl"
+              value={budgetRent}
+              onChange={(event) => setBudgetRent(event.target.value)}
+              onBlur={() => {
+                const amount = parseAmount(budgetRent);
+                setBudgetRent(amount ? formatToman(amount) : "");
+              }}
+              placeholder="مثلاً ۱۰٬۰۰۰٬۰۰۰"
+              aria-describedby="inq-budget-rent-hint"
+            />
+            <small id="inq-budget-rent-hint" className="form-hint">مبلغ اجاره ماهانه به تومان</small>
+          </div>
+        </>
+      ) : isBuyDeal ? (
+        <div className="field">
+          <label htmlFor="inq-budget-purchase">مبلغ خرید</label>
+          <input
+            id="inq-budget-purchase"
+            name="budgetPurchase"
+            inputMode="numeric"
+            dir="rtl"
+            value={budgetPurchase}
+            onChange={(event) => setBudgetPurchase(event.target.value)}
+            onBlur={() => {
+              const amount = parseAmount(budgetPurchase);
+              setBudgetPurchase(amount ? formatToman(amount) : "");
+            }}
+            placeholder="مثلاً ۳٬۰۰۰٬۰۰۰٬۰۰۰"
+            aria-describedby="inq-budget-purchase-hint"
+          />
+          <small id="inq-budget-purchase-hint" className="form-hint">بودجه خرید به تومان</small>
+        </div>
+      ) : isSellDeal ? (
+        <div className="field">
+          <label htmlFor="inq-budget-sale">مبلغ فروش</label>
+          <input
+            id="inq-budget-sale"
+            name="budgetSale"
+            inputMode="numeric"
+            dir="rtl"
+            value={budgetSale}
+            onChange={(event) => setBudgetSale(event.target.value)}
+            onBlur={() => {
+              const amount = parseAmount(budgetSale);
+              setBudgetSale(amount ? formatToman(amount) : "");
+            }}
+            placeholder="مثلاً ۵٬۰۰۰٬۰۰۰٬۰۰۰"
+            aria-describedby="inq-budget-sale-hint"
+          />
+          <small id="inq-budget-sale-hint" className="form-hint">مبلغ فروش به تومان</small>
+        </div>
+      ) : null}
       <div className="field">
         <label htmlFor="inq-job">شغل</label>
         <input
@@ -253,7 +334,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       </div>
       <div className="field">
         <label htmlFor="inq-deal">نوع معامله</label>
-        <select id="inq-deal" value={deal} onChange={(event) => setDeal(event.target.value)}>
+        <select id="inq-deal" value={deal} onChange={(event) => handleDealChange(event.target.value)}>
           <option value="">انتخاب کنید</option>
           {DEAL_OPTIONS.map((item) => (
             <option key={item} value={item}>
