@@ -146,10 +146,16 @@ function signedRequest(input: {
     ", SignedHeaders=" + signedHeaders +
     ", Signature=" + signature;
 
+  let requestBody: ArrayBuffer | undefined;
+  if (input.method === "PUT") {
+    requestBody = new ArrayBuffer(payload.byteLength);
+    new Uint8Array(requestBody).set(payload);
+  }
+
   return {
     method: input.method,
     headers,
-    body: input.method === "PUT" ? payload : undefined,
+    body: requestBody,
   };
 }
 
