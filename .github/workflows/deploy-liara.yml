@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: liara-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -15,6 +19,8 @@ jobs:
       - name: Deploy
         env:
           LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
+          http_proxy: http://proxy.liara.ir:6666
+          https_proxy: http://proxy.liara.ir:6666
         run: |
           npm i -g @liara/cli@9
           liara deploy --app="hirmand" --api-token="$LIARA_TOKEN" --no-app-logs --debug
