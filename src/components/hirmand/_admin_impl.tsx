@@ -45,6 +45,7 @@ import {
 } from "@/lib/properties";
 import { toast, Toaster } from "sonner";
 import { AdminMediaField } from "@/components/hirmand/admin-media-field";
+import { AdminLocationPicker } from "@/components/hirmand/admin-location-picker";
 import { AdminPricingPanel } from "@/components/hirmand/admin-pricing-panel";
 import { AdminConsultantPicker } from "@/components/hirmand/admin-consultant-picker";
 import { AdminMusicManager } from "@/components/hirmand/admin-music-manager";
@@ -100,6 +101,8 @@ type FormState = {
   status: PublishStatus;
   featured: boolean;
   featuredUntil: string;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 const STATUS_LABEL: Record<PublishStatus, string> = {
@@ -148,6 +151,8 @@ function emptyForm(): FormState {
     status: "published",
     featured: false,
     featuredUntil: "",
+    latitude: null,
+    longitude: null,
   };
 }
 
@@ -273,6 +278,8 @@ function propertyToForm(property: Property): FormState {
     status: property.status,
     featured: property.featured,
     featuredUntil: toDateTimeLocal(property.featuredUntil),
+    latitude: property.latitude,
+    longitude: property.longitude,
   };
 }
 
@@ -754,6 +761,10 @@ export function AdminPropertiesPage() {
       toast.error("توضیحات فایل را کامل‌تر بنویسید.");
       return;
     }
+    if ((form.latitude == null) !== (form.longitude == null)) {
+      toast.error("برای موقعیت نقشه، هر دو مختصات عرض و طول را کامل کنید یا هر دو را پاک کنید.");
+      return;
+    }
     if ([form.price, form.deposit, form.rent].some(hasInvalidMoney)) {
       toast.error("مبلغ باید فقط شامل رقم باشد و حداکثر ۲۰ رقم داشته باشد.");
       return;
@@ -817,6 +828,8 @@ export function AdminPropertiesPage() {
           images,
           contactName: form.contactName.trim(),
           contactPhone: form.contactPhone.trim(),
+          latitude: form.latitude,
+          longitude: form.longitude,
           status: form.status,
           featured: form.featured,
           featuredUntil: form.featuredUntil
@@ -907,6 +920,8 @@ export function AdminPropertiesPage() {
           images: parseImageUrls(base.images).valid,
           contactName: base.contactName,
           contactPhone: base.contactPhone,
+          latitude: base.latitude,
+          longitude: base.longitude,
           status,
           featured: base.featured,
           featuredUntil: base.featuredUntil
@@ -1459,11 +1474,14 @@ export function AdminPropertiesPage() {
                       </datalist>
                     </label>
                     <label className="field">
-                      <span>آدرس</span>
+                      <span>آدرس دقیق (فقط مدیریت)</span>
                       <input
                         value={form.address}
                         onChange={(e) => update("address", e.target.value)}
                       />
+                      <small style={{ display: "block", marginTop: 5, color: "var(--muted)", fontSize: ".72rem", lineHeight: 1.8 }}>
+                        این آدرس برای اطلاعات داخلی فایل است و در صفحه عمومی ملک نمایش داده نمی‌شود.
+                      </small>
                     </label>
                     <label className="field admin-span-2">
                       <span>توضیحات</span>
@@ -1474,6 +1492,22 @@ export function AdminPropertiesPage() {
                       />
                     </label>
                   </div>
+                </fieldset>
+
+                <fieldset className="admin-section">
+                  <legend>موقعیت و حریم خصوصی آدرس</legend>
+                  <AdminLocationPicker
+                    neighborhood={form.neighborhood}
+                    latitude={form.latitude}
+                    longitude={form.longitude}
+                    onChange={(coordinates) => {
+                      setForm((prev) => ({
+                        ...prev,
+                        latitude: coordinates.latitude,
+                        longitude: coordinates.longitude,
+                      }));
+                    }}
+                  />
                 </fieldset>
 
                 <fieldset className="admin-section">
