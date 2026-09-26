@@ -27,6 +27,8 @@ type Lead = {
   lastContactedAt: string | null;
   budgetDeposit: number | null;
   budgetRent: number | null;
+  budgetPurchase: number | null;
+  budgetSale: number | null;
   budgetEquivalent: number | null;
   budgetBedrooms: number | null;
   budgetRate: number | null;
@@ -154,6 +156,8 @@ export function AdminLeadManager() {
         lead.note,
         lead.budgetDeposit == null ? "" : String(lead.budgetDeposit),
         lead.budgetRent == null ? "" : String(lead.budgetRent),
+        lead.budgetPurchase == null ? "" : String(lead.budgetPurchase),
+        lead.budgetSale == null ? "" : String(lead.budgetSale),
       ]
         .join(" ")
         .toLowerCase()
@@ -167,6 +171,8 @@ export function AdminLeadManager() {
       "نتیجه بررسی بودجه شما از طرف هیرمند:",
       lead.budgetDeposit ? "رهن: " + formatToman(lead.budgetDeposit) + " تومان" : "",
       lead.budgetRent ? "اجاره ماهانه: " + formatToman(lead.budgetRent) + " تومان" : "",
+      lead.budgetPurchase ? "بودجه خرید: " + formatToman(lead.budgetPurchase) + " تومان" : "",
+      lead.budgetSale ? "بودجه فروش: " + formatToman(lead.budgetSale) + " تومان" : "",
       lead.neighborhood ? "محله: " + lead.neighborhood : "",
       lead.budgetBedrooms ? "حداقل خواب: " + lead.budgetBedrooms : "",
       "",
@@ -299,24 +305,46 @@ export function AdminLeadManager() {
                     {lead.neighborhood ? " · " + lead.neighborhood : ""}
                     {lead.consultant ? " · مشاور: " + lead.consultant : ""}
                   </p>
-                  {(lead.budgetDeposit != null || lead.budgetRent != null || lead.budgetEquivalent != null) ? (
+                  {(lead.budgetDeposit != null ||
+                    lead.budgetRent != null ||
+                    lead.budgetPurchase != null ||
+                    lead.budgetSale != null ||
+                    lead.budgetEquivalent != null) ? (
                     <div className="admin-lead-budget">
-                      <div>
-                        <span>رهن</span>
-                        <strong>{lead.budgetDeposit ? formatToman(lead.budgetDeposit) : "—"}</strong>
-                      </div>
-                      <div>
-                        <span>اجاره</span>
-                        <strong>{lead.budgetRent ? formatToman(lead.budgetRent) : "—"}</strong>
-                      </div>
-                      <div>
-                        <span>معادل رهنی</span>
-                        <strong>{lead.budgetEquivalent ? formatToman(lead.budgetEquivalent) : "—"}</strong>
-                      </div>
-                      <div>
-                        <span>فایل پیشنهادی</span>
-                        <strong>{lead.matchCount.toLocaleString("fa-IR")} مورد</strong>
-                      </div>
+                      {lead.deal === "رهن" || lead.deal === "اجاره" || lead.deal === "رهن و اجاره" ? (
+                        <>
+                          <div>
+                            <span>رهن</span>
+                            <strong>{lead.budgetDeposit ? formatToman(lead.budgetDeposit) : "—"}</strong>
+                          </div>
+                          <div>
+                            <span>اجاره</span>
+                            <strong>{lead.budgetRent ? formatToman(lead.budgetRent) : "—"}</strong>
+                          </div>
+                        </>
+                      ) : lead.deal === "خرید" ? (
+                        <div>
+                          <span>مبلغ خرید</span>
+                          <strong>{lead.budgetPurchase ? formatToman(lead.budgetPurchase) : "—"}</strong>
+                        </div>
+                      ) : lead.deal === "فروش" ? (
+                        <div>
+                          <span>مبلغ فروش</span>
+                          <strong>{lead.budgetSale ? formatToman(lead.budgetSale) : "—"}</strong>
+                        </div>
+                      ) : null}
+                      {lead.budgetEquivalent != null ? (
+                        <div>
+                          <span>معادل رهنی</span>
+                          <strong>{lead.budgetEquivalent ? formatToman(lead.budgetEquivalent) : "—"}</strong>
+                        </div>
+                      ) : null}
+                      {lead.matchCount > 0 ? (
+                        <div>
+                          <span>فایل پیشنهادی</span>
+                          <strong>{lead.matchCount.toLocaleString("fa-IR")} مورد</strong>
+                        </div>
+                      ) : null}
                       {lead.matchedProperties.length ? (
                         <div className="admin-lead-matches">
                           {lead.matchedProperties.slice(0, 5).map((item) => (
