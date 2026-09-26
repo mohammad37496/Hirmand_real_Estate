@@ -2952,3 +2952,73 @@ body:has(.property-detail-page) {
     min-width:18px!important;
   }
 }
+
+/* === Detail card spacing hardening ==========================================
+   Keep the detail page breathable despite the legacy/visual override layers.
+   The content area has one main column in the current JSX, so do not reserve
+   an empty second grid column. Explicit row gaps keep cards separated.
+============================================================================= */
+.property-detail-page .property-detail-top {
+  column-gap: 28px !important;
+  row-gap: 28px !important;
+}
+
+.property-detail-page .property-detail-content {
+  display: block !important;
+  width: 100% !important;
+  margin-top: 34px !important;
+}
+
+.property-detail-page .property-detail-main {
+  display: grid !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  gap: 24px !important;
+}
+
+.property-detail-page .property-detail-main > section {
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+
+.property-detail-page .property-detail-summary {
+  gap: 22px !important;
+}
+
+.property-detail-page .property-contact-card {
+  margin: 2px 0 0 !important;
+  box-shadow: 0 14px 32px rgba(18, 58, 90, 0.08) !important;
+}
+
+@media (max-width: 1024px) {
+  .property-detail-page .property-detail-content {
+    margin-top: 28px !important;
+  }
+
+  .property-detail-page .property-detail-main {
+    gap: 20px !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-detail-top {
+    row-gap: 20px !important;
+  }
+
+  .property-detail-page .property-detail-content {
+    margin-top: 24px !important;
+  }
+
+  .property-detail-page .property-detail-main {
+    gap: 18px !important;
+  }
+
+  .property-detail-page .property-detail-summary {
+    gap: 18px !important;
+  }
+
+  .property-detail-page .property-contact-card {
+    margin-top: 2px !important;
+  }
+}
