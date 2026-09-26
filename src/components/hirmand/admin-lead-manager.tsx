@@ -142,7 +142,19 @@ export function AdminLeadManager() {
     return leads.filter((lead) => {
       if (statusFilter !== "all" && lead.status !== statusFilter) return false;
       if (!q) return true;
-      return [lead.name, lead.phone, lead.peopleCount == null ? "" : String(lead.peopleCount), lead.job, lead.deal, lead.propertyType, lead.neighborhood, lead.consultant, lead.note]
+      return [
+        lead.name,
+        lead.phone,
+        lead.peopleCount == null ? "" : String(lead.peopleCount),
+        lead.job,
+        lead.deal,
+        lead.propertyType,
+        lead.neighborhood,
+        lead.consultant,
+        lead.note,
+        lead.budgetDeposit == null ? "" : String(lead.budgetDeposit),
+        lead.budgetRent == null ? "" : String(lead.budgetRent),
+      ]
         .join(" ")
         .toLowerCase()
         .includes(q);
@@ -287,7 +299,7 @@ export function AdminLeadManager() {
                     {lead.neighborhood ? " · " + lead.neighborhood : ""}
                     {lead.consultant ? " · مشاور: " + lead.consultant : ""}
                   </p>
-                  {lead.source === "budget_match" ? (
+                  {(lead.budgetDeposit != null || lead.budgetRent != null || lead.budgetEquivalent != null) ? (
                     <div className="admin-lead-budget">
                       <div>
                         <span>رهن</span>
