@@ -241,6 +241,8 @@ export const propertyInputSchema = z.object({
   status: z.enum(["draft", "published", "archived"]).default("published"),
   featured: z.boolean().default(false),
   featuredUntil: z.string().trim().max(80).nullable().optional().default(null),
+  latitude: z.number().finite().min(-90).max(90).nullable().optional().default(null),
+  longitude: z.number().finite().min(-180).max(180).nullable().optional().default(null),
 });
 
 const budgetMatchSchema = z
@@ -297,7 +299,15 @@ function parseJsonArray(value: unknown): string[] {
   return [];
 }
 
-function mapProperty(row: Record<string, unknown>): Property {
+function roundPublicCoordinate(value: number | null): number | null {
+  return value == null ? null : Math.round(value * 1000) / 1000;
+}
+
+function mapProperty(row: Record<string, unknown>, options: { admin?: boolean } = {}): Property {
+  const isAdmin = options.admin === true;
+  const latitude = numberOrNull(row.latitude);
+  const longitude = numberOrNull(row.longitude);
+
   return {
     id: String(row.id),
     slug: String(row.slug),
@@ -309,7 +319,7 @@ function mapProperty(row: Record<string, unknown>): Property {
     propertyType: row.property_type as PropertyType,
     city: String(row.city),
     neighborhood: String(row.neighborhood),
-    address: row.address ? String(row.address) : null,
+    address: isAdmin ? (row.address ? String(row.address) : null) : null,
     areaM2: numberOrNull(row.area_m2),
     bedrooms: numberOrNull(row.bedrooms),
     bathrooms: numberOrNull(row.bathrooms),
@@ -336,8 +346,8 @@ function mapProperty(row: Record<string, unknown>): Property {
     publishedAt: row.published_at ? new Date(String(row.published_at)).toISOString() : null,
     createdAt: new Date(String(row.created_at)).toISOString(),
     updatedAt: new Date(String(row.updated_at)).toISOString(),
-    latitude: numberOrNull(row.latitude),
-    longitude: numberOrNull(row.longitude),
+    latitude: isAdmin ? latitude : roundPublicCoordinate(latitude),
+    longitude: isAdmin ? longitude : roundPublicCoordinate(longitude),
     priceDropPercent: numberOrNull(row.price_drop_percent),
   };
 }
@@ -898,7 +908,7 @@ export const listAdminProperties = createServerFn({ method: "POST" })
        limit $8 offset $9`,
       [...filters, data.sort, data.limit, data.offset],
     );
-    return rows.map(mapProperty);
+    return rows.map((row) => mapProperty(row, { admin: true }));
   });
 
 export const countAdminProperties = createServerFn({ method: "POST" })
@@ -1078,13 +1088,15 @@ export const saveProperty = createServerFn({ method: "POST" })
         neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
         built_year, parking, elevator, storage, cabinet_type, flooring_type, cooling_system,
         heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
-        features, images, contact_name, contact_phone, published_at, featured_until
+        features, images, contact_name, contact_phone, published_at, featured_until,
+        latitude, longitude
       ) values (
         $1, $2, $3, $4, $5, $6, $7, 'اصفهان',
         $8, $9, $10::integer, $11::smallint, $12::smallint, $13::smallint, $14::smallint,
         $15::smallint, $16::boolean, $17::boolean, $18::boolean, $19::text, $20::text, $21::text,
         $22::text, $23::text, $24::jsonb, $25::numeric, $26::numeric, $27::numeric, $28::text,
-        $29::jsonb, $30::jsonb, $31::text, $32::text, $33::timestamptz, $34::timestamptz
+        $29::jsonb, $30::jsonb, $31::text, $32::text, $33::timestamptz, $34::timestamptz,
+        $35::double precision, $36::double precision
       )
       on conflict (id) do update set
         slug = excluded.slug,
@@ -1114,6 +1126,8 @@ export const saveProperty = createServerFn({ method: "POST" })
         price = excluded.price,
         deposit = excluded.deposit,
         rent = excluded.rent,
+        latitude = excluded.latitude,
+        longitude = excluded.longitude,
         previous_price = properties.price,
         previous_deposit = properties.deposit,
         previous_rent = properties.rent,
@@ -1245,6 +1259,8 @@ export const saveProperty = createServerFn({ method: "POST" })
         data.contactPhone,
         publishedAt,
         featuredUntil,
+        data.latitude ?? null,
+        data.longitude ?? null,
       ],
     );
 
@@ -1261,13 +1277,13 @@ export const saveProperty = createServerFn({ method: "POST" })
       [
         id,
         action,
-        existing ? JSON.stringify(mapProperty(existing)) : null,
-        JSON.stringify(mapProperty(rows[0])),
+        existing ? JSON.stringify(mapProperty(existing, { admin: true })) : null,
+        JSON.stringify(mapProperty(rows[0], { admin: true })),
       ],
     );
 
     clearPropertyReadCache();
-    return mapProperty(rows[0]);
+    return mapProperty(rows[0], { admin: true });
   });
 
 export const listPropertyChangeHistory = createServerFn({ method: "POST" })
@@ -1366,7 +1382,7 @@ export const deleteProperty = createServerFn({ method: "POST" })
       await sql.query(
         `insert into property_change_history (property_id, action, before_state, after_state)
          values ($1, 'deleted', $2::jsonb, null)`,
-        [data.id, JSON.stringify(mapProperty(existing))],
+        [data.id, JSON.stringify(mapProperty(existing, { admin: true }))],
       );
     }
 
