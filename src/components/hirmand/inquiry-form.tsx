@@ -243,6 +243,28 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           placeholder="مثلاً ۴ نفر"
         />
       </div>
+      <div className="field">
+        <label htmlFor="inq-job">شغل</label>
+        <input
+          id="inq-job"
+          name="job"
+          autoComplete="organization-title"
+          value={job}
+          onChange={(event) => setJob(event.target.value)}
+          placeholder="مثلاً کارمند، پزشک، دانشجو…"
+        />
+      </div>
+      <div className="field">
+        <label htmlFor="inq-deal">نوع معامله</label>
+        <select id="inq-deal" value={deal} onChange={(event) => handleDealChange(event.target.value)}>
+          <option value="">انتخاب کنید</option>
+          {DEAL_OPTIONS.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+      </div>
       {isRentLikeDeal ? (
         <>
           <div className="field">
@@ -321,28 +343,6 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           <small id="inq-budget-sale-hint" className="form-hint">مبلغ فروش به تومان</small>
         </div>
       ) : null}
-      <div className="field">
-        <label htmlFor="inq-job">شغل</label>
-        <input
-          id="inq-job"
-          name="job"
-          autoComplete="organization-title"
-          value={job}
-          onChange={(event) => setJob(event.target.value)}
-          placeholder="مثلاً کارمند، پزشک، دانشجو…"
-        />
-      </div>
-      <div className="field">
-        <label htmlFor="inq-deal">نوع معامله</label>
-        <select id="inq-deal" value={deal} onChange={(event) => handleDealChange(event.target.value)}>
-          <option value="">انتخاب کنید</option>
-          {DEAL_OPTIONS.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
-      </div>
       <div className="field">
         <label htmlFor="inq-type">نوع ملک</label>
         <select
