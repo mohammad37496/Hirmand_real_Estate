@@ -6,9 +6,7 @@ import {
   listDbRelatedEnvKeys,
 } from "./resolve-database-url.mjs";
 
-const isVercel =
-  process.env.VERCEL === "1" || process.env.VERCEL === "true";
-
+const isProduction = process.env.NODE_ENV === "production";
 const runtime = resolveDatabaseUrl();
 const migration = resolveMigrationDatabaseUrl();
 
@@ -20,33 +18,29 @@ if (runtime.url) {
   if (migration.key && migration.key !== runtime.key) {
     console.log(`[deploy] Migrations will use ${migration.key} (direct/unpooled).`);
   }
-  if (runtime.key && /UNPOOLED|NON_POOLING/i.test(runtime.key)) {
-    console.warn(
-      "[deploy] Only an unpooled URL is set. For better performance on Vercel, also add the Neon *pooled* connection as DATABASE_URL.",
-    );
-  }
-} else if (isVercel) {
+} else if (isProduction) {
   const related = listDbRelatedEnvKeys();
-  console.warn(
-    "[deploy] WARNING: No database URL found (DATABASE_URL / POSTGRES_URL / …).",
-  );
+  console.warn("[deploy] WARNING: No database URL found.");
   console.warn(
     related.length
       ? `[deploy] Related env keys: ${related.join(", ")}`
-      : "[deploy] No DATABASE/POSTGRES/NEON env keys on this build.",
+      : "[deploy] No DATABASE/POSTGRES environment keys on this build.",
+  );
+  console.warn(
+    "[deploy] Production database-backed features will not work until DATABASE_URL is configured.",
   );
 } else {
-  console.log("[deploy] Local build: no DATABASE_URL (PGLite fallback OK).");
+  console.log("[deploy] Non-production build: no DATABASE_URL (PGLite fallback OK).");
 }
 
-if (isVercel && !process.env.HIRMAND_ADMIN_KEY?.trim()) {
+if (isProduction && !process.env.HIRMAND_ADMIN_KEY?.trim()) {
   console.warn(
     "[deploy] WARNING: HIRMAND_ADMIN_KEY not set — /admin will reject keys.",
   );
 }
 
 console.log(
-  isVercel
-    ? "[deploy] Vercel environment check finished."
-    : "[deploy] Local build checks skipped.",
+  isProduction
+    ? "[deploy] Production environment check finished."
+    : "[deploy] Non-production environment checks finished.",
 );
