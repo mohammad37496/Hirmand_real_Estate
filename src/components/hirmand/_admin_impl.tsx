@@ -1844,66 +1844,57 @@ export function AdminPropertiesPage() {
         </div>
       </div>
 
-      <nav className="admin-mobile-nav">
+      <nav className="admin-mobile-nav" aria-label="ناوبری مدیریت">
         <button
           type="button"
           className={view === "dashboard" ? "is-active" : ""}
           onClick={() => setView("dashboard")}
+          title="داشبورد"
         >
-          <BarChart3 size={20} />
-          داشبورد
+          <BarChart3 size={19} strokeWidth={2.1} />
+          <span>داشبورد</span>
         </button>
         <button
           type="button"
           className={view === "list" ? "is-active" : ""}
           onClick={() => setView("list")}
+          title="فهرست فایل‌ها"
         >
-          <LayoutDashboard size={20} />
-          فهرست
+          <LayoutDashboard size={19} strokeWidth={2.1} />
+          <span>فهرست</span>
         </button>
         <button
           type="button"
           className={view === "form" && !form.id ? "is-active" : ""}
           onClick={startNew}
+          title="افزودن فایل"
         >
-          <Plus size={20} />
-          جدید
+          <Plus size={20} strokeWidth={2.25} />
+          <span>جدید</span>
         </button>
-        <button type="button" className={view === "music" ? "is-active" : ""} onClick={() => setView("music")}>
-          <Music2 size={20} />
-          موسیقی
+        <button type="button" className={view === "music" ? "is-active" : ""} onClick={() => setView("music")} title="مدیریت موسیقی">
+          <Music2 size={19} strokeWidth={2.1} />
+          <span>موسیقی</span>
         </button>
-        <button type="button" className={view === "leads" ? "is-active" : ""} onClick={() => setView("leads")}>
-          <UsersRound size={20} />
-          درخواست‌ها
+        <button type="button" className={view === "leads" ? "is-active" : ""} onClick={() => setView("leads")} title="درخواست‌های مشتریان">
+          <UsersRound size={19} strokeWidth={2.1} />
+          <span>درخواست‌ها</span>
         </button>
-        <button type="button" className={view === "divar" ? "is-active" : ""} onClick={() => setView("divar")}>
-          <Globe2 size={20} />
-          دیوار
+        <button type="button" className={view === "consultants" ? "is-active" : ""} onClick={() => setView("consultants")} title="مشاورین و اعضای بنگاه">
+          <UsersRound size={19} strokeWidth={2.1} />
+          <span>مشاورین</span>
         </button>
-        <button type="button" className={view === "partners" ? "is-active" : ""} onClick={() => setView("partners")}>
-          <UsersRound size={20} />
-          همکاران
+        <button type="button" className={view === "partners" ? "is-active" : ""} onClick={() => setView("partners")} title="همکاران و کد رهگیری">
+          <UsersRound size={19} strokeWidth={2.1} />
+          <span>همکاران</span>
         </button>
-        <Link
-          to="/"
-          className="admin-mobile-site"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            minHeight: 40,
-            padding: "0 14px",
-            borderRadius: 999,
-            border: "1px solid rgb(255 255 255 / .2)",
-            background: "rgb(255 255 255 / .06)",
-            color: "#f7f5ef",
-            textDecoration: "none",
-            fontSize: ".8rem",
-            fontWeight: 600,
-          }}
-        >
-          سایت
+        <button type="button" className={view === "divar" ? "is-active" : ""} onClick={() => setView("divar")} title="فایل‌های دیوار">
+          <Globe2 size={19} strokeWidth={2.1} />
+          <span>دیوار</span>
+        </button>
+        <Link to="/" className="admin-mobile-site" title="مشاهده سایت">
+          <Home size={19} strokeWidth={2.1} />
+          <span>سایت</span>
         </Link>
       </nav>
     </div>
