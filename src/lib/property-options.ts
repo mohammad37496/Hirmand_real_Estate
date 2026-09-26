@@ -39,6 +39,8 @@ export const PROPERTY_HEATING_OPTIONS = [
   { value: "motorhouse", label: "موتورخانه" },
   { value: "underfloor", label: "گرمایش از کف" },
   { value: "fan_coil", label: "فن‌کویل" },
+  { value: "central", label: "سیستم مرکزی" },
+  { value: "chiller", label: "چیلر" },
   { value: "heater", label: "بخاری" },
   { value: "fireplace", label: "شومینه" },
   { value: "heat_pump", label: "هیت‌پمپ" },
