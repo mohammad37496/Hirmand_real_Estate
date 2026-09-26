@@ -390,8 +390,8 @@ function mapPropertyCard(row: Record<string, unknown>): PropertyCardData {
     rent: row.rent == null ? null : String(row.rent),
     image: row.image ? String(row.image) : null,
     priceDropPercent: numberOrNull(row.price_drop_percent),
-    latitude: numberOrNull(row.latitude),
-    longitude: numberOrNull(row.longitude),
+    latitude: roundPublicCoordinate(numberOrNull(row.latitude)),
+    longitude: roundPublicCoordinate(numberOrNull(row.longitude)),
   };
 }
 
