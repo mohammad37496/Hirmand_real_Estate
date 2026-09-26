@@ -4,5 +4,10 @@
   "build": {
     "location": "iran"
   },
-  "disks": []
+  "disks": [],
+  "node": {
+    "version": "22",
+    "mirror": false,
+    "timezone": "Asia/Tehran"
+  }
 }
