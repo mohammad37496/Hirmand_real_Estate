@@ -5,10 +5,10 @@ import {
   liaraObjectKeyFromUrl,
 } from "@/lib/liara-object-storage.server";
 import {
-  isDatabaseMediaUrl,
   isPlayableMediaUrl,
   normalizeStoredMediaUrl,
 } from "@/lib/music-library.server";
+import { isDatabaseMediaUrl } from "@/lib/media-store.server";
 
 const CACHE_CONTROL =
   "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400";
