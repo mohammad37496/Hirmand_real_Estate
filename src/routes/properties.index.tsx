@@ -379,7 +379,7 @@ function PropertiesIndexPage() {
     // already leaving /properties. TanStack Router owns the URL during route
     // transitions; this effect only owns query-string updates while the index
     // route is actually mounted.
-    const pathname = window.location.pathname.replace(/\\/+$/, "") || "/";
+    const pathname = window.location.pathname.replace(/\/+$/, "") || "/";
     if (pathname !== "/properties") return;
 
     const params = new URLSearchParams();
