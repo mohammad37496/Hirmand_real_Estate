@@ -562,32 +562,42 @@ export const getPublishedPropertyById = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.string().trim().min(1).max(120) }))
   .handler(async ({ data }) => {
     if (dbSource === "unconfigured") return null;
+    const id = data.id.trim();
     setResponseHeader("cache-control", "public, max-age=30, s-maxage=120, stale-while-revalidate=600");
     return cachedPropertyRead(
-      `property-id:${data.id.trim()}`,
+      `property-id:${id}`,
       60_000,
       async () => {
-      const sql = await getSql();
-      const id = data.id.trim();
-      // Legacy /file/:id links circulate with the full uuid AND with the visible
-      // 8-hex fragment (the same fragment the slug suffix and the card code are
-      // built from). Mirror getPublishedProperty's tolerance so a fragment also
-      // resolves and redirects to the canonical slug page instead of 404.
-      const fragment = /^[0-9a-f]{8}$/i.test(id) ? id.toLowerCase() : "";
-      const rows = await sql.query<Record<string, unknown>>(
-        `select ${DETAIL_COLUMNS}
-         from properties
-         where status = 'published'
-           and (
-             id::text = $1
-             or ($2 <> '' and lower(left(id::text, 8)) = $2)
-             or ($2 <> '' and lower(right(id::text, 8)) = $2)
-           )
-         order by case when id::text = $1 then 0 else 1 end
-         limit 1`,
-        [id, fragment],
-      );
-      return rows[0] ? mapProperty(rows[0]) : null;
+        const sql = await getSql();
+
+        const exactRows = await sql.query<Record<string, unknown>>(
+          `select ${DETAIL_COLUMNS}
+           from properties
+           where status = 'published' and id::text = $1
+           limit 1`,
+          [id],
+        );
+        if (exactRows[0]) return mapProperty(exactRows[0]);
+
+        // Legacy /file/:id links may contain the visible 8-hex fragment.
+        // Keep this fallback isolated from the normal UUID lookup so the common
+        // detail path uses the primary-key index.
+        if (!/^[0-9a-f]{8}$/i.test(id)) return null;
+
+        const fragment = id.toLowerCase();
+        const fragmentRows = await sql.query<Record<string, unknown>>(
+          `select ${DETAIL_COLUMNS}
+           from properties
+           where status = 'published'
+             and (
+               lower(left(id::text, 8)) = $1
+               or lower(right(id::text, 8)) = $1
+             )
+           order by case when lower(left(id::text, 8)) = $1 then 0 else 1 end
+           limit 1`,
+          [fragment],
+        );
+        return fragmentRows[0] ? mapProperty(fragmentRows[0]) : null;
       },
     );
   });
@@ -601,47 +611,48 @@ export const getPublishedProperty = createServerFn({ method: "GET" })
       `property-slug:${data.slug}`,
       60_000,
       async () => {
-      const sql = await getSql();
+        const sql = await getSql();
+        const decodedCandidates = decodeSlugCandidates(data.slug);
 
-      // Shared with the detail route so the lookup and the canonical-URL check
-      // always agree on what a slug means (see src/lib/property-slug.ts).
-      const decodedCandidates = decodeSlugCandidates(data.slug);
+        // Canonical/encoded slugs hit the unique slug index first.
+        const slugRows = await sql.query<Record<string, unknown>>(
+          `select ${DETAIL_COLUMNS}
+           from properties
+           where status = 'published' and slug = any($1::text[])
+           order by case when slug = $2 then 0 else 1 end
+           limit 1`,
+          [decodedCandidates, decodedCandidates[0]],
+        );
+        if (slugRows[0]) return mapProperty(slugRows[0]);
 
-      // Old public links were generated from /file/:id and then promoted to
-      // slug URLs such as "عنوان-345555d4". Keep those links resolvable even if
-      // the title/slug has changed later: the final 8 hex characters are the
-      // same short id fragment used by saveProperty().
-      const legacyIdPrefixes = legacyIdFragments(decodedCandidates);
+        // Old links sometimes contain a full id alongside a title.
+        const idRows = await sql.query<Record<string, unknown>>(
+          `select ${DETAIL_COLUMNS}
+           from properties
+           where status = 'published' and id::text = any($1::text[])
+           limit 1`,
+          [decodedCandidates],
+        );
+        if (idRows[0]) return mapProperty(idRows[0]);
 
-      const rows = await sql.query<Record<string, unknown>>(
-        `select ${DETAIL_COLUMNS}
-         from properties
-         where status = 'published'
-           and (
-             slug = any($1::text[])
-             or id::text = any($1::text[])
-             or lower(left(id::text, 8)) = any($4::text[])
-             or lower(right(id::text, 8)) = any($4::text[])
-           )
-         order by
-           case
-             when slug = $2 then 0
-             when slug = $3 then 1
-             when id::text = any($1::text[]) then 2
-             when lower(left(id::text, 8)) = any($4::text[]) then 3
-             when lower(right(id::text, 8)) = any($4::text[]) then 4
-             else 5
-           end
-         limit 1`,
-        [
-          decodedCandidates,
-          decodedCandidates[0],
-          decodedCandidates[1] ?? decodedCandidates[0],
-          legacyIdPrefixes,
-        ],
-      );
+        // The expensive function-on-id fallback is now only used for legacy
+        // 8-hex fragments, and the migration provides matching functional indexes.
+        const legacyIdPrefixes = legacyIdFragments(decodedCandidates);
+        if (!legacyIdPrefixes.length) return null;
 
-      return rows[0] ? mapProperty(rows[0]) : null;
+        const fragmentRows = await sql.query<Record<string, unknown>>(
+          `select ${DETAIL_COLUMNS}
+           from properties
+           where status = 'published'
+             and (
+               lower(left(id::text, 8)) = any($1::text[])
+               or lower(right(id::text, 8)) = any($1::text[])
+             )
+           order by case when lower(left(id::text, 8)) = any($1::text[]) then 0 else 1 end
+           limit 1`,
+          [legacyIdPrefixes],
+        );
+        return fragmentRows[0] ? mapProperty(fragmentRows[0]) : null;
       },
     );
   });
