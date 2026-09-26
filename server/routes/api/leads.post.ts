@@ -30,6 +30,8 @@ const schema = z.object({
   source: z.enum(["website", "budget_match"]).optional().default("website"),
   budgetDeposit: z.number().int().min(0).max(999999999999999).optional(),
   budgetRent: z.number().int().min(0).max(999999999999999).optional(),
+  budgetPurchase: z.number().int().min(0).max(999999999999999).optional(),
+  budgetSale: z.number().int().min(0).max(999999999999999).optional(),
   budgetBedrooms: z.number().int().min(1).max(30).optional(),
   matches: z.array(matchSchema).max(12).optional().default([]),
 }).superRefine((value, ctx) => {
@@ -94,6 +96,8 @@ export default defineEventHandler(async (event) => {
 
   const budgetDeposit = parsed.data.budgetDeposit ?? 0;
   const budgetRent = parsed.data.budgetRent ?? 0;
+  const budgetPurchase = parsed.data.budgetPurchase ?? 0;
+  const budgetSale = parsed.data.budgetSale ?? 0;
   const matchedProperties = parsed.data.matches.slice(0, 12);
   const budgetPayload = {
     name: parsed.data.name,
@@ -116,9 +120,9 @@ export default defineEventHandler(async (event) => {
       await sql.query(
         `update leads
          set name=$2, people_count=$3, job=$4, deal=$5, property_type=$6, neighborhood=$7, consultant=$8, note=$9,
-             source=$10, follow_up_at=current_timestamp + interval '24 hours', acquisition_source=$18, acquisition_medium=$19, acquisition_campaign=$20, acquisition_referrer=$21, acquisition_landing_path=$22, budget_deposit=$11, budget_rent=$12, budget_rate=$13,
-             budget_equivalent=$14, budget_bedrooms=$15, matched_properties=$16::jsonb,
-             match_count=$17, updated_at=current_timestamp
+             source=$10, follow_up_at=current_timestamp + interval '24 hours', acquisition_source=$20, acquisition_medium=$21, acquisition_campaign=$22, acquisition_referrer=$23, acquisition_landing_path=$24, budget_deposit=$11, budget_rent=$12, budget_purchase=$13, budget_sale=$14, budget_rate=$15,
+             budget_equivalent=$16, budget_bedrooms=$17, matched_properties=$18::jsonb,
+             match_count=$19, updated_at=current_timestamp
          where id=$1`,
         [
           existing[0].id,
@@ -133,6 +137,8 @@ export default defineEventHandler(async (event) => {
           parsed.data.source,
           budgetDeposit || null,
           budgetRent || null,
+          budgetPurchase || null,
+          budgetSale || null,
           DEFAULT_MATCH_RAHN_RATE,
           equivalent || null,
           parsed.data.budgetBedrooms ?? null,
@@ -154,10 +160,10 @@ export default defineEventHandler(async (event) => {
     `insert into leads (
       id, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source,
       acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, acquisition_landing_path,
-      follow_up_at, budget_deposit, budget_rent, budget_rate, budget_equivalent, budget_bedrooms,
+      follow_up_at, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_rate, budget_equivalent, budget_bedrooms,
       matched_properties, match_count
     )
-    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,current_timestamp + interval '24 hours',$17,$18,$19,$20,$21,$22::jsonb,$23)
+    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,current_timestamp + interval '24 hours',$17,$18,$19,$20,$21,$22,$23,$24::jsonb,$25)
     returning id`,
     [
       crypto.randomUUID(),
@@ -178,6 +184,8 @@ export default defineEventHandler(async (event) => {
       acquisition.landingPath,
       budgetDeposit || null,
       budgetRent || null,
+      budgetPurchase || null,
+      budgetSale || null,
       parsed.data.source === "budget_match" ? DEFAULT_MATCH_RAHN_RATE : null,
       equivalent || null,
       parsed.data.budgetBedrooms ?? null,
