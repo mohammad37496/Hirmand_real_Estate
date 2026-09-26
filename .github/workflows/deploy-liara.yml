@@ -9,6 +9,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Deploy
         env:
           LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
