@@ -67,8 +67,17 @@ function encodeKey(key: string): string {
     .join("/");
 }
 
-function objectUrl(endpoint: URL, key: string): URL {
-  const url = new URL(endpoint.toString());
+function bucketEndpoint(config: LiaraConfig): URL {
+  const url = new URL(config.endpoint.toString());
+  const bucketPrefix = config.bucket + ".";
+  if (!url.hostname.toLowerCase().startsWith(bucketPrefix.toLowerCase())) {
+    url.hostname = bucketPrefix + url.hostname;
+  }
+  return url;
+}
+
+function objectUrl(config: LiaraConfig, key: string): URL {
+  const url = bucketEndpoint(config);
   const prefix = url.pathname.replace(/\/+$/, "");
   url.pathname = prefix + "/" + encodeKey(key);
   url.search = "";
@@ -153,7 +162,7 @@ async function send(input: {
   const config = readConfig();
   if (!config) return false;
 
-  const url = objectUrl(config.endpoint, input.key);
+  const url = objectUrl(config, input.key);
   const request = signedRequest({
     ...input,
     url,
@@ -196,7 +205,7 @@ export async function putLiaraObject(input: {
     body,
     contentType: input.contentType || "application/octet-stream",
   });
-  return ok ? objectUrl(config.endpoint, input.key).toString() : null;
+  return ok ? objectUrl(config, input.key).toString() : null;
 }
 
 export async function deleteLiaraObject(key: string): Promise<void> {
@@ -209,9 +218,10 @@ export function liaraObjectKeyFromUrl(value: string | null | undefined): string 
 
   try {
     const target = new URL(value);
-    if (target.origin !== config.endpoint.origin) return null;
+    const endpoint = bucketEndpoint(config);
+    if (target.origin !== endpoint.origin) return null;
 
-    const prefix = config.endpoint.pathname.replace(/\/+$/, "");
+    const prefix = endpoint.pathname.replace(/\/+$/, "");
     let pathname = target.pathname;
     if (prefix) {
       if (!pathname.startsWith(prefix + "/")) return null;
