@@ -3,7 +3,7 @@ import { sanitizePostgresConnectionString } from "../../scripts/resolve-database
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
-export type DbSource = "neon" | "pglite" | "unconfigured";
+export type DbSource = "postgres" | "pglite" | "unconfigured";
 
 function resolveDatabaseUrlFromEnv(): string | undefined {
   if (typeof process === "undefined") return undefined;
@@ -27,10 +27,6 @@ function resolveDatabaseUrlFromEnv(): string | undefined {
 
 const databaseUrl = resolveDatabaseUrlFromEnv();
 
-const isVercelRuntime =
-  typeof process !== "undefined" &&
-  (process.env.VERCEL === "1" || process.env.VERCEL === "true");
-
 /**
  * PGlite loads a compiled Postgres from its own WASM/data files
  * (`pglite.wasm`, `pglite.data`). The bundled production server does not ship
@@ -46,8 +42,8 @@ const pgliteUsable =
   Boolean(process.env.PGLITE_DATA_DIR?.trim()) || process.env.NODE_ENV !== "production";
 
 export const dbSource: DbSource = databaseUrl
-  ? "neon"
-  : isVercelRuntime || process.env.CI === "true" || !pgliteUsable
+  ? "postgres"
+  : process.env.CI === "true" || !pgliteUsable
     ? "unconfigured"
     : "pglite";
 
@@ -91,7 +87,7 @@ function toSql(run: Run): Sql {
   return sql;
 }
 
-function createNeonSql(): Promise<Sql> {
+function createPostgresSql(): Promise<Sql> {
   globalRef.__pgSqlPromise__ ??= (async () => {
     const { Pool, types } = await import("pg");
     types.setTypeParser(OID_INT8, Number);
@@ -206,10 +202,10 @@ async function createSql(): Promise<Sql> {
       "@/lib/db is server-only — call getSql() from a createServerFn handler or a server route loader, never from client code.",
     );
   }
-  if (dbSource === "neon") return createNeonSql();
+  if (dbSource === "postgres") return createPostgresSql();
   if (dbSource === "pglite") return createPgliteSql();
   throw new Error(
-    "DATABASE_URL تنظیم نشده است. برای اجرای نسخه Vercel باید یک PostgreSQL/Neon DATABASE_URL در Environment Variables پروژه تنظیم شود.",
+    "DATABASE_URL تنظیم نشده است. برای اجرای نسخه تولیدی باید یک PostgreSQL DATABASE_URL در Environment Variables پروژه تنظیم شود.",
   );
 }
 
