@@ -1,14 +1,15 @@
 /**
  * Minimal S3-compatible client for Liara Object Storage.
  *
- * This deliberately uses Node's built-in crypto/fetch instead of adding another
- * dependency to the app. Credentials are read only on the server.
+ * Liara's S3 endpoint uses path-style bucket addressing, so requests are sent
+ * to the configured endpoint as /<bucket>/<object>. Credentials are read only
+ * on the server.
  */
 
 import { createHash, createHmac } from "node:crypto";
 
 const SERVICE = "s3";
-const REGION = "default";
+const REGION = "";
 const ALGORITHM = "AWS4-HMAC-SHA256";
 
 type LiaraConfig = {
@@ -67,19 +68,15 @@ function encodeKey(key: string): string {
     .join("/");
 }
 
-function bucketEndpoint(config: LiaraConfig): URL {
-  const url = new URL(config.endpoint.toString());
-  const bucketPrefix = config.bucket + ".";
-  if (!url.hostname.toLowerCase().startsWith(bucketPrefix.toLowerCase())) {
-    url.hostname = bucketPrefix + url.hostname;
-  }
-  return url;
-}
-
 function objectUrl(config: LiaraConfig, key: string): URL {
-  const url = bucketEndpoint(config);
+  const url = new URL(config.endpoint.toString());
   const prefix = url.pathname.replace(/\/+$/, "");
-  url.pathname = prefix + "/" + encodeKey(key);
+  url.pathname =
+    prefix +
+    "/" +
+    encodeURIComponent(config.bucket) +
+    "/" +
+    encodeKey(key);
   url.search = "";
   url.hash = "";
   return url;
@@ -101,7 +98,10 @@ function signedRequest(input: {
   contentType?: string;
 }): RequestInit {
   const now = new Date();
-  const amzDate = now.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  const amzDate = now
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}Z$/, "Z");
   const dateStamp = amzDate.slice(0, 8);
   const payload = input.body ?? Buffer.alloc(0);
   const payloadHash = sha256(payload);
@@ -119,8 +119,12 @@ function signedRequest(input: {
   const sortedHeaders = Object.keys(headers)
     .sort()
     .map((key) => [key, headers[key]] as const);
-  const canonicalHeaders =
-    sortedHeaders.map(([key, value]) => key + ":" + value.trim().replace(/\s+/g, " ") + "\n").join("");
+  const canonicalHeaders = sortedHeaders
+    .map(
+      ([key, value]) =>
+        key + ":" + value.trim().replace(/\s+/g, " ") + "\n",
+    )
+    .join("");
   const signedHeaders = sortedHeaders.map(([key]) => key).join(";");
   const canonicalRequest = [
     input.method,
@@ -131,20 +135,29 @@ function signedRequest(input: {
     payloadHash,
   ].join("\n");
 
-  const credentialScope = dateStamp + "/" + REGION + "/" + SERVICE + "/aws4_request";
+  const credentialScope =
+    dateStamp + "/" + REGION + "/" + SERVICE + "/aws4_request";
   const stringToSign = [
     ALGORITHM,
     amzDate,
     credentialScope,
     sha256(canonicalRequest),
   ].join("\n");
-  const signature = hmac(hmacSigningKey(input.secretKey, dateStamp), stringToSign).toString("hex");
+  const signature = hmac(
+    hmacSigningKey(input.secretKey, dateStamp),
+    stringToSign,
+  ).toString("hex");
 
   headers.authorization =
     ALGORITHM +
-    " Credential=" + input.accessKey + "/" + credentialScope +
-    ", SignedHeaders=" + signedHeaders +
-    ", Signature=" + signature;
+    " Credential=" +
+    input.accessKey +
+    "/" +
+    credentialScope +
+    ", SignedHeaders=" +
+    signedHeaders +
+    ", Signature=" +
+    signature;
 
   let requestBody: ArrayBuffer | undefined;
   if (input.method === "PUT") {
@@ -218,25 +231,28 @@ export async function deleteLiaraObject(key: string): Promise<void> {
   await send({ method: "DELETE", key });
 }
 
-export function liaraObjectKeyFromUrl(value: string | null | undefined): string | null {
+export function liaraObjectKeyFromUrl(
+  value: string | null | undefined,
+): string | null {
   const config = readConfig();
   if (!config || !value) return null;
 
   try {
     const target = new URL(value);
-    const endpoint = bucketEndpoint(config);
+    const endpoint = new URL(config.endpoint.toString());
     if (target.origin !== endpoint.origin) return null;
 
     const prefix = endpoint.pathname.replace(/\/+$/, "");
-    let pathname = target.pathname;
-    if (prefix) {
-      if (!pathname.startsWith(prefix + "/")) return null;
-      pathname = pathname.slice(prefix.length);
-    }
+    const expectedPrefix =
+      prefix + "/" + encodeURIComponent(config.bucket) + "/";
+    if (!target.pathname.startsWith(expectedPrefix)) return null;
 
-    const raw = pathname.replace(/^\/+/, "");
+    const raw = target.pathname.slice(expectedPrefix.length);
     if (!raw) return null;
-    return decodeURIComponent(raw);
+    return raw
+      .split("/")
+      .map((segment) => decodeURIComponent(segment))
+      .join("/");
   } catch {
     return null;
   }
