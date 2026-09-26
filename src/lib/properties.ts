@@ -964,6 +964,7 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
         [data.status, data.ids],
       );
     }
+    clearPropertyReadCache();
     return { success: true, updated: rows.length };
   });
 
@@ -990,6 +991,7 @@ export const bulkSetPropertyFeatured = createServerFn({ method: "POST" })
         [data.featured, data.ids],
       );
     }
+    clearPropertyReadCache();
     return { success: true, updated: rows.length };
   });
 
@@ -1016,6 +1018,7 @@ export const bulkAssignPropertyConsultant = createServerFn({ method: "POST" })
         [data.contactName, data.contactPhone, data.ids],
       );
     }
+    clearPropertyReadCache();
     return { success: true, updated: rows.length };
   });
 
@@ -1028,6 +1031,7 @@ export const bulkDeleteProperties = createServerFn({ method: "POST" })
       "delete from properties where id = any($1::text[]) returning id",
       [data.ids],
     );
+    clearPropertyReadCache();
     return { success: true, deleted: rows.length };
   });
 
@@ -1251,6 +1255,7 @@ export const saveProperty = createServerFn({ method: "POST" })
       ],
     );
 
+    clearPropertyReadCache();
     return mapProperty(rows[0]);
   });
 
@@ -1354,5 +1359,6 @@ export const deleteProperty = createServerFn({ method: "POST" })
       );
     }
 
+    clearPropertyReadCache();
     return { success: true };
   });
