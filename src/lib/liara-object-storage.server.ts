@@ -28,7 +28,7 @@ function readConfig(): LiaraConfig | null {
   if (!endpointRaw || !bucket || !accessKey || !secretKey) return null;
 
   try {
-    const endpointInput = /^https?:\/\/i.test(endpointRaw)
+    const endpointInput = /^https?:\/\//i.test(endpointRaw);
       ? endpointRaw
       : "https://" + endpointRaw;
     const endpoint = new URL(endpointInput);
