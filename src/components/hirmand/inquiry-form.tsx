@@ -3,6 +3,7 @@ import { Phone, Send } from "lucide-react";
 import { toast } from "sonner";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SERVICES, SITE, TEAM } from "@/lib/site";
 import { cn } from "@/lib/utils";
+import { formatToman, parseAmount } from "@/lib/money";
 import { listNeighborhoodNames } from "@/lib/neighborhoods";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 
@@ -36,6 +37,8 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
   const [phone, setPhone] = useState("");
   const [peopleCount, setPeopleCount] = useState("");
   const [job, setJob] = useState("");
+  const [budgetDeposit, setBudgetDeposit] = useState("");
+  const [budgetRent, setBudgetRent] = useState("");
   const [deal, setDeal] = useState(draft.deal);
   const [propertyType, setPropertyType] = useState(draft.propertyType);
   const [neighborhood, setNeighborhood] = useState(draft.neighborhood);
@@ -71,6 +74,8 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       phone ? `تلفن: ${normalizePhone(phone)}` : "",
       peopleCount ? `تعداد نفرات: ${peopleCount}` : "",
       job.trim() ? `شغل: ${job.trim()}` : "",
+      parseAmount(budgetDeposit) > 0 ? `قیمت رهن: ${formatToman(parseAmount(budgetDeposit))} تومان` : "",
+      parseAmount(budgetRent) > 0 ? `قیمت اجاره: ${formatToman(parseAmount(budgetRent))} تومان` : "",
       deal ? `نوع معامله: ${deal}` : "",
       propertyType ? `نوع ملک: ${propertyType}` : "",
       neighborhood ? `محله: ${neighborhood}` : "",
@@ -105,11 +110,15 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       return;
     }
     setError("");
+    const budgetDepositNumber = parseAmount(budgetDeposit);
+    const budgetRentNumber = parseAmount(budgetRent);
     const payload = {
       name: name.trim(),
       phone: normalizePhone(phone),
       peopleCount: parsedPeopleCount,
       job: job.trim(),
+      budgetDeposit: budgetDepositNumber || undefined,
+      budgetRent: budgetRentNumber || undefined,
       deal,
       propertyType,
       neighborhood,
@@ -125,6 +134,8 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           phone: payload.phone,
           peopleCount: payload.peopleCount,
           job: payload.job,
+          budgetDeposit: payload.budgetDeposit,
+          budgetRent: payload.budgetRent,
           deal: payload.deal,
           propertyType: payload.propertyType,
           neighborhood: payload.neighborhood,
@@ -192,6 +203,42 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           onChange={(event) => setPeopleCount(event.target.value)}
           placeholder="مثلاً ۴ نفر"
         />
+      </div>
+      <div className="field">
+        <label htmlFor="inq-budget-deposit">قیمت رهن</label>
+        <input
+          id="inq-budget-deposit"
+          name="budgetDeposit"
+          inputMode="numeric"
+          dir="rtl"
+          value={budgetDeposit}
+          onChange={(event) => setBudgetDeposit(event.target.value)}
+          onBlur={() => {
+            const amount = parseAmount(budgetDeposit);
+            setBudgetDeposit(amount ? formatToman(amount) : "");
+          }}
+          placeholder="مثلاً ۵۰۰ میلیون تومان"
+          aria-describedby="inq-budget-deposit-hint"
+        />
+        <small id="inq-budget-deposit-hint" className="form-hint">مبلغ رهن به تومان</small>
+      </div>
+      <div className="field">
+        <label htmlFor="inq-budget-rent">قیمت اجاره</label>
+        <input
+          id="inq-budget-rent"
+          name="budgetRent"
+          inputMode="numeric"
+          dir="rtl"
+          value={budgetRent}
+          onChange={(event) => setBudgetRent(event.target.value)}
+          onBlur={() => {
+            const amount = parseAmount(budgetRent);
+            setBudgetRent(amount ? formatToman(amount) : "");
+          }}
+          placeholder="مثلاً ۱۰ میلیون تومان"
+          aria-describedby="inq-budget-rent-hint"
+        />
+        <small id="inq-budget-rent-hint" className="form-hint">مبلغ اجاره ماهانه به تومان</small>
       </div>
       <div className="field">
         <label htmlFor="inq-job">شغل</label>
