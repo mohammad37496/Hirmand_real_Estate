@@ -96,8 +96,8 @@ export default defineEventHandler(async (event) => {
 
   const budgetDeposit = parsed.data.budgetDeposit ?? 0;
   const budgetRent = parsed.data.budgetRent ?? 0;
-  const budgetPurchase = parsed.data.budgetPurchase ?? 0;
-  const budgetSale = parsed.data.budgetSale ?? 0;
+  const budgetPurchase = parsed.data.deal === "خرید" ? parsed.data.budgetPurchase ?? 0 : 0;
+  const budgetSale = parsed.data.deal === "فروش" ? parsed.data.budgetSale ?? 0 : 0;
   const matchedProperties = parsed.data.matches.slice(0, 12);
   const budgetPayload = {
     name: parsed.data.name,
