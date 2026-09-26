@@ -51,7 +51,7 @@ export function MapEmbed({ target, title }: { target: MapTarget; title: string }
   const links = mapLinks(target);
 
   return (
-    <div className="map-embed" role="img" aria-label={title}>
+    <div className="map-embed" role="region" aria-label={title}>
       <div className="map-local-preview">
         <div className="map-grid" aria-hidden="true" />
         <div className="map-route map-route-a" aria-hidden="true" />
