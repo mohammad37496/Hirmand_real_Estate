@@ -5,13 +5,17 @@ on:
     branches:
       - main
 
+# Only the newest main commit should be deployed. A per-SHA group allowed
+# several Liara deployments to run at the same time and could leave the app
+# serving an older deployment.
 concurrency:
-  group: liara-deploy-${{ github.sha }}
+  group: liara-deploy-main
   cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,4 +28,4 @@ jobs:
           LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
           http_proxy: http://proxy.liara.ir:6666
           https_proxy: http://proxy.liara.ir:6666
-        run: liara deploy --app="hirmand" --api-token="$LIARA_TOKEN" --build-location="iran" --no-app-logs --detach --debug
+        run: liara deploy --app="hirmand" --api-token="$LIARA_TOKEN" --build-location="iran" --no-app-logs --debug
