@@ -22,7 +22,7 @@ export const SITE = {
   locality: "اصفهان",
   lat: 32.610108,
   lng: 51.622979,
-  mapUrl: "https://maps.app.goo.gl/F3pAnDsiDYzggoDR8",
+  mapUrl: `https://balad.ir/location?latitude=32.610108&longitude=51.622979`,
   instagram: "https://www.instagram.com/hirmand.realestate/",
   instagramDm: "https://ig.me/m/hirmand.realestate",
   telegram: "https://t.me/Hirmand_realestate",
