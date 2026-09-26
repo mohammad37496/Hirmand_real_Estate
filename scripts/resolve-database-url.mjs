@@ -1,5 +1,5 @@
 /**
- * Resolve Postgres URLs from Neon / Vercel env names.
+ * Resolve PostgreSQL URLs from standard provider-neutral environment names.
  * Runtime prefers pooled endpoints; migrations prefer direct/unpooled.
  */
 
@@ -11,7 +11,7 @@ const POOLED_KEYS = [
 ];
 
 /**
- * Remove libpq startup options that can make Neon reject the connection.
+ * Remove libpq startup options that may be rejected by managed PostgreSQL providers.
  * In particular, some generated connection strings contain options=statement_timeout=...,
  * which Neon may reject as an unsupported startup parameter. Query-level timeouts
  * are configured by node-postgres.
