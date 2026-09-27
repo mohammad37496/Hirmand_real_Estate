@@ -326,17 +326,17 @@ try {
           thumbCount: document.querySelectorAll(".property-gallery-rail .property-gallery-thumb").length,
           counter: document.querySelector(".property-gallery-counter")?.textContent?.trim() ?? "",
         }));
-        if (initialGallery.thumbCount === 0) {
-          propertyNavigationCheck.ok = false;
-          propertyNavigationCheck.error = "property detail gallery rendered without thumbnails";
-        }
         propertyNavigationCheck.ok =
           propertyNavigationCheck.status.startsWith("/properties/") &&
           propertyNavigationCheck.status !== "/properties/" &&
           propertyNavigationCheck.bodyTextLen > 80 &&
           propertyNavigationCheck.hrefMatchesExpectedSlug &&
           propertyNavigationCheck.bodyContainsExpectedTitle &&
-          propertyNavigationCheck.detailRendered;
+          propertyNavigationCheck.detailRendered &&
+          initialGallery.thumbCount > 0;
+        if (!initialGallery.thumbCount && propertyNavigationCheck.ok === false) {
+          propertyNavigationCheck.error = "property detail gallery rendered without thumbnails";
+        }
         if (!propertyNavigationCheck.ok && !propertyNavigationCheck.detailRendered) {
           propertyNavigationCheck.error = `detail view never mounted for ${propertyNavigationCheck.status}`;
         }
