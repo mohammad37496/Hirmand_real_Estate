@@ -10,7 +10,11 @@ type Props = {
 };
 
 function normalizePhone(value: string) {
-  return value.replace(/[\s\-()]/g, "").replace(/^98/, "0");
+  return value
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+    .replace(/[\s\-()]/g, "")
+    .replace(/^(?:\+98|0098|98)/, "0");
 }
 
 export function AdminConsultantPicker({ contactName, contactPhone, onSelect }: Props) {
