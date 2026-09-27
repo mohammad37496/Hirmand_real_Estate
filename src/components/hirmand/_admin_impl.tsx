@@ -85,6 +85,8 @@ type FormState = {
   parking: boolean;
   elevator: boolean;
   storage: boolean;
+  painted: boolean;
+  wallpaper: boolean;
   cabinetType: Property["cabinetType"];
   flooringType: Property["flooringType"];
   coolingSystem: Property["coolingSystem"];
@@ -136,6 +138,8 @@ function emptyForm(): FormState {
     parking: true,
     elevator: true,
     storage: false,
+    painted: false,
+    wallpaper: false,
     cabinetType: null,
     flooringType: null,
     coolingSystem: null,
@@ -269,6 +273,8 @@ function propertyToForm(property: Property): FormState {
     parking: property.parking,
     elevator: property.elevator,
     storage: property.storage,
+    painted: property.painted,
+    wallpaper: property.wallpaper,
     cabinetType: property.cabinetType ?? null,
     flooringType: property.flooringType ?? null,
     coolingSystem: property.coolingSystem ?? null,
@@ -823,6 +829,8 @@ export function AdminPropertiesPage() {
           parking: form.parking,
           elevator: form.elevator,
           storage: form.storage,
+          painted: form.painted,
+          wallpaper: form.wallpaper,
           cabinetType: form.cabinetType,
           flooringType: form.flooringType,
           coolingSystem: form.coolingSystem,
@@ -916,6 +924,8 @@ export function AdminPropertiesPage() {
           parking: base.parking,
           elevator: base.elevator,
           storage: base.storage,
+          painted: base.painted,
+          wallpaper: base.wallpaper,
           cabinetType: base.cabinetType,
           flooringType: base.flooringType,
           coolingSystem: base.coolingSystem,
@@ -1712,6 +1722,22 @@ export function AdminPropertiesPage() {
                         onChange={(e) => update("storage", e.target.checked)}
                       />
                       انباری
+                    </label>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={form.painted}
+                        onChange={(e) => update("painted", e.target.checked)}
+                      />
+                      رنگ‌آمیزی
+                    </label>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={form.wallpaper}
+                        onChange={(e) => update("wallpaper", e.target.checked)}
+                      />
+                      کاغذ دیواری
                     </label>
                   </div>
                 </fieldset>
