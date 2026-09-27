@@ -21,6 +21,7 @@ function property(overrides: Partial<Property>): Property {
     floor: 2,
     floorLabel: null,
     orientation: null,
+    convertible: true,
     totalFloors: 5,
     builtYear: 1400,
     parking: true,
