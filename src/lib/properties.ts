@@ -1015,7 +1015,7 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
     const sql = await getSql();
 
     const beforeRows = await sql.query<Record<string, unknown>>(
-      `select id, title, status, featured, price, deposit, rent, contact_name, contact_phone
+      `select id, title, status, featured, price, deposit, rent, contact_name, contact_phone, owner_name, owner_phone, owner_info
        from properties
        where id = any($1::text[])`,
       [data.ids],
@@ -1030,7 +1030,7 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
            end,
            updated_at = current_timestamp
        where id = any($2::text[])
-       returning id, title, status, featured, price, deposit, rent, contact_name, contact_phone`,
+       returning id, title, status, featured, price, deposit, rent, contact_name, contact_phone, owner_name, owner_phone, owner_info`,
       [data.status, data.ids],
     );
 
@@ -1144,7 +1144,10 @@ export const bulkSetPropertyFeatured = createServerFn({ method: "POST" })
              'deposit', p.deposit,
              'rent', p.rent,
              'contactName', p.contact_name,
-             'contactPhone', p.contact_phone
+             'contactPhone', p.contact_phone,
+             'ownerName', p.owner_name,
+             'ownerPhone', p.owner_phone,
+             'ownerInfo', p.owner_info
            )
          from properties p
          join before on before.id = p.id`,
@@ -1160,24 +1163,73 @@ export const bulkAssignPropertyConsultant = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAdmin();
     const sql = await getSql();
-    const rows = await sql.query<{ id: string }>(
+
+    const beforeRows = await sql.query<Record<string, unknown>>(
+      `select id, contact_name, contact_phone
+       from properties
+       where id = any($1::text[])`,
+      [data.ids],
+    );
+
+    const rows = await sql.query<Record<string, unknown>>(
       `update properties
        set contact_name = $1,
            contact_phone = $2,
            updated_at = current_timestamp
        where id = any($3::text[])
-       returning id`,
+       returning id, contact_name, contact_phone`,
       [data.contactName, data.contactPhone, data.ids],
     );
+
     if (rows.length) {
-      await sql.query(
-        `insert into property_change_history (property_id, action, before_state, after_state)
-         select id, 'updated', null, jsonb_build_object('contactName', $1, 'contactPhone', $2)
-         from properties
-         where id = any($3::text[])`,
-        [data.contactName, data.contactPhone, data.ids],
+      const beforePayload = JSON.stringify(
+        beforeRows.map((row) => ({
+          id: String(row.id),
+          before_state: {
+            contactName: row.contact_name == null ? null : String(row.contact_name),
+            contactPhone: row.contact_phone == null ? null : String(row.contact_phone),
+          },
+        })),
       );
+      const afterById = new Map(
+        rows.map((row) => [
+          String(row.id),
+          {
+            contactName: row.contact_name == null ? null : String(row.contact_name),
+            contactPhone: row.contact_phone == null ? null : String(row.contact_phone),
+          },
+        ]),
+      );
+      const auditRows = beforeRows
+        .map((row) => {
+          const id = String(row.id);
+          const after = afterById.get(id);
+          if (!after) return null;
+          return { id, before_state: JSON.parse(JSON.stringify(
+            beforeRows.find((item) => String(item.id) === id)
+              ? {
+                  contactName: row.contact_name == null ? null : String(row.contact_name),
+                  contactPhone: row.contact_phone == null ? null : String(row.contact_phone),
+                }
+              : null,
+          )), after_state: after };
+        })
+        .filter((row): row is { id: string; before_state: { contactName: string | null; contactPhone: string | null }; after_state: { contactName: string | null; contactPhone: string | null } } => Boolean(row));
+      if (auditRows.length) {
+        await sql.query(
+          `with audit as (
+             select *
+             from jsonb_to_recordset($1::jsonb)
+               as a(id text, before_state jsonb, after_state jsonb)
+           )
+           insert into property_change_history (property_id, action, before_state, after_state)
+           select id, 'updated', before_state, after_state
+           from audit`,
+          [JSON.stringify(auditRows)],
+        );
+      }
     }
+
     clearPropertyReadCache();
     return { success: true, updated: rows.length };
   });
