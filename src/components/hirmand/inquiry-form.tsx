@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { Phone, Send } from "lucide-react";
 import { toast } from "sonner";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SERVICES, SITE, TEAM } from "@/lib/site";
@@ -32,6 +32,40 @@ function normalizePhone(value: string) {
 
 function isMobile(value: string) {
   return /^09\d{9}$/.test(normalizePhone(value));
+}
+
+function formatBudgetInput(value: string) {
+  const normalized = toLatinDigits(value).replace(/[^\d]/g, "");
+  return normalized ? Number(normalized).toLocaleString("fa-IR") : "";
+}
+
+function handleBudgetChange(
+  event: ChangeEvent<HTMLInputElement>,
+  setValue: (value: string) => void,
+) {
+  const input = event.currentTarget;
+  const rawValue = input.value;
+  const caret = input.selectionStart ?? rawValue.length;
+  const digitsBeforeCaret = toLatinDigits(rawValue.slice(0, caret)).replace(/[^\d]/g, "").length;
+  const formatted = formatBudgetInput(rawValue);
+  setValue(formatted);
+
+  requestAnimationFrame(() => {
+    let position = 0;
+    let seenDigits = 0;
+    while (position < formatted.length && seenDigits < digitsBeforeCaret) {
+      if (/\d/.test(toLatinDigits(formatted[position]))) seenDigits += 1;
+      position += 1;
+    }
+    input.setSelectionRange(position, position);
+  });
+}
+
+function budgetHint(value: string, example: string) {
+  const amount = parseAmount(value);
+  return amount > 0
+    ? formatToman(amount) + " تومان — " + tomanToWords(amount)
+    : example;
 }
 
 export function InquiryForm({ draft }: { draft: InquiryDraft }) {
@@ -301,15 +335,13 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
               inputMode="numeric"
               dir="rtl"
               value={budgetDeposit}
-              onChange={(event) => setBudgetDeposit(event.target.value)}
-              onBlur={() => {
-                const amount = parseAmount(budgetDeposit);
-                setBudgetDeposit(amount ? formatToman(amount) : "");
-              }}
+              onChange={(event) => handleBudgetChange(event, setBudgetDeposit)}
               placeholder="مثلاً ۵۰۰٬۰۰۰٬۰۰۰"
               aria-describedby="inq-budget-deposit-hint"
             />
-            <small id="inq-budget-deposit-hint" className="form-hint">مبلغ رهن به تومان</small>
+            <small id="inq-budget-deposit-hint" className="form-hint">
+              {budgetHint(budgetDeposit, "مثلاً ۵۰۰٬۰۰۰٬۰۰۰ تومان = پانصد میلیون تومان")}
+            </small>
           </div>
           <div className="field">
             <label htmlFor="inq-budget-rent">قیمت اجاره</label>
@@ -319,15 +351,13 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
               inputMode="numeric"
               dir="rtl"
               value={budgetRent}
-              onChange={(event) => setBudgetRent(event.target.value)}
-              onBlur={() => {
-                const amount = parseAmount(budgetRent);
-                setBudgetRent(amount ? formatToman(amount) : "");
-              }}
+              onChange={(event) => handleBudgetChange(event, setBudgetRent)}
               placeholder="مثلاً ۱۰٬۰۰۰٬۰۰۰"
               aria-describedby="inq-budget-rent-hint"
             />
-            <small id="inq-budget-rent-hint" className="form-hint">مبلغ اجاره ماهانه به تومان</small>
+            <small id="inq-budget-rent-hint" className="form-hint">
+              {budgetHint(budgetRent, "مثلاً ۱۰٬۰۰۰٬۰۰۰ تومان = ده میلیون تومان")}
+            </small>
           </div>
         </>
       ) : isBuyDeal ? (
@@ -339,15 +369,13 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
             inputMode="numeric"
             dir="rtl"
             value={budgetPurchase}
-            onChange={(event) => setBudgetPurchase(event.target.value)}
-            onBlur={() => {
-              const amount = parseAmount(budgetPurchase);
-              setBudgetPurchase(amount ? formatToman(amount) : "");
-            }}
+            onChange={(event) => handleBudgetChange(event, setBudgetPurchase)}
             placeholder="مثلاً ۳٬۰۰۰٬۰۰۰٬۰۰۰"
             aria-describedby="inq-budget-purchase-hint"
           />
-          <small id="inq-budget-purchase-hint" className="form-hint">بودجه خرید به تومان</small>
+          <small id="inq-budget-purchase-hint" className="form-hint">
+            {budgetHint(budgetPurchase, "مثلاً ۳٬۰۰۰٬۰۰۰٬۰۰۰ تومان = سه میلیارد تومان")}
+          </small>
         </div>
       ) : isSellDeal ? (
         <div className="field">
@@ -358,15 +386,13 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
             inputMode="numeric"
             dir="rtl"
             value={budgetSale}
-            onChange={(event) => setBudgetSale(event.target.value)}
-            onBlur={() => {
-              const amount = parseAmount(budgetSale);
-              setBudgetSale(amount ? formatToman(amount) : "");
-            }}
+            onChange={(event) => handleBudgetChange(event, setBudgetSale)}
             placeholder="مثلاً ۵٬۰۰۰٬۰۰۰٬۰۰۰"
             aria-describedby="inq-budget-sale-hint"
           />
-          <small id="inq-budget-sale-hint" className="form-hint">مبلغ فروش به تومان</small>
+          <small id="inq-budget-sale-hint" className="form-hint">
+            {budgetHint(budgetSale, "مثلاً ۵٬۰۰۰٬۰۰۰٬۰۰۰ تومان = پنج میلیارد تومان")}
+          </small>
         </div>
       ) : null}
       {isRentLikeDeal ? (
