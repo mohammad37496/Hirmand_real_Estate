@@ -457,7 +457,7 @@ export function AdminAttendanceManager() {
           record.consultantName,
           person?.role ?? "",
           formatPersianDate(record.workDate),
-          index + 1,
+          (index + 1).toLocaleString("fa-IR"),
           session.clockIn,
           session.clockOut,
           formatDuration(totalMinutes(record.sessions)),
@@ -567,7 +567,7 @@ export function AdminAttendanceManager() {
               <div className="admin-attendance-sessions">
                 {form.sessions.map((session, index) => (
                   <div className="admin-attendance-session" key={index}>
-                    <span className="admin-attendance-session-label">نوبت {String(index + 1).toLocaleString("fa-IR")}</span>
+                    <span className="admin-attendance-session-label">نوبت {(index + 1).toLocaleString("fa-IR")}</span>
                     <label className="field">
                       <span>ورود</span>
                       <input
@@ -732,7 +732,7 @@ export function AdminAttendanceManager() {
                       <div className="admin-attendance-pills">
                         {record.sessions.map((session, index) => (
                           <span className="admin-attendance-pill" key={index}>
-                            <Clock3 size={12} /> نوبت {String(index + 1).toLocaleString("fa-IR")}:{" "}
+                            <Clock3 size={12} /> نوبت {(index + 1).toLocaleString("fa-IR")}:{" "}
                             <b dir="ltr">{session.clockIn} تا {session.clockOut}</b>
                           </span>
                         ))}
