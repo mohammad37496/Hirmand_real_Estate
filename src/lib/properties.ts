@@ -98,6 +98,9 @@ export type PropertyHistoryState = {
   rent: string | null;
   contactName: string | null;
   contactPhone: string | null;
+  ownerName: string | null;
+  ownerPhone: string | null;
+  ownerInfo: string | null;
 };
 
 export type PropertyCardData = Pick<
@@ -1044,6 +1047,9 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
             rent: row.rent == null ? null : String(row.rent),
             contactName: row.contact_name == null ? null : String(row.contact_name),
             contactPhone: row.contact_phone == null ? null : String(row.contact_phone),
+            ownerName: row.owner_name == null ? null : String(row.owner_name),
+            ownerPhone: row.owner_phone == null ? null : String(row.owner_phone),
+            ownerInfo: row.owner_info == null ? null : String(row.owner_info),
           },
         })),
       );
@@ -1066,7 +1072,10 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
              'deposit', p.deposit,
              'rent', p.rent,
              'contactName', p.contact_name,
-             'contactPhone', p.contact_phone
+             'contactPhone', p.contact_phone,
+             'ownerName', p.owner_name,
+             'ownerPhone', p.owner_phone,
+             'ownerInfo', p.owner_info
            )
          from properties p
          join before on before.id = p.id`,
@@ -1180,7 +1189,8 @@ export const bulkDeleteProperties = createServerFn({ method: "POST" })
     const sql = await getSql();
 
     const existingRows = await sql.query<Record<string, unknown>>(
-      `select id, title, status, featured, price, deposit, rent, contact_name, contact_phone, images
+      `select id, title, status, featured, price, deposit, rent, contact_name, contact_phone,
+              owner_name, owner_phone, owner_info, images
        from properties
        where id = any($1::text[])`,
       [data.ids],
@@ -1518,6 +1528,9 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
           rent: null,
           contactName: null,
           contactPhone: null,
+          ownerName: null,
+          ownerPhone: null,
+          ownerInfo: null,
         };
       }
       const row = value as Record<string, unknown>;
@@ -1533,6 +1546,9 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
         rent: row.rent == null ? null : String(row.rent),
         contactName: typeof row.contactName === "string" ? row.contactName : null,
         contactPhone: typeof row.contactPhone === "string" ? row.contactPhone : null,
+        ownerName: typeof row.ownerName === "string" ? row.ownerName : null,
+        ownerPhone: typeof row.ownerPhone === "string" ? row.ownerPhone : null,
+        ownerInfo: typeof row.ownerInfo === "string" ? row.ownerInfo : null,
       };
     };
 
