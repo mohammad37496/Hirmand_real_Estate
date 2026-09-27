@@ -1331,13 +1331,13 @@ export function AdminPropertiesPage() {
                   <div className="admin-property-list">
                     {filtered.map((property) => (
                       <article key={property.id} className="admin-property-card">
-                        <div style={{ display: "flex", alignItems: "center", padding: "0 8px" }}>
+                        <div className="admin-property-select">
                           <input
                             type="checkbox"
                             aria-label={"انتخاب " + property.title}
                             checked={selectedIds.includes(property.id)}
                             onChange={() => toggleSelected(property.id)}
-                            style={{ width: 18, height: 18, accentColor: "#f7f5ef" }}
+                            className="admin-row-checkbox"
                           />
                         </div>
                         <div className="admin-property-thumb">
@@ -1357,15 +1357,8 @@ export function AdminPropertiesPage() {
                               const quality = propertyQuality(property);
                               return (
                                 <span
+                                  className={"admin-quality-badge" + (quality.complete ? " is-complete" : "")}
                                   title={"امتیاز تکمیل اطلاعات: " + quality.score + " از 100"}
-                                  style={{
-                                    border: "1px solid " + (quality.complete ? "rgba(126, 220, 173, .28)" : "rgba(247, 245, 239, .28)"),
-                                    background: quality.complete ? "rgba(126, 220, 173, .08)" : "rgba(247, 245, 239, .08)",
-                                    color: quality.complete ? "#f7f5ef" : "#f7f5ef",
-                                    borderRadius: 999,
-                                    padding: "3px 7px",
-                                    fontSize: 11,
-                                  }}
                                 >
                                   {quality.label} · {quality.score}
                                 </span>
@@ -1383,6 +1376,7 @@ export function AdminPropertiesPage() {
                               type="button"
                               className="admin-icon-btn"
                               title="انتشار سریع"
+                              aria-label={"انتشار سریع «" + property.title + "»"}
                               onClick={() => void quickSetStatus(property, "published")}
                             >
                               <Save size={16} />
@@ -1392,6 +1386,7 @@ export function AdminPropertiesPage() {
                               type="button"
                               className="admin-icon-btn"
                               title="بایگانی سریع"
+                              aria-label={"بایگانی سریع «" + property.title + "»"}
                               onClick={() => void quickSetStatus(property, "archived")}
                             >
                               <X size={16} />
@@ -1401,6 +1396,7 @@ export function AdminPropertiesPage() {
                             type="button"
                             className="admin-icon-btn"
                             title="ویرایش"
+                            aria-label={"ویرایش «" + property.title + "»"}
                             onClick={() => editProperty(property)}
                           >
                             <FileEdit size={16} />
@@ -1409,6 +1405,7 @@ export function AdminPropertiesPage() {
                             type="button"
                             className="admin-icon-btn"
                             title="کپی"
+                            aria-label={"کپی «" + property.title + "»"}
                             onClick={() => duplicateProperty(property)}
                           >
                             <Copy size={16} />
@@ -1416,6 +1413,7 @@ export function AdminPropertiesPage() {
                           <a
                             className="admin-icon-btn"
                             title="مشاهده عمومی"
+                            aria-label={"مشاهده عمومی «" + property.title + "»"}
                             href={propertyPath(property)}
                             target="_blank"
                             rel="noreferrer"
@@ -1426,6 +1424,7 @@ export function AdminPropertiesPage() {
                             type="button"
                             className="admin-icon-btn danger"
                             title="حذف"
+                            aria-label={"حذف «" + property.title + "»"}
                             onClick={() => void removeProperty(property)}
                           >
                             <Trash2 size={16} />
@@ -1885,7 +1884,7 @@ export function AdminPropertiesPage() {
                         onChange={(e) => update("featuredUntil", e.target.value)}
                         disabled={!form.featured}
                       />
-                      <small style={{ color: "rgb(247 245 239 / .56)", marginTop: 5 }}>
+                      <small className="admin-field-help">
                         خالی = بدون انقضا. بعد از این زمان، فایل خودکار از اولویت «ویژه» خارج می‌شود.
                       </small>
                     </label>
@@ -1903,13 +1902,11 @@ export function AdminPropertiesPage() {
                   ) : (
                     <div className="admin-breakdown">
                       {changeHistory.map((item) => {
-                        const before = item;
-                        const after = item;
                         const changes: string[] = [];
                         if (item.action === "created") changes.push("فایل ایجاد شد");
                         if (item.action === "deleted") changes.push("فایل حذف شد");
                         if (item.action === "updated") {
-                          if (before.beforeStatus !== after.afterStatus) {
+                          if (item.beforeStatus !== item.afterStatus) {
                             const labels: Record<string, string> = {
                               published: "منتشرشده",
                               draft: "پیش‌نویس",
@@ -1917,22 +1914,22 @@ export function AdminPropertiesPage() {
                             };
                             changes.push(
                               "وضعیت: " +
-                                (labels[String(before.beforeStatus)] ?? String(before.beforeStatus ?? "—")) +
+                                (labels[String(item.beforeStatus)] ?? String(item.beforeStatus ?? "—")) +
                                 " ← " +
-                                (labels[String(after.afterStatus)] ?? String(after.afterStatus ?? "—")),
+                                (labels[String(item.afterStatus)] ?? String(item.afterStatus ?? "—")),
                             );
                           }
-                          if (before.beforeFeatured !== after.afterFeatured) {
-                            changes.push(after.afterFeatured === true ? "ویژه شد" : "از حالت ویژه خارج شد");
+                          if (item.beforeFeatured !== item.afterFeatured) {
+                            changes.push(item.afterFeatured === true ? "ویژه شد" : "از حالت ویژه خارج شد");
                           }
-                          if (before.beforeContactName !== after.afterContactName) {
+                          if (item.beforeContactName !== item.afterContactName) {
                             changes.push("مشاور تغییر کرد");
                           }
                           if (
-                            before.beforeTitle !== after.afterTitle ||
-                            before.beforePrice !== after.afterPrice ||
-                            before.beforeDeposit !== after.afterDeposit ||
-                            before.beforeRent !== after.afterRent
+                            item.beforeTitle !== item.afterTitle ||
+                            item.beforePrice !== item.afterPrice ||
+                            item.beforeDeposit !== item.afterDeposit ||
+                            item.beforeRent !== item.afterRent
                           ) {
                             changes.push("اطلاعات اصلی/قیمت ویرایش شد");
                           }
