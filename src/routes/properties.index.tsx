@@ -22,6 +22,7 @@ import {
   type PropertySort,
   type PropertyTransaction,
   type PropertyType,
+  type PropertyOrientation,
 } from "@/lib/properties";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
@@ -139,6 +140,21 @@ function parseNumber(raw: string) {
   return Number.isFinite(value) && Number.isInteger(value) && value >= 0 ? value : undefined;
 }
 
+const ORIENTATION_OPTIONS: { value: PropertyOrientation; label: string }[] = [
+  { value: "north", label: "شمالی" },
+  { value: "south", label: "جنوبی" },
+  { value: "east", label: "شرقی" },
+  { value: "west", label: "غربی" },
+  { value: "northeast", label: "شمال‌شرقی" },
+  { value: "northwest", label: "شمال‌غربی" },
+  { value: "southeast", label: "جنوب‌شرقی" },
+  { value: "southwest", label: "جنوب‌غربی" },
+  { value: "two_fronts", label: "دو نبش" },
+  { value: "three_fronts", label: "سه نبش" },
+  { value: "four_fronts", label: "چهار نبش" },
+  { value: "other", label: "سایر" },
+];
+
 const FLOOR_OPTIONS = Array.from({ length: 261 }, (_, index) => index - 60).map((value) => ({
   value: String(value),
   label: value === 0 ? "همکف (۰)" : value < 0 ? `منفی ${Math.abs(value).toLocaleString("fa-IR")}` : value.toLocaleString("fa-IR"),
@@ -152,6 +168,10 @@ function validPropertyType(value: string): PropertyType | undefined {
   return value === "apartment" || value === "villa" || value === "office" || value === "heritage" || value === "land" || value === "commercial"
     ? value
     : undefined;
+}
+
+function validOrientation(value: string): PropertyOrientation | undefined {
+  return ORIENTATION_OPTIONS.some((item) => item.value === value) ? value as PropertyOrientation : undefined;
 }
 
 function normalizeBounds(a: string, b: string) {
@@ -189,6 +209,7 @@ function buildFilterData(
   minFloor: string,
   maxFloor: string,
   floorType: "suite" | "",
+  orientation: PropertyOrientation | "",
   minTotalFloors: string,
   maxTotalFloors: string,
   minBuiltYear: string,
@@ -223,6 +244,7 @@ function buildFilterData(
     minFloor: nextMinFloor,
     maxFloor: nextMaxFloor,
     floorType: floorType || undefined,
+    orientation: orientation || undefined,
     minTotalFloors: nextMinTotalFloors,
     maxTotalFloors: nextMaxTotalFloors,
     minBuiltYear: nextMinBuiltYear,
@@ -311,6 +333,7 @@ function PropertiesIndexPage() {
   const [minFloor, setMinFloor] = useState("");
   const [maxFloor, setMaxFloor] = useState("");
   const [floorType, setFloorType] = useState<"suite" | "">("");
+  const [orientation, setOrientation] = useState<PropertyOrientation | "">("");
   const [minTotalFloors, setMinTotalFloors] = useState("");
   const [maxTotalFloors, setMaxTotalFloors] = useState("");
   const [minBuiltYear, setMinBuiltYear] = useState("");
@@ -378,6 +401,7 @@ function PropertiesIndexPage() {
     setMinFloor(params.get("minFloor") ?? "");
     setMaxFloor(params.get("maxFloor") ?? "");
     setFloorType(params.get("floorType") === "suite" ? "suite" : "");
+    setOrientation(validOrientation(params.get("orientation") ?? "") ?? "");
     setMinTotalFloors(params.get("minFloors") ?? "");
     setMaxTotalFloors(params.get("maxFloors") ?? "");
     setMinBuiltYear(params.get("minYear") ?? "");
@@ -419,6 +443,7 @@ function PropertiesIndexPage() {
     if (minFloor.trim()) params.set("minFloor", minFloor.trim());
     if (maxFloor.trim()) params.set("maxFloor", maxFloor.trim());
     if (floorType) params.set("floorType", floorType);
+    if (orientation) params.set("orientation", orientation);
     if (minTotalFloors.trim()) params.set("minFloors", minTotalFloors.trim());
     if (maxTotalFloors.trim()) params.set("maxFloors", maxTotalFloors.trim());
     if (minBuiltYear.trim()) params.set("minYear", minBuiltYear.trim());
@@ -440,7 +465,7 @@ function PropertiesIndexPage() {
       "",
       query ? `/properties?${query}` : "/properties",
     );
-  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, minBathrooms, minFloor, maxFloor, floorType, minTotalFloors, maxTotalFloors, minBuiltYear, maxBuiltYear, parkingOnly, elevatorOnly, storageOnly, specFilters, featureSearch, featuredOnly, hasImagesOnly, hasLocationOnly, sort]);
+  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, minBathrooms, minFloor, maxFloor, floorType, orientation, minTotalFloors, maxTotalFloors, minBuiltYear, maxBuiltYear, parkingOnly, elevatorOnly, storageOnly, specFilters, featureSearch, featuredOnly, hasImagesOnly, hasLocationOnly, sort]);
 
   useEffect(() => {
     if (!urlReady) return;
@@ -521,7 +546,7 @@ function PropertiesIndexPage() {
     }, 320);
 
     return () => window.clearTimeout(timer);
-  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, minBathrooms, minFloor, maxFloor, floorType, minTotalFloors, maxTotalFloors, minBuiltYear, maxBuiltYear, parkingOnly, elevatorOnly, storageOnly, specFilters, featureSearch, featuredOnly, hasImagesOnly, hasLocationOnly, sort]);
+  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, minBathrooms, minFloor, maxFloor, floorType, orientation, minTotalFloors, maxTotalFloors, minBuiltYear, maxBuiltYear, parkingOnly, elevatorOnly, storageOnly, specFilters, featureSearch, featuredOnly, hasImagesOnly, hasLocationOnly, sort]);
 
   const loadMore = useCallback(async () => {
     if (loading || loadingMore || properties.length >= total) return;
@@ -544,6 +569,7 @@ function PropertiesIndexPage() {
           minFloor,
           maxFloor,
           floorType,
+          orientation,
           minTotalFloors,
           maxTotalFloors,
           minBuiltYear,
@@ -642,6 +668,7 @@ function PropertiesIndexPage() {
     if (minFloor.trim()) params.set("minFloor", minFloor.trim());
     if (maxFloor.trim()) params.set("maxFloor", maxFloor.trim());
     if (floorType) params.set("floorType", floorType);
+    if (orientation) params.set("orientation", orientation);
     if (minTotalFloors.trim()) params.set("minFloors", minTotalFloors.trim());
     if (maxTotalFloors.trim()) params.set("maxFloors", maxTotalFloors.trim());
     if (minBuiltYear.trim()) params.set("minYear", minBuiltYear.trim());
@@ -705,6 +732,7 @@ function PropertiesIndexPage() {
     setMinFloor(params.get("minFloor") ?? "");
     setMaxFloor(params.get("maxFloor") ?? "");
     setFloorType(params.get("floorType") === "suite" ? "suite" : "");
+    setOrientation(validOrientation(params.get("orientation") ?? "") ?? "");
     setMinTotalFloors(params.get("minFloors") ?? "");
     setMaxTotalFloors(params.get("maxFloors") ?? "");
     setMinBuiltYear(params.get("minYear") ?? "");
@@ -756,6 +784,7 @@ function PropertiesIndexPage() {
     setMinFloor("");
     setMaxFloor("");
     setFloorType("");
+    setOrientation("");
     setMinTotalFloors("");
     setMaxTotalFloors("");
     setMinBuiltYear("");
@@ -849,7 +878,7 @@ function PropertiesIndexPage() {
     minArea.trim() || maxArea.trim(),
     minPrice.trim() || maxPrice.trim(),
     minBedrooms.trim(),
-    minBathrooms.trim() || minFloor.trim() || maxFloor.trim() || floorType || minTotalFloors.trim() || maxTotalFloors.trim() || minBuiltYear.trim() || maxBuiltYear.trim(),
+    minBathrooms.trim() || minFloor.trim() || maxFloor.trim() || floorType || orientation || minTotalFloors.trim() || maxTotalFloors.trim() || minBuiltYear.trim() || maxBuiltYear.trim(),
     parkingOnly ? "parking" : "",
     elevatorOnly ? "elevator" : "",
     storageOnly ? "storage" : "",
@@ -885,6 +914,9 @@ function PropertiesIndexPage() {
       : null,
     floorType === "suite"
       ? { label: "طبقه: سوئیت", clear: () => setFloorType("") }
+      : null,
+    orientation
+      ? { label: `موقعیت: ${ORIENTATION_OPTIONS.find((item) => item.value === orientation)?.label ?? orientation}`, clear: () => setOrientation("") }
       : null,
     minTotalFloors.trim() || maxTotalFloors.trim()
       ? { label: `تعداد طبقات ${minTotalFloors || "همه"} تا ${maxTotalFloors || "همه"}`, clear: () => { setMinTotalFloors(""); setMaxTotalFloors(""); } }
@@ -1130,6 +1162,15 @@ function PropertiesIndexPage() {
                     </select>
                   </label>
                 </div>
+                <label className="pf-field">
+                  <span>موقعیت ملک</span>
+                  <select value={orientation} onChange={(e) => setOrientation(validOrientation(e.target.value) ?? "")}>
+                    <option value="">همه موقعیت‌ها</option>
+                    {ORIENTATION_OPTIONS.map((item) => (
+                      <option key={item.value} value={item.value}>{item.label}</option>
+                    ))}
+                  </select>
+                </label>
                 <label className="pf-field">
                   <span>طبقه خاص</span>
                   <select value={floorType} onChange={(e) => {
