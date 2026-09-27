@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
   const rows = await sql.query<Record<string, unknown>>(`
     select id, title, slug, status, featured, featured_until, transaction_type, property_type,
            neighborhood, address, area_m2, bedrooms, bathrooms, floor, floor_label, total_floors,
-           built_year, parking, elevator, storage, painted, wallpaper, price, deposit, rent,
+           built_year, parking, elevator, storage, painted, wallpaper, orientation, price, deposit, rent,
            contact_name, contact_phone, created_at, updated_at
     from properties
     order by created_at desc
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
   const headers = [
     "شناسه","عنوان","slug","وضعیت","ویژه","پایان ویژه","معامله","نوع ملک","محله","آدرس",
     "متراژ","خواب","سرویس","طبقه","طبقه خاص","کل طبقات","سال ساخت","پارکینگ","آسانسور",
-    "انباری","رنگ‌آمیزی","کاغذ دیواری","قیمت","رهن","اجاره","مشاور","تلفن","ایجاد","آخرین بروزرسانی"
+    "انباری","رنگ‌آمیزی","کاغذ دیواری","موقعیت ملک","قیمت","رهن","اجاره","مشاور","تلفن","ایجاد","آخرین بروزرسانی"
   ];
   const statusLabels: Record<string,string> = {
     published: "منتشرشده", draft: "پیش‌نویس", archived: "بایگانی"
@@ -50,7 +50,9 @@ export default defineEventHandler(async (event) => {
       row.property_type, row.neighborhood, row.address, row.area_m2, row.bedrooms,
       row.bathrooms, row.floor_label === "suite" ? "سوئیت" : row.floor, row.total_floors, row.built_year,
       row.parking ? "بله" : "خیر", row.elevator ? "بله" : "خیر",
-      row.storage ? "بله" : "خیر", row.painted ? "بله" : "خیر", row.wallpaper ? "بله" : "خیر", row.price, row.deposit, row.rent,
+      row.storage ? "بله" : "خیر", row.painted ? "بله" : "خیر", row.wallpaper ? "بله" : "خیر",
+      ({ north: "شمالی", south: "جنوبی", east: "شرقی", west: "غربی", northeast: "شمال‌شرقی", northwest: "شمال‌غربی",
+        southeast: "جنوب‌شرقی", southwest: "جنوب‌غربی", two_fronts: "دو نبش", three_fronts: "سه نبش", four_fronts: "چهار نبش", other: "سایر" } as Record<string,string>)[String(row.orientation)] ?? "", row.price, row.deposit, row.rent,
       row.contact_name, row.contact_phone, row.created_at, row.updated_at,
     ].map(csvCell).join(","))
   ];
