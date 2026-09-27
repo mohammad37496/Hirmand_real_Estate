@@ -8,6 +8,21 @@ import { SITE } from "@/lib/site";
 import { formatToman } from "@/lib/money";
 import { propertyPath } from "@/lib/property-path";
 
+const PROPERTY_ORIENTATION_LABELS: Record<NonNullable<Property["orientation"]>, string> = {
+  north: "شمالی",
+  south: "جنوبی",
+  east: "شرقی",
+  west: "غربی",
+  northeast: "شمال‌شرقی",
+  northwest: "شمال‌غربی",
+  southeast: "جنوب‌شرقی",
+  southwest: "جنوب‌غربی",
+  two_fronts: "دو نبش",
+  three_fronts: "سه نبش",
+  four_fronts: "چهار نبش",
+  other: "سایر",
+};
+
 const COMPARE_KEY = "hirmand-compare-properties";
 const MAX_COMPARE = 3;
 
@@ -190,6 +205,10 @@ function ComparePage() {
                         {p.floorLabel === "suite" ? "سوئیت" : p.floor != null ? p.floor.toLocaleString("fa-IR") : "—"}
                       </td>
                     ))}
+                  </tr>
+                  <tr>
+                    <th>موقعیت ملک</th>
+                    {properties.map((p) => <td key={p.id}>{p.orientation ? PROPERTY_ORIENTATION_LABELS[p.orientation] : "—"}</td>)}
                   </tr>
                   <tr>
                     <th>پارکینگ</th>
