@@ -9,6 +9,10 @@ const ASSISTANT_CSS = `
 .admin-assistant-suggestion p{margin:0;font-size:.78rem;line-height:1.9;color:rgb(0 0 0 / .68);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .admin-assistant-suggestion .btn-ghost{flex-shrink:0}
 .admin-quality-note{display:block;margin-top:8px;font-size:.68rem;line-height:1.8;color:rgb(0 0 0 / .52)}
+
+/* Admin 3.0 theme override */
+.admin-assistant-suggestion{background:#fbfcfd!important;border-color:#dde4ea!important}.admin-assistant-suggestion small,.admin-quality-note{color:#66717d!important}.admin-assistant-suggestion strong{color:#122333!important}.admin-assistant-suggestion p{color:#475467!important}
+.admin-assistant-suggestion .btn-ghost{background:#fff!important;color:#253545!important;border-color:#cbd5df!important}
 `;
 
 type Props = {
