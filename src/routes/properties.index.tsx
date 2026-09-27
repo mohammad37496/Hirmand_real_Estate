@@ -501,6 +501,7 @@ function PropertiesIndexPage() {
         maxFloor,
         floorType,
         orientation,
+        convertibleOnly,
         minTotalFloors,
         maxTotalFloors,
         minBuiltYear,
