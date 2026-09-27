@@ -2352,6 +2352,99 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
   gap: 14px;
 }
 
+.inquiry-amenities-picker {
+  overflow: hidden;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+.inquiry-amenities-picker summary {
+  list-style: none;
+  min-height: 58px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.inquiry-amenities-picker summary::-webkit-details-marker {
+  display: none;
+}
+
+.inquiry-amenities-picker summary > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.inquiry-amenities-picker summary strong {
+  color: var(--navy-900);
+  font-size: 0.875rem;
+}
+
+.inquiry-amenities-picker summary small {
+  color: var(--subtle);
+  font-size: 0.75rem;
+}
+
+.inquiry-amenities-picker summary > b {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  background: var(--brass-100);
+  border: 1px solid rgb(138 94 20 / 16%);
+  border-radius: 999px;
+  color: var(--brass-800);
+  font-size: 0.72rem;
+}
+
+.inquiry-amenities-picker[open] summary {
+  border-bottom: 1px solid var(--line);
+}
+
+.inquiry-amenities-body {
+  padding: 12px 14px 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.inquiry-amenity-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.inquiry-amenity-option {
+  min-height: 42px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  color: var(--fg);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+}
+
+.inquiry-amenity-option:hover {
+  border-color: var(--brass-300);
+  background: var(--brass-100);
+}
+
+.inquiry-amenity-option input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  flex: 0 0 17px;
+  accent-color: var(--brass-600);
+}
+
 /* --------------------------------------------------------------------------
    20. Contact, social, FAQ, location
    -------------------------------------------------------------------------- */
