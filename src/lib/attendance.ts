@@ -126,18 +126,32 @@ export const saveAttendance = createServerFn({ method: "POST" })
     validateSessions(data.sessions);
 
     const sql = await getSql();
-    const id = data.id?.trim() || crypto.randomUUID();
-    await sql.query(
-      `insert into staff_attendance
-        (id, consultant_id, consultant_name, work_date, sessions, note, created_at, updated_at)
-       values ($1, $2, $3, $4::date, $5::jsonb, $6, current_timestamp, current_timestamp)
-       on conflict (consultant_id, work_date) do update set
-         consultant_name = excluded.consultant_name,
-         sessions = excluded.sessions,
-         note = excluded.note,
-         updated_at = current_timestamp`,
-      [id, data.consultantId, data.consultantName, data.workDate, JSON.stringify(data.sessions), data.note],
-    );
+    if (data.id?.trim()) {
+      await sql.query(
+        `update staff_attendance
+         set consultant_id = $2,
+             consultant_name = $3,
+             work_date = $4::date,
+             sessions = $5::jsonb,
+             note = $6,
+             updated_at = current_timestamp
+         where id = $1`,
+        [data.id.trim(), data.consultantId, data.consultantName, data.workDate, JSON.stringify(data.sessions), data.note],
+      );
+    } else {
+      const id = crypto.randomUUID();
+      await sql.query(
+        `insert into staff_attendance
+          (id, consultant_id, consultant_name, work_date, sessions, note, created_at, updated_at)
+         values ($1, $2, $3, $4::date, $5::jsonb, $6, current_timestamp, current_timestamp)
+         on conflict (consultant_id, work_date) do update set
+           consultant_name = excluded.consultant_name,
+           sessions = excluded.sessions,
+           note = excluded.note,
+           updated_at = current_timestamp`,
+        [id, data.consultantId, data.consultantName, data.workDate, JSON.stringify(data.sessions), data.note],
+      );
+    }
 
     const rows = await sql.query<AttendanceRow>(
       `select id, consultant_id, consultant_name, work_date::text as work_date,
