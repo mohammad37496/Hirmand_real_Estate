@@ -501,13 +501,13 @@ export const listPublishedPropertyCards = createServerFn({ method: "GET" })
           [
             "select " + CARD_COLUMNS,
             "from properties where " + publicPropertyWhereSql(),
-            "order by case when $27::text = 'newest' then case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end else 0 end,",
-            "case when $27::text = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
-            "case when $27::text = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
-            "case when $27::text = 'area_asc' then area_m2 end asc nulls last,",
-            "case when $27::text = 'area_desc' then area_m2 end desc nulls last,",
+            "order by case when $28::text = 'newest' then case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end else 0 end,",
+            "case when $28::text = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
+            "case when $28::text = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
+            "case when $28::text = 'area_asc' then area_m2 end asc nulls last,",
+            "case when $28::text = 'area_desc' then area_m2 end desc nulls last,",
             "published_at desc nulls last, created_at desc",
-            "limit 48 offset $26",
+            "limit 48 offset $27",
           ].join(" "),
           [...params, data.sort],
         );
@@ -526,13 +526,13 @@ export const listPublishedProperties = createServerFn({ method: "GET" })
       [
         "select " + LIST_COLUMNS,
         "from properties where " + publicPropertyWhereSql(),
-        "order by case when $27::text = 'newest' then case when featured then 0 else 1 end else 0 end,",
-        "case when $27::text = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
-        "case when $27::text = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
-        "case when $27::text = 'area_asc' then area_m2 end asc nulls last,",
-        "case when $27::text = 'area_desc' then area_m2 end desc nulls last,",
+        "order by case when $28::text = 'newest' then case when featured then 0 else 1 end else 0 end,",
+        "case when $28::text = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
+        "case when $28::text = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
+        "case when $28::text = 'area_asc' then area_m2 end asc nulls last,",
+        "case when $28::text = 'area_desc' then area_m2 end desc nulls last,",
         "published_at desc nulls last, created_at desc",
-        "limit 48 offset $26",
+        "limit 48 offset $27",
       ].join(" "),
       [...params, data.sort],
     );
@@ -1088,6 +1088,8 @@ export const saveProperty = createServerFn({ method: "POST" })
       : null;
 
     const publishedAt = data.status === "published" ? new Date().toISOString() : null;
+    const savedFloor = data.floorLabel === "suite" ? null : data.floor ?? null;
+    const savedFloorLabel = data.floorLabel === "suite" ? "suite" : null;
 
     await sql.query(
       `insert into properties (
@@ -1245,7 +1247,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         data.areaM2 ?? null,
         data.bedrooms ?? null,
         data.bathrooms ?? null,
-        data.floor ?? null,
+        savedFloor,
         data.totalFloors ?? null,
         data.builtYear ?? null,
         data.parking,
@@ -1269,7 +1271,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         featuredUntil,
         data.latitude ?? null,
         data.longitude ?? null,
-        data.floorLabel ?? null,
+        savedFloorLabel,
       ],
     );
 
