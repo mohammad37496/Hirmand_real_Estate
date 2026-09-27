@@ -222,10 +222,16 @@ function propertyAmenityIcon(value: string) {
   }
 }
 
+function cleanNullableText(value: string | null | undefined) {
+  const normalized = value?.trim() ?? "";
+  return normalized && !/^(null|undefined)$/i.test(normalized) ? normalized : "";
+}
+
 function money(value: string | null) {
-  if (!value) return "";
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? formatToman(parsed) : value;
+  const normalized = cleanNullableText(value);
+  if (!normalized) return "";
+  const parsed = Number(normalized.replace(/,/g, ""));
+  return Number.isFinite(parsed) ? formatToman(parsed) : normalized;
 }
 function unitPrice(value: string | null, areaM2: number | null) {
   if (!value || !areaM2 || areaM2 <= 0) return "";
@@ -263,9 +269,22 @@ function osmEmbedUrl(latitude: number, longitude: number) {
   return `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${latitude}%2C${longitude}`;
 }
 
+function normalizePhoneDigits(value: string) {
+  return value
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+    .replace(/\D/g, "");
+}
+
 function whatsappLink(phone: string, title: string) {
-  const digits = phone.replace(/\D/g, "");
-  const intl = digits.startsWith("98") ? digits : digits.startsWith("0") ? "98" + digits.slice(1) : digits;
+  const digits = normalizePhoneDigits(phone);
+  const intl = digits.startsWith("0098")
+    ? digits.slice(2)
+    : digits.startsWith("98")
+      ? digits
+      : digits.startsWith("0")
+        ? "98" + digits.slice(1)
+        : digits;
   const text = encodeURIComponent(`سلام، درباره فایل «${title}» از سایت هیرمند پیام می‌دهم.`);
   return `https://wa.me/${intl}?text=${text}`;
 }
