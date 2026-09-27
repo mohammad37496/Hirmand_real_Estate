@@ -65,6 +65,14 @@ test("marks a property within the user's direct budget", () => {
   assert.ok((result?.score ?? 0) >= 90);
 });
 
+test("does not mark a non-convertible property as convertible", () => {
+  const result = calculateBudgetMatch(
+    property({ convertible: false, deposit: "700000000", rent: "0" }),
+    { depositBudget: 500_000_000, rentBudget: 10_000_000 },
+  );
+  assert.notEqual(result?.tier, "convertible");
+});
+
 test("marks a higher-deposit property as convertible when total equivalent fits", () => {
   const result = calculateBudgetMatch(
     property({ deposit: "700000000", rent: "0" }),
