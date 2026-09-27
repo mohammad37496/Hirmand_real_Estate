@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { extractDivarMediaUrls, getDivarAgencyReason } from "./divar.ts";
-import { mediaSourceCandidates } from "./media.ts";
+import { extractDivarMediaUrls } from "./divar-media-utils.ts";
+import { isDivarRemoteHost, mediaSourceCandidates } from "./media.ts";
 
 test("extractDivarMediaUrls finds nested CDN image URLs even when the leaf key is generic", () => {
   const urls = extractDivarMediaUrls({
@@ -34,15 +34,9 @@ test("extractDivarMediaUrls does not mistake a normal Divar listing URL for an i
   assert.deepEqual(urls, ["https://divar.ir/images/sample.jpg"]);
 });
 
-test("Divar agency filter catches explicit agency wording", () => {
-  const reason = getDivarAgencyReason({
-    web_info: {
-      business_type: "real-estate-business",
-      title: "فروش آپارتمان",
-    },
-  });
-
-  assert.ok(reason);
+test("Divar media hosts require a first-party HTTPS host", () => {
+  assert.equal(isDivarRemoteHost("https://img.divarcdn.com/a.jpg"), true);
+  assert.equal(isDivarRemoteHost("https://example.com/a.jpg"), false);
 });
 
 test("public media candidates keep Divar images same-origin through the proxy", () => {
