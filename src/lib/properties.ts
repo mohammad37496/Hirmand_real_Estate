@@ -849,7 +849,7 @@ export const matchPublishedPropertiesByBudget = createServerFn({ method: "GET" }
       };
 
       return rows
-        .map(mapProperty)
+        .map((row) => mapProperty(row))
         .map((property) => {
           const details = calculateBudgetMatch(property, budget, rate);
           return details ? { property, ...details } : null;
