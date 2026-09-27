@@ -150,11 +150,6 @@ function isDivarSourceUrl(value: string): boolean {
 }
 
 
-function isDivarMediaHost(value: string): boolean {
-  return isAllowedDivarImageUrl(value);
-}
-
-
 function normalizeCoordinate(value: unknown, max: number): number | null {
   if (typeof value !== "number" && typeof value !== "string") return null;
   const raw = String(value).replace(/,/g, "").trim();
