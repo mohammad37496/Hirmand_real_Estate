@@ -1216,7 +1216,9 @@ export function AdminPropertiesPage() {
                         ? "باشگاه همکاران و کد رهگیری"
                         : view === "consultants"
                           ? "مشاورین و اعضای بنگاه"
-                          : view === "divar"
+                          : view === "attendance"
+                            ? "ساعت ورود و خروج"
+                            : view === "divar"
                           ? "فایل‌های دیوار"
                           : form.id
                         ? "ویرایش فایل"
@@ -1228,9 +1230,11 @@ export function AdminPropertiesPage() {
                   ? `${stats.total.toLocaleString("fa-IR")} فایل در سیستم`
                   : view === "leads"
                     ? "مدیریت Leadها و پیگیری مشتریان"
-                    : view === "divar"
-                      ? "دریافت، فیلتر و ورود فایل‌های شخصی از دیوار"
-                      : form.contactName
+                    : view === "attendance"
+                      ? "ثبت حضور اعضای بنگاه و گزارش ساعت‌های ورود و خروج"
+                      : view === "divar"
+                        ? "دریافت، فیلتر و ورود فایل‌های شخصی از دیوار"
+                        : form.contactName
                     ? `مشاور مسئول: ${form.contactName}${formDirty ? " · تغییرات ذخیره‌نشده" : ""}`
                     : "مشاور مسئول را انتخاب کنید"}            </p>
           </div>
