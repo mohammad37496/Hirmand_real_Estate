@@ -61,22 +61,36 @@ function handleBudgetChange(
   });
 }
 
-function budgetHint(value: string, example: string) {
-  const amount = parseAmount(value);
-  return amount > 0
-    ? formatToman(amount) + " تومان — " + tomanToWords(amount)
-    : example;
+function normalizeBudgetRange(minRaw: string, maxRaw: string) {
+  const minValue = parseAmount(minRaw);
+  const maxValue = parseAmount(maxRaw);
+  if (!minValue && !maxValue) return { min: 0, max: 0 };
+  const min = minValue || maxValue;
+  const max = maxValue || minValue;
+  return { min, max };
 }
+
+function budgetRangeHint(minRaw: string, maxRaw: string, example: string) {
+  const range = normalizeBudgetRange(minRaw, maxRaw);
+  if (!range.max) return example;
+  if (range.min === range.max) return "حدود " + tomanToWords(range.min);
+  return "حدود " + tomanToWords(range.min) + " تا " + tomanToWords(range.max);
+}
+
 
 export function InquiryForm({ draft }: { draft: InquiryDraft }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [peopleCount, setPeopleCount] = useState("");
   const [job, setJob] = useState("");
-  const [budgetDeposit, setBudgetDeposit] = useState("");
-  const [budgetRent, setBudgetRent] = useState("");
-  const [budgetPurchase, setBudgetPurchase] = useState("");
-  const [budgetSale, setBudgetSale] = useState("");
+  const [budgetDepositMin, setBudgetDepositMin] = useState("");
+  const [budgetDepositMax, setBudgetDepositMax] = useState("");
+  const [budgetRentMin, setBudgetRentMin] = useState("");
+  const [budgetRentMax, setBudgetRentMax] = useState("");
+  const [budgetPurchaseMin, setBudgetPurchaseMin] = useState("");
+  const [budgetPurchaseMax, setBudgetPurchaseMax] = useState("");
+  const [budgetSaleMin, setBudgetSaleMin] = useState("");
+  const [budgetSaleMax, setBudgetSaleMax] = useState("");
   const [leaseDeadline, setLeaseDeadline] = useState("");
   const [deal, setDeal] = useState(draft.deal);
   const [propertyType, setPropertyType] = useState(draft.propertyType);
@@ -112,28 +126,40 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
   function handleDealChange(value: string) {
     setDeal(value);
     if (value === "خرید") {
-      setBudgetDeposit("");
-      setBudgetRent("");
-      setBudgetSale("");
+      setBudgetDepositMin("");
+      setBudgetDepositMax("");
+      setBudgetRentMin("");
+      setBudgetRentMax("");
+      setBudgetSaleMin("");
+      setBudgetSaleMax("");
       setLeaseDeadline("");
       return;
     }
     if (value === "فروش") {
-      setBudgetDeposit("");
-      setBudgetRent("");
-      setBudgetPurchase("");
+      setBudgetDepositMin("");
+      setBudgetDepositMax("");
+      setBudgetRentMin("");
+      setBudgetRentMax("");
+      setBudgetPurchaseMin("");
+      setBudgetPurchaseMax("");
       setLeaseDeadline("");
       return;
     }
     if (value === "رهن" || value === "اجاره") {
-      setBudgetPurchase("");
-      setBudgetSale("");
+      setBudgetPurchaseMin("");
+      setBudgetPurchaseMax("");
+      setBudgetSaleMin("");
+      setBudgetSaleMax("");
       return;
     }
-    setBudgetDeposit("");
-    setBudgetRent("");
-    setBudgetPurchase("");
-    setBudgetSale("");
+    setBudgetDepositMin("");
+    setBudgetDepositMax("");
+    setBudgetRentMin("");
+    setBudgetRentMax("");
+    setBudgetPurchaseMin("");
+    setBudgetPurchaseMax("");
+    setBudgetSaleMin("");
+    setBudgetSaleMax("");
     setLeaseDeadline("");
   }
 
@@ -186,20 +212,66 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       setError("نوع معامله را انتخاب کنید.");
       return;
     }
+    const depositRange = isRentLikeDeal
+      ? normalizeBudgetRange(budgetDepositMin, budgetDepositMax)
+      : { min: 0, max: 0 };
+    const rentRange = isRentLikeDeal
+      ? normalizeBudgetRange(budgetRentMin, budgetRentMax)
+      : { min: 0, max: 0 };
+    const purchaseRange = isBuyDeal
+      ? normalizeBudgetRange(budgetPurchaseMin, budgetPurchaseMax)
+      : { min: 0, max: 0 };
+    const saleRange = isSellDeal
+      ? normalizeBudgetRange(budgetSaleMin, budgetSaleMax)
+      : { min: 0, max: 0 };
+
+    if (isRentLikeDeal && !depositRange.max && !rentRange.max) {
+      setError("حداقل یکی از بازه‌های رهن یا اجاره را مشخص کنید.");
+      return;
+    }
+    if (isRentLikeDeal && depositRange.min > depositRange.max) {
+      setError("بازه رهن نامعتبر است؛ مبلغ «از» نمی‌تواند بیشتر از «تا» باشد.");
+      return;
+    }
+    if (isRentLikeDeal && rentRange.min > rentRange.max) {
+      setError("بازه اجاره نامعتبر است؛ مبلغ «از» نمی‌تواند بیشتر از «تا» باشد.");
+      return;
+    }
+    if (isBuyDeal && !purchaseRange.max) {
+      setError("بازه مبلغ خرید را مشخص کنید.");
+      return;
+    }
+    if (isBuyDeal && purchaseRange.min > purchaseRange.max) {
+      setError("بازه خرید نامعتبر است؛ مبلغ «از» نمی‌تواند بیشتر از «تا» باشد.");
+      return;
+    }
+    if (isSellDeal && !saleRange.max) {
+      setError("بازه مبلغ فروش را مشخص کنید.");
+      return;
+    }
+    if (isSellDeal && saleRange.min > saleRange.max) {
+      setError("بازه فروش نامعتبر است؛ مبلغ «از» نمی‌تواند بیشتر از «تا» باشد.");
+      return;
+    }
+
     setError("");
-    const budgetDepositNumber = isRentLikeDeal ? parseAmount(budgetDeposit) : 0;
-    const budgetRentNumber = isRentLikeDeal ? parseAmount(budgetRent) : 0;
-    const budgetPurchaseNumber = isBuyDeal ? parseAmount(budgetPurchase) : 0;
-    const budgetSaleNumber = isSellDeal ? parseAmount(budgetSale) : 0;
     const payload = {
       name: name.trim(),
       phone: normalizePhone(phone),
       peopleCount: parsedPeopleCount,
       job: job.trim(),
-      budgetDeposit: budgetDepositNumber || undefined,
-      budgetRent: budgetRentNumber || undefined,
-      budgetPurchase: budgetPurchaseNumber || undefined,
-      budgetSale: budgetSaleNumber || undefined,
+      budgetDeposit: depositRange.max || undefined,
+      budgetRent: rentRange.max || undefined,
+      budgetPurchase: purchaseRange.max || undefined,
+      budgetSale: saleRange.max || undefined,
+      budgetDepositMin: depositRange.min || undefined,
+      budgetDepositMax: depositRange.max || undefined,
+      budgetRentMin: rentRange.min || undefined,
+      budgetRentMax: rentRange.max || undefined,
+      budgetPurchaseMin: purchaseRange.min || undefined,
+      budgetPurchaseMax: purchaseRange.max || undefined,
+      budgetSaleMin: saleRange.min || undefined,
+      budgetSaleMax: saleRange.max || undefined,
       leaseDeadline: isRentLikeDeal && leaseDeadline ? leaseDeadline : undefined,
       deal,
       propertyType,
@@ -221,6 +293,14 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           budgetRent: payload.budgetRent,
           budgetPurchase: payload.budgetPurchase,
           budgetSale: payload.budgetSale,
+          budgetDepositMin: payload.budgetDepositMin,
+          budgetDepositMax: payload.budgetDepositMax,
+          budgetRentMin: payload.budgetRentMin,
+          budgetRentMax: payload.budgetRentMax,
+          budgetPurchaseMin: payload.budgetPurchaseMin,
+          budgetPurchaseMax: payload.budgetPurchaseMax,
+          budgetSaleMin: payload.budgetSaleMin,
+          budgetSaleMax: payload.budgetSaleMax,
           leaseDeadline: payload.leaseDeadline,
           deal: payload.deal,
           propertyType: payload.propertyType,
@@ -328,73 +408,137 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       {isRentLikeDeal ? (
         <>
           <div className="field">
-            <label htmlFor="inq-budget-deposit">قیمت رهن</label>
+            <label htmlFor="inq-budget-deposit-min">رهن حدودی — از</label>
             <input
-              id="inq-budget-deposit"
-              name="budgetDeposit"
+              id="inq-budget-deposit-min"
+              name="budgetDepositMin"
               inputMode="numeric"
               dir="rtl"
-              value={budgetDeposit}
-              onChange={(event) => handleBudgetChange(event, setBudgetDeposit)}
-              placeholder="مثلاً ۵۰۰٬۰۰۰٬۰۰۰"
+              value={budgetDepositMin}
+              onChange={(event) => handleBudgetChange(event, setBudgetDepositMin)}
+              placeholder="مثلاً ۲۰۰٬۰۰۰٬۰۰۰"
               aria-describedby="inq-budget-deposit-hint"
             />
+          </div>
+          <div className="field">
+            <label htmlFor="inq-budget-deposit-max">رهن حدودی — تا</label>
+            <input
+              id="inq-budget-deposit-max"
+              name="budgetDepositMax"
+              inputMode="numeric"
+              dir="rtl"
+              value={budgetDepositMax}
+              onChange={(event) => handleBudgetChange(event, setBudgetDepositMax)}
+              placeholder="مثلاً ۳۰۰٬۰۰۰٬۰۰۰"
+              aria-describedby="inq-budget-deposit-hint"
+            />
+          </div>
+          <div className="field field-span">
             <small id="inq-budget-deposit-hint" className="form-hint">
-              {budgetHint(budgetDeposit, "مثلاً ۵۰۰٬۰۰۰٬۰۰۰ تومان = پانصد میلیون تومان")}
+              {budgetRangeHint(budgetDepositMin, budgetDepositMax, "مثلاً از ۲۰۰ میلیون تا ۳۰۰ میلیون تومان")}
             </small>
           </div>
           <div className="field">
-            <label htmlFor="inq-budget-rent">قیمت اجاره</label>
+            <label htmlFor="inq-budget-rent-min">اجاره حدودی — از</label>
             <input
-              id="inq-budget-rent"
-              name="budgetRent"
+              id="inq-budget-rent-min"
+              name="budgetRentMin"
               inputMode="numeric"
               dir="rtl"
-              value={budgetRent}
-              onChange={(event) => handleBudgetChange(event, setBudgetRent)}
-              placeholder="مثلاً ۱۰٬۰۰۰٬۰۰۰"
+              value={budgetRentMin}
+              onChange={(event) => handleBudgetChange(event, setBudgetRentMin)}
+              placeholder="مثلاً ۱۲٬۰۰۰٬۰۰۰"
               aria-describedby="inq-budget-rent-hint"
             />
+          </div>
+          <div className="field">
+            <label htmlFor="inq-budget-rent-max">اجاره حدودی — تا</label>
+            <input
+              id="inq-budget-rent-max"
+              name="budgetRentMax"
+              inputMode="numeric"
+              dir="rtl"
+              value={budgetRentMax}
+              onChange={(event) => handleBudgetChange(event, setBudgetRentMax)}
+              placeholder="مثلاً ۱۴٬۰۰۰٬۰۰۰"
+              aria-describedby="inq-budget-rent-hint"
+            />
+          </div>
+          <div className="field field-span">
             <small id="inq-budget-rent-hint" className="form-hint">
-              {budgetHint(budgetRent, "مثلاً ۱۰٬۰۰۰٬۰۰۰ تومان = ده میلیون تومان")}
+              {budgetRangeHint(budgetRentMin, budgetRentMax, "مثلاً از ۱۲ میلیون تا ۱۴ میلیون تومان در ماه")}
             </small>
           </div>
         </>
       ) : isBuyDeal ? (
-        <div className="field">
-          <label htmlFor="inq-budget-purchase">مبلغ خرید</label>
-          <input
-            id="inq-budget-purchase"
-            name="budgetPurchase"
-            inputMode="numeric"
-            dir="rtl"
-            value={budgetPurchase}
-            onChange={(event) => handleBudgetChange(event, setBudgetPurchase)}
-            placeholder="مثلاً ۳٬۰۰۰٬۰۰۰٬۰۰۰"
-            aria-describedby="inq-budget-purchase-hint"
-          />
-          <small id="inq-budget-purchase-hint" className="form-hint">
-            {budgetHint(budgetPurchase, "مثلاً ۳٬۰۰۰٬۰۰۰٬۰۰۰ تومان = سه میلیارد تومان")}
-          </small>
-        </div>
+        <>
+          <div className="field">
+            <label htmlFor="inq-budget-purchase-min">مبلغ خرید حدودی — از</label>
+            <input
+              id="inq-budget-purchase-min"
+              name="budgetPurchaseMin"
+              inputMode="numeric"
+              dir="rtl"
+              value={budgetPurchaseMin}
+              onChange={(event) => handleBudgetChange(event, setBudgetPurchaseMin)}
+              placeholder="مثلاً ۱۳٬۰۰۰٬۰۰۰٬۰۰۰"
+              aria-describedby="inq-budget-purchase-hint"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="inq-budget-purchase-max">مبلغ خرید حدودی — تا</label>
+            <input
+              id="inq-budget-purchase-max"
+              name="budgetPurchaseMax"
+              inputMode="numeric"
+              dir="rtl"
+              value={budgetPurchaseMax}
+              onChange={(event) => handleBudgetChange(event, setBudgetPurchaseMax)}
+              placeholder="مثلاً ۱۳٬۲۰۰٬۰۰۰٬۰۰۰"
+              aria-describedby="inq-budget-purchase-hint"
+            />
+          </div>
+          <div className="field field-span">
+            <small id="inq-budget-purchase-hint" className="form-hint">
+              {budgetRangeHint(budgetPurchaseMin, budgetPurchaseMax, "مثلاً از ۱۳ میلیارد تا ۱۳٫۲ میلیارد تومان")}
+            </small>
+          </div>
+        </>
       ) : isSellDeal ? (
-        <div className="field">
-          <label htmlFor="inq-budget-sale">مبلغ فروش</label>
-          <input
-            id="inq-budget-sale"
-            name="budgetSale"
-            inputMode="numeric"
-            dir="rtl"
-            value={budgetSale}
-            onChange={(event) => handleBudgetChange(event, setBudgetSale)}
-            placeholder="مثلاً ۵٬۰۰۰٬۰۰۰٬۰۰۰"
-            aria-describedby="inq-budget-sale-hint"
-          />
-          <small id="inq-budget-sale-hint" className="form-hint">
-            {budgetHint(budgetSale, "مثلاً ۵٬۰۰۰٬۰۰۰٬۰۰۰ تومان = پنج میلیارد تومان")}
-          </small>
-        </div>
-      ) : null}
+        <>
+          <div className="field">
+            <label htmlFor="inq-budget-sale-min">مبلغ فروش حدودی — از</label>
+            <input
+              id="inq-budget-sale-min"
+              name="budgetSaleMin"
+              inputMode="numeric"
+              dir="rtl"
+              value={budgetSaleMin}
+              onChange={(event) => handleBudgetChange(event, setBudgetSaleMin)}
+              placeholder="مثلاً ۱۳٬۰۰۰٬۰۰۰٬۰۰۰"
+              aria-describedby="inq-budget-sale-hint"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="inq-budget-sale-max">مبلغ فروش حدودی — تا</label>
+            <input
+              id="inq-budget-sale-max"
+              name="budgetSaleMax"
+              inputMode="numeric"
+              dir="rtl"
+              value={budgetSaleMax}
+              onChange={(event) => handleBudgetChange(event, setBudgetSaleMax)}
+              placeholder="مثلاً ۱۳٬۲۰۰٬۰۰۰٬۰۰۰"
+              aria-describedby="inq-budget-sale-hint"
+            />
+          </div>
+          <div className="field field-span">
+            <small id="inq-budget-sale-hint" className="form-hint">
+              {budgetRangeHint(budgetSaleMin, budgetSaleMax, "مثلاً از ۱۳ میلیارد تا ۱۳٫۲ میلیارد تومان")}
+            </small>
+          </div>
+        </>
+      ) : null
       {isRentLikeDeal ? (
         <div className="field field-span inquiry-deadline-field">
           <label htmlFor="inq-lease-deadline">مهلت رهن و اجاره</label>
