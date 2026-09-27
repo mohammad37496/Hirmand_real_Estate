@@ -30,6 +30,7 @@ import {
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import { isInvalidIntegerInput, normalizeMoneyText } from "@/lib/property-input-normalization";
 import { listNeighborhoodNames } from "@/lib/neighborhoods";
+import { listConsultants, type Consultant } from "@/lib/consultants";
 import { propertyPath } from "@/lib/property-path";
 import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
 import {
@@ -380,6 +381,23 @@ export function AdminPropertiesPage() {
   }>>([]);
   const [form, setForm] = useState<FormState>(emptyForm());
   const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>(NEIGHBORHOOD_NAMES);
+  const [assignmentConsultants, setAssignmentConsultants] = useState<Consultant[]>(
+    TEAM.map((person, index) => ({
+      id: person.id,
+      name: person.name,
+      role: person.role,
+      phone: person.phone,
+      phoneDisplay: person.phoneDisplay,
+      icon: person.icon,
+      bio: "",
+      whatsapp: "",
+      telegram: "",
+      eitaa: "",
+      instagram: "",
+      sortOrder: (index + 1) * 10,
+      isActive: true,
+    })),
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -395,8 +413,27 @@ export function AdminPropertiesPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    void listConsultants()
+      .then((items) => {
+        if (!cancelled && items.length) setAssignmentConsultants(items);
+      })
+      .catch(() => {
+        // Keep the bundled team as a graceful fallback.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+    setFormDirty(true);
+  }
+
+  function patchForm(patch: (current: FormState) => FormState) {
+    setForm(patch);
     setFormDirty(true);
   }
 
@@ -1356,13 +1393,13 @@ export function AdminPropertiesPage() {
                               defaultValue=""
                               aria-label="تخصیص مشاور به فایل‌های انتخاب‌شده"
                               onChange={(e) => {
-                                const member = TEAM.find((item) => item.phone === e.target.value);
+                                const member = assignmentConsultants.find((item) => item.phone === e.target.value);
                                 if (member) void bulkAssignConsultant(member);
                                 e.currentTarget.value = "";
                               }}
                             >
                               <option value="">تخصیص مشاور…</option>
-                              {TEAM.map((member) => (
+                              {assignmentConsultants.filter((member) => member.isActive).map((member) => (
                                 <option key={member.phone} value={member.phone}>
                                   {member.name}
                                 </option>
@@ -1510,7 +1547,7 @@ export function AdminPropertiesPage() {
                     </button>
                     <small>
                       نمایش {properties.length.toLocaleString("fa-IR")} از{" "}
-                      {stats.total.toLocaleString("fa-IR")} فایل
+                      {filteredTotal.toLocaleString("fa-IR")} نتیجه فیلترشده
                     </small>
                   </div>
                 ) : null}
@@ -1609,7 +1646,7 @@ export function AdminPropertiesPage() {
                     latitude={form.latitude}
                     longitude={form.longitude}
                     onChange={(coordinates) => {
-                      setForm((prev) => ({
+                      patchForm((prev) => ({
                         ...prev,
                         latitude: coordinates.latitude,
                         longitude: coordinates.longitude,
@@ -1662,10 +1699,10 @@ export function AdminPropertiesPage() {
                         onChange={(e) => {
                           const value = e.target.value;
                           if (value === "suite") {
-                            setForm((prev) => ({ ...prev, floor: "", floorLabel: "suite" }));
+                            patchForm((prev) => ({ ...prev, floor: "", floorLabel: "suite" }));
                             return;
                           }
-                          setForm((prev) => ({ ...prev, floor: value, floorLabel: null }));
+                          patchForm((prev) => ({ ...prev, floor: value, floorLabel: null }));
                         }}
                       >
                         <option value="">انتخاب طبقه</option>
@@ -1783,7 +1820,7 @@ export function AdminPropertiesPage() {
                             type="checkbox"
                             checked={checked}
                             onChange={(e) =>
-                              setForm((prev) => ({
+                              patchForm((prev) => ({
                                 ...prev,
                                 otherAmenities: e.target.checked
                                   ? Array.from(new Set([...prev.otherAmenities, item.value]))
@@ -1892,7 +1929,7 @@ export function AdminPropertiesPage() {
                     contactName={form.contactName}
                     contactPhone={form.contactPhone}
                     onSelect={(member) => {
-                      setForm((prev) => ({
+                      patchForm((prev) => ({
                         ...prev,
                         contactName: member.name,
                         contactPhone: member.phone,
@@ -1934,9 +1971,9 @@ export function AdminPropertiesPage() {
                         type="checkbox"
                         checked={form.featured}
                         onChange={(e) => update("featured", e.target.checked)}
-                        style={{ accentColor: "#f7f5ef", width: 18, height: 18 }}
+                        style={{ accentColor: "var(--brass-600)", width: 18, height: 18 }}
                       />
-                      <span style={{ display: "flex", alignItems: "center", gap: 6, color: "#f7f5ef", fontWeight: 600 }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--navy-900)", fontWeight: 700 }}>
                         <Star size={15} /> فایل ویژه
                       </span>
                     </label>
