@@ -32,6 +32,14 @@ type Lead = {
   budgetRent: number | null;
   budgetPurchase: number | null;
   budgetSale: number | null;
+  budgetDepositMin: number | null;
+  budgetDepositMax: number | null;
+  budgetRentMin: number | null;
+  budgetRentMax: number | null;
+  budgetPurchaseMin: number | null;
+  budgetPurchaseMax: number | null;
+  budgetSaleMin: number | null;
+  budgetSaleMax: number | null;
   budgetEquivalent: number | null;
   budgetBedrooms: number | null;
   budgetRate: number | null;
@@ -76,6 +84,13 @@ function leaseDeadlineMeta(value: string) {
   return { tone: days <= 7 ? "soon" : "normal", text: days.toLocaleString("fa-IR") + " روز باقی مانده" };
 }
 
+function formatBudgetRange(min: number | null, max: number | null, fallback: number | null) {
+  const lower = min ?? fallback;
+  const upper = max ?? fallback;
+  if (!lower && !upper) return "—";
+  if ((lower ?? 0) === (upper ?? 0)) return formatToman(lower ?? upper ?? 0);
+  return formatToman(lower ?? upper ?? 0) + " تا " + formatToman(upper ?? lower ?? 0);
+}
 
 export function AdminLeadManager() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -172,6 +187,14 @@ export function AdminLeadManager() {
         lead.budgetRent == null ? "" : String(lead.budgetRent),
         lead.budgetPurchase == null ? "" : String(lead.budgetPurchase),
         lead.budgetSale == null ? "" : String(lead.budgetSale),
+        lead.budgetDepositMin == null ? "" : String(lead.budgetDepositMin),
+        lead.budgetDepositMax == null ? "" : String(lead.budgetDepositMax),
+        lead.budgetRentMin == null ? "" : String(lead.budgetRentMin),
+        lead.budgetRentMax == null ? "" : String(lead.budgetRentMax),
+        lead.budgetPurchaseMin == null ? "" : String(lead.budgetPurchaseMin),
+        lead.budgetPurchaseMax == null ? "" : String(lead.budgetPurchaseMax),
+        lead.budgetSaleMin == null ? "" : String(lead.budgetSaleMin),
+        lead.budgetSaleMax == null ? "" : String(lead.budgetSaleMax),
         lead.leaseDeadline == null ? "" : lead.leaseDeadline,
         lead.leaseDeadline ? formatPersianDate(lead.leaseDeadline) : "",
       ]
@@ -185,10 +208,18 @@ export function AdminLeadManager() {
     const lines = [
       "سلام " + lead.name + "،",
       "نتیجه بررسی بودجه شما از طرف هیرمند:",
-      lead.budgetDeposit ? "رهن: " + formatToman(lead.budgetDeposit) + " تومان" : "",
-      lead.budgetRent ? "اجاره ماهانه: " + formatToman(lead.budgetRent) + " تومان" : "",
-      lead.budgetPurchase ? "بودجه خرید: " + formatToman(lead.budgetPurchase) + " تومان" : "",
-      lead.budgetSale ? "بودجه فروش: " + formatToman(lead.budgetSale) + " تومان" : "",
+      lead.budgetDeposit || lead.budgetDepositMin || lead.budgetDepositMax
+        ? "رهن: " + formatBudgetRange(lead.budgetDepositMin, lead.budgetDepositMax, lead.budgetDeposit) + " تومان"
+        : "",
+      lead.budgetRent || lead.budgetRentMin || lead.budgetRentMax
+        ? "اجاره ماهانه: " + formatBudgetRange(lead.budgetRentMin, lead.budgetRentMax, lead.budgetRent) + " تومان"
+        : "",
+      lead.budgetPurchase || lead.budgetPurchaseMin || lead.budgetPurchaseMax
+        ? "بودجه خرید: " + formatBudgetRange(lead.budgetPurchaseMin, lead.budgetPurchaseMax, lead.budgetPurchase) + " تومان"
+        : "",
+      lead.budgetSale || lead.budgetSaleMin || lead.budgetSaleMax
+        ? "بودجه فروش: " + formatBudgetRange(lead.budgetSaleMin, lead.budgetSaleMax, lead.budgetSale) + " تومان"
+        : "",
       lead.leaseDeadline && (lead.deal === "رهن" || lead.deal === "اجاره" || lead.deal === "رهن و اجاره")
         ? "مهلت رهن و اجاره: " + formatPersianDate(lead.leaseDeadline)
         : "",
@@ -329,28 +360,36 @@ export function AdminLeadManager() {
                     lead.budgetRent != null ||
                     lead.budgetPurchase != null ||
                     lead.budgetSale != null ||
+                    lead.budgetDepositMin != null ||
+                    lead.budgetDepositMax != null ||
+                    lead.budgetRentMin != null ||
+                    lead.budgetRentMax != null ||
+                    lead.budgetPurchaseMin != null ||
+                    lead.budgetPurchaseMax != null ||
+                    lead.budgetSaleMin != null ||
+                    lead.budgetSaleMax != null ||
                     lead.budgetEquivalent != null) ? (
                     <div className="admin-lead-budget">
                       {lead.deal === "رهن" || lead.deal === "اجاره" || lead.deal === "رهن و اجاره" ? (
                         <>
                           <div>
-                            <span>رهن</span>
-                            <strong>{lead.budgetDeposit ? formatToman(lead.budgetDeposit) : "—"}</strong>
+                            <span>بازه رهن</span>
+                            <strong>{formatBudgetRange(lead.budgetDepositMin, lead.budgetDepositMax, lead.budgetDeposit)}</strong>
                           </div>
                           <div>
-                            <span>اجاره</span>
-                            <strong>{lead.budgetRent ? formatToman(lead.budgetRent) : "—"}</strong>
+                            <span>بازه اجاره</span>
+                            <strong>{formatBudgetRange(lead.budgetRentMin, lead.budgetRentMax, lead.budgetRent)}</strong>
                           </div>
                         </>
                       ) : lead.deal === "خرید" ? (
                         <div>
-                          <span>مبلغ خرید</span>
-                          <strong>{lead.budgetPurchase ? formatToman(lead.budgetPurchase) : "—"}</strong>
+                          <span>بازه مبلغ خرید</span>
+                          <strong>{formatBudgetRange(lead.budgetPurchaseMin, lead.budgetPurchaseMax, lead.budgetPurchase)}</strong>
                         </div>
                       ) : lead.deal === "فروش" ? (
                         <div>
-                          <span>مبلغ فروش</span>
-                          <strong>{lead.budgetSale ? formatToman(lead.budgetSale) : "—"}</strong>
+                          <span>بازه مبلغ فروش</span>
+                          <strong>{formatBudgetRange(lead.budgetSaleMin, lead.budgetSaleMax, lead.budgetSale)}</strong>
                         </div>
                       ) : null}
                       {lead.budgetEquivalent != null ? (
