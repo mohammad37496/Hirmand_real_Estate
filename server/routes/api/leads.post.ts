@@ -27,6 +27,7 @@ const schema = z.object({
   neighborhood: z.string().trim().max(80).default(""),
   consultant: z.string().trim().max(80).default(""),
   note: z.string().trim().max(1500).default(""),
+  leaseDeadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   source: z.enum(["website", "budget_match"]).optional().default("website"),
   budgetDeposit: z.number().int().min(0).max(999999999999999).optional(),
   budgetRent: z.number().int().min(0).max(999999999999999).optional(),
@@ -37,6 +38,17 @@ const schema = z.object({
 }).superRefine((value, ctx) => {
   if (value.source === "budget_match" && (value.budgetDeposit ?? 0) <= 0 && (value.budgetRent ?? 0) <= 0) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["budgetDeposit"], message: "بودجه نامعتبر است." });
+  }
+
+  if (value.leaseDeadline) {
+    const parsedDate = new Date(value.leaseDeadline + "T00:00:00Z");
+    const normalized = Number.isNaN(parsedDate.getTime()) ? "" : parsedDate.toISOString().slice(0, 10);
+    if (normalized !== value.leaseDeadline) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["leaseDeadline"], message: "تاریخ مهلت نامعتبر است." });
+    }
+    if (value.deal !== "رهن" && value.deal !== "اجاره") {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["leaseDeadline"], message: "تاریخ مهلت فقط برای رهن یا اجاره مجاز است." });
+    }
   }
 });
 
@@ -98,6 +110,9 @@ export default defineEventHandler(async (event) => {
   const budgetRent = parsed.data.budgetRent ?? 0;
   const budgetPurchase = parsed.data.deal === "خرید" ? parsed.data.budgetPurchase ?? 0 : 0;
   const budgetSale = parsed.data.deal === "فروش" ? parsed.data.budgetSale ?? 0 : 0;
+  const leaseDeadline = parsed.data.deal === "رهن" || parsed.data.deal === "اجاره"
+    ? parsed.data.leaseDeadline ?? null
+    : null;
   const matchedProperties = parsed.data.matches.slice(0, 12);
   const budgetPayload = {
     name: parsed.data.name,
@@ -120,7 +135,7 @@ export default defineEventHandler(async (event) => {
       await sql.query(
         `update leads
          set name=$2, people_count=$3, job=$4, deal=$5, property_type=$6, neighborhood=$7, consultant=$8, note=$9,
-             source=$10, follow_up_at=current_timestamp + interval '24 hours', acquisition_source=$20, acquisition_medium=$21, acquisition_campaign=$22, acquisition_referrer=$23, acquisition_landing_path=$24, budget_deposit=$11, budget_rent=$12, budget_purchase=$13, budget_sale=$14, budget_rate=$15,
+             source=$10, follow_up_at=current_timestamp + interval '24 hours', lease_deadline=null, acquisition_source=$20, acquisition_medium=$21, acquisition_campaign=$22, acquisition_referrer=$23, acquisition_landing_path=$24, budget_deposit=$11, budget_rent=$12, budget_purchase=$13, budget_sale=$14, budget_rate=$15,
              budget_equivalent=$16, budget_bedrooms=$17, matched_properties=$18::jsonb,
              match_count=$19, updated_at=current_timestamp
          where id=$1`,
@@ -160,10 +175,10 @@ export default defineEventHandler(async (event) => {
     `insert into leads (
       id, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source,
       acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, acquisition_landing_path,
-      follow_up_at, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_rate, budget_equivalent, budget_bedrooms,
+      follow_up_at, lease_deadline, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_rate, budget_equivalent, budget_bedrooms,
       matched_properties, match_count
     )
-    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,current_timestamp + interval '24 hours',$17,$18,$19,$20,$21,$22,$23,$24::jsonb,$25)
+    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,current_timestamp + interval '24 hours',$17,$18,$19,$20,$21,$22,$23,$24,$25::jsonb,$26)
     returning id`,
     [
       crypto.randomUUID(),
@@ -182,6 +197,7 @@ export default defineEventHandler(async (event) => {
       acquisition.campaign,
       acquisition.referrer,
       acquisition.landingPath,
+      leaseDeadline,
       budgetDeposit || null,
       budgetRent || null,
       budgetPurchase || null,
