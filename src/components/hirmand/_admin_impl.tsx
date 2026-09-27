@@ -1453,7 +1453,7 @@ export function AdminPropertiesPage() {
                         </div>
                         <div className="admin-property-thumb">
                           <img
-                            src={property.images[0] || "/images/type-apartment.jpg"}
+                            src={property.images[0] || getPropertyFallbackImage(property.propertyType, property.id)}
                             alt=""
                             loading="lazy"
                           />
