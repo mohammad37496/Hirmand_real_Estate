@@ -51,7 +51,7 @@ body {
 /* Crimson hero / surfaces → navy veils */
 .hero-veil {
   background:
-    linear-gradient(180deg, rgba(15, 23, 39, 0.12) 0%, rgba(15, 23, 39, 0.44) 45%, rgba(15, 23, 39, 0.84) 78%, #0f1727 100%),
+    linear-gradient(180deg, rgba(15, 23, 39, 0.12) 0%, rgba(15, 23, 39, 0.44) 45%, rgba(15, 23, 39, 0.84) 78%, var(--navy-950) 100%),
     radial-gradient(ellipse at 50% 10%, rgba(192, 138, 42, 0.18), transparent 48%);
 }
 
@@ -64,7 +64,7 @@ body {
 .header-inquiry,
 .quick-action-primary,
 .floating-call {
-  background: linear-gradient(180deg, #d1a04d, var(--brass-500));
+  background: linear-gradient(180deg, var(--brass-600), var(--brass-500));
   box-shadow: 0 10px 26px rgba(192, 138, 42, 0.28);
 }
 
@@ -943,7 +943,7 @@ body:has(.music-player.is-hidden) .floating-call-menu {
   height: 20px;
   flex: 0 0 4px;
   border-radius: var(--r-pill);
-  background: linear-gradient(180deg, #d1a04d, var(--brass-600));
+  background: linear-gradient(180deg, var(--brass-600), var(--brass-600));
 }
 
 .property-detail-body p,
