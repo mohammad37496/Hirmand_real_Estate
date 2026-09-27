@@ -1398,7 +1398,7 @@
   .property-convert-table td {
     padding-inline: 9px;
   }
-  .property-convert-results {
+  .property-convert-info-row {
     grid-template-columns: 1fr;
   }
 }
