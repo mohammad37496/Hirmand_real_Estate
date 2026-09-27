@@ -8,6 +8,7 @@ import { nullableMoneyFieldSchema } from "@/lib/property-input-normalization";
 import { decodeSlugCandidates, legacyIdFragments } from "@/lib/property-slug";
 import { calculateBudgetMatch, DEFAULT_MATCH_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
 import { MAX_PROPERTY_MEDIA, isAllowedMediaRef } from "@/lib/media";
+import { deleteStoredMedia } from "@/lib/media-store.server";
 import {
   PROPERTY_CABINET_OPTIONS,
   PROPERTY_COOLING_OPTIONS,
@@ -1009,7 +1010,15 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAdmin();
     const sql = await getSql();
-    const rows = await sql.query<{ id: string }>(
+
+    const beforeRows = await sql.query<Record<string, unknown>>(
+      `select id, title, status, featured, price, deposit, rent, contact_name, contact_phone
+       from properties
+       where id = any($1::text[])`,
+      [data.ids],
+    );
+
+    const rows = await sql.query<Record<string, unknown>>(
       `update properties
        set status = $1,
            published_at = case
@@ -1018,16 +1027,50 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
            end,
            updated_at = current_timestamp
        where id = any($2::text[])
-       returning id`,
+       returning id, title, status, featured, price, deposit, rent, contact_name, contact_phone`,
       [data.status, data.ids],
     );
+
     if (rows.length) {
+      const beforePayload = JSON.stringify(
+        beforeRows.map((row) => ({
+          id: String(row.id),
+          before_state: {
+            title: row.title == null ? null : String(row.title),
+            status: row.status == null ? null : String(row.status),
+            featured: Boolean(row.featured),
+            price: row.price == null ? null : String(row.price),
+            deposit: row.deposit == null ? null : String(row.deposit),
+            rent: row.rent == null ? null : String(row.rent),
+            contactName: row.contact_name == null ? null : String(row.contact_name),
+            contactPhone: row.contact_phone == null ? null : String(row.contact_phone),
+          },
+        })),
+      );
       await sql.query(
-        `insert into property_change_history (property_id, action, before_state, after_state)
-         select id, 'updated', null, jsonb_build_object('status', $1)
-         from properties
-         where id = any($2::text[])`,
-        [data.status, data.ids],
+        `with before as (
+           select *
+           from jsonb_to_recordset($1::jsonb)
+             as b(id text, before_state jsonb)
+         )
+         insert into property_change_history (property_id, action, before_state, after_state)
+         select
+           p.id,
+           'updated',
+           before.before_state,
+           jsonb_build_object(
+             'title', p.title,
+             'status', p.status,
+             'featured', p.featured,
+             'price', p.price,
+             'deposit', p.deposit,
+             'rent', p.rent,
+             'contactName', p.contact_name,
+             'contactPhone', p.contact_phone
+           )
+         from properties p
+         join before on before.id = p.id`,
+        [beforePayload],
       );
     }
     clearPropertyReadCache();
@@ -1039,22 +1082,64 @@ export const bulkSetPropertyFeatured = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAdmin();
     const sql = await getSql();
-    const rows = await sql.query<{ id: string }>(
+
+    const beforeRows = await sql.query<Record<string, unknown>>(
+      `select id, title, status, featured, price, deposit, rent, contact_name, contact_phone
+       from properties
+       where id = any($1::text[])`,
+      [data.ids],
+    );
+
+    const rows = await sql.query<Record<string, unknown>>(
       `update properties
        set featured = $1,
-           featured_until = case when $1 then null else null end,
+           featured_until = null,
            updated_at = current_timestamp
        where id = any($2::text[])
-       returning id`,
+       returning id, title, status, featured, price, deposit, rent, contact_name, contact_phone`,
       [data.featured, data.ids],
     );
+
     if (rows.length) {
+      const beforePayload = JSON.stringify(
+        beforeRows.map((row) => ({
+          id: String(row.id),
+          before_state: {
+            title: row.title == null ? null : String(row.title),
+            status: row.status == null ? null : String(row.status),
+            featured: Boolean(row.featured),
+            price: row.price == null ? null : String(row.price),
+            deposit: row.deposit == null ? null : String(row.deposit),
+            rent: row.rent == null ? null : String(row.rent),
+            contactName: row.contact_name == null ? null : String(row.contact_name),
+            contactPhone: row.contact_phone == null ? null : String(row.contact_phone),
+          },
+        })),
+      );
       await sql.query(
-        `insert into property_change_history (property_id, action, before_state, after_state)
-         select id, 'updated', null, jsonb_build_object('featured', $1)
-         from properties
-         where id = any($2::text[])`,
-        [data.featured, data.ids],
+        `with before as (
+           select *
+           from jsonb_to_recordset($1::jsonb)
+             as b(id text, before_state jsonb)
+         )
+         insert into property_change_history (property_id, action, before_state, after_state)
+         select
+           p.id,
+           'updated',
+           before.before_state,
+           jsonb_build_object(
+             'title', p.title,
+             'status', p.status,
+             'featured', p.featured,
+             'price', p.price,
+             'deposit', p.deposit,
+             'rent', p.rent,
+             'contactName', p.contact_name,
+             'contactPhone', p.contact_phone
+           )
+         from properties p
+         join before on before.id = p.id`,
+        [beforePayload],
       );
     }
     clearPropertyReadCache();
@@ -1093,10 +1178,55 @@ export const bulkDeleteProperties = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAdmin();
     const sql = await getSql();
+
+    const existingRows = await sql.query<Record<string, unknown>>(
+      `select id, title, status, featured, price, deposit, rent, contact_name, contact_phone, images
+       from properties
+       where id = any($1::text[])`,
+      [data.ids],
+    );
+
     const rows = await sql.query<{ id: string }>(
       "delete from properties where id = any($1::text[]) returning id",
       [data.ids],
     );
+
+    if (existingRows.length) {
+      const deletedPayload = JSON.stringify(
+        existingRows.map((row) => ({
+          id: String(row.id),
+          before_state: {
+            title: row.title == null ? null : String(row.title),
+            status: row.status == null ? null : String(row.status),
+            featured: Boolean(row.featured),
+            price: row.price == null ? null : String(row.price),
+            deposit: row.deposit == null ? null : String(row.deposit),
+            rent: row.rent == null ? null : String(row.rent),
+            contactName: row.contact_name == null ? null : String(row.contact_name),
+            contactPhone: row.contact_phone == null ? null : String(row.contact_phone),
+          },
+        })),
+      );
+      await sql.query(
+        `with deleted as (
+           select *
+           from jsonb_to_recordset($1::jsonb)
+             as d(id text, before_state jsonb)
+         )
+         insert into property_change_history (property_id, action, before_state, after_state)
+         select id, 'deleted', before_state, null
+         from deleted`,
+        [deletedPayload],
+      );
+    }
+
+    const mediaUrls = existingRows.flatMap((row) =>
+      Array.isArray(row.images)
+        ? row.images.filter((item): item is string => typeof item === "string")
+        : [],
+    );
+    await Promise.all(mediaUrls.map((url) => deleteStoredMedia(url)));
+
     clearPropertyReadCache();
     return { success: true, deleted: rows.length };
   });
@@ -1452,6 +1582,11 @@ export const deleteProperty = createServerFn({ method: "POST" })
         [data.id, JSON.stringify(mapProperty(existing, { admin: true }))],
       );
     }
+
+    const mediaUrls = Array.isArray(existing?.images)
+      ? existing.images.filter((item): item is string => typeof item === "string")
+      : [];
+    await Promise.all(mediaUrls.map((url) => deleteStoredMedia(url)));
 
     clearPropertyReadCache();
     return { success: true };
