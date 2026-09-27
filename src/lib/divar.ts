@@ -39,6 +39,7 @@ export type DivarFile = {
   bathrooms: number | null;
   floor: number | null;
   floorLabel: "suite" | null;
+  orientation: "north" | "south" | "east" | "west" | "northeast" | "northwest" | "southeast" | "southwest" | "two_fronts" | "three_fronts" | "four_fronts" | "other" | null;
   totalFloors: number | null;
   builtYear: number | null;
   parking: boolean;
@@ -425,6 +426,9 @@ function parseDivarListing(
   const bathrooms = parseNumber(getSpec("تعداد سرویس بهداشتی", "سرویس بهداشتی", "حمام"));
   const rawFloor = normalizeDivarText(getSpec("طبقه"));
   const floorLabel = rawFloor.includes("سوئیت") || rawFloor.includes("سوییت") ? "suite" : null;
+  const rawOrientation = getSpec("موقعیت ملک", "جهت ملک", "جهت ساختمان", "جهت");
+  const compactOrientation = normalizeDivarText(rawOrientation).replace(/\s+/g, "");
+  const orientation = compactOrientation.includes("شمالشرقی") ? "northeast" : compactOrientation.includes("شمالغربی") ? "northwest" : compactOrientation.includes("جنوبشرقی") ? "southeast" : compactOrientation.includes("جنوبغربی") ? "southwest" : compactOrientation.includes("دو نبش") || compactOrientation.includes("دوبر") ? "two_fronts" : compactOrientation.includes("سه نبش") || compactOrientation.includes("سهبر") ? "three_fronts" : compactOrientation.includes("چهار نبش") || compactOrientation.includes("چهاربر") ? "four_fronts" : compactOrientation.includes("شمالی") ? "north" : compactOrientation.includes("جنوبی") ? "south" : compactOrientation.includes("شرقی") ? "east" : compactOrientation.includes("غربی") ? "west" : null;
   const floor = floorLabel ? null : parseNumber(getSpec("طبقه"));
   const totalFloors = parseNumber(getSpec("تعداد کل طبقات ساختمان", "تعداد کل طبقات"));
   const builtYear = parseNumber(getSpec("ساخت", "سال ساخت"));
@@ -469,6 +473,7 @@ function parseDivarListing(
     bathrooms,
     floor,
     floorLabel,
+    orientation,
     totalFloors,
     builtYear,
     parking,
@@ -847,6 +852,7 @@ function mapRow(row: Record<string, unknown>): DivarFile {
     bathrooms: row.bathrooms == null ? null : Number(row.bathrooms),
     floor: row.floor == null ? null : Number(row.floor),
     floorLabel: row.floor_label === "suite" ? "suite" : null,
+    orientation: (row.orientation as DivarFile["orientation"]) ?? null,
     totalFloors: row.total_floors == null ? null : Number(row.total_floors),
     builtYear: row.built_year == null ? null : Number(row.built_year),
     parking: Boolean(row.parking),
@@ -1079,13 +1085,13 @@ export const syncDivarFiles = createServerFn({ method: "POST" })
           area_m2, bedrooms, bathrooms, floor, total_floors, built_year,
           parking, elevator, storage, price, deposit, rent, description,
           features, images, seller_name, seller_type, source_url,
-          latitude, longitude, floor_label, filter_status, last_seen_at, updated_at
+          latitude, longitude, floor_label, filter_status, orientation, last_seen_at, updated_at
         ) values (
           $1,$2,$3,$4,$5,$6,
           $7,$8,$9,$10,$11,$12,
           $13,$14,$15,$16,$17,$18,$19,
           $20::jsonb,$21::jsonb,$22,$23,$24,
-          $25,$26,$27,$28,current_timestamp,current_timestamp
+          $25,$26,$27,$28,$29,current_timestamp,current_timestamp
         )
         on conflict (token) do update set
           title = excluded.title,
@@ -1114,6 +1120,7 @@ export const syncDivarFiles = createServerFn({ method: "POST" })
           longitude = excluded.longitude,
           floor_label = excluded.floor_label,
           filter_status = case when divar_files.filter_status = 'imported' then 'imported' else 'accepted' end,
+          orientation = excluded.orientation,
           reject_reason = null,
           last_seen_at = current_timestamp,
           updated_at = current_timestamp`,
@@ -1146,6 +1153,7 @@ export const syncDivarFiles = createServerFn({ method: "POST" })
           item.longitude,
           item.floorLabel,
           existing === "imported" ? "imported" : "accepted",
+          item.orientation,
         ],
       );
       accepted += existing === "imported" ? 0 : 1;
@@ -1246,6 +1254,7 @@ export const importDivarFile = createServerFn({ method: "POST" })
                longitude = $4,
                floor = $5,
                floor_label = $6,
+               orientation = $7,
                updated_at = current_timestamp
            where id = $1`,
           [
@@ -1255,6 +1264,7 @@ export const importDivarFile = createServerFn({ method: "POST" })
             row.longitude == null ? null : Number(row.longitude),
             row.floor_label === "suite" ? null : row.floor == null ? null : Number(row.floor),
             row.floor_label === "suite" ? "suite" : null,
+            row.orientation == null ? null : String(row.orientation),
           ],
         );
 
@@ -1297,12 +1307,12 @@ export const importDivarFile = createServerFn({ method: "POST" })
         id, slug, status, featured, title, transaction_type, property_type, city,
         neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
         built_year, parking, elevator, storage, price, deposit, rent, description,
-        features, images, contact_name, contact_phone, latitude, longitude, floor_label, published_at
+        features, images, contact_name, contact_phone, latitude, longitude, floor_label, orientation, published_at
       ) values (
         $1,$2,'published',false,$3,$4,$5,'اصفهان',
         $6,null,$7,$8,$9,$10,$11,
         $12,$13,$14,$15,$16,$17,$18,$19,
-        $20::jsonb,$21::jsonb,$22,$23,$24,$25,$26,current_timestamp
+        $20::jsonb,$21::jsonb,$22,$23,$24,$25,$26,$27,current_timestamp
       )`,
       [
         id,
@@ -1331,6 +1341,7 @@ export const importDivarFile = createServerFn({ method: "POST" })
         row.latitude == null ? null : Number(row.latitude),
         row.longitude == null ? null : Number(row.longitude),
         row.floor_label === "suite" ? "suite" : null,
+        row.orientation == null ? null : String(row.orientation),
       ],
     );
 
