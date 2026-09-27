@@ -13,6 +13,7 @@ import refinementsCss from "../refinements.css?url";
 import uiClarityCss from "../ui-clarity.css?url";
 import propertyDetailProCss from "../property-detail-pro.css?url";
 import mobileDeviceFixesCss from "../mobile-device-fixes.css?url";
+import themeHarmonyCss from "../theme-harmony.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -47,6 +48,7 @@ export const Route = createRootRoute({
       { rel: "stylesheet", href: uiClarityCss },
       { rel: "stylesheet", href: propertyDetailProCss },
       { rel: "stylesheet", href: mobileDeviceFixesCss },
+      { rel: "stylesheet", href: themeHarmonyCss },
     ],
   }),
   component: RootDocument,
