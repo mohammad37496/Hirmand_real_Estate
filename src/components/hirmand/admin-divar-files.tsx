@@ -118,6 +118,10 @@ const DIVAR_CSS = `
 .divar-chip,.divar-feature{background:#f7f9fb!important;color:#475467!important;border-color:#dfe5eb!important}
 .divar-price{color:#8a5e14!important}.divar-progress{background:#f8fafc!important;border-color:#e0e6eb!important}.divar-progress-bar{background:#e8edf2!important}.divar-progress-bar span{background:linear-gradient(90deg,#8a5e14,#c08a2a)!important}
 .divar-note{color:#17603f!important}.divar-warning{color:#6f4318!important}
+.divar-reject-reason{display:flex;align-items:flex-start;gap:7px;width:100%;padding:9px 11px;border:1px solid #ecd0d0;border-radius:10px;background:#fff7f7;color:#8f3232;font-size:.75rem;line-height:1.8}
+.divar-image{background:var(--navy-100)!important}
+.divar-gallery-strip{background:linear-gradient(to top,rgba(8,19,32,.78),transparent)!important}
+.divar-tab.is-active{background:var(--navy-900)!important;border-color:var(--navy-900)!important}
 .divar-actions .btn-gold{background:linear-gradient(135deg,#8a5e14,#c08a2a)!important;color:#fff!important}
 @media(max-width:560px){.divar-grid{padding:11px!important}.divar-body{padding:13px!important}.divar-actions>*{flex:1 1 100%!important}}
 `;
@@ -261,6 +265,7 @@ function featureSummary(file: DivarFile) {
 export function AdminDivarFiles() {
   const [files, setFiles] = useState<DivarFile[]>([]);
   const [imported, setImported] = useState<DivarFile[]>([]);
+  const [rejected, setRejected] = useState<DivarFile[]>([]);
   const [stats, setStats] = useState({
     accepted: 0,
     imported: 0,
@@ -268,7 +273,7 @@ export function AdminDivarFiles() {
     totalSeen: 0,
     lastSyncAt: null as string | null,
   });
-  const [tab, setTab] = useState<"accepted" | "imported">("accepted");
+  const [tab, setTab] = useState<"accepted" | "imported" | "rejected">("accepted");
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [importingId, setImportingId] = useState<string | null>(null);
@@ -284,13 +289,15 @@ export function AdminDivarFiles() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [acceptedRows, importedRows, nextStats] = await Promise.all([
+      const [acceptedRows, importedRows, rejectedRows, nextStats] = await Promise.all([
         listDivarFiles({ data: { status: "accepted", limit: 100 } }),
         listDivarFiles({ data: { status: "imported", limit: 100 } }),
+        listDivarFiles({ data: { status: "rejected", limit: 100 } }),
         getDivarStats({ data: {} }),
       ]);
       setFiles(acceptedRows);
       setImported(importedRows);
+      setRejected(rejectedRows);
       setStats(nextStats);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "بارگذاری فایل‌های دیوار انجام نشد.");
@@ -379,7 +386,7 @@ export function AdminDivarFiles() {
     }
   }
 
-  const sourceVisible = tab === "accepted" ? files : imported;
+  const sourceVisible = tab === "accepted" ? files : tab === "imported" ? imported : rejected;
 
   const visible = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -431,7 +438,9 @@ export function AdminDivarFiles() {
   const emptyText =
     tab === "accepted"
       ? "هنوز فایل شخصی جدیدی دریافت نشده. روی «دریافت فایل‌های دیوار» بزنید."
-      : "هنوز فایل دیواری به سایت شما وارد نشده است.";
+      : tab === "imported"
+        ? "هنوز فایل دیواری به سایت شما وارد نشده است."
+        : "فعلاً فایل ردشده‌ای در سابقه فیلتر وجود ندارد.";
 
   const lastSyncLabel = stats.lastSyncAt
     ? new Date(stats.lastSyncAt).toLocaleString("fa-IR")
@@ -517,7 +526,7 @@ export function AdminDivarFiles() {
           <div>
             <span className="kicker">فهرست</span>
             <h2 style={{ margin: 0, fontSize: 20 }}>
-              {tab === "accepted" ? "فایل‌های قابل انتشار" : "فایل‌های منتشرشده"}
+              {tab === "accepted" ? "فایل‌های قابل انتشار" : tab === "imported" ? "فایل‌های منتشرشده" : "فایل‌های ردشده"}
             </h2>
           </div>
           <div className="divar-tabs">
@@ -534,6 +543,13 @@ export function AdminDivarFiles() {
               onClick={() => setTab("imported")}
             >
               <CheckCircle2 size={14} /> منتشرشده <b>{imported.length.toLocaleString("fa-IR")}</b>
+            </button>
+            <button
+              type="button"
+              className={`divar-tab${tab === "rejected" ? " is-active" : ""}`}
+              onClick={() => setTab("rejected")}
+            >
+              <ShieldCheck size={14} /> ردشده <b>{rejected.length.toLocaleString("fa-IR")}</b>
             </button>
           </div>
         </div>
@@ -734,7 +750,11 @@ export function AdminDivarFiles() {
                         </a>
                       ) : null}
 
-                      {tab === "accepted" ? (
+                      {tab === "rejected" ? (
+                        <span className="divar-reject-reason">
+                          <ShieldCheck size={14} /> {file.rejectReason ?? "به دلیل فیلتر مشاور/آژانس رد شده است."}
+                        </span>
+                      ) : tab === "accepted" ? (
                         <button
                           type="button"
                           className="btn-gold"
