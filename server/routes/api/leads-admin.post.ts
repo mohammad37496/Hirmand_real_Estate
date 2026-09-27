@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
     const rows = await sql.query<Record<string, unknown>>(
       "select name, phone, people_count, job, deal, property_type, neighborhood, consultant, status, note, source, " +
         "acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, follow_up_at, last_contacted_at, " +
-        "budget_deposit, budget_rent, budget_purchase, budget_sale, budget_equivalent, budget_bedrooms, match_count, created_at " +
+        "lease_deadline, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_equivalent, budget_bedrooms, match_count, created_at " +
         "from leads where " + conditions.join(" and ") +
         " order by created_at desc limit 50000",
       params,
@@ -85,7 +85,7 @@ export default defineEventHandler(async (event) => {
       closed: "ناموفق / بسته‌شده",
       spam: "اسپم",
     };
-    const header = ["نام", "تلفن", "تعداد نفرات", "شغل", "معامله", "نوع ملک", "محله", "مشاور", "وضعیت", "منبع جذب", "رهن بودجه", "اجاره بودجه", "خرید بودجه", "فروش بودجه", "معادل رهنی", "خواب", "تعداد فایل پیشنهادی", "توضیحات", "تاریخ"];
+    const header = ["نام", "تلفن", "تعداد نفرات", "شغل", "معامله", "نوع ملک", "محله", "مشاور", "وضعیت", "منبع جذب", "رهن بودجه", "اجاره بودجه", "خرید بودجه", "فروش بودجه", "معادل رهنی", "خواب", "تعداد فایل پیشنهادی", "توضیحات", "مهلت رهن و اجاره", "تاریخ"];
     const lines = [
       header.map(csvCell).join(","),
       ...rows.map((row) =>
@@ -108,6 +108,7 @@ export default defineEventHandler(async (event) => {
           row.budget_bedrooms,
           row.match_count,
           row.note,
+          row.lease_deadline,
           csvDate(row.created_at),
         ].map(csvCell).join(","),
       ),
@@ -122,7 +123,7 @@ export default defineEventHandler(async (event) => {
   if ((body.action ?? "list") === "list") {
     const rows = await sql.query<Record<string, unknown>>(
       "select id,name,phone,people_count,job,deal,property_type,neighborhood,consultant,note,status,source, " +
-        "acquisition_source,acquisition_medium,acquisition_campaign,acquisition_referrer,follow_up_at,last_contacted_at, " +
+        "acquisition_source,acquisition_medium,acquisition_campaign,acquisition_referrer,follow_up_at,last_contacted_at,lease_deadline, " +
         "budget_deposit,budget_rent,budget_purchase,budget_sale,budget_equivalent,budget_bedrooms,budget_rate,matched_properties,match_count,created_at " +
         "from leads order by created_at desc limit 300",
     );
@@ -146,6 +147,7 @@ export default defineEventHandler(async (event) => {
         acquisitionReferrer: row.acquisition_referrer == null ? null : String(row.acquisition_referrer),
         followUpAt: row.follow_up_at == null ? null : new Date(String(row.follow_up_at)).toISOString(),
         lastContactedAt: row.last_contacted_at == null ? null : new Date(String(row.last_contacted_at)).toISOString(),
+        leaseDeadline: row.lease_deadline == null ? null : String(row.lease_deadline),
         budgetDeposit: row.budget_deposit == null ? null : Number(row.budget_deposit),
         budgetRent: row.budget_rent == null ? null : Number(row.budget_rent),
         budgetPurchase: row.budget_purchase == null ? null : Number(row.budget_purchase),
