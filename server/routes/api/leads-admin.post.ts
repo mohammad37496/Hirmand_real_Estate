@@ -60,7 +60,7 @@ export default defineEventHandler(async (event) => {
       const index = params.length;
       conditions.push(
         "(" +
-          ["name", "phone", "deal", "property_type", "neighborhood", "consultant", "job", "note", "budget_deposit::text", "budget_rent::text", "budget_purchase::text", "budget_sale::text"]
+          ["name", "phone", "deal", "property_type", "neighborhood", "consultant", "job", "note", "budget_deposit::text", "budget_rent::text", "budget_purchase::text", "budget_sale::text", "budget_deposit_min::text", "budget_deposit_max::text", "budget_rent_min::text", "budget_rent_max::text", "budget_purchase_min::text", "budget_purchase_max::text", "budget_sale_min::text", "budget_sale_max::text"]
             .map((column) => column + " ilike $" + index)
             .join(" or ") +
           ")",
@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
     const rows = await sql.query<Record<string, unknown>>(
       "select name, phone, people_count, job, deal, property_type, neighborhood, consultant, status, note, source, " +
         "acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, follow_up_at, last_contacted_at, " +
-        "lease_deadline, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_equivalent, budget_bedrooms, floor_preference, match_count, created_at " +
+        "lease_deadline, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_deposit_min, budget_deposit_max, budget_rent_min, budget_rent_max, budget_purchase_min, budget_purchase_max, budget_sale_min, budget_sale_max, budget_equivalent, budget_bedrooms, floor_preference, match_count, created_at " +
         "from leads where " + conditions.join(" and ") +
         " order by created_at desc limit 50000",
       params,
@@ -85,7 +85,7 @@ export default defineEventHandler(async (event) => {
       closed: "ناموفق / بسته‌شده",
       spam: "اسپم",
     };
-    const header = ["نام", "تلفن", "تعداد نفرات", "شغل", "معامله", "نوع ملک", "محله", "طبقه", "مشاور", "وضعیت", "منبع جذب", "رهن بودجه", "اجاره بودجه", "خرید بودجه", "فروش بودجه", "معادل رهنی", "خواب", "تعداد فایل پیشنهادی", "توضیحات", "مهلت رهن و اجاره", "تاریخ"];
+    const header = ["نام", "تلفن", "تعداد نفرات", "شغل", "معامله", "نوع ملک", "محله", "طبقه", "مشاور", "وضعیت", "منبع جذب", "رهن از", "رهن تا", "اجاره از", "اجاره تا", "خرید از", "خرید تا", "فروش از", "فروش تا", "معادل رهنی", "خواب", "تعداد فایل پیشنهادی", "توضیحات", "مهلت رهن و اجاره", "تاریخ"];
     const lines = [
       header.map(csvCell).join(","),
       ...rows.map((row) =>
@@ -101,10 +101,14 @@ export default defineEventHandler(async (event) => {
           row.consultant,
           labels[String(row.status) as Status] ?? row.status,
           row.acquisition_source ?? row.source,
-          row.budget_deposit,
-          row.budget_rent,
-          row.budget_purchase,
-          row.budget_sale,
+          row.budget_deposit_min ?? row.budget_deposit,
+          row.budget_deposit_max ?? row.budget_deposit,
+          row.budget_rent_min ?? row.budget_rent,
+          row.budget_rent_max ?? row.budget_rent,
+          row.budget_purchase_min ?? row.budget_purchase,
+          row.budget_purchase_max ?? row.budget_purchase,
+          row.budget_sale_min ?? row.budget_sale,
+          row.budget_sale_max ?? row.budget_sale,
           row.budget_equivalent,
           row.budget_bedrooms,
           row.match_count,
@@ -125,7 +129,7 @@ export default defineEventHandler(async (event) => {
     const rows = await sql.query<Record<string, unknown>>(
       "select id,name,phone,people_count,job,deal,property_type,neighborhood,floor_preference,consultant,note,status,source, " +
         "acquisition_source,acquisition_medium,acquisition_campaign,acquisition_referrer,follow_up_at,last_contacted_at,lease_deadline, " +
-        "budget_deposit,budget_rent,budget_purchase,budget_sale,budget_equivalent,budget_bedrooms,budget_rate,matched_properties,match_count,created_at " +
+        "budget_deposit,budget_rent,budget_purchase,budget_sale,budget_deposit_min,budget_deposit_max,budget_rent_min,budget_rent_max,budget_purchase_min,budget_purchase_max,budget_sale_min,budget_sale_max,budget_equivalent,budget_bedrooms,budget_rate,matched_properties,match_count,created_at " +
         "from leads order by created_at desc limit 300",
     );
     return {
@@ -154,6 +158,14 @@ export default defineEventHandler(async (event) => {
         budgetRent: row.budget_rent == null ? null : Number(row.budget_rent),
         budgetPurchase: row.budget_purchase == null ? null : Number(row.budget_purchase),
         budgetSale: row.budget_sale == null ? null : Number(row.budget_sale),
+        budgetDepositMin: row.budget_deposit_min == null ? null : Number(row.budget_deposit_min),
+        budgetDepositMax: row.budget_deposit_max == null ? null : Number(row.budget_deposit_max),
+        budgetRentMin: row.budget_rent_min == null ? null : Number(row.budget_rent_min),
+        budgetRentMax: row.budget_rent_max == null ? null : Number(row.budget_rent_max),
+        budgetPurchaseMin: row.budget_purchase_min == null ? null : Number(row.budget_purchase_min),
+        budgetPurchaseMax: row.budget_purchase_max == null ? null : Number(row.budget_purchase_max),
+        budgetSaleMin: row.budget_sale_min == null ? null : Number(row.budget_sale_min),
+        budgetSaleMax: row.budget_sale_max == null ? null : Number(row.budget_sale_max),
         budgetEquivalent: row.budget_equivalent == null ? null : Number(row.budget_equivalent),
         budgetBedrooms: row.budget_bedrooms == null ? null : Number(row.budget_bedrooms),
         budgetRate: row.budget_rate == null ? null : Number(row.budget_rate),
