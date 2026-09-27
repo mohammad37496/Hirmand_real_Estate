@@ -96,6 +96,8 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
   const [propertyType, setPropertyType] = useState(draft.propertyType);
   const [neighborhood, setNeighborhood] = useState(draft.neighborhood);
   const [floorPreference, setFloorPreference] = useState("");
+  const [requestedAmenities, setRequestedAmenities] = useState<string[]>([]);
+  const [amenitiesOpen, setAmenitiesOpen] = useState(false);
   const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>(NEIGHBORHOOD_NAMES);
   const [consultant, setConsultant] = useState<(typeof TEAM)[number]["id"]>(TEAM[0].id);
   const [note, setNote] = useState("");
@@ -201,6 +203,16 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       propertyType ? `نوع ملک: ${propertyType}` : "",
       neighborhood ? `محله: ${neighborhood}` : "",
       floorPreference ? `طبقه: ${floorPreference}` : "",
+      requestedAmenities.length
+        ? "امکانات موردنظر: " + requestedAmenities.map((value) => {
+            const item = PROPERTY_OTHER_AMENITY_OPTIONS.find((option) => option.value === value);
+            return item?.label ?? ({
+              parking: "پارکینگ",
+              elevator: "آسانسور",
+              storage: "انباری",
+            } as Record<string, string>)[value] ?? value;
+          }).join("، ")
+        : "",
       `مشاور: ${selected.name}`,
       note ? `توضیح: ${note}` : "",
     ]
@@ -297,6 +309,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       propertyType,
       neighborhood,
       floorPreference,
+      requestedAmenities,
       consultant: selected.name,
       note: note.trim(),
     };
@@ -326,6 +339,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           propertyType: payload.propertyType,
           neighborhood: payload.neighborhood,
           floorPreference: payload.floorPreference,
+          requestedAmenities: payload.requestedAmenities,
           consultant: payload.consultant,
           note: payload.note,
         }),
@@ -619,6 +633,54 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
             </option>
           ))}
         </select>
+      </div>
+      <div className="field field-span">
+        <details className="inquiry-amenities-picker" open={amenitiesOpen} onToggle={(event) => setAmenitiesOpen(event.currentTarget.open)}>
+          <summary>
+            <span>
+              <strong>امکانات موردنظر</strong>
+              <small>اختیاری؛ فقط موارد مهم فایل را انتخاب کنید.</small>
+            </span>
+            <b>{requestedAmenities.length ? requestedAmenities.length.toLocaleString("fa-IR") + " مورد انتخاب شده" : "افزودن امکانات"}</b>
+          </summary>
+          {amenitiesOpen ? (
+            <div className="inquiry-amenities-body">
+              <div className="inquiry-amenity-grid">
+                {[
+                  ["parking", "پارکینگ"],
+                  ["elevator", "آسانسور"],
+                  ["storage", "انباری"],
+                  ["balcony", "بالکن"],
+                  ["master_bedroom", "اتاق مستر"],
+                  ["double_glazed", "پنجره دوجداره"],
+                  ["security_door", "درب ضدسرقت"],
+                  ["cctv", "دوربین مداربسته"],
+                  ...PROPERTY_OTHER_AMENITY_OPTIONS
+                    .filter((item) =>
+                      ["yard", "private_yard", "pool", "gym", "doorman", "pet_friendly", "elevator_private", "private_park"].includes(item.value),
+                    )
+                    .map((item) => [item.value, item.label] as const),
+                ].map(([value, label]) => (
+                  <label key={value} className="inquiry-amenity-option">
+                    <input
+                      type="checkbox"
+                      checked={requestedAmenities.includes(value)}
+                      onChange={() => {
+                        setRequestedAmenities((current) =>
+                          current.includes(value) ? current.filter((item) => item !== value) : [...current, value],
+                        );
+                      }}
+                    />
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+              <small className="form-hint">
+                انتخاب امکانات اختیاری است؛ برای پیدا کردن فایل مناسب، فقط موارد مهم را تیک بزنید.
+              </small>
+            </div>
+          ) : null}
+        </details>
       </div>
       <div className="field">
         <label htmlFor="inq-consultant">مشاور</label>
