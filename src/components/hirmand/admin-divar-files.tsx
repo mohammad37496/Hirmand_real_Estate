@@ -225,6 +225,20 @@ function featureSummary(file: DivarFile) {
     file.parking ? "پارکینگ" : null,
     file.elevator ? "آسانسور" : null,
     file.storage ? "انباری" : null,
+    file.orientation ? ({
+      north: "شمالی",
+      south: "جنوبی",
+      east: "شرقی",
+      west: "غربی",
+      northeast: "شمال‌شرقی",
+      northwest: "شمال‌غربی",
+      southeast: "جنوب‌شرقی",
+      southwest: "جنوب‌غربی",
+      two_fronts: "دو نبش",
+      three_fronts: "سه نبش",
+      four_fronts: "چهار نبش",
+      other: "سایر",
+    } as Record<NonNullable<DivarFile["orientation"]>, string>)[file.orientation] : null,
   ].filter(Boolean) as string[];
   return (file.features.length ? file.features : fallback).slice(0, 6);
 }
