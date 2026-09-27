@@ -52,6 +52,8 @@ export type DivarFile = {
   description: string;
   features: string[];
   images: string[];
+  sourceImageCount: number;
+  publishedImageCount: number;
   sellerName: string | null;
   sellerType: string | null;
   sourceUrl: string;
@@ -848,6 +850,8 @@ function mapRow(row: Record<string, unknown>): DivarFile {
     description: String(row.description ?? ""),
     features: parseJsonArray(row.features),
     images: parseJsonArray(row.images),
+    sourceImageCount: Number(row.source_image_count) || parseJsonArray(row.images).length,
+    publishedImageCount: Number(row.published_image_count) || 0,
     sellerName: row.seller_name == null ? null : String(row.seller_name),
     sellerType: row.seller_type == null ? null : String(row.seller_type),
     sourceUrl: String(row.source_url),
