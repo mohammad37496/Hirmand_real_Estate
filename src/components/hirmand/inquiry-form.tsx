@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SERVICES, SITE, TEAM } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { formatToman, parseAmount, tomanToWords } from "@/lib/money";
+import { PROPERTY_OTHER_AMENITY_OPTIONS } from "@/lib/property-options";
 import { listNeighborhoodNames } from "@/lib/neighborhoods";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { formatPersianDate } from "@/lib/persian-date";
