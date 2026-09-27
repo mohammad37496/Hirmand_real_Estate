@@ -1113,7 +1113,7 @@ export function AdminPropertiesPage() {
         <div className="admin-login-card">
           <span className="kicker">پنل داخلی هیرمند</span>
           <h1>ورود به مدیریت</h1>
-          <p>کلید HIRMAND_ADMIN_KEY را وارد کنید.</p>
+          <p>برای ورود، کلید مدیریت را وارد کنید. این بخش فقط برای مدیریت داخلی هیرمند است.</p>
           <div className="admin-key-row">
             <input
               type="password"
@@ -1123,7 +1123,7 @@ export function AdminPropertiesPage() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") void unlock();
               }}
-              placeholder="HIRMAND_ADMIN_KEY"
+              placeholder="کلید مدیریت"
             />
             <button
               type="button"
