@@ -999,7 +999,6 @@ export const ADMIN_CSS = `
 .admin-private-notice{margin:0 0 14px;padding:10px 12px;border:1px solid #ead8bd;border-radius:11px;background:#fff8eb;color:#725f42;font-size:.69rem;line-height:1.9}
 .admin-owner-section input,.admin-owner-section textarea{background:#fff!important}
 .admin-owner-section textarea{min-height:104px}
-`;
 
 /* ==========================================================================
    Hirmand Admin 3.1 — workflow polish
@@ -1040,3 +1039,5 @@ export const ADMIN_CSS = `
 .admin-main .admin-dashboard .admin-lead-chart-bar-wrap{
   overflow:hidden!important;
 }
+
+`;
