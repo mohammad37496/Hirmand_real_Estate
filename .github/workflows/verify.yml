@@ -59,6 +59,10 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run build
+      # The production build prunes devDependencies for the Liara runtime image.
+      # Restore them in CI before browser smoke tests, which require Vite/Playwright.
+      - name: Restore CI dev dependencies after production build
+        run: npm ci
 
       - name: Seed deterministic property-detail fixture
         run: node scripts/seed-browser-smoke.mjs
