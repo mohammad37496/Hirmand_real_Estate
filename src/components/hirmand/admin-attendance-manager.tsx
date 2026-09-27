@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   CalendarDays,
-  ChevronDown,
   Clock3,
   Download,
   Pencil,
@@ -10,7 +9,6 @@ import {
   Save,
   Trash2,
   UserRound,
-  UsersRound,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
