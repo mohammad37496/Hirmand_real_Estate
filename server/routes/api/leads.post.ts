@@ -25,6 +25,7 @@ const schema = z.object({
   deal: z.string().trim().min(1).max(40),
   propertyType: z.string().trim().max(80).default(""),
   neighborhood: z.string().trim().max(80).default(""),
+  floorPreference: z.string().trim().max(40).default(""),
   consultant: z.string().trim().max(80).default(""),
   note: z.string().trim().max(1500).default(""),
   leaseDeadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -137,7 +138,7 @@ export default defineEventHandler(async (event) => {
          set name=$2, people_count=$3, job=$4, deal=$5, property_type=$6, neighborhood=$7, consultant=$8, note=$9,
              source=$10, follow_up_at=current_timestamp + interval '24 hours', lease_deadline=null, acquisition_source=$20, acquisition_medium=$21, acquisition_campaign=$22, acquisition_referrer=$23, acquisition_landing_path=$24, budget_deposit=$11, budget_rent=$12, budget_purchase=$13, budget_sale=$14, budget_rate=$15,
              budget_equivalent=$16, budget_bedrooms=$17, matched_properties=$18::jsonb,
-             match_count=$19, updated_at=current_timestamp
+             match_count=$19, floor_preference=$25, updated_at=current_timestamp
          where id=$1`,
         [
           existing[0].id,
@@ -164,6 +165,7 @@ export default defineEventHandler(async (event) => {
           acquisition.campaign,
           acquisition.referrer,
           acquisition.landingPath,
+          parsed.data.floorPreference,
         ],
       );
       return { success: true, duplicate: true, updated: true, id: existing[0].id };
@@ -176,9 +178,9 @@ export default defineEventHandler(async (event) => {
       id, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source,
       acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, acquisition_landing_path,
       follow_up_at, lease_deadline, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_rate, budget_equivalent, budget_bedrooms,
-      matched_properties, match_count
+      floor_preference, matched_properties, match_count
     )
-    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,current_timestamp + interval '24 hours',$17,$18,$19,$20,$21,$22,$23,$24,$25::jsonb,$26)
+    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,current_timestamp + interval '24 hours',$17,$18,$19,$20,$21,$22,$23,$24,$25,$26::jsonb,$27)
     returning id`,
     [
       crypto.randomUUID(),
@@ -205,6 +207,7 @@ export default defineEventHandler(async (event) => {
       parsed.data.source === "budget_match" ? DEFAULT_MATCH_RAHN_RATE : null,
       equivalent || null,
       parsed.data.budgetBedrooms ?? null,
+      parsed.data.floorPreference,
       JSON.stringify(matchedProperties),
       matchedProperties.length,
     ],
