@@ -1218,7 +1218,7 @@ export const importDivarFile = createServerFn({ method: "POST" })
     if (data.repair === true || originalImages.length === 0) {
       try {
         const detail = await fetchJson<Record<string, unknown>>(
-          `\${DIVAR_API}/posts-v2/web/\${encodeURIComponent(token)}`,
+          `${DIVAR_API}/posts-v2/web/${encodeURIComponent(token)}`,
         );
         const detailReason = getDivarAgencyReason(detail);
         if (detailReason) {
