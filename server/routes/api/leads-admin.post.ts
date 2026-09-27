@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
     const rows = await sql.query<Record<string, unknown>>(
       "select name, phone, people_count, job, deal, property_type, neighborhood, consultant, status, note, source, " +
         "acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, follow_up_at, last_contacted_at, " +
-        "lease_deadline, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_equivalent, budget_bedrooms, match_count, created_at " +
+        "lease_deadline, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_equivalent, budget_bedrooms, floor_preference, match_count, created_at " +
         "from leads where " + conditions.join(" and ") +
         " order by created_at desc limit 50000",
       params,
@@ -97,6 +97,7 @@ export default defineEventHandler(async (event) => {
           row.deal,
           row.property_type,
           row.neighborhood,
+          row.floor_preference,
           row.consultant,
           labels[String(row.status) as Status] ?? row.status,
           row.acquisition_source ?? row.source,
@@ -122,7 +123,7 @@ export default defineEventHandler(async (event) => {
 
   if ((body.action ?? "list") === "list") {
     const rows = await sql.query<Record<string, unknown>>(
-      "select id,name,phone,people_count,job,deal,property_type,neighborhood,consultant,note,status,source, " +
+      "select id,name,phone,people_count,job,deal,property_type,neighborhood,floor_preference,consultant,note,status,source, " +
         "acquisition_source,acquisition_medium,acquisition_campaign,acquisition_referrer,follow_up_at,last_contacted_at,lease_deadline, " +
         "budget_deposit,budget_rent,budget_purchase,budget_sale,budget_equivalent,budget_bedrooms,budget_rate,matched_properties,match_count,created_at " +
         "from leads order by created_at desc limit 300",
@@ -137,6 +138,7 @@ export default defineEventHandler(async (event) => {
         deal: String(row.deal),
         propertyType: String(row.property_type ?? ""),
         neighborhood: String(row.neighborhood ?? ""),
+        floorPreference: String(row.floor_preference ?? ""),
         consultant: String(row.consultant ?? ""),
         note: String(row.note ?? ""),
         status: String(row.status) as Status,
