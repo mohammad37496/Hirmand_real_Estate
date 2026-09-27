@@ -204,6 +204,18 @@ function ComparePage() {
                     {properties.map((p) => <td key={p.id}>{p.storage ? "دارد" : "ندارد"}</td>)}
                   </tr>
                   <tr>
+                    <th>رنگ‌آمیزی</th>
+                    {properties.map((p) => <td key={p.id}>{p.painted ? "دارد" : "ندارد"}</td>)}
+                  </tr>
+                  <tr>
+                    <th>کاغذ دیواری</th>
+                    {properties.map((p) => <td key={p.id}>{p.wallpaper ? "دارد" : "ندارد"}</td>)}
+                  </tr>
+                  <tr>
+                    <th>انباری</th>
+                    {properties.map((p) => <td key={p.id}>{p.storage ? "دارد" : "ندارد"}</td>)}
+                  </tr>
+                  <tr>
                     <th>قیمت هر متر</th>
                     {properties.map((p) => <td key={p.id}>{valuePerM2(p)}</td>)}
                   </tr>
