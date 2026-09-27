@@ -175,8 +175,6 @@ export function AdminLeadManager() {
     }
   }
 
-  const newCount = leads.filter((lead) => lead.status === "new").length;
-
   const filteredLeads = useMemo(() => {
     const q = query.trim().toLowerCase();
     return leads.filter((lead) => {
@@ -300,7 +298,11 @@ export function AdminLeadManager() {
         <div className="admin-panel-head">
           <div>
             <span className="kicker">CRM</span>
-            <h2>{filteredLeads.length.toLocaleString("fa-IR")} درخواست · {newCount.toLocaleString("fa-IR")} جدید</h2>
+            <h2>
+              {filteredLeads.length.toLocaleString("fa-IR")} درخواست
+              {" · "}
+              {filteredLeads.filter((lead) => lead.status === "new").length.toLocaleString("fa-IR")} جدید
+            </h2>
           </div>
           <div className="admin-list-toolbar">
             <label className="admin-search">
@@ -347,6 +349,12 @@ export function AdminLeadManager() {
             <UserRound size={30} />
             <strong>هنوز درخواستی ثبت نشده</strong>
             <p>Leadهای فرم درخواست ملک اینجا نمایش داده می‌شوند.</p>
+          </div>
+        ) : filteredLeads.length === 0 ? (
+          <div className="admin-empty">
+            <Search size={30} />
+            <strong>نتیجه‌ای با این فیلتر پیدا نشد</strong>
+            <p>عبارت جستجو یا وضعیت انتخاب‌شده را تغییر دهید.</p>
           </div>
         ) : (
           <div className="admin-lead-list">
@@ -489,7 +497,16 @@ export function AdminLeadManager() {
                     className="admin-icon-btn"
                     href={
                       "https://wa.me/" +
-                      lead.phone.replace(/^0/, "98") +
+                      (() => {
+                        const phone = lead.phone
+                          .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+                          .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
+                        return phone.startsWith("0098")
+                          ? phone.slice(2)
+                          : phone.startsWith("98")
+                            ? phone
+                            : phone.replace(/^0/, "98");
+                      })() +
                       "?text=" +
                       encodeURIComponent("سلام، از دفتر هیرمند درباره درخواست شما تماس می‌گیریم.")
                     }
