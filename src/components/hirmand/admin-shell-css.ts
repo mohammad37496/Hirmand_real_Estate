@@ -1040,4 +1040,48 @@ export const ADMIN_CSS = `
   overflow:hidden!important;
 }
 
+
+/* Private owner details in the admin property list */
+.admin-property-owner{
+  margin-top:8px;
+  border:1px solid #eadfcf;
+  border-radius:11px;
+  background:#fffdf8;
+  overflow:hidden;
+}
+.admin-property-owner summary{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:7px 9px;
+  list-style:none;
+  cursor:pointer;
+  color:#7a5414;
+  font-size:.7rem;
+  font-weight:800;
+}
+.admin-property-owner summary::-webkit-details-marker{display:none}
+.admin-property-owner summary::after{
+  content:"⌄";
+  margin-inline-start:auto;
+  color:#a07a3a;
+  font-size:.78rem;
+}
+.admin-property-owner[open] summary{border-bottom:1px solid #eee2d0;background:#fff9ef}
+.admin-property-owner-details{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  padding:8px 10px 9px;
+  color:#56636f;
+  font-size:.68rem;
+  line-height:1.8;
+  overflow-wrap:anywhere;
+}
+.admin-property-owner-details strong{color:#263746}
+@media(max-width:640px){
+  .admin-property-owner{margin-top:6px}
+  .admin-property-owner summary{font-size:.66rem;padding:6px 8px}
+  .admin-property-owner-details{font-size:.64rem;padding:7px 8px 8px}
+}
 `;
