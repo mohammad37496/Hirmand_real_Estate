@@ -125,13 +125,13 @@ export function AdminLocationPicker({
     if (key === "latitude") {
       setLatitudeText(raw);
       const next = parseCoordinate(raw, -90, 90);
-      onChange({ latitude: next, longitude });
+      if (next != null || raw.trim() === "") onChange({ latitude: next, longitude });
       return;
     }
 
     setLongitudeText(raw);
     const next = parseCoordinate(raw, -180, 180);
-    onChange({ latitude, longitude: next });
+    if (next != null || raw.trim() === "") onChange({ latitude, longitude: next });
   }
 
   function useNeighborhoodCenter() {
@@ -220,7 +220,7 @@ export function AdminLocationPicker({
                 aria-label="عرض جغرافیایی موقعیت تقریبی"
                 aria-invalid={!latitudeValid}
               />
-              <small>مثال: ${suggested ? String(suggested.lat) : String(SITE.lat)}</small>
+              <small>{`مثال: ${suggested ? String(suggested.lat) : String(SITE.lat)}`}</small>
               <span className={`admin-location-validation ${latitudeValid ? "is-ok" : "is-error"}`} aria-live="polite">
                 {latitudeValid ? "فرمت مختصات معتبر است" : "عدد واردشده برای عرض جغرافیایی معتبر نیست"}
               </span>
@@ -237,7 +237,7 @@ export function AdminLocationPicker({
                 aria-label="طول جغرافیایی موقعیت تقریبی"
                 aria-invalid={!longitudeValid}
               />
-              <small>مثال: ${suggested ? String(suggested.lng) : String(SITE.lng)}</small>
+              <small>{`مثال: ${suggested ? String(suggested.lng) : String(SITE.lng)}`}</small>
               <span className={`admin-location-validation ${longitudeValid ? "is-ok" : "is-error"}`} aria-live="polite">
                 {longitudeValid ? "فرمت مختصات معتبر است" : "عدد واردشده برای طول جغرافیایی معتبر نیست"}
               </span>
@@ -285,3 +285,5 @@ export function AdminLocationPicker({
         ) : null}
       </div>
     </div>
+  }
+}
