@@ -129,8 +129,8 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       setError("شماره موبایل را به‌صورت ۰۹۱۲۱۲۳۴۵۶۷ وارد کنید.");
       return;
     }
-    const normalizedPeopleCount = toLatinDigits(peopleCount).replace(/[\\s٬,]/g, "");
-    const parsedPeopleCount = /^\\d+$/.test(normalizedPeopleCount) ? Number(normalizedPeopleCount) : Number.NaN;
+    const normalizedPeopleCount = toLatinDigits(peopleCount).replace(/[\s٬,]/g, "");
+    const parsedPeopleCount = /^\d+$/.test(normalizedPeopleCount) ? Number(normalizedPeopleCount) : Number.NaN;
     if (!Number.isInteger(parsedPeopleCount) || parsedPeopleCount < 1 || parsedPeopleCount > 20) {
       setError("تعداد نفرات را بین ۱ تا ۲۰ نفر مشخص کنید.");
       return;
@@ -241,17 +241,20 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           value={peopleCount}
           onChange={(event) => {
             const value = event.target.value;
-            if (/^[0-9۰-۹٠-٩\\s٬,]*$/.test(value)) setPeopleCount(value);
+            if (/^[0-9۰-۹٠-٩\s٬,]*$/.test(value)) setPeopleCount(value);
           }}
           onBlur={() => {
-            const normalized = toLatinDigits(peopleCount).replace(/[\\s٬,]/g, "");
-            if (/^\\d+$/.test(normalized)) {
+            const normalized = toLatinDigits(peopleCount).replace(/[\s٬,]/g, "");
+            if (/^\d+$/.test(normalized)) {
               setPeopleCount(Number(normalized).toLocaleString("fa-IR"));
             }
           }}
           aria-describedby="inq-people-count-hint"
           placeholder="مثلاً ۴"
         />
+        <small id="inq-people-count-hint" className="form-hint">
+          ۱ تا ۲۰ نفر؛ ارقام فارسی، عربی یا انگلیسی پذیرفته می‌شود.
+        </small>
       </div>
       <div className="field">
         <label htmlFor="inq-job">شغل</label>
