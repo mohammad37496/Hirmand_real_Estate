@@ -139,6 +139,7 @@ export type PropertyFilters = {
   maxFloor?: number;
   floorType?: "suite";
   orientation?: PropertyOrientation;
+  convertibleOnly?: boolean;
   minTotalFloors?: number;
   maxTotalFloors?: number;
   minBuiltYear?: number;
@@ -172,6 +173,7 @@ const publicFiltersSchema = z.object({
   maxFloor: z.number().int().min(-60).max(200).optional(),
   floorType: z.literal("suite").optional(),
   orientation: z.enum(["north","south","east","west","northeast","northwest","southeast","southwest","two_fronts","three_fronts","four_fronts","other"]).optional(),
+  convertibleOnly: z.boolean().optional(),
   minTotalFloors: z.number().int().min(0).max(200).optional(),
   maxTotalFloors: z.number().int().min(0).max(200).optional(),
   minBuiltYear: z.number().int().min(1200).max(2500).optional(),
@@ -461,6 +463,7 @@ function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
     data.hasLocationOnly ?? false,
     data.floorType ?? null,
     data.orientation ?? null,
+    data.convertibleOnly ?? false,
     data.offset ?? 0,
   ];
 }
@@ -504,6 +507,7 @@ function publicPropertyWhereSql() {
     "and ($25::boolean is false or (latitude is not null and longitude is not null))",
     "and ($26::text is null or floor_label = $26)",
     "and ($27::text is null or orientation = $27)",
+    "and ($28::boolean is false or convertible = true)",
   ].join(" ");
 }
 
@@ -522,13 +526,13 @@ export const listPublishedPropertyCards = createServerFn({ method: "GET" })
           [
             "select " + CARD_COLUMNS,
             "from properties where " + publicPropertyWhereSql(),
-            "order by case when $29::text = 'newest' then case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end else 0 end,",
-            "case when $29::text = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
-            "case when $29::text = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
-            "case when $29::text = 'area_asc' then area_m2 end asc nulls last,",
-            "case when $29::text = 'area_desc' then area_m2 end desc nulls last,",
+            "order by case when $30::text = 'newest' then case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end else 0 end,",
+            "case when $30::text = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
+            "case when $30::text = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
+            "case when $30::text = 'area_asc' then area_m2 end asc nulls last,",
+            "case when $30::text = 'area_desc' then area_m2 end desc nulls last,",
             "published_at desc nulls last, created_at desc",
-            "limit 48 offset $28",
+            "limit 48 offset $29",
           ].join(" "),
           [...params, data.sort],
         );
@@ -547,13 +551,13 @@ export const listPublishedProperties = createServerFn({ method: "GET" })
       [
         "select " + LIST_COLUMNS,
         "from properties where " + publicPropertyWhereSql(),
-        "order by case when $29::text = 'newest' then case when featured then 0 else 1 end else 0 end,",
-        "case when $29::text = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
-        "case when $29::text = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
-        "case when $29::text = 'area_asc' then area_m2 end asc nulls last,",
-        "case when $29::text = 'area_desc' then area_m2 end desc nulls last,",
+        "order by case when $30::text = 'newest' then case when featured then 0 else 1 end else 0 end,",
+        "case when $30::text = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
+        "case when $30::text = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
+        "case when $30::text = 'area_asc' then area_m2 end asc nulls last,",
+        "case when $30::text = 'area_desc' then area_m2 end desc nulls last,",
         "published_at desc nulls last, created_at desc",
-        "limit 48 offset $28",
+        "limit 48 offset $29",
       ].join(" "),
       [...params, data.sort],
     );
@@ -570,7 +574,7 @@ export const countPublishedProperties = createServerFn({ method: "GET" })
       20_000,
       async () => {
         const sql = await getSql();
-        const params = publicFilterParams(data).slice(0, 27);
+        const params = publicFilterParams(data).slice(0, 28);
         const rows = await sql.query<{ count: number }>(
           "select count(*)::int as count from properties where " + publicPropertyWhereSql(),
           params,
