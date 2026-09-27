@@ -211,6 +211,10 @@ function ComparePage() {
                     {properties.map((p) => <td key={p.id}>{p.orientation ? PROPERTY_ORIENTATION_LABELS[p.orientation] : "—"}</td>)}
                   </tr>
                   <tr>
+                    <th>قابل تبدیل</th>
+                    {properties.map((p) => <td key={p.id}>{p.convertible ? "بله" : "خیر"}</td>)}
+                  </tr>
+                  <tr>
                     <th>پارکینگ</th>
                     {properties.map((p) => <td key={p.id}>{p.parking ? "دارد" : "ندارد"}</td>)}
                   </tr>
