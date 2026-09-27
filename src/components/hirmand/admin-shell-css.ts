@@ -1000,3 +1000,28 @@ export const ADMIN_CSS = `
 .admin-owner-section input,.admin-owner-section textarea{background:#fff!important}
 .admin-owner-section textarea{min-height:104px}
 `;
+
+/* ==========================================================================
+   Hirmand Admin 3.1 — workflow polish
+   ========================================================================== */
+.admin-main .admin-mobile-nav.is-form-active{display:none!important}
+.admin-main .admin-sticky-bar{z-index:2100!important}
+.admin-main .admin-sticky-bar .btn-gold:disabled,
+.admin-main .admin-sticky-bar .btn-ghost:disabled{opacity:.55!important;cursor:not-allowed!important}
+.admin-main .admin-nav-btn:focus-visible,
+.admin-main .admin-icon-btn:focus-visible,
+.admin-main .admin-mobile-nav button:focus-visible,
+.admin-main .admin-mobile-site:focus-visible,
+.admin-main .btn-gold:focus-visible,
+.admin-main .btn-ghost:focus-visible{
+  outline:2px solid rgb(192 138 42 / 40%)!important;
+  outline-offset:2px!important;
+}
+.admin-main .admin-property-card{content-visibility:auto;contain-intrinsic-size:120px}
+.admin-main .admin-property-actions .admin-icon-btn{flex:0 0 auto}
+.admin-main .admin-empty{min-height:180px;display:grid;place-items:center}
+@media(max-width:640px){
+  .admin-main .admin-sticky-bar{left:0!important;right:0!important}
+  .admin-main .admin-form-wrap{padding-bottom:78px!important}
+  .admin-main .admin-property-card{content-visibility:visible}
+}
