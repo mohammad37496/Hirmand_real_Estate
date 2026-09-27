@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Download, ExternalLink, Loader2, MessageCircle, Phone, Search, Trash2, UserRound } from "lucide-react";
+import { CalendarDays, Download, ExternalLink, Loader2, MessageCircle, Phone, Search, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { SITE } from "@/lib/site";
 import { formatToman } from "@/lib/money";
+import { daysUntilDateOnly, formatPersianDate } from "@/lib/persian-date";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 type Lead = {
@@ -25,6 +26,7 @@ type Lead = {
   acquisitionReferrer: string | null;
   followUpAt: string | null;
   lastContactedAt: string | null;
+  leaseDeadline: string | null;
   budgetDeposit: number | null;
   budgetRent: number | null;
   budgetPurchase: number | null;
@@ -63,6 +65,16 @@ function formatDate(value: string) {
     return value;
   }
 }
+
+function leaseDeadlineMeta(value: string) {
+  const days = daysUntilDateOnly(value);
+  if (days == null) return { tone: "normal", text: "" };
+  if (days < 0) return { tone: "expired", text: "مهلت گذشته" };
+  if (days === 0) return { tone: "today", text: "مهلت امروز است" };
+  if (days === 1) return { tone: "soon", text: "۱ روز باقی مانده" };
+  return { tone: days <= 7 ? "soon" : "normal", text: days.toLocaleString("fa-IR") + " روز باقی مانده" };
+}
+
 
 export function AdminLeadManager() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -158,6 +170,8 @@ export function AdminLeadManager() {
         lead.budgetRent == null ? "" : String(lead.budgetRent),
         lead.budgetPurchase == null ? "" : String(lead.budgetPurchase),
         lead.budgetSale == null ? "" : String(lead.budgetSale),
+        lead.leaseDeadline == null ? "" : lead.leaseDeadline,
+        lead.leaseDeadline ? formatPersianDate(lead.leaseDeadline) : "",
       ]
         .join(" ")
         .toLowerCase()
@@ -173,6 +187,9 @@ export function AdminLeadManager() {
       lead.budgetRent ? "اجاره ماهانه: " + formatToman(lead.budgetRent) + " تومان" : "",
       lead.budgetPurchase ? "بودجه خرید: " + formatToman(lead.budgetPurchase) + " تومان" : "",
       lead.budgetSale ? "بودجه فروش: " + formatToman(lead.budgetSale) + " تومان" : "",
+      lead.leaseDeadline && (lead.deal === "رهن" || lead.deal === "اجاره" || lead.deal === "رهن و اجاره")
+        ? "مهلت رهن و اجاره: " + formatPersianDate(lead.leaseDeadline)
+        : "",
       lead.neighborhood ? "محله: " + lead.neighborhood : "",
       lead.budgetBedrooms ? "حداقل خواب: " + lead.budgetBedrooms : "",
       "",
@@ -360,6 +377,18 @@ export function AdminLeadManager() {
                     <div className={new Date(lead.followUpAt).getTime() <= Date.now() ? "admin-lead-followup is-due" : "admin-lead-followup"}>
                       پیگیری: <strong>{formatDate(lead.followUpAt)}</strong>
                     </div>
+                  ) : null}
+                  {lead.leaseDeadline && (lead.deal === "رهن" || lead.deal === "اجاره" || lead.deal === "رهن و اجاره") ? (
+                    (() => {
+                      const meta = leaseDeadlineMeta(lead.leaseDeadline);
+                      return (
+                        <div className={"admin-lead-deadline is-" + meta.tone}>
+                          <CalendarDays size={15} aria-hidden="true" />
+                          <span>مهلت رهن و اجاره: <strong>{formatPersianDate(lead.leaseDeadline)}</strong></span>
+                          {meta.text ? <b>{meta.text}</b> : null}
+                        </div>
+                      );
+                    })()
                   ) : null}
                   {lead.acquisitionSource ? (
                     <div className="admin-lead-attribution">
