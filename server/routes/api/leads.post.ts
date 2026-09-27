@@ -216,9 +216,10 @@ export default defineEventHandler(async (event) => {
       follow_up_at, lease_deadline, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_rate, budget_equivalent, budget_bedrooms,
       floor_preference, matched_properties, match_count,
       budget_deposit_min, budget_deposit_max, budget_rent_min, budget_rent_max,
-      budget_purchase_min, budget_purchase_max, budget_sale_min, budget_sale_max
+      budget_purchase_min, budget_purchase_max, budget_sale_min, budget_sale_max,
+      requested_amenities
     )
-    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,current_timestamp + interval '24 hours',$17,$18,$19,$20,$21,$22,$23,$24,$25,$26::jsonb,$27,$28,$29,$30,$31,$32,$33,$34,$35)
+    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,current_timestamp + interval '24 hours',$17,$18,$19,$20,$21,$22,$23,$24,$25,$26::jsonb,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36::jsonb)
     returning id`,
     [
       crypto.randomUUID(),
