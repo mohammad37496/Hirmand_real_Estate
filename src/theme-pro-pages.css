@@ -548,29 +548,40 @@
 
 .partner-portal-hero {
   display: grid;
+  justify-items: start;
   gap: 12px;
-  padding: 34px;
-  background: linear-gradient(135deg, var(--navy-900), var(--navy-700));
+  padding: 30px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--brass-500);
   border-radius: var(--r-2xl);
-  box-shadow: var(--el-3);
-  color: #fff;
+  box-shadow: var(--el-1);
+  color: var(--fg);
+}
+
+.partner-portal-hero .brand-logo {
+  width: min(120px, 30vw);
+  height: auto;
+  max-height: 88px;
+  object-fit: contain;
+  object-position: right center;
 }
 
 .partner-portal-hero .kicker {
   justify-self: start;
-  background: rgb(192 138 42 / 18%);
-  border-color: rgb(226 196 140 / 32%);
-  color: var(--brass-300);
+  background: var(--brass-100);
+  border-color: var(--brass-300);
+  color: var(--brass-800);
 }
 
 .partner-portal-hero h1 {
-  color: #fff;
+  color: var(--navy-900);
   font-size: clamp(1.4rem, 1.1rem + 1.3vw, 2.05rem);
 }
 
 .partner-portal-hero p {
   max-width: 66ch;
-  color: rgb(255 255 255 / 78%);
+  color: var(--muted);
   font-size: 0.9375rem;
   line-height: 1.95;
 }
