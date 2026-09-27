@@ -25,7 +25,7 @@ const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 
 export type DivarTransaction = "sell" | "rent";
 export type DivarPropertyType = "apartment" | "villa";
-export type DivarFilterStatus = "accepted" | "imported";
+export type DivarFilterStatus = "accepted" | "imported" | "rejected";
 
 export type DivarFile = {
   id: string;
@@ -63,6 +63,7 @@ export type DivarFile = {
   lastSeenAt: string;
   createdAt: string;
   updatedAt: string;
+  rejectReason: string | null;
 };
 
 export type DivarStats = {
@@ -889,11 +890,12 @@ function mapRow(row: Record<string, unknown>): DivarFile {
     lastSeenAt: new Date(String(row.last_seen_at)).toISOString(),
     createdAt: new Date(String(row.created_at)).toISOString(),
     updatedAt: new Date(String(row.updated_at)).toISOString(),
+    rejectReason: row.reject_reason == null ? null : String(row.reject_reason),
   };
 }
 
 const listSchema = z.object({
-  status: z.enum(["accepted", "imported"]).optional().default("accepted"),
+  status: z.enum(["accepted", "imported", "rejected"]).optional().default("accepted"),
   limit: z.number().int().min(1).max(100).optional().default(60),
 });
 
