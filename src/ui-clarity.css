@@ -1727,7 +1727,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   }
   .site-home .property-card-actions{
     padding:8px!important;
-    background:#fbfcfd!important;
+    background:var(--card)!important;
     border-top:1px solid var(--line)!important;
   }
 
@@ -2507,7 +2507,7 @@ body {
     align-items: center !important;
     justify-content: center !important;
     border-inline-start: 1px solid var(--line) !important;
-    background: #fbfcfd !important;
+    background: var(--card) !important;
   }
 
   .property-grid.is-list-view .property-card-actions .property-actions-compact {
@@ -2591,7 +2591,7 @@ body {
     position: static !important;
     padding: 7px 10px !important;
     border-top: 1px solid var(--line) !important;
-    background: #fbfcfd !important;
+    background: var(--card) !important;
   }
 
   .property-grid.is-list-view .property-card-actions .property-actions-compact {
@@ -2787,7 +2787,7 @@ body {
     align-items: center !important;
     justify-content: flex-end !important;
     border-top: 1px solid var(--line) !important;
-    background: #fbfcfd !important;
+    background: var(--card) !important;
   }
 
   .property-grid.is-list-view .property-card-actions .property-actions-compact {
