@@ -938,3 +938,59 @@ export const ADMIN_CSS = `
 @media (max-width:640px){.admin-dashboard-quick-actions{padding:13px;border-radius:16px}.admin-dashboard-quick-grid{grid-template-columns:1fr}.admin-dashboard-quick-card{grid-template-columns:36px minmax(0,1fr) 14px}.admin-system-grid{grid-template-columns:1fr 1fr;padding-left:13px;padding-right:13px}.admin-dashboard-source-list{padding-left:13px;padding-right:13px}}
 @media (max-width:390px){.admin-system-grid{grid-template-columns:1fr}}
 `;
+
+
+/* Lease deadline in CRM */
+.admin-lead-deadline{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:7px 9px;
+  margin-top:10px;
+  padding:9px 11px;
+  border:1px solid #e4e9ee;
+  border-radius:12px;
+  background:#f8fafc;
+  color:#4f5d68;
+  font-size:.72rem;
+  line-height:1.8;
+}
+.admin-lead-deadline svg{flex:0 0 auto;color:#8a5e14}
+.admin-lead-deadline strong{color:#122333;font-weight:850}
+.admin-lead-deadline b{
+  margin-inline-start:auto;
+  padding:3px 8px;
+  border-radius:999px;
+  background:#eef2f5;
+  color:#51606c;
+  font-size:.64rem;
+  font-weight:850;
+}
+.admin-lead-deadline.is-soon{
+  border-color:#ecd9b8;
+  background:#fffaf2;
+}
+.admin-lead-deadline.is-soon svg,
+.admin-lead-deadline.is-soon b{color:#8a5e14}
+.admin-lead-deadline.is-soon b{background:#f8ead3}
+.admin-lead-deadline.is-today{
+  border-color:#e5c589;
+  background:#fff7e8;
+}
+.admin-lead-deadline.is-today b{
+  background:#c08a2a;
+  color:#fff;
+}
+.admin-lead-deadline.is-expired{
+  border-color:#e5bcbc;
+  background:#fff7f7;
+}
+.admin-lead-deadline.is-expired svg{color:#a33a3a}
+.admin-lead-deadline.is-expired b{
+  background:#f7dddd;
+  color:#9b3535;
+}
+@media (max-width:640px){
+  .admin-lead-deadline{align-items:flex-start}
+  .admin-lead-deadline b{margin-inline-start:0}
+}
