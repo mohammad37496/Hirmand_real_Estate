@@ -63,7 +63,7 @@ export type DivarFile = {
   lastSeenAt: string;
   createdAt: string;
   updatedAt: string;
-  rejectReason: string | null;
+  rejectReason?: string | null;
 };
 
 export type DivarStats = {
