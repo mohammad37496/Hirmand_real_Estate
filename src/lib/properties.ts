@@ -561,7 +561,7 @@ export const listPublishedProperties = createServerFn({ method: "GET" })
       ].join(" "),
       [...params, data.sort],
     );
-    return rows.map(mapProperty);
+    return rows.map((row) => mapProperty(row));
   });
 
 export const countPublishedProperties = createServerFn({ method: "GET" })
@@ -597,7 +597,7 @@ export const listPublishedPropertiesByContact = createServerFn({ method: "GET" }
        limit 48`,
       [data.phone],
     );
-    return rows.map(mapProperty);
+    return rows.map((row) => mapProperty(row));
   });
 
 export const getPublishedPropertyById = createServerFn({ method: "GET" })
@@ -784,7 +784,7 @@ export const listRelatedProperties = createServerFn({ method: "GET" })
          limit $4`,
         [data.slug, data.neighborhood, data.propertyType, data.limit],
       );
-      return rows.map(mapProperty);
+      return rows.map((row) => mapProperty(row));
       },
     );
   });
