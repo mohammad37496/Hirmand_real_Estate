@@ -337,6 +337,7 @@ export function AdminPropertiesPage() {
   const [loadingList, setLoadingList] = useState(false);
   const [saving, setSaving] = useState(false);
   const [view, setView] = useState<ViewMode>("dashboard");
+  const [formDirty, setFormDirty] = useState(false);
   const [listFilter, setListFilter] = useState<"all" | PublishStatus | "featured">("all");
   const [query, setQuery] = useState("");
   const [listTransaction, setListTransaction] = useState<"all" | PropertyTransaction>("all");
@@ -385,6 +386,15 @@ export function AdminPropertiesPage() {
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+    setFormDirty(true);
+  }
+
+  function navigateTo(nextView: ViewMode) {
+    if (view === "form" && nextView !== "form" && formDirty) {
+      const leave = window.confirm("تغییرات ذخیره‌نشده این فایل از بین می‌رود. از فرم خارج می‌شوید؟");
+      if (!leave) return;
+    }
+    setView(nextView);
   }
 
   useEffect(() => {
@@ -544,6 +554,7 @@ export function AdminPropertiesPage() {
   }
 
   function logout() {
+    if (view === "form" && formDirty && !window.confirm("تغییرات ذخیره‌نشده پاک می‌شوند. از پنل خارج می‌شوید؟")) return;
     void fetch("/api/admin/session", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -562,6 +573,7 @@ export function AdminPropertiesPage() {
     setServerStats(null);
     setForm(emptyForm());
     setSelectedIds([]);
+    setFormDirty(false);
   }
 
   function toggleSelected(id: string) {
@@ -883,6 +895,7 @@ export function AdminPropertiesPage() {
       });
       toast.success(form.id ? "فایل به‌روزرسانی شد." : "فایل جدید ذخیره شد.");
       setForm(propertyToForm(result));
+      setFormDirty(false);
       const history = await listPropertyChangeHistory({ data: { id: result.id, limit: 10 } }).catch(() => []);
       setChangeHistory(history);
       await refresh();
@@ -895,17 +908,28 @@ export function AdminPropertiesPage() {
   }
 
   function startNew() {
+    if (view === "form" && formDirty && !window.confirm("تغییرات ذخیره‌نشده این فایل از بین می‌رود. فایل جدید را باز می‌کنید؟")) {
+      return;
+    }
     setForm(emptyForm());
     setChangeHistory([]);
+    setFormDirty(false);
     setView("form");
   }
 
   function editProperty(property: Property) {
+    if (view === "form" && formDirty && !window.confirm("تغییرات ذخیره‌نشده این فایل از بین می‌رود. فایل دیگری را ویرایش می‌کنید؟")) {
+      return;
+    }
     setForm(propertyToForm(property));
+    setFormDirty(false);
     setView("form");
   }
 
   function duplicateProperty(property: Property) {
+    if (view === "form" && formDirty && !window.confirm("تغییرات ذخیره‌نشده این فایل از بین می‌رود. فایل را با یک کپی جدید جایگزین می‌کنید؟")) {
+      return;
+    }
     const base = propertyToForm(property);
     setForm({
       ...base,
@@ -915,6 +939,7 @@ export function AdminPropertiesPage() {
       featured: false,
       featuredUntil: "",
     });
+    setFormDirty(false);
     setView("form");
   }
 
@@ -1071,7 +1096,7 @@ export function AdminPropertiesPage() {
           <button
             type="button"
             className={`admin-nav-btn${view === "dashboard" ? " is-active" : ""}`}
-            onClick={() => setView("dashboard")}
+            onClick={() => navigateTo("dashboard")}
           >
             <BarChart3 size={18} />
             داشبورد
@@ -1079,7 +1104,7 @@ export function AdminPropertiesPage() {
           <button
             type="button"
             className={`admin-nav-btn${view === "list" ? " is-active" : ""}`}
-            onClick={() => setView("list")}
+            onClick={() => navigateTo("list")}
           >
             <LayoutDashboard size={18} />
             فهرست فایل‌ها
@@ -1102,23 +1127,23 @@ export function AdminPropertiesPage() {
               ویرایش فعلی
             </button>
           ) : null}
-          <button type="button" className={"admin-nav-btn" + (view === "music" ? " is-active" : "")} onClick={() => setView("music")}>
+          <button type="button" className={"admin-nav-btn" + (view === "music" ? " is-active" : "")} onClick={() => navigateTo("music")}>
             <Music2 size={18} />
             موسیقی سایت
           </button>
-          <button type="button" className={"admin-nav-btn" + (view === "leads" ? " is-active" : "")} onClick={() => setView("leads")}>
+          <button type="button" className={"admin-nav-btn" + (view === "leads" ? " is-active" : "")} onClick={() => navigateTo("leads")}>
             <UsersRound size={18} />
             درخواست‌ها
           </button>
-          <button type="button" className={"admin-nav-btn" + (view === "partners" ? " is-active" : "")} onClick={() => setView("partners")}>
+          <button type="button" className={"admin-nav-btn" + (view === "partners" ? " is-active" : "")} onClick={() => navigateTo("partners")}>
             <UsersRound size={18} />
             همکاران و کد رهگیری
           </button>
-          <button type="button" className={"admin-nav-btn" + (view === "consultants" ? " is-active" : "")} onClick={() => setView("consultants")}>
+          <button type="button" className={"admin-nav-btn" + (view === "consultants" ? " is-active" : "")} onClick={() => navigateTo("consultants")}>
             <UsersRound size={18} />
             مشاورین و اعضای بنگاه
           </button>
-          <button type="button" className={"admin-nav-btn" + (view === "divar" ? " is-active" : "")} onClick={() => setView("divar")}>
+          <button type="button" className={"admin-nav-btn" + (view === "divar" ? " is-active" : "")} onClick={() => navigateTo("divar")}>
             <Globe2 size={18} />
             فایل‌های دیوار
           </button>
@@ -1175,7 +1200,7 @@ export function AdminPropertiesPage() {
                     : view === "divar"
                       ? "دریافت، فیلتر و ورود فایل‌های شخصی از دیوار"
                       : form.contactName
-                    ? `مشاور مسئول: ${form.contactName}`
+                    ? `مشاور مسئول: ${form.contactName}${formDirty ? " · تغییرات ذخیره‌نشده" : ""}`
                     : "مشاور مسئول را انتخاب کنید"}            </p>
           </div>
           <div className="admin-topbar-actions">
@@ -1185,7 +1210,7 @@ export function AdminPropertiesPage() {
                 فایل جدید
               </button>
             ) : (
-              <button type="button" className="btn-ghost" onClick={() => setView(view === "form" ? "list" : "dashboard")}>
+              <button type="button" className="btn-ghost" onClick={() => navigateTo(view === "form" ? "list" : "dashboard")}>
                 <X size={16} />
                 بستن
               </button>
@@ -1966,7 +1991,7 @@ export function AdminPropertiesPage() {
                   مشاور: <strong>{form.contactName || "—"}</strong>
                 </div>
                 <div className="admin-sticky-actions">
-                  <button type="button" className="btn-ghost" onClick={() => setView("list")}>
+                  <button type="button" className="btn-ghost" onClick={() => navigateTo("list")}>
                     انصراف
                   </button>
                   <button type="submit" className="btn-gold" disabled={saving}>
@@ -1984,7 +2009,7 @@ export function AdminPropertiesPage() {
         <button
           type="button"
           className={view === "dashboard" ? "is-active" : ""}
-          onClick={() => setView("dashboard")}
+          onClick={() => navigateTo("dashboard")}
           title="داشبورد"
         >
           <BarChart3 size={19} strokeWidth={2.1} />
@@ -1993,7 +2018,7 @@ export function AdminPropertiesPage() {
         <button
           type="button"
           className={view === "list" ? "is-active" : ""}
-          onClick={() => setView("list")}
+          onClick={() => navigateTo("list")}
           title="فهرست فایل‌ها"
         >
           <LayoutDashboard size={19} strokeWidth={2.1} />
@@ -2008,23 +2033,23 @@ export function AdminPropertiesPage() {
           <Plus size={20} strokeWidth={2.25} />
           <span>جدید</span>
         </button>
-        <button type="button" className={view === "music" ? "is-active" : ""} onClick={() => setView("music")} title="مدیریت موسیقی">
+        <button type="button" className={view === "music" ? "is-active" : ""} onClick={() => navigateTo("music")} title="مدیریت موسیقی">
           <Music2 size={19} strokeWidth={2.1} />
           <span>موسیقی</span>
         </button>
-        <button type="button" className={view === "leads" ? "is-active" : ""} onClick={() => setView("leads")} title="درخواست‌های مشتریان">
+        <button type="button" className={view === "leads" ? "is-active" : ""} onClick={() => navigateTo("leads")} title="درخواست‌های مشتریان">
           <UsersRound size={19} strokeWidth={2.1} />
           <span>درخواست‌ها</span>
         </button>
-        <button type="button" className={view === "consultants" ? "is-active" : ""} onClick={() => setView("consultants")} title="مشاورین و اعضای بنگاه">
+        <button type="button" className={view === "consultants" ? "is-active" : ""} onClick={() => navigateTo("consultants")} title="مشاورین و اعضای بنگاه">
           <UsersRound size={19} strokeWidth={2.1} />
           <span>مشاورین</span>
         </button>
-        <button type="button" className={view === "partners" ? "is-active" : ""} onClick={() => setView("partners")} title="همکاران و کد رهگیری">
+        <button type="button" className={view === "partners" ? "is-active" : ""} onClick={() => navigateTo("partners")} title="همکاران و کد رهگیری">
           <UsersRound size={19} strokeWidth={2.1} />
           <span>همکاران</span>
         </button>
-        <button type="button" className={view === "divar" ? "is-active" : ""} onClick={() => setView("divar")} title="فایل‌های دیوار">
+        <button type="button" className={view === "divar" ? "is-active" : ""} onClick={() => navigateTo("divar")} title="فایل‌های دیوار">
           <Globe2 size={19} strokeWidth={2.1} />
           <span>دیوار</span>
         </button>
