@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
   const sql = await getSql();
   const rows = await sql.query<Record<string, unknown>>(`
     select id, title, slug, status, featured, featured_until, transaction_type, property_type,
-           neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
+           neighborhood, address, area_m2, bedrooms, bathrooms, floor, floor_label, total_floors,
            built_year, parking, elevator, storage, price, deposit, rent,
            contact_name, contact_phone, created_at, updated_at
     from properties
@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
 
   const headers = [
     "شناسه","عنوان","slug","وضعیت","ویژه","پایان ویژه","معامله","نوع ملک","محله","آدرس",
-    "متراژ","خواب","سرویس","طبقه","کل طبقات","سال ساخت","پارکینگ","آسانسور",
+    "متراژ","خواب","سرویس","طبقه","طبقه خاص","کل طبقات","سال ساخت","پارکینگ","آسانسور",
     "انباری","قیمت","رهن","اجاره","مشاور","تلفن","ایجاد","آخرین بروزرسانی"
   ];
   const statusLabels: Record<string,string> = {
@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
       row.featured_until ? new Date(String(row.featured_until)).toISOString() : "",
       transactionLabels[String(row.transaction_type)] ?? row.transaction_type,
       row.property_type, row.neighborhood, row.address, row.area_m2, row.bedrooms,
-      row.bathrooms, row.floor, row.total_floors, row.built_year,
+      row.bathrooms, row.floor_label === "suite" ? "سوئیت" : row.floor, row.total_floors, row.built_year,
       row.parking ? "بله" : "خیر", row.elevator ? "بله" : "خیر",
       row.storage ? "بله" : "خیر", row.price, row.deposit, row.rent,
       row.contact_name, row.contact_phone, row.created_at, row.updated_at,
