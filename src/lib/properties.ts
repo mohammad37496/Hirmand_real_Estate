@@ -62,6 +62,7 @@ export type Property = {
   storage: boolean;
   painted: boolean;
   wallpaper: boolean;
+  convertible: boolean;
   cabinetType: PropertyCabinetType | null;
   flooringType: PropertyFlooringType | null;
   coolingSystem: PropertyCoolingSystem | null;
@@ -231,6 +232,7 @@ export const propertyInputSchema = z.object({
   storage: z.boolean().default(false),
   painted: z.boolean().default(false),
   wallpaper: z.boolean().default(false),
+  convertible: z.boolean().default(false),
   cabinetType: z.enum(CABINET_VALUES).nullable().optional().default(null),
   flooringType: z.enum(FLOORING_VALUES).nullable().optional().default(null),
   coolingSystem: z.enum(COOLING_VALUES).nullable().optional().default(null),
@@ -350,6 +352,7 @@ function mapProperty(row: Record<string, unknown>, options: { admin?: boolean } 
     storage: Boolean(row.storage),
     painted: Boolean(row.painted),
     wallpaper: Boolean(row.wallpaper),
+    convertible: Boolean(row.convertible),
     cabinetType: (row.cabinet_type as PropertyCabinetType | null) ?? null,
     flooringType: (row.flooring_type as PropertyFlooringType | null) ?? null,
     coolingSystem: (row.cooling_system as PropertyCoolingSystem | null) ?? null,
@@ -376,7 +379,7 @@ function mapProperty(row: Record<string, unknown>, options: { admin?: boolean } 
 const LIST_COLUMNS = `
   id, slug, status, featured, featured_until, title, transaction_type, property_type, city,
   neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
-  built_year, parking, elevator, storage, painted, wallpaper, cabinet_type, flooring_type, cooling_system,
+  built_year, parking, elevator, storage, painted, wallpaper, convertible, cabinet_type, flooring_type, cooling_system,
   heating_system, wall_closet_type, other_amenities, price, deposit, rent,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
   latitude, longitude, price_drop_percent, floor_label, orientation,
@@ -419,7 +422,7 @@ function mapPropertyCard(row: Record<string, unknown>): PropertyCardData {
 const DETAIL_COLUMNS = `
   id, slug, status, featured, featured_until, title, transaction_type, property_type, city,
   neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
-  built_year, parking, elevator, storage, painted, wallpaper, cabinet_type, flooring_type, cooling_system,
+  built_year, parking, elevator, storage, painted, wallpaper, convertible, cabinet_type, flooring_type, cooling_system,
   heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
   latitude, longitude, price_drop_percent, floor_label, orientation
@@ -1116,14 +1119,14 @@ export const saveProperty = createServerFn({ method: "POST" })
         built_year, parking, elevator, storage, cabinet_type, flooring_type, cooling_system,
         heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
         features, images, contact_name, contact_phone, published_at, featured_until,
-        latitude, longitude, floor_label, painted, wallpaper, orientation
+        latitude, longitude, floor_label, painted, wallpaper, convertible, orientation
       ) values (
         $1, $2, $3, $4, $5, $6, $7, 'اصفهان',
         $8, $9, $10::integer, $11::smallint, $12::smallint, $13::smallint, $14::smallint,
         $15::smallint, $16::boolean, $17::boolean, $18::boolean, $19::text, $20::text, $21::text,
         $22::text, $23::text, $24::jsonb, $25::numeric, $26::numeric, $27::numeric, $28::text,
         $29::jsonb, $30::jsonb, $31::text, $32::text, $33::timestamptz, $34::timestamptz,
-        $35::double precision, $36::double precision, $37::text, $38::boolean, $39::boolean, $40::text
+        $35::double precision, $36::double precision, $37::text, $38::boolean, $39::boolean, $40::boolean, $41::text
       )
       on conflict (id) do update set
         slug = excluded.slug,
@@ -1158,6 +1161,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         floor_label = excluded.floor_label,
         painted = excluded.painted,
         wallpaper = excluded.wallpaper,
+        convertible = excluded.convertible,
         orientation = excluded.orientation,
         previous_price = properties.price,
         previous_deposit = properties.deposit,
@@ -1295,6 +1299,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         savedFloorLabel,
         data.painted,
         data.wallpaper,
+        data.convertible,
         data.orientation,
       ],
     );
