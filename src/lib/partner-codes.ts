@@ -8,7 +8,8 @@ export function normalizePartnerCode(value: string) {
   return normalizeDigits(value)
     .trim()
     .toUpperCase()
-    .replace(/[\s\u200B\u200C\u200D\u200E\u200F]+/g, "");
+    .replace(/[\s\u200B\u200C\u200E\u200F]+/g, "")
+    .replace(/\u200D/g, "");
 }
 
 export function normalizeTrackingCode(value: string) {
@@ -16,7 +17,8 @@ export function normalizeTrackingCode(value: string) {
     .trim()
     .toUpperCase()
     .replace(/[–—−]/g, "-")
-    .replace(/[\s\u200B\u200C\u200D\u200E\u200F]+/g, "");
+    .replace(/[\s\u200B\u200C\u200E\u200F]+/g, "")
+    .replace(/\u200D/g, "");
 }
 
 export function isValidTrackingCode(value: string) {
