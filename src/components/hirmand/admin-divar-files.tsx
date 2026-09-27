@@ -105,6 +105,21 @@ const DIVAR_CSS = `
 @media (max-width:1080px){.divar-grid{grid-template-columns:1fr}.divar-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:760px){.divar-hero{flex-direction:column}.divar-hero-actions{justify-content:flex-start}.divar-hero h2{font-size:22px}}
 @media (max-width:560px){.divar-stat-grid{grid-template-columns:1fr}.divar-grid{padding:14px}.divar-smart-toolbar,.divar-toolbar{padding:14px}}
+
+/* Admin 3.0 theme override */
+.divar-wrap{color:#122333!important}.divar-wrap .kicker{color:#8a5e14!important}
+.divar-hero{background:linear-gradient(135deg,#fffaf2,#fff)!important;border-color:#ead8bd!important}
+.divar-hero h2,.divar-title{color:#122333!important}.divar-hero p,.divar-description,.divar-meta,.divar-mini{color:#66717d!important}
+.divar-hero-actions select,.divar-select-field select,.divar-search-box,.divar-toggle,.divar-tab,.divar-card,.divar-stat{background:#fff!important;color:#344054!important;border-color:#d5dde5!important}
+.divar-tab.is-active{background:#122333!important;color:#fff!important;border-color:#122333!important}
+.divar-stat-icon{background:#f7efe2!important;color:#8a5e14!important}
+.divar-stat small,.divar-progress small{color:#66717d!important}.divar-stat strong{color:#122333!important}
+.divar-toolbar,.divar-smart-toolbar,.divar-card{border-color:#e1e7ed!important}
+.divar-chip,.divar-feature{background:#f7f9fb!important;color:#475467!important;border-color:#dfe5eb!important}
+.divar-price{color:#8a5e14!important}.divar-progress{background:#f8fafc!important;border-color:#e0e6eb!important}.divar-progress-bar{background:#e8edf2!important}.divar-progress-bar span{background:linear-gradient(90deg,#8a5e14,#c08a2a)!important}
+.divar-note{color:#17603f!important}.divar-warning{color:#6f4318!important}
+.divar-actions .btn-gold{background:linear-gradient(135deg,#8a5e14,#c08a2a)!important;color:#fff!important}
+@media(max-width:560px){.divar-grid{padding:11px!important}.divar-body{padding:13px!important}.divar-actions>*{flex:1 1 100%!important}}
 `;
 
 function formatMoney(value: string | null) {
