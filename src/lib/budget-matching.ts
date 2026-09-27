@@ -108,7 +108,7 @@ export function calculateBudgetMatch(
 
   const propertyTotal = totalRahnEquivalent(deposit, rent, rate);
   const within = deposit <= budgetDeposit && rent <= budgetRent;
-  const convertible = !within && propertyTotal <= budgetTotal;
+  const convertible = property.convertible && !within && propertyTotal <= budgetTotal;
   const near = !within && !convertible && propertyTotal <= budgetTotal * BUDGET_NEAR_RATIO;
 
   if (!within && !convertible && !near) return null;
