@@ -638,4 +638,17 @@ const MUSIC_ADMIN_CSS = `
 .admin-music-active{background:#111315;color:#f7f5ef}
 .admin-music-inactive{background:rgb(0 0 0 / .05);color:rgb(0 0 0 / .55)}
 @media (prefers-reduced-motion:reduce){.admin-music-eq i{animation:none}}
+
+/* Admin 3.0 theme override */
+.admin-music-manager{color:#122333!important}.admin-music-manager .kicker{color:#8a5e14!important}
+.admin-music-head,.admin-music-summary>span,.admin-music-file-card{color:#122333!important}
+.admin-music-summary>span,.admin-music-file-card{background:#fff!important;border-color:#d9e1e8!important}
+.admin-music-summary>span{background:#f8fafc!important}.admin-music-summary strong,.admin-music-file-copy strong{color:#122333!important}.admin-music-summary small,.admin-music-file-copy small,.admin-music-hint,.admin-music-saving,.admin-music-seek span{color:#66717d!important}
+.admin-music-file-card:hover{background:#fffaf2!important;border-color:#d8bc8c!important}.admin-music-file-card.is-selected{background:#fffaf2!important;border-color:#c08a2a!important}
+.admin-music-file-icon{background:#f7efe2!important;color:#8a5e14!important}
+.admin-music-upload-bar,.admin-music-progress{background:#e8edf2!important}.admin-music-upload-bar span,.admin-music-progress span{background:linear-gradient(90deg,#8a5e14,#c08a2a)!important}
+.admin-music-row{border-color:#e5eaf0!important;background:#fff!important}.admin-music-row.is-playing{background:#fffaf2!important}.admin-music-row.is-drop-target{box-shadow:inset 0 2px 0 #c08a2a!important;background:#fffaf2!important}
+.admin-music-handle{color:#8a959f!important}.admin-music-handle:hover{color:#8a5e14!important;background:#f7efe2!important}
+.admin-music-index{color:#8a959f!important}.admin-music-eq i{background:#c08a2a!important}.admin-music-seek input{accent-color:#a96f18!important}
+.admin-music-active{background:#eef8f2!important;color:#18794e!important;border-color:#bfe5cc!important}.admin-music-inactive{background:#f2f4f7!important;color:#66717d!important;border-color:#d7dfe6!important}
 `;
