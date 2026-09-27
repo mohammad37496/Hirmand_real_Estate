@@ -913,7 +913,7 @@ export const ADMIN_CSS = `
 .admin-dashboard-quick-actions{display:flex;flex-direction:column;gap:12px;margin-bottom:16px;padding:16px;border:1px solid #dfe5eb;border-radius:18px;background:linear-gradient(145deg,#fff,#fbfcfd);box-shadow:0 8px 24px rgb(16 24 40 / 4%)}
 .admin-dashboard-quick-intro{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .admin-dashboard-quick-intro h2{margin:3px 0 0;color:#122333;font-size:.95rem;font-weight:820}
-.admin-dashboard-quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.admin-dashboard-quick-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:9px}
 .admin-dashboard-quick-card{min-width:0;display:grid;grid-template-columns:36px minmax(0,1fr) 15px;gap:9px;align-items:center;padding:11px;border:1px solid #d9e1e8;border-radius:13px;background:#fff;color:#122333;text-align:right;font:inherit;cursor:pointer;transition:transform .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease}
 .admin-dashboard-quick-card:hover{transform:translateY(-1px);border-color:#c2ccd5;background:#fffdf9;box-shadow:0 7px 18px rgb(16 24 40 / 6%)}
 .admin-dashboard-quick-card.is-primary{border-color:#e5cfad;background:#fffaf2}
