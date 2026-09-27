@@ -378,6 +378,12 @@ export function AdminPropertiesPage() {
     afterRent: string | null;
     afterContactName: string | null;
     afterContactPhone: string | null;
+    beforeOwnerName: string | null;
+    beforeOwnerPhone: string | null;
+    beforeOwnerInfo: string | null;
+    afterOwnerName: string | null;
+    afterOwnerPhone: string | null;
+    afterOwnerInfo: string | null;
   }>>([]);
   const [form, setForm] = useState<FormState>(emptyForm());
   const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>(NEIGHBORHOOD_NAMES);
@@ -1342,7 +1348,7 @@ export function AdminPropertiesPage() {
                       <input
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        placeholder="جستجو عنوان، محله، مشاور…"
+                        placeholder="جستجو عنوان، محله، مشاور یا مالک…"
                       />
                     </label>
                     <button type="button" className="btn-ghost" onClick={() => {
@@ -1474,6 +1480,21 @@ export function AdminPropertiesPage() {
                           <p>
                             {property.neighborhood} · {property.contactName}
                           </p>
+                          {(property.ownerName || property.ownerPhone || property.ownerInfo) ? (
+                            <details className="admin-property-owner">
+                              <summary>
+                                <KeyRound size={13} aria-hidden="true" />
+                                <span>
+                                  مالک ثبت شده
+                                  {property.ownerName ? ` · ${property.ownerName}` : ""}
+                                </span>
+                              </summary>
+                              <div className="admin-property-owner-details">
+                                {property.ownerPhone ? <span><strong>تماس:</strong> {property.ownerPhone}</span> : null}
+                                {property.ownerInfo ? <span><strong>یادداشت:</strong> {property.ownerInfo}</span> : null}
+                              </div>
+                            </details>
+                          ) : null}
                         </div>
                         <div className="admin-property-actions">
                           {property.status === "draft" ? (
@@ -2068,6 +2089,13 @@ export function AdminPropertiesPage() {
                           }
                           if (item.beforeContactName !== item.afterContactName) {
                             changes.push("مشاور تغییر کرد");
+                          }
+                          if (
+                            item.beforeOwnerName !== item.afterOwnerName ||
+                            item.beforeOwnerPhone !== item.afterOwnerPhone ||
+                            item.beforeOwnerInfo !== item.afterOwnerInfo
+                          ) {
+                            changes.push("اطلاعات مالک تغییر کرد");
                           }
                           if (
                             item.beforeTitle !== item.afterTitle ||
