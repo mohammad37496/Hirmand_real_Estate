@@ -48,6 +48,7 @@ export type Property = {
   bedrooms: number | null;
   bathrooms: number | null;
   floor: number | null;
+  floorLabel: "suite" | null;
   totalFloors: number | null;
   builtYear: number | null;
   parking: boolean;
@@ -127,6 +128,7 @@ export type PropertyFilters = {
   minBathrooms?: number;
   minFloor?: number;
   maxFloor?: number;
+  floorType?: "suite";
   minTotalFloors?: number;
   maxTotalFloors?: number;
   minBuiltYear?: number;
@@ -156,8 +158,9 @@ const publicFiltersSchema = z.object({
   maxPrice: z.number().int().min(0).max(999999999999999).optional(),
   minBedrooms: z.number().int().min(0).max(30).optional(),
   minBathrooms: z.number().int().min(0).max(30).optional(),
-  minFloor: z.number().int().min(-5).max(200).optional(),
-  maxFloor: z.number().int().min(-5).max(200).optional(),
+  minFloor: z.number().int().min(-60).max(200).optional(),
+  maxFloor: z.number().int().min(-60).max(200).optional(),
+  floorType: z.literal("suite").optional(),
   minTotalFloors: z.number().int().min(0).max(200).optional(),
   maxTotalFloors: z.number().int().min(0).max(200).optional(),
   minBuiltYear: z.number().int().min(1200).max(2500).optional(),
@@ -208,7 +211,8 @@ export const propertyInputSchema = z.object({
   areaM2: z.number().int().min(0).max(100000).nullable().optional(),
   bedrooms: z.number().int().min(0).max(30).nullable().optional(),
   bathrooms: z.number().int().min(0).max(30).nullable().optional(),
-  floor: z.number().int().min(-5).max(200).nullable().optional(),
+  floor: z.number().int().min(-60).max(200).nullable().optional(),
+  floorLabel: z.literal("suite").nullable().optional().default(null),
   totalFloors: z.number().int().min(0).max(200).nullable().optional(),
   builtYear: z.number().int().min(1200).max(2500).nullable().optional(),
   parking: z.boolean().default(false),
@@ -324,6 +328,7 @@ function mapProperty(row: Record<string, unknown>, options: { admin?: boolean } 
     bedrooms: numberOrNull(row.bedrooms),
     bathrooms: numberOrNull(row.bathrooms),
     floor: numberOrNull(row.floor),
+    floorLabel: row.floor_label === "suite" ? "suite" : null,
     totalFloors: numberOrNull(row.total_floors),
     builtYear: numberOrNull(row.built_year),
     parking: Boolean(row.parking),
