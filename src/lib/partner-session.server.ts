@@ -1,6 +1,6 @@
 import { createHash, randomBytes, randomInt, scryptSync, timingSafeEqual } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
-import { normalizeDigits, normalizePartnerCode } from "./partner-codes";
+import { normalizeDigits } from "./partner-codes";
 
 export { normalizeDigits, normalizePartnerCode } from "./partner-codes";
 
