@@ -34,6 +34,14 @@ const schema = z.object({
   budgetRent: z.number().int().min(0).max(999999999999999).optional(),
   budgetPurchase: z.number().int().min(0).max(999999999999999).optional(),
   budgetSale: z.number().int().min(0).max(999999999999999).optional(),
+  budgetDepositMin: z.number().int().min(0).max(999999999999999).optional(),
+  budgetDepositMax: z.number().int().min(0).max(999999999999999).optional(),
+  budgetRentMin: z.number().int().min(0).max(999999999999999).optional(),
+  budgetRentMax: z.number().int().min(0).max(999999999999999).optional(),
+  budgetPurchaseMin: z.number().int().min(0).max(999999999999999).optional(),
+  budgetPurchaseMax: z.number().int().min(0).max(999999999999999).optional(),
+  budgetSaleMin: z.number().int().min(0).max(999999999999999).optional(),
+  budgetSaleMax: z.number().int().min(0).max(999999999999999).optional(),
   budgetBedrooms: z.number().int().min(1).max(30).optional(),
   matches: z.array(matchSchema).max(12).optional().default([]),
 }).superRefine((value, ctx) => {
@@ -50,6 +58,18 @@ const schema = z.object({
     if (value.deal !== "رهن" && value.deal !== "اجاره") {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["leaseDeadline"], message: "تاریخ مهلت فقط برای رهن یا اجاره مجاز است." });
     }
+  }
+  if ((value.budgetDepositMin ?? 0) > (value.budgetDepositMax ?? value.budgetDepositMin ?? 0)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["budgetDepositMin"], message: "حداقل رهن نمی‌تواند بیشتر از حداکثر رهن باشد." });
+  }
+  if ((value.budgetRentMin ?? 0) > (value.budgetRentMax ?? value.budgetRentMin ?? 0)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["budgetRentMin"], message: "حداقل اجاره نمی‌تواند بیشتر از حداکثر اجاره باشد." });
+  }
+  if ((value.budgetPurchaseMin ?? 0) > (value.budgetPurchaseMax ?? value.budgetPurchaseMin ?? 0)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["budgetPurchaseMin"], message: "حداقل خرید نمی‌تواند بیشتر از حداکثر خرید باشد." });
+  }
+  if ((value.budgetSaleMin ?? 0) > (value.budgetSaleMax ?? value.budgetSaleMin ?? 0)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["budgetSaleMin"], message: "حداقل فروش نمی‌تواند بیشتر از حداکثر فروش باشد." });
   }
 });
 
@@ -107,10 +127,14 @@ export default defineEventHandler(async (event) => {
     [parsed.data.phone],
   );
 
-  const budgetDeposit = parsed.data.budgetDeposit ?? 0;
-  const budgetRent = parsed.data.budgetRent ?? 0;
-  const budgetPurchase = parsed.data.deal === "خرید" ? parsed.data.budgetPurchase ?? 0 : 0;
-  const budgetSale = parsed.data.deal === "فروش" ? parsed.data.budgetSale ?? 0 : 0;
+  const budgetDepositMin = parsed.data.budgetDepositMin ?? parsed.data.budgetDeposit ?? 0;
+  const budgetDeposit = parsed.data.budgetDepositMax ?? parsed.data.budgetDeposit ?? budgetDepositMin;
+  const budgetRentMin = parsed.data.budgetRentMin ?? parsed.data.budgetRent ?? 0;
+  const budgetRent = parsed.data.budgetRentMax ?? parsed.data.budgetRent ?? budgetRentMin;
+  const budgetPurchaseMin = parsed.data.budgetPurchaseMin ?? parsed.data.budgetPurchase ?? 0;
+  const budgetPurchase = parsed.data.budgetPurchaseMax ?? parsed.data.budgetPurchase ?? budgetPurchaseMin;
+  const budgetSaleMin = parsed.data.budgetSaleMin ?? parsed.data.budgetSale ?? 0;
+  const budgetSale = parsed.data.budgetSaleMax ?? parsed.data.budgetSale ?? budgetSaleMin;
   const leaseDeadline = parsed.data.deal === "رهن" || parsed.data.deal === "اجاره"
     ? parsed.data.leaseDeadline ?? null
     : null;
@@ -138,7 +162,9 @@ export default defineEventHandler(async (event) => {
          set name=$2, people_count=$3, job=$4, deal=$5, property_type=$6, neighborhood=$7, consultant=$8, note=$9,
              source=$10, follow_up_at=current_timestamp + interval '24 hours', lease_deadline=null, acquisition_source=$20, acquisition_medium=$21, acquisition_campaign=$22, acquisition_referrer=$23, acquisition_landing_path=$24, budget_deposit=$11, budget_rent=$12, budget_purchase=$13, budget_sale=$14, budget_rate=$15,
              budget_equivalent=$16, budget_bedrooms=$17, matched_properties=$18::jsonb,
-             match_count=$19, floor_preference=$25, updated_at=current_timestamp
+             match_count=$19, floor_preference=$25, budget_deposit_min=$26, budget_deposit_max=$27,
+             budget_rent_min=$28, budget_rent_max=$29, budget_purchase_min=$30, budget_purchase_max=$31,
+             budget_sale_min=$32, budget_sale_max=$33, updated_at=current_timestamp
          where id=$1`,
         [
           existing[0].id,
@@ -166,6 +192,14 @@ export default defineEventHandler(async (event) => {
           acquisition.referrer,
           acquisition.landingPath,
           parsed.data.floorPreference,
+          budgetDepositMin || null,
+          budgetDeposit || null,
+          budgetRentMin || null,
+          budgetRent || null,
+          budgetPurchaseMin || null,
+          budgetPurchase || null,
+          budgetSaleMin || null,
+          budgetSale || null,
         ],
       );
       return { success: true, duplicate: true, updated: true, id: existing[0].id };
@@ -178,9 +212,11 @@ export default defineEventHandler(async (event) => {
       id, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source,
       acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, acquisition_landing_path,
       follow_up_at, lease_deadline, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_rate, budget_equivalent, budget_bedrooms,
-      floor_preference, matched_properties, match_count
+      floor_preference, matched_properties, match_count,
+      budget_deposit_min, budget_deposit_max, budget_rent_min, budget_rent_max,
+      budget_purchase_min, budget_purchase_max, budget_sale_min, budget_sale_max
     )
-    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,current_timestamp + interval '24 hours',$17,$18,$19,$20,$21,$22,$23,$24,$25,$26::jsonb,$27)
+    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,current_timestamp + interval '24 hours',$17,$18,$19,$20,$21,$22,$23,$24,$25,$26::jsonb,$27,$28,$29,$30,$31,$32,$33,$34,$35)
     returning id`,
     [
       crypto.randomUUID(),
@@ -210,6 +246,14 @@ export default defineEventHandler(async (event) => {
       parsed.data.floorPreference,
       JSON.stringify(matchedProperties),
       matchedProperties.length,
+      budgetDepositMin || null,
+      budgetDeposit || null,
+      budgetRentMin || null,
+      budgetRent || null,
+      budgetPurchaseMin || null,
+      budgetPurchase || null,
+      budgetSaleMin || null,
+      budgetSale || null,
     ],
   );
   return { success: true, id: rows[0]?.id ?? null, duplicate: false };
