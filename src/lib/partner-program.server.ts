@@ -1,4 +1,5 @@
 import { getSql, dbSource } from "@/lib/db";
+import { isValidTrackingCode, normalizeTrackingCode } from "./partner-codes";
 import {
   generatePartnerCode,
   generatePartnerPin,
@@ -450,7 +451,8 @@ export async function submitPartnerContract(input: {
 
 export async function lookupPartnerContract(trackingCode: string) {
   const sql = await ensureConfigured();
-  const code = normalizePartnerCode(trackingCode);
+  const code = normalizeTrackingCode(trackingCode);
+  if (!isValidTrackingCode(code)) return null;
   const rows = await sql.query<Record<string, unknown>>(
     `
       select c.tracking_code, c.transaction_type, c.status, c.created_at, c.approved_at,
