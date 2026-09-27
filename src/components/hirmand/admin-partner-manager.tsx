@@ -4,6 +4,7 @@ import {
   Check,
   CheckCircle2,
   Copy,
+  Download,
   Gift,
   Handshake,
   History,
@@ -170,6 +171,7 @@ export function AdminPartnerManager() {
   const [busy, setBusy] = useState("");
   const [credentials, setCredentials] = useState<{ code: string; pin: string; agency: string } | null>(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended">("all");
   const [selectedAudits, setSelectedAudits] = useState<Array<{
     id: string;
     action: string;
@@ -210,11 +212,12 @@ export function AdminPartnerManager() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return partners;
-    return partners.filter((item) =>
-      [item.agencyName, item.contactName, item.phone, item.partnerCode].join(" ").toLowerCase().includes(q),
-    );
-  }, [partners, search]);
+    return partners.filter((item) => {
+      const matchesStatus = statusFilter === "all" || item.status === statusFilter;
+      const matchesSearch = !q || [item.agencyName, item.contactName, item.phone, item.partnerCode].join(" ").toLowerCase().includes(q);
+      return matchesStatus && matchesSearch;
+    });
+  }, [partners, search, statusFilter]);
 
   async function createPartner() {
     if (!form.agencyName.trim() || !form.contactName.trim() || !form.phone.trim()) {
@@ -281,7 +284,8 @@ export function AdminPartnerManager() {
   }
 
   async function reject(id: string) {
-    const note = window.prompt("دلیل رد قرارداد را وارد کنید:", "") ?? "";
+    const note = window.prompt("دلیل رد قرارداد را وارد کنید:", "");
+    if (note === null) return;
     setBusy(id);
     try {
       await api({ action: "reject", contractId: id, note });
@@ -370,6 +374,34 @@ export function AdminPartnerManager() {
     } catch {
       toast.error("کپی خودکار در این مرورگر در دسترس نیست.");
     }
+  }
+  function exportPartnersCsv() {
+    const csvCell = (value: string | number) => `\"${String(value).replaceAll('\"', '\"\"').replaceAll("\r", " ").replaceAll("\n", " ")}\"`;
+    const rows = [
+      ["کد همکاری", "نام املاک", "مسئول", "تلفن", "وضعیت", "قرارداد تأییدشده", "پاداش آماده", "در انتظار", "کارت"],
+      ...partners.map((item) => [
+        item.partnerCode,
+        item.agencyName,
+        item.contactName,
+        item.phone,
+        STATUS_LABEL[item.status],
+        item.contractCount,
+        item.availableRewards,
+        item.pendingContracts,
+        `${item.cardNumber} / ۱۲ · ${item.cardStamps} مهر`,
+      ]),
+    ];
+    const csv = "\uFEFF" + rows.map((row) => row.map((value) => csvCell(value)).join(",")).join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `hirmand-partners-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    toast.success("گزارش همکاران خروجی گرفته شد.");
   }
 
   function printPartnerCard(partner: PartnerSummary | PartnerOverview) {
@@ -494,10 +526,20 @@ export function AdminPartnerManager() {
       <section className="admin-panel">
         <div className="admin-panel-head">
           <div><span className="kicker">دفاتر همکار</span><h2>{filtered.length.toLocaleString("fa-IR")} حساب</h2></div>
-          <label className="admin-search" style={{ maxWidth: 420 }}>
-            <UsersRound size={16} />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="جستجوی نام املاک، مسئول، تلفن یا کد..." />
-          </label>
+          <div className="admin-partner-toolbar">
+  <label className="admin-search" style={{ maxWidth: 420 }}>
+    <UsersRound size={16} />
+    <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="جستجوی نام املاک، مسئول، تلفن یا کد..." />
+  </label>
+  <select className="admin-partner-status-filter" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "suspended")} aria-label="فیلتر وضعیت حساب">
+    <option value="all">همه حساب‌ها</option>
+    <option value="active">فعال</option>
+    <option value="suspended">غیرفعال</option>
+  </select>
+  <button type="button" className="btn-ghost admin-partner-export" onClick={exportPartnersCsv} disabled={partners.length === 0}>
+    <Download size={15} /> خروجی CSV
+  </button>
+</div>
         </div>
 
         {filtered.length === 0 ? (
@@ -554,7 +596,7 @@ export function AdminPartnerManager() {
             {pending.map((contract) => (
               <article key={contract.id} className="admin-partner-contract">
                 <div className="admin-partner-contract-main">
-                  <div className="admin-partner-contract-code" dir="ltr"><Ticket size={15} /> {contract.trackingCode}</div>
+                  <button type="button" className="admin-partner-contract-code" dir="ltr" onClick={() => void copy(contract.trackingCode)} title="کپی کد رهگیری"><Ticket size={15} /> {contract.trackingCode} <Copy size={13} /></button>
                   <strong>{contract.agencyName}</strong>
                   <span>{TX_LABEL[contract.transactionType]}{contract.contractReference ? " · " + contract.contractReference : ""}</span>
                   <small>{contract.clientName ? "مشتری: " + contract.clientName + " · " : ""}{faDate(contract.createdAt)}</small>
@@ -662,7 +704,7 @@ export function AdminPartnerManager() {
                 {selected.contracts.map((contract) => (
                   <article key={contract.id} className="admin-partner-contract">
                     <div className="admin-partner-contract-main">
-                      <div className="admin-partner-contract-code" dir="ltr"><Ticket size={15} /> {contract.trackingCode}</div>
+                      <button type="button" className="admin-partner-contract-code" dir="ltr" onClick={() => void copy(contract.trackingCode)} title="کپی کد رهگیری"><Ticket size={15} /> {contract.trackingCode} <Copy size={13} /></button>
                       <strong>{CONTRACT_STATUS_LABEL[contract.status]}</strong>
                       <span>{TX_LABEL[contract.transactionType]}{contract.contractReference ? " · " + contract.contractReference : ""}</span>
                       <small>{contract.clientName || "بدون نام مشتری"} · {faDate(contract.createdAt)}</small>
