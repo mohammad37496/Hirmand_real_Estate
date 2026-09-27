@@ -39,7 +39,9 @@ import {
   MonitorSmartphone,
   Navigation,
   PawPrint,
+  Paintbrush,
   Pause,
+  Wallpaper,
   Phone,
   Rewind,
   Ruler,
@@ -1102,6 +1104,8 @@ export function PropertyDetailView({
                 <div><CarFront size={18} /><span><small>پارکینگ</small><strong>{property.parking ? "دارد" : "ندارد"}</strong></span></div>
                 <div><Navigation size={18} /><span><small>آسانسور</small><strong>{property.elevator ? "دارد" : "ندارد"}</strong></span></div>
                 <div><Warehouse size={18} /><span><small>انباری</small><strong>{property.storage ? "دارد" : "ندارد"}</strong></span></div>
+                <div><Paintbrush size={18} /><span><small>رنگ‌آمیزی</small><strong>{property.painted ? "دارد" : "ندارد"}</strong></span></div>
+                <div><Wallpaper size={18} /><span><small>کاغذ دیواری</small><strong>{property.wallpaper ? "دارد" : "ندارد"}</strong></span></div>
                 {property.cabinetType ? (
                   <div><Building2 size={18} /><span><small>نوع کابینت</small><strong>{labelForOption(PROPERTY_CABINET_OPTIONS, property.cabinetType)}</strong></span></div>
                 ) : null}
