@@ -285,5 +285,5 @@ export function AdminLocationPicker({
         ) : null}
       </div>
     </div>
-  }
+  );
 }
