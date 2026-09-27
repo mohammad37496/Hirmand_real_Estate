@@ -2432,6 +2432,14 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
   transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
 }
 
+
+.inquiry-amenity-option span {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--fg);
+}
+
 .inquiry-amenity-option:hover {
   border-color: var(--brass-300);
   background: var(--brass-100);
