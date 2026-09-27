@@ -103,6 +103,8 @@ export function PersianDatePicker({
             dir="rtl"
             numerals="arabext"
             captionLayout="dropdown"
+            navLayout="after"
+            reverseYears
             showOutsideDays
           />
 
