@@ -42,6 +42,7 @@ type Lead = {
   budgetPurchaseMax: number | null;
   budgetSaleMin: number | null;
   budgetSaleMax: number | null;
+  requestedBedrooms: number | null;
   budgetEquivalent: number | null;
   budgetBedrooms: number | null;
   budgetRate: number | null;
@@ -205,6 +206,7 @@ export function AdminLeadManager() {
         lead.budgetPurchaseMax == null ? "" : String(lead.budgetPurchaseMax),
         lead.budgetSaleMin == null ? "" : String(lead.budgetSaleMin),
         lead.budgetSaleMax == null ? "" : String(lead.budgetSaleMax),
+        lead.requestedBedrooms == null ? "" : String(lead.requestedBedrooms),
         lead.leaseDeadline == null ? "" : lead.leaseDeadline,
         lead.leaseDeadline ? formatPersianDate(lead.leaseDeadline) : "",
       ]
@@ -234,7 +236,10 @@ export function AdminLeadManager() {
         ? "مهلت رهن و اجاره: " + formatPersianDate(lead.leaseDeadline)
         : "",
       lead.neighborhood ? "محله: " + lead.neighborhood : "",
-      lead.budgetBedrooms ? "حداقل خواب: " + lead.budgetBedrooms : "",
+      lead.requestedBedrooms != null
+        ? "تعداد خواب موردنظر: " + (lead.requestedBedrooms === 0 ? "بدون خواب / استودیو" : lead.requestedBedrooms >= 6 ? "۶ خواب و بیشتر" : lead.requestedBedrooms.toLocaleString("fa-IR") + " خواب")
+        : "",
+      lead.budgetBedrooms ? "حداقل خواب بودجه‌یابی: " + lead.budgetBedrooms : "",
       "",
       "فایل‌های پیشنهادی:",
       ...lead.matchedProperties.slice(0, 5).map((item, index) =>
@@ -364,6 +369,7 @@ export function AdminLeadManager() {
                     {lead.propertyType ? " · " + lead.propertyType : ""}
                     {lead.neighborhood ? " · " + lead.neighborhood : ""}
                     {lead.floorPreference ? " · طبقه: " + lead.floorPreference : ""}
+                    {lead.requestedBedrooms != null ? " · خواب: " + (lead.requestedBedrooms === 0 ? "بدون خواب" : lead.requestedBedrooms >= 6 ? "۶+" : lead.requestedBedrooms.toLocaleString("fa-IR")) : ""}
                     {lead.requestedAmenities.length ? " · " + lead.requestedAmenities.length.toLocaleString("fa-IR") + " امکان انتخابی" : ""}
                     {lead.consultant ? " · مشاور: " + lead.consultant : ""}
                   </p>
@@ -451,6 +457,11 @@ export function AdminLeadManager() {
                       منبع جذب: <strong>{lead.acquisitionSource}</strong>
                       {lead.acquisitionMedium ? " · " + lead.acquisitionMedium : ""}
                       {lead.acquisitionCampaign ? " · کمپین: " + lead.acquisitionCampaign : ""}
+                    </div>
+                  ) : null}
+                  {lead.requestedBedrooms != null ? (
+                    <div className="admin-lead-bedroom">
+                      خواب موردنظر: <strong>{lead.requestedBedrooms === 0 ? "بدون خواب / استودیو" : lead.requestedBedrooms >= 6 ? "۶ خواب و بیشتر" : lead.requestedBedrooms.toLocaleString("fa-IR") + " خواب"}</strong>
                     </div>
                   ) : null}
                   {lead.requestedAmenities.length ? (
