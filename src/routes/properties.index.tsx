@@ -210,6 +210,7 @@ function buildFilterData(
   maxFloor: string,
   floorType: "suite" | "",
   orientation: PropertyOrientation | "",
+  convertibleOnly: boolean,
   minTotalFloors: string,
   maxTotalFloors: string,
   minBuiltYear: string,
@@ -245,6 +246,7 @@ function buildFilterData(
     maxFloor: nextMaxFloor,
     floorType: floorType || undefined,
     orientation: orientation || undefined,
+    convertibleOnly,
     minTotalFloors: nextMinTotalFloors,
     maxTotalFloors: nextMaxTotalFloors,
     minBuiltYear: nextMinBuiltYear,
@@ -334,6 +336,7 @@ function PropertiesIndexPage() {
   const [maxFloor, setMaxFloor] = useState("");
   const [floorType, setFloorType] = useState<"suite" | "">("");
   const [orientation, setOrientation] = useState<PropertyOrientation | "">("");
+  const [convertibleOnly, setConvertibleOnly] = useState(false);
   const [minTotalFloors, setMinTotalFloors] = useState("");
   const [maxTotalFloors, setMaxTotalFloors] = useState("");
   const [minBuiltYear, setMinBuiltYear] = useState("");
@@ -402,6 +405,7 @@ function PropertiesIndexPage() {
     setMaxFloor(params.get("maxFloor") ?? "");
     setFloorType(params.get("floorType") === "suite" ? "suite" : "");
     setOrientation(validOrientation(params.get("orientation") ?? "") ?? "");
+    setConvertibleOnly(params.get("convertible") === "1");
     setMinTotalFloors(params.get("minFloors") ?? "");
     setMaxTotalFloors(params.get("maxFloors") ?? "");
     setMinBuiltYear(params.get("minYear") ?? "");
@@ -444,6 +448,7 @@ function PropertiesIndexPage() {
     if (maxFloor.trim()) params.set("maxFloor", maxFloor.trim());
     if (floorType) params.set("floorType", floorType);
     if (orientation) params.set("orientation", orientation);
+    if (convertibleOnly) params.set("convertible", "1");
     if (minTotalFloors.trim()) params.set("minFloors", minTotalFloors.trim());
     if (maxTotalFloors.trim()) params.set("maxFloors", maxTotalFloors.trim());
     if (minBuiltYear.trim()) params.set("minYear", minBuiltYear.trim());
@@ -465,7 +470,7 @@ function PropertiesIndexPage() {
       "",
       query ? `/properties?${query}` : "/properties",
     );
-  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, minBathrooms, minFloor, maxFloor, floorType, orientation, minTotalFloors, maxTotalFloors, minBuiltYear, maxBuiltYear, parkingOnly, elevatorOnly, storageOnly, specFilters, featureSearch, featuredOnly, hasImagesOnly, hasLocationOnly, sort]);
+  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, minBathrooms, minFloor, maxFloor, floorType, orientation, minTotalFloors, maxTotalFloors, minBuiltYear, maxBuiltYear, parkingOnly, elevatorOnly, storageOnly, specFilters, featureSearch, featuredOnly, hasImagesOnly, hasLocationOnly, convertibleOnly, sort]);
 
   useEffect(() => {
     if (!urlReady) return;
@@ -547,7 +552,7 @@ function PropertiesIndexPage() {
     }, 320);
 
     return () => window.clearTimeout(timer);
-  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, minBathrooms, minFloor, maxFloor, floorType, orientation, minTotalFloors, maxTotalFloors, minBuiltYear, maxBuiltYear, parkingOnly, elevatorOnly, storageOnly, specFilters, featureSearch, featuredOnly, hasImagesOnly, hasLocationOnly, sort]);
+  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, minBathrooms, minFloor, maxFloor, floorType, orientation, minTotalFloors, maxTotalFloors, minBuiltYear, maxBuiltYear, parkingOnly, elevatorOnly, storageOnly, specFilters, featureSearch, featuredOnly, hasImagesOnly, hasLocationOnly, convertibleOnly, sort]);
 
   const loadMore = useCallback(async () => {
     if (loading || loadingMore || properties.length >= total) return;
@@ -571,6 +576,7 @@ function PropertiesIndexPage() {
           maxFloor,
           floorType,
           orientation,
+          convertibleOnly,
           minTotalFloors,
           maxTotalFloors,
           minBuiltYear,
@@ -638,6 +644,7 @@ function PropertiesIndexPage() {
     featuredOnly,
     hasImagesOnly,
     hasLocationOnly,
+    convertibleOnly,
     sort,
   ]);
 
@@ -672,6 +679,7 @@ function PropertiesIndexPage() {
     if (maxFloor.trim()) params.set("maxFloor", maxFloor.trim());
     if (floorType) params.set("floorType", floorType);
     if (orientation) params.set("orientation", orientation);
+    if (convertibleOnly) params.set("convertible", "1");
     if (minTotalFloors.trim()) params.set("minFloors", minTotalFloors.trim());
     if (maxTotalFloors.trim()) params.set("maxFloors", maxTotalFloors.trim());
     if (minBuiltYear.trim()) params.set("minYear", minBuiltYear.trim());
@@ -736,6 +744,7 @@ function PropertiesIndexPage() {
     setMaxFloor(params.get("maxFloor") ?? "");
     setFloorType(params.get("floorType") === "suite" ? "suite" : "");
     setOrientation(validOrientation(params.get("orientation") ?? "") ?? "");
+    setConvertibleOnly(params.get("convertible") === "1");
     setMinTotalFloors(params.get("minFloors") ?? "");
     setMaxTotalFloors(params.get("maxFloors") ?? "");
     setMinBuiltYear(params.get("minYear") ?? "");
@@ -788,6 +797,7 @@ function PropertiesIndexPage() {
     setMaxFloor("");
     setFloorType("");
     setOrientation("");
+    setConvertibleOnly(false);
     setMinTotalFloors("");
     setMaxTotalFloors("");
     setMinBuiltYear("");
@@ -859,6 +869,7 @@ function PropertiesIndexPage() {
     maxFloor.trim() ||
     floorType ||
     orientation ||
+    convertibleOnly ||
     minTotalFloors.trim() ||
     maxTotalFloors.trim() ||
     minBuiltYear.trim() ||
@@ -886,6 +897,7 @@ function PropertiesIndexPage() {
     parkingOnly ? "parking" : "",
     elevatorOnly ? "elevator" : "",
     storageOnly ? "storage" : "",
+    convertibleOnly ? "convertible" : "",
     specFilters.length ? "specs" : "",
     featureSearch.trim(),
     featuredOnly ? "featured" : "",
@@ -931,6 +943,7 @@ function PropertiesIndexPage() {
     parkingOnly ? { label: "پارکینگ", clear: () => setParkingOnly(false) } : null,
     elevatorOnly ? { label: "آسانسور", clear: () => setElevatorOnly(false) } : null,
     storageOnly ? { label: "انباری", clear: () => setStorageOnly(false) } : null,
+    convertibleOnly ? { label: "قابل تبدیل", clear: () => setConvertibleOnly(false) } : null,
     specFilters.length
       ? { label: `جزئیات ملک: ${specFilters.length.toLocaleString("fa-IR")}`, clear: () => setSpecFilters([]) }
       : null,
@@ -1223,6 +1236,7 @@ function PropertiesIndexPage() {
                 <label className="pf-switch"><span>پارکینگ‌دار</span><input type="checkbox" checked={parkingOnly} onChange={(e) => setParkingOnly(e.target.checked)} /></label>
                 <label className="pf-switch"><span>آسانسوردار</span><input type="checkbox" checked={elevatorOnly} onChange={(e) => setElevatorOnly(e.target.checked)} /></label>
                 <label className="pf-switch"><span>انباری‌دار</span><input type="checkbox" checked={storageOnly} onChange={(e) => setStorageOnly(e.target.checked)} /></label>
+                <label className="pf-switch"><span>قابل تبدیل</span><input type="checkbox" checked={convertibleOnly} onChange={(e) => setConvertibleOnly(e.target.checked)} /></label>
                 <label className="pf-switch"><span>فایل ویژه</span><input type="checkbox" checked={featuredOnly} onChange={(e) => setFeaturedOnly(e.target.checked)} /></label>
                 <label className="pf-switch"><span>دارای عکس</span><input type="checkbox" checked={hasImagesOnly} onChange={(e) => setHasImagesOnly(e.target.checked)} /></label>
                 <label className="pf-switch"><span>دارای موقعیت روی نقشه</span><input type="checkbox" checked={hasLocationOnly} onChange={(e) => setHasLocationOnly(e.target.checked)} /></label>
