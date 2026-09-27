@@ -20,6 +20,7 @@ function property(overrides: Partial<Property>): Property {
     bathrooms: 1,
     floor: 2,
     floorLabel: null,
+    orientation: null,
     totalFloors: 5,
     builtYear: 1400,
     parking: true,
