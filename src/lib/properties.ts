@@ -1575,6 +1575,12 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
         afterRent: after.rent,
         afterContactName: after.contactName,
         afterContactPhone: after.contactPhone,
+        beforeOwnerName: before.ownerName,
+        beforeOwnerPhone: before.ownerPhone,
+        beforeOwnerInfo: before.ownerInfo,
+        afterOwnerName: after.ownerName,
+        afterOwnerPhone: after.ownerPhone,
+        afterOwnerInfo: after.ownerInfo,
       };
     });
   });
