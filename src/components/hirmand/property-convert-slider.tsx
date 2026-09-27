@@ -97,21 +97,25 @@ function PropertyConvertSliderInner({ deposit, rent }: { deposit: number; rent: 
       </div>
 
       <div className="property-convert-results" aria-live="polite">
-        <div className="property-convert-result">
-          <span className="property-convert-result-value">{formatToman(deposit)}</span>
-          <small>رهن فعلی</small>
+        <div className="property-convert-info-row">
+          <div>
+            <span className="property-convert-result-value">{formatToman(deposit)}</span>
+            <small>رهن فعلی</small>
+          </div>
+          <div className="property-convert-result--active">
+            <span className="property-convert-result-value">{formatToman(convertedDeposit)}</span>
+            <small>رهن پس از تبدیل</small>
+          </div>
         </div>
-        <div className="property-convert-result property-convert-result--active">
-          <span className="property-convert-result-value">{formatToman(convertedDeposit)}</span>
-          <small>رهن پیشنهادی</small>
-        </div>
-        <div className="property-convert-result">
-          <span className="property-convert-result-value">{formatToman(rent)}</span>
-          <small>اجاره فعلی</small>
-        </div>
-        <div className="property-convert-result property-convert-result--active">
-          <span className="property-convert-result-value">{formatToman(convertedRent)}</span>
-          <small>اجاره پیشنهادی</small>
+        <div className="property-convert-info-row">
+          <div>
+            <span className="property-convert-result-value">{formatToman(rent)}</span>
+            <small>اجاره فعلی</small>
+          </div>
+          <div className="property-convert-result--active">
+            <span className="property-convert-result-value">{formatToman(convertedRent)}</span>
+            <small>اجاره پس از تبدیل</small>
+          </div>
         </div>
       </div>
 
