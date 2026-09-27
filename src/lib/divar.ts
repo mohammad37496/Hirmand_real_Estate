@@ -38,6 +38,7 @@ export type DivarFile = {
   bedrooms: number | null;
   bathrooms: number | null;
   floor: number | null;
+  floorLabel: "suite" | null;
   totalFloors: number | null;
   builtYear: number | null;
   parking: boolean;
@@ -422,7 +423,9 @@ function parseDivarListing(
   const areaM2 = parseNumber(getSpec("متراژ", "متراژ ملک", "متراژ زیربنا"));
   const bedrooms = parseNumber(getSpec("اتاق", "اتاق‌ها", "خواب"));
   const bathrooms = parseNumber(getSpec("تعداد سرویس بهداشتی", "سرویس بهداشتی", "حمام"));
-  const floor = parseNumber(getSpec("طبقه"));
+  const rawFloor = normalizeDivarText(getSpec("طبقه"));
+  const floorLabel = rawFloor.includes("سوئیت") || rawFloor.includes("سوییت") ? "suite" : null;
+  const floor = floorLabel ? null : parseNumber(getSpec("طبقه"));
   const totalFloors = parseNumber(getSpec("تعداد کل طبقات ساختمان", "تعداد کل طبقات"));
   const builtYear = parseNumber(getSpec("ساخت", "سال ساخت"));
 
@@ -465,6 +468,7 @@ function parseDivarListing(
     bedrooms,
     bathrooms,
     floor,
+    floorLabel,
     totalFloors,
     builtYear,
     parking,
@@ -842,6 +846,7 @@ function mapRow(row: Record<string, unknown>): DivarFile {
     bedrooms: row.bedrooms == null ? null : Number(row.bedrooms),
     bathrooms: row.bathrooms == null ? null : Number(row.bathrooms),
     floor: row.floor == null ? null : Number(row.floor),
+    floorLabel: row.floor_label === "suite" ? "suite" : null,
     totalFloors: row.total_floors == null ? null : Number(row.total_floors),
     builtYear: row.built_year == null ? null : Number(row.built_year),
     parking: Boolean(row.parking),
@@ -1074,13 +1079,13 @@ export const syncDivarFiles = createServerFn({ method: "POST" })
           area_m2, bedrooms, bathrooms, floor, total_floors, built_year,
           parking, elevator, storage, price, deposit, rent, description,
           features, images, seller_name, seller_type, source_url,
-          latitude, longitude, filter_status, last_seen_at, updated_at
+          latitude, longitude, floor_label, filter_status, last_seen_at, updated_at
         ) values (
           $1,$2,$3,$4,$5,$6,
           $7,$8,$9,$10,$11,$12,
           $13,$14,$15,$16,$17,$18,$19,
           $20::jsonb,$21::jsonb,$22,$23,$24,
-          $25,$26,$27,current_timestamp,current_timestamp
+          $25,$26,$27,$28,current_timestamp,current_timestamp
         )
         on conflict (token) do update set
           title = excluded.title,
@@ -1107,6 +1112,7 @@ export const syncDivarFiles = createServerFn({ method: "POST" })
           source_url = excluded.source_url,
           latitude = excluded.latitude,
           longitude = excluded.longitude,
+          floor_label = excluded.floor_label,
           filter_status = case when divar_files.filter_status = 'imported' then 'imported' else 'accepted' end,
           reject_reason = null,
           last_seen_at = current_timestamp,
@@ -1138,6 +1144,7 @@ export const syncDivarFiles = createServerFn({ method: "POST" })
           item.sourceUrl,
           item.latitude,
           item.longitude,
+          item.floorLabel,
           existing === "imported" ? "imported" : "accepted",
         ],
       );
