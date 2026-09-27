@@ -129,7 +129,8 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       setError("شماره موبایل را به‌صورت ۰۹۱۲۱۲۳۴۵۶۷ وارد کنید.");
       return;
     }
-    const parsedPeopleCount = Number(peopleCount);
+    const normalizedPeopleCount = toLatinDigits(peopleCount).replace(/[\\s٬,]/g, "");
+    const parsedPeopleCount = /^\\d+$/.test(normalizedPeopleCount) ? Number(normalizedPeopleCount) : Number.NaN;
     if (!Number.isInteger(parsedPeopleCount) || parsedPeopleCount < 1 || parsedPeopleCount > 20) {
       setError("تعداد نفرات را بین ۱ تا ۲۰ نفر مشخص کنید.");
       return;
@@ -233,14 +234,23 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
         <input
           id="inq-people-count"
           name="peopleCount"
-          type="number"
-          min={1}
-          max={20}
-          step={1}
+          type="text"
           inputMode="numeric"
+          dir="rtl"
+          autoComplete="off"
           value={peopleCount}
-          onChange={(event) => setPeopleCount(event.target.value)}
-          placeholder="مثلاً ۴ نفر"
+          onChange={(event) => {
+            const value = event.target.value;
+            if (/^[0-9۰-۹٠-٩\\s٬,]*$/.test(value)) setPeopleCount(value);
+          }}
+          onBlur={() => {
+            const normalized = toLatinDigits(peopleCount).replace(/[\\s٬,]/g, "");
+            if (/^\\d+$/.test(normalized)) {
+              setPeopleCount(Number(normalized).toLocaleString("fa-IR"));
+            }
+          }}
+          aria-describedby="inq-people-count-hint"
+          placeholder="مثلاً ۴"
         />
       </div>
       <div className="field">
