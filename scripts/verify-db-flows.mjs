@@ -369,5 +369,29 @@ try {
   check("EXP5b lease deadline persists as a date for rental leads", false, e.message.split("\n")[0]);
 }
 
+// ---------- EXP 5c: private property owner details ----------
+try {
+  const ownerPropertyId = crypto.randomUUID();
+  const ownerRows = await q(
+    `insert into properties (
+       id, slug, status, title, transaction_type, property_type, neighborhood, description,
+       contact_name, contact_phone, owner_name, owner_phone, owner_info
+     ) values ($1,$2,'draft','فایل تست مالک','sell','apartment','سعادت‌آباد','توضیحات تستی مالک خصوصی',
+       $3,$4,$5,$6,$7)
+     returning owner_name, owner_phone, owner_info`,
+    [ownerPropertyId,"owner-private-"+ownerPropertyId.slice(0,8),"مشاور تست","09130000000","مالک تست","09131112233","اطلاعات داخلی مالک"],
+  );
+  check(
+    "EXP5c private owner fields persist on properties",
+    ownerRows.length === 1 &&
+      ownerRows[0].owner_name === "مالک تست" &&
+      ownerRows[0].owner_phone === "09131112233" &&
+      ownerRows[0].owner_info === "اطلاعات داخلی مالک",
+  );
+  await q("delete from properties where id=$1",[ownerPropertyId]);
+} catch (e) {
+  check("EXP5c private owner fields persist on properties",false,e.message.split("\n")[0]);
+}
+
 console.log(failures === 0 ? "\nALL CHECKS PASSED" : `\n${failures} CHECK(S) FAILED`);
 process.exit(failures === 0 ? 0 : 1);

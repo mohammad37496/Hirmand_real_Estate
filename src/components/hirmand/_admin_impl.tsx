@@ -103,6 +103,9 @@ type FormState = {
   images: string;
   contactName: string;
   contactPhone: string;
+  ownerName: string;
+  ownerPhone: string;
+  ownerInfo: string;
   status: PublishStatus;
   featured: boolean;
   featuredUntil: string;
@@ -158,6 +161,9 @@ function emptyForm(): FormState {
     images: "",
     contactName: TEAM[0]?.name ?? "مشاور هیرمند",
     contactPhone: TEAM[0]?.phone ?? SITE.phone.mobile,
+    ownerName: "",
+    ownerPhone: "",
+    ownerInfo: "",
     status: "published",
     featured: false,
     featuredUntil: "",
@@ -310,6 +316,9 @@ function propertyToForm(property: Property): FormState {
     images: (property.images ?? []).join("\n"),
     contactName: property.contactName,
     contactPhone: property.contactPhone,
+    ownerName: property.ownerName ?? "",
+    ownerPhone: property.ownerPhone ?? "",
+    ownerInfo: property.ownerInfo ?? "",
     status: property.status,
     featured: property.featured,
     featuredUntil: toDateTimeLocal(property.featuredUntil),
@@ -890,6 +899,9 @@ export function AdminPropertiesPage() {
           images,
           contactName: form.contactName.trim(),
           contactPhone: form.contactPhone.trim(),
+          ownerName: form.ownerName.trim(),
+          ownerPhone: form.ownerPhone.trim(),
+          ownerInfo: form.ownerInfo.trim(),
           latitude: form.latitude,
           longitude: form.longitude,
           status: form.status,
@@ -1000,6 +1012,9 @@ export function AdminPropertiesPage() {
           images: parseImageUrls(base.images).valid,
           contactName: base.contactName,
           contactPhone: base.contactPhone,
+          ownerName: base.ownerName.trim(),
+          ownerPhone: base.ownerPhone.trim(),
+          ownerInfo: base.ownerInfo.trim(),
           latitude: base.latitude,
           longitude: base.longitude,
           status,
@@ -1929,6 +1944,44 @@ export function AdminPropertiesPage() {
                   </div>
                 </fieldset>
               </div>
+
+                <fieldset className="admin-section admin-owner-section">
+                  <legend>اطلاعات صاحب فایل — خصوصی</legend>
+                  <div className="admin-private-notice">
+                    این بخش فقط برای مدیریت هیرمند است و اطلاعات صاحب فایل در صفحه عمومی ملک یا کارت فایل نمایش داده نمی‌شود.
+                  </div>
+                  <div className="admin-form-grid">
+                    <label className="field">
+                      <span>نام صاحب فایل</span>
+                      <input
+                        value={form.ownerName}
+                        onChange={(e) => update("ownerName", e.target.value)}
+                        autoComplete="name"
+                        placeholder="مثلاً آقای احمدی"
+                      />
+                    </label>
+                    <label className="field">
+                      <span>شماره تماس صاحب فایل</span>
+                      <input
+                        dir="ltr"
+                        inputMode="tel"
+                        value={form.ownerPhone}
+                        onChange={(e) => update("ownerPhone", e.target.value)}
+                        autoComplete="tel"
+                        placeholder="0913 000 0000"
+                      />
+                    </label>
+                    <label className="field admin-span-2">
+                      <span>اطلاعات و توضیحات صاحب فایل</span>
+                      <textarea
+                        rows={4}
+                        value={form.ownerInfo}
+                        onChange={(e) => update("ownerInfo", e.target.value)}
+                        placeholder="نکات تماس، شرایط مالک، زمان مناسب تماس یا هر اطلاعات داخلی دیگر..."
+                      />
+                    </label>
+                  </div>
+                </fieldset>
 
               {form.id ? (
                 <fieldset className="admin-section">

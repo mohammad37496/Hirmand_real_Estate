@@ -77,6 +77,9 @@ export type Property = {
   images: string[];
   contactName: string;
   contactPhone: string;
+  ownerName?: string;
+  ownerPhone?: string;
+  ownerInfo?: string;
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -259,6 +262,9 @@ export const propertyInputSchema = z.object({
     .default([]),
   contactName: z.string().trim().min(2).max(80),
   contactPhone: z.string().trim().min(8).max(30),
+  ownerName: z.string().trim().max(100).optional().default(""),
+  ownerPhone: z.string().trim().max(30).optional().default(""),
+  ownerInfo: z.string().trim().max(2000).optional().default(""),
   status: z.enum(["draft", "published", "archived"]).default("published"),
   featured: z.boolean().default(false),
   featuredUntil: z.string().trim().max(80).nullable().optional().default(null),
@@ -369,6 +375,11 @@ function mapProperty(row: Record<string, unknown>, options: { admin?: boolean } 
     images: parseJsonArray(row.images),
     contactName: String(row.contact_name),
     contactPhone: String(row.contact_phone),
+    ...(isAdmin ? {
+      ownerName: row.owner_name == null ? "" : String(row.owner_name),
+      ownerPhone: row.owner_phone == null ? "" : String(row.owner_phone),
+      ownerInfo: row.owner_info == null ? "" : String(row.owner_info),
+    } : {}),
     publishedAt: row.published_at ? new Date(String(row.published_at)).toISOString() : null,
     createdAt: new Date(String(row.created_at)).toISOString(),
     updatedAt: new Date(String(row.updated_at)).toISOString(),
@@ -385,6 +396,7 @@ const LIST_COLUMNS = `
   heating_system, wall_closet_type, other_amenities, price, deposit, rent,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
   latitude, longitude, price_drop_percent, floor_label, orientation,
+  owner_name, owner_phone, owner_info,
   left(description, 280) as description
 `;
 
@@ -427,7 +439,8 @@ const DETAIL_COLUMNS = `
   built_year, parking, elevator, storage, painted, wallpaper, convertible, cabinet_type, flooring_type, cooling_system,
   heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
-  latitude, longitude, price_drop_percent, floor_label, orientation
+  latitude, longitude, price_drop_percent, floor_label, orientation,
+  owner_name, owner_phone, owner_info
 `;
 
 function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
@@ -913,7 +926,7 @@ function adminPropertyWhereSql() {
     "and ($3::text is null or property_type = $3)",
     "and ($4::text is null or neighborhood = $4)",
     "and ($5::boolean is false or (featured = true and (featured_until is null or featured_until >= current_timestamp)))",
-    "and ($6::text is null or title ilike '%' || $6 || '%' or neighborhood ilike '%' || $6 || '%' or coalesce(address, '') ilike '%' || $6 || '%' or contact_name ilike '%' || $6 || '%' or contact_phone ilike '%' || $6 || '%' or id ilike '%' || $6 || '%')",
+    "and ($6::text is null or title ilike '%' || $6 || '%' or neighborhood ilike '%' || $6 || '%' or coalesce(address, '') ilike '%' || $6 || '%' or contact_name ilike '%' || $6 || '%' or contact_phone ilike '%' || $6 || '%' or owner_name ilike '%' || $6 || '%' or owner_phone ilike '%' || $6 || '%' or owner_info ilike '%' || $6 || '%' or id ilike '%' || $6 || '%')",
   ].join(" ");
 }
 
@@ -1125,14 +1138,16 @@ export const saveProperty = createServerFn({ method: "POST" })
         built_year, parking, elevator, storage, cabinet_type, flooring_type, cooling_system,
         heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
         features, images, contact_name, contact_phone, published_at, featured_until,
-        latitude, longitude, floor_label, painted, wallpaper, convertible, orientation
+        latitude, longitude, floor_label, painted, wallpaper, convertible, orientation,
+        owner_name, owner_phone, owner_info
       ) values (
         $1, $2, $3, $4, $5, $6, $7, 'اصفهان',
         $8, $9, $10::integer, $11::smallint, $12::smallint, $13::smallint, $14::smallint,
         $15::smallint, $16::boolean, $17::boolean, $18::boolean, $19::text, $20::text, $21::text,
         $22::text, $23::text, $24::jsonb, $25::numeric, $26::numeric, $27::numeric, $28::text,
         $29::jsonb, $30::jsonb, $31::text, $32::text, $33::timestamptz, $34::timestamptz,
-        $35::double precision, $36::double precision, $37::text, $38::boolean, $39::boolean, $40::boolean, $41::text
+        $35::double precision, $36::double precision, $37::text, $38::boolean, $39::boolean, $40::boolean, $41::text,
+        $42::text, $43::text, $44::text
       )
       on conflict (id) do update set
         slug = excluded.slug,
@@ -1169,6 +1184,9 @@ export const saveProperty = createServerFn({ method: "POST" })
         wallpaper = excluded.wallpaper,
         convertible = excluded.convertible,
         orientation = excluded.orientation,
+        owner_name = excluded.owner_name,
+        owner_phone = excluded.owner_phone,
+        owner_info = excluded.owner_info,
         previous_price = properties.price,
         previous_deposit = properties.deposit,
         previous_rent = properties.rent,
@@ -1307,6 +1325,9 @@ export const saveProperty = createServerFn({ method: "POST" })
         data.wallpaper,
         savedConvertible,
         data.orientation,
+        data.ownerName.trim() || null,
+        data.ownerPhone.trim() || null,
+        data.ownerInfo.trim() || null,
       ],
     );
 

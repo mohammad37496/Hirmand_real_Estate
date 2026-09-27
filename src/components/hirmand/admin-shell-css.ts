@@ -994,3 +994,10 @@ export const ADMIN_CSS = `
   .admin-lead-deadline{align-items:flex-start}
   .admin-lead-deadline b{margin-inline-start:0}
 }
+
+/* Private property-owner workspace */
+.admin-owner-section{border-color:#e5cfad!important;background:linear-gradient(145deg,#fffdf9,#fff)!important}
+.admin-owner-section>legend{color:#8a5e14!important}
+.admin-private-notice{margin:0 0 14px;padding:10px 12px;border:1px solid #ead8bd;border-radius:11px;background:#fff8eb;color:#725f42;font-size:.69rem;line-height:1.9}
+.admin-owner-section input,.admin-owner-section textarea{background:#fff!important}
+.admin-owner-section textarea{min-height:104px}
