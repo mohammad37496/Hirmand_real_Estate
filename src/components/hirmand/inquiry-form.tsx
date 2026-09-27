@@ -20,13 +20,10 @@ const DEAL_OPTIONS = SERVICES.map((item) => item.title);
 const TYPE_OPTIONS = PROPERTY_TYPES.map((item) => item.title);
 const BEDROOM_OPTIONS = [
   { value: "", label: "فرقی ندارد" },
-  { value: "0", label: "بدون خواب / استودیو" },
-  { value: "1", label: "۱ خواب" },
-  { value: "2", label: "۲ خواب" },
-  { value: "3", label: "۳ خواب" },
-  { value: "4", label: "۴ خواب" },
-  { value: "5", label: "۵ خواب" },
-  { value: "6", label: "۶ خواب و بیشتر" },
+  { value: "0", label: "بدون خواب" },
+    { value: "1", label: "۱ خواب" },
+    { value: "2", label: "۲ خواب" },
+    { value: "3", label: "۳ خواب" },
 ] as const;
 
 function toLatinDigits(value: string) {
