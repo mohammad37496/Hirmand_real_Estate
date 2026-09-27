@@ -1019,9 +1019,24 @@ export const ADMIN_CSS = `
 }
 .admin-main .admin-property-card{content-visibility:auto;contain-intrinsic-size:120px}
 .admin-main .admin-property-actions .admin-icon-btn{flex:0 0 auto}
-.admin-main .admin-empty{min-height:180px;display:grid;place-items:center}
+.admin-main .admin-empty{min-height:180px;display:grid;gap:8px;align-content:center;justify-items:center;text-align:center}
 @media(max-width:640px){
   .admin-main .admin-sticky-bar{left:0!important;right:0!important}
   .admin-main .admin-form-wrap{padding-bottom:78px!important}
   .admin-main .admin-property-card{content-visibility:visible}
+}
+
+/* Semantic admin dashboard accents — resist the broad legacy text-color rule. */
+.admin-main .admin-dashboard .admin-dashboard-stat-icon,
+.admin-main .admin-dashboard .admin-dashboard-quick-icon{
+  color:var(--brass-700,#8a5e14)!important;
+}
+.admin-main .admin-dashboard .admin-dashboard-stat>svg,
+.admin-main .admin-dashboard .admin-dashboard-quick-card>svg{
+  color:#7a8792!important;
+}
+.admin-main .admin-dashboard .admin-funnel-track,
+.admin-main .admin-dashboard .admin-breakdown-track,
+.admin-main .admin-dashboard .admin-lead-chart-bar-wrap{
+  overflow:hidden!important;
 }
