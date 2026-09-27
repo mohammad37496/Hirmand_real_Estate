@@ -3,6 +3,7 @@ import { CalendarDays, Download, ExternalLink, Loader2, MessageCircle, Phone, Se
 import { toast } from "sonner";
 import { SITE } from "@/lib/site";
 import { formatToman } from "@/lib/money";
+import { PROPERTY_OTHER_AMENITY_OPTIONS } from "@/lib/property-options";
 import { daysUntilDateOnly, formatPersianDate } from "@/lib/persian-date";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
@@ -16,6 +17,7 @@ type Lead = {
   propertyType: string;
   neighborhood: string;
   floorPreference: string;
+  requestedAmenities: string[];
   consultant: string;
   note: string;
   status: LeadStatus;
@@ -90,6 +92,13 @@ function formatBudgetRange(min: number | null, max: number | null, fallback: num
   if (!lower && !upper) return "—";
   if ((lower ?? 0) === (upper ?? 0)) return formatToman(lower ?? upper ?? 0);
   return formatToman(lower ?? upper ?? 0) + " تا " + formatToman(upper ?? lower ?? 0);
+}
+
+function amenityLabel(value: string) {
+  if (value === "parking") return "پارکینگ";
+  if (value === "elevator") return "آسانسور";
+  if (value === "storage") return "انباری";
+  return PROPERTY_OTHER_AMENITY_OPTIONS.find((item) => item.value === value)?.label ?? value;
 }
 
 export function AdminLeadManager() {
@@ -181,6 +190,7 @@ export function AdminLeadManager() {
         lead.propertyType,
         lead.neighborhood,
         lead.floorPreference,
+        lead.requestedAmenities.join(" "),
         lead.consultant,
         lead.note,
         lead.budgetDeposit == null ? "" : String(lead.budgetDeposit),
@@ -354,6 +364,7 @@ export function AdminLeadManager() {
                     {lead.propertyType ? " · " + lead.propertyType : ""}
                     {lead.neighborhood ? " · " + lead.neighborhood : ""}
                     {lead.floorPreference ? " · طبقه: " + lead.floorPreference : ""}
+                    {lead.requestedAmenities.length ? " · " + lead.requestedAmenities.length.toLocaleString("fa-IR") + " امکان انتخابی" : ""}
                     {lead.consultant ? " · مشاور: " + lead.consultant : ""}
                   </p>
                   {(lead.budgetDeposit != null ||
@@ -440,6 +451,19 @@ export function AdminLeadManager() {
                       منبع جذب: <strong>{lead.acquisitionSource}</strong>
                       {lead.acquisitionMedium ? " · " + lead.acquisitionMedium : ""}
                       {lead.acquisitionCampaign ? " · کمپین: " + lead.acquisitionCampaign : ""}
+                    </div>
+                  ) : null}
+                  {lead.requestedAmenities.length ? (
+                    <div className="admin-lead-amenities" aria-label="امکانات موردنظر">
+                      <span>امکانات:</span>
+                      <div>
+                        {lead.requestedAmenities.slice(0, 6).map((value) => (
+                          <span key={value} className="admin-lead-amenity-chip">{amenityLabel(value)}</span>
+                        ))}
+                        {lead.requestedAmenities.length > 6 ? (
+                          <span className="admin-lead-amenity-more">+{(lead.requestedAmenities.length - 6).toLocaleString("fa-IR")}</span>
+                        ) : null}
+                      </div>
                     </div>
                   ) : null}
                   {lead.note ? <div className="admin-lead-note">{lead.note}</div> : null}
