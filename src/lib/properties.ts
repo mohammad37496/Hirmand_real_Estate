@@ -32,6 +32,11 @@ export type PropertyType =
   | "land"
   | "commercial";
 
+export type PropertyOrientation =
+  | "north" | "south" | "east" | "west"
+  | "northeast" | "northwest" | "southeast" | "southwest"
+  | "two_fronts" | "three_fronts" | "four_fronts" | "other";
+
 export type Property = {
   id: string;
   slug: string;
@@ -49,6 +54,7 @@ export type Property = {
   bathrooms: number | null;
   floor: number | null;
   floorLabel: "suite" | null;
+  orientation: PropertyOrientation | null;
   totalFloors: number | null;
   builtYear: number | null;
   parking: boolean;
@@ -131,6 +137,7 @@ export type PropertyFilters = {
   minFloor?: number;
   maxFloor?: number;
   floorType?: "suite";
+  orientation?: PropertyOrientation;
   minTotalFloors?: number;
   maxTotalFloors?: number;
   minBuiltYear?: number;
@@ -163,6 +170,7 @@ const publicFiltersSchema = z.object({
   minFloor: z.number().int().min(-60).max(200).optional(),
   maxFloor: z.number().int().min(-60).max(200).optional(),
   floorType: z.literal("suite").optional(),
+  orientation: z.enum(["north","south","east","west","northeast","northwest","southeast","southwest","two_fronts","three_fronts","four_fronts","other"]).optional(),
   minTotalFloors: z.number().int().min(0).max(200).optional(),
   maxTotalFloors: z.number().int().min(0).max(200).optional(),
   minBuiltYear: z.number().int().min(1200).max(2500).optional(),
@@ -215,6 +223,7 @@ export const propertyInputSchema = z.object({
   bathrooms: z.number().int().min(0).max(30).nullable().optional(),
   floor: z.number().int().min(-60).max(200).nullable().optional(),
   floorLabel: z.literal("suite").nullable().optional().default(null),
+  orientation: z.enum(["north","south","east","west","northeast","northwest","southeast","southwest","two_fronts","three_fronts","four_fronts","other"]).nullable().optional().default(null),
   totalFloors: z.number().int().min(0).max(200).nullable().optional(),
   builtYear: z.number().int().min(1200).max(2500).nullable().optional(),
   parking: z.boolean().default(false),
@@ -333,6 +342,7 @@ function mapProperty(row: Record<string, unknown>, options: { admin?: boolean } 
     bathrooms: numberOrNull(row.bathrooms),
     floor: numberOrNull(row.floor),
     floorLabel: row.floor_label === "suite" ? "suite" : null,
+    orientation: (row.orientation as PropertyOrientation | null) ?? null,
     totalFloors: numberOrNull(row.total_floors),
     builtYear: numberOrNull(row.built_year),
     parking: Boolean(row.parking),
@@ -369,7 +379,7 @@ const LIST_COLUMNS = `
   built_year, parking, elevator, storage, painted, wallpaper, cabinet_type, flooring_type, cooling_system,
   heating_system, wall_closet_type, other_amenities, price, deposit, rent,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
-  latitude, longitude, price_drop_percent, floor_label,
+  latitude, longitude, price_drop_percent, floor_label, orientation,
   left(description, 280) as description
 `;
 
@@ -412,7 +422,7 @@ const DETAIL_COLUMNS = `
   built_year, parking, elevator, storage, painted, wallpaper, cabinet_type, flooring_type, cooling_system,
   heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
-  latitude, longitude, price_drop_percent, floor_label
+  latitude, longitude, price_drop_percent, floor_label, orientation
 `;
 
 function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
@@ -447,6 +457,7 @@ function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
     data.hasImagesOnly ?? false,
     data.hasLocationOnly ?? false,
     data.floorType ?? null,
+    data.orientation ?? null,
     data.offset ?? 0,
   ];
 }
@@ -489,6 +500,7 @@ function publicPropertyWhereSql() {
     "and ($24::boolean is false or (jsonb_typeof(coalesce(images, '[]'::jsonb)) = 'array' and jsonb_array_length(coalesce(images, '[]'::jsonb)) > 0))",
     "and ($25::boolean is false or (latitude is not null and longitude is not null))",
     "and ($26::text is null or floor_label = $26)",
+    "and ($27::text is null or orientation = $27)",
   ].join(" ");
 }
 
@@ -507,13 +519,13 @@ export const listPublishedPropertyCards = createServerFn({ method: "GET" })
           [
             "select " + CARD_COLUMNS,
             "from properties where " + publicPropertyWhereSql(),
-            "order by case when $28::text = 'newest' then case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end else 0 end,",
-            "case when $28::text = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
-            "case when $28::text = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
-            "case when $28::text = 'area_asc' then area_m2 end asc nulls last,",
-            "case when $28::text = 'area_desc' then area_m2 end desc nulls last,",
+            "order by case when $29::text = 'newest' then case when featured and (featured_until is null or featured_until >= current_timestamp) then 0 else 1 end else 0 end,",
+            "case when $29::text = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
+            "case when $29::text = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
+            "case when $29::text = 'area_asc' then area_m2 end asc nulls last,",
+            "case when $29::text = 'area_desc' then area_m2 end desc nulls last,",
             "published_at desc nulls last, created_at desc",
-            "limit 48 offset $27",
+            "limit 48 offset $28",
           ].join(" "),
           [...params, data.sort],
         );
@@ -532,13 +544,13 @@ export const listPublishedProperties = createServerFn({ method: "GET" })
       [
         "select " + LIST_COLUMNS,
         "from properties where " + publicPropertyWhereSql(),
-        "order by case when $28::text = 'newest' then case when featured then 0 else 1 end else 0 end,",
-        "case when $28::text = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
-        "case when $28::text = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
-        "case when $28::text = 'area_asc' then area_m2 end asc nulls last,",
-        "case when $28::text = 'area_desc' then area_m2 end desc nulls last,",
+        "order by case when $29::text = 'newest' then case when featured then 0 else 1 end else 0 end,",
+        "case when $29::text = 'price_asc' then " + PRICE_EXPR + " end asc nulls last,",
+        "case when $29::text = 'price_desc' then " + PRICE_EXPR + " end desc nulls last,",
+        "case when $29::text = 'area_asc' then area_m2 end asc nulls last,",
+        "case when $29::text = 'area_desc' then area_m2 end desc nulls last,",
         "published_at desc nulls last, created_at desc",
-        "limit 48 offset $27",
+        "limit 48 offset $28",
       ].join(" "),
       [...params, data.sort],
     );
@@ -555,7 +567,7 @@ export const countPublishedProperties = createServerFn({ method: "GET" })
       20_000,
       async () => {
         const sql = await getSql();
-        const params = publicFilterParams(data).slice(0, 26);
+        const params = publicFilterParams(data).slice(0, 27);
         const rows = await sql.query<{ count: number }>(
           "select count(*)::int as count from properties where " + publicPropertyWhereSql(),
           params,
@@ -1104,14 +1116,14 @@ export const saveProperty = createServerFn({ method: "POST" })
         built_year, parking, elevator, storage, cabinet_type, flooring_type, cooling_system,
         heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
         features, images, contact_name, contact_phone, published_at, featured_until,
-        latitude, longitude, floor_label, painted, wallpaper
+        latitude, longitude, floor_label, painted, wallpaper, orientation
       ) values (
         $1, $2, $3, $4, $5, $6, $7, 'اصفهان',
         $8, $9, $10::integer, $11::smallint, $12::smallint, $13::smallint, $14::smallint,
         $15::smallint, $16::boolean, $17::boolean, $18::boolean, $19::text, $20::text, $21::text,
         $22::text, $23::text, $24::jsonb, $25::numeric, $26::numeric, $27::numeric, $28::text,
         $29::jsonb, $30::jsonb, $31::text, $32::text, $33::timestamptz, $34::timestamptz,
-        $35::double precision, $36::double precision, $37::text, $38::boolean, $39::boolean
+        $35::double precision, $36::double precision, $37::text, $38::boolean, $39::boolean, $40::text
       )
       on conflict (id) do update set
         slug = excluded.slug,
@@ -1146,6 +1158,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         floor_label = excluded.floor_label,
         painted = excluded.painted,
         wallpaper = excluded.wallpaper,
+        orientation = excluded.orientation,
         previous_price = properties.price,
         previous_deposit = properties.deposit,
         previous_rent = properties.rent,
@@ -1282,6 +1295,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         savedFloorLabel,
         data.painted,
         data.wallpaper,
+        data.orientation,
       ],
     );
 
