@@ -81,6 +81,7 @@ const DIVAR_CSS = `
 .divar-status{position:absolute;top:10px;inset-inline-end:10px;display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:6px 10px;background:rgba(8,10,12,.76);font-size:.7rem;font-weight:700}
 .divar-status.imported{color:#9fe0b6}
 .divar-status.accepted{color:#e8cd8f}
+.divar-status.rejected{color:#ffb4b4}
 .divar-media-badge{position:absolute;top:10px;inset-inline-start:10px;display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:6px 10px;background:rgba(8,10,12,.76);font-size:.7rem;color:#e7e3da}
 .divar-body{display:flex;flex-direction:column;gap:11px;padding:16px}
 .divar-title{margin:0;font-size:17px;line-height:1.7;color:#111315}
@@ -122,6 +123,7 @@ const DIVAR_CSS = `
 .divar-image{background:var(--navy-100)!important}
 .divar-gallery-strip{background:linear-gradient(to top,rgba(8,19,32,.78),transparent)!important}
 .divar-tab.is-active{background:var(--navy-900)!important;border-color:var(--navy-900)!important}
+.divar-tab:focus-visible,.divar-actions a:focus-visible,.divar-actions button:focus-visible{outline:3px solid rgba(192,138,42,.32);outline-offset:2px}
 .divar-actions .btn-gold{background:linear-gradient(135deg,#8a5e14,#c08a2a)!important;color:#fff!important}
 @media(max-width:560px){.divar-grid{padding:11px!important}.divar-body{padding:13px!important}.divar-actions>*{flex:1 1 100%!important}}
 `;
@@ -176,7 +178,7 @@ function DivarImage({
 }
 
 /** Primary image plus a thumbnail strip so every imported photo is visible. */
-function DivarGallery({ images, badge }: { images: string[]; badge: string }) {
+function DivarGallery({ images, badge }: { images: string[]; badge: DivarFile["filterStatus"] }) {
   const [active, setActive] = useState(0);
   const [broken, setBroken] = useState<Record<number, boolean>>({});
   const list = images.slice(0, 8);
@@ -211,6 +213,10 @@ function DivarGallery({ images, badge }: { images: string[]; badge: string }) {
         {badge === "imported" ? (
           <>
             <BadgeCheck size={12} /> منتشرشده
+          </>
+        ) : badge === "rejected" ? (
+          <>
+            <ShieldCheck size={12} /> ردشده
           </>
         ) : (
           <>
