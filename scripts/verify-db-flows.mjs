@@ -344,5 +344,30 @@ try {
   check("EXP5 leads insert (website + budget_match, mixed null numerics)", false, e.message.split("\n")[0]);
 }
 
+// ---------- EXP 5b: rental/mortgage lease deadline ----------
+try {
+  const deadlineLeadId = crypto.randomUUID();
+  await q(
+    `insert into leads (
+       id, name, phone, deal, property_type, neighborhood, consultant, note, source, lease_deadline
+     ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::date)
+     returning id, deal, lease_deadline`,
+    [deadlineLeadId, "کاربر مهلت", "09121112255", "اجاره", "آپارتمان", "سعادت‌آباد", "", "", "website", "2026-10-01"],
+  );
+  const deadlineRows = await q(
+    "select deal, lease_deadline::text as lease_deadline from leads where id=$1",
+    [deadlineLeadId],
+  );
+  check(
+    "EXP5b lease deadline persists as a date for rental leads",
+    deadlineRows.length === 1 &&
+      deadlineRows[0].deal === "اجاره" &&
+      deadlineRows[0].lease_deadline === "2026-10-01",
+  );
+  await q("delete from leads where id=$1", [deadlineLeadId]);
+} catch (e) {
+  check("EXP5b lease deadline persists as a date for rental leads", false, e.message.split("\n")[0]);
+}
+
 console.log(failures === 0 ? "\nALL CHECKS PASSED" : `\n${failures} CHECK(S) FAILED`);
 process.exit(failures === 0 ? 0 : 1);
