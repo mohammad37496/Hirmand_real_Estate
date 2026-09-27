@@ -261,6 +261,10 @@ try {
     detailRendered: false,
     detailHeading: null,
     error: null,
+    secondNavigationTested: false,
+    secondNavigationOk: true,
+    secondDetailHeading: null,
+    secondGalleryCounter: null,
   };
   const propertyPage = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   /**
@@ -318,6 +322,14 @@ try {
         const clickedDetail = await readDetailState();
         propertyNavigationCheck.detailRendered = clickedDetail.rendered;
         propertyNavigationCheck.detailHeading = clickedDetail.heading || null;
+        const initialGallery = await propertyPage.evaluate(() => ({
+          thumbCount: document.querySelectorAll(".property-gallery-rail .property-gallery-thumb").length,
+          counter: document.querySelector(".property-gallery-counter")?.textContent?.trim() ?? "",
+        }));
+        if (initialGallery.thumbCount === 0) {
+          propertyNavigationCheck.ok = false;
+          propertyNavigationCheck.error = "property detail gallery rendered without thumbnails";
+        }
         propertyNavigationCheck.ok =
           propertyNavigationCheck.status.startsWith("/properties/") &&
           propertyNavigationCheck.status !== "/properties/" &&
@@ -327,6 +339,33 @@ try {
           propertyNavigationCheck.detailRendered;
         if (!propertyNavigationCheck.ok && !propertyNavigationCheck.detailRendered) {
           propertyNavigationCheck.error = `detail view never mounted for ${propertyNavigationCheck.status}`;
+        }
+
+        if (propertyNavigationCheck.ok && (await cards.count()) > 1) {
+          propertyNavigationCheck.secondNavigationTested = true;
+          await propertyPage.goto(propertiesUrl, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+          await propertyPage.waitForTimeout(400);
+          const secondCard = cards.nth(1);
+          const secondHref = await secondCard.getAttribute("href").catch(() => null);
+          await secondCard.click();
+          await propertyPage.waitForLoadState("domcontentloaded").catch(() => undefined);
+          await propertyPage.waitForTimeout(500);
+          const secondState = await readDetailState();
+          const secondCounter = await propertyPage.evaluate(() =>
+            document.querySelector(".property-gallery-counter")?.textContent?.trim() ?? "",
+          );
+          propertyNavigationCheck.secondDetailHeading = secondState.heading || null;
+          propertyNavigationCheck.secondGalleryCounter = secondCounter || null;
+          propertyNavigationCheck.secondNavigationOk =
+            Boolean(secondHref) &&
+            secondState.rendered &&
+            Boolean(secondState.heading) &&
+            (!secondCounter || secondCounter.includes("تصویر ۱ از"));
+          if (!propertyNavigationCheck.secondNavigationOk) {
+            propertyNavigationCheck.ok = false;
+            propertyNavigationCheck.error =
+              "second property navigation or gallery state check failed";
+          }
         }
 
         if (propertyNavigationCheck.ok) {
