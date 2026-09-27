@@ -185,7 +185,11 @@ function ComparePage() {
                   </tr>
                   <tr>
                     <th>طبقه</th>
-                    {properties.map((p) => <td key={p.id}>{p.floor != null ? p.floor.toLocaleString("fa-IR") : "—"}</td>)}
+                    {properties.map((p) => (
+                      <td key={p.id}>
+                        {p.floorLabel === "suite" ? "سوئیت" : p.floor != null ? p.floor.toLocaleString("fa-IR") : "—"}
+                      </td>
+                    ))}
                   </tr>
                   <tr>
                     <th>پارکینگ</th>
