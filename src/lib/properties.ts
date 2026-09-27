@@ -1111,6 +1111,8 @@ export const saveProperty = createServerFn({ method: "POST" })
     const publishedAt = data.status === "published" ? new Date().toISOString() : null;
     const savedFloor = data.floorLabel === "suite" ? null : data.floor ?? null;
     const savedFloorLabel = data.floorLabel === "suite" ? "suite" : null;
+    const savedConvertible =
+      (data.transactionType === "rent" || data.transactionType === "mortgage") ? data.convertible : false;
 
     await sql.query(
       `insert into properties (
@@ -1299,7 +1301,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         savedFloorLabel,
         data.painted,
         data.wallpaper,
-        data.convertible,
+        savedConvertible,
         data.orientation,
       ],
     );
