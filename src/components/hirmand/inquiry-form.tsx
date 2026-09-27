@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { formatToman, parseAmount } from "@/lib/money";
 import { listNeighborhoodNames } from "@/lib/neighborhoods";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import { formatPersianDate } from "@/lib/persian-date";
+import { PersianDatePicker } from "./persian-date-picker";
 
 export type InquiryDraft = {
   deal: string;
@@ -41,6 +43,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
   const [budgetRent, setBudgetRent] = useState("");
   const [budgetPurchase, setBudgetPurchase] = useState("");
   const [budgetSale, setBudgetSale] = useState("");
+  const [leaseDeadline, setLeaseDeadline] = useState("");
   const [deal, setDeal] = useState(draft.deal);
   const [propertyType, setPropertyType] = useState(draft.propertyType);
   const [neighborhood, setNeighborhood] = useState(draft.neighborhood);
@@ -77,12 +80,14 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       setBudgetDeposit("");
       setBudgetRent("");
       setBudgetSale("");
+      setLeaseDeadline("");
       return;
     }
     if (value === "فروش") {
       setBudgetDeposit("");
       setBudgetRent("");
       setBudgetPurchase("");
+      setLeaseDeadline("");
       return;
     }
     if (value === "رهن" || value === "اجاره") {
@@ -94,6 +99,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
     setBudgetRent("");
     setBudgetPurchase("");
     setBudgetSale("");
+    setLeaseDeadline("");
   }
 
   const selected = TEAM.find((person) => person.id === consultant) ?? TEAM[0];
@@ -109,6 +115,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       isRentLikeDeal && parseAmount(budgetRent) > 0 ? `قیمت اجاره: ${formatToman(parseAmount(budgetRent))} تومان` : "",
       isBuyDeal && parseAmount(budgetPurchase) > 0 ? `مبلغ خرید: ${formatToman(parseAmount(budgetPurchase))} تومان` : "",
       isSellDeal && parseAmount(budgetSale) > 0 ? `مبلغ فروش: ${formatToman(parseAmount(budgetSale))} تومان` : "",
+      isRentLikeDeal && leaseDeadline ? `مهلت رهن و اجاره: ${formatPersianDate(leaseDeadline)}` : "",
       deal ? `نوع معامله: ${deal}` : "",
       propertyType ? `نوع ملک: ${propertyType}` : "",
       neighborhood ? `محله: ${neighborhood}` : "",
@@ -157,6 +164,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       budgetRent: budgetRentNumber || undefined,
       budgetPurchase: budgetPurchaseNumber || undefined,
       budgetSale: budgetSaleNumber || undefined,
+      leaseDeadline: isRentLikeDeal && leaseDeadline ? leaseDeadline : undefined,
       deal,
       propertyType,
       neighborhood,
@@ -176,6 +184,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           budgetRent: payload.budgetRent,
           budgetPurchase: payload.budgetPurchase,
           budgetSale: payload.budgetSale,
+          leaseDeadline: payload.leaseDeadline,
           deal: payload.deal,
           propertyType: payload.propertyType,
           neighborhood: payload.neighborhood,
@@ -354,6 +363,18 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
             aria-describedby="inq-budget-sale-hint"
           />
           <small id="inq-budget-sale-hint" className="form-hint">مبلغ فروش به تومان</small>
+        </div>
+      ) : null}
+      {isRentLikeDeal ? (
+        <div className="field field-span inquiry-deadline-field">
+          <label htmlFor="inq-lease-deadline">مهلت رهن و اجاره</label>
+          <PersianDatePicker
+            id="inq-lease-deadline"
+            value={leaseDeadline}
+            onChange={setLeaseDeadline}
+            placeholder="انتخاب مهلت به تاریخ شمسی"
+            hint="اختیاری؛ تاریخ مهلت را با تقویم شمسی انتخاب کنید."
+          />
         </div>
       ) : null}
       <div className="field">
