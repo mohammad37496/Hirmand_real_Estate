@@ -678,18 +678,8 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
               <div className="inquiry-amenity-grid">
                 {[
                   ["parking", "پارکینگ"],
-                  ["elevator", "آسانسور"],
                   ["storage", "انباری"],
-                  ["balcony", "بالکن"],
-                  ["master_bedroom", "اتاق مستر"],
-                  ["double_glazed", "پنجره دوجداره"],
-                  ["security_door", "درب ضدسرقت"],
-                  ["cctv", "دوربین مداربسته"],
-                  ...PROPERTY_OTHER_AMENITY_OPTIONS
-                    .filter((item) =>
-                      ["yard", "private_yard", "pool", "gym", "doorman", "pet_friendly", "elevator_private", "private_park"].includes(item.value),
-                    )
-                    .map((item) => [item.value, item.label] as const),
+                  ["elevator", "آسانسور"],
                 ].map(([value, label]) => (
                   <label key={value} className="inquiry-amenity-option">
                     <input
