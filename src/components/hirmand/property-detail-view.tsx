@@ -83,6 +83,7 @@ import { PropertyActions } from "@/components/hirmand/property-actions";
 import { formatToman } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
+import { getPropertyFallbackImage, getPropertyFallbackImages } from "@/lib/property-fallback-images";
 import { areaSlug } from "@/lib/areas";
 import { propertyPath } from "@/lib/property-path";
 import { TEAM } from "@/lib/site";
@@ -552,7 +553,7 @@ function Gallery({
   const activeRef = useRef(0);
   const thumbRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-  const fallback = "/images/type-apartment.jpg";
+  const fallback = getPropertyFallbackImage("apartment", "gallery-fallback");
   const current = images[active] ?? images[0] ?? "";
 
   useEffect(() => {
@@ -1012,8 +1013,8 @@ export function PropertyDetailView({
 
   const images = useMemo(() => {
     const cleaned = Array.from(new Set(property.images.map((src) => src.trim()).filter(Boolean)));
-    return cleaned.length ? cleaned : ["/images/type-apartment.jpg"];
-  }, [property.images]);
+    return cleaned.length ? cleaned : getPropertyFallbackImages(property.propertyType);
+  }, [property.images, property.propertyType]);
   const area = areaSlug(property.neighborhood);
   const crumbs = [
     { name: "خانه", path: "/" },
