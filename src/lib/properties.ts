@@ -363,7 +363,7 @@ const LIST_COLUMNS = `
   built_year, parking, elevator, storage, cabinet_type, flooring_type, cooling_system,
   heating_system, wall_closet_type, other_amenities, price, deposit, rent,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
-  latitude, longitude, price_drop_percent,
+  latitude, longitude, price_drop_percent, floor_label,
   left(description, 280) as description
 `;
 
@@ -406,7 +406,7 @@ const DETAIL_COLUMNS = `
   built_year, parking, elevator, storage, cabinet_type, flooring_type, cooling_system,
   heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
-  latitude, longitude, price_drop_percent
+  latitude, longitude, price_drop_percent, floor_label
 `;
 
 function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
@@ -440,6 +440,7 @@ function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
     data.featureSearch?.trim() || null,
     data.hasImagesOnly ?? false,
     data.hasLocationOnly ?? false,
+    data.floorType ?? null,
     data.offset ?? 0,
   ];
 }
@@ -481,6 +482,7 @@ function publicPropertyWhereSql() {
     "and ($23::text is null or exists (select 1 from jsonb_array_elements_text(coalesce(features, '[]'::jsonb)) as feature(value) where feature.value ilike '%' || $23 || '%'))",
     "and ($24::boolean is false or (jsonb_typeof(coalesce(images, '[]'::jsonb)) = 'array' and jsonb_array_length(coalesce(images, '[]'::jsonb)) > 0))",
     "and ($25::boolean is false or (latitude is not null and longitude is not null))",
+    "and ($26::text is null or floor_label = $26)",
   ].join(" ");
 }
 
@@ -547,7 +549,7 @@ export const countPublishedProperties = createServerFn({ method: "GET" })
       20_000,
       async () => {
         const sql = await getSql();
-        const params = publicFilterParams(data).slice(0, 25);
+        const params = publicFilterParams(data).slice(0, 26);
         const rows = await sql.query<{ count: number }>(
           "select count(*)::int as count from properties where " + publicPropertyWhereSql(),
           params,
@@ -1094,14 +1096,14 @@ export const saveProperty = createServerFn({ method: "POST" })
         built_year, parking, elevator, storage, cabinet_type, flooring_type, cooling_system,
         heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
         features, images, contact_name, contact_phone, published_at, featured_until,
-        latitude, longitude
+        latitude, longitude, floor_label
       ) values (
         $1, $2, $3, $4, $5, $6, $7, 'اصفهان',
         $8, $9, $10::integer, $11::smallint, $12::smallint, $13::smallint, $14::smallint,
         $15::smallint, $16::boolean, $17::boolean, $18::boolean, $19::text, $20::text, $21::text,
         $22::text, $23::text, $24::jsonb, $25::numeric, $26::numeric, $27::numeric, $28::text,
         $29::jsonb, $30::jsonb, $31::text, $32::text, $33::timestamptz, $34::timestamptz,
-        $35::double precision, $36::double precision
+        $35::double precision, $36::double precision, $37::text
       )
       on conflict (id) do update set
         slug = excluded.slug,
@@ -1133,6 +1135,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         rent = excluded.rent,
         latitude = excluded.latitude,
         longitude = excluded.longitude,
+        floor_label = excluded.floor_label,
         previous_price = properties.price,
         previous_deposit = properties.deposit,
         previous_rent = properties.rent,
@@ -1266,6 +1269,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         featuredUntil,
         data.latitude ?? null,
         data.longitude ?? null,
+        data.floorLabel ?? null,
       ],
     );
 
