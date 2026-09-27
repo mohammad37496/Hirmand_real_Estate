@@ -543,6 +543,7 @@ function PropertiesIndexPage() {
           minBathrooms,
           minFloor,
           maxFloor,
+          floorType,
           minTotalFloors,
           maxTotalFloors,
           minBuiltYear,
