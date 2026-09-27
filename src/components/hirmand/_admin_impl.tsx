@@ -1121,7 +1121,7 @@ export function AdminPropertiesPage() {
             <button
               type="button"
               className={`admin-nav-btn${view === "form" && form.id ? " is-active" : ""}`}
-              onClick={() => setView("form")}
+              onClick={() => navigateTo("form")}
             >
               <FileEdit size={18} />
               ویرایش فعلی
@@ -1221,11 +1221,11 @@ export function AdminPropertiesPage() {
         <div className="admin-content">
           {view === "dashboard" ? (
             <AdminDashboard
-              onOpenProperties={() => setView("list")}
-              onOpenLeads={() => setView("leads")}
+              onOpenProperties={() => navigateTo("list")}
+              onOpenLeads={() => navigateTo("leads")}
               onCreateProperty={startNew}
-              onOpenDivar={() => setView("divar")}
-              onOpenConsultants={() => setView("consultants")}
+              onOpenDivar={() => navigateTo("divar")}
+              onOpenConsultants={() => navigateTo("consultants")}
             />
           ) : null}
 
