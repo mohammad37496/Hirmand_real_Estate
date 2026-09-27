@@ -172,10 +172,30 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       phone ? `تلفن: ${normalizePhone(phone)}` : "",
       peopleCount ? `تعداد نفرات: ${peopleCount}` : "",
       job.trim() ? `شغل: ${job.trim()}` : "",
-      isRentLikeDeal && parseAmount(budgetDeposit) > 0 ? `قیمت رهن: ${formatToman(parseAmount(budgetDeposit))} تومان` : "",
-      isRentLikeDeal && parseAmount(budgetRent) > 0 ? `قیمت اجاره: ${formatToman(parseAmount(budgetRent))} تومان` : "",
-      isBuyDeal && parseAmount(budgetPurchase) > 0 ? `مبلغ خرید: ${formatToman(parseAmount(budgetPurchase))} تومان` : "",
-      isSellDeal && parseAmount(budgetSale) > 0 ? `مبلغ فروش: ${formatToman(parseAmount(budgetSale))} تومان` : "",
+      isRentLikeDeal && (budgetDepositMin || budgetDepositMax)
+        ? (() => {
+            const range = normalizeBudgetRange(budgetDepositMin, budgetDepositMax);
+            return `رهن حدودی: ${formatToman(range.min)} تا ${formatToman(range.max)} تومان`;
+          })()
+        : "",
+      isRentLikeDeal && (budgetRentMin || budgetRentMax)
+        ? (() => {
+            const range = normalizeBudgetRange(budgetRentMin, budgetRentMax);
+            return `اجاره حدودی: ${formatToman(range.min)} تا ${formatToman(range.max)} تومان`;
+          })()
+        : "",
+      isBuyDeal && (budgetPurchaseMin || budgetPurchaseMax)
+        ? (() => {
+            const range = normalizeBudgetRange(budgetPurchaseMin, budgetPurchaseMax);
+            return `مبلغ خرید حدودی: ${formatToman(range.min)} تا ${formatToman(range.max)} تومان`;
+          })()
+        : "",
+      isSellDeal && (budgetSaleMin || budgetSaleMax)
+        ? (() => {
+            const range = normalizeBudgetRange(budgetSaleMin, budgetSaleMax);
+            return `مبلغ فروش حدودی: ${formatToman(range.min)} تا ${formatToman(range.max)} تومان`;
+          })()
+        : "",
       isRentLikeDeal && leaseDeadline ? `مهلت رهن و اجاره: ${formatPersianDate(leaseDeadline)}` : "",
       deal ? `نوع معامله: ${deal}` : "",
       propertyType ? `نوع ملک: ${propertyType}` : "",
