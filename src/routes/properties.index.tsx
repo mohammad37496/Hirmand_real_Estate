@@ -495,6 +495,7 @@ function PropertiesIndexPage() {
         minFloor,
         maxFloor,
         floorType,
+        orientation,
         minTotalFloors,
         maxTotalFloors,
         minBuiltYear,
@@ -623,6 +624,7 @@ function PropertiesIndexPage() {
     minBathrooms,
     minFloor,
     maxFloor,
+    orientation,
     minTotalFloors,
     maxTotalFloors,
     minBuiltYear,
@@ -855,6 +857,7 @@ function PropertiesIndexPage() {
     minFloor.trim() ||
     maxFloor.trim() ||
     floorType ||
+    orientation ||
     minTotalFloors.trim() ||
     maxTotalFloors.trim() ||
     minBuiltYear.trim() ||
