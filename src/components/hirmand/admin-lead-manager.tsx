@@ -15,6 +15,7 @@ type Lead = {
   deal: string;
   propertyType: string;
   neighborhood: string;
+  floorPreference: string;
   consultant: string;
   note: string;
   status: LeadStatus;
@@ -164,6 +165,7 @@ export function AdminLeadManager() {
         lead.deal,
         lead.propertyType,
         lead.neighborhood,
+        lead.floorPreference,
         lead.consultant,
         lead.note,
         lead.budgetDeposit == null ? "" : String(lead.budgetDeposit),
@@ -320,6 +322,7 @@ export function AdminLeadManager() {
                     {lead.deal}
                     {lead.propertyType ? " · " + lead.propertyType : ""}
                     {lead.neighborhood ? " · " + lead.neighborhood : ""}
+                    {lead.floorPreference ? " · طبقه: " + lead.floorPreference : ""}
                     {lead.consultant ? " · مشاور: " + lead.consultant : ""}
                   </p>
                   {(lead.budgetDeposit != null ||
