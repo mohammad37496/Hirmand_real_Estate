@@ -80,6 +80,7 @@ type FormState = {
   bathrooms: string;
   floor: string;
   floorLabel: Property["floorLabel"];
+  orientation: Property["orientation"];
   totalFloors: string;
   builtYear: string;
   parking: boolean;
@@ -133,6 +134,7 @@ function emptyForm(): FormState {
     bathrooms: "1",
     floor: "",
     floorLabel: null,
+    orientation: null,
     totalFloors: "",
     builtYear: "",
     parking: true,
@@ -161,6 +163,21 @@ function emptyForm(): FormState {
     longitude: null,
   };
 }
+
+const ORIENTATION_OPTIONS: { value: NonNullable<Property["orientation"]>; label: string }[] = [
+  { value: "north", label: "شمالی" },
+  { value: "south", label: "جنوبی" },
+  { value: "east", label: "شرقی" },
+  { value: "west", label: "غربی" },
+  { value: "northeast", label: "شمال‌شرقی" },
+  { value: "northwest", label: "شمال‌غربی" },
+  { value: "southeast", label: "جنوب‌شرقی" },
+  { value: "southwest", label: "جنوب‌غربی" },
+  { value: "two_fronts", label: "دو نبش" },
+  { value: "three_fronts", label: "سه نبش" },
+  { value: "four_fronts", label: "چهار نبش" },
+  { value: "other", label: "سایر" },
+];
 
 const FLOOR_OPTIONS = Array.from({ length: 261 }, (_, index) => index - 60).map((value) => ({
   value: String(value),
@@ -268,6 +285,7 @@ function propertyToForm(property: Property): FormState {
     bathrooms: property.bathrooms != null ? String(property.bathrooms) : "",
     floor: property.floor != null ? String(property.floor) : "",
     floorLabel: property.floorLabel ?? null,
+    orientation: property.orientation ?? null,
     totalFloors: property.totalFloors != null ? String(property.totalFloors) : "",
     builtYear: property.builtYear != null ? String(property.builtYear) : "",
     parking: property.parking,
@@ -824,6 +842,7 @@ export function AdminPropertiesPage() {
           bathrooms: numberOrNull(form.bathrooms),
           floor: form.floorLabel === "suite" ? null : numberOrNull(form.floor, true),
           floorLabel: form.floorLabel,
+          orientation: form.orientation,
           totalFloors: numberOrNull(form.totalFloors),
           builtYear: numberOrNull(form.builtYear),
           parking: form.parking,
@@ -919,6 +938,7 @@ export function AdminPropertiesPage() {
           bathrooms: numberOrNull(base.bathrooms),
           floor: base.floorLabel === "suite" ? null : numberOrNull(base.floor, true),
           floorLabel: base.floorLabel,
+          orientation: base.orientation,
           totalFloors: numberOrNull(base.totalFloors),
           builtYear: numberOrNull(base.builtYear),
           parking: base.parking,
@@ -1594,6 +1614,18 @@ export function AdminPropertiesPage() {
                     <label className="field">
                       <span>سال ساخت</span>
                       <input value={form.builtYear} onChange={(e) => update("builtYear", e.target.value)} />
+                    </label>
+                    <label className="field">
+                      <span>موقعیت ملک</span>
+                      <select
+                        value={form.orientation ?? ""}
+                        onChange={(e) => update("orientation", e.target.value ? e.target.value as Property["orientation"] : null)}
+                      >
+                        <option value="">انتخاب موقعیت</option>
+                        {ORIENTATION_OPTIONS.map((item) => (
+                          <option key={item.value} value={item.value}>{item.label}</option>
+                        ))}
+                      </select>
                     </label>
                   </div>
                   <div className="admin-form-grid admin-form-grid-dense admin-property-finish-grid">
