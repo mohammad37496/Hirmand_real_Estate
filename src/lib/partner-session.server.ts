@@ -1,5 +1,8 @@
 import { createHash, randomBytes, randomInt, scryptSync, timingSafeEqual } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
+import { normalizeDigits, normalizePartnerCode } from "./partner-codes";
+
+export { normalizeDigits, normalizePartnerCode } from "./partner-codes";
 
 export const PARTNER_SESSION_COOKIE =
   process.env.NODE_ENV === "production" || process.env.VERCEL === "1"
@@ -37,16 +40,6 @@ export async function verifyPartnerSessionToken(token: string | undefined) {
   } catch {
     return null;
   }
-}
-
-export function normalizePartnerCode(value: string) {
-  return value.trim().toUpperCase().replace(/\s+/g, "");
-}
-
-export function normalizeDigits(value: string) {
-  return value
-    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
-    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
 }
 
 export function normalizePhone(value: string) {
