@@ -103,6 +103,8 @@ const DIVAR_CSS = `
 .divar-note{background:rgba(24,122,88,.07);border:1px solid rgba(24,122,88,.18);color:#14503a}
 .divar-warning{background:rgba(154,99,47,.08);border:1px solid rgba(154,99,47,.2);color:#6f4318}
 .divar-hosted-badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 8px;font-size:.68rem;font-weight:700;background:rgba(24,122,88,.11);color:#17603f}
+.divar-gallery-health{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid #dce6ee;border-radius:10px;background:#f8fafc;color:#57646e;font-size:.72rem}
+.divar-gallery-health strong{color:#17603f;font-variant-numeric:tabular-nums}.divar-gallery-health.is-incomplete{border-color:#ecd0d0;background:#fff7f7}.divar-gallery-health.is-incomplete strong{color:#8f3232}
 @media (max-width:1080px){.divar-grid{grid-template-columns:1fr}.divar-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:760px){.divar-hero{flex-direction:column}.divar-hero-actions{justify-content:flex-start}.divar-hero h2{font-size:22px}}
 @media (max-width:560px){.divar-stat-grid{grid-template-columns:1fr}.divar-grid{padding:14px}.divar-smart-toolbar,.divar-toolbar{padding:14px}}
@@ -697,6 +699,17 @@ export function AdminDivarFiles() {
                         <span>قیمت: {formatMoney(file.price)}</span>
                       )}
                     </div>
+
+                    {file.sourceImageCount > 0 ? (
+                      <div className={`divar-gallery-health${tab === "imported" && file.publishedImageCount < file.sourceImageCount ? " is-incomplete" : ""}`}>
+                        <span><ImageIcon size={13} /> سلامت گالری</span>
+                        <strong>
+                          {tab === "imported"
+                            ? `${file.publishedImageCount.toLocaleString("fa-IR")} / ${file.sourceImageCount.toLocaleString("fa-IR")} تصویر`
+                            : `${file.sourceImageCount.toLocaleString("fa-IR")} تصویر منبع`}
+                        </strong>
+                      </div>
+                    ) : null}
 
                     {features.length ? (
                       <div className="divar-features">
