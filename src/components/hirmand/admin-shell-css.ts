@@ -106,7 +106,7 @@ export const ADMIN_CSS = `
 .btn-ghost:hover{border-color:rgba(247,245,239,.35);background:rgba(247,245,239,.08)}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .admin-consultant{display:flex;flex-direction:column;gap:12px}
-.admin-consultant-hint{margin:0;color:rgb(247 245 239 / .52);font-size:.85rem}
+.admin-consultant-hint{margin:0;color:var(--muted);font-size:.85rem}
 .admin-consultant-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .admin-consultant-card{display:flex;align-items:center;gap:12px;padding:14px 14px;border-radius:var(--r-md);border:1px solid var(--line);background:var(--card-2);color:var(--fg);font:inherit;text-align:right;cursor:pointer;transition:border-color .15s,background .15s,transform .12s,box-shadow .15s;position:relative;box-shadow:var(--el-1)}
 .admin-consultant-card:hover{border-color:var(--brass-300);background:var(--brass-100);box-shadow:var(--el-2);transform:translateY(-1px)}
