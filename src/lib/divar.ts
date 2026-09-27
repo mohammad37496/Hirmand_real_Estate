@@ -1218,16 +1218,16 @@ export const importDivarFile = createServerFn({ method: "POST" })
     if (data.repair === true || originalImages.length === 0) {
       try {
         const detail = await fetchJson<Record<string, unknown>>(
-          \`\${DIVAR_API}/posts-v2/web/\${encodeURIComponent(token)}\`,
+          `\${DIVAR_API}/posts-v2/web/\${encodeURIComponent(token)}`,
         );
         const detailReason = getDivarAgencyReason(detail);
         if (detailReason) {
           await sql.query(
-            \`update divar_files
+            `update divar_files
              set filter_status = 'rejected',
                  reject_reason = $2,
                  updated_at = current_timestamp
-             where id = $1\`,
+             where id = $1`,
             [data.id, detailReason],
           );
           throw new Error("این فایل دوباره توسط فیلتر مشاور/آژانس رد شد.");
@@ -1237,10 +1237,10 @@ export const importDivarFile = createServerFn({ method: "POST" })
         if (freshImages.length) {
           originalImages = freshImages;
           await sql.query(
-            \`update divar_files
+            `update divar_files
              set images = $2::jsonb,
                  updated_at = current_timestamp
-             where id = $1\`,
+             where id = $1`,
             [data.id, JSON.stringify(freshImages)],
           );
         }
