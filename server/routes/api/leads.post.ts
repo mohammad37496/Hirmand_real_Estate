@@ -26,6 +26,7 @@ const schema = z.object({
   propertyType: z.string().trim().max(80).default(""),
   neighborhood: z.string().trim().max(80).default(""),
   floorPreference: z.string().trim().max(40).default(""),
+  requestedAmenities: z.array(z.string().trim().min(1).max(80)).max(30).optional().default([]),
   consultant: z.string().trim().max(80).default(""),
   note: z.string().trim().max(1500).default(""),
   leaseDeadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -164,7 +165,7 @@ export default defineEventHandler(async (event) => {
              budget_equivalent=$16, budget_bedrooms=$17, matched_properties=$18::jsonb,
              match_count=$19, floor_preference=$25, budget_deposit_min=$26, budget_deposit_max=$27,
              budget_rent_min=$28, budget_rent_max=$29, budget_purchase_min=$30, budget_purchase_max=$31,
-             budget_sale_min=$32, budget_sale_max=$33, updated_at=current_timestamp
+             budget_sale_min=$32, budget_sale_max=$33, requested_amenities=$34::jsonb, updated_at=current_timestamp
          where id=$1`,
         [
           existing[0].id,
@@ -200,6 +201,7 @@ export default defineEventHandler(async (event) => {
           budgetPurchase || null,
           budgetSaleMin || null,
           budgetSale || null,
+          JSON.stringify(parsed.data.requestedAmenities),
         ],
       );
       return { success: true, duplicate: true, updated: true, id: existing[0].id };
@@ -254,6 +256,7 @@ export default defineEventHandler(async (event) => {
       budgetPurchase || null,
       budgetSaleMin || null,
       budgetSale || null,
+      JSON.stringify(parsed.data.requestedAmenities),
     ],
   );
   return { success: true, id: rows[0]?.id ?? null, duplicate: false };
