@@ -4,6 +4,7 @@ import {
   Activity,
   BarChart3,
   Building2,
+  Clock3,
   Eye,
   Globe2,
   Music2,
