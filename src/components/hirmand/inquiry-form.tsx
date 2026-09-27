@@ -47,6 +47,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
   const [deal, setDeal] = useState(draft.deal);
   const [propertyType, setPropertyType] = useState(draft.propertyType);
   const [neighborhood, setNeighborhood] = useState(draft.neighborhood);
+  const [floorPreference, setFloorPreference] = useState("");
   const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>(NEIGHBORHOOD_NAMES);
   const [consultant, setConsultant] = useState<(typeof TEAM)[number]["id"]>(TEAM[0].id);
   const [note, setNote] = useState("");
@@ -119,6 +120,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       deal ? `نوع معامله: ${deal}` : "",
       propertyType ? `نوع ملک: ${propertyType}` : "",
       neighborhood ? `محله: ${neighborhood}` : "",
+      floorPreference ? `طبقه: ${floorPreference}` : "",
       `مشاور: ${selected.name}`,
       note ? `توضیح: ${note}` : "",
     ]
@@ -168,6 +170,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       deal,
       propertyType,
       neighborhood,
+      floorPreference,
       consultant: selected.name,
       note: note.trim(),
     };
@@ -188,6 +191,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           deal: payload.deal,
           propertyType: payload.propertyType,
           neighborhood: payload.neighborhood,
+          floorPreference: payload.floorPreference,
           consultant: payload.consultant,
           note: payload.note,
         }),
@@ -403,6 +407,24 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           {neighborhoodOptions.map((item) => (
             <option key={item} value={item}>
               {item}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="field">
+        <label htmlFor="inq-floor">طبقه مورد نظر</label>
+        <select
+          id="inq-floor"
+          name="floorPreference"
+          value={floorPreference}
+          onChange={(event) => setFloorPreference(event.target.value)}
+        >
+          <option value="">فرقی ندارد / بعداً مشخص می‌شود</option>
+          <option value="زیرزمین">زیرزمین</option>
+          <option value="همکف">همکف</option>
+          {Array.from({ length: 20 }, (_, index) => index + 1).map((floor) => (
+            <option key={floor} value={String(floor)}>
+              طبقه {floor.toLocaleString("fa-IR")}
             </option>
           ))}
         </select>
