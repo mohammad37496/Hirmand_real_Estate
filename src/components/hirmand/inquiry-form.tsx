@@ -21,9 +21,9 @@ const TYPE_OPTIONS = PROPERTY_TYPES.map((item) => item.title);
 const BEDROOM_OPTIONS = [
   { value: "", label: "فرقی ندارد" },
   { value: "0", label: "بدون خواب" },
-    { value: "1", label: "۱ خواب" },
-    { value: "2", label: "۲ خواب" },
-    { value: "3", label: "۳ خواب" },
+  { value: "1", label: "۱ خواب" },
+  { value: "2", label: "۲ خواب" },
+  { value: "3", label: "۳ خواب" },
 ] as const;
 
 function toLatinDigits(value: string) {
