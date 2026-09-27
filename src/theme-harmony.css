@@ -1,0 +1,219 @@
+/* ==========================================================================
+   HIRMAND — canonical visual harmony layer
+   Final stylesheet: normalises late-loaded page modules to the site's
+   authoritative Navy / Brass / Paper palette without changing layouts,
+   data flow, or interactions.
+   ========================================================================== */
+
+:root {
+  --hr-paper: var(--paper);
+  --hr-paper-2: var(--paper-2);
+  --hr-surface: var(--card);
+  --hr-surface-2: var(--card-2);
+  --hr-ink: var(--fg);
+  --hr-muted: var(--muted);
+  --hr-subtle: var(--subtle);
+  --hr-line: var(--line);
+  --hr-line-strong: var(--line-2);
+  --hr-gold: var(--brass-500);
+  --hr-gold-strong: var(--brass-700);
+  --pp-elev-1: var(--el-1);
+
+  --ui-ink: var(--fg);
+  --ui-heading: var(--navy-900);
+  --ui-muted: var(--muted);
+  --ui-soft: var(--subtle);
+  --ui-line: var(--line);
+  --ui-surface: var(--card);
+  --ui-surface-2: var(--card-2);
+  --ui-brass: var(--brass-700);
+  --ui-brass-soft: var(--brass-100);
+  --ui-success: var(--ok);
+
+  --pd-navy: var(--navy-900);
+  --pd-navy-deep: var(--navy-950);
+  --pd-navy-soft: var(--navy-100);
+  --pd-gold: var(--brass-500);
+  --pd-gold-soft: var(--brass-100);
+  --pd-bg: var(--paper);
+  --pd-surface: var(--card);
+  --pd-ink: var(--fg);
+  --pd-muted: var(--muted);
+  --pd-line: var(--line);
+}
+
+/* Property listing */
+.pf-page { color: var(--fg); }
+.pf-kicker,
+.pf-hero-copy h1,
+.pf-count strong,
+.pf-group-title,
+.pf-fold summary strong { color: var(--navy-900); }
+.pf-kicker { border-inline-start-color: var(--brass-700); }
+
+.pf-search:focus-within,
+.pf-field input:focus,
+.pf-field select:focus,
+.pf-spec-search:focus-within {
+  border-color: var(--brass-500) !important;
+  box-shadow: 0 0 0 4px rgb(192 138 42 / 14%) !important;
+}
+
+.pf-chip.is-active,
+.pf-views button.is-active,
+.pf-show-results,
+.pf-map-item.is-active {
+  background: var(--navy-900) !important;
+  border-color: var(--navy-900) !important;
+  color: #fff !important;
+}
+
+.pf-chip:hover,
+.pf-fold[open] > summary,
+.pf-spec-subgroup.has-selection > .pf-spec-subgroup-summary,
+.pf-spec-option:hover {
+  background: var(--brass-100) !important;
+}
+
+.pf-chip:hover,
+.pf-spec-option.is-active,
+.pf-show-results {
+  border-color: var(--brass-500) !important;
+}
+
+.pf-price,
+.pf-meta strong,
+.pf-empty > svg,
+.pf-more small,
+.pf-map-item > svg {
+  color: var(--brass-700) !important;
+}
+
+.pf-sidebar,
+.pf-hero,
+.pf-stats > div,
+.pf-search,
+.pf-fold,
+.pf-spec-fold,
+.pf-spec-search,
+.pf-map-panel,
+.pf-map-item,
+.pf-result-card,
+.pf-more {
+  border-color: var(--line) !important;
+}
+
+.pf-hero,
+.pf-sidebar,
+.pf-fold,
+.pf-spec-fold,
+.pf-map-panel,
+.pf-result-card,
+.pf-more {
+  background: var(--card) !important;
+}
+
+.pf-stats > div,
+.pf-search,
+.pf-spec-search,
+.pf-map-item,
+.pf-more {
+  background: var(--card-2) !important;
+}
+
+.pf-field label,
+.pf-group-title small,
+.pf-fold summary small,
+.pf-active-label,
+.pf-count span,
+.pf-results-head,
+.pf-more small {
+  color: var(--muted) !important;
+}
+
+.pf-reset {
+  background: var(--card) !important;
+  color: var(--fg) !important;
+  border-color: var(--line-2) !important;
+}
+.pf-reset:hover {
+  background: var(--card-2) !important;
+  border-color: var(--navy-700) !important;
+}
+
+/* Finance / tools */
+.tools-eyebrow,
+.tools-switch-arrow,
+.commission-result-head svg,
+.finance-tools-hub-link svg {
+  color: var(--brass-700) !important;
+}
+.tools-switch-btn:hover,
+.commission-tabs .commission-tab:hover {
+  border-color: var(--brass-500) !important;
+  background: var(--brass-100) !important;
+}
+.tools-switch-btn.is-active,
+.commission-tabs .commission-tab.is-active {
+  background: var(--navy-900) !important;
+  border-color: var(--navy-900) !important;
+}
+.commission-fields input:focus,
+.commission-box input:focus,
+.commission-box select:focus {
+  border-color: var(--brass-500) !important;
+  box-shadow: 0 0 0 3px rgb(192 138 42 / 13%) !important;
+}
+
+/* Public property detail */
+.property-detail-page .property-contact-card,
+.property-detail-page .property-map-card,
+.property-detail-page .property-detail-summary,
+.property-detail-page .property-detail-main > section,
+.property-detail-page .property-detail-body,
+.property-detail-page .property-location-section,
+.property-detail-page .property-related {
+  background: var(--card) !important;
+  border-color: var(--line) !important;
+  color: var(--fg) !important;
+}
+.property-detail-page .property-price-block,
+.property-detail-page .property-spec-grid > * {
+  background: var(--card-2) !important;
+}
+.property-detail-page .property-status,
+.property-detail-page .property-detail-summary .kicker {
+  color: var(--brass-700) !important;
+}
+.property-detail-page .property-breadcrumb,
+.property-detail-page .property-breadcrumb a {
+  color: var(--navy-900) !important;
+}
+.property-detail-page .property-breadcrumb a:hover,
+.property-detail-page .property-contact-profile {
+  color: var(--brass-700) !important;
+}
+.property-detail-page .property-action-primary,
+.property-detail-page .property-action.is-active {
+  background: var(--navy-900) !important;
+  border-color: var(--navy-900) !important;
+  color: #fff !important;
+}
+.property-detail-page .property-action:hover {
+  border-color: var(--brass-500) !important;
+  background: var(--brass-100) !important;
+}
+.property-detail-page .property-gallery-featured {
+  background: var(--brass-500) !important;
+  color: var(--navy-950) !important;
+}
+
+/* Shared focus */
+:where(button, a, input, select, textarea, summary):focus-visible {
+  outline-color: var(--navy-700);
+}
+
+@media (max-width: 720px) {
+  .pf-hero { background: var(--card) !important; }
+  .property-detail-page { background: transparent !important; }
+}
