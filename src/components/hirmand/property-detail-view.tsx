@@ -550,6 +550,10 @@ function Gallery({
   );
 
   useEffect(() => {
+    setActive((value) => Math.min(value, Math.max(0, images.length - 1)));
+  }, [images.length]);
+
+  useEffect(() => {
     thumbRefs.current[active]?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
   }, [active]);
 
