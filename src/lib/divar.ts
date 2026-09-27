@@ -1244,6 +1244,8 @@ export const importDivarFile = createServerFn({ method: "POST" })
                images = $2::jsonb,
                latitude = $3,
                longitude = $4,
+               floor = $5,
+               floor_label = $6,
                updated_at = current_timestamp
            where id = $1`,
           [
@@ -1251,6 +1253,8 @@ export const importDivarFile = createServerFn({ method: "POST" })
             JSON.stringify(finalImages),
             row.latitude == null ? null : Number(row.latitude),
             row.longitude == null ? null : Number(row.longitude),
+            row.floor_label === "suite" ? null : row.floor == null ? null : Number(row.floor),
+            row.floor_label === "suite" ? "suite" : null,
           ],
         );
 
@@ -1293,12 +1297,12 @@ export const importDivarFile = createServerFn({ method: "POST" })
         id, slug, status, featured, title, transaction_type, property_type, city,
         neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
         built_year, parking, elevator, storage, price, deposit, rent, description,
-        features, images, contact_name, contact_phone, latitude, longitude, published_at
+        features, images, contact_name, contact_phone, latitude, longitude, floor_label, published_at
       ) values (
         $1,$2,'published',false,$3,$4,$5,'اصفهان',
         $6,null,$7,$8,$9,$10,$11,
         $12,$13,$14,$15,$16,$17,$18,$19,
-        $20::jsonb,$21::jsonb,$22,$23,$24,$25,current_timestamp
+        $20::jsonb,$21::jsonb,$22,$23,$24,$25,$26,current_timestamp
       )`,
       [
         id,
@@ -1326,6 +1330,7 @@ export const importDivarFile = createServerFn({ method: "POST" })
         TEAM[0]?.phone ?? SITE.phone.mobile,
         row.latitude == null ? null : Number(row.latitude),
         row.longitude == null ? null : Number(row.longitude),
+        row.floor_label === "suite" ? "suite" : null,
       ],
     );
 
