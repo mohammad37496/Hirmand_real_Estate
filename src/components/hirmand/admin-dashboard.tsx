@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
+  Activity,
   BarChart3,
   Building2,
   Eye,
+  Globe2,
+  Music2,
   Phone,
+  Plus,
   RefreshCw,
   UserRound,
   UsersRound,
@@ -148,9 +152,15 @@ function formatDay(value: string) {
 export function AdminDashboard({
   onOpenProperties,
   onOpenLeads,
+  onCreateProperty,
+  onOpenDivar,
+  onOpenConsultants,
 }: {
   onOpenProperties: () => void;
   onOpenLeads: () => void;
+  onCreateProperty: () => void;
+  onOpenDivar: () => void;
+  onOpenConsultants: () => void;
 }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -301,6 +311,38 @@ export function AdminDashboard({
           );
         })}
       </div>
+
+      <section className="admin-dashboard-quick-actions" aria-label="میانبرهای مدیریتی">
+        <div className="admin-dashboard-quick-intro">
+          <div>
+            <span className="kicker">عملیات سریع</span>
+            <h2>از همین‌جا کارهای پرتکرار را انجام بده</h2>
+          </div>
+          <span className="admin-dashboard-summary">دسترسی یک‌مرحله‌ای به بخش‌های اصلی پنل</span>
+        </div>
+        <div className="admin-dashboard-quick-grid">
+          <button type="button" className="admin-dashboard-quick-card is-primary" onClick={onCreateProperty}>
+            <span className="admin-dashboard-quick-icon"><Plus size={18} /></span>
+            <span><strong>ثبت فایل جدید</strong><small>ایجاد و انتشار فایل جدید</small></span>
+            <ArrowLeft size={15} />
+          </button>
+          <button type="button" className="admin-dashboard-quick-card" onClick={onOpenLeads}>
+            <span className="admin-dashboard-quick-icon"><UsersRound size={18} /></span>
+            <span><strong>پیگیری مشتریان</strong><small>مشاهده لیدها و وضعیت پیگیری</small></span>
+            <ArrowLeft size={15} />
+          </button>
+          <button type="button" className="admin-dashboard-quick-card" onClick={onOpenDivar}>
+            <span className="admin-dashboard-quick-icon"><Globe2 size={18} /></span>
+            <span><strong>فایل‌های دیوار</strong><small>بررسی و ورود فایل‌های جدید</small></span>
+            <ArrowLeft size={15} />
+          </button>
+          <button type="button" className="admin-dashboard-quick-card" onClick={onOpenConsultants}>
+            <span className="admin-dashboard-quick-icon"><UserRound size={18} /></span>
+            <span><strong>مدیریت مشاوران</strong><small>اعضا، تماس و حساب‌های فعال</small></span>
+            <ArrowLeft size={15} />
+          </button>
+        </div>
+      </section>
 
       <div className="admin-dashboard-grid">
         <section className="admin-panel">
@@ -590,6 +632,60 @@ export function AdminDashboard({
                 );
               })
             )}
+          </div>
+        </section>
+      </div>
+
+      <div className="admin-dashboard-grid">
+        <section className="admin-panel">
+          <div className="admin-panel-head">
+            <div>
+              <span className="kicker">جذب</span>
+              <h2>منابع ورود بازدیدکنندگان</h2>
+            </div>
+            <span className="admin-dashboard-summary">۳۰ روز اخیر</span>
+          </div>
+          <div className="admin-dashboard-source-list">
+            {data.visitorSources.length === 0 ? (
+              <div className="admin-empty"><Globe2 size={24} /><strong>هنوز منبع ورودی ثبت نشده</strong></div>
+            ) : (
+              data.visitorSources.slice(0, 6).map((item) => (
+                <div key={item.source + "::" + item.campaign} className="admin-dashboard-source-row">
+                  <div>
+                    <strong>{item.source || "مستقیم"}</strong>
+                    <small>{item.campaign ? "کمپین: " + item.campaign : "بدون کمپین مشخص"}</small>
+                  </div>
+                  <span>{item.visitors.toLocaleString("fa-IR")} نفر</span>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        <section className="admin-panel">
+          <div className="admin-panel-head">
+            <div>
+              <span className="kicker">وضعیت سیستم</span>
+              <h2>سلامت بخش‌های مدیریتی</h2>
+            </div>
+            <span className="admin-system-status"><Activity size={13} /> فعال</span>
+          </div>
+          <div className="admin-system-grid">
+            <div>
+              <span><Building2 size={14} /> فایل‌ها</span>
+              <strong>{data.properties.total.toLocaleString("fa-IR")}</strong>
+              <small>{data.properties.published.toLocaleString("fa-IR")} منتشرشده</small>
+            </div>
+            <div>
+              <span><Music2 size={14} /> موسیقی</span>
+              <strong>{data.music.active.toLocaleString("fa-IR")}</strong>
+              <small>از {data.music.total.toLocaleString("fa-IR")} قطعه فعال</small>
+            </div>
+            <div>
+              <span><UsersRound size={14} /> لید جدید</span>
+              <strong>{data.leads.new.toLocaleString("fa-IR")}</strong>
+              <small>نیازمند بررسی</small>
+            </div>
           </div>
         </section>
       </div>
