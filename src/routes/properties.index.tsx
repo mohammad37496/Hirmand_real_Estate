@@ -161,6 +161,20 @@ function normalizeBounds(a: string, b: string) {
   return [second, first] as const;
 }
 
+function parseFloorNumber(raw: string) {
+  const cleaned = toEnglishDigits(raw).replace(/[^\d.-]/g, "");
+  if (!cleaned) return undefined;
+  const value = Number(cleaned);
+  return Number.isFinite(value) && Number.isInteger(value) && value >= -60 && value <= 200 ? value : undefined;
+}
+
+function normalizeFloorBounds(a: string, b: string) {
+  const first = parseFloorNumber(a);
+  const second = parseFloorNumber(b);
+  if (first == null || second == null || first <= second) return [first, second] as const;
+  return [second, first] as const;
+}
+
 function buildFilterData(
   q: string,
   transactionType: PropertyTransaction | "",
@@ -192,7 +206,7 @@ function buildFilterData(
 ) {
   const [nextMinArea, nextMaxArea] = normalizeBounds(minArea, maxArea);
   const [nextMinPrice, nextMaxPrice] = normalizeBounds(minPrice, maxPrice);
-  const [nextMinFloor, nextMaxFloor] = normalizeBounds(minFloor, maxFloor);
+  const [nextMinFloor, nextMaxFloor] = normalizeFloorBounds(minFloor, maxFloor);
   const [nextMinTotalFloors, nextMaxTotalFloors] = normalizeBounds(minTotalFloors, maxTotalFloors);
   const [nextMinBuiltYear, nextMaxBuiltYear] = normalizeBounds(minBuiltYear, maxBuiltYear);
   return {
