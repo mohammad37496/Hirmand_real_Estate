@@ -13,6 +13,7 @@ import {
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES } from "@/lib/site";
 import { listNeighborhoodNames } from "@/lib/neighborhoods";
 import { mediaSourceCandidates } from "@/lib/media";
+import { getPropertyFallbackImage } from "@/lib/property-fallback-images";
 import { formatToman } from "@/lib/money";
 import type { Property, PropertyCardData, PropertyType, PropertyTransaction } from "@/lib/properties";
 import { isFeaturedActive, listPublishedPropertyCards } from "@/lib/properties";
@@ -23,9 +24,6 @@ const PROPERTY_TYPE_LABEL: Record<PropertyType, string> = {
   apartment: "آپارتمان", villa: "ویلا و باغ", office: "اداری", heritage: "خانه اصیل", land: "زمین", commercial: "تجاری",
 };
 const TRANSACTION_LABEL: Record<PropertyTransaction, string> = { buy: "خرید", sell: "فروش", rent: "اجاره", mortgage: "رهن" };
-const FALLBACK_IMAGES: Record<PropertyType, string> = {
-  apartment: "/images/type-apartment.jpg", villa: "/images/type-villa.jpg", office: "/images/type-office.jpg", heritage: "/images/type-heritage.jpg", land: "/images/type-villa.jpg", commercial: "/images/type-office.jpg",
-};
 function money(value: string | null) { if (!value) return ""; const parsed = Number(value); return Number.isFinite(parsed) ? formatToman(parsed) : value; }
 function unitPriceLabel(property: Property | PropertyCardData) {
   if ((property.transactionType !== "buy" && property.transactionType !== "sell") || !property.price || !property.areaM2 || property.areaM2 <= 0) return "";
@@ -41,7 +39,7 @@ function priceLabel(property: Property | PropertyCardData) {
 function imageFor(property: Property | PropertyCardData) {
   if ("image" in property && property.image) return property.image;
   if ("images" in property && property.images[0]) return property.images[0];
-  return FALLBACK_IMAGES[property.propertyType];
+  return getPropertyFallbackImage(property.propertyType, property.id);
 }
 
 
@@ -80,7 +78,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
           <PropertyImage
             src={image}
             alt={property.title}
-            fallback={FALLBACK_IMAGES[property.propertyType]}
+            fallback={getPropertyFallbackImage(property.propertyType, property.id)}
           />
           <div className="property-card-badges">
             {isFeaturedActive(property) ? (
