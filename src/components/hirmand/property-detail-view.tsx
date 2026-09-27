@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useRef, useState, type TouchEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type TouchEvent } from "react";
 import {
   ArrowRight,
   Accessibility,
@@ -531,6 +531,7 @@ function Gallery({
   const lightboxRef = useRef<HTMLDivElement | null>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const activeRef = useRef(0);
+  const thumbRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const fallback = "/images/type-apartment.jpg";
   const current = images[active] ?? images[0] ?? "";
@@ -547,6 +548,10 @@ function Gallery({
     },
     [images.length],
   );
+
+  useEffect(() => {
+    thumbRefs.current[active]?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+  }, [active]);
 
   const closeLightbox = useCallback(() => {
     setLightboxOpen(false);
@@ -730,6 +735,9 @@ function Gallery({
         <div className="property-gallery-rail" aria-label="انتخاب تصویر">
           {images.map((src, index) => (
             <button
+              ref={(element) => {
+                thumbRefs.current[index] = element;
+              }}
               key={src + "-" + index}
               type="button"
               className={"property-gallery-thumb" + (index === active ? " is-active" : "")}
@@ -979,7 +987,10 @@ export function PropertyDetailView({
     );
   }
 
-  const images = property.images.length ? property.images : ["/images/type-apartment.jpg"];
+  const images = useMemo(() => {
+    const cleaned = Array.from(new Set(property.images.map((src) => src.trim()).filter(Boolean)));
+    return cleaned.length ? cleaned : ["/images/type-apartment.jpg"];
+  }, [property.images]);
   const area = areaSlug(property.neighborhood);
   const crumbs = [
     { name: "خانه", path: "/" },
@@ -1013,7 +1024,7 @@ export function PropertyDetailView({
 
         <section className="property-detail-top" aria-label="خلاصه فایل">
           <div className="property-detail-top-gallery">
-            <Gallery images={images} title={property.title} featured={isFeaturedActive(property)} />
+            <Gallery key={property.id} images={images} title={property.title} featured={isFeaturedActive(property)} />
           </div>
 
 
