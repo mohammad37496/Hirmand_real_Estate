@@ -382,7 +382,7 @@ function TrackingPage() {
                 </label>
                 <label className="field">
                   <span>رمز ۶ رقمی</span>
-                  <input value={pin} onChange={(event) => setPin(toEnglishDigits(event.target.value).replace(/\D/g, "").slice(0, 6))} placeholder="••••••" inputMode="numeric" dir="ltr" autoComplete="current-password" />
+                  <input value={pin} onChange={(event) => setPin(normalizeDigits(event.target.value).replace(/\D/g, "").slice(0, 6))} placeholder="••••••" inputMode="numeric" dir="ltr" autoComplete="current-password" />
                 </label>
                 <button className="btn-gold" type="submit" disabled={loginBusy}>
                   {loginBusy ? <RefreshCw size={16} className="admin-spin" /> : <KeyRound size={16} />}
