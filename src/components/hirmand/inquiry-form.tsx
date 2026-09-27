@@ -3,7 +3,7 @@ import { Phone, Send } from "lucide-react";
 import { toast } from "sonner";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SERVICES, SITE, TEAM } from "@/lib/site";
 import { cn } from "@/lib/utils";
-import { formatToman, parseAmount } from "@/lib/money";
+import { formatToman, parseAmount, tomanToWords } from "@/lib/money";
 import { listNeighborhoodNames } from "@/lib/neighborhoods";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { formatPersianDate } from "@/lib/persian-date";
@@ -17,6 +17,16 @@ export type InquiryDraft = {
 
 const DEAL_OPTIONS = SERVICES.map((item) => item.title);
 const TYPE_OPTIONS = PROPERTY_TYPES.map((item) => item.title);
+const BEDROOM_OPTIONS = [
+  { value: "", label: "فرقی ندارد" },
+  { value: "0", label: "بدون خواب / استودیو" },
+  { value: "1", label: "۱ خواب" },
+  { value: "2", label: "۲ خواب" },
+  { value: "3", label: "۳ خواب" },
+  { value: "4", label: "۴ خواب" },
+  { value: "5", label: "۵ خواب" },
+  { value: "6", label: "۶ خواب و بیشتر" },
+] as const;
 
 function toLatinDigits(value: string) {
   return value
@@ -96,6 +106,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
   const [propertyType, setPropertyType] = useState(draft.propertyType);
   const [neighborhood, setNeighborhood] = useState(draft.neighborhood);
   const [floorPreference, setFloorPreference] = useState("");
+  const [requestedBedrooms, setRequestedBedrooms] = useState("");
   const [requestedAmenities, setRequestedAmenities] = useState<string[]>([]);
   const [amenitiesOpen, setAmenitiesOpen] = useState(false);
   const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>(NEIGHBORHOOD_NAMES);
@@ -202,6 +213,9 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       deal ? `نوع معامله: ${deal}` : "",
       propertyType ? `نوع ملک: ${propertyType}` : "",
       neighborhood ? `محله: ${neighborhood}` : "",
+      requestedBedrooms
+        ? `تعداد خواب موردنظر: ${BEDROOM_OPTIONS.find((item) => item.value === requestedBedrooms)?.label ?? requestedBedrooms}`
+        : "",
       floorPreference ? `طبقه: ${floorPreference}` : "",
       requestedAmenities.length
         ? "امکانات موردنظر: " + requestedAmenities.map((value) => {
@@ -309,6 +323,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
       propertyType,
       neighborhood,
       floorPreference,
+      requestedBedrooms: requestedBedrooms ? Number(requestedBedrooms) : undefined,
       requestedAmenities,
       consultant: selected.name,
       note: note.trim(),
@@ -339,6 +354,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           propertyType: payload.propertyType,
           neighborhood: payload.neighborhood,
           floorPreference: payload.floorPreference,
+          requestedBedrooms: payload.requestedBedrooms,
           requestedAmenities: payload.requestedAmenities,
           consultant: payload.consultant,
           note: payload.note,
@@ -611,6 +627,21 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           {neighborhoodOptions.map((item) => (
             <option key={item} value={item}>
               {item}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="field">
+        <label htmlFor="inq-bedrooms">تعداد خواب موردنظر</label>
+        <select
+          id="inq-bedrooms"
+          name="requestedBedrooms"
+          value={requestedBedrooms}
+          onChange={(event) => setRequestedBedrooms(event.target.value)}
+        >
+          {BEDROOM_OPTIONS.map((item) => (
+            <option key={item.value} value={item.value}>
+              {item.label}
             </option>
           ))}
         </select>
