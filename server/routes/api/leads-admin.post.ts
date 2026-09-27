@@ -85,7 +85,7 @@ export default defineEventHandler(async (event) => {
       closed: "ناموفق / بسته‌شده",
       spam: "اسپم",
     };
-    const header = ["نام", "تلفن", "تعداد نفرات", "شغل", "معامله", "نوع ملک", "محله", "طبقه", "مشاور", "وضعیت", "منبع جذب", "رهن از", "رهن تا", "اجاره از", "اجاره تا", "خرید از", "خرید تا", "فروش از", "فروش تا", "معادل رهنی", "خواب", "تعداد فایل پیشنهادی", "توضیحات", "مهلت رهن و اجاره", "تاریخ"];
+    const header = ["نام", "تلفن", "تعداد نفرات", "شغل", "معامله", "نوع ملک", "محله", "طبقه", "مشاور", "وضعیت", "منبع جذب", "رهن از", "رهن تا", "اجاره از", "اجاره تا", "خرید از", "خرید تا", "فروش از", "فروش تا", "معادل رهنی", "خواب", "تعداد فایل پیشنهادی", "امکانات موردنظر", "توضیحات", "مهلت رهن و اجاره", "تاریخ"];
     const lines = [
       header.map(csvCell).join(","),
       ...rows.map((row) =>
@@ -112,6 +112,7 @@ export default defineEventHandler(async (event) => {
           row.budget_equivalent,
           row.budget_bedrooms,
           row.match_count,
+          Array.isArray(row.requested_amenities) ? row.requested_amenities.join(" | ") : "",
           row.note,
           row.lease_deadline,
           csvDate(row.created_at),
