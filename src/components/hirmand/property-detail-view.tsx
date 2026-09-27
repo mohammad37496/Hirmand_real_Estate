@@ -61,6 +61,21 @@ import {
 } from "lucide-react";
 import { breadcrumbJsonLd, propertyJsonLd, TX_LABEL, TYPE_LABEL } from "@/lib/seo";
 import type { Property } from "@/lib/properties";
+
+const PROPERTY_ORIENTATION_LABELS: Record<NonNullable<Property["orientation"]>, string> = {
+  north: "شمالی",
+  south: "جنوبی",
+  east: "شرقی",
+  west: "غربی",
+  northeast: "شمال‌شرقی",
+  northwest: "شمال‌غربی",
+  southeast: "جنوب‌شرقی",
+  southwest: "جنوب‌غربی",
+  two_fronts: "دو نبش",
+  three_fronts: "سه نبش",
+  four_fronts: "چهار نبش",
+  other: "سایر",
+};
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { PropertyActions } from "@/components/hirmand/property-actions";
@@ -1100,6 +1115,7 @@ export function PropertyDetailView({
                   <div><Building2 size={18} /><span><small>طبقه</small><strong>{property.floor.toLocaleString("fa-IR")}</strong></span></div>
                 ) : null}
                 {property.totalFloors != null ? <div><Layers3 size={18} /><span><small>تعداد طبقات</small><strong>{property.totalFloors.toLocaleString("fa-IR")}</strong></span></div> : null}
+                {property.orientation ? <div><Navigation size={18} /><span><small>موقعیت ملک</small><strong>{PROPERTY_ORIENTATION_LABELS[property.orientation]}</strong></span></div> : null}
                 {property.builtYear != null ? <div><CalendarDays size={18} /><span><small>سال ساخت</small><strong>{property.builtYear.toLocaleString("fa-IR", { useGrouping: false })}</strong></span></div> : null}
                 <div><CarFront size={18} /><span><small>پارکینگ</small><strong>{property.parking ? "دارد" : "ندارد"}</strong></span></div>
                 <div><Navigation size={18} /><span><small>آسانسور</small><strong>{property.elevator ? "دارد" : "ندارد"}</strong></span></div>
