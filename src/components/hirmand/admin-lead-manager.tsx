@@ -217,6 +217,9 @@ export function AdminLeadManager() {
   }, [leads, query, statusFilter]);
 
   function budgetWhatsappHref(lead: Lead) {
+    const phone = lead.phone
+      .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+      .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
     const lines = [
       "سلام " + lead.name + "،",
       "نتیجه بررسی بودجه شما از طرف هیرمند:",
@@ -250,7 +253,7 @@ export function AdminLeadManager() {
     ].filter(Boolean);
     return (
       "https://wa.me/" +
-      lead.phone.replace(/^0/, "98") +
+      (phone.startsWith("0098") ? phone.slice(2) : phone.startsWith("98") ? phone : phone.replace(/^0/, "98")) +
       "?text=" +
       encodeURIComponent(lines.join("\n"))
     );
