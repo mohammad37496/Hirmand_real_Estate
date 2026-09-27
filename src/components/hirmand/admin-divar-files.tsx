@@ -103,6 +103,8 @@ const DIVAR_CSS = `
 .divar-note{background:rgba(24,122,88,.07);border:1px solid rgba(24,122,88,.18);color:#14503a}
 .divar-warning{background:rgba(154,99,47,.08);border:1px solid rgba(154,99,47,.2);color:#6f4318}
 .divar-hosted-badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 8px;font-size:.68rem;font-weight:700;background:rgba(24,122,88,.11);color:#17603f}
+.divar-remote-badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 8px;font-size:.68rem;font-weight:700;background:#fff5e7;color:#8a5e14;border:1px solid #edd5b3}
+.divar-toggle-warning{border-color:#edd5b3!important;background:#fffaf2!important;color:#8a5e14!important}
 .divar-gallery-health{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid #dce6ee;border-radius:10px;background:#f8fafc;color:#57646e;font-size:.72rem}
 .divar-gallery-health strong{color:#17603f;font-variant-numeric:tabular-nums}.divar-gallery-health.is-incomplete{border-color:#ecd0d0;background:#fff7f7}.divar-gallery-health.is-incomplete strong{color:#8f3232}
 @media (max-width:1080px){.divar-grid{grid-template-columns:1fr}.divar-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -293,6 +295,7 @@ export function AdminDivarFiles() {
   const [propertyFilter, setPropertyFilter] = useState<"all" | "apartment" | "villa">("all");
   const [sortBy, setSortBy] = useState<"newest" | "priceAsc" | "priceDesc" | "areaDesc">("newest");
   const [onlyWithImages, setOnlyWithImages] = useState(false);
+  const [onlyNeedsRepair, setOnlyNeedsRepair] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -402,6 +405,12 @@ export function AdminDivarFiles() {
       if (transactionFilter !== "all" && file.transactionType !== transactionFilter) return false;
       if (propertyFilter !== "all" && file.propertyType !== propertyFilter) return false;
       if (onlyWithImages && file.images.length === 0) return false;
+      const repairNeeded =
+        tab === "imported" &&
+        file.sourceImageCount > 0 &&
+        (file.publishedHostedImageCount < file.sourceImageCount ||
+          file.publishedImageCount < file.sourceImageCount);
+      if (onlyNeedsRepair && !repairNeeded) return false;
       if (!query) return true;
       const haystack = [
         file.title,
@@ -423,7 +432,7 @@ export function AdminDivarFiles() {
       if (sortBy === "priceDesc") return bPrice - aPrice;
       return new Date(b.lastSeenAt).getTime() - new Date(a.lastSeenAt).getTime();
     });
-  }, [onlyWithImages, propertyFilter, search, sortBy, sourceVisible, transactionFilter]);
+  }, [onlyNeedsRepair, onlyWithImages, propertyFilter, search, sortBy, sourceVisible, tab, transactionFilter]);
 
   const resetFilters = () => {
     setSearch("");
@@ -431,6 +440,7 @@ export function AdminDivarFiles() {
     setPropertyFilter("all");
     setSortBy("newest");
     setOnlyWithImages(false);
+    setOnlyNeedsRepair(false);
   };
 
   const hasFilters =
@@ -438,7 +448,8 @@ export function AdminDivarFiles() {
     transactionFilter !== "all" ||
     propertyFilter !== "all" ||
     sortBy !== "newest" ||
-    onlyWithImages;
+    onlyWithImages ||
+    onlyNeedsRepair;
 
   const withImages = sourceVisible.filter((file) => file.images.length > 0).length;
   const totalImages = sourceVisible.reduce((sum, file) => sum + file.images.length, 0);
@@ -476,6 +487,16 @@ export function AdminDivarFiles() {
             <option value={36}>۳۶ فایل</option>
             <option value={48}>۴۸ فایل</option>
           </select>
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => void load()}
+            disabled={loading || syncing}
+            title="فقط فهرست و آمار فعلی را تازه کن"
+          >
+            <RefreshCw size={16} className={loading ? "admin-spin" : ""} />
+            تازه‌سازی
+          </button>
           <button type="button" className="btn-gold" onClick={() => void sync()} disabled={syncing}>
             {syncing ? <Loader2 size={16} className="admin-spin" /> : <RefreshCw size={16} />}
             {syncing ? "در حال بررسی دیوار…" : "دریافت فایل‌های دیوار"}
@@ -525,8 +546,22 @@ export function AdminDivarFiles() {
       <div className="divar-note">
         <ImageIcon size={15} style={{ verticalAlign: "middle", marginInlineEnd: 6 }} />
         در این فهرست {withImages.toLocaleString("fa-IR")} فایل تصویر دارد و مجموعاً{" "}
-        {totalImages.toLocaleString("fa-IR")} تصویر آماده انتشار است. با دکمه «تکمیل تصاویر»
-        هر گالری ناقص دوباره از دیوار خوانده می‌شود.
+        {totalImages.toLocaleString("fa-IR")} تصویر منبع وجود دارد.
+        {tab === "imported" ? (
+          <>
+            {" "}از میان فایل‌های منتشرشده،{" "}
+            {sourceVisible
+              .filter(
+                (file) =>
+                  file.sourceImageCount > 0 &&
+                  file.publishedHostedImageCount >= file.sourceImageCount,
+              )
+              .length.toLocaleString("fa-IR")}{" "}
+            گالری کاملاً روی فضای سایت میزبانی می‌شوند؛ موارد دیگر با «تکمیل تصاویر» قابل ترمیم‌اند.
+          </>
+        ) : (
+          <> با «تکمیل تصاویر» می‌توان گالری‌های ناقص را دوباره از دیوار خواند.</>
+        )}
       </div>
 
       <div className="admin-panel">
@@ -632,6 +667,19 @@ export function AdminDivarFiles() {
             </span>
           </label>
 
+          {tab === "imported" ? (
+            <label className="divar-toggle divar-toggle-warning">
+              <input
+                type="checkbox"
+                checked={onlyNeedsRepair}
+                onChange={(event) => setOnlyNeedsRepair(event.target.checked)}
+              />
+              <span>
+                <RefreshCw size={14} /> فقط گالری‌های نیازمند تکمیل
+              </span>
+            </label>
+          ) : null}
+
           <div className="divar-toolbar-result">
             <SlidersHorizontal size={14} />
             <strong>{visible.length.toLocaleString("fa-IR")}</strong>
@@ -701,11 +749,19 @@ export function AdminDivarFiles() {
                     </div>
 
                     {file.sourceImageCount > 0 ? (
-                      <div className={`divar-gallery-health${tab === "imported" && file.publishedImageCount < file.sourceImageCount ? " is-incomplete" : ""}`}>
+                      <div
+                        className={
+                          `divar-gallery-health${tab === "imported" &&
+                          (file.publishedHostedImageCount < file.sourceImageCount ||
+                            file.publishedImageCount < file.sourceImageCount)
+                            ? " is-incomplete"
+                            : ""}`
+                        }
+                      >
                         <span><ImageIcon size={13} /> سلامت گالری</span>
                         <strong>
                           {tab === "imported"
-                            ? `${file.publishedImageCount.toLocaleString("fa-IR")} / ${file.sourceImageCount.toLocaleString("fa-IR")} تصویر`
+                            ? `${file.publishedImageCount.toLocaleString("fa-IR")} / ${file.sourceImageCount.toLocaleString("fa-IR")} نمایش · ${file.publishedHostedImageCount.toLocaleString("fa-IR")} میزبانی`
                             : `${file.sourceImageCount.toLocaleString("fa-IR")} تصویر منبع`}
                         </strong>
                       </div>
@@ -731,6 +787,11 @@ export function AdminDivarFiles() {
                       {file.filterStatus === "imported" && file.images.length > 0 ? (
                         <span className="divar-hosted-badge">
                           <BadgeCheck size={12} /> گالری منتشرشده
+                        </span>
+                      ) : null}
+                      {file.filterStatus === "imported" && file.publishedRemoteImageCount > 0 ? (
+                        <span className="divar-remote-badge">
+                          {file.publishedRemoteImageCount.toLocaleString("fa-IR")} تصویر با منبع دیوار
                         </span>
                       ) : null}
                     </div>
@@ -800,7 +861,12 @@ export function AdminDivarFiles() {
                             ) : (
                               <UploadCloud size={15} />
                             )}
-                            {importing ? "در حال تکمیل تصاویر…" : "تکمیل تصاویر / انتشار"}
+                            {importing
+                             ? "در حال تکمیل تصاویر…"
+                             : file.publishedRemoteImageCount > 0 ||
+                               file.publishedHostedImageCount < file.sourceImageCount
+                               ? "تکمیل تصاویر"
+                               : "بازبینی و تکمیل گالری"}
                           </button>
                           {file.importedPropertyId ? (
                             <a

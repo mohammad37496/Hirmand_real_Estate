@@ -54,6 +54,8 @@ export type DivarFile = {
   images: string[];
   sourceImageCount: number;
   publishedImageCount: number;
+  publishedHostedImageCount: number;
+  publishedRemoteImageCount: number;
   sellerName: string | null;
   sellerType: string | null;
   sourceUrl: string;
@@ -600,6 +602,17 @@ function propertyTypeToSite(value: DivarPropertyType): "apartment" | "villa" {
   return value === "villa" ? "villa" : "apartment";
 }
 
+function nullableNumber(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function nullableInteger(value: unknown): number | null {
+  const parsed = nullableNumber(value);
+  return parsed == null ? null : Math.trunc(parsed);
+}
+
 function slugify(value: string) {
   return (
     value
@@ -688,21 +701,31 @@ async function uploadDivarImages(token: string, urls: string[]): Promise<DivarIm
       return host === initialHost || isDivarRemoteHost(next.toString());
     };
 
-    let current = initial;
-    for (let redirects = 0; redirects <= 3; redirects += 1) {
-      const response = await fetch(current.toString(), {
-        redirect: "manual",
-        headers: candidate.headers,
-        signal: AbortSignal.timeout(candidate.timeoutMs),
-      });
-      if (response.status < 300 || response.status >= 400) return response;
-      const location = response.headers.get("location");
-      if (!location) throw new Error("ریدایرکت بدون مقصد");
-      const next = new URL(location, current);
-      if (!isAllowedRedirect(next)) throw new Error("ریدایرکت به میزبان غیرمجاز");
-      current = next;
+    let lastError: unknown = null;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        let current = initial;
+        for (let redirects = 0; redirects <= 3; redirects += 1) {
+          const response = await fetch(current.toString(), {
+            redirect: "manual",
+            headers: candidate.headers,
+            signal: AbortSignal.timeout(candidate.timeoutMs),
+          });
+          if (response.status < 300 || response.status >= 400) return response;
+          const location = response.headers.get("location");
+          if (!location) throw new Error("ریدایرکت بدون مقصد");
+          const next = new URL(location, current);
+          if (!isAllowedRedirect(next)) throw new Error("ریدایرکت به میزبان غیرمجاز");
+          current = next;
+        }
+        throw new Error("تعداد ریدایرکت بیش از حد مجاز");
+      } catch (error) {
+        lastError = error;
+        if (attempt === 2) break;
+        await new Promise((resolve) => setTimeout(resolve, 350 * (attempt + 1)));
+      }
     }
-    throw new Error("تعداد ریدایرکت بیش از حد مجاز");
+    throw lastError instanceof Error ? lastError : new Error("دریافت تصویر ناموفق بود");
   };
 
   const downloadOne = async (source: string, index: number) => {
@@ -849,6 +872,14 @@ function mapRow(row: Record<string, unknown>): DivarFile {
     images: parseJsonArray(row.images),
     sourceImageCount: Number(row.source_image_count) || parseJsonArray(row.images).length,
     publishedImageCount: Number(row.published_image_count) || 0,
+    publishedHostedImageCount: (() => {
+      const publishedImages = parseJsonArray(row.published_images);
+      return publishedImages.filter((url) => !isDivarSourceUrl(url)).length;
+    })(),
+    publishedRemoteImageCount: (() => {
+      const publishedImages = parseJsonArray(row.published_images);
+      return publishedImages.filter(isDivarSourceUrl).length;
+    })(),
     sellerName: row.seller_name == null ? null : String(row.seller_name),
     sellerType: row.seller_type == null ? null : String(row.seller_type),
     sourceUrl: String(row.source_url),
@@ -879,6 +910,7 @@ export const listDivarFiles = createServerFn({ method: "POST" })
     const rows = await sql.query<Record<string, unknown>>(
       `select divar_files.*,
               p.slug as imported_property_slug,
+              p.images as published_images,
               case
                 when jsonb_typeof(coalesce(divar_files.images, '[]'::jsonb)) = 'array'
                   then jsonb_array_length(coalesce(divar_files.images, '[]'::jsonb))
@@ -1085,10 +1117,12 @@ export const syncDivarFiles = createServerFn({ method: "POST" })
           latitude, longitude, floor_label, filter_status, orientation, last_seen_at, updated_at
         ) values (
           $1,$2,$3,$4,$5,$6,
-          $7,$8,$9,$10,$11,$12,
-          $13,$14,$15,$16,$17,$18,$19,
+          $7::integer,$8::smallint,$9::smallint,$10::smallint,$11::smallint,$12::smallint,
+          $13,$14,$15,$16::numeric(20,0),$17::numeric(20,0),$18::numeric(20,0),
+          $19,
           $20::jsonb,$21::jsonb,$22,$23,$24,
-          $25,$26,$27,$28,$29,current_timestamp,current_timestamp
+          $25::double precision,$26::double precision,$27::text,$28::text,$29::text,
+          current_timestamp,current_timestamp
         )
         on conflict (token) do update set
           title = excluded.title,
@@ -1128,12 +1162,12 @@ export const syncDivarFiles = createServerFn({ method: "POST" })
           item.transactionType,
           item.propertyType,
           item.neighborhood,
-          item.areaM2,
-          item.bedrooms,
-          item.bathrooms,
-          item.floor,
-          item.totalFloors,
-          item.builtYear,
+          nullableInteger(item.areaM2),
+          nullableInteger(item.bedrooms),
+          nullableInteger(item.bathrooms),
+          nullableInteger(item.floor),
+          nullableInteger(item.totalFloors),
+          nullableInteger(item.builtYear),
           item.parking,
           item.elevator,
           item.storage,
@@ -1261,11 +1295,13 @@ export const importDivarFile = createServerFn({ method: "POST" })
       } else {
         const currentImages = parseJsonArray(existingProperty.images);
         const hostedCurrentImages = currentImages.filter((url) => !isDivarSourceUrl(url));
+        const hasRemoteSourceImages = currentImages.some(isDivarSourceUrl);
         const missingImages = Math.max(0, images.length - currentImages.length);
         const shouldRefreshImages =
           data.repair === true ||
           currentImages.length === 0 ||
-          missingImages > 0;
+          missingImages > 0 ||
+          hasRemoteSourceImages;
         const uploadResult = shouldRefreshImages
           ? await uploadDivarImages(token, images)
           : { images: [] as string[], stored: 0, failures: [] as { source: string; reason: string }[], sourceImages: images };
@@ -1287,19 +1323,19 @@ export const importDivarFile = createServerFn({ method: "POST" })
            set status = 'published',
                published_at = coalesce(published_at, current_timestamp),
                images = $2::jsonb,
-               latitude = $3,
-               longitude = $4,
-               floor = $5,
-               floor_label = $6,
-               orientation = $7,
+               latitude = $3::double precision,
+               longitude = $4::double precision,
+               floor = $5::smallint,
+               floor_label = $6::text,
+               orientation = $7::text,
                updated_at = current_timestamp
            where id = $1`,
           [
             existingPropertyId,
             JSON.stringify(finalImages),
-            row.latitude == null ? null : Number(row.latitude),
-            row.longitude == null ? null : Number(row.longitude),
-            row.floor_label === "suite" ? null : row.floor == null ? null : Number(row.floor),
+            nullableNumber(row.latitude),
+            nullableNumber(row.longitude),
+            row.floor_label === "suite" ? null : nullableInteger(row.floor),
             row.floor_label === "suite" ? "suite" : null,
             row.orientation == null ? null : String(row.orientation),
           ],
@@ -1353,9 +1389,10 @@ export const importDivarFile = createServerFn({ method: "POST" })
         features, images, contact_name, contact_phone, latitude, longitude, floor_label, orientation, published_at
       ) values (
         $1,$2,'published',false,$3,$4,$5,'اصفهان',
-        $6,null,$7,$8,$9,$10,$11,
-        $12,$13,$14,$15,$16,$17,$18,$19,
-        $20::jsonb,$21::jsonb,$22,$23,$24,$25,$26,$27,current_timestamp
+        $6,null,$7::integer,$8::smallint,$9::smallint,$10::smallint,$11::smallint,
+        $12::smallint,$13,$14,$15,$16::numeric(20,0),$17::numeric(20,0),$18::numeric(20,0),$19,
+        $20::jsonb,$21::jsonb,$22,$23,$24::double precision,$25::double precision,$26::text,$27::text,
+        current_timestamp
       )`,
       [
         id,
@@ -1364,12 +1401,12 @@ export const importDivarFile = createServerFn({ method: "POST" })
         transactionType,
         propertyType,
         String(row.neighborhood ?? "اصفهان"),
-        row.area_m2 == null ? null : Number(row.area_m2),
-        row.bedrooms == null ? null : Number(row.bedrooms),
-        row.bathrooms == null ? null : Number(row.bathrooms),
-        row.floor == null ? null : Number(row.floor),
-        row.total_floors == null ? null : Number(row.total_floors),
-        row.built_year == null ? null : Number(row.built_year),
+        nullableInteger(row.area_m2),
+        nullableInteger(row.bedrooms),
+        nullableInteger(row.bathrooms),
+        nullableInteger(row.floor),
+        nullableInteger(row.total_floors),
+        nullableInteger(row.built_year),
         Boolean(row.parking),
         Boolean(row.elevator),
         Boolean(row.storage),
@@ -1381,8 +1418,8 @@ export const importDivarFile = createServerFn({ method: "POST" })
         JSON.stringify(importedImages),
         TEAM[0]?.name ?? "مشاور هیرمند",
         TEAM[0]?.phone ?? SITE.phone.mobile,
-        row.latitude == null ? null : Number(row.latitude),
-        row.longitude == null ? null : Number(row.longitude),
+        nullableNumber(row.latitude),
+        nullableNumber(row.longitude),
         row.floor_label === "suite" ? "suite" : null,
         row.orientation == null ? null : String(row.orientation),
       ],
