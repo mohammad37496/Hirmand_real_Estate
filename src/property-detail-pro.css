@@ -1376,6 +1376,30 @@
 }
 
 @media (max-width: 760px) {
+  .property-convert-slider {
+    padding: 17px;
+    border-radius: 18px;
+  }
+  .property-convert-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .property-convert-badge {
+    white-space: normal;
+  }
+  .property-convert-table {
+    min-width: 0;
+  }
+  .property-convert-table th,
+  .property-convert-table td {
+    padding-inline: 9px;
+  }
+  .property-convert-results {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
   .property-detail-page {
     width: min(calc(100% - 16px), 680px);
     padding-top: 14px;
