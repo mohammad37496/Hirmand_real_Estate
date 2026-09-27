@@ -937,8 +937,6 @@ export const ADMIN_CSS = `
 @media (max-width:820px){.admin-dashboard-quick-grid{grid-template-columns:1fr 1fr}}
 @media (max-width:640px){.admin-dashboard-quick-actions{padding:13px;border-radius:16px}.admin-dashboard-quick-grid{grid-template-columns:1fr}.admin-dashboard-quick-card{grid-template-columns:36px minmax(0,1fr) 14px}.admin-system-grid{grid-template-columns:1fr 1fr;padding-left:13px;padding-right:13px}.admin-dashboard-source-list{padding-left:13px;padding-right:13px}}
 @media (max-width:390px){.admin-system-grid{grid-template-columns:1fr}}
-`;
-
 
 /* Lease deadline in CRM */
 .admin-lead-deadline{
@@ -1001,3 +999,4 @@ export const ADMIN_CSS = `
 .admin-private-notice{margin:0 0 14px;padding:10px 12px;border:1px solid #ead8bd;border-radius:11px;background:#fff8eb;color:#725f42;font-size:.69rem;line-height:1.9}
 .admin-owner-section input,.admin-owner-section textarea{background:#fff!important}
 .admin-owner-section textarea{min-height:104px}
+`;
