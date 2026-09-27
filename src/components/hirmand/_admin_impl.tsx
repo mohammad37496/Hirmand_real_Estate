@@ -1198,6 +1198,9 @@ export function AdminPropertiesPage() {
             <AdminDashboard
               onOpenProperties={() => setView("list")}
               onOpenLeads={() => setView("leads")}
+              onCreateProperty={startNew}
+              onOpenDivar={() => setView("divar")}
+              onOpenConsultants={() => setView("consultants")}
             />
           ) : null}
 
