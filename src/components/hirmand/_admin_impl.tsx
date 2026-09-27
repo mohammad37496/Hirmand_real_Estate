@@ -88,6 +88,7 @@ type FormState = {
   storage: boolean;
   painted: boolean;
   wallpaper: boolean;
+  convertible: boolean;
   cabinetType: Property["cabinetType"];
   flooringType: Property["flooringType"];
   coolingSystem: Property["coolingSystem"];
@@ -142,6 +143,7 @@ function emptyForm(): FormState {
     storage: false,
     painted: false,
     wallpaper: false,
+    convertible: false,
     cabinetType: null,
     flooringType: null,
     coolingSystem: null,
@@ -293,6 +295,7 @@ function propertyToForm(property: Property): FormState {
     storage: property.storage,
     painted: property.painted,
     wallpaper: property.wallpaper,
+    convertible: property.convertible,
     cabinetType: property.cabinetType ?? null,
     flooringType: property.flooringType ?? null,
     coolingSystem: property.coolingSystem ?? null,
@@ -850,6 +853,7 @@ export function AdminPropertiesPage() {
           storage: form.storage,
           painted: form.painted,
           wallpaper: form.wallpaper,
+          convertible: form.convertible,
           cabinetType: form.cabinetType,
           flooringType: form.flooringType,
           coolingSystem: form.coolingSystem,
@@ -946,6 +950,7 @@ export function AdminPropertiesPage() {
           storage: base.storage,
           painted: base.painted,
           wallpaper: base.wallpaper,
+          convertible: base.convertible,
           cabinetType: base.cabinetType,
           flooringType: base.flooringType,
           coolingSystem: base.coolingSystem,
@@ -1771,6 +1776,19 @@ export function AdminPropertiesPage() {
                       />
                       کاغذ دیواری
                     </label>
+                    {(form.transactionType === "rent" || form.transactionType === "mortgage") ? (
+                      <label className="admin-convertible-toggle">
+                        <input
+                          type="checkbox"
+                          checked={form.convertible}
+                          onChange={(e) => update("convertible", e.target.checked)}
+                        />
+                        <span>
+                          <strong>قابل تبدیل</strong>
+                          <small>امکان جابه‌جایی بین رهن و اجاره در صفحه جزئیات</small>
+                        </span>
+                      </label>
+                    ) : null}
                   </div>
                 </fieldset>
 
