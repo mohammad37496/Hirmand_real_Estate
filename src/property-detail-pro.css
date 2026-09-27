@@ -2153,7 +2153,7 @@ body:has(.property-detail-page) {
 
 .property-detail-page .property-description-copy,
 .property-detail-page .property-description-copy p {
-  color: #344054 !important;
+  color: var(--fg) !important;
   background: transparent !important;
 }
 
@@ -2621,7 +2621,7 @@ body:has(.property-detail-page) {
 }
 .property-video-controls button:focus-visible,
 .property-video-center-play:focus-visible{
-  outline:2px solid #e5c36a!important;
+  outline:2px solid var(--brass-300)!important;
   outline-offset:2px!important;
 }
 .property-video-time{
@@ -2639,11 +2639,11 @@ body:has(.property-detail-page) {
   min-width:60px!important;
   height:5px!important;
   margin:0!important;
-  accent-color:#d0ad5a!important;
+  accent-color:var(--brass-500)!important;
   cursor:pointer!important;
   appearance:none!important;
   -webkit-appearance:none!important;
-  background:linear-gradient(90deg,#d0ad5a var(--video-progress,0%),rgba(255,255,255,.22) var(--video-progress,0%))!important;
+  background:linear-gradient(90deg,var(--brass-500) var(--video-progress,0%),rgba(255,255,255,.22) var(--video-progress,0%))!important;
   border-radius:999px!important;
 }
 .property-video-progress::-webkit-slider-thumb{
@@ -2653,7 +2653,7 @@ body:has(.property-detail-page) {
   height:13px!important;
   border:2px solid #fff!important;
   border-radius:50%!important;
-  background:#d0ad5a!important;
+  background:var(--brass-500)!important;
   box-shadow:0 2px 8px rgba(0,0,0,.3)!important;
 }
 .property-video-progress::-moz-range-thumb{
@@ -2661,7 +2661,7 @@ body:has(.property-detail-page) {
   height:13px!important;
   border:2px solid #fff!important;
   border-radius:50%!important;
-  background:#d0ad5a!important;
+  background:var(--brass-500)!important;
 }
 @media (max-width:760px){
   .property-video-controls{
@@ -2710,7 +2710,7 @@ body:has(.property-detail-page) {
 }
 .property-spec-grid > div{
   min-width:0;
-  background:linear-gradient(180deg,#fff,#f8fafc);
+  background:linear-gradient(180deg,#fff,var(--card-2));
 }
 .property-spec-grid > div > span{
   min-width:0;
@@ -2725,7 +2725,7 @@ body:has(.property-detail-page) {
   padding:14px;
   border:1px solid var(--pd-line);
   border-radius:var(--pd-radius-md);
-  background:linear-gradient(180deg,#fff,#fafbfc);
+  background:linear-gradient(180deg,#fff,var(--card-2));
 }
 .property-other-amenities-head{
   display:flex;
@@ -2763,7 +2763,7 @@ body:has(.property-detail-page) {
   padding:5px 9px;
   border:1px solid rgba(201,161,74,.22);
   border-radius:999px;
-  background:#fbf7ef;
+  background:var(--card-2);
   color:var(--pd-ink);
   font-size:.64rem;
   font-weight:750;
@@ -2812,7 +2812,7 @@ body:has(.property-detail-page) {
   margin:0!important;
   border:1px solid var(--pd-line)!important;
   border-radius:var(--pd-radius-md)!important;
-  background:linear-gradient(180deg,#fff,#f8fafc)!important;
+  background:linear-gradient(180deg,#fff,var(--card-2))!important;
   overflow:hidden!important;
 }
 .property-spec-amenities > summary{
@@ -2830,11 +2830,11 @@ body:has(.property-detail-page) {
 .property-spec-amenities > summary::-webkit-details-marker{display:none!important}
 .property-spec-amenities > summary::marker{display:none!important}
 .property-spec-amenities > summary:hover{
-  background:#fbfcfd!important;
+  background:var(--card)!important;
 }
 .property-spec-amenities[open] > summary{
   border-bottom:1px solid var(--pd-line)!important;
-  background:linear-gradient(180deg,#fff,#fbfaf6)!important;
+  background:linear-gradient(180deg,#fff,var(--card-2))!important;
 }
 .property-spec-amenities-title{
   display:flex!important;
@@ -2887,7 +2887,7 @@ body:has(.property-detail-page) {
   grid-template-columns:repeat(3,minmax(0,1fr))!important;
   gap:8px!important;
   padding:12px!important;
-  background:#f7f9fb!important;
+  background:var(--card-2)!important;
 }
 .property-spec-amenity-item{
   min-width:0!important;
@@ -2898,7 +2898,7 @@ body:has(.property-detail-page) {
   padding:11px!important;
   border:1px solid rgba(16,42,60,.09)!important;
   border-radius:13px!important;
-  background:linear-gradient(180deg,#fff,#f9fbfc)!important;
+  background:linear-gradient(180deg,#fff,var(--card-2))!important;
   box-shadow:0 5px 16px rgba(16,42,60,.04)!important;
 }
 .property-spec-amenity-item > svg{
@@ -2985,7 +2985,7 @@ body:has(.property-detail-page) {
   width:72px!important;
   height:3px!important;
   border-radius:999px!important;
-  background:linear-gradient(90deg,var(--pd-gold),#e0c77e)!important;
+  background:linear-gradient(90deg,var(--pd-gold),var(--brass-300))!important;
 }
 .property-detail-hero-row{
   padding-top:8px!important;
@@ -3009,11 +3009,11 @@ body:has(.property-detail-page) {
   box-shadow:0 7px 18px rgba(18,58,90,.12)!important;
 }
 .property-type-badge{
-  background:#f8f4ea!important;
+  background:var(--brass-100)!important;
 }
 .property-file-code{
   padding-inline:12px!important;
-  background:#f8fafc!important;
+  background:var(--card-2)!important;
   color:var(--muted)!important;
   font-size:.66rem!important;
   font-weight:800!important;
@@ -3041,7 +3041,7 @@ body:has(.property-detail-page) {
   width:4px!important;
   height:1.15em!important;
   border-radius:999px!important;
-  background:linear-gradient(180deg,var(--pd-gold),#a77e2e)!important;
+  background:linear-gradient(180deg,var(--pd-gold),var(--brass-700))!important;
 }
 .property-detail-meta{
   margin-top:12px!important;
@@ -3056,7 +3056,7 @@ body:has(.property-detail-page) {
   margin-top:16px!important;
   padding:19px 20px!important;
   border-radius:18px!important;
-  background:linear-gradient(145deg,#fffdf8 0%,#f7f9fb 100%)!important;
+  background:linear-gradient(145deg,var(--card-2) 0%,var(--card-2) 100%)!important;
   border-color:rgba(201,161,74,.30)!important;
   box-shadow:0 10px 26px rgba(18,58,90,.06)!important;
 }
@@ -3086,7 +3086,7 @@ body:has(.property-detail-page) {
   align-items:end!important;
   margin-top:20px!important;
   padding-top:14px!important;
-  border-top:1px solid #edf0f2!important;
+  border-top:1px solid var(--line)!important;
 }
 .property-tools-heading span:first-child{
   font-size:.80rem!important;
@@ -3102,7 +3102,7 @@ body:has(.property-detail-page) {
 .property-actions:not(.property-actions-compact) .property-action{
   min-height:44px!important;
   border-radius:12px!important;
-  background:#fbfcfd!important;
+  background:var(--card)!important;
   font-size:.66rem!important;
   font-weight:800!important;
 }
