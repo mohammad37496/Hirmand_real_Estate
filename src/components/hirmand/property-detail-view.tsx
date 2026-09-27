@@ -536,10 +536,12 @@ function Gallery({
   images,
   title,
   featured,
+  fallback,
 }: {
   images: string[];
   title: string;
   featured: boolean;
+  fallback: string;
 }) {
   const [active, setActive] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -553,7 +555,6 @@ function Gallery({
   const activeRef = useRef(0);
   const thumbRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-  const fallback = getPropertyFallbackImage("apartment", "gallery-fallback");
   const current = images[active] ?? images[0] ?? "";
 
   useEffect(() => {
@@ -1048,7 +1049,13 @@ export function PropertyDetailView({
 
         <section className="property-detail-top" aria-label="خلاصه فایل">
           <div className="property-detail-top-gallery">
-            <Gallery key={property.id} images={images} title={property.title} featured={isFeaturedActive(property)} />
+            <Gallery
+              key={property.id}
+              images={images}
+              title={property.title}
+              featured={isFeaturedActive(property)}
+              fallback={getPropertyFallbackImage(property.propertyType, property.id)}
+            />
           </div>
 
 
