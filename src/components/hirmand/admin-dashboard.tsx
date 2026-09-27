@@ -155,12 +155,18 @@ export function AdminDashboard({
   onCreateProperty,
   onOpenDivar,
   onOpenConsultants,
+  onOpenPartners,
+  onOpenAttendance,
+  onOpenMusic,
 }: {
   onOpenProperties: () => void;
   onOpenLeads: () => void;
   onCreateProperty: () => void;
   onOpenDivar: () => void;
   onOpenConsultants: () => void;
+  onOpenPartners: () => void;
+  onOpenAttendance: () => void;
+  onOpenMusic: () => void;
 }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -339,6 +345,21 @@ export function AdminDashboard({
           <button type="button" className="admin-dashboard-quick-card" onClick={onOpenConsultants}>
             <span className="admin-dashboard-quick-icon"><UserRound size={18} /></span>
             <span><strong>مدیریت مشاوران</strong><small>اعضا، تماس و حساب‌های فعال</small></span>
+            <ArrowLeft size={15} />
+          </button>
+          <button type="button" className="admin-dashboard-quick-card" onClick={onOpenPartners}>
+            <span className="admin-dashboard-quick-icon"><UsersRound size={18} /></span>
+            <span><strong>باشگاه همکاران</strong><small>قراردادها، مهرها و کدهای رهگیری</small></span>
+            <ArrowLeft size={15} />
+          </button>
+          <button type="button" className="admin-dashboard-quick-card" onClick={onOpenAttendance}>
+            <span className="admin-dashboard-quick-icon"><Clock3 size={18} /></span>
+            <span><strong>حضور و غیاب</strong><small>ثبت ساعت و گزارش عملکرد اعضا</small></span>
+            <ArrowLeft size={15} />
+          </button>
+          <button type="button" className="admin-dashboard-quick-card" onClick={onOpenMusic}>
+            <span className="admin-dashboard-quick-icon"><Music2 size={18} /></span>
+            <span><strong>موسیقی سایت</strong><small>مدیریت آهنگ‌ها و وضعیت پخش</small></span>
             <ArrowLeft size={15} />
           </button>
         </div>
