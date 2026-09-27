@@ -1213,7 +1213,43 @@ export const importDivarFile = createServerFn({ method: "POST" })
     }
 
     const token = String(row.token);
-    const originalImages = parseJsonArray(row.images);
+    let originalImages = parseJsonArray(row.images);
+
+    if (data.repair === true || originalImages.length === 0) {
+      try {
+        const detail = await fetchJson<Record<string, unknown>>(
+          \`\${DIVAR_API}/posts-v2/web/\${encodeURIComponent(token)}\`,
+        );
+        const detailReason = getDivarAgencyReason(detail);
+        if (detailReason) {
+          await sql.query(
+            \`update divar_files
+             set filter_status = 'rejected',
+                 reject_reason = $2,
+                 updated_at = current_timestamp
+             where id = $1\`,
+            [data.id, detailReason],
+          );
+          throw new Error("این فایل دوباره توسط فیلتر مشاور/آژانس رد شد.");
+        }
+
+        const freshImages = extractDivarMediaUrls(detail);
+        if (freshImages.length) {
+          originalImages = freshImages;
+          await sql.query(
+            \`update divar_files
+             set images = $2::jsonb,
+                 updated_at = current_timestamp
+             where id = $1\`,
+            [data.id, JSON.stringify(freshImages)],
+          );
+        }
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("دوباره توسط فیلتر")) throw error;
+        console.warn("[divar] image refresh failed", token, error);
+      }
+    }
+
     const images = originalImages.slice(0, MAX_IMAGES);
 
     if (existingPropertyId) {
