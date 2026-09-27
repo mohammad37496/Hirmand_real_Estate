@@ -26,6 +26,7 @@ const schema = z.object({
   propertyType: z.string().trim().max(80).default(""),
   neighborhood: z.string().trim().max(80).default(""),
   floorPreference: z.string().trim().max(40).default(""),
+  requestedBedrooms: z.number().int().min(0).max(20).optional(),
   requestedAmenities: z.array(z.string().trim().min(1).max(80)).max(30).optional().default([]),
   consultant: z.string().trim().max(80).default(""),
   note: z.string().trim().max(1500).default(""),
@@ -165,7 +166,7 @@ export default defineEventHandler(async (event) => {
              budget_equivalent=$16, budget_bedrooms=$17, matched_properties=$18::jsonb,
              match_count=$19, floor_preference=$25, budget_deposit_min=$26, budget_deposit_max=$27,
              budget_rent_min=$28, budget_rent_max=$29, budget_purchase_min=$30, budget_purchase_max=$31,
-             budget_sale_min=$32, budget_sale_max=$33, requested_amenities=$34::jsonb, updated_at=current_timestamp
+             budget_sale_min=$32, budget_sale_max=$33, requested_amenities=$34::jsonb, requested_bedrooms=$35, updated_at=current_timestamp
          where id=$1`,
         [
           existing[0].id,
@@ -202,6 +203,7 @@ export default defineEventHandler(async (event) => {
           budgetSaleMin || null,
           budgetSale || null,
           JSON.stringify(parsed.data.requestedAmenities),
+          parsed.data.requestedBedrooms ?? null,
         ],
       );
       return { success: true, duplicate: true, updated: true, id: existing[0].id };
@@ -217,9 +219,9 @@ export default defineEventHandler(async (event) => {
       floor_preference, matched_properties, match_count,
       budget_deposit_min, budget_deposit_max, budget_rent_min, budget_rent_max,
       budget_purchase_min, budget_purchase_max, budget_sale_min, budget_sale_max,
-      requested_amenities
+      requested_amenities, requested_bedrooms
     )
-    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,current_timestamp + interval '24 hours',$17,$18,$19,$20,$21,$22,$23,$24,$25,$26::jsonb,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36::jsonb)
+    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,current_timestamp + interval '24 hours',$17,$18,$19,$20,$21,$22,$23,$24,$25,$26::jsonb,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36::jsonb,$37)
     returning id`,
     [
       crypto.randomUUID(),
@@ -258,6 +260,7 @@ export default defineEventHandler(async (event) => {
       budgetSaleMin || null,
       budgetSale || null,
       JSON.stringify(parsed.data.requestedAmenities),
+      parsed.data.requestedBedrooms ?? null,
     ],
   );
   return { success: true, id: rows[0]?.id ?? null, duplicate: false };
