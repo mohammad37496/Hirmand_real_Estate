@@ -880,7 +880,18 @@ export const listDivarFiles = createServerFn({ method: "POST" })
     if (dbSource === "unconfigured") return [];
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
-      `select divar_files.*, p.slug as imported_property_slug
+      `select divar_files.*,
+              p.slug as imported_property_slug,
+              case
+                when jsonb_typeof(coalesce(divar_files.images, '[]'::jsonb)) = 'array'
+                  then jsonb_array_length(coalesce(divar_files.images, '[]'::jsonb))
+                else 0
+              end as source_image_count,
+              case
+                when jsonb_typeof(coalesce(p.images, '[]'::jsonb)) = 'array'
+                  then jsonb_array_length(coalesce(p.images, '[]'::jsonb))
+                else 0
+              end as published_image_count
        from divar_files
        left join properties p on p.id = divar_files.imported_property_id
        where divar_files.filter_status = $1
