@@ -139,6 +139,11 @@ function parseNumber(raw: string) {
   return Number.isFinite(value) && Number.isInteger(value) && value >= 0 ? value : undefined;
 }
 
+const FLOOR_OPTIONS = Array.from({ length: 261 }, (_, index) => index - 60).map((value) => ({
+  value: String(value),
+  label: value === 0 ? "همکف (۰)" : value < 0 ? `منفی ${Math.abs(value).toLocaleString("fa-IR")}` : value.toLocaleString("fa-IR"),
+}));
+
 function validTransaction(value: string): PropertyTransaction | undefined {
   return value === "buy" || value === "sell" || value === "rent" || value === "mortgage" ? value : undefined;
 }
@@ -169,6 +174,7 @@ function buildFilterData(
   minBathrooms: string,
   minFloor: string,
   maxFloor: string,
+  floorType: "suite" | "",
   minTotalFloors: string,
   maxTotalFloors: string,
   minBuiltYear: string,
@@ -202,6 +208,7 @@ function buildFilterData(
     minBathrooms: parseNumber(minBathrooms),
     minFloor: nextMinFloor,
     maxFloor: nextMaxFloor,
+    floorType: floorType || undefined,
     minTotalFloors: nextMinTotalFloors,
     maxTotalFloors: nextMaxTotalFloors,
     minBuiltYear: nextMinBuiltYear,
@@ -289,6 +296,7 @@ function PropertiesIndexPage() {
   const [minBathrooms, setMinBathrooms] = useState("");
   const [minFloor, setMinFloor] = useState("");
   const [maxFloor, setMaxFloor] = useState("");
+  const [floorType, setFloorType] = useState<"suite" | "">("");
   const [minTotalFloors, setMinTotalFloors] = useState("");
   const [maxTotalFloors, setMaxTotalFloors] = useState("");
   const [minBuiltYear, setMinBuiltYear] = useState("");
@@ -355,6 +363,7 @@ function PropertiesIndexPage() {
     setMinBathrooms(params.get("bathrooms") ?? "");
     setMinFloor(params.get("minFloor") ?? "");
     setMaxFloor(params.get("maxFloor") ?? "");
+    setFloorType(params.get("floorType") === "suite" ? "suite" : "");
     setMinTotalFloors(params.get("minFloors") ?? "");
     setMaxTotalFloors(params.get("maxFloors") ?? "");
     setMinBuiltYear(params.get("minYear") ?? "");
@@ -395,6 +404,7 @@ function PropertiesIndexPage() {
     if (minBathrooms.trim()) params.set("bathrooms", minBathrooms.trim());
     if (minFloor.trim()) params.set("minFloor", minFloor.trim());
     if (maxFloor.trim()) params.set("maxFloor", maxFloor.trim());
+    if (floorType) params.set("floorType", floorType);
     if (minTotalFloors.trim()) params.set("minFloors", minTotalFloors.trim());
     if (maxTotalFloors.trim()) params.set("maxFloors", maxTotalFloors.trim());
     if (minBuiltYear.trim()) params.set("minYear", minBuiltYear.trim());
@@ -416,7 +426,7 @@ function PropertiesIndexPage() {
       "",
       query ? `/properties?${query}` : "/properties",
     );
-  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, minBathrooms, minFloor, maxFloor, minTotalFloors, maxTotalFloors, minBuiltYear, maxBuiltYear, parkingOnly, elevatorOnly, storageOnly, specFilters, featureSearch, featuredOnly, hasImagesOnly, hasLocationOnly, sort]);
+  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, minBathrooms, minFloor, maxFloor, floorType, minTotalFloors, maxTotalFloors, minBuiltYear, maxBuiltYear, parkingOnly, elevatorOnly, storageOnly, specFilters, featureSearch, featuredOnly, hasImagesOnly, hasLocationOnly, sort]);
 
   useEffect(() => {
     if (!urlReady) return;
@@ -445,6 +455,7 @@ function PropertiesIndexPage() {
         minBathrooms,
         minFloor,
         maxFloor,
+        floorType,
         minTotalFloors,
         maxTotalFloors,
         minBuiltYear,
@@ -496,7 +507,7 @@ function PropertiesIndexPage() {
     }, 320);
 
     return () => window.clearTimeout(timer);
-  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, minBathrooms, minFloor, maxFloor, minTotalFloors, maxTotalFloors, minBuiltYear, maxBuiltYear, parkingOnly, elevatorOnly, storageOnly, specFilters, featureSearch, featuredOnly, hasImagesOnly, hasLocationOnly, sort]);
+  }, [urlReady, q, transactionType, propertyType, neighborhood, minArea, maxArea, minPrice, maxPrice, minBedrooms, minBathrooms, minFloor, maxFloor, floorType, minTotalFloors, maxTotalFloors, minBuiltYear, maxBuiltYear, parkingOnly, elevatorOnly, storageOnly, specFilters, featureSearch, featuredOnly, hasImagesOnly, hasLocationOnly, sort]);
 
   const loadMore = useCallback(async () => {
     if (loading || loadingMore || properties.length >= total) return;
@@ -615,6 +626,7 @@ function PropertiesIndexPage() {
     if (minBathrooms.trim()) params.set("bathrooms", minBathrooms.trim());
     if (minFloor.trim()) params.set("minFloor", minFloor.trim());
     if (maxFloor.trim()) params.set("maxFloor", maxFloor.trim());
+    if (floorType) params.set("floorType", floorType);
     if (minTotalFloors.trim()) params.set("minFloors", minTotalFloors.trim());
     if (maxTotalFloors.trim()) params.set("maxFloors", maxTotalFloors.trim());
     if (minBuiltYear.trim()) params.set("minYear", minBuiltYear.trim());
@@ -677,6 +689,7 @@ function PropertiesIndexPage() {
     setMinBathrooms(params.get("bathrooms") ?? "");
     setMinFloor(params.get("minFloor") ?? "");
     setMaxFloor(params.get("maxFloor") ?? "");
+    setFloorType(params.get("floorType") === "suite" ? "suite" : "");
     setMinTotalFloors(params.get("minFloors") ?? "");
     setMaxTotalFloors(params.get("maxFloors") ?? "");
     setMinBuiltYear(params.get("minYear") ?? "");
@@ -727,6 +740,7 @@ function PropertiesIndexPage() {
     setMinBathrooms("");
     setMinFloor("");
     setMaxFloor("");
+    setFloorType("");
     setMinTotalFloors("");
     setMaxTotalFloors("");
     setMinBuiltYear("");
@@ -796,6 +810,7 @@ function PropertiesIndexPage() {
     minBathrooms.trim() ||
     minFloor.trim() ||
     maxFloor.trim() ||
+    floorType ||
     minTotalFloors.trim() ||
     maxTotalFloors.trim() ||
     minBuiltYear.trim() ||
@@ -819,7 +834,7 @@ function PropertiesIndexPage() {
     minArea.trim() || maxArea.trim(),
     minPrice.trim() || maxPrice.trim(),
     minBedrooms.trim(),
-    minBathrooms.trim() || minFloor.trim() || maxFloor.trim() || minTotalFloors.trim() || maxTotalFloors.trim() || minBuiltYear.trim() || maxBuiltYear.trim(),
+    minBathrooms.trim() || minFloor.trim() || maxFloor.trim() || floorType || minTotalFloors.trim() || maxTotalFloors.trim() || minBuiltYear.trim() || maxBuiltYear.trim(),
     parkingOnly ? "parking" : "",
     elevatorOnly ? "elevator" : "",
     storageOnly ? "storage" : "",
@@ -852,6 +867,9 @@ function PropertiesIndexPage() {
     minBathrooms.trim() ? { label: `${minBathrooms} حمام به بالا`, clear: () => setMinBathrooms("") } : null,
     minFloor.trim() || maxFloor.trim()
       ? { label: `طبقه ${minFloor || "همه"} تا ${maxFloor || "همه"}`, clear: () => { setMinFloor(""); setMaxFloor(""); } }
+      : null,
+    floorType === "suite"
+      ? { label: "طبقه: سوئیت", clear: () => setFloorType("") }
       : null,
     minTotalFloors.trim() || maxTotalFloors.trim()
       ? { label: `تعداد طبقات ${minTotalFloors || "همه"} تا ${maxTotalFloors || "همه"}`, clear: () => { setMinTotalFloors(""); setMaxTotalFloors(""); } }
@@ -1083,14 +1101,34 @@ function PropertiesIndexPage() {
                 <div className="pf-range">
                   <label className="pf-field">
                     <span>از طبقه</span>
-                    <input inputMode="numeric" value={minFloor} onChange={(e) => setMinFloor(e.target.value)} placeholder="۰" />
+                    <select value={minFloor} onChange={(e) => setMinFloor(e.target.value)}>
+                      <option value="">از همه طبقات</option>
+                      {FLOOR_OPTIONS.map((item) => <option key={`min-${item.value}`} value={item.value}>{item.label}</option>)}
+                    </select>
                   </label>
                   <i aria-hidden="true">—</i>
                   <label className="pf-field">
                     <span>تا طبقه</span>
-                    <input inputMode="numeric" value={maxFloor} onChange={(e) => setMaxFloor(e.target.value)} placeholder="۲۰" />
+                    <select value={maxFloor} onChange={(e) => setMaxFloor(e.target.value)}>
+                      <option value="">تا همه طبقات</option>
+                      {FLOOR_OPTIONS.map((item) => <option key={`max-${item.value}`} value={item.value}>{item.label}</option>)}
+                    </select>
                   </label>
                 </div>
+                <label className="pf-field">
+                  <span>طبقه خاص</span>
+                  <select value={floorType} onChange={(e) => {
+                    const value = e.target.value === "suite" ? "suite" : "";
+                    setFloorType(value);
+                    if (value === "suite") {
+                      setMinFloor("");
+                      setMaxFloor("");
+                    }
+                  }}>
+                    <option value="">همه طبقات</option>
+                    <option value="suite">سوئیت</option>
+                  </select>
+                </label>
                 <div className="pf-range">
                   <label className="pf-field">
                     <span>از تعداد طبقات</span>
