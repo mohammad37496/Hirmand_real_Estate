@@ -555,7 +555,8 @@ export function AdminPropertiesPage() {
     } catch (error) {
       if (requestId !== propertyRequestId.current) return;
       toast.error(error instanceof Error ? error.message : "بارگذاری فایل‌ها انجام نشد.");
-      throw error;
+      // The mutation may already have succeeded; refresh is only a UI re-sync.
+      return;
     } finally {
       if (requestId === propertyRequestId.current) setLoadingList(false);
     }
@@ -2116,7 +2117,10 @@ export function AdminPropertiesPage() {
         </div>
       </div>
 
-      <nav className="admin-mobile-nav" aria-label="ناوبری مدیریت">
+      <nav
+        className={"admin-mobile-nav" + (view === "form" ? " is-form-active" : "")}
+        aria-label="ناوبری مدیریت"
+      >
         <button
           type="button"
           className={view === "dashboard" ? "is-active" : ""}
