@@ -1313,6 +1313,7 @@ export function AdminPropertiesPage() {
                     { key: "all" as const, label: "همه", value: stats.total, tone: undefined },
                     { key: "published" as const, label: "منتشرشده", value: stats.published, tone: "green" as const },
                     { key: "draft" as const, label: "پیش‌نویس", value: stats.draft, tone: "amber" as const },
+                    { key: "archived" as const, label: "بایگانی", value: stats.archived, tone: "muted" as const },
                     { key: "featured" as const, label: "ویژه", value: stats.featured, tone: "gold" as const },
                   ] as const
                 ).map((item) => (
