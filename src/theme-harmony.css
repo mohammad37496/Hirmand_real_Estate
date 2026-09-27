@@ -208,6 +208,17 @@
   color: var(--navy-950) !important;
 }
 
+/* Preserve the detail page's light luxury hierarchy after this stylesheet's broad surface normalization. */
+.property-detail-page .property-detail-summary .property-contact-card {
+  background: linear-gradient(180deg, var(--card) 0%, var(--paper) 100%) !important;
+}
+
+.property-detail-page .property-detail-main > .property-final-cta {
+  background: linear-gradient(135deg, var(--card) 0%, var(--navy-100) 100%) !important;
+  border-color: var(--line) !important;
+  color: var(--fg) !important;
+}
+
 /* Shared focus */
 :where(button, a, input, select, textarea, summary):focus-visible {
   outline-color: var(--navy-700);
