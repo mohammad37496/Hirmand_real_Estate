@@ -7,7 +7,7 @@ import { SITE } from "@/lib/site";
 import { trackingHead } from "@/lib/seo";
 import type { PartnerContract, PartnerOverview } from "@/lib/partner-program.server";
 import { partnerPortalUrl, partnerQrImageUrl } from "@/lib/partner-links";
-import { isValidTrackingCode, normalizePartnerCode, normalizeTrackingCode } from "@/lib/partner-codes";
+import { isValidTrackingCode, normalizeDigits, normalizePartnerCode, normalizeTrackingCode } from "@/lib/partner-codes";
 
 const TX_LABEL: Record<string, string> = {
   buy: "درخواست خرید",
@@ -21,11 +21,6 @@ const STATUS_LABEL: Record<string, string> = {
   rejected: "ردشده",
 };
 
-function toEnglishDigits(value: string) {
-  return value
-    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
-    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
-}
 
 function faDate(value: string | null | undefined) {
   if (!value) return "—";
@@ -167,7 +162,7 @@ function TrackingPage() {
   async function login(event: FormEvent) {
     event.preventDefault();
     if (loginBusy) return;
-    const normalizedPin = toEnglishDigits(pin).replace(/\D/g, "").slice(0, 6);
+    const normalizedPin = normalizeDigits(pin).replace(/\D/g, "").slice(0, 6);
     if (!code.trim() || normalizedPin.length !== 6) {
       setMessage("کد همکاری و رمز ۶ رقمی را کامل وارد کنید.");
       return;
@@ -224,7 +219,7 @@ function TrackingPage() {
       const response = await fetch("/api/partner/lookup", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ trackingCode }),
+        body: JSON.stringify({ trackingCode: normalized }),
       });
       const data = (await response.json().catch(() => null)) as {
         trackingCode?: string;
@@ -351,11 +346,15 @@ function TrackingPage() {
             {lookup ? (
               <div className="partner-lookup-result">
                 <div className="partner-lookup-code-row">
-  <div className="partner-lookup-code" dir="ltr">{lookup.trackingCode}</div>
-  <button type="button" className="btn-ghost partner-inline-copy" onClick={() => void copyValue(lookup.trackingCode, "کد رهگیری")}>
-    <Copy size={15} /> کپی
-  </button>
-</div>
+                  <div className="partner-lookup-code" dir="ltr">{lookup.trackingCode}</div>
+                  <button
+                    type="button"
+                    className="btn-ghost partner-inline-copy"
+                    onClick={() => void copyValue(lookup.trackingCode, "کد رهگیری")}
+                  >
+                    <Copy size={15} /> کپی
+                  </button>
+                </div>
                 <div><span>وضعیت</span><strong data-status={lookup.status}>{lookup.statusLabel}</strong></div>
                 <div><span>نوع قرارداد</span><strong>{lookup.transactionLabel}</strong></div>
                 <div><span>املاک همکار</span><strong>{lookup.agencyName}</strong></div>
