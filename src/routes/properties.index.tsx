@@ -624,6 +624,7 @@ function PropertiesIndexPage() {
     minBathrooms,
     minFloor,
     maxFloor,
+    floorType,
     orientation,
     minTotalFloors,
     maxTotalFloors,
