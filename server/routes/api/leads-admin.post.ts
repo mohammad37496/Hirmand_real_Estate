@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
     const rows = await sql.query<Record<string, unknown>>(
       "select name, phone, people_count, job, deal, property_type, neighborhood, consultant, status, note, source, " +
         "acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, follow_up_at, last_contacted_at, " +
-        "lease_deadline, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_deposit_min, budget_deposit_max, budget_rent_min, budget_rent_max, budget_purchase_min, budget_purchase_max, budget_sale_min, budget_sale_max, budget_equivalent, budget_bedrooms, floor_preference, match_count, created_at " +
+        "lease_deadline, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_deposit_min, budget_deposit_max, budget_rent_min, budget_rent_max, budget_purchase_min, budget_purchase_max, budget_sale_min, budget_sale_max, budget_equivalent, budget_bedrooms, floor_preference, requested_amenities, match_count, created_at " +
         "from leads where " + conditions.join(" and ") +
         " order by created_at desc limit 50000",
       params,
@@ -143,6 +143,7 @@ export default defineEventHandler(async (event) => {
         propertyType: String(row.property_type ?? ""),
         neighborhood: String(row.neighborhood ?? ""),
         floorPreference: String(row.floor_preference ?? ""),
+        requestedAmenities: Array.isArray(row.requested_amenities) ? row.requested_amenities.map(String) : [],
         consultant: String(row.consultant ?? ""),
         note: String(row.note ?? ""),
         status: String(row.status) as Status,
