@@ -152,8 +152,15 @@ function collectMediaUrls(value: unknown, out: string[] = [], keyHint = "", dept
   if (depth > 10 || out.length >= 60) return out;
   if (typeof value === "string") {
     if (isDivarMediaHost(value)) {
-      const looksMediaKey = /image|photo|picture|thumbnail|media|gallery|cover|url/i.test(keyHint);
-      if (looksMediaKey) out.push(value);
+      try {
+        const url = new URL(value);
+        const looksMediaKey = /image|photo|picture|thumbnail|media|gallery|cover/i.test(keyHint);
+        const looksImagePath = /\.(?:jpe?g|png|gif|webp|avif)(?:$|[?#])/i.test(url.pathname);
+        const isCdnHost = url.hostname.toLowerCase().includes("divarcdn.");
+        if (looksMediaKey || looksImagePath || isCdnHost) out.push(url.toString());
+      } catch {
+        // Ignore malformed URLs.
+      }
     }
     return out;
   }
@@ -167,6 +174,10 @@ function collectMediaUrls(value: unknown, out: string[] = [], keyHint = "", dept
     }
   }
   return out;
+}
+
+export function extractDivarMediaUrls(value: unknown): string[] {
+  return Array.from(new Set(collectMediaUrls(value))).slice(0, MAX_IMAGES);
 }
 
 function normalizeCoordinate(value: unknown, max: number): number | null {
@@ -451,7 +462,7 @@ function parseDivarListing(
   const elevator = /آسانسور/u.test(featureBlob) && !/بدون آسانسور|آسانسور ندارد/u.test(featureBlob);
   const storage = /انباری/u.test(featureBlob) && !/بدون انباری|انباری ندارد/u.test(featureBlob);
 
-  const images = Array.from(new Set(collectMediaUrls(detail))).slice(0, MAX_IMAGES);
+  const images = extractDivarMediaUrls(detail);
   const coordinates = findDivarCoordinates(detail);
 
   const title = String(webInfo.title ?? "فایل دیوار").trim();
@@ -632,12 +643,14 @@ function slugify(value: string) {
 }
 
 type DivarImageDownload = {
-  /** Final ordered list of media hosted by Hirmand storage. */
+  /** Media successfully hosted by Hirmand storage. */
   images: string[];
   /** How many images were copied onto our own storage. */
   stored: number;
-  /** Original URLs that could not be downloaded, with the reason. */
+  /** Original Divar URLs that could not be downloaded; public pages proxy these URLs. */
   failures: { source: string; reason: string }[];
+  /** Sanitized original source URLs, kept as a guaranteed gallery fallback. */
+  sourceImages: string[];
 };
 
 async function uploadDivarImages(token: string, urls: string[]): Promise<DivarImageDownload> {
@@ -793,9 +806,9 @@ async function uploadDivarImages(token: string, urls: string[]): Promise<DivarIm
     failure: { source: string; reason: string } | null;
   }> = [];
 
-  const safeUrls = urls
-    .filter(isAllowedDivarImageUrl)
-    .slice(0, MAX_IMAGES);
+  const safeUrls = Array.from(
+    new Set(urls.filter(isAllowedDivarImageUrl)),
+  ).slice(0, MAX_IMAGES);
   const concurrency = 6;
 
   for (let startIndex = 0; startIndex < safeUrls.length; startIndex += concurrency) {
@@ -824,7 +837,7 @@ async function uploadDivarImages(token: string, urls: string[]): Promise<DivarIm
     if (result.failure) failures.push(result.failure);
   }
 
-  return { images, stored, failures };
+  return { images, stored, failures, sourceImages: safeUrls };
 }
 function parseJsonArray(value: unknown): string[] {
   if (Array.isArray(value)) return value.filter((v): v is string => typeof v === "string");
@@ -1235,13 +1248,17 @@ export const importDivarFile = createServerFn({ method: "POST" })
           missingImages > 0;
         const uploadResult = shouldRefreshImages
           ? await uploadDivarImages(token, images)
-          : { images: [] as string[], stored: 0, failures: [] as { source: string; reason: string }[] };
+          : { images: [] as string[], stored: 0, failures: [] as { source: string; reason: string }[], sourceImages: images };
         // Hosted copies first, then any source still needed to keep the gallery
         // complete. Nothing that already worked is dropped.
+        const fallbackSourceImages = uploadResult.sourceImages.filter((url) =>
+          uploadResult.failures.some((failure) => failure.source === url),
+        );
         const finalImages = Array.from(
           new Set([
-            ...uploadResult.images.filter((url) => !isDivarSourceUrl(url)),
             ...hostedCurrentImages,
+            ...uploadResult.images.filter((url) => !isDivarSourceUrl(url)),
+            ...fallbackSourceImages,
           ]),
         ).slice(0, MAX_IMAGES);
 
@@ -1291,8 +1308,14 @@ export const importDivarFile = createServerFn({ method: "POST" })
     const importedResult = await uploadDivarImages(token, images);
     // Hosted copies come first; sources we could not copy keep the gallery
     // complete and are rendered through our own image proxy.
+    const failedSourceImages = importedResult.sourceImages.filter((url) =>
+      importedResult.failures.some((failure) => failure.source === url),
+    );
     const importedImages = Array.from(
-      new Set(importedResult.images.filter((url) => !isDivarSourceUrl(url))),
+      new Set([
+        ...importedResult.images.filter((url) => !isDivarSourceUrl(url)),
+        ...failedSourceImages,
+      ]),
     ).slice(0, MAX_IMAGES);
 
     const id = existingPropertyId ? existingPropertyId : crypto.randomUUID();
