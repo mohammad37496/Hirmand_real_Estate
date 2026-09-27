@@ -471,6 +471,31 @@
     gap: 12px;
   }
 
+  .inquiry-amenities-picker summary {
+    min-height: 54px;
+    padding: 9px 12px;
+  }
+
+  .inquiry-amenities-picker summary > b {
+    font-size: 0.68rem;
+    padding: 5px 8px;
+  }
+
+  .inquiry-amenities-body {
+    padding: 10px 12px 12px;
+  }
+
+  .inquiry-amenity-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .inquiry-amenity-option {
+    min-height: 44px;
+    padding: 8px;
+    font-size: 0.76rem;
+  }
+
   .form-actions .btn-gold,
   .form-actions .btn-ghost {
     min-height: 52px;
