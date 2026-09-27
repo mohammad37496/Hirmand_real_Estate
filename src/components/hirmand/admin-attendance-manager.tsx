@@ -3,6 +3,7 @@ import {
   CalendarDays,
   Clock3,
   Download,
+  Printer,
   Pencil,
   Plus,
   RefreshCw,
@@ -481,6 +482,7 @@ export function AdminAttendanceManager() {
   }
 
   function setAnchor(value: string) {
+    if (!value) return;
     setAnchorDate(value);
     void refresh(rangeMode, value, staffFilter);
   }
@@ -554,7 +556,7 @@ export function AdminAttendanceManager() {
               <span>تاریخ حضور</span>
               <PersianDatePicker
                 value={form.workDate}
-                onChange={(value) => updateForm("workDate", value)}
+                onChange={(value) => value && updateForm("workDate", value)}
                 placeholder="انتخاب تاریخ شمسی"
                 hint=""
               />
@@ -663,7 +665,7 @@ export function AdminAttendanceManager() {
           <div className="admin-attendance-filterbar">
             <label className="field">
               <span>تاریخ مرجع</span>
-              <PersianDatePicker value={anchorDate} onChange={setAnchor} hint="" />
+              <PersianDatePicker value={anchorDate} onChange={(value) => value && setAnchor(value)} hint="" />
             </label>
 
             <label className="field">
