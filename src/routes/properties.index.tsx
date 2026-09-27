@@ -483,6 +483,37 @@ function PropertiesIndexPage() {
     }
 
     const timer = window.setTimeout(async () => {
+      const hasFilterInteraction = Boolean(
+        q.trim() ||
+        transactionType ||
+        propertyType ||
+        neighborhood ||
+        minArea.trim() ||
+        maxArea.trim() ||
+        minPrice.trim() ||
+        maxPrice.trim() ||
+        minBedrooms.trim() ||
+        minBathrooms.trim() ||
+        minFloor.trim() ||
+        maxFloor.trim() ||
+        floorType ||
+        orientation ||
+        convertibleOnly ||
+        minTotalFloors.trim() ||
+        maxTotalFloors.trim() ||
+        minBuiltYear.trim() ||
+        maxBuiltYear.trim() ||
+        parkingOnly ||
+        elevatorOnly ||
+        storageOnly ||
+        specFilters.length ||
+        featureSearch.trim() ||
+        featuredOnly ||
+        hasImagesOnly ||
+        hasLocationOnly ||
+        sort !== "newest"
+      );
+      if (hasFilterInteraction) trackAnalyticsEvent("filter_use");
       setLoading(true);
       setOffset(0);
 

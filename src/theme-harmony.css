@@ -216,4 +216,38 @@
 @media (max-width: 720px) {
   .pf-hero { background: var(--card) !important; }
   .property-detail-page { background: transparent !important; }
+
+  .property-detail-top,
+  .property-detail-content {
+    gap: var(--sp-6) !important;
+  }
+
+  .property-detail-summary {
+    gap: var(--sp-5) !important;
+  }
+
+  .property-detail-side {
+    display: grid !important;
+    gap: var(--sp-6) !important;
+    align-content: start;
+  }
+
+  .property-contact-card {
+    margin-block-start: 0 !important;
+    border-radius: var(--r-lg) !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .property-detail-page {
+    width: min(100% - 24px, var(--wrap)) !important;
+    padding-bottom: var(--sp-14) !important;
+  }
+
+  .property-detail-summary,
+  .property-detail-main > section,
+  .property-contact-card,
+  .property-related {
+    padding-inline: var(--sp-4) !important;
+  }
 }
