@@ -659,6 +659,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           <option value="زیرزمین">زیرزمین</option>
           <option value="همکف">همکف</option>
           <option value="سوئیت">سوئیت</option>
+          <option value="-60">طبقه -۶۰</option>
           {Array.from({ length: 20 }, (_, index) => index + 1).map((floor) => (
             <option key={floor} value={String(floor)}>
               طبقه {floor.toLocaleString("fa-IR")}
