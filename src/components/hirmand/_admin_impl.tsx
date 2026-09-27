@@ -1299,6 +1299,9 @@ export function AdminPropertiesPage() {
               onCreateProperty={startNew}
               onOpenDivar={() => navigateTo("divar")}
               onOpenConsultants={() => navigateTo("consultants")}
+              onOpenPartners={() => navigateTo("partners")}
+              onOpenAttendance={() => navigateTo("attendance")}
+              onOpenMusic={() => navigateTo("music")}
             />
           ) : null}
 
