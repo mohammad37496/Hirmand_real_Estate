@@ -37,11 +37,11 @@ function stableIndex(value: string, length: number) {
   return Math.abs(hash) % length;
 }
 
-export function getPropertyFallbackImages(propertyType: PropertyType, propertyId: string) {
+export function getPropertyFallbackImages(propertyType: PropertyType) {
   return PROPERTY_FALLBACK_IMAGES[propertyType] ?? PROPERTY_FALLBACK_IMAGES.apartment;
 }
 
 export function getPropertyFallbackImage(propertyType: PropertyType, propertyId: string) {
-  const images = getPropertyFallbackImages(propertyType, propertyId);
+  const images = getPropertyFallbackImages(propertyType);
   return images[stableIndex(propertyId || propertyType, images.length)] ?? images[0];
 }
