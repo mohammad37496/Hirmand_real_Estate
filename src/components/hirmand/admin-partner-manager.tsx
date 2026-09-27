@@ -147,6 +147,17 @@ const PARTNER_CSS = `
 .admin-partner-audit-row:last-child{border-bottom:0}
 .admin-partner-audit-row strong{color:#111315;font-size:.78rem}
 .admin-partner-audit-row span{color:rgb(0 0 0 / .55);font-size:.72rem}
+
+/* Admin 3.0 module override */
+.admin-partners-wrap{color:#122333!important}.admin-partner-create p,.admin-partner-card-head p,.admin-partner-stamp-panel small,.admin-partner-metrics span,.admin-partner-qr p,.admin-partner-audit-row span,.admin-partner-credentials p{color:#66717d!important}
+.admin-partner-card,.admin-partner-stamp-panel,.admin-partner-qr{background:#fbfcfd!important;border-color:#dde4ea!important}
+.admin-partner-card:hover{border-color:#c6b083!important;background:#fffdf9!important}
+.admin-partner-code,.admin-partner-contract-code{background:#122333!important;color:#fff!important}
+.admin-partner-status{background:#f2f4f7!important;color:#344054!important}
+.admin-partner-stamp.is-filled{background:#c08a2a!important;color:#fff!important;border-color:#c08a2a!important}
+.admin-partner-metrics>div{background:#f3f6f8!important}.admin-partner-credential-grid button{background:#fff!important;border-color:#d5dde5!important}
+.admin-partner-actions .btn-gold{background:linear-gradient(135deg,#8a5e14,#c08a2a)!important;color:#fff!important}
+@media(max-width:640px){.admin-partner-grid{grid-template-columns:1fr!important;padding:13px!important}.admin-partner-digital-card{grid-template-columns:1fr!important;padding:13px!important}.admin-partner-qr{grid-template-columns:1fr!important}.admin-partner-qr img{width:132px;height:132px}.admin-partner-credential-grid{grid-template-columns:1fr!important}.admin-partner-contract{padding:12px 13px!important}}
 `;
 
 export function AdminPartnerManager() {
@@ -378,12 +389,12 @@ export function AdminPartnerManager() {
       <!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
       <title>کارت همکاری ${partner.agencyName}</title>
       <style>
-        *{box-sizing:border-box}body{margin:0;padding:28px;background:#000;color:#fff;font-family:Tahoma,Arial,sans-serif}
-        .card{width:860px;max-width:100%;margin:auto;padding:28px;border:2px solid #000;border-radius:28px;background:linear-gradient(145deg,#fff,#000);page-break-inside:avoid}
-        .top{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}.brand{font-weight:800;font-size:24px}.muted{color:rgb(255 255 255 / .62);font-size:13px;line-height:1.8}.code{font:700 16px ui-monospace,monospace;letter-spacing:.08em;color:#000}
-        .qr{width:154px;height:154px;border-radius:18px;background:#fff;padding:8px}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:9px;margin:28px 0 12px}.stamp{aspect-ratio:1;display:grid;place-items:center;border:2px dashed rgb(0 0 0 / .62);border-radius:12px;color:rgb(0 0 0 / .62);font-weight:800}.stamp.filled{border-style:solid;background:#000;color:#000;border-color:#000}
-        .bottom{display:flex;justify-content:space-between;gap:18px;align-items:end;margin-top:16px}.rule{font-weight:700;color:#000}.url{font:12px ui-monospace,monospace;direction:ltr;word-break:break-all;color:rgb(255 255 255 / .62)}
-        @media print{body{padding:0;background:#fff}.card{box-shadow:none;color:#000;background:#fff;border-color:rgb(0 0 0 / .52)}.muted,.url{color:rgb(0 0 0 / .68)}.code,.rule{color:#000}.stamp{border-color:rgb(0 0 0 / .52);color:rgb(0 0 0 / .62)}.stamp.filled{background:#000;color:#000;border-color:rgb(0 0 0 / .52)}}
+        *{box-sizing:border-box}body{margin:0;padding:28px;background:#eef2f5;color:#122333;font-family:Tahoma,Arial,sans-serif}
+        .card{width:860px;max-width:100%;margin:auto;padding:28px;border:1px solid #d5dde5;border-radius:28px;background:linear-gradient(145deg,#fffaf2,#fff);box-shadow:0 20px 55px rgba(8,19,32,.12);page-break-inside:avoid}
+        .top{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}.brand{font-weight:800;font-size:24px;color:#122333}.muted{color:#66717d;font-size:13px;line-height:1.8}.code{font:700 16px ui-monospace,monospace;letter-spacing:.08em;color:#8a5e14}
+        .qr{width:154px;height:154px;border-radius:18px;background:#fff;padding:8px;border:1px solid #d9e1e8}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:9px;margin:28px 0 12px}.stamp{aspect-ratio:1;display:grid;place-items:center;border:2px dashed #cbd5df;border-radius:12px;color:#66717d;font-weight:800}.stamp.filled{border-style:solid;background:#c08a2a;color:#fff;border-color:#c08a2a}
+        .bottom{display:flex;justify-content:space-between;gap:18px;align-items:end;margin-top:16px}.rule{font-weight:700;color:#8a5e14}.url{font:12px ui-monospace,monospace;direction:ltr;word-break:break-all;color:#66717d}
+        @media print{body{padding:0;background:#fff}.card{box-shadow:none;color:#122333;background:#fff;border-color:#cbd5df}.muted,.url{color:#475467}.code,.rule{color:#8a5e14}.stamp{border-color:#cbd5df;color:#66717d}.stamp.filled{background:#c08a2a;color:#fff;border-color:#c08a2a}}
       </style></head><body onload="setTimeout(()=>window.print(),250)">
       <div class="card">
         <div class="top"><div><div class="brand">گروه مشاورین املاک هیرمند</div><div class="muted">باشگاه همکاران · کارت ۱۲ مهر</div><div style="margin-top:18px" class="code">${partner.partnerCode}</div><div class="muted">${partner.agencyName} · ${partner.contactName}</div></div>
