@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeftRight } from "lucide-react";
 import { DEFAULT_MATCH_RAHN_RATE, totalRahnEquivalent } from "@/lib/budget-matching";
 import { formatToman } from "@/lib/money";
@@ -37,6 +37,10 @@ function PropertyConvertSliderInner({ deposit, rent }: { deposit: number; rent: 
     return Math.min(100, Math.max(0, ((rent * 1_000_000) / rate / totalEquivalent) * 100));
   }, [rent, rate, totalEquivalent]);
   const [share, setShare] = useState(initialShare);
+
+  useEffect(() => {
+    setShare(initialShare);
+  }, [initialShare]);
 
   const convertedDeposit = Math.round(totalEquivalent * (1 - share / 100));
   const convertedRent = Math.round((totalEquivalent * share / 100 / 1_000_000) * rate);
