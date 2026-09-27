@@ -588,7 +588,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
             </small>
           </div>
         </>
-      ) : null
+      ) : null}
       {isRentLikeDeal ? (
         <div className="field field-span inquiry-deadline-field">
           <label htmlFor="inq-lease-deadline">مهلت رهن و اجاره</label>
