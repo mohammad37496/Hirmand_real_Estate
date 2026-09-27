@@ -7,6 +7,7 @@ import { SITE } from "@/lib/site";
 import { trackingHead } from "@/lib/seo";
 import type { PartnerContract, PartnerOverview } from "@/lib/partner-program.server";
 import { partnerPortalUrl, partnerQrImageUrl } from "@/lib/partner-links";
+import { isValidTrackingCode, normalizePartnerCode, normalizeTrackingCode } from "@/lib/partner-codes";
 
 const TX_LABEL: Record<string, string> = {
   buy: "درخواست خرید",
@@ -128,13 +129,22 @@ function TrackingPage() {
   });
   const [message, setMessage] = useState("");
 
+  async function copyValue(value: string, label: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      setMessage(`${label} کپی شد.`);
+    } catch {
+      setMessage(`کپی ${label} در این مرورگر در دسترس نیست.`);
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
         const params = new URLSearchParams(window.location.search);
         const prefilled = params.get("code");
-        if (prefilled && !cancelled) setCode(prefilled.trim().toUpperCase());
+        if (prefilled && !cancelled) setCode(normalizePartnerCode(prefilled));
         const response = await fetch("/api/partner/session", {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -201,9 +211,15 @@ function TrackingPage() {
   async function lookupTracking(event: FormEvent) {
     event.preventDefault();
     if (lookupBusy) return;
-    if (!trackingCode.trim()) return;
+    const normalized = normalizeTrackingCode(trackingCode);
+    setTrackingCode(normalized);
+    if (!isValidTrackingCode(normalized)) {
+      setMessage("کد رهگیری را به شکل HIR-YY-XXXXXXXX وارد کنید.");
+      return;
+    }
     setLookupBusy(true);
     setLookup(null);
+    setMessage("");
     try {
       const response = await fetch("/api/partner/lookup", {
         method: "POST",
@@ -225,7 +241,7 @@ function TrackingPage() {
         throw new Error(data?.statusMessage || data?.message || "کد رهگیری پیدا نشد.");
       }
       setLookup({
-        trackingCode: data.trackingCode,
+        trackingCode: normalizeTrackingCode(data.trackingCode),
         transactionLabel: data.transactionLabel || "—",
         statusLabel: data.statusLabel || "—",
         status: data.status || "pending",
@@ -233,6 +249,7 @@ function TrackingPage() {
         createdAt: data.createdAt || "",
         approvedAt: data.approvedAt || null,
       });
+      setMessage("");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "استعلام کد رهگیری انجام نشد.");
     } finally {
@@ -286,6 +303,10 @@ function TrackingPage() {
       <main className="partner-portal" id="top">
         <header className="partner-portal-hero">
           <BrandLogo size="soon" />
+          <nav className="partner-portal-hero-actions" aria-label="دسترسی سریع">
+            <a href="#partner-lookup" className="partner-quick-link">استعلام کد رهگیری</a>
+            {!partner ? <a href="#partner-login" className="partner-quick-link is-primary">ورود همکار</a> : <a href="#partner-account" className="partner-quick-link is-primary">حساب من</a>}
+          </nav>
           <span className="kicker">باشگاه همکاران هیرمند</span>
           <h1>ثبت قرارداد و کد رهگیری</h1>
           <p>
@@ -297,7 +318,7 @@ function TrackingPage() {
         {message ? <div className="partner-alert" role="status" aria-live="polite">{message}</div> : null}
 
         <section className="partner-portal-grid">
-          <section className="partner-portal-card">
+          <section className="partner-portal-card" id="partner-lookup">
             <div className="partner-portal-card-head">
               <div>
                 <span className="kicker">استعلام عمومی</span>
@@ -310,19 +331,31 @@ function TrackingPage() {
                 <span>کد رهگیری</span>
                 <input
                   value={trackingCode}
-                  onChange={(event) => setTrackingCode(event.target.value.toUpperCase())}
-                  placeholder="HIR-26-XXXXXXXX"
+                  onChange={(event) => setTrackingCode(normalizeTrackingCode(event.target.value).slice(0, 15))}
+                  placeholder="HIR-YY-XXXXXXXX"
+                  maxLength={15}
+                  autoComplete="off"
+                  aria-describedby="tracking-format-hint"
                   dir="ltr"
                 />
               </label>
-              <button className="btn-gold" type="submit" disabled={lookupBusy}>
-                {lookupBusy ? <RefreshCw size={16} className="admin-spin" /> : <Ticket size={16} />}
-                استعلام
-              </button>
+              <div className="partner-lookup-actions">
+                <button className="btn-gold" type="submit" disabled={lookupBusy}>
+                  {lookupBusy ? <RefreshCw size={16} className="admin-spin" /> : <Ticket size={16} />}
+                  استعلام
+                </button>
+                {(trackingCode || lookup) ? <button type="button" className="btn-ghost" onClick={() => { setTrackingCode(""); setLookup(null); setMessage(""); }}>پاک کردن</button> : null}
+              </div>
             </form>
+            <p className="partner-field-hint" id="tracking-format-hint">فرمت کد: <b dir="ltr">HIR-YY-XXXXXXXX</b> — حروف و عدد قابل قبول است.</p>
             {lookup ? (
               <div className="partner-lookup-result">
-                <div className="partner-lookup-code" dir="ltr">{lookup.trackingCode}</div>
+                <div className="partner-lookup-code-row">
+  <div className="partner-lookup-code" dir="ltr">{lookup.trackingCode}</div>
+  <button type="button" className="btn-ghost partner-inline-copy" onClick={() => void copyValue(lookup.trackingCode, "کد رهگیری")}>
+    <Copy size={15} /> کپی
+  </button>
+</div>
                 <div><span>وضعیت</span><strong data-status={lookup.status}>{lookup.statusLabel}</strong></div>
                 <div><span>نوع قرارداد</span><strong>{lookup.transactionLabel}</strong></div>
                 <div><span>املاک همکار</span><strong>{lookup.agencyName}</strong></div>
@@ -335,7 +368,7 @@ function TrackingPage() {
           </section>
 
           {!checking && !partner ? (
-            <section className="partner-portal-card">
+            <section className="partner-portal-card" id="partner-login">
               <div className="partner-portal-card-head">
                 <div>
                   <span className="kicker">ورود همکار</span>
@@ -362,12 +395,12 @@ function TrackingPage() {
           ) : null}
 
           {partner ? (
-            <section className="partner-dashboard partner-portal-card">
+            <section className="partner-dashboard partner-portal-card" id="partner-account">
               <div className="partner-dashboard-head">
                 <div>
                   <span className="kicker">حساب فعال</span>
                   <h2>{partner.agencyName}</h2>
-                  <p>{partner.contactName} · {partner.phone} · {partner.partnerCode}</p>
+                  <p>{partner.contactName} · {partner.phone} · <button type="button" className="partner-inline-code" onClick={() => void copyValue(partner.partnerCode, "کد همکاری")} dir="ltr">{partner.partnerCode}</button></p>
                 </div>
                 <button type="button" className="btn-ghost" onClick={() => void logout()}>
                   <LogOut size={16} /> خروج
