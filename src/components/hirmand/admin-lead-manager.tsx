@@ -417,9 +417,12 @@ export function AdminLeadManager() {
                   ) : null}
                   {lead.followUpAt ? (
                     <div className={new Date(lead.followUpAt).getTime() <= Date.now() ? "admin-lead-followup is-due" : "admin-lead-followup"}>
-                      پیگیری: <strong>{formatDate(lead.followUpAt)}</strong>
+                      پیگیری بعدی: <strong>{formatDate(lead.followUpAt)}</strong>
                     </div>
                   ) : null}
+                  <div className="admin-lead-created-at">
+                    تاریخ ثبت درخواست: <strong>{formatDate(lead.createdAt)}</strong>
+                  </div>
                   {lead.leaseDeadline && (lead.deal === "رهن" || lead.deal === "اجاره" || lead.deal === "رهن و اجاره") ? (
                     (() => {
                       const meta = leaseDeadlineMeta(lead.leaseDeadline);
