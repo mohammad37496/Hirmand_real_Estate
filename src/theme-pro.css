@@ -481,6 +481,51 @@ small {
   gap: 8px;
 }
 
+/* Budget matcher — align the hero with the main Hirmand theme. */
+.budget-matcher-hero {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2xl);
+  box-shadow: var(--el-1);
+  padding: 30px;
+}
+
+.budget-matcher-eyebrow {
+  color: var(--brass-700);
+}
+
+.budget-matcher-eyebrow-dot {
+  background: var(--brass-500);
+  box-shadow: 0 0 0 5px rgb(192 138 42 / 10%);
+}
+
+.budget-matcher-hero h2 {
+  color: var(--navy-900);
+}
+
+.budget-matcher-hero p {
+  color: var(--muted);
+}
+
+.budget-matcher-trust {
+  color: var(--subtle);
+}
+
+.budget-matcher-trust svg {
+  color: var(--brass-700);
+}
+
+.budget-matcher-hero-mark {
+  background: var(--brass-100);
+  border: 1px solid var(--brass-300);
+  color: var(--brass-700);
+  box-shadow: var(--el-1);
+}
+
+.budget-matcher-hero-mark span {
+  color: var(--navy-700);
+}
+
 /* --------------------------------------------------------------------------
    5. Forms
    -------------------------------------------------------------------------- */
