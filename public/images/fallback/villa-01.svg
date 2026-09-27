@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">ویلا و باغ</title><desc id="desc">خانه ویلایی با فضای سبز و معماری گرم</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="4f6f52"/><stop offset="1" stop-color="253f32"/></linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffaf4"/><stop offset="1" stop-color="#eadfd2"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="760" fill="url(#bg)"/>
+  <circle cx="1030" cy="105" r="200" fill="url(#glow)" opacity=".8"/>
+  
+    <path d="M150 520V305l300-170 300 170v215" fill="#f6ede0" stroke="#d6b16c" stroke-width="8"/>
+    <path d="M245 520V355h410v165" fill="#e7d8c7"/>
+    <path d="M350 520V395h200v125" fill="#d6b16c" opacity=".82"/>
+    <path d="M230 330L450 205l220 125" fill="#d8c8b8" opacity=".72"/>
+    <rect x="270" y="370" width="70" height="70" rx="8" fill="#fffaf2"/><rect x="560" y="370" width="70" height="70" rx="8" fill="#fffaf2"/>
+    <circle cx="880" cy="430" r="120" fill="#ffffff" opacity=".36"/><path d="M790 520c35-90 100-135 180-135" stroke="#fff" stroke-width="18" stroke-linecap="round" opacity=".55"/>
+    <path d="M120 585H1080" stroke="#d6b16c" stroke-width="5" opacity=".35"/>
+    <path d="M180 650c70-120 150-120 220 0M805 650c60-95 135-100 205 0" stroke="#ffffff" stroke-width="22" stroke-linecap="round" opacity=".4"/>
+  
+  <rect x="70" y="70" width="1060" height="620" rx="38" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="2"/>
+  <text x="92" y="110" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#fff" opacity=".9">HIRMÄND REAL ESTATE</text>
+  <text x="92" y="150" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#fff">ویلا و باغ</text>
+  <text x="92" y="188" font-family="Arial, sans-serif" font-size="20" fill="#fff" opacity=".84">خانه ویلایی با فضای سبز و معماری گرم</text>
+</svg>
