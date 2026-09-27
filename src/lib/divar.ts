@@ -92,6 +92,8 @@ type ParsedListing = Omit<
   | "lastSeenAt"
   | "createdAt"
   | "updatedAt"
+  | "sourceImageCount"
+  | "publishedImageCount"
 >;
 
 const adminInput = z.object({}).optional();
