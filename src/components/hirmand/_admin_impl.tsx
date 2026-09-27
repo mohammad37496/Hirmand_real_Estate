@@ -79,6 +79,7 @@ type FormState = {
   bedrooms: string;
   bathrooms: string;
   floor: string;
+  floorLabel: Property["floorLabel"];
   totalFloors: string;
   builtYear: string;
   parking: boolean;
@@ -129,6 +130,7 @@ function emptyForm(): FormState {
     bedrooms: "2",
     bathrooms: "1",
     floor: "",
+    floorLabel: null,
     totalFloors: "",
     builtYear: "",
     parking: true,
@@ -155,6 +157,11 @@ function emptyForm(): FormState {
     longitude: null,
   };
 }
+
+const FLOOR_OPTIONS = Array.from({ length: 261 }, (_, index) => index - 60).map((value) => ({
+  value: String(value),
+  label: value === 0 ? "همکف (۰)" : value < 0 ? `منفی ${Math.abs(value).toLocaleString("fa-IR")}` : value.toLocaleString("fa-IR"),
+}));
 
 function toEnglishDigits(raw: string) {
   return raw
@@ -256,6 +263,7 @@ function propertyToForm(property: Property): FormState {
     bedrooms: property.bedrooms != null ? String(property.bedrooms) : "",
     bathrooms: property.bathrooms != null ? String(property.bathrooms) : "",
     floor: property.floor != null ? String(property.floor) : "",
+    floorLabel: property.floorLabel ?? null,
     totalFloors: property.totalFloors != null ? String(property.totalFloors) : "",
     builtYear: property.builtYear != null ? String(property.builtYear) : "",
     parking: property.parking,
@@ -808,7 +816,8 @@ export function AdminPropertiesPage() {
           areaM2: numberOrNull(form.areaM2),
           bedrooms: numberOrNull(form.bedrooms),
           bathrooms: numberOrNull(form.bathrooms),
-          floor: numberOrNull(form.floor, true),
+          floor: form.floorLabel === "suite" ? null : numberOrNull(form.floor, true),
+          floorLabel: form.floorLabel,
           totalFloors: numberOrNull(form.totalFloors),
           builtYear: numberOrNull(form.builtYear),
           parking: form.parking,
@@ -900,7 +909,8 @@ export function AdminPropertiesPage() {
           areaM2: numberOrNull(base.areaM2),
           bedrooms: numberOrNull(base.bedrooms),
           bathrooms: numberOrNull(base.bathrooms),
-          floor: numberOrNull(base.floor, true),
+          floor: base.floorLabel === "suite" ? null : numberOrNull(base.floor, true),
+          floorLabel: base.floorLabel,
           totalFloors: numberOrNull(base.totalFloors),
           builtYear: numberOrNull(base.builtYear),
           parking: base.parking,
@@ -1549,7 +1559,23 @@ export function AdminPropertiesPage() {
                     </label>
                     <label className="field">
                       <span>طبقه</span>
-                      <input value={form.floor} onChange={(e) => update("floor", e.target.value)} />
+                      <select
+                        value={form.floorLabel === "suite" ? "suite" : form.floor}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "suite") {
+                            setForm((prev) => ({ ...prev, floor: "", floorLabel: "suite" }));
+                            return;
+                          }
+                          setForm((prev) => ({ ...prev, floor: value, floorLabel: null }));
+                        }}
+                      >
+                        <option value="">انتخاب طبقه</option>
+                        <option value="suite">سوئیت</option>
+                        {FLOOR_OPTIONS.map((item) => (
+                          <option key={item.value} value={item.value}>{item.label}</option>
+                        ))}
+                      </select>
                     </label>
                     <label className="field">
                       <span>کل طبقات</span>
