@@ -25,6 +25,8 @@ function property(overrides: Partial<Property>): Property {
     parking: true,
     elevator: true,
     storage: true,
+    painted: false,
+    wallpaper: false,
     cabinetType: null,
     flooringType: null,
     coolingSystem: null,
