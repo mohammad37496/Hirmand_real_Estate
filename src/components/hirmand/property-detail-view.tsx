@@ -61,6 +61,7 @@ import {
 } from "lucide-react";
 import { breadcrumbJsonLd, propertyJsonLd, TX_LABEL, TYPE_LABEL } from "@/lib/seo";
 import type { Property } from "@/lib/properties";
+import { PropertyConvertSlider } from "@/components/hirmand/property-convert-slider";
 
 const PROPERTY_ORIENTATION_LABELS: Record<NonNullable<Property["orientation"]>, string> = {
   north: "شمالی",
@@ -1308,6 +1309,8 @@ export function PropertyDetailView({
                 </a>
               </div>
             </section>
+
+            <PropertyConvertSlider property={property} />
 
             <Link
               to="/properties"
