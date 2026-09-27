@@ -56,6 +56,9 @@ function PropertyImage({ src, alt, fallback }: { src: string; alt: string; fallb
       loading="lazy"
       decoding="async"
       referrerPolicy="no-referrer"
+      width={800}
+      height={533}
+      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
       onError={() => setAttempt((value) => Math.min(value + 1, candidates.length - 1))}
     />
   );

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, MapPinned, Phone } from "lucide-react";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 import { listPublishedProperties } from "@/lib/properties";
 import { findAreaBySlug, areaHead, areaJsonLd, areaPath, allAreas } from "@/lib/areas";
 import { breadcrumbJsonLd } from "@/lib/seo";
@@ -53,7 +54,7 @@ function AreaPage() {
     .filter((a) => a.groupTitle === area.groupTitle && a.slug !== area.slug)
     .slice(0, 8);
 
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${area.lat},${area.lng}`;
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`اصفهان ${area.name}`)}`;
 
   return (
     <SiteChrome className="property-detail-shell">
@@ -114,9 +115,14 @@ function AreaPage() {
               <div>
                 <strong>موقعیت روی نقشه</strong>
                 <p>
-                  {area.name}، اصفهان — مختصات تقریبی {area.lat.toFixed(4)}، {area.lng.toFixed(4)}
+                  {area.name}، اصفهان — جست‌وجوی موقعیت محله در Google Maps
                 </p>
-                <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackAnalyticsEvent("map_open", area.slug)}
+                >
                   باز کردن در گوگل‌مپ
                 </a>
               </div>

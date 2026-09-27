@@ -501,6 +501,9 @@ function ResilientImage({
       itemProp={itemProp}
       referrerPolicy="no-referrer"
       decoding="async"
+      width={1280}
+      height={853}
+      sizes="(max-width: 720px) 100vw, (max-width: 1200px) 58vw, 760px"
       onError={() => {
         if (attempt < candidates.length - 1) {
           setAttempt((value) => Math.min(value + 1, candidates.length - 1));

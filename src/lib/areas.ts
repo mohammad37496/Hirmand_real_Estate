@@ -70,8 +70,6 @@ export function areaHead(area: AreaInfo | null, slug: string) {
       { name: "robots", content: "index, follow, max-image-preview:large" },
       { name: "geo.region", content: "IR-04" },
       { name: "geo.placename", content: area.name },
-      { name: "geo.position", content: `${area.lat};${area.lng}` },
-      { name: "ICBM", content: `${area.lat}, ${area.lng}` },
       ...socialMeta({ title, description, url }),
     ],
     links: [
@@ -89,11 +87,6 @@ export function areaJsonLd(area: AreaInfo) {
     "@id": `${url}#place`,
     name: `${area.name}، اصفهان`,
     description: `محله ${area.name} در اصفهان — خدمات املاک هیرمند`,
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: area.lat,
-      longitude: area.lng,
-    },
     containedInPlace: {
       "@type": "City",
       name: "اصفهان",

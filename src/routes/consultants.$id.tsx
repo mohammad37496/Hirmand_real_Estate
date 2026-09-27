@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { Briefcase, Check, Handshake, Phone, ArrowRight } from "lucide-react";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
@@ -7,6 +8,7 @@ import { listPublishedPropertiesByContact } from "@/lib/properties";
 import { absoluteUrl, socialMeta } from "@/lib/seo";
 import { SITE } from "@/lib/site";
 import { listConsultants } from "@/lib/consultants";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 const ICONS = {
   briefcase: Briefcase,
@@ -54,6 +56,15 @@ export const Route = createFileRoute("/consultants/$id")({
 
 function ConsultantProfilePage() {
   const data = Route.useLoaderData();
+
+  useEffect(() => {
+    if (!data.person || typeof window === "undefined") return;
+    const key = `hirmand-consultant-viewed:${data.person.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    trackAnalyticsEvent("consultant_view", data.person.id);
+  }, [data.person]);
+
   if (!data.person) {
     return (
       <SiteChrome>
