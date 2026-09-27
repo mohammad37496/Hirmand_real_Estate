@@ -25,6 +25,7 @@ import {
   Download,
   CheckSquare,
   ChevronDown,
+  Clock3,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import { isInvalidIntegerInput, normalizeMoneyText } from "@/lib/property-input-normalization";
@@ -56,6 +57,7 @@ import { AdminListingAssistant } from "@/components/hirmand/admin-listing-assist
 import { AdminPartnerManager } from "@/components/hirmand/admin-partner-manager";
 import { AdminConsultantManager } from "@/components/hirmand/admin-consultant-manager";
 import { AdminDivarFiles } from "@/components/hirmand/admin-divar-files";
+import { AdminAttendanceManager } from "@/components/hirmand/admin-attendance-manager";
 import {
   PROPERTY_CABINET_OPTIONS,
   PROPERTY_COOLING_OPTIONS,
@@ -66,7 +68,7 @@ import {
 } from "@/lib/property-options";
 
 type PublishStatus = "draft" | "published" | "archived";
-type ViewMode = "dashboard" | "list" | "form" | "music" | "leads" | "partners" | "divar" | "consultants";
+type ViewMode = "dashboard" | "list" | "form" | "music" | "leads" | "partners" | "divar" | "consultants" | "attendance";
 
 type FormState = {
   id?: string;
@@ -1168,6 +1170,10 @@ export function AdminPropertiesPage() {
             <UsersRound size={18} />
             مشاورین و اعضای بنگاه
           </button>
+          <button type="button" className={"admin-nav-btn" + (view === "attendance" ? " is-active" : "")} onClick={() => navigateTo("attendance")}>
+            <Clock3 size={18} />
+            ساعت ورود و خروج
+          </button>
           <button type="button" className={"admin-nav-btn" + (view === "divar" ? " is-active" : "")} onClick={() => navigateTo("divar")}>
             <Globe2 size={18} />
             فایل‌های دیوار
@@ -1512,6 +1518,7 @@ export function AdminPropertiesPage() {
           {view === "leads" ? <AdminLeadManager /> : null}
           {view === "partners" ? <AdminPartnerManager /> : null}
           {view === "consultants" ? <AdminConsultantManager /> : null}
+          {view === "attendance" ? <AdminAttendanceManager /> : null}
           {view === "divar" ? <AdminDivarFiles /> : null}
 
           {view === "form" ? (
@@ -2111,6 +2118,10 @@ export function AdminPropertiesPage() {
         <button type="button" className={view === "partners" ? "is-active" : ""} onClick={() => navigateTo("partners")} title="همکاران و کد رهگیری">
           <UsersRound size={19} strokeWidth={2.1} />
           <span>همکاران</span>
+        </button>
+        <button type="button" className={view === "attendance" ? "is-active" : ""} onClick={() => navigateTo("attendance")} title="ساعت ورود و خروج">
+          <Clock3 size={19} strokeWidth={2.1} />
+          <span>حضور</span>
         </button>
         <button type="button" className={view === "divar" ? "is-active" : ""} onClick={() => navigateTo("divar")} title="فایل‌های دیوار">
           <Globe2 size={19} strokeWidth={2.1} />
