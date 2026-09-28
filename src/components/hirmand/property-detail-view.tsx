@@ -84,7 +84,7 @@ import { PropertyActions } from "@/components/hirmand/property-actions";
 import { formatToman } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
-import { getPropertyFallbackImage, getPropertyFallbackImages } from "@/lib/property-fallback-images";
+import { getPropertyFallbackImage, getPropertyFallbackImageAvif, getPropertyFallbackImages } from "@/lib/property-fallback-images";
 import { areaSlug } from "@/lib/areas";
 import { propertyPath } from "@/lib/property-path";
 import { TEAM } from "@/lib/site";
@@ -535,24 +535,31 @@ function ResilientImage({
     );
   }
 
+  const usingLocalFallback = current === fallback && fallback.startsWith("/images/fallback/");
+  const fallbackAvif = usingLocalFallback ? fallback.replace(/\.webp$/i, ".avif") : "";
+
   return (
-    <img
-      src={current}
-      alt={alt}
-      className={className}
-      loading={loading}
-      fetchPriority={fetchPriority}
-      itemProp={itemProp}
-      referrerPolicy="no-referrer"
-      decoding="async"
-      onError={() => {
-        if (attempt < candidates.length - 1) {
-          setAttempt((value) => Math.min(value + 1, candidates.length - 1));
-        } else {
-          setFailed(true);
-        }
-      }}
-    />
+    <picture>
+      {usingLocalFallback ? <source srcSet={fallbackAvif} type="image/avif" /> : null}
+      {usingLocalFallback ? <source srcSet={fallback} type="image/webp" /> : null}
+      <img
+        src={current}
+        alt={alt}
+        className={className}
+        loading={loading}
+        fetchPriority={fetchPriority}
+        itemProp={itemProp}
+        referrerPolicy="no-referrer"
+        decoding="async"
+        onError={() => {
+          if (attempt < candidates.length - 1) {
+            setAttempt((value) => Math.min(value + 1, candidates.length - 1));
+          } else {
+            setFailed(true);
+          }
+        }}
+      />
+    </picture>
   );
 }
 
