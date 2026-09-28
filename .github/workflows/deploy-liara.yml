@@ -23,46 +23,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install image codecs for fallback assets
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y imagemagick webp ffmpeg
-
-      - name: Verify image codecs
-        run: |
-          command -v magick || command -v convert
-          convert -version || magick -version
-          (convert -list format 2>/dev/null || magick -list format 2>/dev/null) | grep -E "WEBP"
-          ffmpeg -hide_banner -encoders | grep -E "libaom-av1"
-
-      - name: Prepare self-hosted fallback assets
-        run: |
-          refresh=0
-          if [ "$GITHUB_EVENT_BEFORE" != "0000000000000000000000000000000000000000" ]; then
-            changed="$(git diff --name-only "$GITHUB_EVENT_BEFORE" "$GITHUB_SHA")"
-            if printf '%s\n' "$changed" | grep -Eq '^(scripts/fallback-source-images.json|scripts/generate-fallback-assets.mjs)$'; then
-              refresh=1
-            fi
-          fi
-          echo "Fallback image refresh: $refresh"
-          FORCE_FALLBACK_IMAGE_REFRESH="$refresh" node scripts/generate-fallback-assets.mjs
-
-      - name: Remove legacy SVG fallback assets
-        run: find public/images/fallback -type f -name "*.svg" -delete
-
-      - name: Commit fallback assets
-        run: |
-          if git diff --quiet -- public/images/fallback; then
-            echo "No fallback asset changes to commit."
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/images/fallback
-          git commit -m "build: vendor self-hosted fallback images [skip ci]"
-          git push origin HEAD:main
-
       - name: Install Liara CLI
         run: npm i -g @liara/cli@9
 
