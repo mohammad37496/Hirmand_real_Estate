@@ -2498,6 +2498,34 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
   accent-color: var(--brass-600);
 }
 
+/* Desktop readability: keep the mobile density, but give the inquiry
+   amenities proper visual weight and use the available width cleanly. */
+@media (min-width: 721px) {
+  .inquiry-amenity-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .inquiry-amenity-option {
+    min-height: 48px;
+    padding: 10px 14px;
+    border-color: var(--line-2);
+  }
+
+  .inquiry-amenity-option span {
+    color: var(--navy-900);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.75;
+  }
+
+  .inquiry-amenity-option input {
+    width: 18px;
+    height: 18px;
+    flex-basis: 18px;
+  }
+}
+
 /* --------------------------------------------------------------------------
    20. Contact, social, FAQ, location
    -------------------------------------------------------------------------- */
