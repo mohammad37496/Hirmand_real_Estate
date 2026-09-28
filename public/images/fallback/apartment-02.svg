@@ -1,24 +1,49 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
-  <title id="title">آپارتمان روشن</title><desc id="desc">فضای مسکونی مینیمال با حس لوکس و آرام</desc>
+  <title id="title">آپارتمان مینیمال</title>
+  <desc id="desc">نمای معماری مینیمال برای فایل‌های آپارتمانی</desc>
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="5d6974"/><stop offset="1" stop-color="1f3448"/></linearGradient>
-    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fffaf4"/><stop offset="1" stop-color="#eadfd2"/></linearGradient>
-    <radialGradient id="glow"><stop stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#0f171c"/>
+      <stop offset=".55" stop-color="#1e3438"/>
+      <stop offset="1" stop-color="#49685f"/>
+    </linearGradient>
+    <radialGradient id="sun" cx=".78" cy=".18" r=".55">
+      <stop stop-color="#fff4d8" stop-opacity=".92"/>
+      <stop offset=".45" stop-color="#d8c18d" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#d8c18d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#fff" stop-opacity=".09"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".16"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#071014" flood-opacity=".35"/>
+    </filter>
   </defs>
   <rect width="1200" height="760" fill="url(#bg)"/>
-  <circle cx="1030" cy="105" r="200" fill="url(#glow)" opacity=".8"/>
-  
-    <path d="M150 520V305l300-170 300 170v215" fill="#f6ede0" stroke="#d7b77b" stroke-width="8"/>
-    <path d="M245 520V355h410v165" fill="#e7d8c7"/>
-    <path d="M350 520V395h200v125" fill="#d7b77b" opacity=".82"/>
-    <path d="M230 330L450 205l220 125" fill="#d8c8b8" opacity=".72"/>
-    <rect x="270" y="370" width="70" height="70" rx="8" fill="#fffaf2"/><rect x="560" y="370" width="70" height="70" rx="8" fill="#fffaf2"/>
-    <circle cx="880" cy="430" r="120" fill="#ffffff" opacity=".36"/><path d="M790 520c35-90 100-135 180-135" stroke="#fff" stroke-width="18" stroke-linecap="round" opacity=".55"/>
-    <path d="M120 585H1080" stroke="#d7b77b" stroke-width="5" opacity=".35"/>
-    <path d="M180 650c70-120 150-120 220 0M805 650c60-95 135-100 205 0" stroke="#ffffff" stroke-width="22" stroke-linecap="round" opacity=".4"/>
-  
-  <rect x="70" y="70" width="1060" height="620" rx="38" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="2"/>
-  <text x="92" y="110" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#fff" opacity=".9">HIRMÄND REAL ESTATE</text>
-  <text x="92" y="150" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#fff">آپارتمان روشن</text>
-  <text x="92" y="188" font-family="Arial, sans-serif" font-size="20" fill="#fff" opacity=".84">فضای مسکونی مینیمال با حس لوکس و آرام</text>
+  <rect width="1200" height="760" fill="url(#sun)"/>
+  <circle cx="160" cy="125" r="90" fill="#f5ecd7" opacity=".045"/>
+  <circle cx="1015" cy="670" r="220" fill="#84b9a8" opacity=".08"/>
+  <g filter="url(#shadow)">
+    
+      <path d="M145 585V265l290-130 290 130v320Z" fill="#f3eee5"/>
+      <path d="M205 570V305l230-105 230 105v265Z" fill="#cdc8c0"/>
+      <path d="M265 342h340v172H265z" fill="#1d2932"/>
+      <g opacity=".95">
+        <rect x="292" y="369" width="70" height="105" rx="5" fill="#84c9ba"/>
+        <rect x="382" y="369" width="70" height="105" rx="5" fill="#b2e2d7"/>
+        <rect x="472" y="369" width="70" height="105" rx="5" fill="#84c9ba"/>
+      </g>
+      <path d="M435 200v370M205 305h460" stroke="#b9a16e" stroke-width="8" opacity=".8"/>
+      <path d="M120 610h720" stroke="#b5b0a8" stroke-width="25" stroke-linecap="round"/>
+      <ellipse cx="930" cy="475" rx="120" ry="120" fill="#efe8dc" opacity=".65"/>
+      <path d="M850 610c44-105 95-147 148-160" stroke="#53655c" stroke-width="22" stroke-linecap="round" opacity=".75"/>
+    
+  </g>
+  <rect x="48" y="48" width="1104" height="664" rx="34" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="2"/>
+  <path d="M88 645H1112" stroke="#fff" stroke-opacity=".09" stroke-width="2"/>
+  <g opacity=".88">
+    <rect x="86" y="86" width="7" height="42" rx="3.5" fill="#c9ad73"/>
+    <rect x="104" y="86" width="3" height="42" rx="1.5" fill="#9ac9bc"/>
+  </g>
 </svg>
