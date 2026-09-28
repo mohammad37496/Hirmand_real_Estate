@@ -84,7 +84,7 @@ import { PropertyActions } from "@/components/hirmand/property-actions";
 import { formatToman } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
-import { getPropertyFallbackImage, getPropertyFallbackImageAvif, getPropertyFallbackImages } from "@/lib/property-fallback-images";
+import { getPropertyFallbackImage, getPropertyFallbackImages } from "@/lib/property-fallback-images";
 import { areaSlug } from "@/lib/areas";
 import { propertyPath } from "@/lib/property-path";
 import { TEAM } from "@/lib/site";
