@@ -17,21 +17,30 @@ const manifestPath = join(root, "scripts", "fallback-source-images.json");
 const sources = JSON.parse(readFileSync(manifestPath, "utf8"));
 
 const generatedFiles = [];
+let imageMagickBin = null;
 
 async function run(command, args) {
   await execFileAsync(command, args, { cwd: root, maxBuffer: 1024 * 1024 * 2 });
 }
 
 async function assertCodecs() {
-  try {
-    await run("magick", ["-version"]);
-  } catch {
+  for (const candidate of ["magick", "convert"]) {
+    try {
+      await run(candidate, ["-version"]);
+      imageMagickBin = candidate;
+      break;
+    } catch {
+      // Try the next executable.
+    }
+  }
+
+  if (!imageMagickBin) {
     throw new Error("ImageMagick is required to generate fallback assets.");
   }
 
-  const { stdout } = await execFileAsync("magick", ["-list", "format"]);
-  if (!/AVIF.*RW/i.test(stdout)) {
-    throw new Error("The installed ImageMagick build does not provide AVIF read/write support.");
+  const { stdout } = await execFileAsync(imageMagickBin, ["-list", "format"]);
+  if (!/AVIF.*RW|HEIC.*RW/i.test(stdout)) {
+    throw new Error("The installed ImageMagick build does not provide AVIF/HEIC read/write support.");
   }
   if (!/WEBP.*RW/i.test(stdout)) {
     throw new Error("The installed ImageMagick build does not provide WebP read/write support.");
@@ -84,7 +93,7 @@ async function main() {
       console.log(`Preparing ${base}`);
       await download(urls[index], source);
 
-      await run("magick", [
+      await run(imageMagickBin, [
         source,
         "-auto-orient",
         "-resize",
@@ -95,7 +104,7 @@ async function main() {
         webp,
       ]);
 
-      await run("magick", [
+      await run(imageMagickBin, [
         source,
         "-auto-orient",
         "-resize",
