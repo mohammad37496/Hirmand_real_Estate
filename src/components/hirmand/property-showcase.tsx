@@ -13,7 +13,7 @@ import {
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES } from "@/lib/site";
 import { listNeighborhoodNames } from "@/lib/neighborhoods";
 import { mediaSourceCandidates } from "@/lib/media";
-import { getPropertyFallbackImage, getPropertyFallbackImageAvif } from "@/lib/property-fallback-images";
+import { getPropertyFallbackImage, getPropertyFallbackImageAvif, getPropertyFallbackLegacyImage } from "@/lib/property-fallback-images";
 import { formatToman } from "@/lib/money";
 import type { Property, PropertyCardData, PropertyType, PropertyTransaction } from "@/lib/properties";
 import { isFeaturedActive, listPublishedPropertyCards } from "@/lib/properties";
@@ -48,11 +48,13 @@ function PropertyImage({
   alt,
   fallback,
   fallbackAvif,
+  fallbackLegacy,
 }: {
   src: string;
   alt: string;
   fallback: string;
   fallbackAvif: string;
+  fallbackLegacy: string;
 }) {
   const candidates = mediaSourceCandidates(src, fallback);
   const [attempt, setAttempt] = useState(0);
@@ -64,7 +66,7 @@ function PropertyImage({
       {usingLocalFallback ? <source srcSet={fallbackAvif} type="image/avif" /> : null}
       {usingLocalFallback ? <source srcSet={fallback} type="image/webp" /> : null}
       <img
-        src={current}
+        src={usingLocalFallback ? fallbackLegacy : current}
         alt={alt}
         loading="lazy"
         decoding="async"
@@ -96,6 +98,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
             alt={property.title}
             fallback={getPropertyFallbackImage(property.propertyType, property.id)}
             fallbackAvif={getPropertyFallbackImageAvif(property.propertyType, property.id)}
+            fallbackLegacy={getPropertyFallbackLegacyImage(property.propertyType, property.id)}
           />
           <div className="property-card-badges">
             {isFeaturedActive(property) ? (
