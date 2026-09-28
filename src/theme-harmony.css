@@ -1638,3 +1638,187 @@
     font-size: .88rem !important;
   }
 }
+
+
+/* Final consultant card — unified light Hirmand theme */
+.property-detail-page .property-detail-aside .property-contact-card {
+  position: relative !important;
+  overflow: hidden !important;
+  display: grid !important;
+  gap: 14px !important;
+  margin: 0 !important;
+  padding: 20px !important;
+  color: #152430 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fbf8f2 100%) !important;
+  border: 1px solid #e4dccc !important;
+  border-radius: 22px !important;
+  box-shadow: 0 12px 30px rgb(11 26 43 / 8%) !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-card::before {
+  content: "" !important;
+  position: absolute !important;
+  inset-inline: 0 !important;
+  inset-block-start: 0 !important;
+  height: 4px !important;
+  background: linear-gradient(90deg, #0b1a2b 0%, #8a5e14 100%) !important;
+}
+
+.property-detail-page .property-detail-aside .property-consultant-main {
+  grid-template-columns: 58px minmax(0, 1fr) 40px !important;
+  gap: 12px !important;
+  align-items: center !important;
+}
+
+.property-detail-page .property-detail-aside .property-consultant-avatar {
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 17px !important;
+  background: linear-gradient(145deg, #e2c48c 0%, #c08a2a 100%) !important;
+  color: #0b1a2b !important;
+  font-size: 1.35rem !important;
+  font-weight: 900 !important;
+  box-shadow: 0 8px 18px rgb(11 26 43 / 12%) !important;
+}
+
+.property-detail-page .property-detail-aside .property-consultant-copy {
+  gap: 2px !important;
+}
+
+.property-detail-page .property-detail-aside .property-consultant-copy .kicker {
+  color: #8a5e14 !important;
+  font-size: .7rem !important;
+  font-weight: 850 !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-name {
+  color: #0b1a2b !important;
+  font-size: 1.05rem !important;
+  font-weight: 900 !important;
+  line-height: 1.65 !important;
+}
+
+.property-detail-page .property-detail-aside .property-consultant-role {
+  color: #57646e !important;
+  font-size: .76rem !important;
+  font-weight: 700 !important;
+}
+
+.property-detail-page .property-detail-aside .property-consultant-badge {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 12px !important;
+  background: #f7edda !important;
+  color: #8a5e14 !important;
+  border: 1px solid #ddc99f !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-phone {
+  width: 100% !important;
+  min-height: 48px !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 10px 13px !important;
+  border-radius: 13px !important;
+  background: #f7f4ee !important;
+  border: 1px solid #e4dccc !important;
+  color: #0b1a2b !important;
+  font-size: .95rem !important;
+  font-weight: 900 !important;
+  letter-spacing: .02em !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-phone:hover {
+  background: #fbf8f2 !important;
+  border-color: #c08a2a !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-note {
+  margin: 0 !important;
+  color: #57646e !important;
+  font-size: .78rem !important;
+  font-weight: 500 !important;
+  line-height: 2 !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-actions {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 9px !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-actions .btn-gold,
+.property-detail-page .property-detail-aside .property-contact-actions .btn-ghost {
+  min-height: 46px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  padding: 10px 11px !important;
+  border-radius: 12px !important;
+  font-size: .78rem !important;
+  font-weight: 850 !important;
+  text-decoration: none !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-actions .btn-gold {
+  background: linear-gradient(180deg, #e2c48c 0%, #c08a2a 100%) !important;
+  color: #0b1a2b !important;
+  border: 1px solid #b77d1f !important;
+  box-shadow: 0 7px 16px rgb(192 138 42 / 18%) !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-actions .btn-gold:hover {
+  transform: translateY(-1px) !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-actions .btn-ghost {
+  background: #ffffff !important;
+  color: #0b1a2b !important;
+  border: 1px solid #e4dccc !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-actions .btn-ghost:hover {
+  background: #fbf8f2 !important;
+  border-color: #c08a2a !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-profile {
+  display: inline-flex !important;
+  align-items: center !important;
+  align-self: flex-start !important;
+  gap: 6px !important;
+  width: fit-content !important;
+  padding: 2px 0 !important;
+  color: #8a5e14 !important;
+  font-size: .76rem !important;
+  font-weight: 850 !important;
+  text-decoration: none !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-profile:hover {
+  color: #6f4a0f !important;
+  text-decoration: underline !important;
+  text-underline-offset: 4px !important;
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-detail-aside .property-contact-card {
+    padding: 17px !important;
+    border-radius: 18px !important;
+  }
+
+  .property-detail-page .property-detail-aside .property-consultant-main {
+    grid-template-columns: 52px minmax(0, 1fr) 38px !important;
+  }
+
+  .property-detail-page .property-detail-aside .property-consultant-avatar {
+    width: 52px !important;
+    height: 52px !important;
+    font-size: 1.2rem !important;
+  }
+
+  .property-detail-page .property-detail-aside .property-contact-actions {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
