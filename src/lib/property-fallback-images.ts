@@ -2,30 +2,37 @@ import type { PropertyType } from "@/lib/properties";
 
 type FallbackMap = Record<PropertyType, readonly string[]>;
 
+/**
+ * Realistic photographic fallbacks for listings without uploaded media.
+ *
+ * The photos are served through Unsplash's image CDN with a bounded width so
+ * fallback galleries stay visually rich without downloading the original
+ * source dimensions.
+ */
 export const PROPERTY_FALLBACK_IMAGES: FallbackMap = {
   apartment: [
-    "/images/fallback/apartment-01.svg",
-    "/images/fallback/apartment-02.svg",
+    "https://images.unsplash.com/photo-1778604263874-5d9f372e0434?auto=format&fit=crop&fm=jpg&q=82&w=1600",
+    "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&fm=jpg&q=82&w=1600",
   ],
   villa: [
-    "/images/fallback/villa-01.svg",
-    "/images/fallback/villa-02.svg",
+    "https://images.unsplash.com/photo-1781269986378-a2f366df4d0f?auto=format&fit=crop&fm=jpg&q=82&w=1600",
+    "https://images.unsplash.com/photo-1638989795059-f4dba0a3f291?auto=format&fit=crop&fm=jpg&q=82&w=1600",
   ],
   office: [
-    "/images/fallback/office-01.svg",
-    "/images/fallback/office-02.svg",
+    "https://images.unsplash.com/photo-1774953037913-af0cf688491a?auto=format&fit=crop&fm=jpg&q=82&w=1600",
+    "https://images.unsplash.com/photo-1765371512971-9d4da531d004?auto=format&fit=crop&fm=jpg&q=82&w=1600",
   ],
   heritage: [
-    "/images/fallback/heritage-01.svg",
-    "/images/fallback/heritage-02.svg",
+    "https://images.unsplash.com/photo-1780245989984-a178d6c54a7b?auto=format&fit=crop&fm=jpg&q=82&w=1600",
+    "https://images.unsplash.com/photo-1638989795059-f4dba0a3f291?auto=format&fit=crop&fm=jpg&q=82&w=1600",
   ],
   land: [
-    "/images/fallback/land-01.svg",
-    "/images/fallback/land-02.svg",
+    "https://images.unsplash.com/photo-1724863169421-4e495fd7100f?auto=format&fit=crop&fm=jpg&q=82&w=1600",
+    "https://images.unsplash.com/photo-1781816927578-ec36210fede0?auto=format&fit=crop&fm=jpg&q=82&w=1600",
   ],
   commercial: [
-    "/images/fallback/commercial-01.svg",
-    "/images/fallback/commercial-02.svg",
+    "https://images.unsplash.com/photo-1770385605649-11de1a033064?auto=format&fit=crop&fm=jpg&q=82&w=1600",
+    "https://images.unsplash.com/photo-1768758533474-5cd148638a98?auto=format&fit=crop&fm=jpg&q=82&w=1600",
   ],
 };
 
