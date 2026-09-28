@@ -959,7 +959,7 @@ function ConsultantCard({ property }: { property: Property }) {
   const whatsapp = person?.wa || whatsappLink(property.contactPhone, property.title);
 
   return (
-    <aside className="property-contact-card" aria-label="اطلاعات مشاور فایل">
+    <div className="property-contact-card" aria-label="اطلاعات مشاور فایل">
       <div className="property-consultant-main">
         <div className="property-consultant-avatar" aria-hidden="true">{initial}</div>
         <div className="property-consultant-copy">
@@ -1012,7 +1012,7 @@ function ConsultantCard({ property }: { property: Property }) {
           <ChevronLeft size={15} aria-hidden="true" />
         </Link>
       ) : null}
-    </aside>
+    </div>
   );
 }
 
