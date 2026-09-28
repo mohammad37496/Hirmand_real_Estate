@@ -1476,3 +1476,165 @@
 .property-detail-page .property-detail-body li svg {
   color: #8a5e14 !important;
 }
+
+
+/* Final property specification readability layer */
+.property-detail-page .property-divar-specs {
+  position: relative !important;
+  overflow: visible !important;
+  isolation: isolate !important;
+  color: #152430 !important;
+  background: #ffffff !important;
+}
+
+.property-detail-page .property-divar-specs::after {
+  display: none !important;
+  content: none !important;
+}
+
+.property-detail-page .property-divar-specs .property-section-heading,
+.property-detail-page .property-divar-specs .property-spec-grid,
+.property-detail-page .property-divar-specs .property-spec-amenities {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.property-detail-page .property-divar-specs .property-section-heading h2 {
+  color: #0b1a2b !important;
+  font-size: 1.2rem !important;
+  font-weight: 900 !important;
+  line-height: 1.7 !important;
+}
+
+.property-detail-page .property-divar-specs .property-section-heading .kicker {
+  color: #8a5e14 !important;
+  font-size: .72rem !important;
+  font-weight: 850 !important;
+}
+
+.property-detail-page .property-divar-specs .property-source-badge {
+  color: #57646e !important;
+  background: #fbf8f2 !important;
+  border-color: #e4dccc !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-grid > div {
+  min-width: 0 !important;
+  min-height: 88px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 11px !important;
+  padding: 14px !important;
+  color: #152430 !important;
+  background: #fbf8f2 !important;
+  border: 1px solid #e4dccc !important;
+  border-radius: 15px !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-grid > div > svg {
+  flex: 0 0 auto !important;
+  width: 38px !important;
+  height: 38px !important;
+  padding: 8px !important;
+  color: #8a5e14 !important;
+  background: #f7edda !important;
+  border: 1px solid #ddc99f !important;
+  border-radius: 11px !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-grid > div > span {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 3px !important;
+  color: #152430 !important;
+  font-size: .9rem !important;
+  font-weight: 700 !important;
+  line-height: 1.7 !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-grid small {
+  color: #57646e !important;
+  font-size: .72rem !important;
+  font-weight: 750 !important;
+  line-height: 1.6 !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-grid strong {
+  color: #0b1a2b !important;
+  font-size: .98rem !important;
+  font-weight: 900 !important;
+  line-height: 1.65 !important;
+  overflow-wrap: anywhere !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-amenities {
+  margin-top: 14px !important;
+  color: #152430 !important;
+  background: #fbf8f2 !important;
+  border-color: #e4dccc !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-amenities > summary {
+  color: #152430 !important;
+  background: #fbf8f2 !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-amenities-title strong {
+  color: #0b1a2b !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-amenities-title small,
+.property-detail-page .property-divar-specs .property-spec-amenities-toggle small {
+  color: #57646e !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-amenity-item {
+  color: #152430 !important;
+  background: #ffffff !important;
+  border-color: #e4dccc !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-amenity-item > svg {
+  color: #8a5e14 !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-amenity-item small {
+  color: #57646e !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-amenity-item strong {
+  color: #12293f !important;
+}
+
+@media (max-width: 1024px) {
+  .property-detail-page .property-divar-specs .property-spec-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-divar-specs .property-spec-grid {
+    grid-template-columns: 1fr !important;
+    gap: 9px !important;
+  }
+
+  .property-detail-page .property-divar-specs .property-spec-grid > div {
+    min-height: 76px !important;
+    padding: 11px !important;
+  }
+
+  .property-detail-page .property-divar-specs .property-spec-grid > div > svg {
+    width: 34px !important;
+    height: 34px !important;
+    padding: 7px !important;
+  }
+
+  .property-detail-page .property-divar-specs .property-spec-grid > div > span {
+    font-size: .88rem !important;
+  }
+}
