@@ -24,10 +24,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Prepare self-hosted fallback assets
-        env:
-          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
-          GITHUB_SHA: ${{ github.sha }}
-          FORCE_FALLBACK_IMAGE_REFRESH: ${{ github.event.before != '0000000000000000000000000000000000000000' && contains(steps.changes.outputs.source_manifest_changed, 'true') && '1' || '0' }}
         run: |
           refresh=0
           if [ "$GITHUB_EVENT_BEFORE" != "0000000000000000000000000000000000000000" ]; then
