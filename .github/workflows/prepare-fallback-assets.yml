@@ -1,4 +1,5 @@
 name: Prepare self-hosted fallback assets
+# Generates and vendors fallback images so runtime has no external image dependency.
 
 on:
   push:
