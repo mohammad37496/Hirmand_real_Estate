@@ -38,10 +38,6 @@ try {
       "این رکورد فقط برای تست واقعی مسیر Admin Form تا mutation و PostgreSQL ایجاد شده است.",
     );
     await form.getByLabel("قیمت فروش (تومان)").fill(price);
-    // The form defaults to draft, but the assertions below expect a published
-    // row. Set it explicitly so the test states its own precondition instead of
-    // depending on a form default it does not control.
-    await form.getByLabel("وضعیت", { exact: true }).selectOption("published");
 
     await form.getByRole("button", { name: "ذخیره", exact: true }).click();
     try {
