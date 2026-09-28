@@ -8,6 +8,7 @@
   "node": {
     "version": "22",
     "mirror": true,
-    "timezone": "Asia/Tehran"
+    "timezone": "Asia/Tehran",
+    "npmAudit": false
   }
 }
