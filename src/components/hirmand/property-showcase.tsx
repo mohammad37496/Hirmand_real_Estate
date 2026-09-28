@@ -60,12 +60,17 @@ function PropertyImage({
   const [attempt, setAttempt] = useState(0);
   const [legacyMode, setLegacyMode] = useState(false);
   const current = candidates[Math.min(attempt, candidates.length - 1)] ?? fallback;
-  const usingLocalFallback = current === fallback && fallback.startsWith("/images/fallback/");
+  const usingLocalFallback =
+    current === fallback && fallback.startsWith("/images/fallback/");
+  const usingLocalRasterFallback =
+    usingLocalFallback && /\.(avif|webp)$/i.test(fallback);
 
   return (
     <picture>
-      {usingLocalFallback && !legacyMode ? <source srcSet={fallbackAvif} type="image/avif" /> : null}
-      {usingLocalFallback && !legacyMode ? <source srcSet={fallback} type="image/webp" /> : null}
+      {usingLocalRasterFallback && !legacyMode && fallbackAvif ? (
+        <source srcSet={fallbackAvif} type="image/avif" />
+      ) : null}
+      {usingLocalRasterFallback && !legacyMode ? <source srcSet={fallback} type="image/webp" /> : null}
       <img
         src={legacyMode && usingLocalFallback ? fallbackLegacy : current}
         alt={alt}
