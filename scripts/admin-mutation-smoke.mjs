@@ -38,9 +38,25 @@ try {
       "این رکورد فقط برای تست واقعی مسیر Admin Form تا mutation و PostgreSQL ایجاد شده است.",
     );
     await form.getByLabel("قیمت فروش (تومان)").fill(price);
+    // The form defaults to draft, but the assertions below expect a published
+    // row. Set it explicitly so the test states its own precondition instead of
+    // depending on a form default it does not control.
+    await form.getByLabel("وضعیت", { exact: true }).selectOption("published");
 
     await form.getByRole("button", { name: "ذخیره", exact: true }).click();
-    await page.getByText("فایل جدید ذخیره شد.", { exact: true }).waitFor({ state: "visible", timeout: 15000 });
+    try {
+      await page
+        .getByText("فایل جدید ذخیره شد.", { exact: true })
+        .waitFor({ state: "visible", timeout: 15000 });
+    } catch (error) {
+      // Report the toast the form actually raised. A bare timeout here hid a
+      // validation rejection behind an unhelpful Playwright message.
+      const toasts = await page.locator("[data-sonner-toast]").allInnerTexts().catch(() => []);
+      throw new Error(
+        "Admin save never reported success. Visible toasts: " +
+          (toasts.map((text) => text.replace(/\s+/g, " ").trim()).join(" | ") || "(none)"),
+      );
+    }
 
     const client = await pool.connect();
     try {
