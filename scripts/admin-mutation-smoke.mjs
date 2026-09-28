@@ -29,15 +29,36 @@ try {
 
     const form = page.locator("form.admin-form-wrap");
     await form.waitFor({ state: "visible", timeout: 10000 });
+    // Filling before React hydrates mutates the DOM without updating component
+    // state, so the save would submit empty values. Wait for hydration first.
+    await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => undefined);
     await form.getByLabel("عنوان").fill(title);
     await form.getByLabel("محله").fill("مرکز شهر");
-    await form.getByLabel("توضیحات").fill(
+    // The form carries both a "توضیحات" field and an "اطلاعات و توضیحات صاحب فایل"
+    // field. Label matching is substring-based by default, so this one has to be
+    // exact or the strict-mode locator resolves to two textareas and throws.
+    await form.getByLabel("توضیحات", { exact: true }).fill(
       "این رکورد فقط برای تست واقعی مسیر Admin Form تا mutation و PostgreSQL ایجاد شده است.",
     );
     await form.getByLabel("قیمت فروش (تومان)").fill(price);
 
     await form.getByRole("button", { name: "ذخیره", exact: true }).click();
-    await page.getByText("فایل جدید ذخیره شد.", { exact: true }).waitFor({ state: "visible", timeout: 15000 });
+    try {
+      // The first server-function call in a cold Nitro preview is compiled on
+      // demand, so the very first save legitimately takes far longer than a
+      // warm one. A 15s budget turned that cold start into a false failure.
+      await page
+        .getByText("فایل جدید ذخیره شد.", { exact: true })
+        .waitFor({ state: "visible", timeout: 60000 });
+    } catch (error) {
+      // Report the toast the form actually raised. A bare timeout here hid a
+      // validation rejection behind an unhelpful Playwright message.
+      const toasts = await page.locator("[data-sonner-toast]").allInnerTexts().catch(() => []);
+      throw new Error(
+        "Admin save never reported success. Visible toasts: " +
+          (toasts.map((text) => text.replace(/\s+/g, " ").trim()).join(" | ") || "(none)"),
+      );
+    }
 
     const client = await pool.connect();
     try {
