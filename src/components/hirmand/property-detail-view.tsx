@@ -539,14 +539,24 @@ function ResilientImage({
   }
 
   const usingLocalFallback = current === fallback && fallback.startsWith("/images/fallback/");
-  const fallbackAvif = usingLocalFallback ? fallback.replace(/\.webp$/i, ".avif") : "";
+  const usingLocalRasterFallback =
+    usingLocalFallback && /\.(avif|webp)$/i.test(fallback);
+  const fallbackAvif =
+    usingLocalRasterFallback && /\.webp$/i.test(fallback)
+      ? fallback.replace(/\.webp$/i, ".avif")
+      : "";
   const fallbackLegacyImage =
-    fallbackLegacy ?? (fallback.startsWith("/images/fallback/") ? fallback.replace(/\.webp$/i, ".svg") : "");
+    fallbackLegacy ??
+    (fallback.startsWith("/images/fallback/") ? fallback.replace(/\.(?:webp|avif)$/i, ".svg") : fallback);
 
   return (
     <picture>
-      {usingLocalFallback && !legacyMode ? <source srcSet={fallbackAvif} type="image/avif" /> : null}
-      {usingLocalFallback && !legacyMode ? <source srcSet={fallback} type="image/webp" /> : null}
+      {usingLocalRasterFallback && !legacyMode && fallbackAvif ? (
+        <source srcSet={fallbackAvif} type="image/avif" />
+      ) : null}
+      {usingLocalRasterFallback && !legacyMode ? (
+        <source srcSet={fallback} type="image/webp" />
+      ) : null}
       <img
         src={usingLocalFallback && legacyMode && fallbackLegacyImage ? fallbackLegacyImage : current}
         alt={alt}
