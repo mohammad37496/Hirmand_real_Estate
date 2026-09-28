@@ -2051,3 +2051,91 @@
     min-height: 48px !important;
   }
 }
+
+
+/* Final desktop sidebar flow fix — prevent nested sticky overlap */
+@media (min-width: 1025px) {
+  .property-detail-page .property-detail-content {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 370px) !important;
+    align-items: start !important;
+    gap: 30px !important;
+  }
+
+  .property-detail-page .property-detail-main {
+    min-width: 0 !important;
+  }
+
+  .property-detail-page .property-detail-aside {
+    position: sticky !important;
+    top: 108px !important;
+    align-self: start !important;
+    display: grid !important;
+    grid-auto-rows: max-content !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 18px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    isolation: isolate !important;
+  }
+
+  .property-detail-page .property-detail-aside .property-contact-card {
+    position: static !important;
+    top: auto !important;
+    inset: auto !important;
+    align-self: start !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    transform: none !important;
+    z-index: 1 !important;
+  }
+
+  .property-detail-page .property-detail-aside .property-quick-overview {
+    position: static !important;
+    top: auto !important;
+    inset: auto !important;
+    align-self: start !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    transform: none !important;
+    z-index: 0 !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .property-detail-page .property-detail-content {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 20px !important;
+  }
+
+  .property-detail-page .property-detail-aside {
+    position: static !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 16px !important;
+    height: auto !important;
+  }
+
+  .property-detail-page .property-detail-aside .property-contact-card,
+  .property-detail-page .property-detail-aside .property-quick-overview {
+    position: static !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-detail-content {
+    gap: 16px !important;
+  }
+
+  .property-detail-page .property-detail-aside {
+    gap: 14px !important;
+  }
+}
