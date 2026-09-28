@@ -587,11 +587,13 @@ function Gallery({
   title,
   featured,
   fallback,
+  fallbackLegacy,
 }: {
   images: readonly string[];
   title: string;
   featured: boolean;
   fallback: string;
+  fallbackLegacy?: string;
 }) {
   const [active, setActive] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -754,6 +756,7 @@ function Gallery({
             <ResilientImage
               src={current}
               fallback={fallback}
+              fallbackLegacy={fallbackLegacy}
               alt={title + " - تصویر " + (active + 1).toLocaleString("fa-IR")}
               itemProp="image"
               loading="eager"
@@ -890,6 +893,7 @@ function Gallery({
                     <ResilientImage
                       src={current}
                       fallback={fallback}
+                      fallbackLegacy={fallbackLegacy}
                       alt={title + " - تصویر " + (active + 1).toLocaleString("fa-IR")}
                       loading="eager"
                     />

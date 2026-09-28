@@ -111,18 +111,8 @@ body {
   border-color: rgb(138 94 20 / 34%);
 }
 
-.property-card:hover {
-  border-color: rgb(192 138 42 / 42%);
-}
-
-.property-badge-discount {
-  background: var(--brass-700);
-  color: #fff;
-}
-
-.property-card-details-link {
-  color: var(--brass-700);
-}
+/* The shared property card now lives in property-card.css (pcard-* namespace),
+   so the legacy .property-card rules were removed from this layer. */
 
 .property-detail-summary {
   background:

@@ -1609,7 +1609,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     color:var(--subtle)!important;
   }
 
-  /* Listing area: cards become single-column with stronger media hierarchy. */
+  /* Listing area: the card itself is owned by property-card.css. */
   .site-home .property-showcase{
     margin-top:31px!important;
   }
