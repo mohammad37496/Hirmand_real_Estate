@@ -3,49 +3,48 @@ import type { PropertyType } from "@/lib/properties";
 type FallbackMap = Record<PropertyType, readonly string[]>;
 
 /**
- * Realistic photographic fallbacks for listings without uploaded media.
+ * Self-hosted fallback photography.
  *
- * The set is intentionally cohesive with Hirmand's canonical navy / brass /
- * paper visual system: warm neutrals, natural wood, soft daylight and restrained
- * blue/green accents. Images are free-to-use Unsplash photos and are delivered
- * through the image CDN at a bounded width.
+ * The binary WebP/AVIF assets are committed into public/images/fallback by the
+ * fallback-asset GitHub Action. The browser never needs the external source
+ * service at runtime.
  */
 export const PROPERTY_FALLBACK_IMAGES: FallbackMap = {
   apartment: [
-    "https://images.unsplash.com/photo-1781344334903-f33d8b76e292?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1771888703723-01d85da1dae1?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1774429076579-d90d43bffd3b?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1766245456897-5c86726d084d?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "/images/fallback/apartment-01.webp",
+    "/images/fallback/apartment-02.webp",
+    "/images/fallback/apartment-03.webp",
+    "/images/fallback/apartment-04.webp",
   ],
   villa: [
-    "https://images.unsplash.com/photo-1771371428960-35a50c2d4e7c?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1783125127024-3f3eda015db4?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1786204685672-e344095e5b49?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1783125127199-860da9744dcc?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "/images/fallback/villa-01.webp",
+    "/images/fallback/villa-02.webp",
+    "/images/fallback/villa-03.webp",
+    "/images/fallback/villa-04.webp",
   ],
   office: [
-    "https://images.unsplash.com/photo-1774953037913-af0cf688491a?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1767786330387-5cef0327b6c1?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1765371512971-9d4da531d004?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1782080163196-26ed8ea266d7?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "/images/fallback/office-01.webp",
+    "/images/fallback/office-02.webp",
+    "/images/fallback/office-03.webp",
+    "/images/fallback/office-04.webp",
   ],
   heritage: [
-    "https://images.unsplash.com/photo-1780245989984-a178d6c54a7b?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1782414720823-5966c6c24446?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1783195269540-37d9a87b270b?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1783066232761-b68438c0d9a6?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "/images/fallback/heritage-01.webp",
+    "/images/fallback/heritage-02.webp",
+    "/images/fallback/heritage-03.webp",
+    "/images/fallback/heritage-04.webp",
   ],
   land: [
-    "https://images.unsplash.com/photo-1781816927578-ec36210fede0?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1769961332176-3e88f410857d?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1779275397165-f8b00cc64818?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1779275397168-6f6fdf4fa8d6?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "/images/fallback/land-01.webp",
+    "/images/fallback/land-02.webp",
+    "/images/fallback/land-03.webp",
+    "/images/fallback/land-04.webp",
   ],
   commercial: [
-    "https://images.unsplash.com/photo-1778034758869-75d25cd6e737?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1786114604377-43f9636c3414?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1786456629213-d087d121044f?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1778069982088-eb6605730a30?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "/images/fallback/commercial-01.webp",
+    "/images/fallback/commercial-02.webp",
+    "/images/fallback/commercial-03.webp",
+    "/images/fallback/commercial-04.webp",
   ],
 };
 
@@ -64,4 +63,8 @@ export function getPropertyFallbackImages(propertyType: PropertyType) {
 export function getPropertyFallbackImage(propertyType: PropertyType, propertyId: string) {
   const images = getPropertyFallbackImages(propertyType);
   return images[stableIndex(propertyId || propertyType, images.length)] ?? images[0];
+}
+
+export function getPropertyFallbackImageAvif(propertyType: PropertyType, propertyId: string) {
+  return getPropertyFallbackImage(propertyType, propertyId).replace(/\.webp$/i, ".avif");
 }
