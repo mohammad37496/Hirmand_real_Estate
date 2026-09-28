@@ -151,9 +151,6 @@ table {
   .team-card,
   .contact-card,
   .tracking-card,
-  .property-card-topline,
-  .property-card-price-row,
-  .property-card-footer,
   .tools-heading-row,
   .budget-form-heading,
   .property-detail-meta,
@@ -301,8 +298,7 @@ table {
   /* Keep pill rows scrollable instead of increasing document width. */
   .pf-chips,
   .site-home .hero-intents,
-  .site-home .property-showcase-cta,
-  .site-home .property-card-specs {
+  .site-home .property-showcase-cta {
     max-width: 100% !important;
     overflow-x: auto !important;
     overscroll-behavior-x: contain !important;
@@ -311,8 +307,7 @@ table {
 
   .pf-chips::-webkit-scrollbar,
   .site-home .hero-intents::-webkit-scrollbar,
-  .site-home .property-showcase-cta::-webkit-scrollbar,
-  .site-home .property-card-specs::-webkit-scrollbar {
+  .site-home .property-showcase-cta::-webkit-scrollbar {
     display: none !important;
   }
 

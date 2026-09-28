@@ -1691,8 +1691,7 @@
 
 .action-menu-panel em,
 .rahn-slider-labels strong,
-.soon-managed,
-.property-card-code {
+.soon-managed {
   color: var(--subtle);
 }
 

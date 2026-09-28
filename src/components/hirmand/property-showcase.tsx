@@ -31,10 +31,21 @@ function unitPriceLabel(property: Property | PropertyCardData) {
   if (!Number.isFinite(price) || price <= 0) return "";
   return `هر متر ${formatToman(Math.round(price / property.areaM2))} تومان`;
 }
-function priceLabel(property: Property | PropertyCardData) {
-  if (property.transactionType === "rent") return property.deposit ? `رهن ${money(property.deposit)} تومان${property.rent ? ` • اجاره ${money(property.rent)} تومان` : ""}` : property.rent ? `اجاره ${money(property.rent)} تومان` : "تماس برای قیمت";
-  if (property.transactionType === "mortgage") return property.deposit ? `رهن ${money(property.deposit)} تومان` : "تماس برای قیمت";
-  return property.price ? `قیمت ${money(property.price)} تومان` : "تماس برای قیمت";
+type PriceLine = { label?: string; value: string };
+function priceLines(property: Property | PropertyCardData): PriceLine[] {
+  const deposit = money(property.deposit);
+  const rent = money(property.rent);
+  if (property.transactionType === "rent") {
+    const lines: PriceLine[] = [];
+    if (deposit) lines.push({ label: "رهن", value: `${deposit} تومان` });
+    if (rent) lines.push({ label: "اجاره", value: `${rent} تومان` });
+    return lines;
+  }
+  if (property.transactionType === "mortgage") {
+    return deposit ? [{ label: "رهن", value: `${deposit} تومان` }] : [];
+  }
+  const price = money(property.price);
+  return price ? [{ value: `${price} تومان` }] : [];
 }
 function imageFor(property: Property | PropertyCardData) {
   if ("image" in property && property.image) return property.image;
@@ -93,18 +104,20 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
   const transaction = TRANSACTION_LABEL[property.transactionType];
   const type = PROPERTY_TYPE_LABEL[property.propertyType];
   const code = property.id.slice(-6).toUpperCase();
+  const prices = priceLines(property);
+  const unitPrice = unitPriceLabel(property);
 
   return (
-    <article className="property-card">
+    <article className="pcard">
       <Link
         to="/properties/$slug"
         params={{ slug: property.slug.trim() || property.id }}
-        className="property-card-link"
+        className="pcard-link"
         data-property-link="true"
         data-property-id={property.id}
         aria-label={`مشاهده جزئیات کامل فایل ${property.title}`}
       >
-        <div className="property-card-media">
+        <div className="pcard-media">
           <PropertyImage
             src={image}
             alt={property.title}
@@ -112,42 +125,54 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
             fallbackAvif={getPropertyFallbackImageAvif(property.propertyType, property.id)}
             fallbackLegacy={getPropertyFallbackLegacyImage(property.propertyType, property.id)}
           />
-          <div className="property-card-badges">
+          <div className="pcard-badges">
             {isFeaturedActive(property) ? (
-              <span className="property-badge property-badge-featured">ویژه</span>
+              <span className="pcard-badge pcard-badge-featured">ویژه</span>
             ) : null}
-            <span className="property-badge">{transaction}</span>
+            <span className="pcard-badge pcard-badge-transaction">{transaction}</span>
           </div>
           {property.priceDropPercent && property.priceDropPercent > 0 ? (
-            <span className="property-badge property-badge-discount">
+            <span className="pcard-badge pcard-badge-discount">
               ٪{property.priceDropPercent.toLocaleString("fa-IR")} کاهش
             </span>
           ) : null}
-          <span className="property-card-arrow" aria-hidden="true">
+          <span className="pcard-arrow" aria-hidden="true">
             <ChevronLeft size={16} />
           </span>
         </div>
 
-        <div className="property-card-body">
-          <div className="property-card-topline">
-            <div className="property-card-meta">
+        <div className="pcard-body">
+          <div className="pcard-topline">
+            <div className="pcard-meta">
               <span>{transaction}</span>
               <span>{type}</span>
-              <span>{property.neighborhood}</span>
             </div>
-            <span className="property-card-code">کد {code}</span>
+            <span className="pcard-code">کد {code}</span>
           </div>
 
-          <h3>{property.title}</h3>
+          <h3 className="pcard-title">{property.title}</h3>
 
-          <div className="property-card-price-row">
-            <p className="property-card-price">{priceLabel(property)}</p>
-            {unitPriceLabel(property) ? (
-              <span className="property-card-unit-price">{unitPriceLabel(property)}</span>
-            ) : null}
+          <div className="pcard-price-row">
+            {prices.length ? (
+              prices.map((price) =>
+                price.label ? (
+                  <p key={`${price.label}-${price.value}`} className="pcard-price-line">
+                    <span className="pcard-price-label">{price.label}</span>
+                    <span className="pcard-price-value">{price.value}</span>
+                  </p>
+                ) : (
+                  <p key={price.value} className="pcard-price">
+                    {price.value}
+                  </p>
+                ),
+              )
+            ) : (
+              <p className="pcard-price pcard-price-pending">تماس برای قیمت</p>
+            )}
+            {unitPrice ? <span className="pcard-unit-price">{unitPrice}</span> : null}
           </div>
 
-          <div className="property-card-specs" aria-label="مشخصات خلاصه">
+          <div className="pcard-specs" aria-label="مشخصات خلاصه">
             {property.areaM2 ? (
               <span><Ruler size={14} /> {property.areaM2.toLocaleString("fa-IR")} متر</span>
             ) : null}
@@ -162,18 +187,18 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
             ) : null}
           </div>
 
-          <div className="property-card-footer">
-            <span className="property-card-location">
+          <div className="pcard-footer">
+            <span className="pcard-location">
               <MapPinned size={14} /> {property.neighborhood}
             </span>
-            <span className="property-card-details-link">
-              جزئیات فایل <ChevronLeft size={14} />
+            <span className="pcard-details-link">
+              مشاهده جزئیات <ChevronLeft size={14} />
             </span>
           </div>
         </div>
       </Link>
 
-      <div className="property-card-actions" aria-label="عملیات فایل">
+      <div className="pcard-actions" aria-label="عملیات فایل">
         <PropertyActions property={property} compact />
       </div>
     </article>

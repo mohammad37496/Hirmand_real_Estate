@@ -98,7 +98,7 @@ function AreaPage() {
 
         <div className="property-detail-grid">
           <div className="property-detail-main">
-            <div className="property-card-meta">
+            <div className="pcard-meta">
               <span>اصفهان</span>
               <span>{area.groupTitle}</span>
             </div>
