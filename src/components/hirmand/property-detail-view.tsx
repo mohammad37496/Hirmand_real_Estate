@@ -84,7 +84,7 @@ import { PropertyActions } from "@/components/hirmand/property-actions";
 import { formatToman } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
-import { getPropertyFallbackImage, getPropertyFallbackImages } from "@/lib/property-fallback-images";
+import { getPropertyFallbackImage, getPropertyFallbackImages, getPropertyFallbackLegacyImage } from "@/lib/property-fallback-images";
 import { areaSlug } from "@/lib/areas";
 import { propertyPath } from "@/lib/property-path";
 import { TEAM } from "@/lib/site";
@@ -509,6 +509,7 @@ function ResilientImage({
   src,
   alt,
   fallback,
+  fallbackLegacy,
   className,
   loading,
   itemProp,
@@ -517,6 +518,7 @@ function ResilientImage({
   src: string;
   alt: string;
   fallback: string;
+  fallbackLegacy: string;
   className?: string;
   loading?: "eager" | "lazy";
   itemProp?: string;
@@ -543,7 +545,7 @@ function ResilientImage({
       {usingLocalFallback ? <source srcSet={fallbackAvif} type="image/avif" /> : null}
       {usingLocalFallback ? <source srcSet={fallback} type="image/webp" /> : null}
       <img
-        src={current}
+        src={usingLocalFallback ? fallbackLegacy : current}
         alt={alt}
         className={className}
         loading={loading}
@@ -1101,6 +1103,7 @@ export function PropertyDetailView({
               title={property.title}
               featured={featuredActive}
               fallback={getPropertyFallbackImage(property.propertyType, property.id)}
+              fallbackLegacy={getPropertyFallbackLegacyImage(property.propertyType, property.id)}
             />
           </div>
 
