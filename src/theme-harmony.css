@@ -2257,3 +2257,93 @@
     align-items: flex-start !important;
   }
 }
+
+
+/* Final detail content composition — aligned main/specs with sidebar */
+@media (min-width: 1025px) {
+  .property-detail-page .property-detail-content {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 370px) !important;
+    grid-template-areas: "main aside" !important;
+    align-items: start !important;
+    column-gap: 30px !important;
+    row-gap: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .property-detail-page .property-detail-main {
+    grid-area: main !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 24px !important;
+    align-self: start !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .property-detail-page .property-detail-main > section,
+  .property-detail-page .property-detail-main > .property-convert-slider,
+  .property-detail-page .property-detail-main > .text-link {
+    min-width: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .property-detail-page .property-detail-main > .property-divar-specs {
+    margin-top: 0 !important;
+  }
+
+  .property-detail-page .property-detail-aside {
+    grid-area: aside !important;
+    align-self: start !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  .property-detail-page .property-detail-aside > .property-contact-card,
+  .property-detail-page .property-detail-aside > .property-quick-overview {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .property-detail-page .property-detail-content {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas:
+      "main"
+      "aside" !important;
+    gap: 20px !important;
+  }
+
+  .property-detail-page .property-detail-main {
+    grid-area: main !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 20px !important;
+    min-width: 0 !important;
+  }
+
+  .property-detail-page .property-detail-aside {
+    grid-area: aside !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-detail-content {
+    gap: 16px !important;
+  }
+
+  .property-detail-page .property-detail-main {
+    gap: 16px !important;
+  }
+
+  .property-detail-page .property-detail-aside {
+    gap: 14px !important;
+  }
+}
