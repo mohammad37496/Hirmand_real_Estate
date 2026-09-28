@@ -1069,25 +1069,24 @@ export function PropertyDetailView({
                     <span className="property-type-badge">
                       {TYPE_LABEL[property.propertyType]}
                     </span>
+                    {property.featured ? <span className="property-featured-note">فایل ویژه</span> : null}
                   </div>
                   <span className="property-file-code">
                     کد فایل {property.id.slice(-6).toLocaleUpperCase("fa-IR")}
                   </span>
                 </div>
 
-                {property.featured ? (
-                  <div className="property-featured-note">فایل ویژه هیرمند</div>
-                ) : null}
-
-                <h1>{property.title}</h1>
-
-                <p className="property-detail-meta">
-                  <MapPinned size={17} aria-hidden="true" />
-                  <span>
-                    {property.neighborhood}
-                    {property.address ? ` · ${property.address}` : ""}
-                  </span>
-                </p>
+                <div className="property-detail-title-block">
+                  <span className="property-detail-eyebrow">معرفی فایل هیرمند</span>
+                  <h1>{property.title}</h1>
+                  <p className="property-detail-meta">
+                    <MapPinned size={17} aria-hidden="true" />
+                    <span>
+                      {property.neighborhood}
+                      {property.address ? ` · ${property.address}` : ""}
+                    </span>
+                  </p>
+                </div>
 
                 <div className="property-price-block">
                   <span>قیمت فایل</span>
@@ -1132,9 +1131,20 @@ export function PropertyDetailView({
                   <span>ذخیره، اشتراک، چاپ و مقایسه</span>
                 </div>
                 <PropertyActions property={property} />
-              </header>
 
-              <ConsultantCard property={property} />
+                <div className="property-summary-facts" aria-label="اطلاعات کلیدی فایل">
+                  {property.areaM2 != null ? (
+                    <div><Ruler size={16} aria-hidden="true" /><span><small>متراژ</small><strong>{property.areaM2.toLocaleString("fa-IR")} متر</strong></span></div>
+                  ) : null}
+                  {property.bedrooms != null ? (
+                    <div><BedDouble size={16} aria-hidden="true" /><span><small>خواب</small><strong>{property.bedrooms.toLocaleString("fa-IR")}</strong></span></div>
+                  ) : null}
+                  {property.builtYear != null ? (
+                    <div><CalendarDays size={16} aria-hidden="true" /><span><small>سال ساخت</small><strong>{property.builtYear.toLocaleString("fa-IR", { useGrouping: false })}</strong></span></div>
+                  ) : null}
+                  <div><CarFront size={16} aria-hidden="true" /><span><small>پارکینگ</small><strong>{property.parking ? "دارد" : "ندارد"}</strong></span></div>
+                </div>
+              </header>
             </div>
         </section>
 
@@ -1362,6 +1372,25 @@ export function PropertyDetailView({
               <ArrowRight size={16} /> بازگشت به فهرست فایل‌ها
             </Link>
           </article>
+
+          <aside className="property-detail-aside" aria-label="اطلاعات و اقدام‌های فایل">
+            <ConsultantCard property={property} />
+
+            <section className="property-quick-overview" aria-labelledby="property-quick-overview-title">
+              <div className="property-aside-heading">
+                <span className="kicker">خلاصه فایل</span>
+                <h2 id="property-quick-overview-title">قبل از تماس، این‌ها را بدانید</h2>
+              </div>
+              <div className="property-quick-overview-list">
+                <div><span>نوع معامله</span><strong>{TX_LABEL[property.transactionType]}</strong></div>
+                <div><span>نوع ملک</span><strong>{TYPE_LABEL[property.propertyType]}</strong></div>
+                <div><span>محله</span><strong>{property.neighborhood}</strong></div>
+                {property.floor != null ? <div><span>طبقه</span><strong>{property.floor.toLocaleString("fa-IR")}</strong></div> : null}
+                {property.elevator ? <div><span>آسانسور</span><strong>دارد</strong></div> : null}
+                {property.storage ? <div><span>انباری</span><strong>دارد</strong></div> : null}
+              </div>
+            </section>
+          </aside>
         </section>
 
         <div className="property-mobile-actions" role="group" aria-label="اقدام‌های سریع فایل">
