@@ -2,12 +2,12 @@
   "app": "hirmand",
   "port": 3000,
   "build": {
-    "location": "germany"
+    "location": "iran"
   },
   "disks": [],
   "node": {
     "version": "22",
-    "mirror": false,
+    "mirror": true,
     "timezone": "Asia/Tehran"
   }
 }
