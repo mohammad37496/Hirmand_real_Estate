@@ -430,3 +430,52 @@
   }
 }
 
+/* ========================================================================== 
+   Desktop card separation — final cascade repair
+   Keep the property detail hierarchy airy and stable in Chrome/desktop.
+   Mobile/tablet rules remain untouched.
+   ========================================================================== */
+@media (min-width: 1025px) {
+  .property-detail-page .property-detail-top {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.45fr) minmax(380px, 0.55fr) !important;
+    grid-template-areas: "gallery summary" !important;
+    column-gap: 30px !important;
+    row-gap: 30px !important;
+    align-items: start !important;
+  }
+
+  .property-detail-page .property-detail-top-gallery {
+    grid-area: gallery !important;
+    min-width: 0 !important;
+  }
+
+  .property-detail-page .property-detail-summary {
+    grid-area: summary !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  .property-detail-page .property-detail-content {
+    display: block !important;
+    margin-top: 34px !important;
+  }
+
+  .property-detail-page .property-detail-main {
+    display: grid !important;
+    gap: 28px !important;
+    min-width: 0 !important;
+  }
+
+  .property-detail-page .property-detail-main > section {
+    margin: 0 !important;
+  }
+
+  .property-detail-page .property-spec-grid {
+    gap: 14px !important;
+  }
+
+  .property-detail-page .property-spec-grid > div {
+    min-width: 0 !important;
+  }
+}
