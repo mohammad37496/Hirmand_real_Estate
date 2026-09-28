@@ -52,6 +52,23 @@ async function download(url, output) {
 }
 
 async function main() {
+  const forceRefresh = process.env.FORCE_FALLBACK_IMAGE_REFRESH === "1";
+  const expectedFiles = Object.entries(sources).flatMap(([type, urls]) =>
+    urls.flatMap((_, index) => {
+      const number = String(index + 1).padStart(2, "0");
+      const base = `${type}-${number}`;
+      return [
+        join(outputDir, `${base}.webp`),
+        join(outputDir, `${base}.avif`),
+      ];
+    }),
+  );
+
+  if (!forceRefresh && expectedFiles.every((file) => existsSync(file))) {
+    console.log("Self-hosted fallback assets are already present; skipping regeneration.");
+    return;
+  }
+
   await assertCodecs();
   mkdirSync(outputDir, { recursive: true });
   mkdirSync(tmpDir, { recursive: true });
