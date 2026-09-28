@@ -1,6 +1,8 @@
 import { SITE, TEAM } from "@/lib/site";
 import type { Property } from "@/lib/properties";
 import { propertyPath } from "@/lib/property-path";
+import { DB_MEDIA_PATH, isDivarRemoteHost } from "@/lib/media";
+import { formatToman } from "@/lib/money";
 
 const TX_LABEL: Record<string, string> = {
   buy: "خرید",
@@ -22,6 +24,36 @@ export function absoluteUrl(path = "/"): string {
   const base = SITE.url.replace(/\/$/, "");
   if (!path || path === "/") return base + "/";
   return path.startsWith("http") ? path : `${base}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+/**
+ * Turn a stored media reference into a URL a crawler outside our origin can
+ * actually fetch. Classifieds CDNs reject hotlinking, so their media is routed
+ * through our own same-origin proxy; anything non-fetchable returns "".
+ */
+function shareableImageUrl(src: string | null | undefined): string {
+  const value = (src ?? "").trim();
+  if (!value) return "";
+  if (value.startsWith(DB_MEDIA_PATH)) return absoluteUrl(value);
+  try {
+    const url = new URL(value);
+    if (isDivarRemoteHost(value)) {
+      return absoluteUrl(`/api/media-proxy?url=${encodeURIComponent(url.toString())}`);
+    }
+    if (url.protocol === "https:") return url.toString();
+    return "";
+  } catch {
+    return value.startsWith("/") ? absoluteUrl(value) : "";
+  }
+}
+
+/** Best available social image for a listing, never an invented one. */
+export function propertySocialImage(property: Property): string {
+  const own = property.images
+    .map(shareableImageUrl)
+    .find((candidate) => candidate && !candidate.endsWith(".svg"));
+  if (own) return own;
+  return ogImageUrl();
 }
 
 export function ogImageUrl(path = "/images/isfahan-hero.jpg"): string {
@@ -97,12 +129,14 @@ export function propertyPageTitle(property: Property): string {
 export function propertyPageDescription(property: Property): string {
   const tx = TX_LABEL[property.transactionType] ?? "معامله";
   const type = TYPE_LABEL[property.propertyType] ?? "ملک";
-  const area = property.areaM2 ? `، ${property.areaM2} متر` : "";
-  const beds = property.bedrooms ? `، ${property.bedrooms} خواب` : "";
-  const base = `${tx} ${type} در ${property.neighborhood}، اصفهان${area}${beds}. ${property.description}`
-    .replace(/\s+/g, " ")
-    .trim();
-  return base.length > 160 ? base.slice(0, 157) + "…" : base;
+  const area = property.areaM2 ? `، ${formatToman(property.areaM2)} متر` : "";
+  const beds = property.bedrooms ? `، ${formatToman(property.bedrooms)} خواب` : "";
+  const body = property.description.replace(/\s+/g, " ").trim();
+  const lead = `${tx} ${type} در ${property.neighborhood}، اصفهان${area}${beds}.`;
+  // Keep the opening sentence factual and first: it is what a search result
+  // shows, and a truncated tail of ad copy reads worse than the essentials.
+  const base = body ? `${lead} ${body}` : lead;
+  return base.length > 160 ? base.slice(0, 157).trimEnd() + "…" : base;
 }
 
 export function propertyHead(property: Property | null, slug: string) {
@@ -121,12 +155,7 @@ export function propertyHead(property: Property | null, slug: string) {
   const title = propertyPageTitle(property);
   const description = propertyPageDescription(property);
   const url = absoluteUrl(propertyPath(property));
-  const image =
-    property.images[0] && property.images[0].startsWith("http")
-      ? property.images[0]
-      : property.images[0]
-        ? absoluteUrl(property.images[0])
-        : ogImageUrl();
+  const image = propertySocialImage(property);
 
   return {
     meta: [
@@ -165,9 +194,7 @@ export function trackingHead() {
 
 export function propertyJsonLd(property: Property) {
   const url = absoluteUrl(propertyPath(property));
-  const image = property.images.map((src) =>
-    src.startsWith("http") ? src : absoluteUrl(src),
-  );
+  const image = property.images.map(shareableImageUrl).filter(Boolean);
   const offers: Record<string, unknown> = {
     "@type": "Offer",
     availability: "https://schema.org/InStock",
@@ -196,7 +223,9 @@ export function propertyJsonLd(property: Property) {
     description: property.description,
     url,
     datePosted: property.publishedAt ?? property.createdAt,
+    dateModified: property.updatedAt ?? property.publishedAt ?? property.createdAt,
     image: image.length ? image : [ogImageUrl()],
+    inLanguage: "fa-IR",
     address: {
       "@type": "PostalAddress",
       addressLocality: property.city || SITE.locality,
@@ -213,7 +242,21 @@ export function propertyJsonLd(property: Property) {
           },
         }
       : {}),
-    ...(property.bedrooms != null ? { numberOfRooms: property.bedrooms } : {}),
+    ...(property.bedrooms != null
+      ? { numberOfRooms: property.bedrooms, numberOfBedrooms: property.bedrooms }
+      : {}),
+    ...(property.bathrooms != null ? { numberOfBathroomsTotal: property.bathrooms } : {}),
+    ...(property.floor != null ? { floorLevel: String(property.floor) } : {}),
+    ...(property.builtYear != null ? { yearBuilt: property.builtYear } : {}),
+    ...(property.features.length
+      ? {
+          amenityFeature: property.features.slice(0, 20).map((feature) => ({
+            "@type": "LocationFeatureSpecification",
+            name: feature,
+            value: true,
+          })),
+        }
+      : {}),
     offers,
     provider: {
       "@id": `${SITE.url}#organization`,

@@ -62,6 +62,7 @@ import {
 import { breadcrumbJsonLd, propertyJsonLd, TX_LABEL, TYPE_LABEL } from "@/lib/seo";
 import type { Property } from "@/lib/properties";
 import { PropertyConvertSlider } from "@/components/hirmand/property-convert-slider";
+import { toast } from "sonner";
 
 const PROPERTY_ORIENTATION_LABELS: Record<NonNullable<Property["orientation"]>, string> = {
   north: "شمالی",
@@ -252,6 +253,25 @@ function primaryPrice(property: Property) {
   return property.price ? money(property.price) + " تومان" : "تماس بگیرید";
 }
 
+/** Guarded unit price: empty string when it cannot be computed truthfully. */
+function perMeterLabel(property: Property) {
+  if (property.transactionType !== "buy" && property.transactionType !== "sell") return "";
+  const value = unitPrice(property.price, property.areaM2);
+  return value ? value + " تومان" : "";
+}
+
+function depositRentLabel(property: Property) {
+  const parts: string[] = [];
+  if (property.deposit) parts.push("رهن " + money(property.deposit) + " تومان");
+  if (property.rent) parts.push("اجاره " + money(property.rent) + " تومان");
+  return parts.join(" · ");
+}
+
+/** Short, stable, human-friendly file code derived from the immutable id. */
+function fileCode(id: string) {
+  return id.replace(/[^a-z0-9]/gi, "").slice(-6).toUpperCase();
+}
+
 function mapsLink(latitude: number | null, longitude: number | null, neighborhood: string) {
   if (latitude != null && longitude != null) {
     return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
@@ -304,6 +324,10 @@ async function shareCurrentProperty(property: Pick<Property, "id" | "slug" | "ti
       await navigator.share(data);
     } else if (navigator.clipboard) {
       await navigator.clipboard.writeText(url);
+      toast.success("لینک فایل کپی شد.");
+    } else {
+      toast.info(url);
+      return;
     }
     trackAnalyticsEvent("property_share", property.slug);
   } catch {
@@ -538,7 +562,7 @@ function Gallery({
   featured,
   fallback,
 }: {
-  images: string[];
+  images: readonly string[];
   title: string;
   featured: boolean;
   fallback: string;
@@ -645,7 +669,7 @@ function Gallery({
       image.decoding = "async";
       image.src = candidate;
     });
-  }, [active, images]);
+  }, [active, images, fallback]);
 
   function touchDistance(touches: TouchEvent<HTMLDivElement>["touches"]) {
     if (touches.length < 2) return 0;
@@ -975,6 +999,17 @@ export function PropertyDetailView({
 }) {
   const viewedPropertySlug = property?.slug;
 
+  // The gallery list is derived before the early return below: a hook that only
+  // runs for a present property would break React's hook order the moment the
+  // same component renders with and without data.
+  const images = useMemo(() => {
+    const raw = property?.images ?? [];
+    const cleaned = Array.from(new Set(raw.map((src) => src.trim()).filter(Boolean)));
+    return cleaned.length
+      ? cleaned
+      : getPropertyFallbackImages(property?.propertyType ?? "apartment");
+  }, [property?.images, property?.propertyType]);
+
   useEffect(() => {
     if (!viewedPropertySlug || typeof window === "undefined") return;
     const recentKey = "hirmand-recent-properties";
@@ -1012,11 +1047,15 @@ export function PropertyDetailView({
     );
   }
 
-  const images = useMemo(() => {
-    const cleaned = Array.from(new Set(property.images.map((src) => src.trim()).filter(Boolean)));
-    return cleaned.length ? cleaned : getPropertyFallbackImages(property.propertyType);
-  }, [property.images, property.propertyType]);
   const area = areaSlug(property.neighborhood);
+  const featuredActive = isFeaturedActive(property);
+  const perMeter = perMeterLabel(property);
+  const depositRent = depositRentLabel(property);
+  const code = fileCode(property.id);
+  const descriptionParagraphs = property.description
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
   const crumbs = [
     { name: "خانه", path: "/" },
     ...(area ? [{ name: property.neighborhood, path: `/areas/${area}` }] : []),
@@ -1053,7 +1092,7 @@ export function PropertyDetailView({
               key={property.id}
               images={images}
               title={property.title}
-              featured={isFeaturedActive(property)}
+              featured={featuredActive}
               fallback={getPropertyFallbackImage(property.propertyType, property.id)}
             />
           </div>
@@ -1069,11 +1108,13 @@ export function PropertyDetailView({
                     <span className="property-type-badge">
                       {TYPE_LABEL[property.propertyType]}
                     </span>
-                    {property.featured ? <span className="property-featured-note">فایل ویژه</span> : null}
+                    {featuredActive ? <span className="property-featured-note">فایل ویژه</span> : null}
                   </div>
-                  <span className="property-file-code">
-                    کد فایل {property.id.slice(-6).toLocaleUpperCase("fa-IR")}
-                  </span>
+                  {code ? (
+                    <span className="property-file-code">
+                      کد فایل <bdi dir="ltr">{code}</bdi>
+                    </span>
+                  ) : null}
                 </div>
 
                 <div className="property-detail-title-block">
@@ -1091,18 +1132,12 @@ export function PropertyDetailView({
                 <div className="property-price-block">
                   <span>قیمت فایل</span>
                   <strong dir="rtl" className="property-price-value">{primaryPrice(property)}</strong>
-                  {property.price && property.areaM2 && (property.transactionType === "buy" || property.transactionType === "sell") ? (
+                  {perMeter ? (
                     <small className="property-price-per-m2">
-                      قیمت تقریبی هر متر: <strong>{unitPrice(property.price, property.areaM2)} تومان</strong>
+                      قیمت تقریبی هر متر: <strong>{perMeter}</strong>
                     </small>
                   ) : null}
-                  {property.deposit || property.rent ? (
-                    <small>
-                      {property.deposit ? `رهن ${money(property.deposit)}` : ""}
-                      {property.deposit && property.rent ? " · " : ""}
-                      {property.rent ? `اجاره ${money(property.rent)}` : ""}
-                    </small>
-                  ) : null}
+                  {depositRent ? <small>{depositRent}</small> : null}
                 </div>
 
                 <div className="property-primary-contact" aria-label="تماس سریع با مشاور">
@@ -1262,9 +1297,16 @@ export function PropertyDetailView({
               </div>
 
               <div className="property-description-copy">
-                {property.description.split(/\n\s*\n/).map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
+                {descriptionParagraphs.length ? (
+                  descriptionParagraphs.map((paragraph, index) => (
+                    <p key={index}>{paragraph}</p>
+                  ))
+                ) : (
+                  <p>
+                    برای این فایل توضیح متنی ثبت نشده است. برای دریافت جزئیات کامل، شرایط معامله و هماهنگی
+                    بازدید با مشاور فایل در تماس باشید.
+                  </p>
+                )}
               </div>
 
               {property.features.length ? (

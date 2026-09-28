@@ -3620,3 +3620,149 @@ body:has(.property-detail-page) {
     margin-inline-start:auto!important;
   }
 }
+
+/* ==========================================================================
+   Loading state — mirrors the real layout so the swap causes no shift
+   ========================================================================== */
+.property-detail-skeleton {
+  pointer-events: none;
+  user-select: none;
+}
+
+.property-detail-skeleton > * {
+  opacity: .92;
+}
+
+.property-skeleton-breadcrumb,
+.property-skeleton-line,
+.property-skeleton-price,
+.property-skeleton-actions,
+.property-skeleton-contact,
+.property-skeleton-gallery,
+.property-skeleton-specs > span {
+  background: linear-gradient(
+    90deg,
+    var(--pd-surface) 0%,
+    color-mix(in srgb, var(--pd-line) 55%, var(--pd-surface)) 45%,
+    var(--pd-surface) 90%
+  );
+  background-size: 220% 100%;
+  border-radius: var(--pd-radius-sm);
+  animation: property-skeleton-shimmer 1.5s var(--pd-speed) ease-in-out infinite;
+}
+
+.property-skeleton-breadcrumb {
+  width: min(58%, 320px);
+  height: 12px;
+  margin-bottom: 18px;
+}
+
+.property-skeleton-gallery {
+  min-height: 420px;
+  border-radius: var(--pd-radius-lg);
+}
+
+.property-skeleton-line {
+  display: block;
+  height: 13px;
+}
+
+.property-skeleton-line-short {
+  width: 34%;
+}
+
+.property-skeleton-line-medium {
+  width: 62%;
+}
+
+.property-skeleton-line-long {
+  width: 100%;
+}
+
+.property-skeleton-line-title {
+  width: 78%;
+  height: 26px;
+  margin-block: 14px 10px;
+}
+
+.property-skeleton-price {
+  height: 92px;
+  margin-top: 18px;
+  border-radius: var(--pd-radius-md);
+}
+
+.property-skeleton-actions {
+  height: 46px;
+  margin-top: 14px;
+}
+
+.property-skeleton-contact {
+  height: 78px;
+  margin-top: 14px;
+  border-radius: var(--pd-radius-md);
+}
+
+.property-skeleton-section {
+  margin-top: 22px;
+  padding: 22px;
+  background: var(--pd-surface);
+  border: 1px solid var(--pd-line);
+  border-radius: var(--pd-radius-lg);
+}
+
+.property-skeleton-specs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-block: 18px 22px;
+}
+
+.property-skeleton-specs > span {
+  height: 66px;
+  border-radius: var(--pd-radius-sm);
+}
+
+@keyframes property-skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+
+/* The price value carries its own class so a long amount can shrink on narrow
+   screens instead of overflowing the card. */
+.property-price-value {
+  display: block;
+  max-width: 100%;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .property-skeleton-gallery {
+    min-height: 330px;
+  }
+
+  .property-skeleton-specs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .property-skeleton-section {
+    padding: 16px;
+    border-radius: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .property-skeleton-breadcrumb,
+  .property-skeleton-line,
+  .property-skeleton-price,
+  .property-skeleton-actions,
+  .property-skeleton-contact,
+  .property-skeleton-gallery,
+  .property-skeleton-specs > span {
+    animation: none;
+  }
+}

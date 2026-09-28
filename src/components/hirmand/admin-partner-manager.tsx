@@ -376,7 +376,7 @@ export function AdminPartnerManager() {
     }
   }
   function exportPartnersCsv() {
-    const csvCell = (value: string | number) => `\"${String(value).replaceAll('\"', '\"\"').replaceAll("\r", " ").replaceAll("\n", " ")}\"`;
+    const csvCell = (value: string | number) => `"${String(value).replaceAll('"', '""').replaceAll("\r", " ").replaceAll("\n", " ")}"`;
     const rows = [
       ["کد همکاری", "نام املاک", "مسئول", "تلفن", "وضعیت", "قرارداد تأییدشده", "پاداش آماده", "در انتظار", "کارت"],
       ...partners.map((item) => [
