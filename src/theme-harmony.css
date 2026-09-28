@@ -438,11 +438,22 @@
 @media (min-width: 1025px) {
   .property-detail-page .property-detail-top {
     display: grid !important;
-    grid-template-columns: minmax(0, 1.45fr) minmax(380px, 0.55fr) !important;
+    grid-template-columns: minmax(0, 1.52fr) minmax(360px, 0.68fr) !important;
     grid-template-areas: "gallery summary" !important;
-    column-gap: 30px !important;
-    row-gap: 30px !important;
+    column-gap: 42px !important;
+    row-gap: 34px !important;
     align-items: start !important;
+    width: 100% !important;
+  }
+
+  .property-detail-page .property-detail-top-gallery,
+  .property-detail-page .property-detail-summary {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .property-detail-page .property-gallery {
+    width: 100% !important;
   }
 
   .property-detail-page .property-detail-top-gallery {
