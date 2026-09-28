@@ -18,6 +18,7 @@ const sources = JSON.parse(readFileSync(manifestPath, "utf8"));
 
 const generatedFiles = [];
 let imageMagickBin = null;
+let ffmpegBin = null;
 
 async function run(command, args) {
   await execFileAsync(command, args, { cwd: root, maxBuffer: 1024 * 1024 * 2 });
@@ -35,15 +36,24 @@ async function assertCodecs() {
   }
 
   if (!imageMagickBin) {
-    throw new Error("ImageMagick is required to generate fallback assets.");
+    throw new Error("ImageMagick is required to generate WebP fallback assets.");
   }
 
   const { stdout } = await execFileAsync(imageMagickBin, ["-list", "format"]);
-  if (!/AVIF.*RW|HEIC.*RW/i.test(stdout)) {
-    throw new Error("The installed ImageMagick build does not provide AVIF/HEIC read/write support.");
-  }
   if (!/WEBP.*RW/i.test(stdout)) {
     throw new Error("The installed ImageMagick build does not provide WebP read/write support.");
+  }
+
+  try {
+    await run("ffmpeg", ["-version"]);
+    ffmpegBin = "ffmpeg";
+  } catch {
+    throw new Error("FFmpeg with libaom-av1 is required to generate AVIF fallback assets.");
+  }
+
+  const { stdout: encoders } = await execFileAsync(ffmpegBin, ["-hide_banner", "-encoders"]);
+  if (!/libaom-av1/.test(encoders)) {
+    throw new Error("The installed FFmpeg build does not provide the libaom-av1 encoder.");
   }
 }
 
@@ -104,16 +114,25 @@ async function main() {
         webp,
       ]);
 
-      await run(imageMagickBin, [
+      await run(ffmpegBin, [
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-y",
+        "-i",
         source,
-        "-auto-orient",
-        "-resize",
-        "1600x1600>",
-        "-strip",
-        "-quality",
-        "55",
-        "-define",
-        "heic:speed=6",
+        "-frames:v",
+        "1",
+        "-c:v",
+        "libaom-av1",
+        "-crf",
+        "34",
+        "-b:v",
+        "0",
+        "-still-picture",
+        "1",
+        "-pix_fmt",
+        "yuv420p",
         avif,
       ]);
 
