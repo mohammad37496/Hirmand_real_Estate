@@ -64,6 +64,13 @@ jobs:
       - name: Restore CI dev dependencies after production build
         run: npm ci
 
+      # The smoke fixtures below write to and read from the real `properties`
+      # table, so the service database has to be migrated first. Without this
+      # the seed dies with `relation "properties" does not exist` and the
+      # browser smoke never runs.
+      - name: Apply database migrations
+        run: npm run db:migrate
+
       - name: Seed deterministic property-detail fixture
         run: node scripts/seed-browser-smoke.mjs
 
