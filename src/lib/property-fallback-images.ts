@@ -68,3 +68,10 @@ export function getPropertyFallbackImage(propertyType: PropertyType, propertyId:
 export function getPropertyFallbackImageAvif(propertyType: PropertyType, propertyId: string) {
   return getPropertyFallbackImage(propertyType, propertyId).replace(/\.webp$/i, ".avif");
 }
+
+export function getPropertyFallbackLegacyImage(propertyType: PropertyType, propertyId: string) {
+  const index = stableIndex(propertyId || propertyType, getPropertyFallbackImages(propertyType).length) + 1;
+  const type = propertyType;
+  return `/images/fallback/${type}-${String(index).padStart(2, "0")}.svg`;
+}
+
