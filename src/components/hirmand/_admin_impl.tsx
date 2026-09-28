@@ -32,6 +32,7 @@ import { isInvalidIntegerInput, normalizeMoneyText } from "@/lib/property-input-
 import { listNeighborhoodNames } from "@/lib/neighborhoods";
 import { listConsultants, type Consultant } from "@/lib/consultants";
 import { propertyPath } from "@/lib/property-path";
+import { getPropertyFallbackImage } from "@/lib/property-fallback-images";
 import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
 import {
   bulkAssignPropertyConsultant,
