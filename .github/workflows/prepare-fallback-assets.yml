@@ -1,0 +1,51 @@
+name: Prepare self-hosted fallback assets
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/lib/property-fallback-images.ts"
+      - "scripts/fallback-source-images.json"
+      - "scripts/generate-fallback-assets.mjs"
+      - ".github/workflows/prepare-fallback-assets.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fallback-assets-main
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify image codecs
+        run: |
+          magick -version
+          magick -list format | grep -E "AVIF|WEBP"
+
+      - name: Generate WebP + AVIF assets
+        run: node scripts/generate-fallback-assets.mjs
+
+      - name: Remove legacy SVG fallback assets
+        run: |
+          find public/images/fallback -type f -name "*.svg" -delete
+
+      - name: Commit generated assets
+        run: |
+          if git diff --quiet -- public/images/fallback; then
+            echo "Fallback assets are already up to date."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/images/fallback
+          git commit -m "build: vendor self-hosted fallback images [skip ci]"
+          git push origin HEAD:main
