@@ -13,7 +13,7 @@ import {
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES } from "@/lib/site";
 import { listNeighborhoodNames } from "@/lib/neighborhoods";
 import { mediaSourceCandidates } from "@/lib/media";
-import { getPropertyFallbackImage } from "@/lib/property-fallback-images";
+import { getPropertyFallbackImage, getPropertyFallbackImageAvif } from "@/lib/property-fallback-images";
 import { formatToman } from "@/lib/money";
 import type { Property, PropertyCardData, PropertyType, PropertyTransaction } from "@/lib/properties";
 import { isFeaturedActive, listPublishedPropertyCards } from "@/lib/properties";
@@ -43,19 +43,35 @@ function imageFor(property: Property | PropertyCardData) {
 }
 
 
-function PropertyImage({ src, alt, fallback }: { src: string; alt: string; fallback: string }) {
+function PropertyImage({
+  src,
+  alt,
+  fallback,
+  fallbackAvif,
+}: {
+  src: string;
+  alt: string;
+  fallback: string;
+  fallbackAvif: string;
+}) {
   const candidates = mediaSourceCandidates(src, fallback);
   const [attempt, setAttempt] = useState(0);
   const current = candidates[Math.min(attempt, candidates.length - 1)] ?? fallback;
+  const usingLocalFallback = current === fallback && fallback.startsWith("/images/fallback/");
+
   return (
-    <img
-      src={current}
-      alt={alt}
-      loading="lazy"
-      decoding="async"
-      referrerPolicy="no-referrer"
-      onError={() => setAttempt((value) => Math.min(value + 1, candidates.length - 1))}
-    />
+    <picture>
+      {usingLocalFallback ? <source srcSet={fallbackAvif} type="image/avif" /> : null}
+      {usingLocalFallback ? <source srcSet={fallback} type="image/webp" /> : null}
+      <img
+        src={current}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+        onError={() => setAttempt((value) => Math.min(value + 1, candidates.length - 1))}
+      />
+    </picture>
   );
 }
 export function PropertyCard({ property }: { property: Property | PropertyCardData }) {
@@ -79,6 +95,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
             src={image}
             alt={property.title}
             fallback={getPropertyFallbackImage(property.propertyType, property.id)}
+            fallbackAvif={getPropertyFallbackImageAvif(property.propertyType, property.id)}
           />
           <div className="property-card-badges">
             {isFeaturedActive(property) ? (
