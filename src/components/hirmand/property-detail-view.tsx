@@ -518,7 +518,7 @@ function ResilientImage({
   src: string;
   alt: string;
   fallback: string;
-  fallbackLegacy: string;
+  fallbackLegacy?: string;
   className?: string;
   loading?: "eager" | "lazy";
   itemProp?: string;
@@ -539,13 +539,15 @@ function ResilientImage({
 
   const usingLocalFallback = current === fallback && fallback.startsWith("/images/fallback/");
   const fallbackAvif = usingLocalFallback ? fallback.replace(/\.webp$/i, ".avif") : "";
+  const fallbackLegacyImage =
+    fallbackLegacy ?? (fallback.startsWith("/images/fallback/") ? fallback.replace(/\.webp$/i, ".svg") : "");
 
   return (
     <picture>
       {usingLocalFallback ? <source srcSet={fallbackAvif} type="image/avif" /> : null}
       {usingLocalFallback ? <source srcSet={fallback} type="image/webp" /> : null}
       <img
-        src={usingLocalFallback ? fallbackLegacy : current}
+        src={usingLocalFallback && fallbackLegacyImage ? fallbackLegacyImage : current}
         alt={alt}
         className={className}
         loading={loading}
