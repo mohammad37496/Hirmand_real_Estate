@@ -31,7 +31,10 @@ try {
     await form.waitFor({ state: "visible", timeout: 10000 });
     await form.getByLabel("عنوان").fill(title);
     await form.getByLabel("محله").fill("مرکز شهر");
-    await form.getByLabel("توضیحات").fill(
+    // The form carries both a "توضیحات" field and an "اطلاعات و توضیحات صاحب فایل"
+    // field. Label matching is substring-based by default, so this one has to be
+    // exact or the strict-mode locator resolves to two textareas and throws.
+    await form.getByLabel("توضیحات", { exact: true }).fill(
       "این رکورد فقط برای تست واقعی مسیر Admin Form تا mutation و PostgreSQL ایجاد شده است.",
     );
     await form.getByLabel("قیمت فروش (تومان)").fill(price);
