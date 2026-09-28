@@ -527,6 +527,7 @@ function ResilientImage({
   const candidates = mediaSourceCandidates(src, fallback);
   const [attempt, setAttempt] = useState(0);
   const [failed, setFailed] = useState(false);
+  const [legacyMode, setLegacyMode] = useState(false);
   const current = candidates[Math.min(attempt, Math.max(0, candidates.length - 1))] ?? fallback;
 
   if (failed) {
@@ -544,10 +545,10 @@ function ResilientImage({
 
   return (
     <picture>
-      {usingLocalFallback ? <source srcSet={fallbackAvif} type="image/avif" /> : null}
-      {usingLocalFallback ? <source srcSet={fallback} type="image/webp" /> : null}
+      {usingLocalFallback && !legacyMode ? <source srcSet={fallbackAvif} type="image/avif" /> : null}
+      {usingLocalFallback && !legacyMode ? <source srcSet={fallback} type="image/webp" /> : null}
       <img
-        src={usingLocalFallback && fallbackLegacyImage ? fallbackLegacyImage : current}
+        src={usingLocalFallback && legacyMode && fallbackLegacyImage ? fallbackLegacyImage : current}
         alt={alt}
         className={className}
         loading={loading}
@@ -556,6 +557,10 @@ function ResilientImage({
         referrerPolicy="no-referrer"
         decoding="async"
         onError={() => {
+          if (usingLocalFallback && !legacyMode && fallbackLegacyImage) {
+            setLegacyMode(true);
+            return;
+          }
           if (attempt < candidates.length - 1) {
             setAttempt((value) => Math.min(value + 1, candidates.length - 1));
           } else {
