@@ -58,20 +58,27 @@ function PropertyImage({
 }) {
   const candidates = mediaSourceCandidates(src, fallback);
   const [attempt, setAttempt] = useState(0);
+  const [legacyMode, setLegacyMode] = useState(false);
   const current = candidates[Math.min(attempt, candidates.length - 1)] ?? fallback;
   const usingLocalFallback = current === fallback && fallback.startsWith("/images/fallback/");
 
   return (
     <picture>
-      {usingLocalFallback ? <source srcSet={fallbackAvif} type="image/avif" /> : null}
-      {usingLocalFallback ? <source srcSet={fallback} type="image/webp" /> : null}
+      {usingLocalFallback && !legacyMode ? <source srcSet={fallbackAvif} type="image/avif" /> : null}
+      {usingLocalFallback && !legacyMode ? <source srcSet={fallback} type="image/webp" /> : null}
       <img
-        src={usingLocalFallback ? fallbackLegacy : current}
+        src={legacyMode && usingLocalFallback ? fallbackLegacy : current}
         alt={alt}
         loading="lazy"
         decoding="async"
         referrerPolicy="no-referrer"
-        onError={() => setAttempt((value) => Math.min(value + 1, candidates.length - 1))}
+        onError={() => {
+          if (usingLocalFallback && !legacyMode) {
+            setLegacyMode(true);
+            return;
+          }
+          setAttempt((value) => Math.min(value + 1, candidates.length - 1));
+        }}
       />
     </picture>
   );
