@@ -2,7 +2,8 @@
   "app": "hirmand",
   "port": 3000,
   "build": {
-    "location": "iran"
+    "location": "germany",
+    "cache": true
   },
   "disks": [],
   "node": {
