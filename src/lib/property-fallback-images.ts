@@ -37,9 +37,9 @@ export const PROPERTY_FALLBACK_IMAGES: FallbackMap = {
   ],
   land: [
     "https://images.unsplash.com/photo-1781816927578-ec36210fede0?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1783066232761-b68438c0d9a6?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1783125127199-860da9744dcc?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1769780265587-037ee842c0b0?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "https://images.unsplash.com/photo-1769961332176-3e88f410857d?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "https://images.unsplash.com/photo-1779275397165-f8b00cc64818?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "https://images.unsplash.com/photo-1779275397168-6f6fdf4fa8d6?auto=format&fit=crop&fm=jpg&q=84&w=1600",
   ],
   commercial: [
     "https://images.unsplash.com/photo-1778034758869-75d25cd6e737?auto=format&fit=crop&fm=jpg&q=84&w=1600",
