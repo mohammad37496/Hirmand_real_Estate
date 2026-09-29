@@ -2854,3 +2854,99 @@ body:has(.property-detail-page) .footer a:hover {
     font-size: .68rem !important;
   }
 }
+
+
+/* ==========================================================================
+   HIRMAND — FINAL STATIC SURFACES / NO HOVER ON REQUESTED ELEMENTS
+   ========================================================================== */
+
+/* Map: never expose a legacy dark/black surface around the embedded map. */
+.property-detail-page .property-map-card,
+.property-detail-page .property-map-card::before,
+.property-detail-page .property-map-card::after,
+.property-detail-page .property-map-actions {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #173149 !important;
+}
+
+.property-detail-page .property-map-card {
+  border-color: #e4dccc !important;
+  box-shadow: 0 8px 22px rgb(16 36 52 / 6%) !important;
+}
+
+.property-detail-page .property-map-card iframe {
+  background: #f7f4ee !important;
+}
+
+/* Features: keep the cards completely static; no lift, recolor or shadow change. */
+.property-detail-page .property-features li,
+.property-detail-page .property-features li:hover,
+.property-detail-page .property-features li:focus,
+.property-detail-page .property-features li:active {
+  transform: none !important;
+  border-color: #e4dccc !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fbf8f2 100%) !important;
+  color: #173149 !important;
+  box-shadow: 0 4px 13px rgb(16 36 52 / 4%) !important;
+}
+
+.property-detail-page .property-features li svg {
+  background: #f7edda !important;
+  color: #8a5e14 !important;
+}
+
+/* WhatsApp: keep its normal appearance on hover/focus/active as well. */
+.property-detail-page a.btn-ghost[href^="https://wa.me/"],
+.property-detail-page a.btn-ghost[href^="https://wa.me/"]:hover,
+.property-detail-page a.btn-ghost[href^="https://wa.me/"]:focus,
+.property-detail-page a.btn-ghost[href^="https://wa.me/"]:focus-visible,
+.property-detail-page a.btn-ghost[href^="https://wa.me/"]:active {
+  transform: none !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fbf8f2 100%) !important;
+  background-color: #ffffff !important;
+  background-image: linear-gradient(180deg, #ffffff 0%, #fbf8f2 100%) !important;
+  border-color: #d3c8b4 !important;
+  color: #173149 !important;
+  box-shadow: 0 7px 17px rgb(16 36 52 / 6%) !important;
+}
+
+.property-detail-page a.btn-ghost[href^="https://wa.me/"] svg {
+  color: #8a5e14 !important;
+  stroke: currentColor !important;
+}
+
+/* The consultant-card ghost action is static too. */
+.property-detail-page .property-contact-actions .btn-ghost,
+.property-detail-page .property-contact-actions .btn-ghost:hover,
+.property-detail-page .property-contact-actions .btn-ghost:focus,
+.property-detail-page .property-contact-actions .btn-ghost:active {
+  transform: none !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fbf8f2 100%) !important;
+  border-color: #d3c8b4 !important;
+  color: #173149 !important;
+  box-shadow: 0 6px 16px rgb(16 36 52 / 5%) !important;
+}
+
+/* Property-card spec chips: no hover animation or color shift. */
+.pcard-specs span,
+.pcard-specs span:hover,
+.pcard-specs span:focus,
+.pcard-specs span:active {
+  transform: none !important;
+  border-color: rgba(11, 26, 43, 0.09) !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #626d7b !important;
+  box-shadow: 0 2px 8px rgba(11, 26, 43, 0.035) !important;
+}
+
+.pcard-specs span svg {
+  color: #8a5e14 !important;
+}
+
+.pcard-specs span,
+.pcard-specs span:hover {
+  transition: none !important;
+}
