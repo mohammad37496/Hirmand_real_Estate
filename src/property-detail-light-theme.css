@@ -2371,3 +2371,86 @@ body:has(.property-detail-page) .footer a:hover {
 .property-detail-page .property-final-cta-actions a.btn-ghost[href^="https://wa.me/"]:focus-visible svg {
   color: #8a5e14 !important;
 }
+
+/* === HIRMAND — PROPERTY SPEC ICON CONTRAST LOCK ===============================
+   Final icon treatment for the property-detail specification grid.
+   Icons stay visually separate from text and retain strong contrast on every
+   theme state and breakpoint.
+   ========================================================================== */
+
+.property-detail-page .property-spec-grid > div > svg,
+.property-detail-page .property-divar-specs .property-spec-grid > div > svg,
+.property-detail-page .property-spec-amenity-item > svg {
+  flex: 0 0 40px !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 9px !important;
+  box-sizing: border-box !important;
+  border: 1px solid rgba(192, 138, 42, 0.24) !important;
+  border-radius: 11px !important;
+  background: #f5ead2 !important;
+  background-color: #f5ead2 !important;
+  background-image: none !important;
+  color: #8a5e14 !important;
+  stroke: #8a5e14 !important;
+  fill: none !important;
+  stroke-width: 2.15 !important;
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  -webkit-text-fill-color: #8a5e14 !important;
+}
+
+.property-detail-page .property-spec-grid > div > svg *,
+.property-detail-page .property-divar-specs .property-spec-grid > div > svg *,
+.property-detail-page .property-spec-amenity-item > svg * {
+  stroke: #8a5e14 !important;
+  fill: none !important;
+  opacity: 1 !important;
+}
+
+.property-detail-page .property-spec-grid > div:hover > svg,
+.property-detail-page .property-divar-specs .property-spec-grid > div:hover > svg,
+.property-detail-page .property-spec-amenity-item:hover > svg {
+  background: #fff4df !important;
+  background-color: #fff4df !important;
+  border-color: #dfbd75 !important;
+  color: #8a5e14 !important;
+  stroke: #8a5e14 !important;
+}
+
+.property-detail-page .property-spec-grid > div > span,
+.property-detail-page .property-divar-specs .property-spec-grid > div > span {
+  min-width: 0 !important;
+}
+
+.property-detail-page .property-spec-grid small,
+.property-detail-page .property-divar-specs .property-spec-grid small {
+  color: #566878 !important;
+  opacity: 1 !important;
+}
+
+.property-detail-page .property-spec-grid strong,
+.property-detail-page .property-divar-specs .property-spec-grid strong {
+  color: #173149 !important;
+  opacity: 1 !important;
+}
+
+/* Keep the icons visible even on very small phones. */
+@media (max-width: 360px) {
+  .property-detail-page .property-spec-grid > div > svg,
+  .property-detail-page .property-divar-specs .property-spec-grid > div > svg,
+  .property-detail-page .property-spec-amenity-item > svg {
+    display: grid !important;
+    flex-basis: 34px !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    padding: 7px !important;
+  }
+}
