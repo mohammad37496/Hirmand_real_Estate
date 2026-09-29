@@ -2454,3 +2454,75 @@ body:has(.property-detail-page) .footer a:hover {
     padding: 7px !important;
   }
 }
+
+
+/* ==========================================================================
+   PROPERTY DETAIL — CONSULTANT AVATAR / TEAM ICON HARMONY
+   Reuse the consultant-section visual language without rendering initials.
+   ========================================================================== */
+.property-detail-page .property-consultant-avatar {
+  width: 72px !important;
+  height: 72px !important;
+  min-width: 72px !important;
+  display: grid !important;
+  place-items: center !important;
+  box-sizing: border-box !important;
+  border-radius: var(--hr-radius-xl) !important;
+  color: var(--hr-brass-strong) !important;
+  background:
+    radial-gradient(circle at 30% 25%, rgb(255 255 255 / 92%), transparent 30%),
+    linear-gradient(145deg, rgb(192 138 42 / 22%), rgb(192 138 42 / 7%)) !important;
+  border: 1px solid rgb(192 138 42 / 34%) !important;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 90%),
+    0 7px 18px rgb(16 36 52 / 7%) !important;
+  overflow: hidden !important;
+}
+
+.property-detail-page .property-consultant-avatar svg {
+  width: 28px !important;
+  height: 28px !important;
+  color: var(--hr-brass-strong) !important;
+  stroke: currentColor !important;
+  stroke-width: 1.7 !important;
+  fill: none !important;
+  opacity: 1 !important;
+}
+
+.property-detail-page .property-consultant-main:hover .property-consultant-avatar {
+  border-color: rgb(192 138 42 / 52%) !important;
+  background:
+    radial-gradient(circle at 30% 25%, #fff, transparent 32%),
+    linear-gradient(145deg, rgb(192 138 42 / 28%), rgb(192 138 42 / 10%)) !important;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 95%),
+    0 9px 22px rgb(16 36 52 / 9%) !important;
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-consultant-avatar {
+    width: 64px !important;
+    height: 64px !important;
+    min-width: 64px !important;
+    border-radius: 18px !important;
+  }
+
+  .property-detail-page .property-consultant-avatar svg {
+    width: 25px !important;
+    height: 25px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .property-detail-page .property-consultant-avatar {
+    width: 58px !important;
+    height: 58px !important;
+    min-width: 58px !important;
+    border-radius: 16px !important;
+  }
+
+  .property-detail-page .property-consultant-avatar svg {
+    width: 23px !important;
+    height: 23px !important;
+  }
+}
