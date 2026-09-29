@@ -39,7 +39,6 @@ import { InquiryForm, type InquiryDraft } from "./inquiry-form";
 import { BrandLogo } from "./logo";
 import { MapAppButtons, MapEmbed } from "./map-apps";
 import { PropertyShowcase } from "./property-showcase";
-import { BudgetMatcher } from "./budget-matcher";
 import type { PropertyCardData } from "@/lib/properties";
 import { Reveal } from "./reveal";
 import { scrollToId } from "./scroll";
@@ -829,7 +828,6 @@ export function SitePage({ initialProperties = [] }: { initialProperties?: Prope
         <SmartRecommendations />
         <Services onPick={(title) => goInquiry({ deal: title })} />
         <Properties onPick={(title) => goInquiry({ propertyType: title })} />
-        <BudgetMatcher />
         <About />
         <Process />
         <Neighborhoods onPick={(name) => goInquiry({ neighborhood: name })} />
