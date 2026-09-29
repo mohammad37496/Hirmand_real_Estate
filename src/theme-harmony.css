@@ -2473,3 +2473,167 @@
     min-height: 48px !important;
   }
 }
+
+/* ==========================================================================
+   Desktop readability pass — stronger Persian contrast + comfortable text sizes
+   Keeps the light luxury theme while removing low-contrast / micro-text issues.
+   ========================================================================== */
+@media (min-width: 980px) {
+  /* Property listing / advanced specification filters */
+  .pf-page .pf-hero-copy p,
+  .pf-page .pf-group-title small,
+  .pf-page .pf-field > span,
+  .pf-page .pf-quick > span,
+  .pf-page .pf-active-label,
+  .pf-page .pf-sort,
+  .pf-page .pf-more small,
+  .pf-page .pf-spec-filter > summary small,
+  .pf-page .pf-spec-filter > summary b,
+  .pf-page .pf-spec-filter-group-title small {
+    color: #526474 !important;
+  }
+
+  .pf-page .pf-group-title,
+  .pf-page .pf-spec-filter > summary strong,
+  .pf-page .pf-spec-filter-group-title span {
+    color: #173149 !important;
+  }
+
+  .pf-page .pf-spec-filter > summary {
+    min-height: 68px !important;
+  }
+
+  .pf-page .pf-spec-filter > summary strong {
+    font-size: .86rem !important;
+    line-height: 1.65 !important;
+  }
+
+  .pf-page .pf-spec-filter > summary small {
+    font-size: .68rem !important;
+    line-height: 1.75 !important;
+  }
+
+  .pf-page .pf-spec-filter-group-title span {
+    font-size: .75rem !important;
+  }
+
+  .pf-page .pf-spec-filter-group-title small {
+    font-size: .66rem !important;
+  }
+
+  .pf-page .pf-spec-options {
+    gap: 7px !important;
+  }
+
+  .pf-page .pf-spec-option {
+    min-height: 46px !important;
+    padding: 8px 10px !important;
+    color: #33495c !important;
+    font-size: .76rem !important;
+    font-weight: 700 !important;
+    line-height: 1.8 !important;
+  }
+
+  .pf-page .pf-spec-option:hover {
+    color: #173149 !important;
+  }
+
+  .pf-page .pf-spec-option.is-active {
+    color: #fff !important;
+    background: #173149 !important;
+    border-color: #173149 !important;
+  }
+
+  .pf-page .pf-spec-option-mark {
+    border-color: #aeb9c3 !important;
+    color: #173149 !important;
+  }
+
+  /* Property detail page — body copy and secondary labels */
+  .property-detail-page .property-detail-meta,
+  .property-detail-page .property-description-meta,
+  .property-detail-page .property-map-actions > span,
+  .property-detail-page .property-location-fallback p {
+    color: #536575 !important;
+  }
+
+  .property-detail-page .property-detail-meta {
+    font-size: .94rem !important;
+    line-height: 2 !important;
+    font-weight: 650 !important;
+  }
+
+  .property-detail-page .property-detail-body p,
+  .property-detail-page .property-detail-body li,
+  .property-detail-page .property-description-copy p,
+  .property-detail-page .property-location-section p {
+    color: #263d50 !important;
+    font-size: .96rem !important;
+    line-height: 2.08 !important;
+  }
+
+  .property-detail-page .property-detail-main h2,
+  .property-detail-page .property-detail-body h2,
+  .property-detail-page .property-location-section h2,
+  .property-detail-page .property-related h2 {
+    color: #102d45 !important;
+  }
+
+  .property-detail-page .property-spec-grid small,
+  .property-detail-page .property-summary-facts small,
+  .property-detail-page .property-tools-heading > span:last-child,
+  .property-detail-page .property-price-block > span,
+  .property-detail-page .property-price-block small {
+    color: #566878 !important;
+  }
+
+  .property-detail-page .property-spec-grid strong,
+  .property-detail-page .property-summary-facts strong,
+  .property-detail-page .property-tools-heading > span:first-child {
+    color: #173149 !important;
+  }
+
+  .property-detail-page .property-spec-grid small,
+  .property-detail-page .property-summary-facts small {
+    font-size: .68rem !important;
+    line-height: 1.6 !important;
+    font-weight: 700 !important;
+  }
+
+  .property-detail-page .property-summary-facts strong {
+    font-size: .78rem !important;
+  }
+
+  .property-detail-page .property-tools-heading > span:last-child {
+    font-size: .74rem !important;
+  }
+
+  /* Text placed over gallery images stays readable even on bright rooms. */
+  .property-detail-page .property-gallery-open,
+  .property-detail-page .property-gallery-counter,
+  .property-detail-page .property-gallery-featured,
+  .property-detail-page .property-gallery-thumb-number {
+    text-shadow: 0 1px 2px rgb(0 0 0 / 45%) !important;
+  }
+
+  .property-detail-page .property-gallery-open {
+    font-size: .78rem !important;
+    font-weight: 800 !important;
+  }
+
+  .property-detail-page .property-gallery-counter,
+  .property-detail-page .property-gallery-featured {
+    font-size: .76rem !important;
+  }
+
+  /* Breadcrumb / utility text gets enough size for normal desktop zoom. */
+  .property-detail-page .property-breadcrumb {
+    font-size: .86rem !important;
+  }
+
+  .property-detail-page .property-source-badge {
+    color: #526474 !important;
+    font-size: .73rem !important;
+  }
+}
+
