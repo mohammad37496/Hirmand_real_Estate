@@ -180,31 +180,25 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
           <div
             className="pcard-specs"
             aria-label="مشخصات خلاصه"
-            style={{
-              background: "#f1eae0",
-              color: "#626d7b",
-              borderTop: "1px solid rgba(11, 26, 43, 0.09)",
-              borderBottom: "1px solid rgba(11, 26, 43, 0.09)",
-            }}
           >
             {property.areaM2 ? (
-              <span style={{ background: "#ffffff", color: "#626d7b", border: "1px solid rgba(11, 26, 43, 0.09)" }}>
-                <Ruler size={14} style={{ color: "#8a5e14" }} /> {property.areaM2.toLocaleString("fa-IR")} متر
+              <span className="pcard-spec">
+                <Ruler size={14} aria-hidden="true" /> {property.areaM2.toLocaleString("fa-IR")} متر
               </span>
             ) : null}
             {property.bedrooms ? (
-              <span style={{ background: "#ffffff", color: "#626d7b", border: "1px solid rgba(11, 26, 43, 0.09)" }}>
-                <BedDouble size={14} style={{ color: "#8a5e14" }} /> {property.bedrooms.toLocaleString("fa-IR")} خواب
+              <span className="pcard-spec">
+                <BedDouble size={14} aria-hidden="true" /> {property.bedrooms.toLocaleString("fa-IR")} خواب
               </span>
             ) : null}
             {property.parking ? (
-              <span style={{ background: "#ffffff", color: "#626d7b", border: "1px solid rgba(11, 26, 43, 0.09)" }}>
-                <CarFront size={14} style={{ color: "#8a5e14" }} /> پارکینگ
+              <span className="pcard-spec">
+                <CarFront size={14} aria-hidden="true" /> پارکینگ
               </span>
             ) : null}
             {property.elevator ? (
-              <span style={{ background: "#ffffff", color: "#626d7b", border: "1px solid rgba(11, 26, 43, 0.09)" }}>
-                <Building2 size={14} style={{ color: "#8a5e14" }} /> آسانسور
+              <span className="pcard-spec">
+                <Building2 size={14} aria-hidden="true" /> آسانسور
               </span>
             ) : null}
           </div>
