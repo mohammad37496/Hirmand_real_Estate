@@ -1226,7 +1226,7 @@ export function PropertyDetailView({
                 <summary className="property-specs-accordion-summary">
                   <span className="property-specs-accordion-heading">
                     <span className="kicker">جزئیات فایل</span>
-                    <span id="property-specs-title" className="property-specs-title">مشخصات ملک</span>
+                    <h2 id="property-specs-title" className="property-specs-title">مشخصات ملک</h2>
                   </span>
                   <span className="property-specs-accordion-meta">
                     <span className="property-source-badge">اطلاعات آگهی</span>
