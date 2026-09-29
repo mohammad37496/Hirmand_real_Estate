@@ -3733,3 +3733,61 @@ body:has(.property-detail-page) {
   content: none !important;
   background: none !important;
 }
+
+
+/* === HIRMAND DESCRIPTION META — NO DARK BACKGROUND ===========================
+   Hard-stop any legacy dark/gradient background on the publication metadata
+   wrapper and its two date chips.
+   ========================================================================== */
+
+.property-detail-page .property-description-meta,
+.property-detail-page .property-description-meta::before,
+.property-detail-page .property-description-meta::after {
+  background: #f1eae0 !important;
+  background-color: #f1eae0 !important;
+  background-image: none !important;
+  color: #626d7b !important;
+  border-color: rgba(11, 26, 43, 0.10) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  mix-blend-mode: normal !important;
+}
+
+.property-detail-page .property-description-meta::before,
+.property-detail-page .property-description-meta::after {
+  display: none !important;
+  content: none !important;
+}
+
+.property-detail-page .property-description-meta > span,
+.property-detail-page .property-description-meta > span::before,
+.property-detail-page .property-description-meta > span::after {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #626d7b !important;
+  border-color: rgba(11, 26, 43, 0.10) !important;
+  box-shadow: 0 2px 8px rgba(11, 26, 43, 0.035) !important;
+  text-shadow: none !important;
+  mix-blend-mode: normal !important;
+}
+
+.property-detail-page .property-description-meta > span::before,
+.property-detail-page .property-description-meta > span::after {
+  display: none !important;
+  content: none !important;
+}
+
+.property-detail-page .property-description-meta > span strong {
+  color: #102d45 !important;
+}
+
+.property-detail-page .property-description-meta > span time {
+  color: #8a5e14 !important;
+}
+
+.property-detail-page .property-description-meta > span:hover {
+  background: #f5ead2 !important;
+  background-color: #f5ead2 !important;
+  border-color: #dfbd75 !important;
+}
