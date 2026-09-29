@@ -7,6 +7,7 @@ import {
   Armchair,
   Baby,
   Bath,
+  Briefcase,
   BriefcaseBusiness,
   Camera,
   CarFront,
@@ -959,13 +960,15 @@ function ConsultantCard({ property }: { property: Property }) {
   const person = TEAM.find((item) => item.phone === property.contactPhone || item.name === property.contactName);
   const displayName = property.contactName || person?.name || "مشاور هیرمند";
   const role = person?.role ?? "مشاور املاک";
-  const initial = displayName.replace(/^آقای\s+/, "").trim().slice(0, 1) || "ه";
+  const ConsultantIcon = person?.icon === "handshake" ? Handshake : Briefcase;
   const whatsapp = person?.wa || whatsappLink(property.contactPhone, property.title);
 
   return (
     <div className="property-contact-card" aria-label="اطلاعات مشاور فایل">
       <div className="property-consultant-main">
-        <div className="property-consultant-avatar" aria-hidden="true">{initial}</div>
+        <div className="property-consultant-avatar" aria-hidden="true">
+          <ConsultantIcon size={28} strokeWidth={1.7} />
+        </div>
         <div className="property-consultant-copy">
           <span className="kicker">مشاور فایل</span>
           <strong className="property-contact-name">{displayName}</strong>
