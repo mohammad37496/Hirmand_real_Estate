@@ -3654,3 +3654,38 @@ body:has(.property-detail-page) {
     line-height: 2.12 !important;
   }
 }
+
+
+/* === HIRMAND FINAL CTA WHATSAPP — LIGHT THEME LOCK ============================
+   Keep the public WhatsApp CTA light at rest even when legacy .btn-ghost rules
+   are loaded earlier in the detail-page stylesheet stack.
+   ========================================================================== */
+
+.property-detail-page .property-final-cta .property-final-cta-actions > .btn-ghost {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  min-height: 48px !important;
+  background: var(--surface, #ffffff) !important;
+  color: var(--navy-900, #102d45) !important;
+  border: 1px solid var(--line-2, rgba(11, 26, 43, 0.13)) !important;
+  border-radius: 13px !important;
+  box-shadow: 0 4px 14px rgba(11, 26, 43, 0.045) !important;
+  text-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.property-detail-page .property-final-cta .property-final-cta-actions > .btn-ghost svg {
+  color: var(--brass-700, #8a5e14) !important;
+  stroke: currentColor !important;
+}
+
+.property-detail-page .property-final-cta .property-final-cta-actions > .btn-ghost:hover,
+.property-detail-page .property-final-cta .property-final-cta-actions > .btn-ghost:focus-visible {
+  background: var(--brass-100, #f5ead2) !important;
+  color: var(--brass-700, #8a5e14) !important;
+  border-color: var(--brass-300, #dfbd75) !important;
+  box-shadow: 0 7px 18px rgba(192, 138, 42, 0.11) !important;
+}
