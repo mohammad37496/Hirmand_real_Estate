@@ -3689,3 +3689,47 @@ body:has(.property-detail-page) {
   border-color: var(--brass-300, #dfbd75) !important;
   box-shadow: 0 7px 18px rgba(192, 138, 42, 0.11) !important;
 }
+
+
+/* === HIRMAND DESCRIPTION COPY — NO DARK BACKGROUND ===========================
+   Hard-stop legacy dark/gradient styling on the description wrapper and its
+   paragraph. This guarantees a light surface even when older higher-specificity
+   selectors target the first paragraph.
+   ========================================================================== */
+
+.property-detail-page .property-detail-body .property-description-copy,
+.property-detail-page .property-detail-body .property-description-copy::before,
+.property-detail-page .property-detail-body .property-description-copy::after {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #152430 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  mix-blend-mode: normal !important;
+}
+
+.property-detail-page .property-detail-body .property-description-copy::before,
+.property-detail-page .property-detail-body .property-description-copy::after {
+  display: none !important;
+  content: none !important;
+}
+
+.property-detail-page .property-detail-body .property-description-copy > p,
+.property-detail-page .property-detail-body .property-description-copy > p:first-child {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #152430 !important;
+  border-color: rgba(11, 26, 43, 0.10) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  mix-blend-mode: normal !important;
+}
+
+.property-detail-page .property-detail-body .property-description-copy > p::before,
+.property-detail-page .property-detail-body .property-description-copy > p::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+}
