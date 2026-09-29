@@ -3830,3 +3830,45 @@ body:has(.property-detail-page) {
   border-color: #dfbd75 !important;
   box-shadow: 0 7px 18px rgba(192, 138, 42, 0.11) !important;
 }
+
+
+/* === HIRMAND PROPERTY PRICE — NO DARK BACKGROUND =============================
+   Force the main price panel to a solid light-theme surface. Remove legacy
+   gradients/images and keep all price text readable in the default state.
+   ========================================================================== */
+
+.property-detail-page .property-price-block,
+.property-detail-page .property-price-block::before,
+.property-detail-page .property-price-block::after {
+  background: #f1eae0 !important;
+  background-color: #f1eae0 !important;
+  background-image: none !important;
+  color: #152430 !important;
+  border-color: rgba(11, 26, 43, 0.11) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  mix-blend-mode: normal !important;
+}
+
+.property-detail-page .property-price-block::after {
+  display: none !important;
+  content: none !important;
+}
+
+.property-detail-page .property-price-block > span,
+.property-detail-page .property-price-block > small,
+.property-detail-page .property-price-block .property-price-per-m2 {
+  color: #626d7b !important;
+}
+
+.property-detail-page .property-price-block > strong,
+.property-detail-page .property-price-block .property-price-value,
+.property-detail-page .property-price-block .property-price-per-m2 strong {
+  color: #102d45 !important;
+  -webkit-text-fill-color: #102d45 !important;
+}
+
+.property-detail-page .property-price-block .property-price-per-m2 strong {
+  color: #8a5e14 !important;
+  -webkit-text-fill-color: #8a5e14 !important;
+}
