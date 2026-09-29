@@ -39,7 +39,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test:template": "node --test 'scripts/**/*.test.mjs'",
-    "start": "node scripts/check-runtime-db.mjs && node scripts/migrate.mjs && node .output/server/index.mjs"
+    "start": "node scripts/check-runtime-db.mjs && node scripts/migrate.mjs && node .output/server/index.mjs",
+    "prebuild": "node scripts/generate-fallback-assets.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.4",
