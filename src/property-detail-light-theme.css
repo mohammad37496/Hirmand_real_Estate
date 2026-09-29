@@ -318,3 +318,46 @@ body:has(.property-detail-page) .footer a:hover {
     box-shadow: none !important;
   }
 }
+
+/* High-contrast property specification icons.
+   This rule is intentionally last so older theme layers cannot wash the icons out. */
+.property-detail-page .property-divar-specs .property-spec-grid > div > svg,
+.property-detail-page .property-spec-grid > div > svg {
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 42px !important;
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+  padding: 9px !important;
+  box-sizing: border-box !important;
+  color: var(--navy-900, #0b1a2b) !important;
+  background: var(--brass-100, #f7edda) !important;
+  border: 1px solid var(--brass-300, #e2c48c) !important;
+  border-radius: 12px !important;
+  opacity: 1 !important;
+  stroke: currentColor !important;
+  stroke-width: 2.25 !important;
+  fill: none !important;
+  filter: none !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-grid > div > svg:hover,
+.property-detail-page .property-spec-grid > div > svg:hover {
+  color: var(--brass-800, #6f4a0f) !important;
+  background: var(--brass-100, #f7edda) !important;
+  border-color: var(--brass-500, #c08a2a) !important;
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-divar-specs .property-spec-grid > div > svg,
+  .property-detail-page .property-spec-grid > div > svg {
+    flex-basis: 40px !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    padding: 8px !important;
+  }
+}
