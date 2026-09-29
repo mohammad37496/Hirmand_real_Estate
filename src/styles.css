@@ -8038,3 +8038,51 @@ a.btn-ghost[href^="https://wa.me/"] svg {
     font-size: 0.68rem;
   }
 }
+
+
+/* Property map — remove any legacy dark (#121216) surface and use the final
+   Hirmand premium theme consistently on desktop and mobile. */
+.property-map-card,
+.property-map-card iframe {
+  background: var(--surface) !important;
+  color-scheme: light;
+}
+
+.property-map-card {
+  border-color: var(--line) !important;
+  box-shadow: 0 12px 30px rgba(23, 32, 51, 0.07);
+}
+
+.property-map-actions {
+  background: var(--surface) !important;
+  color: var(--muted) !important;
+  border-top: 1px solid var(--line);
+}
+
+.property-map-actions .btn-ghost {
+  color: var(--gold) !important;
+  background: var(--surface) !important;
+  border-color: var(--gold-line) !important;
+  box-shadow: none !important;
+}
+
+.property-map-actions .btn-ghost:hover,
+.property-map-actions .btn-ghost:active {
+  color: var(--gold) !important;
+  background: var(--surface) !important;
+  border-color: var(--gold-line) !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+@media (max-width: 680px) {
+  .property-map-actions {
+    gap: 8px;
+    padding: 10px;
+    background: var(--surface) !important;
+  }
+
+  .property-map-actions .btn-ghost {
+    width: 100%;
+  }
+}
