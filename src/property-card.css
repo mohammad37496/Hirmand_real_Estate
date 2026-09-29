@@ -599,3 +599,43 @@
     transform: none;
   }
 }
+
+
+/* === HIRMAND PROPERTY CARD SPECS — GLOBAL LIGHT DEFAULT ======================
+   The compact specs row must be branded in its resting state everywhere,
+   not only after hover or only inside the property-detail page.
+   ========================================================================== */
+
+.pcard-specs {
+  background: var(--surface-2, #f1eae0) !important;
+  color: var(--muted, #626d7b) !important;
+  border-top: 1px solid var(--line, rgba(11, 26, 43, 0.09)) !important;
+  border-bottom: 1px solid var(--line, rgba(11, 26, 43, 0.09)) !important;
+  border-radius: 10px !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+.pcard-specs span {
+  background: transparent !important;
+  color: var(--muted, #626d7b) !important;
+  text-shadow: none !important;
+}
+
+.pcard-specs svg {
+  color: var(--brass-700, #8a5e14) !important;
+  stroke: currentColor !important;
+}
+
+.pcard:hover .pcard-specs,
+.pcard:focus-within .pcard-specs {
+  background: var(--brass-100, #f5ead2) !important;
+  color: var(--navy-900, #102d45) !important;
+  border-top-color: var(--brass-300, #dfbd75) !important;
+  border-bottom-color: var(--brass-300, #dfbd75) !important;
+}
+
+.pcard:hover .pcard-specs span,
+.pcard:focus-within .pcard-specs span {
+  color: var(--navy-900, #102d45) !important;
+}
