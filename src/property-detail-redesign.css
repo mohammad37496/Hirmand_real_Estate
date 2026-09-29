@@ -145,7 +145,7 @@
 }
 
 .property-detail-page .property-gallery-featured {
-  background: rgba(15, 118, 110, .94) !important;
+  background: var(--gold) !important;
   color: #fff !important;
 }
 
@@ -246,7 +246,7 @@
 
 .property-detail-page .property-gallery-thumb.is-active {
   border-color: var(--gold) !important;
-  box-shadow: 0 0 0 2px rgba(15, 118, 110, .12) !important;
+  box-shadow: 0 0 0 2px var(--gold-line) !important;
 }
 
 .property-detail-page .property-gallery-thumb-number {
@@ -263,6 +263,107 @@
   font-size: .64rem !important;
   font-weight: 800 !important;
   line-height: 1 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Canonical light surface / readability guard
+   -------------------------------------------------------------------------- */
+
+body:has(.property-detail-page) {
+  background: var(--paper) !important;
+  color: var(--fg) !important;
+}
+
+.property-detail-page {
+  background: transparent !important;
+  color: var(--fg) !important;
+}
+
+.property-detail-page .property-detail-summary,
+.property-detail-page .property-detail-summary-head,
+.property-detail-page .property-detail-content > *,
+.property-detail-page .property-detail-main > section,
+.property-detail-page .property-detail-body,
+.property-detail-page .property-location-section,
+.property-detail-page .property-detail-aside > *,
+.property-detail-page .property-final-cta {
+  background: var(--card) !important;
+  color: var(--fg) !important;
+  color-scheme: light;
+}
+
+.property-detail-page .property-detail-summary {
+  border-color: var(--line) !important;
+  box-shadow: var(--el-2) !important;
+}
+
+.property-detail-page .property-detail-summary::before {
+  background: linear-gradient(90deg, var(--navy-900), var(--brass-500)) !important;
+}
+
+.property-detail-page .property-detail-title-block h1,
+.property-detail-page .property-tools-heading span:first-child,
+.property-detail-page .property-summary-facts strong,
+.property-detail-page .property-file-code bdi {
+  color: var(--navy-900) !important;
+}
+
+.property-detail-page .property-detail-meta,
+.property-detail-page .property-tools-heading span:last-child,
+.property-detail-page .property-summary-facts small,
+.property-detail-page .property-price-block > span,
+.property-detail-page .property-price-per-m2,
+.property-detail-page .property-price-block > small {
+  color: var(--muted) !important;
+}
+
+.property-detail-page .property-price-block,
+.property-detail-page .property-summary-facts > div,
+.property-detail-page .property-actions:not(.property-actions-compact) .property-action,
+.property-detail-page .property-type-badge,
+.property-detail-page .property-file-code {
+  background: var(--card-2) !important;
+  border-color: var(--line) !important;
+}
+
+.property-detail-page .property-price-block {
+  border-color: rgb(192 138 42 / 26%) !important;
+  background:
+    linear-gradient(180deg, rgb(192 138 42 / 6%), var(--card-2)) !important;
+}
+
+.property-detail-page .property-price-value,
+.property-detail-page .property-price-per-m2 strong,
+.property-detail-page .property-detail-eyebrow,
+.property-detail-page .property-detail-meta svg,
+.property-detail-page .property-summary-facts > div > svg,
+.property-detail-page .property-actions:not(.property-actions-compact) .property-action:hover,
+.property-detail-page .property-actions:not(.property-actions-compact) .property-action.is-active {
+  color: var(--gold) !important;
+}
+
+.property-detail-page .property-status-badge {
+  background: rgb(192 138 42 / 10%) !important;
+  border-color: rgb(192 138 42 / 22%) !important;
+  color: var(--brass-700) !important;
+}
+
+.property-detail-page .property-primary-contact-call {
+  background: var(--navy-900) !important;
+  color: #fff !important;
+  box-shadow: var(--el-2) !important;
+}
+
+.property-detail-page .property-primary-contact-whatsapp {
+  background: var(--card) !important;
+  color: var(--navy-900) !important;
+  border-color: var(--line-2) !important;
+}
+
+.property-detail-page .property-actions:not(.property-actions-compact) .property-action:hover,
+.property-detail-page .property-actions:not(.property-actions-compact) .property-action.is-active {
+  background: var(--brass-100) !important;
+  border-color: var(--gold-line) !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -325,8 +426,8 @@
 }
 
 .property-detail-page .property-status-badge {
-  background: rgba(15, 118, 110, .10) !important;
-  border: 1px solid rgba(15, 118, 110, .18) !important;
+  background: rgb(192 138 42 / 10%) !important;
+  border: 1px solid rgb(192 138 42 / 18%) !important;
   color: var(--gold) !important;
 }
 
@@ -337,8 +438,8 @@
 }
 
 .property-detail-page .property-featured-note {
-  background: rgba(196, 138, 58, .11) !important;
-  border: 1px solid rgba(196, 138, 58, .24) !important;
+  background: rgb(192 138 42 / 11%) !important;
+  border: 1px solid rgb(192 138 42 / 24%) !important;
   color: var(--gold-soft) !important;
 }
 
@@ -405,9 +506,9 @@
   gap: 4px !important;
   margin: 8px 0 0 !important;
   padding: 15px 16px !important;
-  border: 1px solid rgba(15, 118, 110, .16) !important;
+  border: 1px solid rgb(192 138 42 / 16%) !important;
   border-radius: 16px !important;
-  background: linear-gradient(180deg, rgba(15,118,110,.045), var(--surface-2)) !important;
+  background: linear-gradient(180deg, rgb(192 138 42 / 4.5%), var(--surface-2)) !important;
   box-shadow: none !important;
 }
 
@@ -465,7 +566,7 @@
 .property-detail-page .property-primary-contact-call {
   background: var(--gold) !important;
   color: #fff !important;
-  box-shadow: 0 10px 22px rgba(15, 118, 110, .16) !important;
+  box-shadow: 0 10px 22px rgb(192 138 42 / 16%) !important;
 }
 
 .property-detail-page .property-primary-contact-whatsapp {
@@ -523,7 +624,7 @@
 .property-detail-page .property-actions:not(.property-actions-compact) .property-action.is-active {
   color: var(--gold) !important;
   border-color: var(--gold-line) !important;
-  background: rgba(15, 118, 110, .08) !important;
+  background: rgb(192 138 42 / 8%) !important;
 }
 
 .property-detail-page .property-summary-facts {
@@ -942,10 +1043,10 @@
   align-items: center !important;
   gap: 18px !important;
   padding: 20px 22px !important;
-  border: 1px solid rgba(15,118,110,.18) !important;
+  border: 1px solid rgb(192 138 42 / 18%) !important;
   border-radius: 20px !important;
   background:
-    linear-gradient(135deg, rgba(15,118,110,.07), rgba(196,138,58,.045)),
+    linear-gradient(135deg, rgb(192 138 42 / 7%), rgb(192 138 42 / 4.5%)),
     var(--surface) !important;
 }
 
@@ -1022,7 +1123,7 @@
   display: grid !important;
   place-items: center !important;
   border-radius: 14px !important;
-  background: rgba(15,118,110,.10) !important;
+  background: rgb(192 138 42 / 10%) !important;
   color: var(--gold) !important;
   border: 1px solid var(--gold-line) !important;
   font-size: 1.05rem !important;
