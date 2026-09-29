@@ -2940,3 +2940,134 @@ body:has(.property-detail-page) {
   background: var(--card, #ffffff) !important;
   border-color: var(--brass-300, #dfbd75) !important;
 }
+
+
+/* === HIRMAND DETAIL — DEFAULT STATE THEME LOCK ==============================
+   Normalize controls that previously became branded only on hover, leaving
+   their default state dark. No interaction or markup changes.
+   ========================================================================== */
+
+/* Gallery controls and thumbnail counters: light by default, branded on hover. */
+.property-detail-page .property-gallery-nav,
+.property-detail-page .property-gallery-thumb-number {
+  background: rgb(255 255 255 / 94%) !important;
+  color: var(--navy-900, #102d45) !important;
+  border: 1px solid var(--line, rgba(11, 26, 43, 0.12)) !important;
+  box-shadow: 0 7px 18px rgba(11, 26, 43, 0.07) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.property-detail-page .property-gallery-thumb-number {
+  min-width: 22px !important;
+  min-height: 22px !important;
+}
+
+.property-detail-page .property-gallery-nav:hover,
+.property-detail-page .property-gallery-thumb:hover .property-gallery-thumb-number {
+  background: var(--brass-100, #f5ead2) !important;
+  color: var(--brass-700, #8a5e14) !important;
+  border-color: var(--brass-300, #dfbd75) !important;
+}
+
+/* Similar-property transaction labels: no dark default pill. */
+.property-detail-page .property-related .pcard-badge-transaction {
+  background: var(--brass-100, #f5ead2) !important;
+  color: var(--brass-700, #8a5e14) !important;
+  border: 1px solid var(--brass-300, #dfbd75) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Similar-property action buttons: light at rest; brass only for interaction. */
+.property-detail-page .property-related .pcard-actions .property-action {
+  background: var(--surface, #ffffff) !important;
+  color: var(--navy-900, #102d45) !important;
+  border-color: var(--line, rgba(11, 26, 43, 0.12)) !important;
+  box-shadow: 0 3px 12px rgba(11, 26, 43, 0.035) !important;
+}
+
+.property-detail-page .property-related .pcard-actions .property-action:hover,
+.property-detail-page .property-related .pcard-actions .property-action:focus-visible {
+  background: var(--brass-100, #f5ead2) !important;
+  color: var(--brass-700, #8a5e14) !important;
+  border-color: var(--brass-300, #dfbd75) !important;
+}
+
+/* Consultant sidebar: eliminate any legacy navy/dark panel as a default surface. */
+.property-detail-page .property-detail-aside .property-contact-card,
+.property-detail-page .property-detail-aside .property-quick-overview {
+  background: var(--card, #ffffff) !important;
+  color: var(--fg, #152430) !important;
+  border-color: var(--line, rgba(11, 26, 43, 0.11)) !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-card::before,
+.property-detail-page .property-detail-aside .property-contact-card::after,
+.property-detail-page .property-detail-aside .property-quick-overview::before,
+.property-detail-page .property-detail-aside .property-quick-overview::after {
+  display: none !important;
+  content: none !important;
+}
+
+.property-detail-page .property-detail-aside .property-consultant-copy .kicker,
+.property-detail-page .property-detail-aside .property-contact-profile {
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-name,
+.property-detail-page .property-detail-aside .property-consultant-role,
+.property-detail-page .property-detail-aside .property-quick-overview strong {
+  color: var(--navy-900, #102d45) !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-phone,
+.property-detail-page .property-detail-aside .property-contact-note,
+.property-detail-page .property-detail-aside .property-quick-overview span {
+  color: var(--muted, #626d7b) !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-actions .btn-gold {
+  background: var(--brass-500, #c08a2a) !important;
+  color: var(--navy-950, #081320) !important;
+  border-color: var(--brass-500, #c08a2a) !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-actions .btn-ghost {
+  background: var(--surface, #ffffff) !important;
+  color: var(--navy-900, #102d45) !important;
+  border-color: var(--line-2, rgba(11, 26, 43, 0.12)) !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-actions .btn-ghost:hover {
+  background: var(--brass-100, #f5ead2) !important;
+  color: var(--brass-700, #8a5e14) !important;
+  border-color: var(--brass-300, #dfbd75) !important;
+}
+
+/* Fixed mobile action bar: light default state. */
+.property-detail-page .property-mobile-actions {
+  background: rgb(255 255 255 / 96%) !important;
+  border: 1px solid var(--line, rgba(11, 26, 43, 0.12)) !important;
+  box-shadow: 0 12px 30px rgba(11, 26, 43, 0.10) !important;
+}
+
+.property-detail-page .property-mobile-action {
+  background: var(--surface, #ffffff) !important;
+  color: var(--navy-900, #102d45) !important;
+  border-color: var(--line, rgba(11, 26, 43, 0.11)) !important;
+}
+
+.property-detail-page .property-mobile-action:hover,
+.property-detail-page .property-mobile-action:focus-visible {
+  background: var(--brass-100, #f5ead2) !important;
+  color: var(--brass-700, #8a5e14) !important;
+  border-color: var(--brass-300, #dfbd75) !important;
+}
+
+.property-detail-page .property-mobile-action-call {
+  background: var(--brass-500, #c08a2a) !important;
+  color: var(--navy-950, #081320) !important;
+  border-color: var(--brass-500, #c08a2a) !important;
+}
