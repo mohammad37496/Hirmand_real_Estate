@@ -3791,3 +3791,42 @@ body:has(.property-detail-page) {
   background-color: #f5ead2 !important;
   border-color: #dfbd75 !important;
 }
+
+
+/* === HIRMAND FINAL CTA WHATSAPP — HARD LIGHT SURFACE ==========================
+   Use fixed light-theme values here so a legacy dark --surface variable or
+   higher-level .btn-ghost rule cannot turn this exact CTA dark at rest.
+   ========================================================================== */
+
+.property-detail-page .property-final-cta-actions > a.btn-ghost,
+.property-detail-page .property-final-cta-actions > a.btn-ghost:link,
+.property-detail-page .property-final-cta-actions > a.btn-ghost:visited {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #102d45 !important;
+  border: 1px solid rgba(11, 26, 43, 0.13) !important;
+  box-shadow: 0 4px 14px rgba(11, 26, 43, 0.045) !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+.property-detail-page .property-final-cta-actions > a.btn-ghost svg {
+  color: #8a5e14 !important;
+  stroke: #8a5e14 !important;
+  fill: none !important;
+  opacity: 1 !important;
+}
+
+.property-detail-page .property-final-cta-actions > a.btn-ghost:hover,
+.property-detail-page .property-final-cta-actions > a.btn-ghost:focus-visible,
+.property-detail-page .property-final-cta-actions > a.btn-ghost:active {
+  background: #f5ead2 !important;
+  background-color: #f5ead2 !important;
+  background-image: none !important;
+  color: #8a5e14 !important;
+  border-color: #dfbd75 !important;
+  box-shadow: 0 7px 18px rgba(192, 138, 42, 0.11) !important;
+}
