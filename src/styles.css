@@ -9294,3 +9294,188 @@ a.btn-ghost[href^="https://wa.me/"] svg {
     color: #0f766e !important;
   }
 }
+
+
+/* =========================================================
+   HIRMAND MOBILE — PROPERTY SPECS ACCORDION
+   The specs section remains normal on desktop and becomes a
+   clean tap-to-expand drawer on mobile.
+   ========================================================= */
+
+.property-specs-accordion {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.property-specs-accordion > summary {
+  list-style: none;
+}
+
+.property-specs-accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
+.property-specs-accordion-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+
+.property-specs-accordion-heading {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.property-specs-title {
+  margin: 0 !important;
+  color: var(--fg) !important;
+  font-size: clamp(1.05rem, 0.95rem + 0.35vw, 1.32rem) !important;
+  font-weight: 800 !important;
+  line-height: 1.55 !important;
+}
+
+.property-specs-accordion-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+}
+
+.property-specs-accordion-meta > svg {
+  color: var(--gold);
+  transition: transform 180ms ease;
+}
+
+.property-specs-accordion[open] > .property-specs-accordion-summary > .property-specs-accordion-meta > svg {
+  transform: rotate(180deg);
+}
+
+.property-specs-accordion-body {
+  min-width: 0;
+}
+
+@media (min-width: 721px) {
+  .property-specs-accordion > summary {
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .property-specs-accordion-meta > svg {
+    display: none;
+  }
+
+  .property-specs-accordion-body {
+    display: block;
+    margin-top: 14px;
+  }
+}
+
+@media (max-width: 720px) {
+  .property-divar-specs {
+    overflow: hidden !important;
+  }
+
+  .property-specs-accordion > summary {
+    min-height: 58px;
+    padding: 5px 2px 8px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .property-specs-accordion-summary:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 4px;
+    border-radius: 10px;
+  }
+
+  .property-specs-accordion-heading .kicker {
+    margin-bottom: 0 !important;
+  }
+
+  .property-specs-title {
+    display: block !important;
+    color: #15221f !important;
+    font-size: 1.08rem !important;
+    font-weight: 800 !important;
+    line-height: 1.6 !important;
+  }
+
+  .property-specs-accordion-meta {
+    gap: 6px;
+  }
+
+  .property-specs-accordion-meta .property-source-badge {
+    display: inline-flex !important;
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  .property-specs-accordion-meta > svg {
+    width: 19px;
+    height: 19px;
+    flex: 0 0 auto;
+  }
+
+  .property-specs-accordion-body {
+    margin-top: 4px;
+    padding-top: 9px;
+    border-top: 1px solid var(--line);
+    animation: hirmand-specs-open 180ms ease-out;
+  }
+
+  .property-specs-accordion:not([open]) > .property-specs-accordion-body {
+    display: none;
+  }
+
+  @keyframes hirmand-specs-open {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .property-specs-accordion:not([open]) > .property-specs-accordion-summary .property-specs-accordion-meta > svg {
+    transform: rotate(0deg);
+  }
+
+  .property-specs-accordion[open] > .property-specs-accordion-summary .property-specs-accordion-meta > svg {
+    transform: rotate(180deg);
+  }
+
+  .property-spec-grid {
+    margin-top: 0 !important;
+  }
+
+  .property-spec-amenities {
+    margin-top: 9px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .property-specs-accordion > summary {
+    min-height: 54px;
+    padding-block: 3px 7px;
+  }
+
+  .property-specs-title {
+    font-size: 1rem !important;
+  }
+
+  .property-specs-accordion-meta .property-source-badge {
+    font-size: 0.55rem !important;
+    padding-inline: 7px !important;
+  }
+
+  .property-specs-accordion-meta > svg {
+    width: 18px;
+    height: 18px;
+  }
+}
