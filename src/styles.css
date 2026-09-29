@@ -9130,3 +9130,75 @@ a.btn-ghost[href^="https://wa.me/"] svg {
     font-size: 0.61rem;
   }
 }
+
+
+/* =========================================================
+   HIRMAND MOBILE PROPERTY CONTACT / FILE TOOLS FLOW FIX
+   Keep quick contact strictly above file tools in normal flow.
+   ========================================================= */
+@media (max-width: 720px) {
+  .property-detail-summary {
+    display: block !important;
+    position: relative !important;
+    overflow: visible !important;
+  }
+
+  .property-primary-contact,
+  .property-tools-heading,
+  .property-actions:not(.property-actions-compact),
+  .property-summary-facts {
+    position: static !important;
+    inset: auto !important;
+    float: none !important;
+    clear: both !important;
+    transform: none !important;
+  }
+
+  .property-primary-contact {
+    margin-top: 10px !important;
+    margin-bottom: 10px !important;
+    z-index: auto !important;
+    isolation: auto !important;
+  }
+
+  .property-primary-contact-call,
+  .property-primary-contact-whatsapp {
+    position: static !important;
+    transform: none !important;
+  }
+
+  .property-tools-heading {
+    position: static !important;
+    margin-top: 10px !important;
+    margin-bottom: 6px !important;
+    z-index: auto !important;
+  }
+
+  .property-actions:not(.property-actions-compact) {
+    position: static !important;
+    display: grid !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: auto !important;
+    isolation: auto !important;
+    overflow: visible !important;
+  }
+
+  .property-actions:not(.property-actions-compact) .property-action {
+    position: static !important;
+    z-index: auto !important;
+    pointer-events: auto !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .property-primary-contact {
+    margin-bottom: 9px !important;
+  }
+
+  .property-tools-heading {
+    margin-top: 9px !important;
+  }
+}
