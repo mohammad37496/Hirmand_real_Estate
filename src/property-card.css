@@ -639,3 +639,82 @@
 .pcard:focus-within .pcard-specs span {
   color: var(--navy-900, #102d45) !important;
 }
+
+
+/* === HIRMAND PROPERTY CARD SPECS — HARD LIGHT SURFACES =======================
+   Make each compact specification item visibly belong to the main light theme.
+   No inherited dark/overlay state is allowed in the resting state.
+   ========================================================================== */
+
+.pcard-specs,
+.pcard-specs * {
+  -webkit-text-fill-color: currentColor !important;
+}
+
+.pcard-specs {
+  background: #f1eae0 !important;
+  color: #626d7b !important;
+  border-top: 1px solid rgba(11, 26, 43, 0.09) !important;
+  border-bottom: 1px solid rgba(11, 26, 43, 0.09) !important;
+  box-shadow: none !important;
+}
+
+.pcard-specs span {
+  min-height: 30px !important;
+  padding: 5px 9px !important;
+  border: 1px solid rgba(11, 26, 43, 0.09) !important;
+  border-radius: 9px !important;
+  background: #ffffff !important;
+  color: #626d7b !important;
+  box-shadow: 0 2px 8px rgba(11, 26, 43, 0.035) !important;
+}
+
+.pcard-specs span svg {
+  width: 14px !important;
+  height: 14px !important;
+  color: #8a5e14 !important;
+  stroke: currentColor !important;
+}
+
+.pcard-specs span:hover {
+  background: #f5ead2 !important;
+  color: #102d45 !important;
+  border-color: #dfbd75 !important;
+}
+
+.pcard-specs span:hover svg {
+  color: #8a5e14 !important;
+}
+
+.pcard:hover .pcard-specs,
+.pcard:focus-within .pcard-specs {
+  background: #f1eae0 !important;
+  color: #626d7b !important;
+  border-top-color: rgba(11, 26, 43, 0.09) !important;
+  border-bottom-color: rgba(11, 26, 43, 0.09) !important;
+}
+
+.pcard:hover .pcard-specs span,
+.pcard:focus-within .pcard-specs span {
+  background: #ffffff !important;
+  color: #626d7b !important;
+  border-color: rgba(11, 26, 43, 0.09) !important;
+}
+
+.pcard:hover .pcard-specs span:hover,
+.pcard:focus-within .pcard-specs span:hover {
+  background: #f5ead2 !important;
+  color: #102d45 !important;
+  border-color: #dfbd75 !important;
+}
+
+@media (max-width: 720px) {
+  .pcard-specs {
+    gap: 7px 9px !important;
+  }
+
+  .pcard-specs span {
+    min-height: 29px !important;
+    padding-inline: 8px !important;
+  }
+}
