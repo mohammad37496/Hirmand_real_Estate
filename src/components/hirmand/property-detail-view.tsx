@@ -962,7 +962,6 @@ function ConsultantCard({ property }: { property: Property }) {
   const displayName = property.contactName || person?.name || "مشاور هیرمند";
   const role = person?.role ?? "مشاور املاک";
   const ConsultantIcon = person?.icon === "handshake" ? Handshake : Briefcase;
-  const whatsapp = person?.wa || whatsappLink(property.contactPhone, property.title);
 
   return (
     <div className="property-contact-card" aria-label="اطلاعات مشاور فایل">
@@ -997,16 +996,6 @@ function ConsultantCard({ property }: { property: Property }) {
         >
           <Phone size={16} aria-hidden="true" />
           تماس مستقیم
-        </a>
-        <a
-          href={whatsapp}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-ghost"
-          onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
-        >
-          <WhatsAppIcon size={16} aria-hidden="true" />
-          واتساپ
         </a>
       </div>
 
