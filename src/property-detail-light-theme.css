@@ -3140,3 +3140,351 @@ body:has(.property-detail-page) .property-detail-page,
 .property-detail-page .property-related .pcard-specs span svg {
   color: var(--brass-700) !important;
 }
+
+
+/* ==========================================================================
+   HIRMAND — MOBILE DETAIL LAYOUT FINAL PASS
+   One-column flow, no overlapping cards, no dark content surfaces.
+   ========================================================================== */
+
+@media (max-width: 720px) {
+  body:has(.property-detail-page) {
+    background-color: var(--paper) !important;
+    background-image: none !important;
+  }
+
+  .property-detail-page {
+    width: min(calc(100% - 16px), 680px) !important;
+    margin-inline: auto !important;
+    padding: 12px 0 132px !important;
+    overflow: visible !important;
+  }
+
+  .property-detail-page .property-detail-top {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas:
+      "gallery"
+      "summary" !important;
+    gap: 14px !important;
+    margin: 0 !important;
+    direction: rtl !important;
+    align-items: start !important;
+    position: relative !important;
+    z-index: auto !important;
+  }
+
+  .property-detail-page .property-detail-top-gallery {
+    grid-area: gallery !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    position: relative !important;
+    z-index: auto !important;
+  }
+
+  .property-detail-page .property-detail-summary {
+    grid-area: summary !important;
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 16px !important;
+    border-radius: 16px !important;
+    background: var(--card) !important;
+    background-image: none !important;
+    border: 1px solid var(--line) !important;
+    box-shadow: var(--el-1) !important;
+    overflow: visible !important;
+    z-index: auto !important;
+  }
+
+  .property-detail-page .property-detail-summary::before {
+    display: none !important;
+  }
+
+  .property-detail-page .property-detail-content {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas:
+      "main"
+      "aside" !important;
+    gap: 14px !important;
+    margin: 14px 0 0 !important;
+    position: relative !important;
+    z-index: auto !important;
+    align-items: start !important;
+  }
+
+  .property-detail-page .property-detail-main {
+    grid-area: main !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 14px !important;
+    margin: 0 !important;
+    position: relative !important;
+    z-index: auto !important;
+  }
+
+  .property-detail-page .property-detail-aside {
+    grid-area: aside !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 14px !important;
+    margin: 0 !important;
+    position: relative !important;
+    z-index: auto !important;
+  }
+
+  .property-detail-page .property-detail-main > section,
+  .property-detail-page .property-detail-main > .property-convert-slider,
+  .property-detail-page .property-detail-aside > *,
+  .property-detail-page .property-related {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    box-sizing: border-box !important;
+    margin-inline: 0 !important;
+    position: relative !important;
+    inset: auto !important;
+    z-index: auto !important;
+  }
+
+  .property-detail-page .property-detail-main > section,
+  .property-detail-page .property-detail-main > .property-convert-slider {
+    padding: 15px !important;
+    border-radius: 16px !important;
+    background: var(--card) !important;
+    background-image: none !important;
+    border: 1px solid var(--line) !important;
+    color: var(--fg) !important;
+    box-shadow: var(--el-1) !important;
+    overflow: visible !important;
+  }
+
+  .property-detail-page .property-contact-card,
+  .property-detail-page .property-quick-overview,
+  .property-detail-page .property-final-cta,
+  .property-detail-page .property-related {
+    background: var(--card) !important;
+    background-image: none !important;
+    border: 1px solid var(--line) !important;
+    color: var(--fg) !important;
+    box-shadow: var(--el-1) !important;
+  }
+
+  .property-detail-page .property-contact-card,
+  .property-detail-page .property-quick-overview {
+    padding: 15px !important;
+    border-radius: 16px !important;
+  }
+
+  .property-detail-page .property-final-cta {
+    padding: 16px !important;
+    border-radius: 16px !important;
+  }
+
+  .property-detail-page .property-related {
+    margin-top: 0 !important;
+    padding: 15px !important;
+    border-radius: 16px !important;
+  }
+
+  .property-detail-page .property-gallery {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    position: relative !important;
+    z-index: auto !important;
+    background: transparent !important;
+    border: 0 !important;
+  }
+
+  .property-detail-page .property-gallery-main {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    aspect-ratio: 4 / 3 !important;
+    position: relative !important;
+    z-index: auto !important;
+    border-radius: 16px !important;
+    background: var(--paper-2) !important;
+    box-shadow: var(--el-1) !important;
+  }
+
+  .property-detail-page .property-gallery-main > .property-video-player,
+  .property-detail-page .property-gallery-main .property-video-frame,
+  .property-detail-page .property-gallery-main .property-video-frame video,
+  .property-detail-page .property-gallery-main > video {
+    background: var(--paper-2) !important;
+    background-color: var(--paper-2) !important;
+  }
+
+  .property-detail-page .property-gallery-rail {
+    position: relative !important;
+    z-index: auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 7px !important;
+    padding: 2px 1px 4px !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+  }
+
+  .property-detail-page .property-gallery-thumb {
+    position: relative !important;
+    z-index: auto !important;
+    flex: 0 0 76px !important;
+    width: 76px !important;
+    height: 58px !important;
+    min-width: 76px !important;
+    min-height: 58px !important;
+    border-radius: 9px !important;
+    background: var(--paper-2) !important;
+    border: 1px solid var(--line) !important;
+    box-shadow: none !important;
+  }
+
+  .property-detail-page .property-summary-facts,
+  .property-detail-page .property-spec-grid,
+  .property-detail-page .property-features ul,
+  .property-detail-page .property-contact-actions,
+  .property-detail-page .property-final-cta-actions,
+  .property-detail-page .property-related .property-grid {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .property-detail-page .property-summary-facts {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .property-detail-page .property-spec-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .property-detail-page .property-spec-grid > div,
+  .property-detail-page .property-summary-facts > div {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    margin: 0 !important;
+  }
+
+  .property-detail-page .property-detail-body .property-features ul {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 7px !important;
+  }
+
+  .property-detail-page .property-detail-body .property-features li {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    position: relative !important;
+    background: var(--card-2) !important;
+    border: 1px solid var(--line) !important;
+    color: var(--fg) !important;
+  }
+
+  .property-detail-page .property-location-fallback,
+  .property-detail-page .property-map-actions {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .property-detail-page .property-map-card {
+    background: var(--card) !important;
+    background-image: none !important;
+    border: 1px solid var(--line) !important;
+    box-shadow: var(--el-1) !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+  }
+
+  .property-detail-page .property-lightbox {
+    /* The image lightbox may remain dark as a deliberate modal surface. */
+  }
+
+  .property-detail-page .property-mobile-actions {
+    bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+    box-sizing: border-box !important;
+    z-index: 90 !important;
+  }
+
+  .property-detail-page .property-mobile-action {
+    min-width: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  .property-detail-page .property-mobile-action:hover,
+  .property-detail-page .property-mobile-action:focus-visible {
+    transform: none !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .property-detail-page {
+    width: min(calc(100% - 12px), 680px) !important;
+    padding-bottom: 134px !important;
+  }
+
+  .property-detail-page .property-detail-summary,
+  .property-detail-page .property-detail-main > section,
+  .property-detail-page .property-detail-main > .property-convert-slider,
+  .property-detail-page .property-detail-aside > *,
+  .property-detail-page .property-related {
+    padding: 13px !important;
+    border-radius: 14px !important;
+  }
+
+  .property-detail-page .property-summary-facts,
+  .property-detail-page .property-spec-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .property-detail-page .property-gallery-thumb {
+    flex-basis: 70px !important;
+    width: 70px !important;
+    min-width: 70px !important;
+    height: 54px !important;
+    min-height: 54px !important;
+  }
+
+  .property-detail-page .property-mobile-actions {
+    left: 6px !important;
+    right: 6px !important;
+  }
+}
