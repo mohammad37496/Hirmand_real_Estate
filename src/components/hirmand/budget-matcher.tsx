@@ -241,28 +241,29 @@ export function BudgetMatcher() {
 
   return (
     <section className="budget-matcher" id="budget-match" aria-labelledby="budget-match-title">
-      <div className="budget-matcher-hero">
+      <header className="budget-matcher-hero">
         <div className="budget-matcher-hero-copy">
-          <div className="budget-matcher-eyebrow">
-            <span className="budget-matcher-eyebrow-dot" />
-            جستجوی هوشمند رهن و اجاره
+          <div className="budget-matcher-eyebrow" aria-label="جستجوی هوشمند رهن و اجاره">
+            <span className="budget-matcher-eyebrow-dot" aria-hidden="true" />
+            <span>جستجوی هوشمند رهن و اجاره</span>
           </div>
           <h2 id="budget-match-title">بودجه‌تان را بگویید؛ فایل مناسب را پیدا می‌کنیم.</h2>
           <p>
             سقف رهن و اجاره را وارد کنید. هیرمند فایل‌های منتشرشده را از نظر ارزش مالی، ترکیب پرداخت،
             محله و تعداد خواب بررسی می‌کند و برای هر گزینه توضیح می‌دهد چرا به بودجه شما نزدیک است.
           </p>
-          <div className="budget-matcher-trust">
-            <span><Calculator size={14} /> محاسبه با معادل رهنی</span>
-            <span><Sparkles size={14} /> رتبه‌بندی بر اساس میزان تطبیق</span>
-            <span><UserRound size={14} /> امکان پیگیری توسط مشاور</span>
-          </div>
+          <ul className="budget-matcher-trust" aria-label="مزایای جستجوی هوشمند">
+            <li><Calculator size={14} aria-hidden="true" /><span>محاسبه با معادل رهنی</span></li>
+            <li><Sparkles size={14} aria-hidden="true" /><span>رتبه‌بندی بر اساس میزان تطبیق</span></li>
+            <li><UserRound size={14} aria-hidden="true" /><span>امکان پیگیری توسط مشاور</span></li>
+          </ul>
         </div>
-        <div className="budget-matcher-hero-mark" aria-hidden="true">
-          <WalletCards size={38} strokeWidth={1.35} />
+        <aside className="budget-matcher-hero-mark" aria-label="سیستم تطبیق بودجه هیرمند">
+          <WalletCards size={38} strokeWidth={1.35} aria-hidden="true" />
           <span>HIRMAND MATCH</span>
-        </div>
-      </div>
+          <small>تطبیق بودجه با فایل‌های منتشرشده</small>
+        </aside>
+      </header>
 
       <div className="budget-matcher-layout">
         <div className="budget-matcher-main">
