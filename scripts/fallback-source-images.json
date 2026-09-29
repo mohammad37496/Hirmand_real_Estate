@@ -1,15 +1,19 @@
 {
   "apartment": [
-    "https://images.unsplash.com/photo-1781344334903-f33d8b76e292?auto=format&fit=crop&fm=jpg&q=84&w=1600",
     "https://images.unsplash.com/photo-1771888703723-01d85da1dae1?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1774429076579-d90d43bffd3b?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1766245456897-5c86726d084d?auto=format&fit=crop&fm=jpg&q=84&w=1600"
+    "https://images.unsplash.com/photo-1773754532196-014342510e64?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "https://images.unsplash.com/photo-1775241183056-06f3f6c10c76?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "https://images.unsplash.com/photo-1770063817031-f3b98dff347f?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "https://images.unsplash.com/photo-1784318519037-7ee0b1668e95?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "https://images.unsplash.com/photo-1760072513376-67a46aab0fd1?auto=format&fit=crop&fm=jpg&q=84&w=1600"
   ],
   "villa": [
-    "https://images.unsplash.com/photo-1771371428960-35a50c2d4e7c?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1783125127024-3f3eda015db4?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1786204685672-e344095e5b49?auto=format&fit=crop&fm=jpg&q=84&w=1600",
-    "https://images.unsplash.com/photo-1783125127199-860da9744dcc?auto=format&fit=crop&fm=jpg&q=84&w=1600"
+    "https://images.unsplash.com/photo-1771888703723-01d85da1dae1?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "https://images.unsplash.com/photo-1773754532196-014342510e64?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "https://images.unsplash.com/photo-1775241183056-06f3f6c10c76?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "https://images.unsplash.com/photo-1770063817031-f3b98dff347f?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "https://images.unsplash.com/photo-1784318519037-7ee0b1668e95?auto=format&fit=crop&fm=jpg&q=84&w=1600",
+    "https://images.unsplash.com/photo-1760072513376-67a46aab0fd1?auto=format&fit=crop&fm=jpg&q=84&w=1600"
   ],
   "office": [
     "https://images.unsplash.com/photo-1774953037913-af0cf688491a?auto=format&fit=crop&fm=jpg&q=84&w=1600",
