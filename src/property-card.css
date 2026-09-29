@@ -325,29 +325,61 @@
 }
 
 /* ----------------------------------------------------------------- specs -- */
+/* ----------------------------------------------------------------- specs -- */
+/* Compact property facts: warm branded strip + individual white chips. */
 .pcard-specs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 14px;
+  align-items: center;
+  justify-content: flex-start;
+  direction: rtl;
+  gap: 6px;
   margin-top: 2px;
-  padding: 12px 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 0.75rem;
+  padding: 10px 11px;
+  border-top: 1px solid rgba(11, 26, 43, 0.09);
+  border-bottom: 1px solid rgba(11, 26, 43, 0.09);
+  border-radius: 10px;
+  background: #f1eae0;
+  color: #626d7b;
+  font-size: 0.72rem;
   font-weight: 600;
 }
 
 .pcard-specs span {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
+  justify-content: center;
   gap: 5px;
+  min-height: 31px;
+  padding: 5px 9px;
+  border: 1px solid rgba(11, 26, 43, 0.09);
+  border-radius: 8px;
+  background: #fff;
+  color: #626d7b;
+  box-shadow: 0 2px 8px rgba(11, 26, 43, 0.035);
+  line-height: 1;
   white-space: nowrap;
+  transition:
+    background-color 160ms var(--ease),
+    border-color 160ms var(--ease),
+    color 160ms var(--ease),
+    transform 160ms var(--ease);
 }
 
-.pcard-specs svg {
-  flex: 0 0 auto;
-  color: var(--brass-700);
+.pcard-specs span svg {
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  color: #8a5e14;
+  stroke: currentColor;
+}
+
+.pcard-specs span:hover {
+  border-color: #dfbd75;
+  background: #f5ead2;
+  color: #102d45;
+  transform: translateY(-1px);
 }
 
 /* ---------------------------------------------------------------- footer -- */
@@ -600,121 +632,22 @@
   }
 }
 
-
-/* === HIRMAND PROPERTY CARD SPECS — GLOBAL LIGHT DEFAULT ======================
-   The compact specs row must be branded in its resting state everywhere,
-   not only after hover or only inside the property-detail page.
-   ========================================================================== */
-
-.pcard-specs {
-  background: var(--surface-2, #f1eae0) !important;
-  color: var(--muted, #626d7b) !important;
-  border-top: 1px solid var(--line, rgba(11, 26, 43, 0.09)) !important;
-  border-bottom: 1px solid var(--line, rgba(11, 26, 43, 0.09)) !important;
-  border-radius: 10px !important;
-  text-shadow: none !important;
-  box-shadow: none !important;
-}
-
-.pcard-specs span {
-  background: transparent !important;
-  color: var(--muted, #626d7b) !important;
-  text-shadow: none !important;
-}
-
-.pcard-specs svg {
-  color: var(--brass-700, #8a5e14) !important;
-  stroke: currentColor !important;
-}
-
-.pcard:hover .pcard-specs,
-.pcard:focus-within .pcard-specs {
-  background: var(--brass-100, #f5ead2) !important;
-  color: var(--navy-900, #102d45) !important;
-  border-top-color: var(--brass-300, #dfbd75) !important;
-  border-bottom-color: var(--brass-300, #dfbd75) !important;
-}
-
-.pcard:hover .pcard-specs span,
-.pcard:focus-within .pcard-specs span {
-  color: var(--navy-900, #102d45) !important;
-}
-
-
-/* === HIRMAND PROPERTY CARD SPECS — HARD LIGHT SURFACES =======================
-   Make each compact specification item visibly belong to the main light theme.
-   No inherited dark/overlay state is allowed in the resting state.
-   ========================================================================== */
-
-.pcard-specs,
-.pcard-specs * {
-  -webkit-text-fill-color: currentColor !important;
-}
-
-.pcard-specs {
-  background: #f1eae0 !important;
-  color: #626d7b !important;
-  border-top: 1px solid rgba(11, 26, 43, 0.09) !important;
-  border-bottom: 1px solid rgba(11, 26, 43, 0.09) !important;
-  box-shadow: none !important;
-}
-
-.pcard-specs span {
-  min-height: 30px !important;
-  padding: 5px 9px !important;
-  border: 1px solid rgba(11, 26, 43, 0.09) !important;
-  border-radius: 9px !important;
-  background: #ffffff !important;
-  color: #626d7b !important;
-  box-shadow: 0 2px 8px rgba(11, 26, 43, 0.035) !important;
-}
-
-.pcard-specs span svg {
-  width: 14px !important;
-  height: 14px !important;
-  color: #8a5e14 !important;
-  stroke: currentColor !important;
-}
-
-.pcard-specs span:hover {
-  background: #f5ead2 !important;
-  color: #102d45 !important;
-  border-color: #dfbd75 !important;
-}
-
-.pcard-specs span:hover svg {
-  color: #8a5e14 !important;
-}
-
-.pcard:hover .pcard-specs,
-.pcard:focus-within .pcard-specs {
-  background: #f1eae0 !important;
-  color: #626d7b !important;
-  border-top-color: rgba(11, 26, 43, 0.09) !important;
-  border-bottom-color: rgba(11, 26, 43, 0.09) !important;
-}
-
-.pcard:hover .pcard-specs span,
-.pcard:focus-within .pcard-specs span {
-  background: #ffffff !important;
-  color: #626d7b !important;
-  border-color: rgba(11, 26, 43, 0.09) !important;
-}
-
-.pcard:hover .pcard-specs span:hover,
-.pcard:focus-within .pcard-specs span:hover {
-  background: #f5ead2 !important;
-  color: #102d45 !important;
-  border-color: #dfbd75 !important;
-}
-
 @media (max-width: 720px) {
   .pcard-specs {
-    gap: 7px 9px !important;
+    gap: 6px;
+    padding: 9px 10px;
   }
 
   .pcard-specs span {
-    min-height: 29px !important;
-    padding-inline: 8px !important;
+    min-height: 29px;
+    padding: 5px 8px;
+    border-radius: 7px;
+    font-size: 0.68rem;
+  }
+
+  .pcard-specs span svg {
+    width: 13px;
+    height: 13px;
+    flex-basis: 13px;
   }
 }
