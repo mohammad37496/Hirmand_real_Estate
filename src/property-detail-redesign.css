@@ -1767,3 +1767,185 @@ body:has(.property-detail-page) {
     background: var(--card, #ffffff) !important;
   }
 }
+
+
+/* === HIRMAND DESCRIPTION THEME LOCK =======================================
+   Align the property description card with the site's light ivory/navy/brass
+   theme and neutralize legacy dark surfaces without changing content/logic.
+   ========================================================================== */
+.property-detail-page .property-detail-body {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+  background: var(--surface, #ffffff) !important;
+  color: var(--fg, #152430) !important;
+  border-color: var(--line, rgba(11, 26, 43, 0.11)) !important;
+  box-shadow: var(--el-1, 0 10px 28px rgba(11, 26, 43, 0.06)) !important;
+}
+
+.property-detail-page .property-detail-body::before,
+.property-detail-page .property-detail-body::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+}
+
+.property-detail-page .property-detail-body .property-section-heading {
+  position: relative !important;
+  z-index: 1 !important;
+  background: transparent !important;
+}
+
+.property-detail-page .property-detail-body .property-section-heading h2 {
+  color: var(--fg, #152430) !important;
+}
+
+.property-detail-page .property-detail-body .property-section-heading .kicker {
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+.property-detail-page .property-detail-body .property-source-badge {
+  background: var(--brass-100, #f5ead2) !important;
+  border-color: var(--gold-line, rgba(138, 94, 20, 0.24)) !important;
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+.property-detail-page .property-detail-body .property-description-meta {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  margin: 0 0 18px !important;
+}
+
+.property-detail-page .property-detail-body .property-description-meta > span {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  min-width: 0 !important;
+  padding: 11px 13px !important;
+  background: var(--surface-2, #f1eae0) !important;
+  border: 1px solid var(--line, rgba(11, 26, 43, 0.11)) !important;
+  border-radius: 12px !important;
+}
+
+.property-detail-page .property-detail-body .property-description-meta strong {
+  color: var(--fg, #152430) !important;
+  font-size: .68rem !important;
+  font-weight: 800 !important;
+}
+
+.property-detail-page .property-detail-body .property-description-meta time {
+  color: var(--muted, #626d7b) !important;
+  font-size: .68rem !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+
+.property-detail-page .property-detail-body .property-description-copy {
+  position: relative !important;
+  z-index: 1 !important;
+  padding: 2px 0 0 !important;
+}
+
+.property-detail-page .property-detail-body .property-description-copy p {
+  margin: 0 !important;
+  padding: 15px 16px !important;
+  background: #fff !important;
+  border: 1px solid var(--line, rgba(11, 26, 43, 0.09)) !important;
+  border-radius: 14px !important;
+  color: var(--fg, #152430) !important;
+  font-size: .9rem !important;
+  line-height: 2.15 !important;
+  white-space: pre-line !important;
+}
+
+.property-detail-page .property-detail-body .property-description-copy p + p {
+  margin-top: 10px !important;
+}
+
+.property-detail-page .property-detail-body .property-description-copy p:first-child {
+  color: var(--muted, #626d7b) !important;
+  background: var(--surface-2, #f1eae0) !important;
+  font-size: .73rem !important;
+  line-height: 1.95 !important;
+  font-weight: 700 !important;
+}
+
+.property-detail-page .property-detail-body .property-features {
+  position: relative !important;
+  z-index: 1 !important;
+  margin-top: 18px !important;
+  padding-top: 17px !important;
+  border-top: 1px solid var(--line, rgba(11, 26, 43, 0.11)) !important;
+}
+
+.property-detail-page .property-detail-body .property-section-subheading h3 {
+  color: var(--fg, #152430) !important;
+}
+
+.property-detail-page .property-detail-body .property-section-subheading > span {
+  display: inline-flex !important;
+  align-items: center !important;
+  min-height: 28px !important;
+  padding: 4px 9px !important;
+  background: var(--brass-100, #f5ead2) !important;
+  border: 1px solid var(--gold-line, rgba(138, 94, 20, 0.24)) !important;
+  border-radius: 999px !important;
+  color: var(--brass-700, #8a5e14) !important;
+  font-size: .65rem !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+}
+
+.property-detail-page .property-detail-body .property-features ul {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  margin: 11px 0 0 !important;
+}
+
+.property-detail-page .property-detail-body .property-features li {
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+  min-height: 56px !important;
+  padding: 10px 12px !important;
+  background: var(--surface-2, #f1eae0) !important;
+  border: 1px solid var(--line, rgba(11, 26, 43, 0.09)) !important;
+  border-radius: 13px !important;
+  color: var(--fg, #152430) !important;
+  font-size: .74rem !important;
+  font-weight: 750 !important;
+}
+
+.property-detail-page .property-detail-body .property-features li svg {
+  flex: 0 0 auto !important;
+  width: 18px !important;
+  height: 18px !important;
+  padding: 3px !important;
+  border-radius: 999px !important;
+  background: var(--brass-100, #f5ead2) !important;
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-detail-body .property-description-meta {
+    grid-template-columns: 1fr !important;
+  }
+
+  .property-detail-page .property-detail-body .property-description-meta > span {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+  }
+
+  .property-detail-page .property-detail-body .property-description-copy p {
+    padding: 13px 14px !important;
+    font-size: .86rem !important;
+  }
+
+  .property-detail-page .property-detail-body .property-features ul {
+    grid-template-columns: 1fr !important;
+  }
+}
