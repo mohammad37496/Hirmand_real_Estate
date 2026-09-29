@@ -13,7 +13,6 @@ import {
   Sparkles,
   Target,
   UserRound,
-  WalletCards,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -72,6 +71,60 @@ function normalizePhone(value: string) {
     .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
     .replace(/[\s\-()]/g, "")
     .replace(/^(?:\+98|0098|98)/, "0");
+}
+
+function BudgetMatchMarkIcon() {
+  return (
+    <svg
+      className="budget-matcher-mark-icon"
+      viewBox="0 0 72 72"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <defs>
+        <linearGradient id="budget-mark-gold" x1="13" y1="10" x2="58" y2="62" gradientUnits="userSpaceOnUse">
+          <stop stopColor="var(--brass-300)" />
+          <stop offset="1" stopColor="var(--brass-500)" />
+        </linearGradient>
+      </defs>
+      <circle cx="36" cy="36" r="32" fill="var(--navy-950)" stroke="var(--brass-500)" strokeWidth="1.5" />
+      <path
+        d="M18 31.5 36 17l18 14.5"
+        stroke="url(#budget-mark-gold)"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M23 29.5V44c0 2.2 1.8 4 4 4h18c2.2 0 4-1.8 4-4V29.5"
+        stroke="var(--navy-200)"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M27 35h12v8H27z"
+        fill="var(--navy-900)"
+        stroke="var(--brass-300)"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M45 35.5h5.8c3 0 5.2 2.1 5.2 4.7s-2.2 4.8-5.2 4.8H45"
+        stroke="var(--navy-200)"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
+      <circle cx="49.5" cy="40.2" r="1.5" fill="var(--brass-300)" />
+      <ellipse cx="24" cy="50.5" rx="7" ry="2.8" fill="var(--brass-500)" />
+      <path d="M17 50.5v4.8c0 1.6 3.1 2.8 7 2.8s7-1.2 7-2.8v-4.8" stroke="var(--brass-500)" strokeWidth="2" />
+      <ellipse cx="24" cy="55.3" rx="7" ry="2.8" fill="var(--navy-900)" stroke="var(--brass-300)" strokeWidth="1.2" />
+      <ellipse cx="34" cy="55.3" rx="7" ry="2.8" fill="var(--brass-500)" />
+      <path d="M27 55.3v4.6c0 1.6 3.1 2.8 7 2.8s7-1.2 7-2.8v-4.6" stroke="var(--brass-500)" strokeWidth="2" />
+      <ellipse cx="34" cy="59.9" rx="7" ry="2.8" fill="var(--navy-900)" stroke="var(--brass-300)" strokeWidth="1.2" />
+    </svg>
+  );
 }
 
 function conversionText(match: PropertyBudgetMatch) {
@@ -259,9 +312,13 @@ export function BudgetMatcher() {
           </ul>
         </div>
         <aside className="budget-matcher-hero-mark" aria-label="سیستم تطبیق بودجه هیرمند">
-          <WalletCards size={38} strokeWidth={1.35} aria-hidden="true" />
-          <span>HIRMAND MATCH</span>
-          <small>تطبیق بودجه با فایل‌های منتشرشده</small>
+          <div className="budget-matcher-mark-emblem">
+            <BudgetMatchMarkIcon />
+          </div>
+          <div className="budget-matcher-mark-copy">
+            <span>HIRMAND <b>MATCH</b></span>
+            <small>تطبیق بودجه با فایل‌های منتشرشده</small>
+          </div>
         </aside>
       </header>
 
