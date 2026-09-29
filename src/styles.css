@@ -8094,3 +8094,52 @@ a.btn-ghost[href^="https://wa.me/"] svg {
 .pcard-spec:active {
   background: #F1EAE0 !important;
 }
+
+
+/* Property actions stacking fix — especially important on the mobile detail layout. */
+.property-detail-summary,
+.property-detail-content,
+.property-detail-main {
+  position: relative;
+}
+
+.property-detail-summary {
+  z-index: 3;
+  overflow: visible;
+}
+
+.property-actions {
+  position: relative;
+  z-index: 20;
+  isolation: isolate;
+  overflow: visible;
+}
+
+.property-action {
+  position: relative;
+  z-index: 21;
+  pointer-events: auto;
+}
+
+@media (max-width: 720px) {
+  .property-detail-summary {
+    z-index: 5;
+    overflow: visible !important;
+  }
+
+  .property-actions {
+    position: relative !important;
+    z-index: 30 !important;
+    overflow: visible !important;
+  }
+
+  .property-action {
+    position: relative !important;
+    z-index: 31 !important;
+    pointer-events: auto !important;
+  }
+
+  .property-actions:not(.property-actions-compact) {
+    isolation: isolate;
+  }
+}
