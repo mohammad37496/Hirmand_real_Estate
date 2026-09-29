@@ -3050,3 +3050,93 @@ body:has(.property-detail-page) .property-detail-page,
   box-shadow: inherit !important;
   text-decoration: none !important;
 }
+
+
+/* ==========================================================================
+   HIRMAND — STATIC DETAIL MICRO-CONTROLS
+   Keep WhatsApp, amenity rows and compact specs simple and unchanged on hover.
+   ========================================================================== */
+
+.property-detail-page a.btn-ghost[href^="https://wa.me/"],
+.property-detail-page a.btn-ghost[href^="https://wa.me/"]:hover,
+.property-detail-page a.btn-ghost[href^="https://wa.me/"]:focus,
+.property-detail-page a.btn-ghost[href^="https://wa.me/"]:focus-visible,
+.property-detail-page a.btn-ghost[href^="https://wa.me/"]:active {
+  background: var(--card) !important;
+  background-image: none !important;
+  border-color: var(--line) !important;
+  color: var(--navy-900) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+.property-detail-page a.btn-ghost[href^="https://wa.me/"] svg,
+.property-detail-page a.btn-ghost[href^="https://wa.me/"]:hover svg,
+.property-detail-page a.btn-ghost[href^="https://wa.me/"]:focus svg,
+.property-detail-page a.btn-ghost[href^="https://wa.me/"]:active svg {
+  color: var(--brass-700) !important;
+  stroke: currentColor !important;
+}
+
+.property-detail-page .property-spec-amenity-item,
+.property-detail-page .property-spec-amenity-item:hover,
+.property-detail-page .property-spec-amenity-item:focus,
+.property-detail-page .property-spec-amenity-item:active {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: var(--fg) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+.property-detail-page .property-spec-amenity-item > svg,
+.property-detail-page .property-spec-amenity-item:hover > svg,
+.property-detail-page .property-spec-amenity-item:focus > svg,
+.property-detail-page .property-spec-amenity-item:active > svg {
+  background: var(--card) !important;
+  background-color: var(--card) !important;
+  border-color: var(--line) !important;
+  color: var(--brass-700) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.property-detail-page .property-features li,
+.property-detail-page .property-features li:hover,
+.property-detail-page .property-features li:focus,
+.property-detail-page .property-features li:active {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: var(--fg) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+.property-detail-page .property-features li svg {
+  color: var(--brass-700) !important;
+}
+
+.property-detail-page .property-related .pcard-specs,
+.property-detail-page .property-related .pcard:hover .pcard-specs,
+.property-detail-page .property-related .pcard:focus-within .pcard-specs,
+.property-detail-page .property-related .pcard-specs span,
+.property-detail-page .property-related .pcard-specs span:hover,
+.property-detail-page .property-related .pcard-specs span:focus,
+.property-detail-page .property-related .pcard-specs span:active {
+  background: var(--card) !important;
+  background-color: var(--card) !important;
+  border-color: var(--line) !important;
+  color: var(--muted) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+.property-detail-page .property-related .pcard-specs span svg {
+  color: var(--brass-700) !important;
+}
