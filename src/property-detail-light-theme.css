@@ -1,0 +1,320 @@
+/* ==========================================================================
+   HIRMAND — property detail light/canonical theme
+   Final cascade layer for the public property-detail page.
+   Keeps the existing layout and interactions; removes unintended dark/black
+   content surfaces and aligns the page with the site's canonical theme tokens.
+   ========================================================================== */
+
+.property-detail-page {
+  background: var(--paper, #f7f4ee) !important;
+  color: var(--fg, #152430) !important;
+}
+
+/* Page sections / cards: always use the site's light surfaces. */
+.property-detail-page .property-detail-top,
+.property-detail-page .property-detail-summary,
+.property-detail-page .property-detail-main > section,
+.property-detail-page .property-detail-body,
+.property-detail-page .property-divar-specs,
+.property-detail-page .property-location-section,
+.property-detail-page .property-map-card,
+.property-detail-page .property-final-cta,
+.property-detail-page .property-quick-overview,
+.property-detail-page .property-related,
+.property-detail-page .property-contact-card {
+  color: var(--fg, #152430) !important;
+  border-color: var(--line, #e4dccc) !important;
+  background: var(--card, #ffffff) !important;
+}
+
+/* Warm secondary surfaces. */
+.property-detail-page .property-price-block,
+.property-detail-page .property-spec-grid > *,
+.property-detail-page .property-spec-amenities,
+.property-detail-page .property-quick-overview-list > div,
+.property-detail-page .property-description-meta > span,
+.property-detail-page .property-features,
+.property-detail-page .property-location-fallback {
+  color: var(--fg, #152430) !important;
+  border-color: var(--line, #e4dccc) !important;
+  background: var(--card-2, #fbf8f2) !important;
+}
+
+/* Keep the detail page's final CTA branded without a dark block. */
+.property-detail-page .property-final-cta {
+  background:
+    linear-gradient(135deg, var(--card, #ffffff) 0%, var(--navy-100, #e2eaf2) 100%) !important;
+}
+
+/* Breadcrumb / small utility surfaces. */
+.property-detail-page .property-breadcrumb,
+.property-detail-page .property-file-code,
+.property-detail-page .property-map-actions,
+.property-detail-page .property-action,
+.property-detail-page .property-primary-contact-whatsapp {
+  color: var(--fg, #152430) !important;
+  background: var(--card, #ffffff) !important;
+  border-color: var(--line, #e4dccc) !important;
+}
+
+/* Status / action accents: use the canonical brand instead of black/navy fills. */
+.property-detail-page .property-status-badge,
+.property-detail-page .property-primary-contact-call,
+.property-detail-page .property-action-primary,
+.property-detail-page .property-action.is-active {
+  background: var(--brass-500, #c08a2a) !important;
+  border-color: var(--brass-500, #c08a2a) !important;
+  color: #fff !important;
+}
+
+.property-detail-page .property-status-badge:hover,
+.property-detail-page .property-primary-contact-call:hover,
+.property-detail-page .property-action-primary:hover,
+.property-detail-page .property-action.is-active:hover {
+  background: var(--brass-600, #a8761f) !important;
+  border-color: var(--brass-600, #a8761f) !important;
+}
+
+.property-detail-page .property-type-badge,
+.property-detail-page .property-featured-note,
+.property-detail-page .property-gallery-featured,
+.property-detail-page .property-detail-title-block .property-detail-eyebrow {
+  background: var(--brass-100, #f7edda) !important;
+  border-color: var(--line, #e4dccc) !important;
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+/* Consultant card: same content hierarchy, but no dark panel. */
+.property-detail-page .property-contact-card {
+  background:
+    linear-gradient(180deg, var(--card, #ffffff) 0%, var(--paper, #f7f4ee) 100%) !important;
+  color: var(--fg, #152430) !important;
+  box-shadow: 0 16px 34px rgb(16 36 52 / 10%) !important;
+}
+
+.property-detail-page .property-contact-card .property-contact-name,
+.property-detail-page .property-contact-card .property-contact-phone,
+.property-detail-page .property-contact-card .property-contact-note,
+.property-detail-page .property-contact-card .property-consultant-role {
+  color: var(--fg, #152430) !important;
+}
+
+.property-detail-page .property-contact-card .property-consultant-copy .kicker,
+.property-detail-page .property-contact-card .property-consultant-badge,
+.property-detail-page .property-contact-card .property-contact-profile {
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+.property-detail-page .property-contact-card .property-consultant-badge {
+  background: var(--brass-100, #f7edda) !important;
+  border: 1px solid var(--line, #e4dccc) !important;
+}
+
+.property-detail-page .property-contact-card .property-contact-phone {
+  background: var(--card-2, #fbf8f2) !important;
+  border-color: var(--line, #e4dccc) !important;
+}
+
+.property-detail-page .property-contact-card .btn-ghost {
+  background: var(--card, #ffffff) !important;
+  border-color: var(--line, #e4dccc) !important;
+  color: var(--fg, #152430) !important;
+}
+
+.property-detail-page .property-contact-card .btn-ghost:hover {
+  background: var(--brass-100, #f7edda) !important;
+  border-color: var(--brass-500, #c08a2a) !important;
+}
+
+.property-detail-page .property-contact-card .btn-gold {
+  background: linear-gradient(
+    180deg,
+    var(--brass-300, #e2c48c),
+    var(--brass-500, #c08a2a)
+  ) !important;
+  color: var(--navy-950, #081320) !important;
+}
+
+/* Gallery UI chrome: light cards around the imagery; the imagery itself is untouched. */
+.property-detail-page .property-gallery-rail,
+.property-detail-page .property-gallery-thumb,
+.property-detail-page .property-gallery-open,
+.property-detail-page .property-gallery-nav,
+.property-detail-page .property-gallery-counter {
+  border-color: var(--line, #e4dccc) !important;
+}
+
+.property-detail-page .property-gallery-thumb,
+.property-detail-page .property-gallery-open,
+.property-detail-page .property-gallery-nav {
+  background: var(--card, #ffffff) !important;
+  color: var(--fg, #152430) !important;
+}
+
+.property-detail-page .property-gallery-thumb.is-active {
+  border-color: var(--brass-500, #c08a2a) !important;
+  box-shadow: 0 0 0 2px var(--brass-100, #f7edda) !important;
+}
+
+.property-detail-page .property-gallery-counter {
+  background: var(--card, #ffffff) !important;
+  color: var(--fg, #152430) !important;
+}
+
+.property-detail-page .property-gallery-featured {
+  color: var(--navy-950, #081320) !important;
+}
+
+/* Video chrome stays functional but no longer renders as a black content panel. */
+.property-detail-page .property-video-controls {
+  background: var(--card, #ffffff) !important;
+  color: var(--fg, #152430) !important;
+  border-top: 1px solid var(--line, #e4dccc) !important;
+}
+
+.property-detail-page .property-video-controls button {
+  color: var(--fg, #152430) !important;
+  background: var(--card-2, #fbf8f2) !important;
+  border-color: var(--line, #e4dccc) !important;
+}
+
+.property-detail-page .property-video-controls button:hover {
+  background: var(--brass-100, #f7edda) !important;
+  border-color: var(--brass-500, #c08a2a) !important;
+}
+
+.property-detail-page .property-video-progress {
+  accent-color: var(--brass-600, #a8761f);
+}
+
+/* Remove dark utility backgrounds that were inherited from earlier global skins. */
+.property-detail-page .property-tools-heading,
+.property-detail-page .property-section-heading,
+.property-detail-page .property-section-subheading {
+  background: transparent !important;
+  color: var(--fg, #152430) !important;
+}
+
+.property-detail-page .property-tools-heading span:last-child,
+.property-detail-page .property-section-subheading span,
+.property-detail-page .property-description-meta time {
+  color: var(--muted, #57646e) !important;
+}
+
+/* Keep the floating actions consistent with the light property-detail page. */
+body:has(.property-detail-page) .quick-actions .quick-action {
+  background: var(--card, #ffffff) !important;
+  color: var(--fg, #152430) !important;
+  border-color: var(--line, #e4dccc) !important;
+}
+
+body:has(.property-detail-page) .quick-actions .quick-action-primary {
+  background: var(--brass-500, #c08a2a) !important;
+  color: #fff !important;
+  border-color: var(--brass-500, #c08a2a) !important;
+}
+
+/* Header/footer on the detail route use the same light page treatment. */
+body:has(.property-detail-page) .site-nav,
+body:has(.property-detail-page) .site-nav.is-scrolled {
+  background: rgb(247 244 238 / 96%) !important;
+  border-bottom-color: var(--line, #e4dccc) !important;
+  color: var(--fg, #152430) !important;
+  backdrop-filter: blur(14px) !important;
+}
+
+body:has(.property-detail-page) .site-nav .nav-brand,
+body:has(.property-detail-page) .site-nav .nav-brand strong,
+body:has(.property-detail-page) .site-nav .nav-links,
+body:has(.property-detail-page) .site-nav .nav-links a,
+body:has(.property-detail-page) .site-nav .nav-brand small {
+  color: var(--fg, #152430) !important;
+}
+
+body:has(.property-detail-page) .site-nav .nav-links a:hover,
+body:has(.property-detail-page) .site-nav .nav-links a.is-current {
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+body:has(.property-detail-page) .site-nav .menu-toggle {
+  background: var(--card, #ffffff) !important;
+  color: var(--fg, #152430) !important;
+  border-color: var(--line, #e4dccc) !important;
+}
+
+body:has(.property-detail-page) .footer {
+  background:
+    linear-gradient(180deg, var(--card, #ffffff), var(--paper-2, #f1eae0)) !important;
+  color: var(--fg, #152430) !important;
+  border-top-color: var(--line, #e4dccc) !important;
+}
+
+body:has(.property-detail-page) .footer .footer-address,
+body:has(.property-detail-page) .footer small {
+  color: var(--muted, #57646e) !important;
+}
+
+body:has(.property-detail-page) .footer a {
+  color: var(--fg, #152430) !important;
+}
+
+body:has(.property-detail-page) .footer a:hover {
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+/* Mobile: preserve light surfaces and prevent dark full-width bands. */
+@media (max-width: 720px) {
+  .property-detail-page,
+  .property-detail-page .property-detail-top,
+  .property-detail-page .property-detail-content,
+  .property-detail-page .property-detail-summary,
+  .property-detail-page .property-detail-main > section,
+  .property-detail-page .property-detail-body,
+  .property-detail-page .property-related,
+  .property-detail-page .property-quick-overview {
+    background: var(--paper, #f7f4ee) !important;
+  }
+
+  .property-detail-page .property-detail-summary,
+  .property-detail-page .property-detail-main > section,
+  .property-detail-page .property-contact-card {
+    background: var(--card, #ffffff) !important;
+  }
+}
+
+/* Lightbox is an image viewer; keep it legible without the legacy black skin. */
+.property-lightbox {
+  background: rgb(247 244 238 / 97%) !important;
+  color: var(--fg, #152430) !important;
+}
+
+.property-lightbox-close,
+.property-lightbox-nav,
+.property-lightbox-count,
+.property-lightbox-zoom-hint,
+.property-lightbox-thumb {
+  background: var(--card, #ffffff) !important;
+  color: var(--fg, #152430) !important;
+  border-color: var(--line, #e4dccc) !important;
+}
+
+.property-lightbox-close:hover,
+.property-lightbox-nav:hover,
+.property-lightbox-thumb.is-active {
+  background: var(--brass-100, #f7edda) !important;
+  border-color: var(--brass-500, #c08a2a) !important;
+}
+
+/* Print stays paper/white and never falls back to the old dark palette. */
+@media print {
+  .property-detail-page,
+  .property-detail-page .property-detail-summary,
+  .property-detail-page .property-detail-main > section,
+  .property-detail-page .property-contact-card,
+  .property-detail-page .property-final-cta,
+  .property-detail-page .property-quick-overview {
+    background: #fff !important;
+    color: #152430 !important;
+    box-shadow: none !important;
+  }
+}
