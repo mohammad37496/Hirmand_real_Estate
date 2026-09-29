@@ -2998,3 +2998,36 @@ body:has(.property-detail-page) .property-detail-page,
   background: #ffffff !important;
   border-color: #e4dccc !important;
 }
+
+
+/* ==========================================================================
+   PROPERTY DETAIL — QUICK OVERVIEW HEADING READABILITY
+   ========================================================================== */
+.property-detail-page #property-quick-overview-title {
+  margin: 0 !important;
+  color: #173149 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+  font-size: clamp(1rem, 0.94rem + 0.22vw, 1.16rem) !important;
+  line-height: 1.75 !important;
+  font-weight: 950 !important;
+  letter-spacing: 0 !important;
+  overflow-wrap: anywhere !important;
+}
+
+.property-detail-page .property-quick-overview .property-aside-heading h2 {
+  color: #173149 !important;
+}
+
+@media (max-width: 720px) {
+  .property-detail-page #property-quick-overview-title {
+    font-size: 0.98rem !important;
+    line-height: 1.8 !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .property-detail-page #property-quick-overview-title {
+    font-size: 0.94rem !important;
+  }
+}
