@@ -3508,3 +3508,43 @@ body:has(.property-detail-page) {
     gap: 7px 10px !important;
   }
 }
+
+
+/* === HIRMAND CONSULTANT WHATSAPP — LIGHT MAIN THEME LOCK =====================
+   The consultant-card WhatsApp .btn-ghost must match the public light theme
+   in its resting state, including icon contrast. Hover uses the brass accent.
+   ========================================================================== */
+
+.property-detail-page .property-detail-aside .property-contact-actions > .btn-ghost {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  min-height: 46px !important;
+  background: var(--surface, #ffffff) !important;
+  color: var(--navy-900, #102d45) !important;
+  border: 1px solid var(--line-2, rgba(11, 26, 43, 0.13)) !important;
+  border-radius: 13px !important;
+  box-shadow: 0 3px 12px rgba(11, 26, 43, 0.035) !important;
+  text-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-actions > .btn-ghost svg {
+  color: var(--brass-700, #8a5e14) !important;
+  stroke: currentColor !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-actions > .btn-ghost:hover,
+.property-detail-page .property-detail-aside .property-contact-actions > .btn-ghost:focus-visible {
+  background: var(--brass-100, #f5ead2) !important;
+  color: var(--brass-700, #8a5e14) !important;
+  border-color: var(--brass-300, #dfbd75) !important;
+  box-shadow: 0 6px 16px rgba(192, 138, 42, 0.10) !important;
+}
+
+.property-detail-page .property-detail-aside .property-contact-actions > .btn-ghost:hover svg,
+.property-detail-page .property-detail-aside .property-contact-actions > .btn-ghost:focus-visible svg {
+  color: var(--brass-700, #8a5e14) !important;
+}
