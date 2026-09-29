@@ -9479,3 +9479,9 @@ a.btn-ghost[href^="https://wa.me/"] svg {
     height: 18px;
   }
 }
+
+
+/* Final property card specs strip background */
+.pcard-specs {
+  background: #F1EAE0 !important;
+}
