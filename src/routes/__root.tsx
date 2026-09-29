@@ -16,6 +16,7 @@ import mobileDeviceFixesCss from "../mobile-device-fixes.css?url";
 import themeHarmonyCss from "../theme-harmony.css?url";
 import propertyCardCss from "../property-card.css?url";
 import homePropertyLayoutCss from "../home-property-layout.css?url";
+import propertyDetailRedesignCss from "../property-detail-redesign.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -53,6 +54,7 @@ export const Route = createRootRoute({
       { rel: "stylesheet", href: themeHarmonyCss },
       { rel: "stylesheet", href: propertyCardCss },
       { rel: "stylesheet", href: homePropertyLayoutCss },
+      { rel: "stylesheet", href: propertyDetailRedesignCss },
     ],
   }),
   component: RootDocument,
