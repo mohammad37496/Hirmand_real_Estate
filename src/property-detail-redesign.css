@@ -3452,3 +3452,59 @@ body:has(.property-detail-page) {
     z-index: 1 !important;
   }
 }
+
+
+/* === HIRMAND RELATED CARD SPECS — LIGHT THEME LOCK ===========================
+   Summary specifications inside related property cards inherit the public
+   light theme instead of any legacy dark card styling.
+   ========================================================================== */
+
+.property-detail-page .property-related .pcard-specs {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 8px 14px !important;
+  background: var(--surface-2, #f1eae0) !important;
+  color: var(--muted, #626d7b) !important;
+  border: 1px solid var(--line, rgba(11, 26, 43, 0.09)) !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+
+.property-detail-page .property-related .pcard-specs span {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  background: transparent !important;
+  color: var(--muted, #626d7b) !important;
+  text-shadow: none !important;
+}
+
+.property-detail-page .property-related .pcard-specs span svg {
+  flex: 0 0 auto !important;
+  color: var(--brass-700, #8a5e14) !important;
+  stroke: currentColor !important;
+}
+
+.property-detail-page .property-related .pcard-specs span::selection {
+  background: var(--brass-100, #f5ead2) !important;
+  color: var(--navy-900, #102d45) !important;
+}
+
+.property-detail-page .property-related .pcard:hover .pcard-specs,
+.property-detail-page .property-related .pcard:focus-within .pcard-specs {
+  background: var(--card-2, #f1eae0) !important;
+  color: var(--navy-900, #102d45) !important;
+  border-color: var(--brass-300, #dfbd75) !important;
+}
+
+.property-detail-page .property-related .pcard:hover .pcard-specs span,
+.property-detail-page .property-related .pcard:focus-within .pcard-specs span {
+  color: var(--navy-900, #102d45) !important;
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-related .pcard-specs {
+    gap: 7px 10px !important;
+  }
+}
