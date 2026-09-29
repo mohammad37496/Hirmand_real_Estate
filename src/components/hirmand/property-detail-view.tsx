@@ -1222,13 +1222,18 @@ export function PropertyDetailView({
         <section className="property-detail-content">
           <article className="property-detail-main">
             <section className="property-divar-specs" aria-labelledby="property-specs-title">
-              <div className="property-section-heading">
-                <div>
-                  <span className="kicker">جزئیات فایل</span>
-                  <h2 id="property-specs-title">مشخصات ملک</h2>
-                </div>
-                <span className="property-source-badge">اطلاعات آگهی</span>
-              </div>
+              <details className="property-specs-accordion" open>
+                <summary className="property-specs-accordion-summary">
+                  <span className="property-specs-accordion-heading">
+                    <span className="kicker">جزئیات فایل</span>
+                    <span id="property-specs-title" className="property-specs-title">مشخصات ملک</span>
+                  </span>
+                  <span className="property-specs-accordion-meta">
+                    <span className="property-source-badge">اطلاعات آگهی</span>
+                    <ChevronDown size={18} aria-hidden="true" />
+                  </span>
+                </summary>
+                <div className="property-specs-accordion-body">
               <div className="property-spec-grid">
                 {property.areaM2 != null ? <div><Ruler size={18} /><span><small>متراژ</small><strong>{property.areaM2.toLocaleString("fa-IR")} متر</strong></span></div> : null}
                 {property.bedrooms != null ? <div><BedDouble size={18} /><span><small>اتاق خواب</small><strong>{property.bedrooms.toLocaleString("fa-IR")}</strong></span></div> : null}
@@ -1304,6 +1309,8 @@ export function PropertyDetailView({
                   </div>
                 </details>
               ) : null}
+                </div>
+              </details>
             </section>
 
 
