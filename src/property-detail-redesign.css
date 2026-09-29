@@ -1680,3 +1680,90 @@ body:has(.property-detail-page) {
     grid-template-columns: 1fr !important;
   }
 }
+
+
+/* === HIRMAND SPEC THEME LOCK ==============================================
+   Keep the property specifications aligned with the site's light ivory/navy/
+   brass theme. This final layer intentionally neutralizes any legacy dark
+   surface/pseudo-element rules without changing property data or behavior.
+   ========================================================================== */
+.property-detail-page .property-divar-specs {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+  background: var(--surface, #ffffff) !important;
+  color: var(--fg, #152430) !important;
+  border: 1px solid var(--line, rgba(11, 26, 43, 0.11)) !important;
+  box-shadow: var(--el-1, 0 10px 28px rgba(11, 26, 43, 0.06)) !important;
+}
+
+.property-detail-page .property-divar-specs::before,
+.property-detail-page .property-divar-specs::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+}
+
+.property-detail-page .property-divar-specs .property-section-heading {
+  position: relative !important;
+  z-index: 1 !important;
+  background: transparent !important;
+  color: var(--fg, #152430) !important;
+}
+
+.property-detail-page .property-divar-specs .property-section-heading h2 {
+  color: var(--fg, #152430) !important;
+}
+
+.property-detail-page .property-divar-specs .property-section-heading .kicker,
+.property-detail-page .property-divar-specs .property-section-heading > svg {
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+.property-detail-page .property-divar-specs .property-source-badge {
+  background: var(--brass-100, #f5ead2) !important;
+  border-color: var(--gold-line, rgba(138, 94, 20, 0.24)) !important;
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-grid {
+  position: relative !important;
+  z-index: 1 !important;
+  background: transparent !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-grid > div {
+  background: var(--card, #ffffff) !important;
+  color: var(--fg, #152430) !important;
+  border-color: var(--line, rgba(11, 26, 43, 0.11)) !important;
+  box-shadow: 0 3px 14px rgba(11, 26, 43, 0.035) !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-grid > div:hover {
+  background: var(--card, #ffffff) !important;
+  border-color: var(--brass-500, #c08a2a) !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-grid > div > svg {
+  background: var(--brass-100, #f5ead2) !important;
+  color: var(--brass-700, #8a5e14) !important;
+  border-color: rgba(138, 94, 20, 0.16) !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-grid small {
+  color: var(--subtle, #8b94a1) !important;
+}
+
+.property-detail-page .property-divar-specs .property-spec-grid strong {
+  color: var(--fg, #152430) !important;
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-divar-specs {
+    background: var(--surface, #ffffff) !important;
+  }
+
+  .property-detail-page .property-divar-specs .property-spec-grid > div {
+    background: var(--card, #ffffff) !important;
+  }
+}
