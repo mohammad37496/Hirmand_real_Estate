@@ -2950,3 +2950,51 @@ body:has(.property-detail-page) .footer a:hover {
 .pcard-specs span:hover {
   transition: none !important;
 }
+
+
+/* ==========================================================================
+   HIRMAND — REMOVE ALL LEGACY BLACK SURFACES FROM PROPERTY DETAIL CONTENT
+   ========================================================================== */
+body:has(.property-detail-page),
+body:has(.property-detail-page) .property-detail-page,
+.property-detail-page .property-detail-content,
+.property-detail-page .property-detail-main,
+.property-detail-page .property-detail-body,
+.property-detail-page .property-location-section,
+.property-detail-page .property-divar-specs,
+.property-detail-page .property-spec-amenities,
+.property-detail-page .property-spec-amenities-body,
+.property-detail-page .property-spec-amenity-item,
+.property-detail-page .property-map-card,
+.property-detail-page .property-map-actions {
+  background-color: #f7f4ee !important;
+  color: #173149 !important;
+}
+
+.property-detail-page .property-detail-body,
+.property-detail-page .property-location-section,
+.property-detail-page .property-divar-specs,
+.property-detail-page .property-spec-amenities,
+.property-detail-page .property-spec-amenities-body,
+.property-detail-page .property-map-card {
+  background-image: none !important;
+}
+
+.property-detail-page .property-detail-body,
+.property-detail-page .property-location-section,
+.property-detail-page .property-divar-specs {
+  background: #ffffff !important;
+}
+
+.property-detail-page .property-spec-amenities {
+  border-color: #e4dccc !important;
+}
+
+.property-detail-page .property-spec-amenities-body {
+  background: #fbf8f2 !important;
+}
+
+.property-detail-page .property-spec-amenity-item {
+  background: #ffffff !important;
+  border-color: #e4dccc !important;
+}
