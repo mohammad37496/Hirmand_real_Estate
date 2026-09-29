@@ -8086,3 +8086,11 @@ a.btn-ghost[href^="https://wa.me/"] svg {
     width: 100%;
   }
 }
+
+
+/* Property card specs background refinement */
+.pcard-spec,
+.pcard-spec:hover,
+.pcard-spec:active {
+  background: #F1EAE0 !important;
+}
