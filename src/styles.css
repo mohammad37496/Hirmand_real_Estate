@@ -9202,3 +9202,95 @@ a.btn-ghost[href^="https://wa.me/"] svg {
     margin-top: 9px !important;
   }
 }
+
+
+/* =========================================================
+   HIRMAND PROPERTY DETAIL — LEGIBILITY FINAL PASS
+   ========================================================= */
+
+/* Specifications heading: keep strong contrast in every theme layer. */
+#property-specs-title,
+.property-divar-specs #property-specs-title,
+.property-section-heading #property-specs-title {
+  color: var(--fg) !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+  font-weight: 800 !important;
+  font-size: clamp(1.05rem, 0.95rem + 0.35vw, 1.32rem) !important;
+  line-height: 1.55 !important;
+}
+
+/* WhatsApp CTA: prevent legacy dark btn-ghost rules from reducing contrast. */
+.property-detail-page a.btn-ghost[href^="https://wa.me/"],
+.property-detail-page a.btn-ghost[href^="https://wa.me/"]:visited {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-height: 46px !important;
+  padding: 9px 16px !important;
+  color: #163247 !important;
+  background: #fffdfa !important;
+  border: 1px solid var(--gold-line) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 7px 18px rgba(23, 32, 51, 0.07) !important;
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+  line-height: 1.4 !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+.property-detail-page a.btn-ghost[href^="https://wa.me/"] svg {
+  flex: 0 0 auto !important;
+  width: 18px !important;
+  height: 18px !important;
+  color: #0f766e !important;
+  opacity: 1 !important;
+}
+
+.property-detail-page a.btn-ghost[href^="https://wa.me/"]:hover,
+.property-detail-page a.btn-ghost[href^="https://wa.me/"]:active,
+.property-detail-page a.btn-ghost[href^="https://wa.me/"]:focus-visible {
+  color: #163247 !important;
+  background: #fffdfa !important;
+  border-color: var(--gold-line) !important;
+  box-shadow: 0 7px 18px rgba(23, 32, 51, 0.07) !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+@media (max-width: 720px) {
+  #property-specs-title,
+  .property-divar-specs #property-specs-title,
+  .property-section-heading #property-specs-title {
+    display: block !important;
+    min-width: 0 !important;
+    color: #15221f !important;
+    font-size: 1.08rem !important;
+    line-height: 1.6 !important;
+    letter-spacing: -0.01em !important;
+  }
+
+  .property-detail-page a.btn-ghost[href^="https://wa.me/"],
+  .property-detail-page a.btn-ghost[href^="https://wa.me/"]:visited {
+    width: 100% !important;
+    min-height: 46px !important;
+    padding: 10px 14px !important;
+    color: #163247 !important;
+    background: #fffdfa !important;
+    border-color: rgba(15, 118, 110, 0.28) !important;
+    font-size: 0.78rem !important;
+    font-weight: 800 !important;
+    box-shadow: 0 5px 14px rgba(23, 32, 51, 0.055) !important;
+  }
+
+  .property-detail-page a.btn-ghost[href^="https://wa.me/"] svg {
+    width: 18px !important;
+    height: 18px !important;
+    color: #0f766e !important;
+  }
+}
