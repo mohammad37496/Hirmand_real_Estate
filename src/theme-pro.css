@@ -26,35 +26,35 @@
    1. Design tokens
    -------------------------------------------------------------------------- */
 :root {
-  /* Brand — deep navy + brass, sampled from the Hirmand mark */
-  --navy-950: #081320;
-  --navy-900: #0b1a2b;
-  --navy-800: #12293f;
-  --navy-700: #1a3a55;
-  --navy-600: #26506f;
-  --navy-200: #c6d5e2;
-  --navy-100: #e2eaf2;
+  /* Brand — the property-detail palette promoted to the site-wide system: deep green + teal + warm gold */
+  --navy-950: #0b1e1b;
+  --navy-900: #15221f;
+  --navy-800: #1e3732;
+  --navy-700: #28534c;
+  --navy-600: #397066;
+  --navy-200: #cfe5e1;
+  --navy-100: #e4efec;
 
-  --brass-800: #6f4a0f;
-  --brass-700: #8a5e14; /* text-safe accent on paper / white (5.2:1) */
-  --brass-600: #a8761f;
-  --brass-500: #c08a2a; /* fills and borders only */
-  --brass-300: #e2c48c;
-  --brass-100: #f7edda;
+  --brass-800: #0b5f58;
+  --brass-700: #0f766e; /* property-detail primary teal */
+  --brass-600: #238d82;
+  --brass-500: #c48a3a; /* warm secondary accent */
+  --brass-300: #e0ba78;
+  --brass-100: #fbefdc;
 
   /* Neutrals */
-  --paper: #f7f4ee;
-  --paper-2: #f1eae0;
+  --paper: #f5f7f6;
+  --paper-2: #edf2f0;
   --card: #ffffff;
-  --card-2: #fbf8f2;
+  --card-2: #fbfdfc;
 
-  --fg: #152430; /* 14.6:1 on paper */
-  --muted: #57646e; /* 5.5:1 on paper */
-  --subtle: #64707b; /* 4.6:1 on paper */
-  --faint: #8a939c; /* decorative / large only */
+  --fg: #15221f;
+  --muted: #65736e;
+  --subtle: #6f7d78;
+  --faint: #98a5a1; /* decorative / large only */
 
-  --line: #e4dccc;
-  --line-2: #d3c8b4;
+  --line: #d8e3df;
+  --line-2: #c7d4d0;
 
   /* Semantic */
   --ok: #1c7a56;
@@ -103,9 +103,9 @@
   --sp-18: 72px;
 
   /* Elevation — navy-tinted, low opacity, three deliberate steps */
-  --el-1: 0 1px 2px rgb(11 26 43 / 4%), 0 2px 5px rgb(11 26 43 / 5%);
-  --el-2: 0 2px 6px rgb(11 26 43 / 5%), 0 14px 32px rgb(11 26 43 / 8%);
-  --el-3: 0 10px 24px rgb(11 26 43 / 8%), 0 36px 72px rgb(11 26 43 / 12%);
+  --el-1: 0 1px 2px rgb(21 34 31 / 4%), 0 2px 5px rgb(21 34 31 / 5%);
+  --el-2: 0 2px 6px rgb(21 34 31 / 5%), 0 14px 32px rgb(21 34 31 / 8%);
+  --el-3: 0 10px 24px rgb(21 34 31 / 8%), 0 36px 72px rgb(21 34 31 / 12%);
   --el-brass: 0 10px 24px rgb(192 138 42 / 22%);
 
   /* Motion */
@@ -125,7 +125,7 @@
   --surface-2: var(--card-2);
   --gold: var(--brass-700);
   --gold-soft: var(--brass-500);
-  --gold-line: rgb(138 94 20 / 26%);
+  --gold-line: rgb(15 118 110 / 20%);
   --ink: #ffffff;
   --line-strong: var(--line-2);
   --shadow: var(--el-2);
@@ -141,7 +141,7 @@ html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   overflow-x: clip;
-  scrollbar-color: rgb(11 26 43 / 28%) transparent;
+  scrollbar-color: rgb(21 34 31 / 28%) transparent;
 }
 
 body {
@@ -150,7 +150,7 @@ body {
   background-color: var(--paper);
   background-image:
     radial-gradient(1100px 560px at 10% -6%, rgb(192 138 42 / 8%), transparent 62%),
-    radial-gradient(900px 520px at 102% 4%, rgb(11 26 43 / 5%), transparent 60%);
+    radial-gradient(900px 520px at 102% 4%, rgb(21 34 31 / 5%), transparent 60%);
   background-repeat: no-repeat;
   color: var(--fg);
   font-family: var(--font);
@@ -211,14 +211,14 @@ small {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgb(11 26 43 / 26%);
+  background: rgb(21 34 31 / 26%);
   border: 3px solid transparent;
   background-clip: content-box;
   border-radius: var(--r-pill);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgb(11 26 43 / 42%);
+  background: rgb(21 34 31 / 42%);
   background-clip: content-box;
 }
 
@@ -280,7 +280,7 @@ small {
   margin-bottom: 12px;
   padding: 5px 12px;
   background: var(--brass-100);
-  border: 1px solid rgb(138 94 20 / 18%);
+  border: 1px solid rgb(15 118 110 / 18%);
   border-radius: var(--r-pill);
   color: var(--brass-800);
   font-size: 0.75rem;
@@ -303,7 +303,7 @@ small {
   flex: 0 0 auto;
   color: var(--brass-700);
   background: var(--brass-100);
-  border: 1px solid rgb(138 94 20 / 14%);
+  border: 1px solid rgb(15 118 110 / 14%);
   border-radius: var(--r-sm);
 }
 
@@ -643,7 +643,7 @@ small {
 .site-nav.is-scrolled {
   background: rgb(247 244 238 / 98%);
   border-bottom-color: var(--line-2);
-  box-shadow: 0 6px 24px rgb(11 26 43 / 7%);
+  box-shadow: 0 6px 24px rgb(21 34 31 / 7%);
 }
 
 .site-nav-inner {
@@ -704,7 +704,7 @@ small {
 }
 
 .nav-links a:hover {
-  background: rgb(11 26 43 / 6%);
+  background: rgb(21 34 31 / 6%);
   color: var(--navy-900);
 }
 
@@ -805,7 +805,7 @@ small {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgb(8 19 32 / 62%) 0%, rgb(8 19 32 / 74%) 46%, var(--navy-950) 100%),
+    linear-gradient(180deg, rgb(11 30 27 / 62%) 0%, rgb(11 30 27 / 74%) 46%, var(--navy-950) 100%),
     radial-gradient(760px 420px at 50% 8%, rgb(192 138 42 / 14%), transparent 62%);
 }
 
@@ -968,7 +968,7 @@ small {
 }
 
 .quick-action:hover {
-  background: rgb(11 26 43 / 5%);
+  background: rgb(21 34 31 / 5%);
   color: var(--navy-900);
 }
 
@@ -1077,9 +1077,9 @@ small {
   border-radius: var(--r-lg) var(--r-lg) 0 0;
   background:
     radial-gradient(circle at 12% 0%, rgb(192 138 42 / 18%), transparent 28%),
-    linear-gradient(135deg, rgb(8 19 32 / 98%), rgb(18 41 63 / 98%));
+    linear-gradient(135deg, rgb(11 30 27 / 98%), rgb(30 55 50 / 98%));
   color: var(--brass-100);
-  box-shadow: 0 -14px 44px rgb(8 19 32 / 28%);
+  box-shadow: 0 -14px 44px rgb(11 30 27 / 28%);
   backdrop-filter: blur(18px);
 }
 
@@ -1343,11 +1343,11 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
 }
 
 .music-track:hover {
-  background: rgb(138 94 20 / 6%);
+  background: rgb(15 118 110 / 6%);
 }
 
 .music-track.is-active {
-  background: linear-gradient(90deg, rgb(138 94 20 / 12%), rgb(138 94 20 / 4%));
+  background: linear-gradient(90deg, rgb(15 118 110 / 12%), rgb(15 118 110 / 4%));
 }
 
 .music-track-number {
@@ -2057,7 +2057,7 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
 
 .property-badge {
   padding: 5px 11px;
-  background: rgb(8 19 32 / 78%);
+  background: rgb(11 30 27 / 78%);
   border-radius: var(--r-pill);
   color: #fff;
   font-size: 0.6875rem;
@@ -2083,7 +2083,7 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
   flex-direction: column;
   gap: 1px;
   padding: 8px 11px;
-  background: rgb(8 19 32 / 66%);
+  background: rgb(11 30 27 / 66%);
   border-radius: var(--r-xs);
   color: #fff;
   font-size: 0.6875rem;
@@ -2440,7 +2440,7 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
   flex: 0 0 auto;
   padding: 6px 10px;
   background: var(--brass-100);
-  border: 1px solid rgb(138 94 20 / 16%);
+  border: 1px solid rgb(15 118 110 / 16%);
   border-radius: 999px;
   color: var(--brass-800);
   font-size: 0.72rem;
@@ -2675,7 +2675,7 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
   display: grid;
   place-items: center;
   background: var(--brass-100);
-  border: 1px solid rgb(138 94 20 / 16%);
+  border: 1px solid rgb(15 118 110 / 16%);
   border-radius: var(--r-xs);
   color: var(--brass-700);
   font-size: 1.0625rem;
@@ -2937,7 +2937,7 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
   height: 34px;
   flex: 0 0 34px;
   background: var(--brass-100);
-  border: 1px solid rgb(138 94 20 / 16%);
+  border: 1px solid rgb(15 118 110 / 16%);
   border-radius: var(--r-xs);
   color: var(--brass-800);
   font-size: 0.8125rem;
@@ -3089,7 +3089,7 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
   gap: 10px;
   padding: 14px;
   background: var(--brass-100);
-  border: 1px solid rgb(138 94 20 / 14%);
+  border: 1px solid rgb(15 118 110 / 14%);
   border-radius: var(--r-sm);
   color: var(--brass-800);
   font-size: 0.8125rem;
@@ -3233,7 +3233,7 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
   justify-items: center;
   padding: 14px 26px;
   background: var(--brass-100);
-  border: 1px solid rgb(138 94 20 / 16%);
+  border: 1px solid rgb(15 118 110 / 16%);
   border-radius: var(--r-md);
   color: var(--brass-800);
 }
@@ -3599,7 +3599,7 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
   justify-self: start;
   padding: 5px 13px;
   background: var(--brass-100);
-  border: 1px solid rgb(138 94 20 / 16%);
+  border: 1px solid rgb(15 118 110 / 16%);
   border-radius: var(--r-pill);
   color: var(--brass-800);
   font-size: 0.75rem;
@@ -3758,7 +3758,7 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
   margin-top: 4px;
   padding: 12px;
   background: var(--brass-100);
-  border: 1px solid rgb(138 94 20 / 12%);
+  border: 1px solid rgb(15 118 110 / 12%);
   border-radius: var(--r-sm);
 }
 
@@ -4371,7 +4371,7 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
   gap: 6px;
   margin-top: var(--sp-8);
   padding: 8px;
-  background: rgb(8 19 32 / 72%);
+  background: rgb(11 30 27 / 72%);
   border-color: rgb(255 255 255 / 14%);
   box-shadow:
     var(--el-3),
@@ -4522,7 +4522,7 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
 }
 
 .property-card:hover {
-  border-color: rgb(138 94 20 / 26%);
+  border-color: rgb(15 118 110 / 26%);
   box-shadow: var(--el-2);
   transform: translateY(-3px);
 }
