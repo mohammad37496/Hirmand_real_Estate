@@ -172,7 +172,7 @@
 }
 
 .budget-matcher .budget-matcher-hero-mark span {
-  color: #fff !important;
+  color: var(--ink) !important;
   font-size: var(--fs-xs) !important;
   font-weight: 900 !important;
   letter-spacing: .16em !important;
@@ -313,7 +313,7 @@
 .budget-matcher .budget-search-button {
   background: var(--navy-900) !important;
   border-color: var(--navy-900) !important;
-  color: #fff !important;
+  color: var(--ink) !important;
   box-shadow: var(--el-2) !important;
 }
 
