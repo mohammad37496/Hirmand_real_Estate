@@ -243,17 +243,6 @@ function unitPrice(value: string | null, areaM2: number | null) {
   if (!Number.isFinite(parsed) || parsed <= 0) return "";
   return formatToman(Math.round(parsed / areaM2));
 }
-function primaryPrice(property: Property) {
-  if (property.transactionType === "rent") {
-    if (property.deposit) return "رهن " + money(property.deposit) + " تومان";
-    if (property.rent) return "اجاره " + money(property.rent) + " تومان";
-    return "تماس بگیرید";
-  }
-  if (property.transactionType === "mortgage") {
-    return property.deposit ? "رهن " + money(property.deposit) + " تومان" : "تماس بگیرید";
-  }
-  return property.price ? money(property.price) + " تومان" : "تماس بگیرید";
-}
 
 /** Guarded unit price: empty string when it cannot be computed truthfully. */
 function perMeterLabel(property: Property) {
@@ -262,11 +251,29 @@ function perMeterLabel(property: Property) {
   return value ? value + " تومان" : "";
 }
 
-function depositRentLabel(property: Property) {
-  const parts: string[] = [];
-  if (property.deposit) parts.push("رهن " + money(property.deposit) + " تومان");
-  if (property.rent) parts.push("اجاره " + money(property.rent) + " تومان");
-  return parts.join(" · ");
+/**
+ * Structured price rows: buy/sell shows the total, rent splits deposit and
+ * rent, mortgage shows the deposit. Missing amounts never render a fake
+ * number — the row falls back to "تماس بگیرید" only when nothing is stored.
+ */
+function priceRows(property: Property) {
+  const rows: { label: string; value: string }[] = [];
+  const deposit = money(property.deposit);
+  const rent = money(property.rent);
+  const price = money(property.price);
+
+  if (property.transactionType === "rent") {
+    if (deposit) rows.push({ label: "رهن", value: deposit + " تومان" });
+    if (rent) rows.push({ label: "اجاره", value: rent + " تومان" });
+    if (!rows.length) rows.push({ label: "قیمت", value: "تماس بگیرید" });
+    return rows;
+  }
+  if (property.transactionType === "mortgage") {
+    rows.push({ label: "رهن", value: deposit ? deposit + " تومان" : "تماس بگیرید" });
+    return rows;
+  }
+  rows.push({ label: "قیمت کل", value: price ? price + " تومان" : "تماس بگیرید" });
+  return rows;
 }
 
 /** Short, stable, human-friendly file code derived from the immutable id. */
@@ -1074,7 +1081,6 @@ export function PropertyDetailView({
   const area = areaSlug(property.neighborhood);
   const featuredActive = isFeaturedActive(property);
   const perMeter = perMeterLabel(property);
-  const depositRent = depositRentLabel(property);
   const code = fileCode(property.id);
   const descriptionParagraphs = property.description
     .split(/\n\s*\n/)
@@ -1155,14 +1161,20 @@ export function PropertyDetailView({
                 </div>
 
                 <div className="property-price-block">
-                  <span>قیمت فایل</span>
-                  <strong dir="rtl" className="property-price-value">{primaryPrice(property)}</strong>
+                  <span className="property-price-label">قیمت فایل</span>
+                  <div className="property-price-rows">
+                    {priceRows(property).map((row) => (
+                      <div className="property-price-row" key={row.label}>
+                        <span className="property-price-row-label">{row.label}</span>
+                        <strong dir="rtl" className="property-price-value">{row.value}</strong>
+                      </div>
+                    ))}
+                  </div>
                   {perMeter ? (
                     <small className="property-price-per-m2">
                       قیمت تقریبی هر متر: <strong>{perMeter}</strong>
                     </small>
                   ) : null}
-                  {depositRent ? <small>{depositRent}</small> : null}
                 </div>
 
                 <div className="property-primary-contact" aria-label="تماس سریع با مشاور">
@@ -1224,30 +1236,30 @@ export function PropertyDetailView({
                 </summary>
                 <div className="property-specs-accordion-body">
               <div className="property-spec-grid">
-                {property.areaM2 != null ? <div><Ruler size={18} /><span><small>متراژ</small><strong>{property.areaM2.toLocaleString("fa-IR")} متر</strong></span></div> : null}
-                {property.bedrooms != null ? <div><BedDouble size={18} /><span><small>اتاق خواب</small><strong>{property.bedrooms.toLocaleString("fa-IR")}</strong></span></div> : null}
-                {property.bathrooms != null ? <div><Bath size={18} /><span><small>سرویس</small><strong>{property.bathrooms.toLocaleString("fa-IR")}</strong></span></div> : null}
+                {property.areaM2 != null ? <div><Ruler size={18} aria-hidden="true" /><span><small>متراژ</small><strong>{property.areaM2.toLocaleString("fa-IR")} متر</strong></span></div> : null}
+                {property.bedrooms != null ? <div><BedDouble size={18} aria-hidden="true" /><span><small>اتاق خواب</small><strong>{property.bedrooms.toLocaleString("fa-IR")}</strong></span></div> : null}
+                {property.bathrooms != null ? <div><Bath size={18} aria-hidden="true" /><span><small>سرویس</small><strong>{property.bathrooms.toLocaleString("fa-IR")}</strong></span></div> : null}
                 {property.floorLabel === "suite" ? (
-                  <div><Building2 size={18} /><span><small>طبقه</small><strong>سوئیت</strong></span></div>
+                  <div><Building2 size={18} aria-hidden="true" /><span><small>طبقه</small><strong>سوئیت</strong></span></div>
                 ) : property.floor != null ? (
-                  <div><Building2 size={18} /><span><small>طبقه</small><strong>{property.floor.toLocaleString("fa-IR")}</strong></span></div>
+                  <div><Building2 size={18} aria-hidden="true" /><span><small>طبقه</small><strong>{property.floor.toLocaleString("fa-IR")}</strong></span></div>
                 ) : null}
-                {property.totalFloors != null ? <div><Layers3 size={18} /><span><small>تعداد طبقات</small><strong>{property.totalFloors.toLocaleString("fa-IR")}</strong></span></div> : null}
-                {property.orientation ? <div><Navigation size={18} /><span><small>موقعیت ملک</small><strong>{PROPERTY_ORIENTATION_LABELS[property.orientation]}</strong></span></div> : null}
-                {property.builtYear != null ? <div><CalendarDays size={18} /><span><small>سال ساخت</small><strong>{property.builtYear.toLocaleString("fa-IR", { useGrouping: false })}</strong></span></div> : null}
-                <div><CarFront size={18} /><span><small>پارکینگ</small><strong>{property.parking ? "دارد" : "ندارد"}</strong></span></div>
-                <div><Navigation size={18} /><span><small>آسانسور</small><strong>{property.elevator ? "دارد" : "ندارد"}</strong></span></div>
-                <div><Warehouse size={18} /><span><small>انباری</small><strong>{property.storage ? "دارد" : "ندارد"}</strong></span></div>
-                <div><Paintbrush size={18} /><span><small>رنگ‌آمیزی</small><strong>{property.painted ? "دارد" : "ندارد"}</strong></span></div>
-                <div><Wallpaper size={18} /><span><small>کاغذ دیواری</small><strong>{property.wallpaper ? "دارد" : "ندارد"}</strong></span></div>
+                {property.totalFloors != null ? <div><Layers3 size={18} aria-hidden="true" /><span><small>تعداد طبقات</small><strong>{property.totalFloors.toLocaleString("fa-IR")}</strong></span></div> : null}
+                {property.orientation ? <div><Navigation size={18} aria-hidden="true" /><span><small>موقعیت ملک</small><strong>{PROPERTY_ORIENTATION_LABELS[property.orientation]}</strong></span></div> : null}
+                {property.builtYear != null ? <div><CalendarDays size={18} aria-hidden="true" /><span><small>سال ساخت</small><strong>{property.builtYear.toLocaleString("fa-IR", { useGrouping: false })}</strong></span></div> : null}
+                <div><CarFront size={18} aria-hidden="true" /><span><small>پارکینگ</small><strong>{property.parking ? "دارد" : "ندارد"}</strong></span></div>
+                <div><Navigation size={18} aria-hidden="true" /><span><small>آسانسور</small><strong>{property.elevator ? "دارد" : "ندارد"}</strong></span></div>
+                <div><Warehouse size={18} aria-hidden="true" /><span><small>انباری</small><strong>{property.storage ? "دارد" : "ندارد"}</strong></span></div>
+                <div><Paintbrush size={18} aria-hidden="true" /><span><small>رنگ‌آمیزی</small><strong>{property.painted ? "دارد" : "ندارد"}</strong></span></div>
+                <div><Wallpaper size={18} aria-hidden="true" /><span><small>کاغذ دیواری</small><strong>{property.wallpaper ? "دارد" : "ندارد"}</strong></span></div>
                 {property.cabinetType ? (
-                  <div><Building2 size={18} /><span><small>نوع کابینت</small><strong>{labelForOption(PROPERTY_CABINET_OPTIONS, property.cabinetType)}</strong></span></div>
+                  <div><Building2 size={18} aria-hidden="true" /><span><small>نوع کابینت</small><strong>{labelForOption(PROPERTY_CABINET_OPTIONS, property.cabinetType)}</strong></span></div>
                 ) : null}
                 {property.flooringType ? (
-                  <div><Layers3 size={18} /><span><small>کف</small><strong>{labelForOption(PROPERTY_FLOORING_OPTIONS, property.flooringType)}</strong></span></div>
+                  <div><Layers3 size={18} aria-hidden="true" /><span><small>کف</small><strong>{labelForOption(PROPERTY_FLOORING_OPTIONS, property.flooringType)}</strong></span></div>
                 ) : null}
                 {property.wallClosetType ? (
-                  <div><Building2 size={18} /><span><small>کمد دیواری</small><strong>{labelForOption(PROPERTY_WALL_CLOSET_OPTIONS, property.wallClosetType)}</strong></span></div>
+                  <div><Building2 size={18} aria-hidden="true" /><span><small>کمد دیواری</small><strong>{labelForOption(PROPERTY_WALL_CLOSET_OPTIONS, property.wallClosetType)}</strong></span></div>
                 ) : null}
               </div>
               {property.otherAmenities.length || property.coolingSystem || property.heatingSystem ? (
@@ -1301,8 +1313,6 @@ export function PropertyDetailView({
                 </div>
               </details>
             </section>
-
-
 
             <section className="property-detail-body" aria-labelledby="property-description-title">
               <div className="property-section-heading">
@@ -1366,7 +1376,7 @@ export function PropertyDetailView({
                     <span className="kicker">موقعیت</span>
                     <h2 id="property-location-title">موقعیت تقریبی فایل روی نقشه</h2>
                   </div>
-                  <MapPinned size={20} />
+                  <MapPinned size={20} aria-hidden="true" />
                 </div>
                 {property.latitude != null && property.longitude != null ? (
                   <div className="property-map-card">
@@ -1384,13 +1394,13 @@ export function PropertyDetailView({
                         rel="noopener noreferrer"
                         className="btn-ghost"
                       >
-                        <ExternalLink size={15} /> باز کردن در نقشه
+                        <ExternalLink size={15} aria-hidden="true" /> باز کردن در نقشه
                       </a>
                     </div>
                   </div>
                 ) : (
                   <div className="property-location-fallback">
-                    <MapPinned size={20} />
+                    <MapPinned size={20} aria-hidden="true" />
                     <div>
                       <strong>محدوده تقریبی فایل</strong>
                       <p>اصفهان، {property.neighborhood}</p>
@@ -1401,7 +1411,7 @@ export function PropertyDetailView({
                       rel="noopener noreferrer"
                       className="btn-ghost"
                     >
-                      <ExternalLink size={15} /> جستجو در نقشه
+                      <ExternalLink size={15} aria-hidden="true" /> جستجو در نقشه
                     </a>
                   </div>
                 )}

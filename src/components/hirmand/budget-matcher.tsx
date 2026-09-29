@@ -13,6 +13,7 @@ import {
   Sparkles,
   Target,
   UserRound,
+  WalletCards,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
