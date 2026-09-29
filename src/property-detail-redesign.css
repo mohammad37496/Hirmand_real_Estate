@@ -2814,3 +2814,129 @@ body:has(.property-detail-page) {
     background: var(--card, #ffffff) !important;
   }
 }
+
+
+/* === HIRMAND RELATED CARDS — FINAL LIGHT SURFACE LOCK =======================
+   Eliminate any legacy black/dark surface in the similar-properties section,
+   including card media, body, action rail and interactive overlays.
+   ========================================================================== */
+
+.property-detail-page .property-related {
+  background: var(--surface, #ffffff) !important;
+  color: var(--fg, #152430) !important;
+  border-color: var(--line, rgba(11, 26, 43, 0.11)) !important;
+}
+
+.property-detail-page .property-related::before,
+.property-detail-page .property-related::after {
+  display: none !important;
+  content: none !important;
+}
+
+.property-detail-page .property-related .property-grid {
+  background: transparent !important;
+}
+
+.property-detail-page .property-related .pcard,
+.property-detail-page .property-related .pcard-link {
+  background: var(--card, #ffffff) !important;
+  color: var(--fg, #152430) !important;
+  border-color: var(--line, rgba(11, 26, 43, 0.11)) !important;
+}
+
+.property-detail-page .property-related .pcard-media {
+  background: var(--paper-2, #eee9e0) !important;
+}
+
+.property-detail-page .property-related .pcard-media::before,
+.property-detail-page .property-related .pcard-media::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+}
+
+.property-detail-page .property-related .pcard-body {
+  background: var(--card, #ffffff) !important;
+  color: var(--fg, #152430) !important;
+}
+
+.property-detail-page .property-related .pcard-topline,
+.property-detail-page .property-related .pcard-price-row,
+.property-detail-page .property-related .pcard-footer,
+.property-detail-page .property-related .pcard-specs {
+  background: transparent !important;
+}
+
+.property-detail-page .property-related .pcard-meta,
+.property-detail-page .property-related .pcard-footer,
+.property-detail-page .property-related .pcard-unit-price {
+  color: var(--muted, #626d7b) !important;
+}
+
+.property-detail-page .property-related .pcard-title,
+.property-detail-page .property-related .pcard-price {
+  color: var(--navy-900, #102d45) !important;
+}
+
+.property-detail-page .property-related .pcard-code {
+  color: var(--subtle, #8b94a1) !important;
+}
+
+.property-detail-page .property-related .pcard-specs {
+  border-color: var(--line, rgba(11, 26, 43, 0.09)) !important;
+  color: var(--muted, #626d7b) !important;
+}
+
+.property-detail-page .property-related .pcard-specs svg,
+.property-detail-page .property-related .pcard-location svg,
+.property-detail-page .property-related .pcard-details-link {
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+.property-detail-page .property-related .pcard-actions {
+  background: var(--card, #ffffff) !important;
+  border-color: var(--line, rgba(11, 26, 43, 0.11)) !important;
+  box-shadow: none !important;
+}
+
+.property-detail-page .property-related .pcard-actions::before,
+.property-detail-page .property-related .pcard-actions::after,
+.property-detail-page .property-related .property-actions::before,
+.property-detail-page .property-related .property-actions::after {
+  display: none !important;
+  content: none !important;
+}
+
+.property-detail-page .property-related .pcard-actions .property-action {
+  background: var(--surface, #ffffff) !important;
+  color: var(--navy-900, #102d45) !important;
+  border-color: var(--line-2, rgba(11, 26, 43, 0.12)) !important;
+  box-shadow: 0 3px 12px rgba(11, 26, 43, 0.035) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.property-detail-page .property-related .pcard-actions .property-action:hover {
+  background: var(--brass-100, #f5ead2) !important;
+  color: var(--brass-700, #8a5e14) !important;
+  border-color: var(--brass-300, #dfbd75) !important;
+}
+
+.property-detail-page .property-related .pcard-actions .property-action.is-active,
+.property-detail-page .property-related .pcard-actions .property-action[aria-pressed="true"] {
+  background: var(--brass-500, #c08a2a) !important;
+  color: var(--navy-950, #081320) !important;
+  border-color: var(--brass-500, #c08a2a) !important;
+}
+
+.property-detail-page .property-related .pcard-arrow {
+  background: rgb(255 255 255 / 94%) !important;
+  color: var(--navy-900, #102d45) !important;
+  border-color: var(--line, rgba(11, 26, 43, 0.10)) !important;
+}
+
+.property-detail-page .property-related .pcard:hover,
+.property-detail-page .property-related .pcard:focus-within {
+  background: var(--card, #ffffff) !important;
+  border-color: var(--brass-300, #dfbd75) !important;
+}
