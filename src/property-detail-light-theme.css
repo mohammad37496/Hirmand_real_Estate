@@ -2332,3 +2332,42 @@ body:has(.property-detail-page) .footer a:hover {
     justify-content: space-between !important;
   }
 }
+
+/* === HIRMAND — WHATSAPP CTA / PERMANENT LIGHT THEME ==========================
+   The final CTA's WhatsApp button must stay on the light Hirmand palette in
+   every state: default, link, visited, hover, focus and active.
+   ========================================================================== */
+
+.property-detail-page .property-final-cta-actions a.btn-ghost[href^="https://wa.me/"],
+.property-detail-page .property-final-cta-actions a.btn-ghost[href^="https://wa.me/"]:link,
+.property-detail-page .property-final-cta-actions a.btn-ghost[href^="https://wa.me/"]:visited,
+.property-detail-page .property-final-cta-actions a.btn-ghost[href^="https://wa.me/"]:hover,
+.property-detail-page .property-final-cta-actions a.btn-ghost[href^="https://wa.me/"]:focus,
+.property-detail-page .property-final-cta-actions a.btn-ghost[href^="https://wa.me/"]:active {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #102d45 !important;
+  border: 1px solid #d3c8b4 !important;
+  box-shadow: 0 2px 8px rgba(11, 26, 43, 0.035) !important;
+  text-shadow: none !important;
+  -webkit-text-fill-color: #102d45 !important;
+}
+
+.property-detail-page .property-final-cta-actions a.btn-ghost[href^="https://wa.me/"] svg {
+  color: #8a5e14 !important;
+  stroke: currentColor !important;
+}
+
+.property-detail-page .property-final-cta-actions a.btn-ghost[href^="https://wa.me/"]:hover,
+.property-detail-page .property-final-cta-actions a.btn-ghost[href^="https://wa.me/"]:focus-visible {
+  background: #f5ead2 !important;
+  background-color: #f5ead2 !important;
+  border-color: #dfbd75 !important;
+  color: #102d45 !important;
+}
+
+.property-detail-page .property-final-cta-actions a.btn-ghost[href^="https://wa.me/"]:hover svg,
+.property-detail-page .property-final-cta-actions a.btn-ghost[href^="https://wa.me/"]:focus-visible svg {
+  color: #8a5e14 !important;
+}
