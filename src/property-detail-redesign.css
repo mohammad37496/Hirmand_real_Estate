@@ -2325,3 +2325,62 @@ body:has(.property-detail-page) {
     background: var(--surface, #ffffff) !important;
   }
 }
+
+
+/* === HIRMAND PROPERTY ACTIONS THEME LOCK ==================================
+   Align detail-page action controls with the light ivory/navy/brass theme.
+   ========================================================================== */
+.property-detail-page .property-actions {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.property-detail-page .property-actions .property-action {
+  min-height: 44px !important;
+  padding: 8px 13px !important;
+  gap: 7px !important;
+  border: 1px solid var(--line, rgba(11, 26, 43, 0.11)) !important;
+  border-radius: 11px !important;
+  background: var(--surface, #ffffff) !important;
+  color: var(--navy-900, #102d45) !important;
+  box-shadow: 0 3px 12px rgba(11, 26, 43, 0.035) !important;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease !important;
+}
+
+.property-detail-page .property-actions .property-action svg {
+  flex: 0 0 auto !important;
+  color: currentColor !important;
+}
+
+.property-detail-page .property-actions .property-action:hover {
+  border-color: var(--brass-500, #c08a2a) !important;
+  background: var(--brass-100, #f5ead2) !important;
+  color: var(--brass-700, #8a5e14) !important;
+  box-shadow: 0 6px 16px rgba(138, 94, 20, 0.10) !important;
+  transform: translateY(-1px) !important;
+}
+
+.property-detail-page .property-actions .property-action.is-active,
+.property-detail-page .property-actions .property-action[aria-pressed="true"] {
+  border-color: var(--brass-500, #c08a2a) !important;
+  background: var(--brass-500, #c08a2a) !important;
+  color: var(--navy-950, #081320) !important;
+  box-shadow: 0 7px 18px rgba(192, 138, 42, 0.18) !important;
+}
+
+.property-detail-page .property-actions .property-action:focus-visible {
+  outline: 3px solid rgba(192, 138, 42, 0.22) !important;
+  outline-offset: 2px !important;
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-actions .property-action {
+    min-height: 42px !important;
+    padding: 8px 10px !important;
+  }
+}
