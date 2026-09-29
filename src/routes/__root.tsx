@@ -29,7 +29,7 @@ export const Route = createRootRoute({
       },
       { title: SITE.title },
       { name: "description", content: SITE.description },
-      { name: "theme-color", content: "#15221f" },
+      { name: "theme-color", content: "#0b1a2b" },
       { name: "color-scheme", content: "light" },
       { name: "author", content: SITE.nameFa },
       { name: "referrer", content: "strict-origin-when-cross-origin" },
