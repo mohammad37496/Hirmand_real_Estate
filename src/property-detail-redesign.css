@@ -3225,3 +3225,230 @@ body:has(.property-detail-page) {
     background: rgb(255 255 255 / 98%) !important;
   }
 }
+
+
+/* === HIRMAND PROPERTY SUMMARY — FINAL LIGHT + STACKING LOCK ==================
+   The summary and specifications are separate layout blocks. Keep the summary
+   fully readable, prevent legacy dark descendants, and guarantee the content
+   section starts below the hero instead of visually sliding underneath it.
+   ========================================================================== */
+
+.property-detail-page .property-detail-top {
+  position: relative !important;
+  z-index: 2 !important;
+  isolation: isolate !important;
+  margin-bottom: 26px !important;
+  overflow: visible !important;
+  background: transparent !important;
+}
+
+.property-detail-page .property-detail-top-gallery {
+  position: relative !important;
+  z-index: 1 !important;
+  min-width: 0 !important;
+}
+
+.property-detail-page .property-detail-summary {
+  position: relative !important;
+  z-index: 3 !important;
+  isolation: isolate !important;
+  min-width: 0 !important;
+  background: var(--card, #ffffff) !important;
+  color: var(--fg, #152430) !important;
+  border: 1px solid var(--line-2, rgba(11, 26, 43, 0.12)) !important;
+  box-shadow: 0 16px 38px rgba(11, 26, 43, 0.08) !important;
+}
+
+.property-detail-page .property-detail-summary,
+.property-detail-page .property-detail-summary-head,
+.property-detail-page .property-detail-hero-row,
+.property-detail-page .property-status-group,
+.property-detail-page .property-detail-title-block,
+.property-detail-page .property-tools-heading,
+.property-detail-page .property-summary-facts {
+  background: transparent !important;
+}
+
+.property-detail-page .property-detail-summary-head {
+  color: var(--fg, #152430) !important;
+}
+
+.property-detail-page .property-detail-title-block h1,
+.property-detail-page .property-summary-facts strong {
+  color: var(--navy-900, #102d45) !important;
+}
+
+.property-detail-page .property-detail-meta,
+.property-detail-page .property-summary-facts small {
+  color: var(--muted, #626d7b) !important;
+}
+
+.property-detail-page .property-detail-meta svg,
+.property-detail-page .property-summary-facts > div > svg {
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+.property-detail-page .property-price-block {
+  background: var(--surface-2, #f1eae0) !important;
+  color: var(--fg, #152430) !important;
+  border: 1px solid var(--line, rgba(11, 26, 43, 0.11)) !important;
+  box-shadow: none !important;
+}
+
+.property-detail-page .property-price-block > span,
+.property-detail-page .property-price-block > small {
+  color: var(--muted, #626d7b) !important;
+}
+
+.property-detail-page .property-price-block .property-price-value,
+.property-detail-page .property-price-block .property-price-per-m2 strong {
+  color: var(--navy-900, #102d45) !important;
+}
+
+.property-detail-page .property-primary-contact {
+  background: transparent !important;
+}
+
+.property-detail-page .property-primary-contact a {
+  box-shadow: none !important;
+}
+
+.property-detail-page .property-primary-contact-call {
+  background: var(--brass-500, #c08a2a) !important;
+  color: var(--navy-950, #081320) !important;
+  border-color: var(--brass-500, #c08a2a) !important;
+}
+
+.property-detail-page .property-primary-contact-whatsapp {
+  background: var(--surface, #ffffff) !important;
+  color: var(--navy-900, #102d45) !important;
+  border-color: var(--line, rgba(11, 26, 43, 0.12)) !important;
+}
+
+.property-detail-page .property-primary-contact-whatsapp:hover {
+  background: var(--brass-100, #f5ead2) !important;
+  color: var(--brass-700, #8a5e14) !important;
+  border-color: var(--brass-300, #dfbd75) !important;
+}
+
+.property-detail-page .property-tools-heading {
+  color: var(--fg, #152430) !important;
+  border-color: var(--line, rgba(11, 26, 43, 0.11)) !important;
+}
+
+.property-detail-page .property-actions:not(.property-actions-compact) {
+  background: transparent !important;
+}
+
+.property-detail-page .property-actions:not(.property-actions-compact) .property-action {
+  background: var(--surface, #ffffff) !important;
+  color: var(--navy-900, #102d45) !important;
+  border: 1px solid var(--line-2, rgba(11, 26, 43, 0.13)) !important;
+  box-shadow: 0 3px 12px rgba(11, 26, 43, 0.035) !important;
+}
+
+.property-detail-page .property-actions:not(.property-actions-compact) .property-action svg {
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+.property-detail-page .property-actions:not(.property-actions-compact) .property-action:hover,
+.property-detail-page .property-actions:not(.property-actions-compact) .property-action:focus-visible {
+  background: var(--brass-100, #f5ead2) !important;
+  color: var(--brass-700, #8a5e14) !important;
+  border-color: var(--brass-300, #dfbd75) !important;
+}
+
+.property-detail-page .property-summary-facts > div {
+  background: var(--surface-2, #f1eae0) !important;
+  color: var(--fg, #152430) !important;
+  border: 1px solid var(--line, rgba(11, 26, 43, 0.10)) !important;
+}
+
+.property-detail-page .property-detail-content {
+  position: relative !important;
+  z-index: 1 !important;
+  isolation: isolate !important;
+  clear: both !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.property-detail-page .property-detail-main {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.property-detail-page .property-divar-specs {
+  position: relative !important;
+  z-index: 2 !important;
+  isolation: isolate !important;
+  background: var(--card, #ffffff) !important;
+  color: var(--fg, #152430) !important;
+  border-color: var(--line-2, rgba(11, 26, 43, 0.12)) !important;
+  box-shadow: 0 12px 30px rgba(11, 26, 43, 0.055) !important;
+}
+
+.property-detail-page .property-divar-specs *,
+.property-detail-page .property-spec-grid,
+.property-detail-page .property-spec-grid > div,
+.property-detail-page .property-spec-amenities,
+.property-detail-page .property-spec-amenity-item {
+  color: var(--fg, #152430) !important;
+}
+
+.property-detail-page .property-spec-grid > div {
+  background: var(--surface, #ffffff) !important;
+  border-color: var(--line, rgba(11, 26, 43, 0.10)) !important;
+  box-shadow: 0 3px 12px rgba(11, 26, 43, 0.035) !important;
+}
+
+.property-detail-page .property-spec-grid > div > svg,
+.property-detail-page .property-spec-amenity-item > svg {
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+.property-detail-page .property-spec-grid small,
+.property-detail-page .property-spec-amenity-item small {
+  color: var(--muted, #626d7b) !important;
+}
+
+.property-detail-page .property-spec-grid strong,
+.property-detail-page .property-spec-amenity-item strong {
+  color: var(--navy-900, #102d45) !important;
+}
+
+.property-detail-page .property-spec-amenities {
+  background: var(--surface-2, #f1eae0) !important;
+  border-color: var(--line, rgba(11, 26, 43, 0.11)) !important;
+}
+
+.property-detail-page .property-spec-amenities-body {
+  background: var(--surface, #ffffff) !important;
+  border-top-color: var(--line, rgba(11, 26, 43, 0.09)) !important;
+}
+
+.property-detail-page .property-spec-amenity-item {
+  background: var(--card, #ffffff) !important;
+  border-color: var(--line, rgba(11, 26, 43, 0.09)) !important;
+}
+
+@media (max-width: 1024px) {
+  .property-detail-page .property-detail-top {
+    margin-bottom: 22px !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-detail-top {
+    margin-bottom: 18px !important;
+    z-index: 2 !important;
+  }
+
+  .property-detail-page .property-detail-content {
+    margin-top: 0 !important;
+  }
+
+  .property-detail-page .property-divar-specs {
+    z-index: 1 !important;
+  }
+}
