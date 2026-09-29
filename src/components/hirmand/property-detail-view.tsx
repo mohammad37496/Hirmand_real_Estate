@@ -30,6 +30,7 @@ import {
   Flame,
   Flower2,
   Gauge,
+  Handshake,
   FastForward,
   Layers3,
   MapPinned,
@@ -967,7 +968,7 @@ function ConsultantCard({ property }: { property: Property }) {
     <div className="property-contact-card" aria-label="اطلاعات مشاور فایل">
       <div className="property-consultant-main">
         <div className="property-consultant-avatar" aria-hidden="true">
-          <ConsultantIcon size={28} strokeWidth={1.7} />
+          <ConsultantIcon size={20} strokeWidth={1.8} />
         </div>
         <div className="property-consultant-copy">
           <span className="kicker">مشاور فایل</span>
