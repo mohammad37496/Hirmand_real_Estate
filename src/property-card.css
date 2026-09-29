@@ -360,11 +360,7 @@
   box-shadow: 0 2px 8px rgba(11, 26, 43, 0.035);
   line-height: 1;
   white-space: nowrap;
-  transition:
-    background-color 160ms var(--ease),
-    border-color 160ms var(--ease),
-    color 160ms var(--ease),
-    transform 160ms var(--ease);
+  transition: none;
 }
 
 .pcard-specs span svg {
@@ -375,12 +371,8 @@
   stroke: currentColor;
 }
 
-.pcard-specs span:hover {
-  border-color: #dfbd75;
-  background: #f5ead2;
-  color: #102d45;
-  transform: translateY(-1px);
-}
+/* Keep compact property facts static; the main Hirmand theme does not
+   change their color, border or position on hover. */
 
 /* ---------------------------------------------------------------- footer -- */
 .pcard-footer {
