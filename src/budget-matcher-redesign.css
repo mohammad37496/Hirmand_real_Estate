@@ -528,14 +528,22 @@
     padding: 16px !important;
   }
 
-  .budget-matcher .budget-matcher-hero-mark > svg {
-    width: 34px !important;
-    height: 34px !important;
-    grid-row: span 2 !important;
+  .budget-matcher .budget-matcher-mark-emblem {
+    width: 62px !important;
+    height: 62px !important;
   }
 
-  .budget-matcher .budget-matcher-hero-mark span,
-  .budget-matcher .budget-matcher-hero-mark small {
+  .budget-matcher .budget-matcher-mark-icon {
+    width: 56px !important;
+    height: 56px !important;
+  }
+
+  .budget-matcher .budget-matcher-mark-copy {
+    text-align: right !important;
+  }
+
+  .budget-matcher .budget-matcher-mark-copy > span,
+  .budget-matcher .budget-matcher-mark-copy small {
     text-align: right !important;
   }
 
@@ -574,11 +582,21 @@
     border-radius: var(--r-lg) !important;
   }
 
-  .budget-matcher .budget-matcher-hero-mark span {
+  .budget-matcher .budget-matcher-mark-emblem {
+    width: 58px !important;
+    height: 58px !important;
+  }
+
+  .budget-matcher .budget-matcher-mark-icon {
+    width: 52px !important;
+    height: 52px !important;
+  }
+
+  .budget-matcher .budget-matcher-mark-copy > span {
     font-size: .67rem !important;
   }
 
-  .budget-matcher .budget-matcher-hero-mark small {
+  .budget-matcher .budget-matcher-mark-copy small {
     font-size: .59rem !important;
   }
 
