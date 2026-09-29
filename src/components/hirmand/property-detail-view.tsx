@@ -65,6 +65,7 @@ import { breadcrumbJsonLd, propertyJsonLd, TX_LABEL, TYPE_LABEL } from "@/lib/se
 import type { Property } from "@/lib/properties";
 import { PropertyConvertSlider } from "@/components/hirmand/property-convert-slider";
 import { toast } from "sonner";
+import { WhatsAppIcon } from "@/components/hirmand/social-icons";
 
 const PROPERTY_ORIENTATION_LABELS: Record<NonNullable<Property["orientation"]>, string> = {
   north: "شمالی",
@@ -1005,7 +1006,7 @@ function ConsultantCard({ property }: { property: Property }) {
           className="btn-ghost"
           onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
         >
-          <MessageCircle size={16} aria-hidden="true" />
+          <WhatsAppIcon size={16} aria-hidden="true" />
           واتساپ
         </a>
       </div>
@@ -1192,7 +1193,7 @@ export function PropertyDetailView({
                     rel="noopener noreferrer"
                     onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
                   >
-                    <MessageCircle size={18} aria-hidden="true" />
+                    <WhatsAppIcon size={18} aria-hidden="true" />
                     <span>واتساپ</span>
                   </a>
                 </div>
@@ -1434,7 +1435,7 @@ export function PropertyDetailView({
                   onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
                   className="btn-ghost"
                 >
-                  <MessageCircle size={17} aria-hidden="true" />
+                  <WhatsAppIcon size={17} aria-hidden="true" />
                   واتساپ
                 </a>
               </div>
@@ -1487,7 +1488,7 @@ export function PropertyDetailView({
             className="property-mobile-action"
             onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
           >
-            <MessageCircle size={18} aria-hidden="true" />
+            <WhatsAppIcon size={18} aria-hidden="true" />
             <span>واتساپ</span>
           </a>
           <button
