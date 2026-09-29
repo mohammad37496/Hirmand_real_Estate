@@ -7828,3 +7828,213 @@ body{background:var(--bg);color:var(--fg)}
     padding-inline: 8px;
   }
 }
+
+
+/* =========================================================
+   HIRMAND PROPERTY MICRO POLISH
+   Scoped WhatsApp + property-card specs + feature lists.
+   Uses the final premium ivory / navy / copper theme.
+   ========================================================= */
+
+a.btn-ghost[href^="https://wa.me/"],
+a.btn-ghost[href^="https://wa.me/"]:hover,
+a.btn-ghost[href^="https://wa.me/"]:active {
+  color: var(--gold) !important;
+  background: var(--surface) !important;
+  border-color: var(--gold-line) !important;
+  box-shadow: 0 8px 22px rgba(23, 32, 51, 0.06);
+  filter: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+a.btn-ghost[href^="https://wa.me/"] svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  color: var(--gold);
+}
+
+.property-primary-contact-whatsapp,
+.property-primary-contact-whatsapp:hover,
+.property-primary-contact-whatsapp:active {
+  color: var(--gold) !important;
+  background: var(--surface) !important;
+  border-color: var(--gold-line) !important;
+  box-shadow: 0 8px 22px rgba(23, 32, 51, 0.06);
+  filter: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+.property-primary-contact-whatsapp svg {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+  color: var(--gold);
+}
+
+.property-contact-actions .btn-ghost {
+  background: var(--surface);
+  border-color: var(--gold-line);
+  color: var(--gold);
+}
+
+.property-contact-actions .btn-ghost:hover,
+.property-contact-actions .btn-ghost:active {
+  background: var(--surface);
+  border-color: var(--gold-line);
+  color: var(--gold);
+  box-shadow: 0 8px 22px rgba(23, 32, 51, 0.06);
+  transform: none;
+  filter: none;
+}
+
+.pcard-specs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.pcard-spec {
+  min-width: 0;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 8px;
+  overflow: hidden;
+  border: 1px solid var(--gold-line);
+  border-radius: 10px;
+  background: rgba(143, 93, 50, 0.045);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+  line-height: 1.35;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: none !important;
+}
+
+.pcard-spec svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  color: var(--gold);
+}
+
+.pcard-spec:hover,
+.pcard-spec:active {
+  color: var(--muted);
+  background: rgba(143, 93, 50, 0.045);
+  border-color: var(--gold-line);
+  transform: none;
+  box-shadow: none;
+}
+
+.property-spec-grid > div {
+  transition: none !important;
+}
+
+.property-spec-grid > div:hover,
+.property-spec-grid > div:active {
+  background: #fbfaf7;
+  border-color: rgba(11, 26, 43, 0.07);
+  transform: none;
+  box-shadow: none;
+}
+
+.property-features > ul,
+.property-detail-body > ul {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.property-features > ul > li,
+.property-detail-body > ul > li {
+  min-width: 0;
+  min-height: 46px;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--fg);
+  box-shadow: none;
+  transition: none !important;
+}
+
+.property-features > ul > li:hover,
+.property-features > ul > li:active,
+.property-detail-body > ul > li:hover,
+.property-detail-body > ul > li:active {
+  background: var(--surface-2);
+  border-color: var(--line);
+  color: var(--fg);
+  transform: none;
+  box-shadow: none;
+}
+
+.property-features > ul > li svg,
+.property-detail-body > ul > li svg {
+  width: 18px;
+  height: 18px;
+  margin-top: 0;
+  padding: 3px;
+  box-sizing: content-box;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: rgba(143, 93, 50, 0.10);
+  color: var(--gold);
+}
+
+.property-features > ul > li span,
+.property-detail-body > ul > li span {
+  min-width: 0;
+  color: var(--fg);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.8;
+}
+
+@media (max-width: 720px) {
+  .pcard-specs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .pcard-spec {
+    min-height: 40px;
+    justify-content: flex-start;
+    padding-inline: 9px;
+    font-size: 0.7rem;
+  }
+
+  .property-features > ul,
+  .property-detail-body > ul {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .property-features > ul > li,
+  .property-detail-body > ul > li {
+    min-height: 44px;
+    padding: 9px 10px;
+  }
+
+  .property-primary-contact-whatsapp {
+    min-height: 46px;
+  }
+}
+
+@media (max-width: 420px) {
+  .pcard-spec {
+    font-size: 0.68rem;
+  }
+}
