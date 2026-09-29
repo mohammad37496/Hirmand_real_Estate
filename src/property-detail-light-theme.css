@@ -2267,3 +2267,68 @@ body:has(.property-detail-page) .footer a:hover {
     break-inside: avoid !important;
   }
 }
+
+/* === HIRMAND — DESCRIPTION META FINAL LIGHT SURFACE ==========================
+   Hard-lock the publication/update metadata row to the site's canonical
+   light palette so legacy/global dark surfaces cannot make it black.
+   ========================================================================== */
+
+.property-detail-page .property-detail-body .property-description-meta,
+.property-detail-page .property-detail-body .property-description-meta::before,
+.property-detail-page .property-detail-body .property-description-meta::after {
+  background: #f1eae0 !important;
+  background-color: #f1eae0 !important;
+  background-image: none !important;
+  color: #626d7b !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.property-detail-page .property-detail-body .property-description-meta > span,
+.property-detail-page .property-detail-body .property-description-meta > span::before,
+.property-detail-page .property-detail-body .property-description-meta > span::after {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 34px !important;
+  padding: 7px 11px !important;
+  border: 1px solid rgba(11, 26, 43, 0.09) !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #626d7b !important;
+  box-shadow: 0 2px 8px rgba(11, 26, 43, 0.035) !important;
+  text-shadow: none !important;
+}
+
+.property-detail-page .property-detail-body .property-description-meta > span strong {
+  color: #102d45 !important;
+  font-weight: 850 !important;
+}
+
+.property-detail-page .property-detail-body .property-description-meta > span time {
+  color: #8a5e14 !important;
+  font-weight: 750 !important;
+  font-variant-numeric: tabular-nums !important;
+  white-space: nowrap !important;
+}
+
+.property-detail-page .property-detail-body .property-description-meta > span:hover {
+  background: #f5ead2 !important;
+  background-color: #f5ead2 !important;
+  border-color: #dfbd75 !important;
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-detail-body .property-description-meta {
+    gap: 7px !important;
+    padding: 0 !important;
+  }
+
+  .property-detail-page .property-detail-body .property-description-meta > span {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+}
