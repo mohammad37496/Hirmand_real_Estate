@@ -13,7 +13,7 @@ import {
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES } from "@/lib/site";
 import { listNeighborhoodNames } from "@/lib/neighborhoods";
 import { mediaSourceCandidates } from "@/lib/media";
-import { getPropertyFallbackImage, getPropertyFallbackImageAvif, getPropertyFallbackLegacyImage } from "@/lib/property-fallback-images";
+import { getPropertyFallbackImage, getPropertyFallbackImageAvif, getPropertyFallbackLegacyImage, isPropertyFallbackImage } from "@/lib/property-fallback-images";
 import { formatToman } from "@/lib/money";
 import type { Property, PropertyCardData, PropertyType, PropertyTransaction } from "@/lib/properties";
 import { isFeaturedActive, listPublishedPropertyCards } from "@/lib/properties";
@@ -48,8 +48,13 @@ function priceLines(property: Property | PropertyCardData): PriceLine[] {
   return price ? [{ value: `${price} تومان` }] : [];
 }
 function imageFor(property: Property | PropertyCardData) {
-  if ("image" in property && property.image) return property.image;
-  if ("images" in property && property.images[0]) return property.images[0];
+  if ("image" in property && property.image && !isPropertyFallbackImage(property.image)) {
+    return property.image;
+  }
+  if ("images" in property) {
+    const ownedImage = property.images.find((src) => src && !isPropertyFallbackImage(src));
+    if (ownedImage) return ownedImage;
+  }
   return getPropertyFallbackImage(property.propertyType, property.id);
 }
 
