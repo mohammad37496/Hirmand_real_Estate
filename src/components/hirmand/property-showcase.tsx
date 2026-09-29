@@ -177,18 +177,35 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
             {unitPrice ? <span className="pcard-unit-price">{unitPrice}</span> : null}
           </div>
 
-          <div className="pcard-specs" aria-label="مشخصات خلاصه">
+          <div
+            className="pcard-specs"
+            aria-label="مشخصات خلاصه"
+            style={{
+              background: "#f1eae0",
+              color: "#626d7b",
+              borderTop: "1px solid rgba(11, 26, 43, 0.09)",
+              borderBottom: "1px solid rgba(11, 26, 43, 0.09)",
+            }}
+          >
             {property.areaM2 ? (
-              <span><Ruler size={14} /> {property.areaM2.toLocaleString("fa-IR")} متر</span>
+              <span style={{ background: "#ffffff", color: "#626d7b", border: "1px solid rgba(11, 26, 43, 0.09)" }}>
+                <Ruler size={14} style={{ color: "#8a5e14" }} /> {property.areaM2.toLocaleString("fa-IR")} متر
+              </span>
             ) : null}
             {property.bedrooms ? (
-              <span><BedDouble size={14} /> {property.bedrooms.toLocaleString("fa-IR")} خواب</span>
+              <span style={{ background: "#ffffff", color: "#626d7b", border: "1px solid rgba(11, 26, 43, 0.09)" }}>
+                <BedDouble size={14} style={{ color: "#8a5e14" }} /> {property.bedrooms.toLocaleString("fa-IR")} خواب
+              </span>
             ) : null}
             {property.parking ? (
-              <span><CarFront size={14} /> پارکینگ</span>
+              <span style={{ background: "#ffffff", color: "#626d7b", border: "1px solid rgba(11, 26, 43, 0.09)" }}>
+                <CarFront size={14} style={{ color: "#8a5e14" }} /> پارکینگ
+              </span>
             ) : null}
             {property.elevator ? (
-              <span><Building2 size={14} /> آسانسور</span>
+              <span style={{ background: "#ffffff", color: "#626d7b", border: "1px solid rgba(11, 26, 43, 0.09)" }}>
+                <Building2 size={14} style={{ color: "#8a5e14" }} /> آسانسور
+              </span>
             ) : null}
           </div>
 
