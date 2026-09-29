@@ -3071,3 +3071,157 @@ body:has(.property-detail-page) {
   color: var(--navy-950, #081320) !important;
   border-color: var(--brass-500, #c08a2a) !important;
 }
+/* === HIRMAND RELATED — LIGHT MAIN THEME POLISH ===============================
+   Keep similar-property cards aligned with the site's ivory / white + navy /
+   brass system in their resting state. Interaction may add brass emphasis,
+   but never reintroduce a dark/black default surface.
+   ========================================================================== */
+
+.property-detail-page .property-related {
+  background: var(--paper, #f7f4ee) !important;
+  color: var(--fg, #152430) !important;
+}
+
+.property-detail-page .property-related .section-head,
+.property-detail-page .property-related .section-head h2,
+.property-detail-page .property-related .section-head p {
+  background: transparent !important;
+}
+
+.property-detail-page .property-related .section-head .kicker {
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+.property-detail-page .property-related .section-head h2 {
+  color: var(--navy-900, #102d45) !important;
+}
+
+.property-detail-page .property-related .section-head p {
+  color: var(--muted, #626d7b) !important;
+}
+
+.property-detail-page .property-related .pcard {
+  overflow: hidden !important;
+  background: var(--card, #ffffff) !important;
+  border: 1px solid var(--line, rgba(11, 26, 43, 0.11)) !important;
+  box-shadow: 0 10px 28px rgba(11, 26, 43, 0.06) !important;
+}
+
+.property-detail-page .property-related .pcard-link,
+.property-detail-page .property-related .pcard-media,
+.property-detail-page .property-related .pcard-body {
+  background: var(--card, #ffffff) !important;
+}
+
+.property-detail-page .property-related .pcard-media {
+  background: var(--paper-2, #eee9e0) !important;
+}
+
+.property-detail-page .property-related .pcard-media::before,
+.property-detail-page .property-related .pcard-media::after,
+.property-detail-page .property-related .pcard-link::before,
+.property-detail-page .property-related .pcard-link::after {
+  display: none !important;
+  content: none !important;
+  background: transparent !important;
+}
+
+.property-detail-page .property-related .pcard-badge-transaction {
+  background: var(--brass-100, #f5ead2) !important;
+  color: var(--brass-700, #8a5e14) !important;
+  border: 1px solid var(--brass-300, #dfbd75) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.property-detail-page .property-related .pcard-actions {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.property-detail-page .property-related .pcard-actions .property-action {
+  background: rgb(255 255 255 / 97%) !important;
+  color: var(--navy-900, #102d45) !important;
+  border: 1px solid var(--line-2, rgba(11, 26, 43, 0.13)) !important;
+  box-shadow: 0 6px 16px rgba(11, 26, 43, 0.08) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.property-detail-page .property-related .pcard-actions .property-action:hover,
+.property-detail-page .property-related .pcard-actions .property-action:focus-visible {
+  background: var(--brass-100, #f5ead2) !important;
+  color: var(--brass-700, #8a5e14) !important;
+  border-color: var(--brass-300, #dfbd75) !important;
+}
+
+.property-detail-page .property-related .pcard-actions .property-action.is-active,
+.property-detail-page .property-related .pcard-actions .property-action[aria-pressed="true"] {
+  background: var(--brass-500, #c08a2a) !important;
+  color: var(--navy-950, #081320) !important;
+  border-color: var(--brass-500, #c08a2a) !important;
+}
+
+.property-detail-page .property-related .pcard-arrow {
+  background: rgb(255 255 255 / 96%) !important;
+  color: var(--navy-900, #102d45) !important;
+  border: 1px solid var(--line, rgba(11, 26, 43, 0.11)) !important;
+  box-shadow: 0 6px 16px rgba(11, 26, 43, 0.08) !important;
+}
+
+.property-detail-page .property-related .pcard-title,
+.property-detail-page .property-related .pcard-price {
+  color: var(--navy-900, #102d45) !important;
+}
+
+.property-detail-page .property-related .pcard-price {
+  font-weight: 800 !important;
+}
+
+.property-detail-page .property-related .pcard-meta,
+.property-detail-page .property-related .pcard-code,
+.property-detail-page .property-related .pcard-unit-price,
+.property-detail-page .property-related .pcard-location {
+  color: var(--muted, #626d7b) !important;
+}
+
+.property-detail-page .property-related .pcard-specs {
+  background: var(--surface-2, #f1eae0) !important;
+  border-color: var(--line, rgba(11, 26, 43, 0.09)) !important;
+}
+
+.property-detail-page .property-related .pcard-specs,
+.property-detail-page .property-related .pcard-location,
+.property-detail-page .property-related .pcard-details-link {
+  color: var(--muted, #626d7b) !important;
+}
+
+.property-detail-page .property-related .pcard-specs svg,
+.property-detail-page .property-related .pcard-location svg,
+.property-detail-page .property-related .pcard-details-link svg {
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+.property-detail-page .property-related .pcard-details-link {
+  color: var(--navy-900, #102d45) !important;
+  font-weight: 700 !important;
+}
+
+.property-detail-page .property-related .pcard:hover,
+.property-detail-page .property-related .pcard:focus-within {
+  background: var(--card, #ffffff) !important;
+  border-color: var(--brass-300, #dfbd75) !important;
+  box-shadow: 0 14px 32px rgba(11, 26, 43, 0.09) !important;
+}
+
+.property-detail-page .property-related .pcard:hover .pcard-details-link,
+.property-detail-page .property-related .pcard:focus-within .pcard-details-link {
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-related .pcard-actions .property-action {
+    background: rgb(255 255 255 / 98%) !important;
+  }
+}
