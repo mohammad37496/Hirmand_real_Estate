@@ -2,17 +2,18 @@ import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { SITE, TEAM } from "@/lib/site";
-import { dbSource, getSql } from "@/lib/db";
+import { dbSource, getSql, type Sql } from "@/lib/db";
 import { storeMedia } from "@/lib/media-store.server";
 import { detectRasterImageType, isAllowedDivarImageUrl, isDivarRemoteHost } from "@/lib/media";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { isMoneyText, normalizeMoneyText } from "@/lib/property-input-normalization";
 import { extractDivarMediaUrls } from "./divar-media-utils";
+import { DIVAR_MAX_PUBLISHED_IMAGES } from "./divar-status";
 
-const DIVAR_API = "https://api.divar.ir/v8";
+export const DIVAR_API = "https://api.divar.ir/v8";
 const DIVAR_WEB = "https://divar.ir";
 const CITY_SLUG = "isfahan";
-const CATEGORIES = [
+export const CATEGORIES = [
   "apartment-sell",
   "house-villa-sell",
   "apartment-rent",
@@ -21,8 +22,12 @@ const CATEGORIES = [
 const DEFAULT_LIMIT = 24;
 const MAX_LIMIT = 48;
 const DETAIL_BATCH = 4;
-const MAX_IMAGES = 20;
+/** Shared with the admin panel so the gallery cap and the health badge agree. */
+const MAX_IMAGES = DIVAR_MAX_PUBLISHED_IMAGES;
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
+/** A `running` sync row older than this was crashed, not still working. */
+const SYNC_RUN_STALE_MS = 10 * 60 * 1000;
+const MAX_SYNC_RUNS = 6;
 
 export type DivarTransaction = "sell" | "rent";
 export type DivarPropertyType = "apartment" | "villa";
@@ -69,6 +74,25 @@ export type DivarFile = {
   createdAt: string;
   updatedAt: string;
   rejectReason?: string | null;
+  /** The admin approved this ad by hand after the agency filter rejected it. */
+  manualOverride: boolean;
+};
+
+export type DivarSyncStatus = "running" | "completed" | "failed";
+
+export type DivarSyncRun = {
+  id: string;
+  status: DivarSyncStatus;
+  requestedLimit: number;
+  inspected: number;
+  accepted: number;
+  newlyVisible: number;
+  rejected: number;
+  requests: number;
+  durationMs: number | null;
+  error: string | null;
+  startedAt: string;
+  finishedAt: string | null;
 };
 
 export type DivarStats = {
@@ -76,7 +100,19 @@ export type DivarStats = {
   imported: number;
   rejected: number;
   totalSeen: number;
+  /** Finish time of the newest completed sync (falls back to last activity). */
   lastSyncAt: string | null;
+  syncRuns: DivarSyncRun[];
+};
+
+export type DivarSyncSummary = {
+  accepted: number;
+  visible: number;
+  rejected: number;
+  inspected: number;
+  requests: number;
+  syncedAt: string;
+  durationMs: number;
 };
 
 type ListingCandidate = {
@@ -85,7 +121,7 @@ type ListingCandidate = {
   webInfo: Record<string, unknown>;
 };
 
-type ParsedListing = Omit<
+export type ParsedListing = Omit<
   DivarFile,
   | "id"
   | "filterStatus"
@@ -98,6 +134,7 @@ type ParsedListing = Omit<
   | "publishedImageCount"
   | "publishedHostedImageCount"
   | "publishedRemoteImageCount"
+  | "manualOverride"
 >;
 
 const adminInput = z.object({}).optional();
@@ -106,6 +143,11 @@ function requireAdminSync() {
   return getCookie(ADMIN_SESSION_COOKIE);
 }
 
+/**
+ * Module-local on purpose — see the note in `divar-review.ts`. Exporting it
+ * would keep the `admin-session.server` import alive in the client bundle and
+ * the TanStack Start import-protection plugin rejects that at build time.
+ */
 async function requireAdmin() {
   if (await verifyAdminSessionToken(requireAdminSync())) return;
   throw new Error("نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.");
@@ -270,7 +312,7 @@ export function getDivarAgencyReason(value: unknown): string | null {
 }
 
 
-function strictNullableMoney(value: unknown): string | null {
+export function strictNullableMoney(value: unknown): string | null {
   const normalized = normalizeMoneyText(value);
   if (!normalized) return null;
   if (!isMoneyText(normalized)) {
@@ -345,7 +387,7 @@ function findModalWidgets(value: unknown, out: unknown[] = [], depth = 0) {
   return out;
 }
 
-function parseDivarListing(
+export function parseDivarListing(
   detail: Record<string, unknown>,
   webInfo: Record<string, unknown>,
   category: (typeof CATEGORIES)[number],
@@ -488,7 +530,7 @@ function parseDivarListing(
   };
 }
 
-async function fetchJson<T>(url: string, init: RequestInit = {}): Promise<T> {
+export async function fetchJson<T>(url: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(url, {
     ...init,
     headers: {
@@ -610,7 +652,7 @@ function nullableNumber(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function nullableInteger(value: unknown): number | null {
+export function nullableInteger(value: unknown): number | null {
   const parsed = nullableNumber(value);
   return parsed == null ? null : Math.trunc(parsed);
 }
@@ -895,12 +937,104 @@ function mapRow(row: Record<string, unknown>): DivarFile {
     createdAt: new Date(String(row.created_at)).toISOString(),
     updatedAt: new Date(String(row.updated_at)).toISOString(),
     rejectReason: row.reject_reason == null ? null : String(row.reject_reason),
+    manualOverride: Boolean(row.manual_override),
   };
+}
+
+function mapSyncRun(row: Record<string, unknown>): DivarSyncRun {
+  const status = String(row.status ?? "running");
+  return {
+    id: String(row.id),
+    status: (["running", "completed", "failed"].includes(status)
+      ? status
+      : "failed") as DivarSyncStatus,
+    requestedLimit: Number(row.requested_limit) || 0,
+    inspected: Number(row.inspected) || 0,
+    accepted: Number(row.accepted) || 0,
+    newlyVisible: Number(row.newly_visible) || 0,
+    rejected: Number(row.rejected) || 0,
+    requests: Number(row.requests) || 0,
+    durationMs: row.duration_ms == null ? null : Number(row.duration_ms),
+    error: row.error == null ? null : String(row.error),
+    startedAt: new Date(String(row.started_at)).toISOString(),
+    finishedAt: row.finished_at ? new Date(String(row.finished_at)).toISOString() : null,
+  };
+}
+
+/** A run that never closed (process died mid-crawl) is dropped from the history. */
+function isStaleSyncRun(run: DivarSyncRun): boolean {
+  return (
+    run.status === "running" &&
+    Date.now() - new Date(run.startedAt).getTime() > SYNC_RUN_STALE_MS
+  );
+}
+
+type RejectedCandidateInput = {
+  token: string;
+  title: string;
+  transactionType: DivarTransaction;
+  propertyType: DivarPropertyType;
+  neighborhood: string;
+  sellerName: string | null;
+  reason: string;
+};
+
+/**
+ * Records a listing the agency filter rejected.
+ *
+ * Two invariants use the same statement so they can never drift apart: a file
+ * that is already published on the site is never demoted off it by a later
+ * sync, and a file an admin approved by hand keeps that decision.
+ */
+async function upsertRejectedDivarFile(sql: Sql, input: RejectedCandidateInput) {
+  await sql.query(
+    `insert into divar_files (
+      id, token, title, transaction_type, property_type, neighborhood,
+      description, images, seller_name, seller_type, source_url,
+      filter_status, reject_reason, manual_override, last_seen_at, updated_at
+    ) values (
+      $1, $2, $3, $4, $5, $6,
+      '', '[]'::jsonb, $7, 'مشاور املاک', $8,
+      'rejected', $9, false, current_timestamp, current_timestamp
+    )
+    on conflict (token) do update set
+      title = excluded.title,
+      neighborhood = excluded.neighborhood,
+      seller_name = excluded.seller_name,
+      filter_status = case
+        when divar_files.filter_status = 'imported' then 'imported'
+        when divar_files.manual_override then 'accepted'
+        else 'rejected'
+      end,
+      seller_type = case
+        when divar_files.manual_override then divar_files.seller_type
+        else 'مشاور املاک'
+      end,
+      reject_reason = case
+        when divar_files.manual_override then divar_files.reject_reason
+        else excluded.reject_reason
+      end,
+      last_seen_at = current_timestamp,
+      updated_at = current_timestamp`,
+    [
+      crypto.randomUUID(),
+      input.token,
+      input.title,
+      input.transactionType,
+      input.propertyType,
+      input.neighborhood,
+      input.sellerName,
+      `${DIVAR_WEB}/v/${input.token}`,
+      input.reason,
+    ],
+  );
 }
 
 const listSchema = z.object({
   status: z.enum(["accepted", "imported", "rejected"]).optional().default("accepted"),
   limit: z.number().int().min(1).max(100).optional().default(60),
+  /** The list used to be hard-capped at the first 100 rows with no way to page. */
+  offset: z.number().int().min(0).max(20_000).optional().default(0),
 });
 
 export const listDivarFiles = createServerFn({ method: "POST" })
@@ -927,8 +1061,8 @@ export const listDivarFiles = createServerFn({ method: "POST" })
        left join properties p on p.id = divar_files.imported_property_id
        where divar_files.filter_status = $1
        order by divar_files.last_seen_at desc, divar_files.created_at desc
-       limit $2`,
-      [data.status, data.limit],
+       limit $2 offset $3`,
+      [data.status, data.limit, data.offset],
     );
     return rows.map(mapRow);
   });
@@ -938,7 +1072,14 @@ export const getDivarStats = createServerFn({ method: "POST" })
   .handler(async () => {
     await requireAdmin();
     if (dbSource === "unconfigured") {
-      return { accepted: 0, imported: 0, rejected: 0, totalSeen: 0, lastSyncAt: null } satisfies DivarStats;
+      return {
+        accepted: 0,
+        imported: 0,
+        rejected: 0,
+        totalSeen: 0,
+        lastSyncAt: null,
+        syncRuns: [],
+      } satisfies DivarStats;
     }
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(`
@@ -947,16 +1088,35 @@ export const getDivarStats = createServerFn({ method: "POST" })
         count(*) filter (where filter_status = 'imported')::int as imported,
         count(*) filter (where filter_status = 'rejected')::int as rejected,
         count(*)::int as total_seen,
-        max(updated_at) as last_sync_at
+        max(updated_at) as last_activity_at
       from divar_files
     `);
     const row = rows[0] ?? {};
+
+    // The sync log is authoritative for "last check"; `max(updated_at)` also
+    // moves when a file is imported or approved, so it is only a fallback.
+    let syncRuns: DivarSyncRun[] = [];
+    try {
+      const runRows = await sql.query<Record<string, unknown>>(
+        `select * from divar_sync_runs order by started_at desc limit $1`,
+        [MAX_SYNC_RUNS],
+      );
+      syncRuns = runRows.map(mapSyncRun).filter((run) => !isStaleSyncRun(run));
+    } catch (error) {
+      // Migration 0044 not applied yet: the panel still works, just without history.
+      console.warn("[divar] sync history unavailable", error);
+    }
+
+    const lastRun = syncRuns.find((run) => run.finishedAt);
     return {
       accepted: Number(row.accepted) || 0,
       imported: Number(row.imported) || 0,
       rejected: Number(row.rejected) || 0,
       totalSeen: Number(row.total_seen) || 0,
-      lastSyncAt: row.last_sync_at ? new Date(String(row.last_sync_at)).toISOString() : null,
+      lastSyncAt:
+        lastRun?.finishedAt ??
+        (row.last_activity_at ? new Date(String(row.last_activity_at)).toISOString() : null),
+      syncRuns,
     } satisfies DivarStats;
   });
 
@@ -964,15 +1124,47 @@ const syncSchema = z.object({
   limit: z.number().int().min(4).max(MAX_LIMIT).optional().default(DEFAULT_LIMIT),
 });
 
-export const syncDivarFiles = createServerFn({ method: "POST" })
-  .validator(syncSchema)
-  .handler(async ({ data }) => {
-    await requireAdmin();
-    if (dbSource === "unconfigured") {
-      throw new Error("DATABASE_URL تنظیم نشده است. اول PostgreSQL/Neon را به پروژه وصل کنید.");
-    }
+/** Closes a sync-run row with its counters, or with the failure message. */
+async function finishDivarSyncRun(
+  sql: Sql,
+  runId: string,
+  status: "completed" | "failed",
+  summary: Omit<DivarSyncSummary, "durationMs"> | null,
+  durationMs: number,
+  error?: unknown,
+) {
+  const message = error == null ? null : error instanceof Error ? error.message : String(error);
+  await sql.query(
+    `update divar_sync_runs
+        set status = $2,
+            inspected = $3,
+            accepted = $4,
+            newly_visible = $5,
+            rejected = $6,
+            requests = $7,
+            duration_ms = $8,
+            error = $9,
+            finished_at = current_timestamp
+      where id = $1`,
+    [
+      runId,
+      status,
+      summary?.inspected ?? 0,
+      summary?.accepted ?? 0,
+      summary?.visible ?? 0,
+      summary?.rejected ?? 0,
+      summary?.requests ?? 0,
+      Math.max(0, Math.round(durationMs)),
+      message ? message.slice(0, 500) : null,
+    ],
+  );
+}
 
-    const sql = await getSql();
+/** The crawl itself. Sync-run bookkeeping is the caller's job. */
+async function runDivarSync(
+  sql: Sql,
+  data: { limit: number },
+): Promise<Omit<DivarSyncSummary, "durationMs">> {
     const cityId = await resolveIsfahanCityId();
     const target = data.limit;
     const seenTokens = new Set<string>();
@@ -1000,37 +1192,15 @@ export const syncDivarFiles = createServerFn({ method: "POST" })
         for (const row of preRejected) {
           const reason = getDivarAgencyReason(row.webInfo) ?? "مشکوک به آگهی املاک";
           rejected += 1;
-          await sql.query(
-            `insert into divar_files (
-              id, token, title, transaction_type, property_type, neighborhood,
-              description, images, seller_name, seller_type, source_url,
-              filter_status, reject_reason, last_seen_at, updated_at
-            ) values (
-              $1, $2, $3, $4, $5, $6,
-              '', '[]'::jsonb, $7, 'business', $8,
-              'rejected', $9, current_timestamp, current_timestamp
-            )
-            on conflict (token) do update set
-              title = excluded.title,
-              neighborhood = excluded.neighborhood,
-              seller_name = excluded.seller_name,
-              seller_type = 'business',
-              filter_status = case when divar_files.filter_status = 'imported' then 'imported' else 'rejected' end,
-              reject_reason = excluded.reject_reason,
-              last_seen_at = current_timestamp,
-              updated_at = current_timestamp`,
-            [
-              crypto.randomUUID(),
-              row.token,
-              String(row.webInfo.title ?? "فایل دیوار"),
-              category.includes("rent") ? "rent" : "sell",
-              category.includes("villa") ? "villa" : "apartment",
-              String(row.webInfo.district_persian ?? row.webInfo.district ?? "اصفهان"),
-              firstStringByKey(row.webInfo, /seller|owner|user|business/i),
-              `${DIVAR_WEB}/v/${row.token}`,
-              reason,
-            ],
-          );
+          await upsertRejectedDivarFile(sql, {
+            token: row.token,
+            title: String(row.webInfo.title ?? "فایل دیوار"),
+            transactionType: category.includes("rent") ? "rent" : "sell",
+            propertyType: category.includes("villa") ? "villa" : "apartment",
+            neighborhood: String(row.webInfo.district_persian ?? row.webInfo.district ?? "اصفهان"),
+            sellerName: firstStringByKey(row.webInfo, /seller|owner|user|business/i),
+            reason,
+          });
         }
 
         const pending = candidates.filter((row) => !preRejected.some((r) => r.token === row.token));
@@ -1043,8 +1213,12 @@ export const syncDivarFiles = createServerFn({ method: "POST" })
                   `${DIVAR_API}/posts-v2/web/${encodeURIComponent(row.token)}`,
                 );
                 const reason = getDivarAgencyReason(detail);
-                if (reason) return { row, reason };
-                return { row, parsed: parseDivarListing(detail, row.webInfo, row.category, row.token) };
+                if (reason) return { row, reason, parsed: null };
+                return {
+                  row,
+                  reason: null,
+                  parsed: parseDivarListing(detail, row.webInfo, row.category, row.token),
+                };
               } catch (error) {
                 console.warn("[divar] detail failed", row.token, error);
                 return null;
@@ -1054,42 +1228,23 @@ export const syncDivarFiles = createServerFn({ method: "POST" })
 
           for (const result of results) {
             if (!result) continue;
-            if ("reason" in result) {
+            if (result.reason) {
               rejected += 1;
-              await sql.query(
-                `insert into divar_files (
-                  id, token, title, transaction_type, property_type, neighborhood,
-                  description, images, seller_name, seller_type, source_url,
-                  filter_status, reject_reason, last_seen_at, updated_at
-                ) values (
-                  $1, $2, $3, $4, $5, $6,
-                  '', '[]'::jsonb, $7, 'business', $8,
-                  'rejected', $9, current_timestamp, current_timestamp
-                )
-                on conflict (token) do update set
-                  title = excluded.title,
-                  neighborhood = excluded.neighborhood,
-                  seller_name = excluded.seller_name,
-                  seller_type = 'business',
-                  filter_status = case when divar_files.filter_status = 'imported' then 'imported' else 'rejected' end,
-                  reject_reason = excluded.reject_reason,
-                  last_seen_at = current_timestamp,
-                  updated_at = current_timestamp`,
-                [
-                  crypto.randomUUID(),
-                  result.row.token,
-                  String(result.row.webInfo.title ?? "فایل دیوار"),
-                  result.row.category.includes("rent") ? "rent" : "sell",
-                  result.row.category.includes("villa") ? "villa" : "apartment",
-                  String(result.row.webInfo.district_persian ?? result.row.webInfo.district ?? "اصفهان"),
-                  firstStringByKey(result.row.webInfo, /seller|owner|user|business/i),
-                  `${DIVAR_WEB}/v/${result.row.token}`,
-                  result.reason,
-                ],
-              );
+              await upsertRejectedDivarFile(sql, {
+                token: result.row.token,
+                title: String(result.row.webInfo.title ?? "فایل دیوار"),
+                transactionType: result.row.category.includes("rent") ? "rent" : "sell",
+                propertyType: result.row.category.includes("villa") ? "villa" : "apartment",
+                neighborhood: String(
+                  result.row.webInfo.district_persian ?? result.row.webInfo.district ?? "اصفهان",
+                ),
+                sellerName: firstStringByKey(result.row.webInfo, /seller|owner|user|business/i),
+                reason: result.reason,
+              });
               continue;
             }
 
+            if (!result.parsed) continue;
             acceptedRows.push(result.parsed);
             if (acceptedRows.length >= target) break;
           }
@@ -1200,6 +1355,51 @@ export const syncDivarFiles = createServerFn({ method: "POST" })
       requests,
       syncedAt: new Date().toISOString(),
     };
+}
+
+export const syncDivarFiles = createServerFn({ method: "POST" })
+  .validator(syncSchema)
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    if (dbSource === "unconfigured") {
+      throw new Error("DATABASE_URL تنظیم نشده است. اول PostgreSQL/Neon را به پروژه وصل کنید.");
+    }
+
+    const sql = await getSql();
+    const startedAt = Date.now();
+
+    // Bookkeeping is best-effort on purpose: an unapplied migration 0044 must
+    // degrade to "no history", never to a broken crawl.
+    let runId: string | null = null;
+    try {
+      runId = crypto.randomUUID();
+      await sql.query(
+        `insert into divar_sync_runs (id, status, requested_limit)
+         values ($1, 'running', $2)`,
+        [runId, data.limit],
+      );
+    } catch (error) {
+      runId = null;
+      console.warn("[divar] could not open a sync run", error);
+    }
+
+    try {
+      const summary = await runDivarSync(sql, { limit: data.limit });
+      const durationMs = Date.now() - startedAt;
+      if (runId) {
+        await finishDivarSyncRun(sql, runId, "completed", summary, durationMs).catch((error) => {
+          console.warn("[divar] could not close the sync run", error);
+        });
+      }
+      return { ...summary, durationMs } satisfies DivarSyncSummary;
+    } catch (error) {
+      if (runId) {
+        await finishDivarSyncRun(sql, runId, "failed", null, Date.now() - startedAt, error).catch(
+          () => undefined,
+        );
+      }
+      throw error;
+    }
   });
 
 const idSchema = z.object({
@@ -1228,19 +1428,20 @@ export const importDivarFile = createServerFn({ method: "POST" })
       throw new Error("این فایل به دلیل نشانه‌های مشاور/آژانس قابل ورود نیست.");
     }
 
-    const detailText = [
-      row.title,
-      row.description,
-      row.seller_name,
-      row.seller_type,
-    ].join("\n");
-    const reason = getDivarAgencyReason(detailText);
-    if (reason) {
-      await sql.query(
-        `update divar_files set filter_status='rejected', reject_reason=$2, updated_at=current_timestamp where id=$1`,
-        [data.id, reason],
-      );
-      throw new Error("این فایل دوباره توسط فیلتر مشاور/آژانس رد شد.");
+    // A hand-approved file keeps its approval. The agency filter exists to keep
+    // brokers off the site, not to silently overrule the admin who reviewed the
+    // ad — without this, "تأیید دستی" would be undone by the very next publish.
+    const manualOverride = Boolean(row.manual_override);
+    if (!manualOverride) {
+      const detailText = [row.title, row.description, row.seller_name, row.seller_type].join("\n");
+      const reason = getDivarAgencyReason(detailText);
+      if (reason) {
+        await sql.query(
+          `update divar_files set filter_status='rejected', reject_reason=$2, updated_at=current_timestamp where id=$1`,
+          [data.id, reason],
+        );
+        throw new Error("این فایل دوباره توسط فیلتر مشاور/آژانس رد شد.");
+      }
     }
 
     const token = String(row.token);
@@ -1251,7 +1452,7 @@ export const importDivarFile = createServerFn({ method: "POST" })
         const detail = await fetchJson<Record<string, unknown>>(
           `${DIVAR_API}/posts-v2/web/${encodeURIComponent(token)}`,
         );
-        const detailReason = getDivarAgencyReason(detail);
+        const detailReason = manualOverride ? null : getDivarAgencyReason(detail);
         if (detailReason) {
           await sql.query(
             `update divar_files
