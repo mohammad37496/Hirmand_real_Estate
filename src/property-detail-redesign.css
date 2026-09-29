@@ -3548,3 +3548,63 @@ body:has(.property-detail-page) {
 .property-detail-page .property-detail-aside .property-contact-actions > .btn-ghost:focus-visible svg {
   color: var(--brass-700, #8a5e14) !important;
 }
+
+
+/* === HIRMAND DESCRIPTION META — FINAL LIGHT THEME LOCK ======================
+   Publication/update metadata stays on the same ivory / white / navy / brass
+   system and remains readable against the surrounding description card.
+   ========================================================================== */
+
+.property-detail-page .property-detail-body .property-description-meta {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+  background: var(--surface-2, #f1eae0) !important;
+  color: var(--muted, #626d7b) !important;
+  border: 1px solid var(--line, rgba(11, 26, 43, 0.10)) !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.property-detail-page .property-detail-body .property-description-meta > span {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 38px !important;
+  padding: 7px 11px !important;
+  background: var(--card, #ffffff) !important;
+  color: var(--muted, #626d7b) !important;
+  border: 1px solid var(--line, rgba(11, 26, 43, 0.09)) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 2px 8px rgba(11, 26, 43, 0.025) !important;
+}
+
+.property-detail-page .property-detail-body .property-description-meta > span strong {
+  color: var(--navy-900, #102d45) !important;
+  font-weight: 800 !important;
+}
+
+.property-detail-page .property-detail-body .property-description-meta > span time {
+  color: var(--brass-700, #8a5e14) !important;
+  font-weight: 750 !important;
+  font-variant-numeric: tabular-nums !important;
+  white-space: nowrap !important;
+}
+
+.property-detail-page .property-detail-body .property-description-meta > span:hover {
+  background: var(--brass-100, #f5ead2) !important;
+  border-color: var(--brass-300, #dfbd75) !important;
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-detail-body .property-description-meta {
+    gap: 7px !important;
+  }
+
+  .property-detail-page .property-detail-body .property-description-meta > span {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+}
