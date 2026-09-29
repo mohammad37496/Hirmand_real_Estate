@@ -2608,3 +2608,249 @@ body:has(.property-detail-page) .footer a:hover {
     min-height: 18px !important;
   }
 }
+
+
+/* ==========================================================================
+   PROPERTY DETAIL — PREMIUM CONTACT + FEATURES
+   ========================================================================== */
+
+/* Primary contact actions: clearer hierarchy, stronger touch targets,
+   restrained Hirmand luxury styling. */
+.property-detail-page .property-primary-contact {
+  gap: 10px !important;
+  margin-top: 16px !important;
+}
+
+.property-detail-page .property-primary-contact > a {
+  position: relative !important;
+  min-height: 52px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 9px !important;
+  padding: 10px 14px !important;
+  border-radius: 14px !important;
+  font-size: .74rem !important;
+  font-weight: 900 !important;
+  line-height: 1.5 !important;
+  text-decoration: none !important;
+  overflow: hidden !important;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease !important;
+}
+
+.property-detail-page .property-primary-contact > a::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background: linear-gradient(120deg, rgb(255 255 255 / 10%), transparent 48%) !important;
+  pointer-events: none !important;
+}
+
+.property-detail-page .property-primary-contact-call {
+  border: 1px solid #102d45 !important;
+  background: linear-gradient(135deg, #173149 0%, #0b1a2b 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 22px rgb(11 26 43 / 14%) !important;
+}
+
+.property-detail-page .property-primary-contact-call:hover {
+  transform: translateY(-2px) !important;
+  border-color: #8a5e14 !important;
+  background: linear-gradient(135deg, #20435f 0%, #173149 100%) !important;
+  box-shadow: 0 13px 26px rgb(11 26 43 / 18%) !important;
+}
+
+.property-detail-page .property-primary-contact-whatsapp {
+  border: 1px solid #d3c8b4 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #fbf8f2 100%) !important;
+  color: #173149 !important;
+  box-shadow: 0 7px 17px rgb(16 36 52 / 6%) !important;
+}
+
+.property-detail-page .property-primary-contact-whatsapp:hover {
+  transform: translateY(-2px) !important;
+  border-color: #c08a2a !important;
+  background: #f7edda !important;
+  color: #8a5e14 !important;
+  box-shadow: 0 11px 22px rgb(16 36 52 / 9%) !important;
+}
+
+.property-detail-page .property-primary-contact > a svg {
+  position: relative !important;
+  z-index: 1 !important;
+  flex: 0 0 auto !important;
+  width: 19px !important;
+  height: 19px !important;
+  padding: 5px !important;
+  box-sizing: content-box !important;
+  border-radius: 9px !important;
+  stroke-width: 2.15 !important;
+}
+
+.property-detail-page .property-primary-contact-call svg {
+  color: #173149 !important;
+  background: #e2c48c !important;
+  stroke: #173149 !important;
+}
+
+.property-detail-page .property-primary-contact-whatsapp svg {
+  color: #8a5e14 !important;
+  background: #f7edda !important;
+  stroke: currentColor !important;
+}
+
+/* Consultant-card WhatsApp / call actions use the same premium button system. */
+.property-detail-page .property-contact-actions .btn-gold,
+.property-detail-page .property-contact-actions .btn-ghost {
+  min-height: 46px !important;
+  border-radius: 13px !important;
+  font-size: .7rem !important;
+  font-weight: 900 !important;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease !important;
+}
+
+.property-detail-page .property-contact-actions .btn-gold:hover,
+.property-detail-page .property-contact-actions .btn-ghost:hover {
+  transform: translateY(-1px) !important;
+}
+
+.property-detail-page .property-contact-actions .btn-ghost {
+  background: linear-gradient(180deg, #ffffff 0%, #fbf8f2 100%) !important;
+  border-color: #d3c8b4 !important;
+  color: #173149 !important;
+  box-shadow: 0 6px 16px rgb(16 36 52 / 5%) !important;
+}
+
+.property-detail-page .property-contact-actions .btn-ghost:hover {
+  background: #f7edda !important;
+  border-color: #c08a2a !important;
+  color: #8a5e14 !important;
+}
+
+.property-detail-page .property-contact-actions svg {
+  width: 17px !important;
+  height: 17px !important;
+  flex: 0 0 auto !important;
+}
+
+/* Features: compact information tiles instead of plain list rows. */
+.property-detail-page .property-features {
+  margin-top: 22px !important;
+  padding-top: 18px !important;
+  border-top: 1px solid #e4dccc !important;
+}
+
+.property-detail-page .property-features > .property-section-subheading {
+  margin-bottom: 10px !important;
+}
+
+.property-detail-page .property-features > .property-section-subheading h3 {
+  color: #173149 !important;
+  font-size: .96rem !important;
+  line-height: 1.7 !important;
+  font-weight: 950 !important;
+}
+
+.property-detail-page .property-features > .property-section-subheading > span {
+  min-height: 28px !important;
+  padding: 5px 10px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgb(192 138 42 / 24%) !important;
+  background: #f7edda !important;
+  color: #8a5e14 !important;
+  font-size: .63rem !important;
+  font-weight: 900 !important;
+}
+
+.property-detail-page .property-features ul {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 9px !important;
+  margin-top: 12px !important;
+}
+
+.property-detail-page .property-features li {
+  min-height: 50px !important;
+  align-items: center !important;
+  gap: 9px !important;
+  padding: 10px 12px !important;
+  border: 1px solid #e4dccc !important;
+  border-radius: 13px !important;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #fbf8f2 100%) !important;
+  color: #173149 !important;
+  font-size: .71rem !important;
+  font-weight: 750 !important;
+  line-height: 1.7 !important;
+  box-shadow: 0 4px 13px rgb(16 36 52 / 4%) !important;
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background 150ms ease !important;
+}
+
+.property-detail-page .property-features li:hover {
+  transform: translateY(-1px) !important;
+  border-color: rgb(192 138 42 / 42%) !important;
+  background: #f7edda !important;
+  box-shadow: 0 8px 18px rgb(16 36 52 / 6%) !important;
+}
+
+.property-detail-page .property-features li svg {
+  width: 15px !important;
+  height: 15px !important;
+  min-width: 15px !important;
+  margin: 0 !important;
+  padding: 4px !important;
+  box-sizing: content-box !important;
+  border-radius: 8px !important;
+  background: #f7edda !important;
+  color: #8a5e14 !important;
+  stroke: currentColor !important;
+  stroke-width: 2.2 !important;
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-primary-contact {
+    gap: 8px !important;
+  }
+
+  .property-detail-page .property-primary-contact > a {
+    min-height: 50px !important;
+    padding-inline: 10px !important;
+    font-size: .7rem !important;
+  }
+
+  .property-detail-page .property-features ul {
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .property-detail-page .property-primary-contact > a {
+    min-height: 48px !important;
+    gap: 7px !important;
+    font-size: .68rem !important;
+  }
+
+  .property-detail-page .property-primary-contact > a svg {
+    width: 17px !important;
+    height: 17px !important;
+    padding: 4px !important;
+  }
+
+  .property-detail-page .property-features li {
+    min-height: 48px !important;
+    padding: 9px 10px !important;
+    font-size: .68rem !important;
+  }
+}
