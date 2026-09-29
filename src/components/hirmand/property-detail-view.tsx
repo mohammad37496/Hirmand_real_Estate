@@ -15,7 +15,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Maximize2,
-  MessageCircle,
   Play,
   Share2,
   Sparkles,
