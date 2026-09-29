@@ -2463,26 +2463,43 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
 }
 
 .inquiry-amenity-option {
-  min-height: 42px;
-  padding: 8px 10px;
+  min-width: 0;
+  width: 100%;
+  min-height: 52px;
+  box-sizing: border-box;
+  padding: 11px 14px;
   display: flex;
+  flex-direction: row !important;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 10px;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--r-sm);
   color: var(--fg);
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   cursor: pointer;
-  transition: border-color var(--fast) var(--ease), background var(--fast) var(--ease);
+  transition:
+    border-color var(--fast) var(--ease),
+    background-color var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease),
+    transform var(--fast) var(--ease);
 }
 
-
 .inquiry-amenity-option span {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: block;
   font-size: 0.9rem;
   font-weight: 600;
   line-height: 1.6;
   color: var(--fg);
+  direction: rtl;
+  writing-mode: horizontal-tb;
+  white-space: nowrap !important;
+  word-break: normal;
+  overflow-wrap: normal;
 }
 
 .inquiry-amenity-option:hover {
@@ -2491,11 +2508,16 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
 }
 
 .inquiry-amenity-option input {
-  width: 17px;
-  height: 17px;
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
   margin: 0;
-  flex: 0 0 17px;
+  padding: 0;
+  flex: 0 0 20px;
   accent-color: var(--brass-600);
+  appearance: auto;
 }
 
 /* Desktop readability: keep the mobile density, but give the inquiry
@@ -2503,26 +2525,34 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
 @media (min-width: 721px) {
   .inquiry-amenity-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
+    gap: 12px;
   }
 
   .inquiry-amenity-option {
-    min-height: 48px;
-    padding: 10px 14px;
+    min-height: 56px;
+    padding: 12px 16px;
     border-color: var(--line-2);
+    box-shadow: var(--el-1);
+  }
+
+  .inquiry-amenity-option:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--el-2);
   }
 
   .inquiry-amenity-option span {
+    min-width: 0;
     color: var(--navy-900);
     font-size: 1rem;
     font-weight: 700;
-    line-height: 1.75;
+    line-height: 1.6;
+    white-space: nowrap !important;
   }
 
   .inquiry-amenity-option input {
-    width: 18px;
-    height: 18px;
-    flex-basis: 18px;
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
   }
 }
 
