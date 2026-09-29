@@ -84,7 +84,7 @@ import { PropertyActions } from "@/components/hirmand/property-actions";
 import { formatToman } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
-import { getPropertyFallbackImage, getPropertyFallbackImages, getPropertyFallbackLegacyImage } from "@/lib/property-fallback-images";
+import { getPropertyFallbackImage, getPropertyFallbackImages, getPropertyFallbackLegacyImage, isPropertyFallbackImage } from "@/lib/property-fallback-images";
 import { areaSlug } from "@/lib/areas";
 import { propertyPath } from "@/lib/property-path";
 import { TEAM } from "@/lib/site";
@@ -1035,8 +1035,9 @@ export function PropertyDetailView({
   const images = useMemo(() => {
     const raw = property?.images ?? [];
     const cleaned = Array.from(new Set(raw.map((src) => src.trim()).filter(Boolean)));
-    return cleaned.length
-      ? cleaned
+    const ownedImages = cleaned.filter((src) => !isPropertyFallbackImage(src));
+    return ownedImages.length
+      ? ownedImages
       : getPropertyFallbackImages(property?.propertyType ?? "apartment");
   }, [property?.images, property?.propertyType]);
 
