@@ -3031,3 +3031,22 @@ body:has(.property-detail-page) .property-detail-page,
     font-size: 0.94rem !important;
   }
 }
+
+
+/* ==========================================================================
+   HIRMAND — FOOTER CTA STATIC / NO HOVER
+   ========================================================================== */
+.footer-cta,
+.footer-cta:hover,
+.footer-cta:focus,
+.footer-cta:focus-visible,
+.footer-cta:active,
+.footer-cta:visited {
+  transform: none !important;
+  transition: none !important;
+  color: inherit !important;
+  background: inherit !important;
+  border-color: inherit !important;
+  box-shadow: inherit !important;
+  text-decoration: none !important;
+}
