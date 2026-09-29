@@ -2266,3 +2266,62 @@ body:has(.property-detail-page) {
     background: var(--surface, #ffffff) !important;
   }
 }
+
+
+/* === HIRMAND SUMMARY FACTS THEME LOCK =====================================
+   Align the compact key facts row with the site's light ivory/navy/brass
+   theme and ensure no legacy dark surface can leak into the summary card.
+   ========================================================================== */
+.property-detail-page .property-summary-facts {
+  position: relative !important;
+  z-index: 1 !important;
+  background: transparent !important;
+  color: var(--fg, #152430) !important;
+  border-color: var(--line, rgba(11, 26, 43, 0.11)) !important;
+}
+
+.property-detail-page .property-summary-facts > div {
+  background: var(--surface, #ffffff) !important;
+  color: var(--fg, #152430) !important;
+  border: 1px solid var(--line, rgba(11, 26, 43, 0.11)) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 3px 12px rgba(11, 26, 43, 0.035) !important;
+}
+
+.property-detail-page .property-summary-facts > div:hover {
+  background: var(--card, #ffffff) !important;
+  border-color: var(--brass-300, #e2c48c) !important;
+}
+
+.property-detail-page .property-summary-facts > div > svg {
+  flex: 0 0 auto !important;
+  color: var(--brass-700, #8a5e14) !important;
+}
+
+.property-detail-page .property-summary-facts > div > span {
+  background: transparent !important;
+}
+
+.property-detail-page .property-summary-facts small {
+  color: var(--muted, #626d7b) !important;
+  font-size: .64rem !important;
+  font-weight: 700 !important;
+}
+
+.property-detail-page .property-summary-facts strong {
+  color: var(--navy-900, #102d45) !important;
+  font-size: .76rem !important;
+  font-weight: 850 !important;
+  line-height: 1.65 !important;
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-summary-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .property-detail-page .property-summary-facts > div {
+    background: var(--surface, #ffffff) !important;
+  }
+}
