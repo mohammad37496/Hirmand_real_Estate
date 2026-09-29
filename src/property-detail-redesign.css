@@ -3608,3 +3608,49 @@ body:has(.property-detail-page) {
     justify-content: space-between !important;
   }
 }
+
+
+/* === HIRMAND DESCRIPTION COPY — FINAL LIGHT THEME LOCK ========================
+   Keep the readable description surface on the same light ivory/white system;
+   body text uses a darker readable tone than the surrounding metadata.
+   ========================================================================== */
+
+.property-detail-page .property-detail-body .property-description-copy {
+  background: var(--surface, #ffffff) !important;
+  color: var(--fg, #152430) !important;
+  border: 1px solid var(--line, rgba(11, 26, 43, 0.08)) !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.property-detail-page .property-detail-body .property-description-copy p {
+  margin: 0 !important;
+  max-width: 82ch !important;
+  color: var(--fg, #152430) !important;
+  font-size: 1rem !important;
+  line-height: 2.05 !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.005em !important;
+  text-shadow: none !important;
+}
+
+.property-detail-page .property-detail-body .property-description-copy p + p {
+  margin-top: 14px !important;
+}
+
+.property-detail-page .property-detail-body .property-description-copy strong,
+.property-detail-page .property-detail-body .property-description-copy b {
+  color: var(--navy-900, #102d45) !important;
+}
+
+@media (max-width: 720px) {
+  .property-detail-page .property-detail-body .property-description-copy {
+    border-radius: 10px !important;
+  }
+
+  .property-detail-page .property-detail-body .property-description-copy p {
+    font-size: .94rem !important;
+    line-height: 2.12 !important;
+  }
+}
