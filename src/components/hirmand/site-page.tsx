@@ -833,7 +833,6 @@ export function SitePage({ initialProperties = [] }: { initialProperties?: Prope
         <About />
         <Process />
         <Neighborhoods onPick={(name) => goInquiry({ neighborhood: name })} />
-        <Tools />
         <Team />
         <TrackingCta />
         <Inquiry draft={draft} />
