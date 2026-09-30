@@ -30,7 +30,7 @@ export default defineEventHandler((event)=>handleChunkedUpload(event,{
     const fileName=String(session.pathname).split("/").pop()||"document";
     const rows=await sql.query<Record<string,unknown>>(
       "insert into admin_documents(id,lead_id,property_id,title,document_type,status,file_url,media_id,file_name,mime_type,size_bytes,notes,due_at) values($1,$2,$3,$4,$5,'pending',$6,$7,$8,$9,$10,$11,$12) returning *",
-      [crypto.randomUUID(),leadId||null,propertyId||null,text.title,documentType,""+DB_MEDIA_PATH+stored.id,stored.id,fileName,String(session.content_type??"application/octet-stream"),totalBytes,notes,dueAt],
+      [crypto.randomUUID(),leadId||null,propertyId||null,text.title,documentType,"/api/admin-document-media/"+stored.id,stored.id,fileName,String(session.content_type??"application/octet-stream"),totalBytes,notes,dueAt],
     );
     if(leadId) await sql.query("insert into lead_activities(lead_id,activity_type,title,note,metadata) values($1,'document',$2,$3,$4::jsonb)",[leadId,"سند جدید اضافه شد",text.title,JSON.stringify({documentId:rows[0]?.id??"",documentType})]);
     return {document:{id:String(rows[0]?.id??""),leadId:leadId||null,propertyId:propertyId||null,title:text.title,documentType,status:"pending",
