@@ -23,6 +23,7 @@ import {
   Filter,
   ArrowUpDown,
   Globe2,
+  GitCompareArrows,
   Download,
   CheckSquare,
   ChevronDown,
@@ -1623,7 +1624,9 @@ export function AdminPropertiesPage() {
                     ? "مدیریت Leadها و پیگیری مشتریان"
                     : view === "attendance"
                       ? "ثبت حضور اعضای بنگاه و گزارش ساعت‌های ورود و خروج"
-                      : view === "divar"
+                      : view === "matching"
+                        ? "تطبیق درخواست‌های مشتری با فایل‌های منتشرشده سایت"
+                        : view === "divar"
                         ? "دریافت، فیلتر و ورود فایل‌های شخصی از دیوار"
                         : form.contactName
                     ? `مشاور مسئول: ${form.contactName}${formDirty ? " · تغییرات ذخیره‌نشده" : ""}`
