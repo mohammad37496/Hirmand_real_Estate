@@ -20,6 +20,7 @@ import {
 import { AdminCardSkeleton, AdminErrorBanner } from "@/components/hirmand/admin-ui";
 import { AdminCampaignLinkBuilder } from "@/components/hirmand/admin-campaign-link-builder";
 import { AdminPropertyLifecyclePanel } from "@/components/hirmand/admin-property-lifecycle-panel";
+import { AdminNeighborhoodDemandRadar } from "@/components/hirmand/admin-neighborhood-demand-radar";
 import { fa, faBytes } from "@/components/hirmand/admin-ui-utils";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
@@ -762,6 +763,8 @@ export function AdminDashboard({
       </div>
 
       <AdminCampaignLinkBuilder />
+
+      <AdminNeighborhoodDemandRadar />
 
       <div style={{ marginTop: 18 }}><AdminPropertyLifecyclePanel /></div>
 
