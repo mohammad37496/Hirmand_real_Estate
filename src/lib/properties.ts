@@ -1404,7 +1404,13 @@ export const saveProperty = createServerFn({ method: "POST" })
     await requireAdmin();
     const sql = await getSql();
 
-    if (data.status === "published") {
+    const id = data.id ?? crypto.randomUUID();
+    const existingRows = await sql.query<Record<string, unknown>>(
+      `select ${DETAIL_COLUMNS} from properties where id = $1 limit 1`,
+      [id],
+    );
+    const existing = existingRows[0] ?? null;
+    if (data.status === "published" && (!existing || existing.status !== "published")) {
       const readiness = getPublishReadiness({
         transactionType: data.transactionType,
         title: data.title,
@@ -1426,12 +1432,6 @@ export const saveProperty = createServerFn({ method: "POST" })
       }
     }
 
-    const id = data.id ?? crypto.randomUUID();
-    const existingRows = await sql.query<Record<string, unknown>>(
-      `select ${DETAIL_COLUMNS} from properties where id = $1 limit 1`,
-      [id],
-    );
-    const existing = existingRows[0] ?? null;
     const existingSlug = typeof existing?.slug === "string" ? existing.slug.trim() : "";
     const slug = existingSlug || `${slugify(data.title)}-${id.slice(0, 8)}`;
     const featuredUntil = data.featured && data.featuredUntil
