@@ -379,6 +379,7 @@ export default defineEventHandler(async (event) => {
       rent,
       updatedAt: new Date(String(property.updated_at)).toISOString(),
       publishedAt: property.published_at ? new Date(String(property.published_at)).toISOString() : null,
+      contactName: String(property.contact_name ?? "").trim(),
     },
     events,
     uniqueVisitors,
