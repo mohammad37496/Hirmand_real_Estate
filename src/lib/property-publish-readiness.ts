@@ -48,11 +48,13 @@ export function getPublishReadiness(input: PublishReadinessInput): PublishReadin
   if (!consultantOk) blockers.push("نام و شماره تماس مشاور باید کامل باشد.");
 
   const pricingOk =
-    input.transactionType === "sell" || input.transactionType === "buy"
+    input.transactionType === "sell"
       ? hasMoney(input.price)
       : input.transactionType === "rent"
         ? hasMoney(input.deposit) || hasMoney(input.rent)
-        : hasMoney(input.deposit);
+        : input.transactionType === "mortgage"
+          ? hasMoney(input.deposit)
+          : true;
   checks.push({ key: "pricing", label: "قیمت و شرایط مالی", state: pricingOk ? "ok" : "blocker" });
   if (!pricingOk) blockers.push("قیمت یا شرایط مالی متناسب با نوع معامله را وارد کنید.");
 
