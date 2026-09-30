@@ -643,3 +643,6 @@
     flex-basis: 13px;
   }
 }
+
+.pcard-badge-availability{border:1px solid rgba(34,76,48,.12);background:rgba(255,255,255,.92);color:#244b31}
+.pcard-badge-availability-ok{background:rgba(234,247,237,.94);color:#2f6b42}
