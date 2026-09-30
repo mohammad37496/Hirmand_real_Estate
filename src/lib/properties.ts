@@ -10,6 +10,7 @@ import { decodeSlugCandidates, legacyIdFragments } from "@/lib/property-slug";
 import { calculateBudgetMatch, DEFAULT_MATCH_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
 import { MAX_PROPERTY_MEDIA, isAllowedMediaRef } from "@/lib/media";
 import { deleteStoredMedia } from "@/lib/media-store.server";
+import { getPublishReadiness } from "@/lib/property-publish-readiness";
 import {
   PROPERTY_CABINET_OPTIONS,
   PROPERTY_COOLING_OPTIONS,
@@ -1402,6 +1403,28 @@ export const saveProperty = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAdmin();
     const sql = await getSql();
+
+    if (data.status === "published") {
+      const readiness = getPublishReadiness({
+        transactionType: data.transactionType,
+        title: data.title,
+        neighborhood: data.neighborhood,
+        description: data.description,
+        contactName: data.contactName,
+        contactPhone: data.contactPhone,
+        price: data.price ?? "",
+        deposit: data.deposit ?? "",
+        rent: data.rent ?? "",
+        imageCount: data.images.length,
+        areaM2: data.areaM2 == null ? "" : String(data.areaM2),
+        features: data.features.join("\n"),
+        latitude: data.latitude ?? null,
+        longitude: data.longitude ?? null,
+      });
+      if (!readiness.ready) {
+        throw new Error("انتشار فایل متوقف شد: " + readiness.blockers.join(" "));
+      }
+    }
 
     const id = data.id ?? crypto.randomUUID();
     const existingRows = await sql.query<Record<string, unknown>>(
