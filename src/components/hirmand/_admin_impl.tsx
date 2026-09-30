@@ -68,6 +68,7 @@ import { AdminLeadManager } from "@/components/hirmand/admin-lead-manager";
 import { AdminDashboard } from "@/components/hirmand/admin-dashboard";
 import { ADMIN_CSS } from "@/components/hirmand/admin-shell-css";
 import { AdminListingAssistant } from "@/components/hirmand/admin-listing-assistant";
+import { AdminPublishReadiness } from "@/components/hirmand/admin-publish-readiness";
 import { AdminPartnerManager } from "@/components/hirmand/admin-partner-manager";
 import { AdminConsultantManager } from "@/components/hirmand/admin-consultant-manager";
 import { AdminDivarFiles } from "@/components/hirmand/admin-divar-files";
@@ -88,6 +89,7 @@ import {
   PROPERTY_OTHER_AMENITY_OPTIONS,
   PROPERTY_WALL_CLOSET_OPTIONS,
 } from "@/lib/property-options";
+import { getPublishReadiness } from "@/lib/property-publish-readiness";
 
 type PublishStatus = "draft" | "published" | "archived";
 const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
@@ -328,7 +330,25 @@ function hasInvalidPropertyIntegerInputs(form: Pick<
     isInvalidIntegerInput(form.builtYear)
   );
 }
-function toDateTimeLocal(value: string | null | undefined) {
+
+function getPublishReadinessForForm(form: FormState) {
+  return getPublishReadiness({
+    transactionType: form.transactionType,
+    title: form.title,
+    neighborhood: form.neighborhood,
+    description: form.description,
+    contactName: form.contactName,
+    contactPhone: form.contactPhone,
+    price: form.price,
+    deposit: form.deposit,
+    rent: form.rent,
+    imageCount: form.images.split(/[\n,]+/).map((x) => x.trim()).filter(Boolean).length,
+    areaM2: form.areaM2,
+    features: form.features,
+    latitude: form.latitude,
+    longitude: form.longitude,
+  });
+}function toDateTimeLocal(value: string | null | undefined) {
   if (!value) return "";
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return "";
@@ -1201,6 +1221,14 @@ export function AdminPropertiesPage() {
     if (form.transactionType === "mortgage" && deposit == null) {
       toast.error("برای فایل رهن، مبلغ رهن را وارد کنید.");
       return;
+    }
+
+    if (form.status === "published") {
+      const readiness = getPublishReadinessForForm(form);
+      if (!readiness.ready) {
+        toast.error("انتشار فایل متوقف شد: " + readiness.blockers.join(" "));
+        return;
+      }
     }
 
     const { valid: images, invalid } = parseImageUrls(form.images);
@@ -2472,6 +2500,23 @@ export function AdminPropertiesPage() {
                         contactPhone: member.phone,
                       }));
                     }}
+                  />
+                  <AdminPublishReadiness
+                    compact
+                    transactionType={form.transactionType}
+                    title={form.title}
+                    neighborhood={form.neighborhood}
+                    description={form.description}
+                    contactName={form.contactName}
+                    contactPhone={form.contactPhone}
+                    price={form.price}
+                    deposit={form.deposit}
+                    rent={form.rent}
+                    imageCount={form.images.split(/[\n,]+/).map((x) => x.trim()).filter(Boolean).length}
+                    areaM2={form.areaM2}
+                    features={form.features}
+                    latitude={form.latitude}
+                    longitude={form.longitude}
                   />
                   <div className="admin-form-grid" style={{ marginTop: 14 }}>
                     <label className="field">
