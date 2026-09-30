@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BarChart3, CalendarDays, Eye, Heart, MessageCircle, Phone, RefreshCw, Share2, UsersRound } from "lucide-react";
 import { toast } from "sonner";
 
@@ -49,7 +49,7 @@ export function AdminPropertyPerformance({ propertyId }: { propertyId: string })
   const [data, setData] = useState<PerformanceData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  async function load(silent = false) {
+  const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
       const response = await fetch("/api/admin-property-performance", {
@@ -69,11 +69,11 @@ export function AdminPropertyPerformance({ propertyId }: { propertyId: string })
     } finally {
       setLoading(false);
     }
-  }
+  }, [propertyId]);
 
   useEffect(() => {
     void load();
-  }, [propertyId]);
+  }, [load]);
 
   return (
     <fieldset className="admin-section admin-property-performance">
