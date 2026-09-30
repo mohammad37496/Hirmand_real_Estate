@@ -1,42 +1,11 @@
-import { Database,Download,ShieldCheck } from "lucide-react";
+import { Database, Download, RefreshCw, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-
+type Verification={verifiedAt:string;coreReady:boolean;tables:Array<{table:string;exists:boolean;count:number}>};
+const TABLE_LABEL:Record<string,string>={properties:"فایل‌ها",leads:"لیدها",lead_activities:"فعالیت‌های CRM",finance_transactions:"امور مالی",consultants:"مشاوران",staff_attendance:"حضور و غیاب",admin_tasks:"وظایف",property_change_history:"تاریخچه فایل‌ها",site_events:"رویدادهای سایت"};
 export function AdminBackupManager(){
-  const [busy,setBusy]=useState(false);
-  async function backup(){
-    if(busy)return;
-    setBusy(true);
-    try{
-      const res=await fetch("/api/admin-backup",{
-        method:"GET",
-        credentials:"same-origin",
-        headers:{"accept":"application/json"},
-      });
-      if(!res.ok){
-        const data=await res.json().catch(()=>({}));
-        throw new Error(data?.statusMessage||"ساخت نسخه پشتیبان انجام نشد.");
-      }
-      const blob=await res.blob();
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement("a");
-      a.href=url;
-      a.download="hirmand-admin-backup-"+new Date().toISOString().slice(0,10)+".json";
-      document.body.appendChild(a);a.click();a.remove();
-      URL.revokeObjectURL(url);
-      toast.success("نسخه پشتیبان دانلود شد.");
-    }catch(e){toast.error(e instanceof Error?e.message:"ساخت نسخه پشتیبان انجام نشد.");}
-    finally{setBusy(false);}
-  }
-  return <div className="admin-backup-page">
-    <section className="admin-panel admin-backup-hero">
-      <span className="admin-backup-icon"><ShieldCheck size={28}/></span>
-      <div><span className="kicker">امنیت و پشتیبان‌گیری</span><h2>نسخه پشتیبان از اطلاعات مدیریتی</h2><p>یک فایل JSON از اطلاعات اصلی فایل‌ها، درخواست‌ها، فعالیت‌های CRM، امور مالی، مشاوران و حضور و غیاب تهیه می‌شود. این فایل را در محل امن نگهداری کنید.</p></div>
-      <button className="btn-gold" type="button" onClick={()=>void backup()} disabled={busy}><Download size={17}/>{busy?"در حال آماده‌سازی…":"دانلود نسخه پشتیبان"}</button>
-    </section>
-    <section className="admin-panel admin-backup-info">
-      <Database size={22}/>
-      <div><strong>توجه</strong><p>نسخه پشتیبان شامل اطلاعات خصوصی مدیریتی است؛ آن را در فضای عمومی یا برای افراد غیرمجاز ارسال نکنید.</p></div>
-    </section>
-  </div>
+  const [busy,setBusy]=useState(false),[verifying,setVerifying]=useState(false),[verification,setVerification]=useState<Verification|null>(null);
+  async function verifyBackup(){if(verifying)return;setVerifying(true);try{const res=await fetch("/api/admin-backup?mode=verify",{method:"GET",credentials:"same-origin",headers:{accept:"application/json"}});const data=await res.json().catch(()=>({})) as Partial<Verification>&{statusMessage?:string};if(!res.ok)throw new Error(data?.statusMessage||"راستی‌آزمایی پشتیبان انجام نشد.");setVerification(data as Verification);toast.success(data.coreReady?"ساختار اصلی پایگاه داده آماده است.":"ساختار پایگاه داده کامل نیست.");}catch(e){toast.error(e instanceof Error?e.message:"راستی‌آزمایی پشتیبان انجام نشد.");}finally{setVerifying(false);}}
+  async function backup(){if(busy)return;setBusy(true);try{const res=await fetch("/api/admin-backup",{method:"GET",credentials:"same-origin",headers:{accept:"application/json"}});if(!res.ok){const data=await res.json().catch(()=>({}));throw new Error(data?.statusMessage||"ساخت نسخه پشتیبان انجام نشد.");}const blob=await res.blob();const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="hirmand-admin-backup-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);toast.success("نسخه پشتیبان دانلود شد؛ شمارش رکوردها داخل فایل ثبت شده است.");}catch(e){toast.error(e instanceof Error?e.message:"ساخت نسخه پشتیبان انجام نشد.");}finally{setBusy(false);}}
+  return <div className="admin-backup-page"><section className="admin-panel admin-backup-hero"><span className="admin-backup-icon"><ShieldCheck size={28}/></span><div><span className="kicker">امنیت و پشتیبان‌گیری</span><h2>نسخه پشتیبان از اطلاعات مدیریتی</h2><p>وجود جداول اصلی و تعداد رکوردهای آن‌ها را قبل از خروجی بررسی کنید. فایل JSON نیز شمارش رکوردهای صادرشده را در بخش integrity نگه می‌دارد.</p></div><div style={{display:"flex",gap:7,flexWrap:"wrap",justifyContent:"flex-end"}}><button className="btn-ghost" type="button" onClick={()=>void verifyBackup()} disabled={verifying}><RefreshCw size={15} className={verifying?"admin-spin":""}/>{verifying?"در حال بررسی…":"راستی‌آزمایی"}</button><button className="btn-gold" type="button" onClick={()=>void backup()} disabled={busy}><Download size={17}/>{busy?"در حال آماده‌سازی…":"دانلود نسخه پشتیبان"}</button></div></section>{verification?<section className="admin-panel"><div className="admin-panel-head"><div><span className="kicker">سلامت داده</span><h2>{verification.coreReady?"ساختار اصلی تأیید شد":"هشدار ساختاری"}</h2></div><span className="admin-dashboard-summary">{new Date(verification.verifiedAt).toLocaleString("fa-IR")}</span></div><div className="admin-system-grid">{verification.tables.map((item)=><div key={item.table}><span><Database size={13}/> {TABLE_LABEL[item.table]??item.table}</span><strong>{item.exists?item.count.toLocaleString("fa-IR"):"—"}</strong><small>{item.exists?"جدول در دسترس است":"جدول موجود نیست"}</small></div>)}</div></section>:null}</div>;
 }

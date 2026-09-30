@@ -60,12 +60,12 @@ function totalEquivalent(deposit: number, rent: number) {
 
 function propertyAmenitySet(row: Record<string, unknown>) {
   const values = new Set<string>();
-  if (Boolean(row.parking)) values.add("parking");
-  if (Boolean(row.elevator)) values.add("elevator");
-  if (Boolean(row.storage)) values.add("storage");
-  if (Boolean(row.painted)) values.add("painted");
-  if (Boolean(row.wallpaper)) values.add("wallpaper");
-  if (Boolean(row.convertible)) values.add("convertible");
+  if (row.parking) values.add("parking");
+  if (row.elevator) values.add("elevator");
+  if (row.storage) values.add("storage");
+  if (row.painted) values.add("painted");
+  if (row.wallpaper) values.add("wallpaper");
+  if (row.convertible) values.add("convertible");
 
   for (const value of jsonArray(row.other_amenities)) values.add(value);
 
