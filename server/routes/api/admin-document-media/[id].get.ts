@@ -16,7 +16,7 @@ export default defineEventHandler(async(event:H3Event)=>{
   const range=parseRangeHeader(getHeader(event,"range"),meta.sizeBytes);if(range==="unsatisfiable"){setResponseHeader(event,"content-range","bytes */"+meta.sizeBytes);throw createError({statusCode:416,statusMessage:"بازه درخواست نامعتبر است."});
   }
   const result=await readMediaRange(id,range?range.start:0,range?range.end:null);if(!result)throw createError({statusCode:404,statusMessage:"سند پیدا نشد."});
-  const headers={"cache-control":"private, no-store","content-type":result.contentType,"content-length":String(result.bytes.length),"content-disposition":"attachment; filename=\\"document\\"","x-content-type-options":"nosniff",
+  const headers={"cache-control":"private, no-store","content-type":result.contentType,"content-length":String(result.bytes.length),"content-disposition":'attachment; filename="document"',"x-content-type-options":"nosniff",
     ...(range?{"content-range":"bytes "+range.start+"-"+(range.start+result.bytes.length-1)+"/"+meta.sizeBytes}: {})};
   return new Response(new Uint8Array(result.bytes),{status:range?206:200,headers});
 });
