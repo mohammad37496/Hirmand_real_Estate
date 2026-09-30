@@ -454,7 +454,7 @@ export default defineEventHandler(async (event) => {
   ).catch(() => {});
 
   return {
-    lead: mapLead(lead),
+    lead: { ...mapLead(lead), matchCount: serializedMatches.length },
     mode,
     matches: serializedMatches,
   };
