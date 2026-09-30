@@ -25,26 +25,33 @@ try {
 
     const page = await context.newPage();
     await page.goto(baseUrl + "/admin", { waitUntil: "domcontentloaded", timeout: 45000 });
-    const postAdminApi = async (path, data) =>
-      page.evaluate(async ({ path, data }) => {
-        const response = await fetch(path, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          credentials: "same-origin",
-          body: JSON.stringify(data),
-        });
-        const raw = await response.text();
-        let body = {};
-        try {
-          body = raw ? JSON.parse(raw) : {};
-        } catch {
-          throw new Error("Admin API " + path + " returned non-JSON HTTP " + response.status());
-        }
-        if (!response.ok) {
-          throw new Error("Admin API " + path + " failed: HTTP " + response.status() + " " + JSON.stringify(body));
-        }
-        return body;
-      }, { path, data });
+    const adminCookies = await context.cookies(baseUrl);
+    const cookieHeader = adminCookies.map(({ name, value }) => name + "=" + value).join("; ");
+    if (!cookieHeader) throw new Error("Admin session cookie was not stored after login.");
+
+    const postAdminApi = async (path, data) => {
+      const response = await context.request.post(baseUrl + path, {
+        data,
+        headers: {
+          origin: baseUrl,
+          cookie: cookieHeader,
+        },
+      });
+      const raw = await response.text();
+      let body = {};
+      try {
+        body = raw ? JSON.parse(raw) : {};
+      } catch {
+        throw new Error(
+          "Admin API " + path + " returned non-JSON HTTP " + response.status() +
+          " body=" + raw.slice(0, 1200),
+        );
+      }
+      if (!response.ok) {
+        throw new Error("Admin API " + path + " failed: HTTP " + response.status() + " " + JSON.stringify(body));
+      }
+      return body;
+    };
 
     const commandSummary = await postAdminApi("/api/admin-lead-command", { action: "summary" });
     for (const key of ["overdue", "today", "newLeads", "upcomingVisits", "unassigned"]) {
