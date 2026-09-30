@@ -2227,22 +2227,8 @@ body:has(.property-detail-page) .footer a:hover {
     grid-template-columns: 1fr !important;
   }
 
-  /* Fixed contact bar: call / WhatsApp / share, one per route, safe-area aware. */
-  .property-detail-page .property-mobile-actions {
-    position: fixed !important;
-    inset: auto 8px max(8px, env(safe-area-inset-bottom)) 8px !important;
-    z-index: 80 !important;
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 6px !important;
-    padding: 6px !important;
-    border: 1px solid var(--hr-border) !important;
-    border-radius: var(--hr-radius-lg) !important;
-    background: rgb(255 255 255 / 96%) !important;
-    box-shadow: 0 18px 42px rgb(16 36 52 / 15%) !important;
-    backdrop-filter: blur(16px) !important;
-  }
-
+  /* Fixed contact bar: see the "MOBILE LAYER" section at the end of this file,
+     which owns it for both portrait phones and landscape phones. */
   .property-detail-page .property-mobile-action {
     min-height: 46px !important;
     min-width: 0 !important;
@@ -2306,11 +2292,6 @@ body:has(.property-detail-page) .footer a:hover {
     min-width: 70px !important;
     height: 54px !important;
     min-height: 54px !important;
-  }
-
-  .property-detail-page .property-mobile-actions {
-    left: 6px !important;
-    right: 6px !important;
   }
 }
 
@@ -2637,5 +2618,635 @@ body:has(.property-detail-page) .footer a:hover {
   .property-detail-page .property-detail-aside > * {
     box-shadow: none !important;
     break-inside: avoid !important;
+  }
+}
+
+/* ==========================================================================
+   HIRMAND · PROPERTY DETAIL · MOBILE LAYER
+   --------------------------------------------------------------------------
+   The single owner of the phone presentation of /properties/:slug.
+
+   Why this section exists
+   -----------------------
+   The mobile look of this route used to be the accident of eight stylesheets
+   loaded in sequence (styles, properties-pro, theme-pro, theme-pro-pages,
+   mobile, refinements, ui-clarity, property-detail-pro, mobile-device-fixes,
+   theme-harmony, property-detail-redesign, property-detail-light-theme).
+   The same selector — `.property-mobile-actions` — was declared in five of
+   them, `.property-gallery-main` in six. Nothing documented which one won, so
+   fixes had to be made by adding another `!important` and the cascade grew
+   instead of converging. This section converges it:
+
+     * it is the last thing in the last-loaded stylesheet, so it wins ties;
+     * every selector is scoped to `.property-detail-page`, so no other route
+       can be affected;
+     * the properties it sets are no longer set anywhere else in a mobile
+       media query, so there is exactly one owner per declaration.
+
+   Desktop safety
+   --------------
+   Everything below is inside a mobile media query, so widths ≥ 901px cannot
+   match and the desktop layout is untouched by construction — not by
+   specificity, not by load order. The two rules that genuinely cannot be
+   wrapped in a media query (the safe-area insets) are written so they compute
+   to zero on a device without a notch, and are additionally gated on the
+   mobile band.
+
+   The mobile band
+   ---------------
+   Portrait phones are `max-width: 720px`. That alone misses landscape phones:
+   an iPhone 14 Pro Max is 932px *wide* when rotated, so it fell through to the
+   desktop band, where the contact bar is `display: none` — leaving a rotated
+   phone with no way to call, and a page whose bottom padding still reserved
+   space for a bar that was not there. The second query pairs a short
+   viewport with a phone-max width. 932px is the widest rotated phone in the
+   matrix and the site's desktop band starts at 1024px, so no desktop window
+   can match.
+
+   !important
+   ----------
+   Used only where a pre-existing rule in an earlier stylesheet would otherwise
+   win on load order alone. Each block notes what it overrides.
+   ========================================================================== */
+
+@media (max-width: 720px), (max-height: 500px) and (max-width: 932px) {
+
+  /* -- 00 · Safe areas and the document shell ---------------------------- */
+
+  /* The route wrapper reserves room for the fixed header. On a notched phone
+     the header grows by the status-bar inset, so the reservation has to grow
+     with it or the first section slides under the header. */
+  body:has(.property-detail-page) .site-nav {
+    padding-top: env(safe-area-inset-top) !important;
+  }
+
+  body:has(.property-detail-page) > .page,
+  body:has(.property-detail-page) .page {
+    padding-top: calc(76px + env(safe-area-inset-top)) !important;
+  }
+
+  /* Header controls were 40px tall — under the 44px touch minimum, and the
+     two sat 4px apart, so a thumb aiming for the menu button could hit the
+     call button. Growing them to 44 adds 4px to the header height, which is
+     absorbed by the wrapper padding above. */
+  body:has(.property-detail-page) .site-nav .menu-toggle,
+  body:has(.property-detail-page) .site-nav .nav-call {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  /* Bottom inset: the fixed bar plus breathing room, so the last section and
+     the footer are never trapped underneath the home indicator. */
+  .property-detail-page {
+    padding-bottom: calc(96px + 20px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* -- 01 · Gallery ------------------------------------------------------- */
+
+  /* The hero was pinned to `min-height/max-height: 300px` by a leftover
+     desktop-era rule, while the element inside it is a 4:3 box plus a 64px
+     thumbnail rail and an 8px gap. 300px could not contain 344px of content,
+     so the rail was drawn on top of the bottom of the photo. Height is now
+     derived from the image's own ratio and the rail sits below it in flow. */
+  .property-detail-page .property-gallery {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    gap: 8px !important;
+  }
+
+  .property-detail-page .property-gallery-main {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    aspect-ratio: 4 / 3 !important;
+  }
+
+  .property-detail-page .property-gallery-main img,
+  .property-detail-page .property-gallery-main video {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    /* Listing photography is shot wide (16:9) and the hero frame is 4:3, so
+       `cover` has to crop. Biasing the crop slightly above centre keeps the
+       subject — a kitchen counter, a facade, a skyline — in frame instead of
+       slicing the middle of the room. */
+    object-position: center 42% !important;
+  }
+
+  /* Overlays used to be a full-height flex box whose children were themselves
+     absolutely positioned, so the counter inherited `left`/`right` from two
+     different layers and stretched into a 315px-wide pill sitting underneath
+     the "fullscreen" button. It is now a single top row: counter at the
+     inline start, featured badge at the inline end. */
+  .property-detail-page .property-gallery-overlays {
+    inset: 8px 8px auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    pointer-events: none !important;
+  }
+
+  .property-detail-page .property-gallery-counter {
+    position: static !important;
+    inset: auto !important;
+    width: auto !important;
+    margin-inline-end: auto !important;
+    min-height: 30px !important;
+    padding: 5px 11px !important;
+    font-size: .72rem !important;
+    line-height: 1.35 !important;
+    white-space: nowrap !important;
+  }
+
+  .property-detail-page .property-gallery-featured {
+    position: static !important;
+    inset: auto !important;
+    min-height: 30px !important;
+    padding: 5px 11px !important;
+    font-size: .7rem !important;
+    line-height: 1.35 !important;
+  }
+
+  /* "Fullscreen" moves to the bottom inline-start so it can never collide with
+     the counter row above it or with the centred arrows. */
+  .property-detail-page .property-gallery-open {
+    inset: auto auto 10px 10px !important;
+    min-height: 44px !important;
+    min-width: 44px !important;
+    padding: 7px 12px !important;
+    font-size: .7rem !important;
+    line-height: 1.3 !important;
+  }
+
+  /* The previous/next buttons carried `top`/`bottom`/`left`/`right` but no
+     `position`, so every declaration was inert and the two 44px circles fell
+     into normal flow *below* the photo — stacked on top of the thumbnail
+     rail. They are now real overlays, vertically centred, thumb-sized. */
+  .property-detail-page .property-gallery-nav {
+    position: absolute !important;
+    top: 50% !important;
+    bottom: auto !important;
+    margin-top: -22px !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    background: rgb(255 255 255 / 86%) !important;
+    box-shadow: 0 4px 14px rgb(16 36 52 / 18%) !important;
+  }
+
+  .property-detail-page .property-gallery-nav.property-gallery-prev {
+    inset-inline: auto auto !important;
+    inset-inline-start: 8px !important;
+  }
+
+  .property-detail-page .property-gallery-nav.property-gallery-next {
+    inset-inline: auto auto !important;
+    inset-inline-end: 8px !important;
+  }
+
+  /* Thumbnail rail: the last thumbnail used to be clipped flush against the
+     container edge with no hint that the rail scrolls. Edge padding plus a
+     mask fade on the inline end makes the overflow discoverable. */
+  .property-detail-page .property-gallery-rail {
+    padding: 2px 4px 6px !important;
+    gap: 8px !important;
+    -webkit-mask-image: linear-gradient(to left, #000 0, #000 88%, transparent 100%);
+    mask-image: linear-gradient(to left, #000 0, #000 88%, transparent 100%);
+  }
+
+  /* The `:nth-of-type(n + 5)` variant is included deliberately: three earlier
+     layers size thumbnails 5+ differently from 1-4 (74x58, 76x58, 72x56), so
+     the rail grew a step partway through the strip. Matching the variant here
+     keeps every thumbnail the same size. */
+  .property-detail-page .property-gallery-thumb,
+  .property-detail-page .property-gallery-thumb:nth-of-type(n + 5) {
+    display: block !important;
+    flex: 0 0 68px !important;
+    width: 68px !important;
+    min-width: 68px !important;
+    height: 54px !important;
+    min-height: 54px !important;
+    border-radius: 9px !important;
+  }
+
+  /* -- 01b · Video player in the gallery ---------------------------------- */
+
+  /* property-detail-pro.css shrinks the transport buttons to 30x30 inside
+     @media (max-width: 760px). On a phone that is smaller than a fingertip,
+     and the four of them sit next to the progress bar in a 44px-tall bar, so
+     there is no room to grow the bar either — the buttons grow within it. */
+  .property-detail-page .property-video-controls {
+    inset: auto 8px 8px !important;
+    min-height: 56px !important;
+    max-width: calc(100% - 16px) !important;
+    gap: 6px !important;
+    padding: 6px !important;
+    border-radius: 13px !important;
+  }
+
+  .property-detail-page .property-video-controls button {
+    width: 44px !important;
+    height: 44px !important;
+    flex-basis: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  .property-detail-page .property-video-time {
+    font-size: .66rem !important;
+    line-height: 1.3 !important;
+  }
+
+  .property-detail-page .property-video-center-play {
+    width: 60px !important;
+    height: 60px !important;
+  }
+
+  /* -- 02 · Breadcrumb ---------------------------------------------------- */
+
+  /* Was 10.7px type with 19px-tall links: below the touch minimum and too
+     small to read comfortably on a 6" panel. */
+  .property-detail-page .property-breadcrumb {
+    font-size: .75rem !important;
+    line-height: 1.6 !important;
+    gap: 4px !important;
+    margin-bottom: 10px !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .property-detail-page .property-breadcrumb::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .property-detail-page .property-breadcrumb a,
+  .property-detail-page .property-breadcrumb > span {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 44px !important;
+    min-width: 44px !important;
+    padding-inline: 4px !important;
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+  }
+
+  /* The trail's last item is the page you are on: keep it, but let it clip
+     rather than push the container into a horizontal scrollbar. */
+  .property-detail-page .property-breadcrumb > span:last-child {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* -- 03 · Title, badges and price --------------------------------------- */
+
+  /* `line-height: 9.76px` on a 9.76px font — the file-code pill was setting
+     its own text on top of itself. */
+  .property-detail-page .property-file-code {
+    font-size: .72rem !important;
+    line-height: 1.45 !important;
+    padding: 5px 10px !important;
+    min-height: 30px !important;
+    flex: 0 0 auto !important;
+  }
+
+  .property-detail-page .property-detail-eyebrow {
+    font-size: .72rem !important;
+    line-height: 1.45 !important;
+  }
+
+  .property-detail-page h1,
+  .property-detail-page .property-detail-meta {
+    overflow-wrap: break-word !important;
+  }
+
+  .property-detail-page h1 {
+    font-size: 1.22rem !important;
+    line-height: 1.62 !important;
+  }
+
+  .property-detail-page .property-detail-meta {
+    font-size: .78rem !important;
+    line-height: 1.6 !important;
+  }
+
+  .property-detail-page .property-price-label,
+  .property-detail-page .property-price-per-m2 {
+    font-size: .75rem !important;
+    line-height: 1.6 !important;
+  }
+
+  /* A nine-digit price plus its unit is ~300px of text at 28px; on a 320px
+     screen the value column is 265px, so the figure would either wrap
+     mid-number or clip. The clamp keeps the hero size on large phones and
+     steps down only where the number no longer fits. */
+  .property-detail-page .property-price-value {
+    font-size: clamp(1.5rem, 7.4vw, 1.75rem) !important;
+    line-height: 1.4 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .property-detail-page .property-price-block {
+    padding: 14px !important;
+    gap: 4px !important;
+  }
+
+  .property-detail-page .property-price-row {
+    gap: 2px 10px !important;
+  }
+
+  .property-detail-page .property-actions .property-action,
+  .property-detail-page .property-action {
+    min-height: 48px !important;
+    min-width: 44px !important;
+  }
+
+  /* -- 04 · Spec grid ----------------------------------------------------- */
+
+  /* These selectors deliberately repeat the `.property-divar-specs` ancestor.
+     theme-harmony.css and property-detail-redesign.css style this grid through
+     that same three-class path with `!important`, so a shallower selector here
+     would lose on specificity no matter which file loads last. Matching the
+     path — and being in the last stylesheet — is what makes this the winner.
+
+     Seventeen full-width rows is a 1,290px column of scrolling on a phone.
+     Two columns from 360px up roughly halves it; below that the cards would
+     be 130px wide, which Persian labels such as "پارکینگ اختصاصی" cannot hold
+     without breaking mid-word. */
+  .property-detail-page .property-divar-specs .property-spec-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+  }
+
+  .property-detail-page .property-divar-specs .property-spec-grid > .property-spec-item {
+    display: grid !important;
+    grid-template-columns: 28px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 10px !important;
+    min-height: 0 !important;
+    border-radius: 13px !important;
+    min-width: 0 !important;
+  }
+
+  .property-detail-page .property-divar-specs .property-spec-grid .property-spec-item-icon {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    border-radius: 9px !important;
+  }
+
+  /* The spec label was `#8b9097` on white — 3.21:1, the only text on the page
+     below WCAG AA, and at 10.9px it had to clear AA Large (18.66px bold) to
+     get any slack. `--muted` (#57646e) is the existing token for de-emphasised
+     body text and measures 5.74:1 on the same surface, so nothing new is
+     invented and the label finally reads on a phone outdoors. */
+  .property-detail-page .property-divar-specs .property-spec-grid .property-spec-item small {
+    color: var(--muted) !important;
+    font-size: .7rem !important;
+    line-height: 1.5 !important;
+    font-weight: 650 !important;
+  }
+
+  .property-detail-page .property-divar-specs .property-spec-grid .property-spec-item strong {
+    font-size: .82rem !important;
+    line-height: 1.4 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .property-detail-page .property-spec-group-title {
+    font-size: .9rem !important;
+  }
+
+  /* -- 05 · Amenities ----------------------------------------------------- */
+
+  .property-detail-page .property-divar-specs .property-spec-amenities-body {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    padding: 0 10px 10px !important;
+  }
+
+  .property-detail-page .property-divar-specs .property-spec-amenities-body > .property-spec-amenity-item {
+    display: grid !important;
+    grid-template-columns: 26px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 9px !important;
+    min-width: 0 !important;
+  }
+
+  .property-detail-page .property-spec-amenity-item small {
+    color: var(--muted) !important;
+    font-size: .7rem !important;
+    line-height: 1.45 !important;
+    font-weight: 650 !important;
+  }
+
+  .property-detail-page .property-spec-amenity-item strong {
+    font-size: .78rem !important;
+    line-height: 1.4 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  /* -- 06 · Accordions ---------------------------------------------------- */
+
+  /* The specs accordion already animates open (`hirmand-specs-open`,
+     styles.css). The amenities accordion below it did not, so opening it was
+     an instant snap while the one above it eased — re-using the same keyframes
+     keeps both feeling identical without a second animation definition. */
+  .property-detail-page .property-spec-amenities[open] > .property-spec-amenities-body {
+    animation: hirmand-specs-open 180ms ease-out;
+  }
+
+  .property-detail-page .property-specs-accordion-summary,
+  .property-detail-page .property-spec-amenities > summary {
+    min-height: 56px !important;
+    padding-block: 8px !important;
+    -webkit-tap-highlight-color: rgb(168 118 31 / 18%);
+  }
+
+  .property-detail-page .property-specs-accordion-title,
+  .property-detail-page .property-spec-amenities-title strong {
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+  }
+
+  .property-detail-page .property-specs-accordion-body,
+  .property-detail-page .property-spec-amenities-body {
+    min-width: 0 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  /* -- 07 · Description --------------------------------------------------- */
+
+  /* Every paragraph was its own padded card while the grid already added
+     13px of gap — 29px between two sentences of prose, and 28px of the
+     viewport width spent on padding instead of text. On a phone the copy
+     reads as one continuous block with a lead paragraph.
+
+     Same specificity note as the spec grid: `.property-detail-body` is part of
+     the path because an earlier layer styles the paragraphs through it. */
+  .property-detail-page .property-detail-body .property-description-copy > p {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 1rem !important;
+    line-height: 1.95 !important;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+    text-align: start !important;
+    overflow-wrap: break-word !important;
+    hyphens: none;
+  }
+
+  .property-detail-page .property-detail-body .property-description-copy > p:first-child {
+    font-size: 1.0625rem !important;
+    font-weight: 650 !important;
+    line-height: 1.95 !important;
+    color: var(--hr-navy) !important;
+    margin-bottom: 2px !important;
+  }
+
+  .property-detail-page .property-description-copy {
+    gap: 14px !important;
+  }
+
+  .property-detail-page .property-detail-body .property-features li {
+    font-size: .875rem !important;
+    line-height: 1.8 !important;
+    min-height: 44px !important;
+    padding: 11px 12px !important;
+  }
+
+  /* -- 08 · Map ----------------------------------------------------------- */
+
+  /* The card's 18px padding left a 297px iframe inside a 335px column. */
+  .property-detail-page .property-map-card {
+    padding: 12px !important;
+    gap: 10px !important;
+  }
+
+  .property-detail-page .property-map-card iframe {
+    width: 100% !important;
+    height: clamp(210px, 62vw, 300px) !important;
+    min-height: 0 !important;
+    border-radius: 13px !important;
+  }
+
+  .property-detail-page .property-map-actions {
+    padding: 11px 12px !important;
+    gap: 10px !important;
+    font-size: .75rem !important;
+    line-height: 1.6 !important;
+  }
+
+  .property-detail-page .property-map-actions a {
+    min-height: 44px !important;
+    padding-inline: 14px !important;
+  }
+
+  /* -- 09 · Fixed contact bar (call / WhatsApp / share) ------------------- */
+
+  /* Owned here and nowhere else. 44px-tall actions with a 48px minimum
+     height, and an inline inset of 8px so the bar never touches the screen
+     edge where a system gesture lives. */
+  .property-detail-page .property-mobile-actions {
+    position: fixed !important;
+    inset: auto 8px max(10px, env(safe-area-inset-bottom)) 8px !important;
+    z-index: 80 !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    padding: 8px !important;
+    border: 1px solid var(--hr-border) !important;
+    border-radius: 18px !important;
+    background: rgb(255 255 255 / 96%) !important;
+    box-shadow: 0 12px 34px rgb(16 36 52 / 16%) !important;
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+  }
+
+  .property-detail-page .property-mobile-action {
+    min-height: 48px !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    padding: 6px 4px !important;
+    border-radius: 12px !important;
+    font-size: .74rem !important;
+    line-height: 1.25 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+  }
+
+  .property-detail-page .property-mobile-action svg {
+    flex: 0 0 auto !important;
+  }
+
+  /* -- 10 · Final CTA and overview ---------------------------------------- */
+
+  .property-detail-page .property-primary-contact a {
+    min-height: 52px !important;
+    font-size: .82rem !important;
+  }
+
+  .property-detail-page .property-final-cta-actions a,
+  .property-detail-page .property-final-cta-actions button {
+    min-height: 50px !important;
+    font-size: .85rem !important;
+  }
+}
+
+/* Very small phones (≤359px): one column of spec cards, tightened type. */
+@media (max-width: 359px) {
+  .property-detail-page .property-divar-specs .property-spec-grid,
+  .property-detail-page .property-divar-specs .property-spec-amenities-body {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .property-detail-page h1 {
+    font-size: 1.14rem !important;
+  }
+
+  .property-detail-page .property-mobile-action {
+    font-size: .68rem !important;
+  }
+}
+
+/* Landscape phones are short: the bar and the gallery overlays get out of the
+   way of the content instead of covering it. The bottom reservation is the
+   same 100px the portrait band uses — qa-visual-matrix.mjs asserts the page
+   always clears a fixed bar by at least that much, and a landscape phone is
+   still a phone. */
+@media (max-height: 500px) and (max-width: 932px) and (min-width: 721px) {
+  .property-detail-page {
+    padding-bottom: calc(72px + 28px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .property-detail-page .property-mobile-actions {
+    padding: 6px !important;
+    gap: 6px !important;
+  }
+
+  .property-detail-page .property-mobile-action {
+    flex-direction: row !important;
+    gap: 6px !important;
+    min-height: 44px !important;
+  }
+
+  .property-detail-page .property-gallery-overlays {
+    inset: 6px 6px auto !important;
   }
 }

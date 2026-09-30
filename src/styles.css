@@ -8984,24 +8984,12 @@ a.btn-ghost[href^="https://wa.me/"] svg {
     font-size: 0.69rem;
   }
 
-  /* Bottom quick actions */
-  .property-mobile-actions {
-    position: fixed !important;
-    inset-inline: 8px !important;
-    inset-block-end: max(8px, env(safe-area-inset-bottom)) !important;
-    z-index: 90 !important;
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 5px !important;
-    padding: 5px !important;
-    border: 1px solid rgba(23, 32, 51, 0.10) !important;
-    border-radius: 15px !important;
-    background: rgba(255, 253, 250, 0.96) !important;
-    box-shadow: 0 14px 34px rgba(23, 32, 51, 0.18) !important;
-    backdrop-filter: blur(18px) saturate(135%);
-    -webkit-backdrop-filter: blur(18px) saturate(135%);
-  }
-
+  /* The fixed bottom bar (.property-mobile-actions) is owned by the
+     property-detail mobile layer in property-detail-light-theme.css. It used
+     to be re-declared here with a third set of spacing/size values, which is
+     how the bar ended up with a 40px-wide column and no single source of
+     truth. The markup only exists on /properties/:slug, so nothing else in
+     this file depends on these rules. */
   .property-mobile-action {
     min-width: 0;
     min-height: 46px;

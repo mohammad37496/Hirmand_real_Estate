@@ -22,16 +22,25 @@ const url = "/properties/" + encodeURIComponent(slug);
 const outDir = "/workspace/screenshots";
 mkdirSync(outDir, { recursive: true });
 
+// The mobile widths the redesign is specified against (iPhone SE through
+// iPhone 15 Pro Max, plus the common Android sizes), a landscape phone, the
+// tablet edge, and the desktop widths used as a no-regression fingerprint.
 const VIEWPORTS = [
-  { w: 320, h: 800, name: "320" },
-  { w: 375, h: 812, name: "375" },
-  { w: 390, h: 844, name: "390" },
-  { w: 430, h: 932, name: "430" },
-  { w: 768, h: 1024, name: "768" },
-  { w: 1024, h: 800, name: "1024" },
-  { w: 1280, h: 800, name: "1280" },
-  { w: 1440, h: 900, name: "1440" },
-  { w: 1920, h: 1080, name: "1920" },
+  { w: 320, h: 568, name: "320x568" },
+  { w: 360, h: 800, name: "360x800" },
+  { w: 375, h: 667, name: "375x667" },
+  { w: 375, h: 812, name: "375x812" },
+  { w: 390, h: 844, name: "390x844" },
+  { w: 393, h: 852, name: "393x852" },
+  { w: 412, h: 915, name: "412x915" },
+  { w: 430, h: 932, name: "430x932" },
+  { w: 844, h: 390, name: "844x390-landscape", mobile: true },
+  { w: 932, h: 430, name: "932x430-landscape", mobile: true },
+  { w: 768, h: 1024, name: "768x1024" },
+  { w: 1024, h: 800, name: "1024x800" },
+  { w: 1280, h: 800, name: "1280x800" },
+  { w: 1440, h: 900, name: "1440x900" },
+  { w: 1920, h: 1080, name: "1920x1080" },
 ];
 
 const luminance = (r, g, b) => {
@@ -205,9 +214,12 @@ for (const vp of VIEWPORTS) {
   if (facts.darkSurfaces.length) problems.push(`dark surfaces: ${facts.darkSurfaces.join(", ")}`);
   if (facts.barOverlap.length) problems.push(`fixed bar overlaps ${facts.barOverlap.join(", ")}`);
   if (facts.smallTargets.length) problems.push(`targets <44px: ${facts.smallTargets.join(", ")}`);
-  if (vp.w <= 720 && facts.fixedBars !== 1) problems.push(`fixed bars on mobile: ${facts.fixedBars}`);
-  if (vp.w > 720 && facts.fixedBars > 0) problems.push(`fixed bar leaked to desktop: ${facts.fixedBars}`);
-  if (vp.w <= 720 && facts.padBottom < 100) problems.push(`padding-bottom ${facts.padBottom}px < 100`);
+  // A landscape phone is 844px *wide*, so width alone misclassifies it. The
+  // viewport list carries an explicit mobile flag for exactly this reason.
+  const isMobile = vp.mobile ?? vp.w <= 720;
+  if (isMobile && facts.fixedBars !== 1) problems.push(`fixed bars on mobile: ${facts.fixedBars}`);
+  if (!isMobile && facts.fixedBars > 0) problems.push(`fixed bar leaked to desktop: ${facts.fixedBars}`);
+  if (isMobile && facts.padBottom < 100) problems.push(`padding-bottom ${facts.padBottom}px < 100`);
   if (realErrors.length) problems.push(`console: ${realErrors.slice(0, 2).join(" | ")}`);
   if (!facts.h1) problems.push("no h1");
 

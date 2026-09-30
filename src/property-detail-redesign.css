@@ -1582,21 +1582,9 @@ body:has(.property-detail-page) {
     grid-template-columns: 1fr !important;
   }
 
-  .property-detail-page .property-mobile-actions {
-    position: fixed !important;
-    inset: auto 10px max(10px, env(safe-area-inset-bottom)) 10px !important;
-    z-index: 70 !important;
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 6px !important;
-    padding: 6px !important;
-    border: 1px solid var(--line) !important;
-    border-radius: 15px !important;
-    background: rgba(255,255,255,.95) !important;
-    box-shadow: 0 18px 42px rgba(15,32,29,.16) !important;
-    backdrop-filter: blur(16px) !important;
-  }
-
+  /* Fixed contact bar: owned by the property-detail mobile layer in
+     property-detail-light-theme.css. This duplicate carried a different
+     inset/gap/padding set and lost the cascade fight by specificity alone. */
   .property-detail-page .property-mobile-action {
     min-height: 44px !important;
     display: flex !important;
