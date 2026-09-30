@@ -32,6 +32,8 @@ const schema = z.object({
   note: z.string().trim().max(1500).default(""),
   leaseDeadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   source: z.enum(["website", "budget_match"]).optional().default("website"),
+  propertyId: z.string().trim().min(1).max(120).optional(),
+  visitPreferredAt: z.string().trim().max(80).optional(),
   budgetDeposit: z.number().int().min(0).max(999999999999999).optional(),
   budgetRent: z.number().int().min(0).max(999999999999999).optional(),
   budgetPurchase: z.number().int().min(0).max(999999999999999).optional(),
@@ -51,6 +53,20 @@ const schema = z.object({
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["budgetDeposit"], message: "بودجه نامعتبر است." });
   }
 
+  if (value.visitPreferredAt) {
+    const visitDate = new Date(value.visitPreferredAt);
+    if (!Number.isFinite(visitDate.getTime())) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["visitPreferredAt"], message: "زمان بازدید نامعتبر است." });
+    } else if (visitDate.getTime() < Date.now() + 30 * 60 * 1000) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["visitPreferredAt"], message: "زمان بازدید باید حداقل ۳۰ دقیقه از اکنون فاصله داشته باشد." });
+    }
+  }
+  if (value.visitPreferredAt && !value.propertyId) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["propertyId"], message: "برای درخواست بازدید، فایل مشخص نشده است." });
+  }
+  if (value.propertyId && !value.visitPreferredAt) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["visitPreferredAt"], message: "زمان پیشنهادی بازدید مشخص نشده است." });
+  }
   if (value.leaseDeadline) {
     const parsedDate = new Date(value.leaseDeadline + "T00:00:00Z");
     const normalized = Number.isNaN(parsedDate.getTime()) ? "" : parsedDate.toISOString().slice(0, 10);
@@ -158,6 +174,38 @@ export default defineEventHandler(async (event) => {
     : parsed.data.note;
 
   if (existing[0]) {
+    if (parsed.data.propertyId && parsed.data.visitPreferredAt) {
+      const visitDate = new Date(parsed.data.visitPreferredAt);
+      const propertyRows = await sql.query<{ id: string }>(
+        "select id from properties where id::text = $1 and status = 'published' limit 1",
+        [parsed.data.propertyId],
+      );
+      if (!propertyRows[0]) throw createError({ statusCode: 404, statusMessage: "فایل موردنظر برای بازدید در دسترس نیست." });
+      const rows = await sql.query<{ id: string }>(
+        "update leads set name=$2, deal=$3, property_type=$4, neighborhood=$5, consultant=$6, note=$7, property_id=$8, visit_preferred_at=$9, visit_requested_at=current_timestamp, visit_status='requested', follow_up_at=current_timestamp + interval '4 hours', updated_at=current_timestamp where id=$1 returning id",
+        [
+          existing[0].id,
+          parsed.data.name,
+          parsed.data.deal || "بازدید",
+          parsed.data.propertyType,
+          parsed.data.neighborhood,
+          parsed.data.consultant,
+          parsed.data.note,
+          parsed.data.propertyId,
+          visitDate.toISOString(),
+        ],
+      );
+      await sql.query(
+        "insert into lead_activities (lead_id, activity_type, title, note, metadata) values ($1,'visit',$2,$3,$4::jsonb)",
+        [
+          existing[0].id,
+          "درخواست بازدید ثبت شد",
+          parsed.data.note || "درخواست جدید برای بازدید فایل",
+          JSON.stringify({ propertyId: parsed.data.propertyId, visitPreferredAt: visitDate.toISOString() }),
+        ],
+      ).catch(() => {});
+      return { success: true, duplicate: true, updated: Boolean(rows[0]), id: existing[0].id, visitRequested: true };
+    }
     if (parsed.data.source === "budget_match") {
       await sql.query(
         `update leads
@@ -211,6 +259,45 @@ export default defineEventHandler(async (event) => {
     return { success: true, duplicate: true, id: existing[0].id };
   }
 
+  if (parsed.data.propertyId && parsed.data.visitPreferredAt) {
+    const visitDate = new Date(parsed.data.visitPreferredAt);
+    const propertyRows = await sql.query<{ id: string; title: string; property_type: string; neighborhood: string; contact_name: string }>(
+      "select id, title, property_type, neighborhood, contact_name from properties where id::text = $1 and status = 'published' limit 1",
+      [parsed.data.propertyId],
+    );
+    const property = propertyRows[0];
+    if (!property) throw createError({ statusCode: 404, statusMessage: "فایل موردنظر برای بازدید در دسترس نیست." });
+    const rows = await sql.query<{ id: string }>(
+      "insert into leads (id, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source, follow_up_at, floor_preference, property_id, visit_preferred_at, visit_requested_at, visit_status) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'website',current_timestamp + interval '4 hours',$11,$12,$13,current_timestamp,'requested') returning id",
+      [
+        crypto.randomUUID(),
+        parsed.data.name,
+        parsed.data.phone,
+        parsed.data.peopleCount ?? null,
+        parsed.data.job,
+        "بازدید",
+        property.property_type,
+        property.neighborhood,
+        property.contact_name || parsed.data.consultant,
+        parsed.data.note.trim() || "درخواست بازدید فایل",
+        parsed.data.floorPreference,
+        property.id,
+        visitDate.toISOString(),
+      ],
+    );
+    if (!rows[0]) throw createError({ statusCode: 500, statusMessage: "ثبت درخواست بازدید انجام نشد." });
+    await sql.query(
+      "insert into lead_activities (lead_id, activity_type, title, note, metadata) values ($1,'visit',$2,$3,$4::jsonb)",
+      [
+        rows[0].id,
+        "درخواست بازدید ثبت شد",
+        "فایل: " + property.title,
+        parsed.data.note.trim() || "درخواست بازدید از فایل",
+        JSON.stringify({ propertyId: property.id, visitPreferredAt: visitDate.toISOString() }),
+      ],
+    ).catch(() => {});
+    return { success: true, duplicate: false, id: rows[0].id, visitRequested: true };
+  }
   const rows = await sql.query<{ id: string }>(
     `insert into leads (
       id, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source,
