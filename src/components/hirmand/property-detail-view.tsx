@@ -1098,66 +1098,60 @@ export function PropertyDetailView({
         if (!cancelled) setPriceHistory([]);
       });
 
-    const watchKey = "hirmand-price-watch";
-    const signature = JSON.stringify({
-      price: property?.price ?? null,
-      deposit: property?.deposit ?? null,
-      rent: property?.rent ?? null,
-    });
+    let ignoreWatchSync = false;
+    void fetch("/api/property-watch", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "sync" }),
+    })
+      .then((response) => response.ok ? response.json() as Promise<{ alerts?: Array<{ message: string }> }> : null)
+      .then((result) => {
+        if (ignoreWatchSync) return;
+        if (result?.alerts?.length) {
+          for (const alert of result.alerts.slice(0, 3)) {
+            toast.success(alert.message);
+          }
+        }
+      })
+      .catch(() => {});
 
     try {
-      const raw = localStorage.getItem(watchKey);
+      const raw = localStorage.getItem("hirmand-price-watch");
       const parsed = raw ? JSON.parse(raw) : {};
       const watches = parsed && typeof parsed === "object" && !Array.isArray(parsed)
         ? parsed as Record<string, string>
         : {};
-      const previous = watches[viewedPropertySlug];
-      setPriceWatchEnabled(Boolean(previous));
-
-      if (previous && previous !== signature) {
-        toast.success("قیمت یا شرایط مالی این فایل تغییر کرده است.");
-        watches[viewedPropertySlug] = signature;
-        localStorage.setItem(watchKey, JSON.stringify(watches));
-      }
+      setPriceWatchEnabled(Boolean(watches[viewedPropertySlug]));
     } catch {
-      // Price watch is a convenience feature; storage failures are harmless.
+      setPriceWatchEnabled(false);
     }
 
     return () => {
       cancelled = true;
+      ignoreWatchSync = true;
     };
   }, [viewedPropertySlug, property?.price, property?.deposit, property?.rent]);
 
-  function togglePriceWatch() {
+  async function togglePriceWatch() {
     if (!viewedPropertySlug || typeof window === "undefined") return;
-    const watchKey = "hirmand-price-watch";
-    const signature = JSON.stringify({
-      price: property?.price ?? null,
-      deposit: property?.deposit ?? null,
-      rent: property?.rent ?? null,
-    });
+    const nextAction = priceWatchEnabled ? "unsubscribe" : "subscribe";
 
     try {
-      const raw = localStorage.getItem(watchKey);
-      const parsed = raw ? JSON.parse(raw) : {};
-      const watches = parsed && typeof parsed === "object" && !Array.isArray(parsed)
-        ? parsed as Record<string, string>
-        : {};
-
-      if (watches[viewedPropertySlug]) {
-        delete watches[viewedPropertySlug];
-        setPriceWatchEnabled(false);
-        toast.success("پیگیری قیمت این فایل خاموش شد.");
-      } else {
-        watches[viewedPropertySlug] = signature;
-        setPriceWatchEnabled(true);
-        toast.success("تغییرات قیمت این فایل در این مرورگر پیگیری می‌شود.");
-      }
-
-      localStorage.setItem(watchKey, JSON.stringify(watches));
+      const response = await fetch("/api/property-watch", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: nextAction, slug: viewedPropertySlug }),
+      });
+      if (!response.ok) throw new Error("watch request failed");
+      setPriceWatchEnabled(nextAction === "subscribe");
       trackAnalyticsEvent("property_price_watch", viewedPropertySlug);
+      toast.success(
+        nextAction === "subscribe"
+          ? "پیگیری قیمت این فایل روی حساب مرورگر شما فعال شد."
+          : "پیگیری قیمت این فایل خاموش شد.",
+      );
     } catch {
-      toast.error("ذخیره پیگیری قیمت در این مرورگر ممکن نشد.");
+      toast.error("ثبت پیگیری قیمت انجام نشد؛ دوباره تلاش کنید.");
     }
   }
 
