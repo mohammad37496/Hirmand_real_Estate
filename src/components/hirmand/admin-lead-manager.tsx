@@ -25,6 +25,7 @@ import { PROPERTY_OTHER_AMENITY_OPTIONS } from "@/lib/property-options";
 import { daysUntilDateOnly, formatPersianDate } from "@/lib/persian-date";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
+type VisitStatus = "none" | "requested" | "confirmed" | "completed" | "cancelled";
 type Lead = {
   id: string;
   name: string;
@@ -65,6 +66,10 @@ type Lead = {
   budgetBedrooms: number | null;
   budgetRate: number | null;
   matchCount: number;
+  propertyId: string | null;
+  visitPreferredAt: string | null;
+  visitRequestedAt: string | null;
+  visitStatus: VisitStatus;
   matchedProperties: Array<{
     slug: string;
     title: string;
@@ -83,6 +88,14 @@ const STATUS_LABEL: Record<LeadStatus, string> = {
   contract: "قرارداد",
   closed: "ناموفق / بسته‌شده",
   spam: "اسپم",
+};
+
+const VISIT_STATUS_LABEL: Record<VisitStatus, string> = {
+  none: "بدون بازدید",
+  requested: "درخواست بازدید",
+  confirmed: "بازدید تأیید شد",
+  completed: "بازدید انجام شد",
+  cancelled: "بازدید لغو شد",
 };
 
 function formatDate(value: string) {
@@ -219,6 +232,20 @@ export function AdminLeadManager() {
       toast.success("وضعیت درخواست به‌روزرسانی شد.");
     } catch (error) {
       toast.error(adminErrorMessage(error, "تغییر وضعیت انجام نشد."));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function updateVisitStatus(id: string, visitStatus: VisitStatus) {
+    if (busyId) return;
+    setBusyId(id);
+    try {
+      await postLead({ action: "visit_status", id, visitStatus });
+      setLeads((prev) => prev.map((lead) => (lead.id === id ? { ...lead, visitStatus } : lead)));
+      toast.success("وضعیت بازدید به‌روزرسانی شد.");
+    } catch (error) {
+      toast.error(adminErrorMessage(error, "تغییر وضعیت بازدید انجام نشد."));
     } finally {
       setBusyId(null);
     }
@@ -477,6 +504,9 @@ export function AdminLeadManager() {
                     {lead.source === "budget_match" ? (
                       <span className="admin-lead-budget-badge">بودجه‌یابی</span>
                     ) : null}
+                    {lead.visitStatus !== "none" ? (
+                      <span className="admin-lead-budget-badge">{VISIT_STATUS_LABEL[lead.visitStatus]}</span>
+                    ) : null}
                   </div>
                   <a className="admin-lead-phone" href={"tel:" + lead.phone}>
                     <Phone size={15} /> {lead.phone}
@@ -600,6 +630,22 @@ export function AdminLeadManager() {
                     <div className="admin-lead-follow-up">
                       <CalendarDays size={14} />
                       <span>پیگیری بعدی: <strong>{formatDate(lead.followUpAt)}</strong></span>
+                    </div>
+                  ) : null}
+                  {lead.visitPreferredAt ? (
+                    <div className="admin-lead-follow-up">
+                      <CalendarDays size={14} />
+                      <span>زمان پیشنهادی بازدید: <strong>{formatDate(lead.visitPreferredAt)}</strong></span>
+                      <select
+                        value={lead.visitStatus}
+                        onChange={(event) => void updateVisitStatus(lead.id, event.target.value as VisitStatus)}
+                        disabled={busyId === lead.id}
+                        aria-label="وضعیت بازدید"
+                      >
+                        {Object.entries(VISIT_STATUS_LABEL).map(([value, label]) => (
+                          <option key={value} value={value}>{label}</option>
+                        ))}
+                      </select>
                     </div>
                   ) : null}
                   {lead.note ? (
