@@ -110,6 +110,8 @@ export function AdminProductivityCenter() {
     void loadAll();
     const timer = window.setInterval(() => void loadAll(), 60000);
     return () => window.clearInterval(timer);
+    // loadAll is intentionally kept local to this screen; refresh cadence is stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredTasks = useMemo(() => {
