@@ -57,7 +57,11 @@ export function AdminPropertyFilterPresets(props: {
 
   function apply() {
     const preset = presets.find((item) => item.name === selected);
-    if (preset) props.onApply({ ...preset, name: undefined as never });
+    if (preset) {
+      const { name: _name, ...state } = preset;
+      void _name;
+      props.onApply(state);
+    }
   }
 
   return (
