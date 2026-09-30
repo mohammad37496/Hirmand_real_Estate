@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { BarChart3, CalendarRange, CheckCircle2, Eye, Filter, PhoneCall, RefreshCw, Target, UsersRound } from "lucide-react";
+import { BarChart3, CalendarRange, CheckCircle2, PhoneCall, RefreshCw, Target, UsersRound } from "lucide-react";
 
 type Row = {
   source: string;
