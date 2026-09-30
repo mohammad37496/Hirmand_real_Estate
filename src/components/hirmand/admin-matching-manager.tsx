@@ -107,6 +107,16 @@ type MatchProperty = {
   amenityCoverage: number | null;
 };
 
+const STATUS_LABEL: Record<string, string> = {
+  new: "جدید",
+  contacted: "تماس گرفته شد",
+  follow_up: "پیگیری",
+  visited: "بازدید",
+  contract: "قرارداد",
+  closed: "ناموفق / بسته‌شده",
+  spam: "اسپم",
+};
+
 const MODE_META: Record<MatchMode, { title: string; description: string }> = {
   price: {
     title: "قیمت حدودی",
@@ -342,7 +352,7 @@ export function AdminMatchingManager() {
                     <span className="kicker">جزئیات کامل درخواست</span>
                     <h2>{selectedLead.name}</h2>
                   </div>
-                  <span className="admin-matching-request-status">{selectedLead.status}</span>
+                  <span className="admin-matching-request-status">{STATUS_LABEL[selectedLead.status] ?? selectedLead.status}</span>
                 </div>
 
                 <div className="admin-matching-request-grid">
