@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   BadgeCheck,
-  BedDouble,
   Building2,
   CheckCircle2,
   ChevronDown,
   Clock3,
-  MapPin,
   Phone,
   RefreshCw,
   Search,
@@ -16,7 +14,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PROPERTY_OTHER_AMENITY_OPTIONS, labelForOption, PROPERTY_CABINET_OPTIONS, PROPERTY_FLOORING_OPTIONS, PROPERTY_COOLING_OPTIONS, PROPERTY_HEATING_OPTIONS, PROPERTY_WALL_CLOSET_OPTIONS } from "@/lib/property-options";
-import { PROPERTY_TYPES } from "@/lib/site";
 import { formatToman } from "@/lib/money";
 import { propertyPath } from "@/lib/property-path";
 
@@ -275,6 +272,8 @@ export function AdminMatchingManager() {
     if (!selectedLeadId) return;
     setExpandedId(null);
     void runMatch();
+    // runMatch intentionally stays out of the dependency list: it is an event-style helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLeadId, mode]);
 
   return (
