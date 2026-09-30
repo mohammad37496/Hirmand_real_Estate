@@ -1517,9 +1517,14 @@ export const saveProperty = createServerFn({ method: "POST" })
         data.wallpaper,
         savedConvertible,
         data.orientation,
-        data.ownerName.trim() || null,
-        data.ownerPhone.trim() || null,
-        data.ownerInfo.trim() || null,
+        // Migration 0038 declares these three columns `not null default ''`, so
+        // "no owner details" has to be written as an empty string. Sending NULL
+        // violated the NOT NULL constraint and made every property create or
+        // update from /admin fail with
+        // `null value in column "owner_name" of relation "properties"`.
+        data.ownerName.trim(),
+        data.ownerPhone.trim(),
+        data.ownerInfo.trim(),
       ],
     );
 

@@ -41,6 +41,13 @@ try {
       "این رکورد فقط برای تست واقعی مسیر Admin Form تا mutation و PostgreSQL ایجاد شده است.",
     );
     await form.getByLabel("قیمت فروش (تومان)").fill(price);
+    // A new file intentionally starts as a draft (emptyForm() in _admin_impl.tsx
+    // sets status: "draft"), but the step after this one opens the public
+    // /properties/:slug page, which only serves published listings. Choose the
+    // status explicitly so the smoke does not depend on that default.
+    // The status <select> is the only one carrying a "published" option, so
+    // targeting it by that option keeps the locator stable.
+    await form.locator('select:has(option[value="published"])').selectOption("published");
 
     await form.getByRole("button", { name: "ذخیره", exact: true }).click();
     try {
