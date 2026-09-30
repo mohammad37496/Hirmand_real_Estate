@@ -1703,6 +1703,7 @@ export function AdminPropertiesPage() {
               <AdminDashboard
                 onOpenProperties={() => navigateTo("list")}
               onOpenLeads={() => navigateTo("leads")}
+              onOpenProductivity={() => navigateTo("productivity")}
               onCreateProperty={startNew}
               onOpenDivar={() => navigateTo("divar")}
               onOpenConsultants={() => navigateTo("consultants")}
