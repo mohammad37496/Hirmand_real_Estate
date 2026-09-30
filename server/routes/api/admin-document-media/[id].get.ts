@@ -3,7 +3,8 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-sessi
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 import { getMediaMeta, readMediaRange } from "@/lib/media-store.server";
 
-async function requireAdmin(event:H3Event){if(!await verifyAdminSessionToken(getCookie(event,ADMIN_SESSION_COOKIE)))throw createError({statusCode:401,statusMessage:"نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.");assertSameOrigin(event);}
+async function requireAdmin(event:H3Event){if(!await verifyAdminSessionToken(getCookie(event,ADMIN_SESSION_COOKIE)))throw createError({statusCode:401,statusMessage:"نشست مدیریت معتبر نیست. دوباره وارد پنل شوید."});
+  assertSameOrigin(event);}
 function parseRangeHeader(header:string|undefined,size:number){
   if(!header)return null;const match=/^bytes=(\\d*)-(\\d*)$/.exec(header.trim());if(!match)return null;
   const start=match[1]?Number(match[1]):Math.max(0,size-Number(match[2]||0));const end=match[2]?Math.min(Number(match[2]),size-1):size-1;
