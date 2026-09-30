@@ -414,8 +414,8 @@ export default defineEventHandler(async (event) => {
       overdue: Number((leadSla[0] ?? {}).overdue) || 0,
       newOver4Hours: Number((leadSla[0] ?? {}).new_over_4h) || 0,
     },
-    consultantPerformance: consultantPerformance.map((row) => ({
-      id: String(row.id),
+    consultantPerformance: (consultantPerformance as Array<Record<string, unknown>>).map((row) => ({
+      id: String(row.id ?? ""),
       name: String(row.name ?? ""),
       phone: String(row.phone ?? ""),
       active: Boolean(row.is_active),
