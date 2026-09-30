@@ -63,6 +63,8 @@ export type ChunkedUploadConfig = {
   unsupportedTypeMessage: string;
   sizeLimitMessage: (limitMb: number) => string;
   textFields?: TextField[];
+  /** Keep the assembled object in the private database media endpoint. */
+  databaseOnly?: boolean;
   /** Called once every chunk arrived; persists the business record. */
   finish: (input: {
     stored: StoredMedia;
@@ -342,6 +344,7 @@ export async function handleChunkedUpload(
         pathname: String(session.pathname),
         contentType: String(session.content_type),
         sessionId: uploadId,
+        databaseOnly: config.databaseOnly,
       });
 
       // The declared type and the extension are both attacker-controlled. Read

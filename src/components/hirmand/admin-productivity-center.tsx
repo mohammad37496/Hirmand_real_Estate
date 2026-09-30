@@ -4,6 +4,7 @@ import {
   ListTodo, Plus, RefreshCw, SearchX, ServerCog, ShieldCheck, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { AdminPropertyIntegrityCenter } from "@/components/hirmand/admin-property-integrity-center";
 
 type TaskStatus = "open" | "done" | "cancelled";
 type Priority = "low" | "normal" | "high" | "urgent";
@@ -162,6 +163,7 @@ export function AdminProductivityCenter() {
   return (
     <div className="admin-productivity">
       <style dangerouslySetInnerHTML={{ __html: CENTER_CSS }} />
+      <AdminPropertyIntegrityCenter />
       {(data?.tasks.overdue || data?.propertyHealth.incomplete) ? (
         <div className="admin-productivity-notice">
           <AlertCircle size={18} />

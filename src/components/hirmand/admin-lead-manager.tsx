@@ -25,6 +25,8 @@ import { PROPERTY_OTHER_AMENITY_OPTIONS } from "@/lib/property-options";
 import { daysUntilDateOnly, formatPersianDate } from "@/lib/persian-date";
 import { AdminLeadDedupe } from "@/components/hirmand/admin-lead-dedupe";
 import { AdminLeadAssignmentBalancer } from "@/components/hirmand/admin-lead-assignment-balancer";
+import { AdminLeadCommandCenter } from "@/components/hirmand/admin-lead-command-center";
+import { AdminDealDocumentsCenter } from "@/components/hirmand/admin-deal-documents-center";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 type VisitStatus = "none" | "requested" | "confirmed" | "completed" | "cancelled";
@@ -413,6 +415,8 @@ export function AdminLeadManager() {
   return (
     <div className="admin-lead-manager">
       {confirmDialog}
+      <AdminLeadCommandCenter />
+      <AdminDealDocumentsCenter />
       <AdminLeadAssignmentBalancer />
       <AdminLeadDedupe />
       <section className="admin-panel">

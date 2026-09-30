@@ -125,6 +125,8 @@ export async function storeAssembledUpload(input: {
   pathname: string;
   contentType: string;
   sessionId: string;
+  /** Keep sensitive records in the private database media endpoint. */
+  databaseOnly?: boolean;
 }): Promise<StoredMedia> {
   requireDatabase();
   const sql = await getSql();
@@ -169,7 +171,7 @@ export async function storeAssembledUpload(input: {
     id,
   };
   const assembled = await readMediaRange(id, 0, null);
-  if (assembled && assembled.size > 0 && assembled.size <= MAX_OFFLOAD_BYTES) {
+  if (!input.databaseOnly && assembled && assembled.size > 0 && assembled.size <= MAX_OFFLOAD_BYTES) {
     if (liaraStorageConfigured()) {
       const url = await putLiaraObject({
         key: input.pathname,
