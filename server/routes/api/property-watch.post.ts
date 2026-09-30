@@ -92,6 +92,7 @@ export default defineEventHandler(async (event) => {
            price=excluded.price,
            deposit=excluded.deposit,
            rent=excluded.rent,
+           availability_status=excluded.availability_status,
            enabled=true,
            updated_at=current_timestamp`,
         [
