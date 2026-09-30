@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { AdminCardSkeleton, AdminErrorBanner } from "@/components/hirmand/admin-ui";
 import { AdminCampaignLinkBuilder } from "@/components/hirmand/admin-campaign-link-builder";
+import { AdminActionCenter } from "@/components/hirmand/admin-action-center";
 import { AdminPropertyLifecyclePanel } from "@/components/hirmand/admin-property-lifecycle-panel";
 import { AdminNeighborhoodDemandRadar } from "@/components/hirmand/admin-neighborhood-demand-radar";
 import { fa, faBytes } from "@/components/hirmand/admin-ui-utils";
@@ -182,6 +183,7 @@ function formatDay(value: string) {
 export function AdminDashboard({
   onOpenProperties,
   onOpenLeads,
+  onOpenProductivity,
   onCreateProperty,
   onOpenDivar,
   onOpenConsultants,
@@ -191,6 +193,7 @@ export function AdminDashboard({
 }: {
   onOpenProperties: () => void;
   onOpenLeads: () => void;
+  onOpenProductivity: () => void;
   onCreateProperty: () => void;
   onOpenDivar: () => void;
   onOpenConsultants: () => void;
@@ -761,6 +764,8 @@ export function AdminDashboard({
           </div>
         </section>
       </div>
+
+      <AdminActionCenter onOpenProperties={onOpenProperties} onOpenLeads={onOpenLeads} onOpenProductivity={onOpenProductivity} />
 
       <AdminCampaignLinkBuilder />
 
