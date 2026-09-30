@@ -254,13 +254,6 @@ export function AdminLeadManager() {
             : lead,
         ),
       );
-      await postLead({
-        action: "activity",
-        id,
-        activityType: "follow_up",
-        activityTitle: followUpDraft ? "پیگیری برای زمان مشخص شد" : "زمان پیگیری پاک شد",
-        activityNote: followUpDraft ? "زمان پیگیری: " + new Date(followUpDraft).toLocaleString("fa-IR") : "",
-      });
       setOpenFollowUpId(null);
       toast.success(followUpDraft ? "زمان پیگیری ذخیره شد." : "زمان پیگیری حذف شد.");
     } catch (error) {
