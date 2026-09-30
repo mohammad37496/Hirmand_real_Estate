@@ -67,6 +67,7 @@ import type { Property } from "@/lib/properties";
 import { PropertyConvertSlider } from "@/components/hirmand/property-convert-slider";
 import { toast } from "sonner";
 import { WhatsAppIcon } from "@/components/hirmand/social-icons";
+import "@/property-price-history.css";
 
 const PROPERTY_ORIENTATION_LABELS: Record<NonNullable<Property["orientation"]>, string> = {
   north: "شمالی",
