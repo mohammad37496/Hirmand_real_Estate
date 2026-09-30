@@ -136,6 +136,11 @@ export function AdminLeadManager() {
   const [openNoteId, setOpenNoteId] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+  const [openFollowUpId, setOpenFollowUpId] = useState<string | null>(null);
+  const [followUpDraft, setFollowUpDraft] = useState("");
+  const [savingFollowUp, setSavingFollowUp] = useState(false);
+  const [openActivityId, setOpenActivityId] = useState<string | null>(null);
+  const [activities, setActivities] = useState<Record<string, Array<{ id: number; type: string; title: string; note: string; createdAt: string }>>>({});
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const requestId = useRef(0);
 
@@ -230,6 +235,54 @@ export function AdminLeadManager() {
       toast.error(adminErrorMessage(error, "ذخیره یادداشت انجام نشد."));
     } finally {
       setSavingNote(false);
+    }
+  }
+
+  async function saveFollowUp(id: string) {
+    if (savingFollowUp) return;
+    setSavingFollowUp(true);
+    try {
+      await postLead({
+        action: "follow_up",
+        id,
+        followUpAt: followUpDraft ? new Date(followUpDraft).toISOString() : null,
+      });
+      setLeads((prev) =>
+        prev.map((lead) =>
+          lead.id === id
+            ? { ...lead, followUpAt: followUpDraft ? new Date(followUpDraft).toISOString() : null }
+            : lead,
+        ),
+      );
+      await postLead({
+        action: "activity",
+        id,
+        activityType: "follow_up",
+        activityTitle: followUpDraft ? "پیگیری برای زمان مشخص شد" : "زمان پیگیری پاک شد",
+        activityNote: followUpDraft ? "زمان پیگیری: " + new Date(followUpDraft).toLocaleString("fa-IR") : "",
+      });
+      setOpenFollowUpId(null);
+      toast.success(followUpDraft ? "زمان پیگیری ذخیره شد." : "زمان پیگیری حذف شد.");
+    } catch (error) {
+      toast.error(adminErrorMessage(error, "ذخیره زمان پیگیری انجام نشد."));
+    } finally {
+      setSavingFollowUp(false);
+    }
+  }
+
+  async function toggleActivities(id: string) {
+    if (openActivityId === id) {
+      setOpenActivityId(null);
+      return;
+    }
+    setOpenActivityId(id);
+    if (activities[id]) return;
+    try {
+      const response = await postLead({ action: "activities", id });
+      const data = await response.json() as { activities?: Array<{ id: number; type: string; title: string; note: string; createdAt: string }> };
+      setActivities((prev) => ({ ...prev, [id]: Array.isArray(data.activities) ? data.activities : [] }));
+    } catch (error) {
+      toast.error(adminErrorMessage(error, "تاریخچه فعالیت‌ها بارگذاری نشد."));
     }
   }
 
@@ -549,6 +602,12 @@ export function AdminLeadManager() {
                       </div>
                     </div>
                   ) : null}
+                  {lead.followUpAt ? (
+                    <div className="admin-lead-follow-up">
+                      <CalendarDays size={14} />
+                      <span>پیگیری بعدی: <strong>{formatDate(lead.followUpAt)}</strong></span>
+                    </div>
+                  ) : null}
                   {lead.note ? (
                     <div className="admin-lead-note">
                       <strong>یادداشت: </strong>
@@ -581,8 +640,42 @@ export function AdminLeadManager() {
                       </div>
                     </div>
                   ) : null}
+                  {openFollowUpId === lead.id ? (
+                    <div className="admin-lead-note-editor admin-lead-follow-up-editor">
+                      <label className="field">
+                        <span>پیگیری بعدی</span>
+                        <input
+                          type="datetime-local"
+                          value={followUpDraft}
+                          onChange={(event) => setFollowUpDraft(event.target.value)}
+                        />
+                      </label>
+                      <div className="admin-lead-note-actions">
+                        <button type="button" className="btn-gold" onClick={() => void saveFollowUp(lead.id)} disabled={savingFollowUp}>
+                          {savingFollowUp ? "در حال ذخیره…" : "ذخیره زمان پیگیری"}
+                        </button>
+                        <button type="button" className="btn-ghost" onClick={() => setOpenFollowUpId(null)}>انصراف</button>
+                      </div>
+                    </div>
+                  ) : null}
                   <small>ثبت: {formatDate(lead.createdAt)}</small>
                 </div>
+
+                {openActivityId === lead.id ? (
+                  <div className="admin-lead-activity-timeline">
+                    {(activities[lead.id] ?? []).length === 0 ? (
+                      <span>هنوز فعالیتی ثبت نشده است.</span>
+                    ) : (
+                      (activities[lead.id] ?? []).map((item) => (
+                        <div key={item.id}>
+                          <strong>{item.title}</strong>
+                          <small>{new Date(item.createdAt).toLocaleString("fa-IR")}</small>
+                          {item.note ? <p>{item.note}</p> : null}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                ) : null}
 
                 <div className="admin-lead-actions">
                   <a
@@ -619,6 +712,29 @@ export function AdminLeadManager() {
                       <MessageCircle size={16} />
                     </a>
                   ) : null}
+                  <button
+                    type="button"
+                    className="admin-icon-btn"
+                    title="زمان‌بندی پیگیری"
+                    aria-label={"زمان‌بندی پیگیری برای " + lead.name}
+                    onClick={() => {
+                      const current = lead.followUpAt ? new Date(lead.followUpAt) : new Date(Date.now() + 24 * 60 * 60 * 1000);
+                      const local = new Date(current.getTime() - current.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                      setFollowUpDraft(local);
+                      setOpenFollowUpId(lead.id);
+                    }}
+                  >
+                    <CalendarDays size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-icon-btn"
+                    title="تاریخچه فعالیت"
+                    aria-label={"تاریخچه فعالیت برای " + lead.name}
+                    onClick={() => void toggleActivities(lead.id)}
+                  >
+                    <Clock3 size={16} />
+                  </button>
                   <select
                     className="admin-lead-status-select"
                     value={lead.status}
