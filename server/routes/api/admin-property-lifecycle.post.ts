@@ -90,7 +90,7 @@ export default defineEventHandler(async (event) => {
     if (!Array.isArray(row.images) || row.images.length === 0) missing.push("تصویر");
 
     const staleDays = Number(row.stale_days) || 0;
-    const priority = staleDays >= criticalDays || missing.length >= 2 ? "urgent" : staleDays >= staleDays ? "high" : "normal";
+    const priority = staleDays >= criticalDays || missing.length >= 2 ? "urgent" : "high";
     return {
       id: String(row.id),
       slug: String(row.slug),
