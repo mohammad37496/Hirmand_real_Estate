@@ -94,6 +94,18 @@ type DashboardData = {
     campaign: string;
     visitors: number;
   }[];
+  consultantPerformance: {
+    id: string;
+    name: string;
+    phone: string;
+    active: boolean;
+    files: number;
+    leads: number;
+    contracts: number;
+    views: number;
+    calls: number;
+    whatsapp: number;
+  }[];
   followUps: { due: number; next7: number };
   recentLeads: {
     id: string;
@@ -743,6 +755,40 @@ export function AdminDashboard({
           </div>
         </section>
       </div>
+
+      <section className="admin-panel" style={{ marginTop: 18 }}>
+        <div className="admin-panel-head">
+          <div>
+            <span className="kicker">تیم فروش</span>
+            <h2>عملکرد مشاوران در ۳۰ روز اخیر</h2>
+          </div>
+          <UsersRound size={18} />
+        </div>
+        {data.consultantPerformance.length === 0 ? (
+          <div className="admin-empty">
+            <UsersRound size={24} />
+            <strong>هنوز داده کافی برای گزارش مشاوران ثبت نشده</strong>
+          </div>
+        ) : (
+          <div className="admin-breakdown">
+            {data.consultantPerformance.map((item) => (
+              <div key={item.id} className="admin-breakdown-row">
+                <div>
+                  <span>{item.name || "مشاور بدون نام"}{item.active ? "" : " · غیرفعال"}</span>
+                  <strong>{fa(item.leads)} لید</strong>
+                </div>
+                <small>
+                  {fa(item.files)} فایل · {fa(item.views)} بازدید · {fa(item.calls)} تماس · {fa(item.whatsapp)} واتساپ · {fa(item.contracts)} قرارداد
+                </small>
+                <a className="text-link" href={"tel:" + item.phone}>تماس</a>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="admin-dashboard-summary" style={{ marginTop: 10 }}>
+          این گزارش بر اساس مشاور ثبت‌شده روی فایل‌ها و لیدهای CRM و رویدادهای ۳۰ روز اخیر محاسبه می‌شود.
+        </p>
+      </section>
 
       <div className="admin-dashboard-grid">
         <section className="admin-panel">
