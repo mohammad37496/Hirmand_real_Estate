@@ -198,6 +198,89 @@ export const stubAdminApi = {
       }),
     }),
 
+  "**/api/admin-sales-control-center": async (route) => {
+    let body = {};
+    try {
+      body = route.request().postDataJSON() ?? {};
+    } catch {
+      body = {};
+    }
+    const days = [7, 30, 90].includes(Number(body.days)) ? Number(body.days) : 30;
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        days,
+        pipeline: { new: 18, contacted: 41, follow_up: 27, visited: 12, contract: 9 },
+        summary: {
+          consultants: 3,
+          activeConsultants: 3,
+          activeLeads: 28,
+          overdueLeads: 4,
+          visitRequests: 5,
+          contracts: 9,
+          totalViews: 1240,
+        },
+        consultants: [
+          {
+            id: "c1",
+            name: "آقای شیخ",
+            phone: "09131056029",
+            active: true,
+            files: 24,
+            leads: 42,
+            periodLeads: 18,
+            activeLeads: 11,
+            new7d: 5,
+            overdueLeads: 2,
+            nextFollowUps: 4,
+            visitRequests: 2,
+            contracts: 12,
+            periodContracts: 4,
+            views: 420,
+            conversionRate: 22.2,
+          },
+          {
+            id: "c2",
+            name: "آقای مرادی",
+            phone: "09130000000",
+            active: true,
+            files: 18,
+            leads: 35,
+            periodLeads: 14,
+            activeLeads: 9,
+            new7d: 3,
+            overdueLeads: 1,
+            nextFollowUps: 6,
+            visitRequests: 2,
+            contracts: 8,
+            periodContracts: 3,
+            views: 330,
+            conversionRate: 21.4,
+          },
+          {
+            id: "c3",
+            name: "مشاور نمونه",
+            phone: "09120000000",
+            active: true,
+            files: 12,
+            leads: 21,
+            periodLeads: 9,
+            activeLeads: 8,
+            new7d: 2,
+            overdueLeads: 1,
+            nextFollowUps: 3,
+            visitRequests: 1,
+            contracts: 3,
+            periodContracts: 2,
+            views: 190,
+            conversionRate: 22.2,
+          },
+        ],
+      }),
+    });
+  },
+
   "**/api/leads-admin": async (route) => {
     let body = {};
     try {
