@@ -139,6 +139,13 @@ export default defineEventHandler(async (event) => {
       closed: "ناموفق / بسته‌شده",
       spam: "اسپم",
     };
+    const visitLabels: Record<VisitStatus, string> = {
+      none: "بدون بازدید",
+      requested: "درخواست بازدید",
+      confirmed: "تأییدشده",
+      completed: "انجام‌شده",
+      cancelled: "لغوشده",
+    };
     const header = ["نام", "تلفن", "تعداد نفرات", "شغل", "معامله", "نوع ملک", "محله", "طبقه", "مشاور", "وضعیت", "وضعیت بازدید", "زمان بازدید", "منبع جذب", "رهن از", "رهن تا", "اجاره از", "اجاره تا", "خرید از", "خرید تا", "فروش از", "فروش تا", "معادل رهنی", "خواب موردنظر", "خواب بودجه‌یابی", "تعداد فایل پیشنهادی", "امکانات موردنظر", "توضیحات", "مهلت رهن و اجاره", "تاریخ"];
     const lines = [
       header.map(csvCell).join(","),
@@ -154,8 +161,8 @@ export default defineEventHandler(async (event) => {
           row.floor_preference,
           row.consultant,
           labels[String(row.status) as Status] ?? row.status,
-          row.visit_status ?? "none",
-          row.visit_preferred_at ?? "",
+          visitLabels[String(row.visit_status) as VisitStatus] ?? "بدون بازدید",
+          row.visit_preferred_at == null ? "" : csvDate(row.visit_preferred_at),
           row.acquisition_source ?? row.source,
           row.budget_deposit_min ?? row.budget_deposit,
           row.budget_deposit_max ?? row.budget_deposit,
