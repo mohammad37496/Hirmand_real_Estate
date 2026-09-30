@@ -8,6 +8,7 @@ function property(overrides: Partial<Property>): Property {
     id: "1",
     slug: "test",
     status: "published",
+    availabilityStatus: "available",
     featured: false,
     title: "ملک تست",
     transactionType: "rent",
