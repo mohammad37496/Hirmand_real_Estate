@@ -75,6 +75,7 @@ import { AdminMatchingManager } from "@/components/hirmand/admin-matching-manage
 import { AdminOwnerManager } from "@/components/hirmand/admin-owner-manager";
 import { AdminFinanceManager } from "@/components/hirmand/admin-finance-manager";
 import { AdminBackupManager } from "@/components/hirmand/admin-backup-manager";
+import { AdminOperationsCenter } from "@/components/hirmand/admin-operations-center";
 import {
   PROPERTY_CABINET_OPTIONS,
   PROPERTY_COOLING_OPTIONS,
@@ -1670,16 +1671,24 @@ export function AdminPropertiesPage() {
 
         <div className="admin-content">
           {view === "dashboard" ? (
-            <AdminDashboard
-              onOpenProperties={() => navigateTo("list")}
+            <>
+              <AdminOperationsCenter
+                onOpenLeads={() => navigateTo("leads")}
+                onOpenMatching={() => navigateTo("matching")}
+                onOpenProperties={() => navigateTo("list")}
+                onOpenFinance={() => navigateTo("finance")}
+              />
+              <AdminDashboard
+                onOpenProperties={() => navigateTo("list")}
               onOpenLeads={() => navigateTo("leads")}
               onCreateProperty={startNew}
               onOpenDivar={() => navigateTo("divar")}
               onOpenConsultants={() => navigateTo("consultants")}
               onOpenPartners={() => navigateTo("partners")}
               onOpenAttendance={() => navigateTo("attendance")}
-              onOpenMusic={() => navigateTo("music")}
-            />
+                onOpenMusic={() => navigateTo("music")}
+              />
+            </>
           ) : null}
 
           {view === "list" ? (
