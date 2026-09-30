@@ -7,6 +7,12 @@ import { DEFAULT_MATCH_RAHN_RATE } from "@/lib/budget-matching";
 type MatchMode = "price" | "amenities" | "both" | "smart";
 
 const MATCH_MODES: MatchMode[] = ["price", "amenities", "both", "smart"];
+const MODE_META_LABEL: Record<MatchMode, string> = {
+  price: "قیمت حدودی",
+  amenities: "امکانات",
+  both: "قیمت + امکانات",
+  smart: "تطبیق هوشمند",
+};
 
 const TYPE_LABELS: Record<string, string> = {
   apartment: "آپارتمان",
@@ -244,10 +250,13 @@ export default defineEventHandler(async (event) => {
   await requireAdmin(event);
 
   const body = (await readBody(event).catch(() => ({}))) as {
-    action?: "list" | "match";
+    action?: "list" | "match" | "feedback";
     leadId?: string;
     mode?: MatchMode;
     limit?: number;
+    feedback?: "sent" | "liked" | "rejected" | "visited";
+    propertyId?: string;
+    propertyTitle?: string;
   };
 
   if (dbSource === "unconfigured") {
@@ -255,6 +264,33 @@ export default defineEventHandler(async (event) => {
   }
 
   const sql = await getSql();
+
+  if (body.action === "feedback") {
+    if (!body.leadId || !body.propertyId || !body.feedback) {
+      throw createError({ statusCode: 400, statusMessage: "اطلاعات نتیجه مچ ناقص است." });
+    }
+    const labels = {
+      sent: "فایل برای مشتری ارسال شد",
+      liked: "مشتری فایل را پسندید",
+      rejected: "مشتری فایل را نپسندید",
+      visited: "برای فایل بازدید انجام شد",
+    } as const;
+    const title = body.propertyTitle?.trim().slice(0, 180) || "فایل";
+    await sql.query(
+      "insert into lead_activities (lead_id, activity_type, title, note, metadata) values ($1,'match',$2,$3,$4::jsonb)",
+      [
+        body.leadId,
+        labels[body.feedback] + " · " + title,
+        "نتیجه مچ برای فایل ثبت شد.",
+        JSON.stringify({
+          feedback: body.feedback,
+          propertyId: body.propertyId,
+          propertyTitle: title,
+        }),
+      ],
+    );
+    return { success: true };
+  }
 
   if ((body.action ?? "list") === "list") {
     const rows = await sql.query<Record<string, unknown>>(
@@ -383,9 +419,43 @@ export default defineEventHandler(async (event) => {
     .sort((a, b) => b.score - a.score || (b.amenityCoverage ?? 0) - (a.amenityCoverage ?? 0) || (b.priceMatch ?? 0) - (a.priceMatch ?? 0))
     .slice(0, limit);
 
+  const serializedMatches = scored.map((item) =>
+    serializeProperty(item.row, item.score, item.reasons, item.amenityCoverage, item.priceMatch),
+  );
+
+  await sql.query(
+    "update leads set matched_properties=$2::jsonb, match_count=$3, updated_at=current_timestamp where id=$1",
+    [
+      body.leadId,
+      JSON.stringify(
+        serializedMatches.map((item) => ({
+          id: item.id,
+          slug: item.slug,
+          title: item.title,
+          score: item.score,
+          priceMatch: item.priceMatch,
+          amenityCoverage: item.amenityCoverage,
+          mode,
+          updatedAt: new Date().toISOString(),
+        })),
+      ),
+      serializedMatches.length,
+    ],
+  );
+
+  await sql.query(
+    "insert into lead_activities (lead_id, activity_type, title, note, metadata) values ($1,'match',$2,$3,$4::jsonb)",
+    [
+      body.leadId,
+      "مچ فایل‌ها انجام شد",
+      "معیار: " + MODE_META_LABEL[mode] + " · " + serializedMatches.length + " فایل پیشنهاد شد.",
+      JSON.stringify({ mode, count: serializedMatches.length }),
+    ],
+  ).catch(() => {});
+
   return {
     lead: mapLead(lead),
     mode,
-    matches: scored.map((item) => serializeProperty(item.row, item.score, item.reasons, item.amenityCoverage, item.priceMatch)),
+    matches: serializedMatches,
   };
 });
