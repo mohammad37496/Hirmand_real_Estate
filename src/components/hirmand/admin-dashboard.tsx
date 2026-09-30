@@ -106,6 +106,7 @@ type DashboardData = {
     calls: number;
     whatsapp: number;
   }[];
+  leadSla: { overdue: number; newOver4Hours: number };
   followUps: { due: number; next7: number };
   recentLeads: {
     id: string;
@@ -285,6 +286,8 @@ export function AdminDashboard({
   }
 
   const stats = [
+    { label: "لید بدون تماس بیش از ۲۴ ساعت", value: data.leadSla.overdue, icon: Phone, tone: "red" },
+    { label: "لید جدید بالای ۴ ساعت", value: data.leadSla.newOver4Hours, icon: Clock3, tone: "amber" },
     { label: "کل فایل‌ها", value: data.properties.total, icon: Building2, tone: "gold" },
     { label: "بازدید امروز", value: data.visitors.today, icon: Eye, tone: "blue" },
     { label: "فایل‌های منتشرشده", value: data.properties.published, icon: BarChart3, tone: "green" },
