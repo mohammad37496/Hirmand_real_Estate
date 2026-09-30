@@ -69,6 +69,14 @@ import { toast } from "sonner";
 import { WhatsAppIcon } from "@/components/hirmand/social-icons";
 import "@/property-price-history.css";
 
+const PROPERTY_AVAILABILITY_LABELS: Record<Property["availabilityStatus"], string> = {
+  available: "موجود",
+  reserved: "رزرو موقت",
+  sold: "فروخته‌شده",
+  rented: "اجاره‌داده‌شده",
+  unavailable: "فعلاً ناموجود",
+};
+
 const PROPERTY_ORIENTATION_LABELS: Record<NonNullable<Property["orientation"]>, string> = {
   north: "شمالی",
   south: "جنوبی",
@@ -86,6 +94,7 @@ const PROPERTY_ORIENTATION_LABELS: Record<NonNullable<Property["orientation"]>, 
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { PropertyActions } from "@/components/hirmand/property-actions";
+import { PropertyViewingRequest } from "@/components/hirmand/property-viewing-request";
 import { formatToman } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
@@ -1384,6 +1393,15 @@ export function PropertyDetailView({
                     <span className="property-type-badge">
                       {TYPE_LABEL[property.propertyType]}
                     </span>
+                    <span
+                      className={
+                        property.availabilityStatus === "available"
+                          ? "property-availability-badge property-availability-badge-available"
+                          : "property-availability-badge"
+                      }
+                    >
+                      {PROPERTY_AVAILABILITY_LABELS[property.availabilityStatus]}
+                    </span>
                     {featuredActive ? <span className="property-featured-note">فایل ویژه</span> : null}
                   </div>
                   {code ? (
@@ -1747,6 +1765,15 @@ export function PropertyDetailView({
                   <WhatsAppIcon size={17} aria-hidden="true" />
                   واتساپ
                 </a>
+                <PropertyViewingRequest
+                  property={{
+                    id: property.id,
+                    slug: property.slug,
+                    title: property.title,
+                    neighborhood: property.neighborhood,
+                    availabilityStatus: property.availabilityStatus,
+                  }}
+                />
               </div>
             </section>
 
