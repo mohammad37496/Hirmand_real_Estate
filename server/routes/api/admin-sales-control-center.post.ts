@@ -111,7 +111,7 @@ export default defineEventHandler(async (event) => {
       `,
     ).catch((error) => {
       console.error("[admin-sales-control-center] consultant query unavailable", error);
-      return [];
+      return [] as Record<string, unknown>[];
     }),
     sql.query<Record<string, unknown>>(
       `select
@@ -125,7 +125,7 @@ export default defineEventHandler(async (event) => {
       `,
     ).catch((error) => {
       console.error("[admin-sales-control-center] pipeline query unavailable", error);
-      return [{}];
+      return [] as Record<string, unknown>[];
     }),
   ]);
 
@@ -151,7 +151,7 @@ export default defineEventHandler(async (event) => {
     };
   });
 
-  const pipelineRow = pipelineRows[0] ?? {};
+  const pipelineRow = (pipelineRows[0] ?? {}) as Record<string, unknown>;
   const summary = consultants.reduce(
     (acc, item) => {
       acc.consultants += 1;
