@@ -3,9 +3,11 @@ import { createPortal } from "react-dom";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type TouchEvent } from "react";
 import {
   ArrowRight,
+  ArrowDownRight,
   Accessibility,
   Armchair,
   Baby,
+  Bell,
   Bath,
   Briefcase,
   BriefcaseBusiness,
@@ -90,7 +92,7 @@ import { getPropertyFallbackImage, getPropertyFallbackImages, getPropertyFallbac
 import { areaSlug } from "@/lib/areas";
 import { propertyPath } from "@/lib/property-path";
 import { TEAM } from "@/lib/site";
-import { isFeaturedActive } from "@/lib/properties";
+import { getPublishedPropertyPriceHistory, isFeaturedActive, type PropertyPriceHistoryItem } from "@/lib/properties";
 import {
   PROPERTY_CABINET_OPTIONS,
   PROPERTY_COOLING_OPTIONS,
@@ -1055,6 +1057,8 @@ export function PropertyDetailView({
   related: Property[];
 }) {
   const viewedPropertySlug = property?.slug;
+  const [priceHistory, setPriceHistory] = useState<PropertyPriceHistoryItem[]>([]);
+  const [priceWatchEnabled, setPriceWatchEnabled] = useState(false);
 
   // The gallery list is derived before the early return below: a hook that only
   // runs for a present property would break React's hook order the moment the
@@ -1067,6 +1071,85 @@ export function PropertyDetailView({
       ? ownedImages
       : getPropertyFallbackImages(property?.propertyType ?? "apartment");
   }, [property?.images, property?.propertyType]);
+
+  useEffect(() => {
+    if (!viewedPropertySlug || typeof window === "undefined") {
+      setPriceHistory([]);
+      setPriceWatchEnabled(false);
+      return;
+    }
+
+    let cancelled = false;
+    void getPublishedPropertyPriceHistory({ data: { slug: viewedPropertySlug } })
+      .then((items) => {
+        if (!cancelled) setPriceHistory(items);
+      })
+      .catch(() => {
+        if (!cancelled) setPriceHistory([]);
+      });
+
+    const watchKey = "hirmand-price-watch";
+    const signature = JSON.stringify({
+      price: property?.price ?? null,
+      deposit: property?.deposit ?? null,
+      rent: property?.rent ?? null,
+    });
+
+    try {
+      const raw = localStorage.getItem(watchKey);
+      const parsed = raw ? JSON.parse(raw) : {};
+      const watches = parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        ? parsed as Record<string, string>
+        : {};
+      const previous = watches[viewedPropertySlug];
+      setPriceWatchEnabled(Boolean(previous));
+
+      if (previous && previous !== signature) {
+        toast.success("قیمت یا شرایط مالی این فایل تغییر کرده است.");
+        watches[viewedPropertySlug] = signature;
+        localStorage.setItem(watchKey, JSON.stringify(watches));
+      }
+    } catch {
+      // Price watch is a convenience feature; storage failures are harmless.
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [viewedPropertySlug, property?.price, property?.deposit, property?.rent]);
+
+  function togglePriceWatch() {
+    if (!viewedPropertySlug || typeof window === "undefined") return;
+    const watchKey = "hirmand-price-watch";
+    const signature = JSON.stringify({
+      price: property?.price ?? null,
+      deposit: property?.deposit ?? null,
+      rent: property?.rent ?? null,
+    });
+
+    try {
+      const raw = localStorage.getItem(watchKey);
+      const parsed = raw ? JSON.parse(raw) : {};
+      const watches = parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        ? parsed as Record<string, string>
+        : {};
+
+      if (watches[viewedPropertySlug]) {
+        delete watches[viewedPropertySlug];
+        setPriceWatchEnabled(false);
+        toast.success("پیگیری قیمت این فایل خاموش شد.");
+      } else {
+        watches[viewedPropertySlug] = signature;
+        setPriceWatchEnabled(true);
+        toast.success("تغییرات قیمت این فایل در این مرورگر پیگیری می‌شود.");
+      }
+
+      localStorage.setItem(watchKey, JSON.stringify(watches));
+      trackAnalyticsEvent("property_price_watch", viewedPropertySlug);
+    } catch {
+      toast.error("ذخیره پیگیری قیمت در این مرورگر ممکن نشد.");
+    }
+  }
 
   useEffect(() => {
     if (!viewedPropertySlug || typeof window === "undefined") return;
@@ -1364,6 +1447,15 @@ export function PropertyDetailView({
                   <span>ذخیره، اشتراک، چاپ و مقایسه</span>
                 </div>
                 <PropertyActions property={property} />
+                <button
+                  type="button"
+                  className={"property-price-watch-button" + (priceWatchEnabled ? " is-active" : "")}
+                  onClick={togglePriceWatch}
+                  aria-pressed={priceWatchEnabled}
+                >
+                  <Bell size={16} aria-hidden="true" />
+                  <span>{priceWatchEnabled ? "در حال پیگیری قیمت" : "پیگیری تغییر قیمت"}</span>
+                </button>
 
                 <div className="property-summary-facts" aria-label="اطلاعات کلیدی فایل">
                   {property.areaM2 != null ? (
@@ -1525,6 +1617,60 @@ export function PropertyDetailView({
                 </div>
               ) : null}
             </section>
+
+            {priceHistory.length ? (
+              <section className="property-price-history" aria-labelledby="property-price-history-title">
+                <div className="property-section-heading">
+                  <div>
+                    <span className="kicker">شفافیت قیمت</span>
+                    <h2 id="property-price-history-title">روند تغییر قیمت و شرایط مالی</h2>
+                  </div>
+                  <span className="property-source-badge">
+                    {priceHistory.length.toLocaleString("fa-IR")} تغییر ثبت‌شده
+                  </span>
+                </div>
+                <div className="property-price-history-list">
+                  {priceHistory.map((item, index) => {
+                    const changes: Array<{ label: string; previous: string | null; next: string | null }> = [];
+                    if (item.previousPrice !== item.newPrice) {
+                      changes.push({ label: "قیمت کل", previous: item.previousPrice, next: item.newPrice });
+                    }
+                    if (item.previousDeposit !== item.newDeposit) {
+                      changes.push({ label: "رهن", previous: item.previousDeposit, next: item.newDeposit });
+                    }
+                    if (item.previousRent !== item.newRent) {
+                      changes.push({ label: "اجاره", previous: item.previousRent, next: item.newRent });
+                    }
+
+                    return (
+                      <article className="property-price-history-item" key={item.changedAt + "-" + index}>
+                        <div className="property-price-history-date">
+                          <ArrowDownRight size={16} aria-hidden="true" />
+                          <time dateTime={item.changedAt}>{formatAdDate(item.changedAt)}</time>
+                        </div>
+                        <div className="property-price-history-changes">
+                          {changes.map((change) => {
+                            const previous = change.previous ? formatToman(Number(change.previous)) + " تومان" : "ثبت نشده";
+                            const nextValue = change.next ? formatToman(Number(change.next)) + " تومان" : "حذف شد";
+                            return (
+                              <div className="property-price-history-change" key={change.label}>
+                                <span>{change.label}</span>
+                                <strong>{previous}</strong>
+                                <b>→</b>
+                                <strong className="is-current">{nextValue}</strong>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+                <p className="property-price-history-note">
+                  این سابقه فقط تغییرات ثبت‌شده در سامانه هیرمند را نشان می‌دهد و جایگزین بررسی شرایط نهایی معامله نیست.
+                </p>
+              </section>
+            ) : null}
 
             {(property.latitude != null && property.longitude != null) || property.neighborhood ? (
               <section className="property-location-section" aria-labelledby="property-location-title">
