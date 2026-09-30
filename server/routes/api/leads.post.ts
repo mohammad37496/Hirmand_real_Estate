@@ -4,6 +4,7 @@ import { dbSource, getSql } from "@/lib/db";
 import { buildBudgetLeadNote, budgetEquivalent } from "@/lib/budget-lead";
 import { DEFAULT_MATCH_RAHN_RATE } from "@/lib/budget-matching";
 import { autoMatchLead } from "@/lib/lead-smart-matcher.server";
+import { persistLeadRoutingActivity, routeLeadConsultant } from "@/lib/lead-routing.server";
 
 const VISITOR_COOKIE = "hirmand_visitor_id";
 
@@ -177,6 +178,8 @@ export default defineEventHandler(async (event) => {
     ? parsed.data.leaseDeadline ?? null
     : null;
   const matchedProperties = parsed.data.matches.slice(0, 12);
+  const routing = await routeLeadConsultant(sql, parsed.data);
+  const routedConsultant = routing.consultant || parsed.data.consultant;
   const budgetPayload = {
     name: parsed.data.name,
     phone: parsed.data.phone,
@@ -320,7 +323,7 @@ export default defineEventHandler(async (event) => {
       parsed.data.deal,
       parsed.data.propertyType,
       parsed.data.neighborhood,
-      parsed.data.consultant,
+      routedConsultant,
       note,
       parsed.data.source,
       acquisition.source,
@@ -367,13 +370,14 @@ export default defineEventHandler(async (event) => {
       "insert into lead_activities (lead_id, activity_type, title, note, metadata) values ($1,'follow_up',$2,$3,$4::jsonb)",
       [createdLeadId, "لید جدید ثبت شد", "پیگیری اولیه در مرکز مدیریت برای این درخواست ساخته شد.", JSON.stringify({ source: parsed.data.source })],
     ).catch(() => {});
+    await persistLeadRoutingActivity(sql, createdLeadId, routing);
     await createAutomaticFollowUp(sql, {
       leadId: createdLeadId,
       title: parsed.data.source === "budget_match" ? "پیگیری لید بودجه‌ای: " + parsed.data.name : "تماس اولیه با لید: " + parsed.data.name,
       description: parsed.data.source === "budget_match"
         ? "لید از جستجوی بودجه ثبت شده؛ فایل‌های پیشنهادی و بودجه مشتری را بررسی و تماس بگیرید."
         : "لید جدید سایت است؛ اطلاعات درخواست را بررسی و تماس اولیه را انجام دهید.",
-      assignee: parsed.data.consultant,
+      assignee: routedConsultant,
       priority: parsed.data.source === "budget_match" ? "high" : "normal",
       dueMinutes: 24 * 60,
     });
