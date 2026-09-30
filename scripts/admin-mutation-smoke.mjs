@@ -29,7 +29,17 @@ try {
         data,
         headers: { origin: baseUrl },
       });
-      const body = await response.json().catch(() => ({}));
+      const raw = await response.text();
+      let body = {};
+      try {
+        body = raw ? JSON.parse(raw) : {};
+      } catch {
+        throw new Error(
+          "Admin API " + path + " returned non-JSON HTTP " + response.status() +
+          " content-type=" + (response.headers()["content-type"] || "(none)") +
+          " body=" + raw.slice(0, 1200),
+        );
+      }
       if (!response.ok) {
         throw new Error("Admin API " + path + " failed: HTTP " + response.status() + " " + JSON.stringify(body));
       }
@@ -38,7 +48,7 @@ try {
 
     const commandSummary = await postAdminApi("/api/admin-lead-command", { action: "summary" });
     for (const key of ["overdue", "today", "newLeads", "upcomingVisits", "unassigned"]) {
-      if (typeof commandSummary.stats?.[key] !== "number") throw new Error("Lead command summary is missing stat " + key);
+      if (typeof commandSummary.stats?.[key] !== "number") throw new Error("Lead command summary is malformed: " + JSON.stringify(commandSummary).slice(0, 2000));
     }
 
     const integritySummary = await postAdminApi("/api/admin-property-integrity", { action: "summary" });
