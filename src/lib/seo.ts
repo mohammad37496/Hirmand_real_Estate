@@ -129,8 +129,8 @@ export function propertyPageTitle(property: Property): string {
 export function propertyPageDescription(property: Property): string {
   const tx = TX_LABEL[property.transactionType] ?? "معامله";
   const type = TYPE_LABEL[property.propertyType] ?? "ملک";
-  const area = property.areaM2 ? `، ${formatToman(property.areaM2)} متر` : "";
-  const beds = property.bedrooms ? `، ${formatToman(property.bedrooms)} خواب` : "";
+  const area = property.areaM2 ? `، ${property.areaM2} متر` : "";
+  const beds = property.bedrooms ? `، ${property.bedrooms} خواب` : "";
   const body = property.description.replace(/\s+/g, " ").trim();
   const lead = `${tx} ${type} در ${property.neighborhood}، اصفهان${area}${beds}.`;
   // Keep the opening sentence factual and first: it is what a search result
