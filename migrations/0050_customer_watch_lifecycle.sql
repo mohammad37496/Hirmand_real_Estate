@@ -7,6 +7,7 @@ create table if not exists property_watch_subscriptions (
   price numeric(20,0),
   deposit numeric(20,0),
   rent numeric(20,0),
+  availability_status text not null default 'available',
   enabled boolean not null default true,
   last_notified_at timestamptz,
   created_at timestamptz not null default current_timestamp,
@@ -32,6 +33,8 @@ create table if not exists property_watch_alerts (
   current_deposit numeric(20,0),
   previous_rent numeric(20,0),
   current_rent numeric(20,0),
+  previous_availability text,
+  current_availability text,
   message text not null,
   created_at timestamptz not null default current_timestamp,
   seen_at timestamptz
