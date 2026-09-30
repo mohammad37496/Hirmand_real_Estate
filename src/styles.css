@@ -6228,25 +6228,14 @@ body {
 
 
 /* =========================================================
-   HIRMAND BLACK / CRIMSON BRAND THEME
-   Primary: #860a0a
-   Secondary: deep black
+   HIRMAND BLACK / CRIMSON BRAND THEME — REMOVED
+   This was an abandoned brand direction (deep black + crimson)
+   that has since been superseded by the "HIRMAND PREMIUM THEME"
+   layer further down this file (warm ivory / deep navy / brass).
+   Its `:root` token override has been removed: the navy/brass/paper
+   tokens from theme-pro.css are the single source of truth, and a
+   second black palette here only fought them in the cascade.
    ========================================================= */
-
-:root {
-  --bg: #050506;
-  --surface: #0b0b0d;
-  --surface-2: #121216;
-  --fg: #f5f5f6;
-  --muted: #b4b4ba;
-  --subtle: #787880;
-  --gold: #860a0a;
-  --gold-soft: #a51212;
-  --ink: #ffffff;
-  --line: rgba(255,255,255,.09);
-  --gold-line: rgba(134,10,10,.42);
-  --shadow: 0 18px 45px rgba(0,0,0,.34);
-}
 
 html,
 body {
@@ -6449,24 +6438,11 @@ body {
   color: #b61a1a;
 }
 
-/* Marketplace: convert the earlier white classifieds surface to black/red */
-.properties-index-page,
-.property-detail-page {
-  --surface: #0b0b0d;
-  --surface-2: #121216;
-  --fg: #f5f5f6;
-  --muted: #b1b1b8;
-  --subtle: #76767e;
-  --gold: #860a0a;
-  --gold-soft: #b51b1b;
-  --ink: #fff;
-  --line: rgba(255,255,255,.09);
-  --gold-line: rgba(134,10,10,.42);
-  color: #f5f5f6;
-  background: #081320;
-  border-color: rgba(255,255,255,.08);
-}
-
+/* Marketplace surfaces.
+   The dark/black-red repaint that used to live here has been removed: it set
+   near-white inherited text and #121216 panels on the classifieds routes,
+   which the paper theme then had to fight with opaque overrides. The paper,
+   navy and brass tokens now resolve directly, with no dark fallback. */
 .properties-market-toolbar,
 .properties-filter-panel,
 .properties-result-meta,
@@ -6476,8 +6452,7 @@ body {
 .property-detail-main > section,
 .property-detail-body,
 .property-location-section {
-  background: #0b0b0d;
-  border-color: rgba(255,255,255,.09);
+  border-color: var(--hr-line, #e4dccc);
 }
 
 .properties-market-toolbar {

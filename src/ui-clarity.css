@@ -1954,32 +1954,38 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     height: auto !important;
     min-height: 0 !important;
   }
+  /* The main frame carries `aspect-ratio: 16 / 10`, so it already decides the
+     gallery's height. Pinning the container, the frame and the rail to the same
+     fixed pixel value only fought that ratio, and made the rail shorter than the
+     photo it was meant to sit beside. */
   .property-detail-page .property-gallery {
-    height: 420px !important;
-    min-height: 420px !important;
-    max-height: 420px !important;
+    height: auto;
+    min-height: 0;
+    max-height: none;
   }
-  .property-detail-page .property-gallery-main,
-  .property-detail-page .property-gallery-main img,
-  .property-detail-page .property-gallery-main video {
-    height: 420px !important;
-    min-height: 0 !important;
-    max-height: 420px !important;
+  .property-detail-page .property-gallery-main {
+    height: auto;
+    min-height: 0;
+    max-height: none;
   }
   .property-detail-page .property-gallery-rail {
-    height: 420px !important;
-    max-height: 420px !important;
-    overflow: hidden !important;
+    height: auto;
+    max-height: none;
+    overflow: hidden;
   }
 }
+/* The hero image sets the gallery's height.
+   This used to pin every gallery box to a fixed 400px, which fought the
+   two-column hero in property-detail-redesign.css: the container stayed at
+   400px while the 16/10 image inside it rendered at 484px and spilled out of
+   its own frame, leaving the thumbnail rail 84px shorter than the photo.
+   Letting the image define the height keeps the rail and the main frame in
+   step at every width, and removes six !important height declarations. */
 @media (min-width: 1280px) {
   .property-detail-page .property-gallery,
-  .property-detail-page .property-gallery-main,
-  .property-detail-page .property-gallery-main img,
-  .property-detail-page .property-gallery-main video,
   .property-detail-page .property-gallery-rail {
-    height: 400px !important;
-    max-height: 400px !important;
+    height: auto;
+    max-height: none;
   }
 }
 
