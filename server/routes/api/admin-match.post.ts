@@ -52,19 +52,6 @@ function totalEquivalent(deposit: number, rent: number) {
   return Math.max(0, deposit) + (Math.max(0, rent) * 1_000_000) / DEFAULT_MATCH_RAHN_RATE;
 }
 
-function normalizeDeal(value: string) {
-  return value.trim();
-}
-
-function propertyTxCompatible(deal: string, transactionType: string) {
-  const normalized = normalizeDeal(deal);
-  if (normalized === "خرید") return transactionType === "sell";
-  if (normalized === "فروش") return transactionType === "buy";
-  if (normalized === "رهن") return transactionType === "mortgage" || transactionType === "rent";
-  if (normalized === "اجاره") return transactionType === "rent" || transactionType === "mortgage";
-  return true;
-}
-
 function propertyAmenitySet(row: Record<string, unknown>) {
   const values = new Set<string>();
   if (Boolean(row.parking)) values.add("parking");
