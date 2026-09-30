@@ -95,13 +95,15 @@ const row = {
     "امکان بازدید در هر ساعت شبانه‌روز",
   ],
   // Only real files in public/images, so a gallery 404 never masquerades as an
-  // app defect during QA.
+  // app defect during QA. The trailing entry is a video: the gallery renders a
+  // custom player for it, which is a layout path no image-only fixture reaches.
   images: [
     "/images/type-apartment.jpg",
     "/images/type-villa.jpg",
     "/images/type-office.jpg",
     "/images/type-heritage.jpg",
     "/images/isfahan-arch.jpg",
+    "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
   ],
   description: [
     "این آپارتمان در طبقه ششم ساختمانی نوساز با چشم‌انداز باز قرار دارد و نور طبیعی در تمام ساعات روز در آن جریان دارد.",

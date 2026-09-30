@@ -1891,20 +1891,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     max-height: 380px !important;
   }
 }
-@media (max-width: 720px) {
-  .property-detail-page .property-gallery,
-  .property-detail-page .property-gallery-main,
-  .property-detail-page .property-gallery-main img,
-  .property-detail-page .property-gallery-main video {
-    min-height: 300px !important;
-    max-height: 300px !important;
-  }
-  .property-detail-page .property-gallery-open {
-    min-height: 34px !important;
-    padding: 6px 9px !important;
-    font-size: .68rem !important;
-  }
-}
 
 /* === Gallery aligns with the full property summary / consultant card =========== */
 @media (min-width: 1025px) {

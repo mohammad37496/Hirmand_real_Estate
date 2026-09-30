@@ -1620,22 +1620,9 @@
     gap: 11px;
   }
 
-  .property-mobile-actions {
-    position: fixed;
-    z-index: 60;
-    inset-inline: 8px;
-    inset-block-end: max(8px, env(safe-area-inset-bottom));
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 7px;
-    padding: 7px;
-    background: rgba(255, 255, 255, .96);
-    border: 1px solid var(--pd-line);
-    border-radius: 16px;
-    box-shadow: 0 16px 34px rgba(18, 58, 90, .16);
-    backdrop-filter: blur(16px);
-  }
-
+  /* Fixed bottom bar: owned by the property-detail mobile layer
+     (property-detail-light-theme.css). Previously duplicated here with a
+     wider breakpoint and its own gap/padding values. */
   .property-mobile-action {
     min-height: 48px;
     display: flex;
@@ -1741,10 +1728,6 @@
   .property-consultant-avatar {
     width: 46px;
     height: 46px;
-  }
-
-  .property-mobile-actions {
-    inset-inline: 6px;
   }
 }
 
