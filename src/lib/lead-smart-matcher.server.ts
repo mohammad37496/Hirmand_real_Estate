@@ -130,6 +130,16 @@ function scoreProperty(
   row: Record<string, unknown>,
   lead: Record<string, unknown>,
   mode: MatchMode,
+  learned: {
+    likedProperties: Set<string>;
+    rejectedProperties: Set<string>;
+    likedNeighborhoods: Set<string>;
+    rejectedNeighborhoods: Set<string>;
+    likedTypes: Set<string>;
+    rejectedTypes: Set<string>;
+    likedTransactions: Set<string>;
+    rejectedTransactions: Set<string>;
+  },
 ) {
   const requestedAmenities = jsonArray(lead.requested_amenities);
   const requestedBedrooms = num(lead.requested_bedrooms);
@@ -202,6 +212,39 @@ function scoreProperty(
       score += 5;
       reasons.push("طبقه مطابق درخواست");
     }
+  }
+
+  if (learned.likedProperties.has(String(row.id))) {
+    score += 8;
+    reasons.push("مورد پسند قبلی مشتری");
+  }
+  if (learned.rejectedProperties.has(String(row.id))) {
+    score -= 10;
+  }
+
+  const rowNeighborhood = String(row.neighborhood ?? "").trim();
+  const rowType = String(row.property_type ?? "").trim();
+  const rowTransaction = String(row.transaction_type ?? "").trim();
+
+  if (learned.likedNeighborhoods.has(rowNeighborhood)) {
+    score += 5;
+    reasons.push("ترجیح یادگرفته‌شده از محله");
+  }
+  if (learned.rejectedNeighborhoods.has(rowNeighborhood)) {
+    score -= 4;
+  }
+  if (learned.likedTypes.has(rowType)) {
+    score += 3;
+    reasons.push("ترجیح یادگرفته‌شده از نوع ملک");
+  }
+  if (learned.rejectedTypes.has(rowType)) {
+    score -= 2;
+  }
+  if (learned.likedTransactions.has(rowTransaction)) {
+    score += 2;
+  }
+  if (learned.rejectedTransactions.has(rowTransaction)) {
+    score -= 2;
   }
 
   const hasMeaningfulSignal =
@@ -281,6 +324,63 @@ export async function autoMatchLead(
 
   if (!transactionTypes.length) return { count: 0, matches: [] };
 
+  const feedbackRows = await sql.query<Record<string, unknown>>(
+    `select
+       metadata->>'propertyId' as property_id,
+       metadata->>'feedback' as feedback
+     from lead_activities
+     where lead_id=$1
+       and activity_type='match'
+       and metadata->>'feedback' in ('liked','rejected')
+     order by created_at desc
+     limit 100`,
+    [leadId],
+  );
+
+  const feedbackIds = feedbackRows
+    .map((row) => row.property_id)
+    .filter((value): value is string => typeof value === "string" && value.length > 0);
+
+  const feedbackProperties = feedbackIds.length
+    ? await sql.query<Record<string, unknown>>(
+        `select id, neighborhood, property_type, transaction_type
+         from properties
+         where id = any($1::text[])`,
+        [feedbackIds],
+      )
+    : [];
+
+  const feedbackById = new Map(feedbackProperties.map((row) => [String(row.id), row]));
+  const learned = {
+    likedProperties: new Set(feedbackRows.filter((row) => row.feedback === "liked").map((row) => String(row.property_id))),
+    rejectedProperties: new Set(feedbackRows.filter((row) => row.feedback === "rejected").map((row) => String(row.property_id))),
+    likedNeighborhoods: new Set<string>(),
+    rejectedNeighborhoods: new Set<string>(),
+    likedTypes: new Set<string>(),
+    rejectedTypes: new Set<string>(),
+    likedTransactions: new Set<string>(),
+    rejectedTransactions: new Set<string>(),
+  };
+
+  for (const row of feedbackRows) {
+    const property = feedbackById.get(String(row.property_id));
+    if (!property) continue;
+    const destination = row.feedback === "liked" ? learned : learned;
+    const isLiked = row.feedback === "liked";
+    const neighborhood = String(property.neighborhood ?? "").trim();
+    const type = String(property.property_type ?? "").trim();
+    const transaction = String(property.transaction_type ?? "").trim();
+    if (isLiked) {
+      if (neighborhood) learned.likedNeighborhoods.add(neighborhood);
+      if (type) learned.likedTypes.add(type);
+      if (transaction) learned.likedTransactions.add(transaction);
+    } else {
+      if (neighborhood) learned.rejectedNeighborhoods.add(neighborhood);
+      if (type) learned.rejectedTypes.add(type);
+      if (transaction) learned.rejectedTransactions.add(transaction);
+    }
+  }
+
   const candidateRows = await sql.query<Record<string, unknown>>(
     `select ${PROPERTY_COLUMNS}
      from properties
@@ -296,7 +396,7 @@ export async function autoMatchLead(
   );
 
   const scored = candidateRows
-    .map((row) => ({ row, scored: scoreProperty(row, lead, mode) }))
+    .map((row) => ({ row, scored: scoreProperty(row, lead, mode, learned) }))
     .filter((item) => item.scored.hasMeaningfulSignal)
     .sort((a, b) =>
       b.scored.score - a.scored.score ||
