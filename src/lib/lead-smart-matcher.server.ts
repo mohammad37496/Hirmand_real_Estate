@@ -365,7 +365,6 @@ export async function autoMatchLead(
   for (const row of feedbackRows) {
     const property = feedbackById.get(String(row.property_id));
     if (!property) continue;
-    const destination = row.feedback === "liked" ? learned : learned;
     const isLiked = row.feedback === "liked";
     const neighborhood = String(property.neighborhood ?? "").trim();
     const type = String(property.property_type ?? "").trim();
