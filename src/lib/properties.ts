@@ -722,6 +722,49 @@ export const getPublishedProperty = createServerFn({ method: "GET" })
     );
   });
 
+export type PropertyPriceHistoryItem = {
+  changedAt: string;
+  previousPrice: string | null;
+  newPrice: string | null;
+  previousDeposit: string | null;
+  newDeposit: string | null;
+  previousRent: string | null;
+  newRent: string | null;
+};
+
+export const getPublishedPropertyPriceHistory = createServerFn({ method: "GET" })
+  .validator(z.object({ slug: z.string().trim().min(1).max(220) }))
+  .handler(async ({ data }) => {
+    if (dbSource === "unconfigured") return [];
+    setResponseHeader("cache-control", "public, max-age=30, s-maxage=120, stale-while-revalidate=600");
+    const sql = await getSql();
+    const propertyRows = await sql.query<{ id: string }>("select id::text as id from properties where status='published' and slug=$1 limit 1", [data.slug]);
+    const propertyId = propertyRows[0]?.id;
+    if (!propertyId) return [];
+
+    const rows = await sql.query<Record<string, unknown>>(      "select changed_at, before_state->>'price' as previous_price, after_state->>'price' as new_price, " +
+      "before_state->>'deposit' as previous_deposit, after_state->>'deposit' as new_deposit, " +
+      "before_state->>'rent' as previous_rent, after_state->>'rent' as new_rent " +
+      "from property_change_history " +
+      "where property_id=$1 and action='updated' and (" +
+      "before_state->>'price' is distinct from after_state->>'price' " +
+      "or before_state->>'deposit' is distinct from after_state->>'deposit' " +
+      "or before_state->>'rent' is distinct from after_state->>'rent') " +
+      "order by changed_at desc limit 12"
+      , [propertyId],
+    );
+
+    return rows.map((row) => ({
+      changedAt: new Date(String(row.changed_at)).toISOString(),
+      previousPrice: row.previous_price == null ? null : String(row.previous_price),
+      newPrice: row.new_price == null ? null : String(row.new_price),
+      previousDeposit: row.previous_deposit == null ? null : String(row.previous_deposit),
+      newDeposit: row.new_deposit == null ? null : String(row.new_deposit),
+      previousRent: row.previous_rent == null ? null : String(row.previous_rent),
+      newRent: row.new_rent == null ? null : String(row.new_rent),
+    }));
+  });
+
 export const listPublishedPropertyCardsBySlugs = createServerFn({ method: "GET" })
   .validator(z.object({
     slugs: z.array(z.string().trim().min(1).max(220)).max(8),
