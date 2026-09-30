@@ -43,8 +43,8 @@ export default defineEventHandler(async (event) => {
            and l.follow_up_at < current_timestamp
        )::int as overdue,
        count(l.id) filter (
-         where l.visit_requested_at is not null
-           or l.visit_status = 'requested'
+         where l.status not in ('closed','spam')
+           and (l.visit_requested_at is not null or l.visit_status = 'requested')
        )::int as viewing_requests
      from consultants c
      left join leads l on trim(coalesce(l.consultant,'')) = trim(c.name)
