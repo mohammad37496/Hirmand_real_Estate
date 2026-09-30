@@ -178,7 +178,15 @@ export default defineEventHandler(async (event) => {
     ? parsed.data.leaseDeadline ?? null
     : null;
   const matchedProperties = parsed.data.matches.slice(0, 12);
-  const routing = await routeLeadConsultant(sql, parsed.data);
+  let routing: Awaited<ReturnType<typeof routeLeadConsultant>> = {
+    consultant: parsed.data.consultant,
+    reason: parsed.data.consultant ? "manual" : "no-active-consultant",
+  };
+  try {
+    routing = await routeLeadConsultant(sql, parsed.data);
+  } catch (error) {
+    console.error("[leads] consultant routing unavailable", error);
+  }
   const routedConsultant = routing.consultant || parsed.data.consultant;
   const budgetPayload = {
     name: parsed.data.name,
