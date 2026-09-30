@@ -229,7 +229,7 @@ body:has(.property-detail-page) .page {
 
 .property-detail-page .property-gallery-open {
   inset: auto 15px 15px auto !important;
-  min-height: 42px !important;
+  min-height: 44px !important;
   padding: 7px 12px !important;
   border: 1px solid var(--hr-border) !important;
   border-radius: var(--r-sm) !important;
@@ -1977,8 +1977,8 @@ body:has(.property-detail-page) .footer a:hover {
 
   .property-detail-page .property-gallery-open {
     inset: auto 10px 10px auto !important;
-    min-height: 40px !important;
-    padding: 6px 9px !important;
+    min-height: 44px !important;
+    padding: 6px 11px !important;
     font-size: .62rem !important;
   }
 
@@ -2326,6 +2326,268 @@ body:has(.property-detail-page) .footer a:hover {
 /* --------------------------------------------------------------------------
    Reduced motion / print
    -------------------------------------------------------------------------- */
+
+/* Desktop sidebar rail.
+   The main column is far taller than the agent card, which used to leave a
+   wide bare column under the rail. The aside now stretches for the full height
+   of the grid row and carries the paper tint, while only its inner stack is
+   sticky — so the column reads as a deliberate rail and the consultant card
+   stays in view while the visitor reads the specs. */
+@media (min-width: 901px) {
+  .property-detail-page .property-detail-aside {
+    align-self: stretch !important;
+    position: relative;
+    height: auto !important;
+    background: var(--hr-panel-warm) !important;
+    border: 1px solid var(--hr-border);
+    border-radius: var(--hr-radius-lg);
+    padding: 18px;
+  }
+
+  .property-detail-page .property-detail-aside-inner {
+    position: sticky;
+    top: 94px;
+    display: grid;
+    gap: 14px;
+  }
+}
+
+/* ==========================================================================
+   PROPERTY DETAIL — SPEC GROUPING & READABILITY
+   The spec list is now authored as three labelled groups (مشخصات اصلی /
+   امکانات ساختمان / امکانات تکمیلی). These are new class names, so they need
+   no !important to win: nothing in the older layers targets them.
+   ========================================================================== */
+.property-spec-group + .property-spec-group {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--hr-border);
+}
+
+.property-detail-page .property-spec-group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: .9375rem;
+  font-weight: 800;
+  line-height: 1.6;
+  color: var(--hr-navy);
+}
+
+.property-detail-page .property-spec-group-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--hr-brass-soft);
+  color: var(--hr-brass);
+  font-size: .6875rem;
+  font-weight: 800;
+}
+
+/* One spec row: icon, label, value. The value is the loud part because it is
+   what a visitor scans for. */
+.property-detail-page .property-spec-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--hr-border);
+  border-radius: 14px;
+  background: var(--hr-panel);
+  min-width: 0;
+}
+
+.property-detail-page .property-spec-item-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: var(--hr-panel-warm);
+  color: var(--hr-brass);
+}
+
+.property-detail-page .property-spec-item > span:last-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.property-detail-page .property-spec-item small {
+  font-size: .6875rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--hr-muted);
+}
+
+.property-detail-page .property-spec-item strong {
+  font-size: .9375rem;
+  font-weight: 800;
+  line-height: 1.5;
+  color: var(--hr-ink);
+  overflow-wrap: anywhere;
+}
+
+/* Price is the second-most important thing on the page after the photo, so it
+   gets a real surface and a brass edge instead of sitting on the bare white
+   summary card. */
+.property-detail-page .property-price-block {
+  background: var(--hr-brass-soft) !important;
+  border: 1px solid var(--hr-brass-fill) !important;
+  border-radius: var(--hr-radius-md) !important;
+  padding: 16px 18px !important;
+  box-shadow: none !important;
+}
+
+.property-detail-page .property-price-label {
+  font-size: .75rem !important;
+  font-weight: 700 !important;
+  color: var(--hr-brass) !important;
+}
+
+.property-detail-page .property-price-value {
+  font-size: 1.75rem !important;
+  font-weight: 800 !important;
+  line-height: 1.35 !important;
+  color: var(--hr-navy) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Total price and price-per-metre must never be confused with each other. */
+.property-detail-page .property-price-per-m2 {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: space-between !important;
+  gap: 10px;
+  margin-top: 8px !important;
+  padding-top: 8px !important;
+  border-top: 1px solid rgba(192, 138, 42, .28);
+  font-size: .75rem !important;
+  color: var(--hr-muted) !important;
+}
+
+.property-detail-page .property-price-per-m2 strong {
+  font-size: .875rem !important;
+  font-weight: 800 !important;
+  color: var(--hr-navy) !important;
+}
+
+/* Breadcrumb: a quiet trail, not a pill-shaped scroller. */
+.property-detail-page .property-breadcrumb {
+  overflow-x: auto !important;
+  border-radius: 0 !important;
+  padding-block: 2px;
+  scrollbar-width: none;
+}
+
+.property-detail-page .property-breadcrumb::-webkit-scrollbar {
+  display: none;
+}
+
+.property-detail-page .property-breadcrumb > :last-child {
+  color: var(--hr-navy);
+  font-weight: 700;
+}
+
+/* Editorial description.
+   `.property-detail-body` is part of the selector on purpose: property-detail-
+   redesign.css sets 0.73rem (11.68px) on a three-class selector, which outranks
+   a two-class rule no matter how late it loads. Body copy on a listing page
+   cannot be 11.7px, so the description is restated at reading size here. */
+.property-detail-page .property-detail-body .property-description-copy {
+  max-width: 68ch;
+}
+
+.property-detail-page .property-detail-body .property-description-copy p,
+.property-detail-page .property-description-copy p {
+  max-width: none;
+  margin: 0 0 14px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  font-size: 1rem !important;
+  font-weight: 400 !important;
+  line-height: 2.05 !important;
+  color: var(--hr-ink) !important;
+}
+
+.property-detail-page .property-detail-body .property-description-copy p:last-child,
+.property-detail-page .property-description-copy p:last-child {
+  margin-bottom: 0;
+}
+
+/* The opening paragraph is a lead. property-detail-redesign.css styled it as
+   0.73rem grey-on-tint, which made it read *smaller* than the body copy that
+   follows it. A lead should lead: a touch larger, navy, and on the same
+   surface as the rest of the section. */
+.property-detail-page .property-detail-body .property-description-copy > p:first-child {
+  font-size: 1.0625rem !important;
+  font-weight: 700 !important;
+  line-height: 1.95 !important;
+  color: var(--hr-navy) !important;
+  background: transparent !important;
+  margin-bottom: 16px !important;
+}
+
+/* Publish / update dates stay metadata: quiet, and never louder than the price. */
+.property-detail-page .property-description-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  padding: 10px 14px;
+  border: 1px solid var(--hr-border);
+  border-radius: 12px;
+  background: var(--hr-panel-soft);
+  font-size: .75rem;
+  line-height: 1.7;
+  color: var(--hr-muted);
+}
+
+.property-detail-page .property-description-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.property-detail-page .property-description-meta strong {
+  font-weight: 700;
+  color: var(--hr-navy);
+}
+
+/* The feature chips inherit the same 0.74rem (11.84px) scale as the old
+   description copy, which is too small to scan comfortably. */
+.property-detail-page .property-detail-body .property-features li,
+.property-detail-page .property-features li {
+  font-size: .875rem !important;
+  font-weight: 500 !important;
+  line-height: 1.85 !important;
+}
+
+/* Touch targets: the fullscreen control was 42px tall and the gallery arrows
+   40px on mobile, both under the 44px minimum. */
+.property-detail-page .property-gallery-open {
+  min-height: 44px;
+  padding-inline: 14px;
+}
+
+.property-detail-page .property-gallery-nav {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.property-detail-page .property-gallery-thumb {
+  min-height: 44px;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .property-detail-page *,

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { createPortal } from "react-dom";
-import { useCallback, useEffect, useMemo, useRef, useState, type TouchEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type TouchEvent } from "react";
 import {
   ArrowRight,
   Accessibility,
@@ -229,6 +229,33 @@ function propertyAmenityIcon(value: string) {
 function cleanNullableText(value: string | null | undefined) {
   const normalized = value?.trim() ?? "";
   return normalized && !/^(null|undefined)$/i.test(normalized) ? normalized : "";
+}
+
+/** One labelled specification row, grouped by what it describes. */
+type SpecFact = {
+  id: string;
+  label: string;
+  value: string;
+  icon: ReactNode;
+};
+
+/**
+ * Narrows the `cond && {...}` / `cond ? {...} : null` entries of a spec list.
+ * Every group is authored as a list of conditional entries, and this guard is
+ * what proves to the type checker that only real rows survive.
+ */
+function isSpecFact(entry: SpecFact | false | null): entry is SpecFact {
+  return Boolean(entry);
+}
+
+/**
+ * Builds one spec group. The parameter type is what lets TypeScript contextually
+ * type the `cond && {...}` entries, so `filter` can narrow them to `SpecFact`.
+ */
+function specGroup(
+  entries: (SpecFact | false | null)[],
+): SpecFact[] {
+  return entries.filter(isSpecFact);
 }
 
 function money(value: string | null) {
@@ -1092,6 +1119,140 @@ export function PropertyDetailView({
     { name: property.title, path: propertyPath(property) },
   ];
 
+  // مشخصات به‌صورت گروه‌بندی‌شده ساخته می‌شود تا صفحه به‌جای یک دیوار طولانی از
+  // فیلدها، سه بلوک قابل اسکن داشته باشد. هر مورد فقط وقتی ساخته می‌شود که در
+  // داده واقعی وجود داشته باشد، پس هیچ مقدار فرضی وارد رابط کاربری نمی‌شود.
+  const has = (value: string | null | undefined): value is string => Boolean(value);
+  const yesNo = (value: boolean) => (value ? "دارد" : "ندارد");
+
+  const coreSpecs = specGroup([
+    property.areaM2 != null && {
+      id: "area",
+      label: "متراژ",
+      value: property.areaM2.toLocaleString("fa-IR") + " متر",
+      icon: <Ruler size={18} aria-hidden="true" />,
+    },
+    property.bedrooms != null && {
+      id: "bedrooms",
+      label: "اتاق خواب",
+      value: property.bedrooms.toLocaleString("fa-IR"),
+      icon: <BedDouble size={18} aria-hidden="true" />,
+    },
+    property.bathrooms != null && {
+      id: "bathrooms",
+      label: "سرویس",
+      value: property.bathrooms.toLocaleString("fa-IR"),
+      icon: <Bath size={18} aria-hidden="true" />,
+    },
+    property.floorLabel === "suite" && {
+      id: "floor",
+      label: "طبقه",
+      value: "سوئیت",
+      icon: <Building2 size={18} aria-hidden="true" />,
+    },
+    property.floorLabel !== "suite" && property.floor != null && {
+      id: "floor",
+      label: "طبقه",
+      value: property.floor.toLocaleString("fa-IR"),
+      icon: <Building2 size={18} aria-hidden="true" />,
+    },
+    property.totalFloors != null && {
+      id: "total-floors",
+      label: "تعداد طبقات",
+      value: property.totalFloors.toLocaleString("fa-IR"),
+      icon: <Layers3 size={18} aria-hidden="true" />,
+    },
+    property.builtYear != null && {
+      id: "built-year",
+      label: "سال ساخت",
+      value: property.builtYear.toLocaleString("fa-IR", { useGrouping: false }),
+      icon: <CalendarDays size={18} aria-hidden="true" />,
+    },
+    property.orientation && {
+      id: "orientation",
+      label: "موقعیت ملک",
+      value: PROPERTY_ORIENTATION_LABELS[property.orientation],
+      icon: <Navigation size={18} aria-hidden="true" />,
+    },
+  ]);
+
+  const buildingSpecs = specGroup([
+    {
+      id: "parking",
+      label: "پارکینگ",
+      value: yesNo(property.parking),
+      icon: <CarFront size={18} aria-hidden="true" />,
+    },
+    {
+      id: "elevator",
+      label: "آسانسور",
+      value: yesNo(property.elevator),
+      icon: <Navigation size={18} aria-hidden="true" />,
+    },
+    {
+      id: "storage",
+      label: "انباری",
+      value: yesNo(property.storage),
+      icon: <Warehouse size={18} aria-hidden="true" />,
+    },
+    property.coolingSystem && {
+      id: "cooling",
+      label: "سیستم سرمایش",
+      value: labelForOption(PROPERTY_COOLING_OPTIONS, property.coolingSystem),
+      icon: propertyAmenityIcon("cooling"),
+    },
+    property.heatingSystem && {
+      id: "heating",
+      label: "سیستم گرمایش",
+      value: labelForOption(PROPERTY_HEATING_OPTIONS, property.heatingSystem),
+      icon: propertyAmenityIcon("heating"),
+    },
+  ]);
+
+  const extraSpecs = specGroup([
+    {
+      id: "painted",
+      label: "رنگ‌آمیزی",
+      value: yesNo(property.painted),
+      icon: <Paintbrush size={18} aria-hidden="true" />,
+    },
+    {
+      id: "wallpaper",
+      label: "کاغذ دیواری",
+      value: yesNo(property.wallpaper),
+      icon: <Wallpaper size={18} aria-hidden="true" />,
+    },
+    has(property.cabinetType) && {
+      id: "cabinet",
+      label: "نوع کابینت",
+      value: labelForOption(PROPERTY_CABINET_OPTIONS, property.cabinetType),
+      icon: <Building2 size={18} aria-hidden="true" />,
+    },
+    has(property.flooringType) && {
+      id: "flooring",
+      label: "کف",
+      value: labelForOption(PROPERTY_FLOORING_OPTIONS, property.flooringType),
+      icon: <Layers3 size={18} aria-hidden="true" />,
+    },
+    has(property.wallClosetType) && {
+      id: "closet",
+      label: "کمد دیواری",
+      value: labelForOption(PROPERTY_WALL_CLOSET_OPTIONS, property.wallClosetType),
+      icon: <Building2 size={18} aria-hidden="true" />,
+    },
+  ]);
+
+  const amenityCount =
+    property.otherAmenities.length +
+    (property.coolingSystem ? 1 : 0) +
+    (property.heatingSystem ? 1 : 0);
+
+  const specGroups: { id: string; title: string; facts: SpecFact[] }[] = [
+    { id: "core", title: "مشخصات اصلی", facts: coreSpecs },
+    { id: "building", title: "امکانات ساختمان", facts: buildingSpecs },
+    { id: "extra", title: "امکانات تکمیلی", facts: extraSpecs },
+  ];
+
   return (
     <SiteChrome>
       <script
@@ -1235,33 +1396,31 @@ export function PropertyDetailView({
                   </span>
                 </summary>
                 <div className="property-specs-accordion-body">
-              <div className="property-spec-grid">
-                {property.areaM2 != null ? <div><Ruler size={18} aria-hidden="true" /><span><small>متراژ</small><strong>{property.areaM2.toLocaleString("fa-IR")} متر</strong></span></div> : null}
-                {property.bedrooms != null ? <div><BedDouble size={18} aria-hidden="true" /><span><small>اتاق خواب</small><strong>{property.bedrooms.toLocaleString("fa-IR")}</strong></span></div> : null}
-                {property.bathrooms != null ? <div><Bath size={18} aria-hidden="true" /><span><small>سرویس</small><strong>{property.bathrooms.toLocaleString("fa-IR")}</strong></span></div> : null}
-                {property.floorLabel === "suite" ? (
-                  <div><Building2 size={18} aria-hidden="true" /><span><small>طبقه</small><strong>سوئیت</strong></span></div>
-                ) : property.floor != null ? (
-                  <div><Building2 size={18} aria-hidden="true" /><span><small>طبقه</small><strong>{property.floor.toLocaleString("fa-IR")}</strong></span></div>
-                ) : null}
-                {property.totalFloors != null ? <div><Layers3 size={18} aria-hidden="true" /><span><small>تعداد طبقات</small><strong>{property.totalFloors.toLocaleString("fa-IR")}</strong></span></div> : null}
-                {property.orientation ? <div><Navigation size={18} aria-hidden="true" /><span><small>موقعیت ملک</small><strong>{PROPERTY_ORIENTATION_LABELS[property.orientation]}</strong></span></div> : null}
-                {property.builtYear != null ? <div><CalendarDays size={18} aria-hidden="true" /><span><small>سال ساخت</small><strong>{property.builtYear.toLocaleString("fa-IR", { useGrouping: false })}</strong></span></div> : null}
-                <div><CarFront size={18} aria-hidden="true" /><span><small>پارکینگ</small><strong>{property.parking ? "دارد" : "ندارد"}</strong></span></div>
-                <div><Navigation size={18} aria-hidden="true" /><span><small>آسانسور</small><strong>{property.elevator ? "دارد" : "ندارد"}</strong></span></div>
-                <div><Warehouse size={18} aria-hidden="true" /><span><small>انباری</small><strong>{property.storage ? "دارد" : "ندارد"}</strong></span></div>
-                <div><Paintbrush size={18} aria-hidden="true" /><span><small>رنگ‌آمیزی</small><strong>{property.painted ? "دارد" : "ندارد"}</strong></span></div>
-                <div><Wallpaper size={18} aria-hidden="true" /><span><small>کاغذ دیواری</small><strong>{property.wallpaper ? "دارد" : "ندارد"}</strong></span></div>
-                {property.cabinetType ? (
-                  <div><Building2 size={18} aria-hidden="true" /><span><small>نوع کابینت</small><strong>{labelForOption(PROPERTY_CABINET_OPTIONS, property.cabinetType)}</strong></span></div>
-                ) : null}
-                {property.flooringType ? (
-                  <div><Layers3 size={18} aria-hidden="true" /><span><small>کف</small><strong>{labelForOption(PROPERTY_FLOORING_OPTIONS, property.flooringType)}</strong></span></div>
-                ) : null}
-                {property.wallClosetType ? (
-                  <div><Building2 size={18} aria-hidden="true" /><span><small>کمد دیواری</small><strong>{labelForOption(PROPERTY_WALL_CLOSET_OPTIONS, property.wallClosetType)}</strong></span></div>
-                ) : null}
-              </div>
+              {specGroups
+                .filter((group) => group.facts.length > 0)
+                .map((group) => (
+                  <section className="property-spec-group" key={group.id} aria-labelledby={`spec-group-${group.id}`}>
+                    <h3 className="property-spec-group-title" id={`spec-group-${group.id}`}>
+                      {group.title}
+                      <span className="property-spec-group-count">
+                        {group.facts.length.toLocaleString("fa-IR")}
+                      </span>
+                    </h3>
+                    <div className="property-spec-grid">
+                      {group.facts.map((fact) => (
+                        <div className="property-spec-item" key={fact.id}>
+                          <span className="property-spec-item-icon" aria-hidden="true">
+                            {fact.icon}
+                          </span>
+                          <span>
+                            <small>{fact.label}</small>
+                            <strong>{fact.value}</strong>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ))}
               {property.otherAmenities.length || property.coolingSystem || property.heatingSystem ? (
                 <details className="property-spec-amenities">
                   <summary>
@@ -1273,9 +1432,7 @@ export function PropertyDetailView({
                       </span>
                     </span>
                     <span className="property-spec-amenities-toggle">
-                      <small>
-                        {(property.otherAmenities.length + (property.coolingSystem ? 1 : 0) + (property.heatingSystem ? 1 : 0)).toLocaleString("fa-IR")} مورد
-                      </small>
+                      <small>{amenityCount.toLocaleString("fa-IR")} مورد</small>
                       <ChevronDown size={19} aria-hidden="true" />
                     </span>
                   </summary>
@@ -1458,22 +1615,24 @@ export function PropertyDetailView({
           </article>
 
           <aside className="property-detail-aside" aria-label="اطلاعات و اقدام‌های فایل">
-            <ConsultantCard property={property} />
+            <div className="property-detail-aside-inner">
+              <ConsultantCard property={property} />
 
-            <section className="property-quick-overview" aria-labelledby="property-quick-overview-title">
-              <div className="property-aside-heading">
-                <span className="kicker">خلاصه فایل</span>
-                <h2 id="property-quick-overview-title">قبل از تماس، این‌ها را بدانید</h2>
-              </div>
-              <div className="property-quick-overview-list">
-                <div><span>نوع معامله</span><strong>{TX_LABEL[property.transactionType]}</strong></div>
-                <div><span>نوع ملک</span><strong>{TYPE_LABEL[property.propertyType]}</strong></div>
-                <div><span>محله</span><strong>{property.neighborhood}</strong></div>
-                {property.floor != null ? <div><span>طبقه</span><strong>{property.floor.toLocaleString("fa-IR")}</strong></div> : null}
-                {property.elevator ? <div><span>آسانسور</span><strong>دارد</strong></div> : null}
-                {property.storage ? <div><span>انباری</span><strong>دارد</strong></div> : null}
-              </div>
-            </section>
+              <section className="property-quick-overview" aria-labelledby="property-quick-overview-title">
+                <div className="property-aside-heading">
+                  <span className="kicker">خلاصه فایل</span>
+                  <h2 id="property-quick-overview-title">قبل از تماس، این‌ها را بدانید</h2>
+                </div>
+                <div className="property-quick-overview-list">
+                  <div><span>نوع معامله</span><strong>{TX_LABEL[property.transactionType]}</strong></div>
+                  <div><span>نوع ملک</span><strong>{TYPE_LABEL[property.propertyType]}</strong></div>
+                  <div><span>محله</span><strong>{property.neighborhood}</strong></div>
+                  {property.floor != null ? <div><span>طبقه</span><strong>{property.floor.toLocaleString("fa-IR")}</strong></div> : null}
+                  {property.elevator ? <div><span>آسانسور</span><strong>دارد</strong></div> : null}
+                  {property.storage ? <div><span>انباری</span><strong>دارد</strong></div> : null}
+                </div>
+              </section>
+            </div>
           </aside>
         </section>
 
