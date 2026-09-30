@@ -20,6 +20,7 @@ import {
 import { AdminCardSkeleton, AdminErrorBanner } from "@/components/hirmand/admin-ui";
 import { AdminCampaignLinkBuilder } from "@/components/hirmand/admin-campaign-link-builder";
 import { AdminActionCenter } from "@/components/hirmand/admin-action-center";
+import { AdminSalesControlCenter } from "@/components/hirmand/admin-sales-control-center";
 import { AdminPropertyLifecyclePanel } from "@/components/hirmand/admin-property-lifecycle-panel";
 import { AdminNeighborhoodDemandRadar } from "@/components/hirmand/admin-neighborhood-demand-radar";
 import { fa, faBytes } from "@/components/hirmand/admin-ui-utils";
@@ -773,39 +774,7 @@ export function AdminDashboard({
 
       <div style={{ marginTop: 18 }}><AdminPropertyLifecyclePanel /></div>
 
-      <section className="admin-panel" style={{ marginTop: 18 }}>
-        <div className="admin-panel-head">
-          <div>
-            <span className="kicker">تیم فروش</span>
-            <h2>عملکرد مشاوران در ۳۰ روز اخیر</h2>
-          </div>
-          <UsersRound size={18} />
-        </div>
-        {data.consultantPerformance.length === 0 ? (
-          <div className="admin-empty">
-            <UsersRound size={24} />
-            <strong>هنوز داده کافی برای گزارش مشاوران ثبت نشده</strong>
-          </div>
-        ) : (
-          <div className="admin-breakdown">
-            {data.consultantPerformance.map((item) => (
-              <div key={item.id} className="admin-breakdown-row">
-                <div>
-                  <span>{item.name || "مشاور بدون نام"}{item.active ? "" : " · غیرفعال"}</span>
-                  <strong>{fa(item.leads)} لید</strong>
-                </div>
-                <small>
-                  {fa(item.files)} فایل · {fa(item.views)} بازدید · {fa(item.calls)} تماس · {fa(item.whatsapp)} واتساپ · {fa(item.contracts)} قرارداد
-                </small>
-                <a className="text-link" href={"tel:" + item.phone}>تماس</a>
-              </div>
-            ))}
-          </div>
-        )}
-        <p className="admin-dashboard-summary" style={{ marginTop: 10 }}>
-          این گزارش بر اساس مشاور ثبت‌شده روی فایل‌ها و لیدهای CRM و رویدادهای ۳۰ روز اخیر محاسبه می‌شود.
-        </p>
-      </section>
+      <AdminSalesControlCenter onOpenLeads={onOpenLeads} onOpenProperties={onOpenProperties} />
 
       <div className="admin-dashboard-grid">
         <section className="admin-panel">
