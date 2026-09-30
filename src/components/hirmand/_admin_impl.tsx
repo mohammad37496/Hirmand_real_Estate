@@ -78,6 +78,8 @@ import { AdminFinanceManager } from "@/components/hirmand/admin-finance-manager"
 import { AdminBackupManager } from "@/components/hirmand/admin-backup-manager";
 import { AdminOperationsCenter } from "@/components/hirmand/admin-operations-center";
 import { AdminProductivityCenter } from "@/components/hirmand/admin-productivity-center";
+import { AdminPropertyPerformance } from "@/components/hirmand/admin-property-performance";
+import "@/admin-property-performance.css";
 import {
   PROPERTY_CABINET_OPTIONS,
   PROPERTY_COOLING_OPTIONS,
@@ -2092,6 +2094,7 @@ export function AdminPropertiesPage() {
                 <a href="#section-media">رسانه</a>
                 <a href="#section-publish">مشاور و انتشار</a>
                 <a href="#section-owner">اطلاعات صاحب فایل</a>
+                {form.id ? <a href="#section-performance">عملکرد</a> : null}
                 {form.id ? <a href="#section-history">تاریخچه</a> : null}
               </nav>
 
@@ -2574,6 +2577,8 @@ export function AdminPropertiesPage() {
                     </label>
                   </div>
                 </fieldset>
+
+              {form.id ? <div id="section-performance"><AdminPropertyPerformance propertyId={form.id} /></div> : null}
 
               {form.id ? (
                 <fieldset className="admin-section" id="section-history">

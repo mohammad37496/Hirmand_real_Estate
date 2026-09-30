@@ -1,0 +1,18 @@
+.admin-property-performance{overflow:hidden}
+.admin-property-performance-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:16px}
+.admin-property-performance-head h2{margin:5px 0 4px;font-size:1.08rem;color:var(--navy-900)}
+.admin-property-performance-head p{margin:0;color:var(--muted);font-size:.78rem;line-height:1.9}
+.admin-property-performance-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.admin-property-performance-stat{display:grid;gap:7px;padding:13px 14px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--paper,#fff)}
+.admin-property-performance-stat span{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:.75rem;font-weight:700}
+.admin-property-performance-stat strong{font-size:1.28rem;color:var(--navy-900)}
+.admin-property-performance-stat.is-accent{background:var(--brass-50,#fbf7ef);border-color:rgb(184 133 48 / 24%)}
+.admin-property-performance-funnel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
+.admin-property-performance-funnel div{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:var(--surface-2,#f7f5f0);border:1px solid var(--line)}
+.admin-property-performance-funnel span{font-size:.74rem;color:var(--muted)}
+.admin-property-performance-funnel strong{font-size:.9rem;color:var(--navy-900)}
+.admin-property-performance-skeleton{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.admin-property-performance-skeleton span{height:74px;border-radius:var(--r-md);background:linear-gradient(90deg,var(--surface-2,#f5f4f0),var(--card,#fff),var(--surface-2,#f5f4f0));background-size:200% 100%;animation:admin-performance-shimmer 1.2s linear infinite}
+@keyframes admin-performance-shimmer{to{background-position:-200% 0}}
+@media(max-width:900px){.admin-property-performance-grid,.admin-property-performance-funnel{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.admin-property-performance-head{display:grid}.admin-property-performance-grid,.admin-property-performance-funnel,.admin-property-performance-skeleton{grid-template-columns:1fr 1fr}.admin-property-performance-stat strong{font-size:1.12rem}}
