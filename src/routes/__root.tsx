@@ -20,6 +20,7 @@ import propertyDetailRedesignCss from "../property-detail-redesign.css?url";
 import budgetMatcherRedesignCss from "../budget-matcher-redesign.css?url";
 import propertyDetailLightThemeCss from "../property-detail-light-theme.css?url";
 import adminMobileClarityCss from "../admin-mobile-clarity.css?url";
+import adminMatchingCss from "../admin-matching.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -61,6 +62,7 @@ export const Route = createRootRoute({
       { rel: "stylesheet", href: budgetMatcherRedesignCss },
       { rel: "stylesheet", href: propertyDetailLightThemeCss },
       { rel: "stylesheet", href: adminMobileClarityCss },
+      { rel: "stylesheet", href: adminMatchingCss },
     ],
   }),
   component: RootDocument,
