@@ -1118,11 +1118,42 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
     const sql = await getSql();
 
     const beforeRows = await sql.query<Record<string, unknown>>(
-      `select id, title, status, featured, price, deposit, rent, contact_name, contact_phone, owner_name, owner_phone, owner_info
+      `select id, title, status, featured, price, deposit, rent, contact_name, contact_phone,
+              owner_name, owner_phone, owner_info, neighborhood, transaction_type, description,
+              area_m2, features, images, latitude, longitude
        from properties
        where id = any($1::text[])`,
       [data.ids],
     );
+
+    if (data.status === "published") {
+      const blocked = beforeRows
+        .map((row) => {
+          const readiness = getPublishReadiness({
+            transactionType: String(row.transaction_type ?? "sell") as "sell" | "buy" | "rent" | "mortgage",
+            title: String(row.title ?? ""),
+            neighborhood: String(row.neighborhood ?? ""),
+            description: String(row.description ?? ""),
+            contactName: String(row.contact_name ?? ""),
+            contactPhone: String(row.contact_phone ?? ""),
+            price: row.price == null ? "" : String(row.price),
+            deposit: row.deposit == null ? "" : String(row.deposit),
+            rent: row.rent == null ? "" : String(row.rent),
+            imageCount: parseJsonArray(row.images).length,
+            areaM2: row.area_m2 == null ? "" : String(row.area_m2),
+            features: parseJsonArray(row.features).join("\n"),
+            latitude: numberOrNull(row.latitude),
+            longitude: numberOrNull(row.longitude),
+          });
+          return readiness.ready ? null : { title: String(row.title ?? "فایل"), blockers: readiness.blockers };
+        })
+        .filter((item): item is { title: string; blockers: string[] } => Boolean(item));
+
+      if (blocked.length) {
+        const detail = blocked.slice(0, 5).map((item) => item.title + ": " + item.blockers.join(" ")).join(" | ");
+        throw new Error("انتشار گروهی متوقف شد. " + detail);
+      }
+    }
 
     const rows = await sql.query<Record<string, unknown>>(
       `update properties
