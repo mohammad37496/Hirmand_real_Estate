@@ -16,7 +16,11 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # A cold runner can spend 10+ minutes in `playwright install --with-deps`
+    # alone, and this job is timed including that. At 20 minutes the job was
+    # cancelled mid-download before any project code ran, which reads as a
+    # failure in the checks list but is only a slow install.
+    timeout-minutes: 40
     env:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/hirmand_verify
       BROWSER_SMOKE_PROPERTY_ID: browser-smoke-property-001
@@ -59,9 +63,11 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run build
-      # The production build prunes devDependencies for the Liara runtime image.
-      # Restore them in CI before browser smoke tests, which require Vite/Playwright.
-      - name: Restore CI dev dependencies after production build
+      # `npm run build` no longer prunes devDependencies — that step moved to
+      # `build:deploy`, which is what the runtime image uses. This reinstall is
+      # kept as a cheap safety net in case the build command changes back, since
+      # the browser smoke below needs Vite and Playwright.
+      - name: Ensure CI dev dependencies after production build
         run: npm ci
 
       # The smoke fixtures below write to and read from the real `properties`

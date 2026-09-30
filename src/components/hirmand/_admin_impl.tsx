@@ -9,6 +9,7 @@ import {
   Home,
   KeyRound,
   LayoutDashboard,
+  Menu,
   Music2,
   UsersRound,
   LogOut,
@@ -47,6 +48,12 @@ import {
   saveProperty,
 } from "@/lib/properties";
 import { toast, Toaster } from "sonner";
+import {
+  AdminErrorBanner,
+  AdminListSkeleton,
+  AdminPagination,
+} from "@/components/hirmand/admin-ui";
+import { adminErrorMessage, fa, useConfirmDialog } from "@/components/hirmand/admin-ui-utils";
 import { AdminMediaField } from "@/components/hirmand/admin-media-field";
 import { AdminLocationPicker } from "@/components/hirmand/admin-location-picker";
 import { AdminPricingPanel } from "@/components/hirmand/admin-pricing-panel";
@@ -71,6 +78,72 @@ import {
 
 type PublishStatus = "draft" | "published" | "archived";
 type ViewMode = "dashboard" | "list" | "form" | "music" | "leads" | "partners" | "divar" | "consultants" | "attendance";
+
+type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
+type MediaFilter = "all" | "with" | "without";
+
+const LIST_SORT_OPTIONS: { value: ListSort; label: string }[] = [
+  { value: "newest", label: "جدیدترین ایجاد" },
+  { value: "updated", label: "آخرین بروزرسانی" },
+  { value: "oldest", label: "قدیمی‌ترین ایجاد" },
+  { value: "title", label: "عنوان (الفبایی)" },
+  { value: "price_desc", label: "بیشترین قیمت" },
+  { value: "price_asc", label: "کمترین قیمت" },
+  { value: "area_desc", label: "بیشترین متراژ" },
+];
+
+const DEFAULT_PAGE_SIZE = 20;
+
+/**
+ * Draft autosave.
+ *
+ * A half-filled property form is expensive to recreate, but owner contact
+ * details are sensitive, so they are deliberately excluded from the draft.
+ * `sessionStorage` (not `localStorage`) means the draft dies with the tab and
+ * never lingers on a shared machine's disk.
+ */
+const DRAFT_KEY = "hirmand:admin:property-draft";
+
+type DraftShape = Omit<FormState, "ownerName" | "ownerPhone" | "ownerInfo"> & {
+  savedAt: string;
+};
+
+function loadDraft(key: string): DraftShape | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(`${DRAFT_KEY}:${key}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as DraftShape;
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveDraft(key: string, form: FormState) {
+  if (typeof window === "undefined") return;
+  try {
+    const { ownerName, ownerPhone, ownerInfo, ...safe } = form;
+    void ownerName;
+    void ownerPhone;
+    void ownerInfo;
+    window.sessionStorage.setItem(
+      `${DRAFT_KEY}:${key}`,
+      JSON.stringify({ ...safe, savedAt: new Date().toISOString() }),
+    );
+  } catch {
+    // A full or blocked storage must never block editing.
+  }
+}
+
+function clearDraft(key: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(`${DRAFT_KEY}:${key}`);
+  } catch {
+    // Ignore: the draft is an optimisation, not a source of truth.
+  }
+}
 
 type FormState = {
   id?: string;
@@ -336,7 +409,6 @@ export function AdminPropertiesPage() {
   const [unlocked, setUnlocked] = useState(false);
   const [sessionChecking, setSessionChecking] = useState(true);
   const [properties, setProperties] = useState<Property[]>([]);
-  const [propertyOffset, setPropertyOffset] = useState(0);
   const [propertyHasMore, setPropertyHasMore] = useState(false);
   const [filteredTotal, setFilteredTotal] = useState(0);
   const [serverStats, setServerStats] = useState<{
@@ -347,6 +419,8 @@ export function AdminPropertiesPage() {
     featured: number;
   } | null>(null);
   const propertyRequestId = useRef(0);
+  const submitting = useRef(false);
+  const draftKeyRef = useRef("new");
   const [loadingList, setLoadingList] = useState(false);
   const [saving, setSaving] = useState(false);
   const [view, setView] = useState<ViewMode>("dashboard");
@@ -356,9 +430,36 @@ export function AdminPropertiesPage() {
   const [listTransaction, setListTransaction] = useState<"all" | PropertyTransaction>("all");
   const [listType, setListType] = useState<"all" | PropertyType>("all");
   const [listNeighborhood, setListNeighborhood] = useState("");
-  const [listSort, setListSort] = useState<"newest" | "title" | "price_desc">("newest");
+  const [listSort, setListSort] = useState<ListSort>("newest");
+  const [listMedia, setListMedia] = useState<MediaFilter>("all");
+  const [listPriceMin, setListPriceMin] = useState("");
+  const [listPriceMax, setListPriceMax] = useState("");
+  const [listAreaMin, setListAreaMin] = useState("");
+  const [listBedroomsMin, setListBedroomsMin] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [listError, setListError] = useState<string | null>(null);
+  const [busyRowId, setBusyRowId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [draftRestored, setDraftRestored] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
+
+  const navItems = useMemo(
+    () => [
+      { view: "dashboard" as ViewMode, label: "داشبورد", icon: BarChart3 },
+      { view: "list" as ViewMode, label: "فایل‌های ملک", icon: LayoutDashboard },
+      { view: "leads" as ViewMode, label: "درخواست‌ها", icon: UsersRound },
+      { view: "consultants" as ViewMode, label: "مشاوران", icon: UsersRound },
+      { view: "partners" as ViewMode, label: "همکاران", icon: UsersRound },
+      { view: "music" as ViewMode, label: "موسیقی", icon: Music2 },
+      { view: "attendance" as ViewMode, label: "حضور و غیاب", icon: Clock3 },
+      { view: "divar" as ViewMode, label: "فایل‌های دیوار", icon: Globe2 },
+    ],
+    [],
+  );
+
   const [changeHistory, setChangeHistory] = useState<Array<{
     id: number;
     action: "created" | "updated" | "deleted";
@@ -446,10 +547,23 @@ export function AdminPropertiesPage() {
 
   function navigateTo(nextView: ViewMode) {
     if (view === "form" && nextView !== "form" && formDirty) {
-      const leave = window.confirm("تغییرات ذخیره‌نشده این فایل از بین می‌رود. از فرم خارج می‌شوید؟");
-      if (!leave) return;
+      void (async () => {
+        const leave = await confirm({
+          title: "تغییرات ذخیره نشده دارید",
+          description:
+            "اگر از این فرم خارج شوید، تغییراتی که ذخیره نکرده‌اید از بین می‌رود. می‌خواهید خارج شوید؟",
+          confirmLabel: "بله، خارج شو",
+          cancelLabel: "بمانم",
+          tone: "danger",
+        });
+        if (!leave) return;
+        setView(nextView);
+        setDrawerOpen(false);
+      })();
+      return;
     }
     setView(nextView);
+    setDrawerOpen(false);
   }
 
   useEffect(() => {
@@ -482,6 +596,38 @@ export function AdminPropertiesPage() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [formDirty, view]);
 
+  // Draft autosave: keep the expensive part of a long form across an
+  // accidental navigation. Owner contact fields are never written.
+  useEffect(() => {
+    if (view !== "form") return;
+    if (!formDirty) return;
+    const timer = window.setTimeout(() => saveDraft(draftKeyRef.current, form), 800);
+    return () => window.clearTimeout(timer);
+  }, [form, formDirty, view]);
+
+  // Restore once per opened record so the banner does not nag after the user
+  // keeps editing the restored draft.
+  useEffect(() => {
+    if (view !== "form" || draftRestored) return;
+    const key = form.id ?? "new";
+    draftKeyRef.current = key;
+    const draft = loadDraft(key);
+    if (!draft) return;
+    setForm((current) => {
+      if (formDirty) return current;
+      return {
+        ...current,
+        ...draft,
+        // Owner details always come from the saved record, never the draft.
+        ownerName: current.ownerName,
+        ownerPhone: current.ownerPhone,
+        ownerInfo: current.ownerInfo,
+      };
+    });
+    setFormDirty(true);
+    setDraftRestored(key);
+  }, [view, form.id, formDirty, draftRestored]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -507,8 +653,7 @@ export function AdminPropertiesPage() {
 
         if (cancelled) return;
         setProperties(rows);
-        setPropertyOffset(rows.length);
-        setFilteredTotal(filteredCount);
+          setFilteredTotal(filteredCount);
         setPropertyHasMore(rows.length < filteredCount);
         setServerStats(totals);
         setUnlocked(true);
@@ -525,7 +670,19 @@ export function AdminPropertiesPage() {
     };
   }, []);
 
-  function currentListFilters(offset = 0, limit = 50) {
+  /** Parses a Persian/Arabic digit money or number input into a number. */
+  function listNumber(raw: string): number | undefined {
+    const digits = raw
+      .replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
+      .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
+      .replace(/[٬،,\s]/g, "");
+    if (!digits) return undefined;
+    if (!/^\d+$/.test(digits)) return undefined;
+    const value = Number(digits);
+    return Number.isSafeInteger(value) ? value : undefined;
+  }
+
+  function currentListFilters(offset: number, limit: number) {
     return {
       limit,
       offset,
@@ -538,16 +695,94 @@ export function AdminPropertiesPage() {
       neighborhood: listNeighborhood || undefined,
       featuredOnly: listFilter === "featured",
       search: query.trim() || undefined,
+      hasImages: listMedia === "all" ? undefined : listMedia === "with",
+      minPrice: listNumber(listPriceMin),
+      maxPrice: listNumber(listPriceMax),
+      minArea: listNumber(listAreaMin),
+      minBedrooms: listNumber(listBedroomsMin),
       sort: listSort,
     } as const;
+  }
+
+  const activeFilterChips = useMemo(() => {
+    const chips: { key: string; label: string; clear: () => void }[] = [];
+    if (listFilter !== "all") {
+      chips.push({
+        key: "status",
+        label:
+          listFilter === "featured"
+            ? "فقط ویژه"
+            : `وضعیت: ${
+                { published: "منتشرشده", draft: "پیش‌نویس", archived: "بایگانی" }[
+                  listFilter as PublishStatus
+                ]
+              }`,
+        clear: () => setListFilter("all"),
+      });
+    }
+    if (listTransaction !== "all") {
+      chips.push({
+        key: "transaction",
+        label: `معامله: ${TX_OPTIONS.find((item) => item.value === listTransaction)?.label ?? listTransaction}`,
+        clear: () => setListTransaction("all"),
+      });
+    }
+    if (listType !== "all") {
+      chips.push({
+        key: "type",
+        label: `نوع: ${PROPERTY_TYPES.find((item) => item.id === listType)?.title ?? listType}`,
+        clear: () => setListType("all"),
+      });
+    }
+    if (listNeighborhood) {
+      chips.push({ key: "neighborhood", label: `محله: ${listNeighborhood}`, clear: () => setListNeighborhood("") });
+    }
+    if (listMedia !== "all") {
+      chips.push({
+        key: "media",
+        label: listMedia === "with" ? "دارای تصویر" : "بدون تصویر",
+        clear: () => setListMedia("all"),
+      });
+    }
+    if (listPriceMin) chips.push({ key: "priceMin", label: `از ${fa(listNumber(listPriceMin) ?? 0)}`, clear: () => setListPriceMin("") });
+    if (listPriceMax) chips.push({ key: "priceMax", label: `تا ${fa(listNumber(listPriceMax) ?? 0)}`, clear: () => setListPriceMax("") });
+    if (listAreaMin) chips.push({ key: "areaMin", label: `متراژ از ${fa(listNumber(listAreaMin) ?? 0)}`, clear: () => setListAreaMin("") });
+    if (listBedroomsMin) chips.push({ key: "bedrooms", label: `${fa(listNumber(listBedroomsMin) ?? 0)}+ خواب`, clear: () => setListBedroomsMin("") });
+    return chips;
+  }, [
+    listFilter,
+    listTransaction,
+    listType,
+    listNeighborhood,
+    listMedia,
+    listPriceMin,
+    listPriceMax,
+    listAreaMin,
+    listBedroomsMin,
+  ]);
+
+  function clearAllFilters() {
+    setListFilter("all");
+    setListTransaction("all");
+    setListType("all");
+    setListNeighborhood("");
+    setListSort("newest");
+    setListMedia("all");
+    setListPriceMin("");
+    setListPriceMax("");
+    setListAreaMin("");
+    setListBedroomsMin("");
+    setQuery("");
+    setPage(1);
   }
 
   async function refresh() {
     if (!unlocked) return;
     const requestId = ++propertyRequestId.current;
     setLoadingList(true);
+    setListError(null);
     try {
-      const filterData = currentListFilters(0, 50);
+      const filterData = currentListFilters((page - 1) * pageSize, pageSize);
       const [rows, totals, filteredCount] = await Promise.all([
         listAdminProperties({ data: filterData }),
         countAdminProperties({ data: {} }),
@@ -555,14 +790,17 @@ export function AdminPropertiesPage() {
       ]);
       if (requestId !== propertyRequestId.current) return;
       setProperties(rows);
-      setPropertyOffset(rows.length);
       setFilteredTotal(filteredCount);
       setPropertyHasMore(rows.length < filteredCount);
       setServerStats(totals);
+      // A filter change can shrink the result set below the current page.
+      const lastPage = Math.max(1, Math.ceil(filteredCount / pageSize));
+      if (page > lastPage) setPage(lastPage);
     } catch (error) {
       if (requestId !== propertyRequestId.current) return;
-      toast.error(error instanceof Error ? error.message : "بارگذاری فایل‌ها انجام نشد.");
-      // The mutation may already have succeeded; refresh is only a UI re-sync.
+      const message = adminErrorMessage(error, "بارگذاری فایل‌ها انجام نشد.");
+      setListError(message);
+      toast.error(message);
       return;
     } finally {
       if (requestId === propertyRequestId.current) setLoadingList(false);
@@ -604,7 +842,6 @@ export function AdminPropertiesPage() {
 
       setKeyInput("");
       setProperties(rows);
-      setPropertyOffset(rows.length);
       setFilteredTotal(filteredCount);
       setPropertyHasMore(rows.length < filteredCount);
       setServerStats(totals);
@@ -613,33 +850,51 @@ export function AdminPropertiesPage() {
       if (showToast) toast.success("ورود به پنل مدیریت موفق بود.");
     } catch (error) {
       setUnlocked(false);
-      toast.error(error instanceof Error ? error.message : "کلید مدیریت نادرست است.");
+      toast.error(adminErrorMessage(error, "کلید مدیریت نادرست است."));
     } finally {
       setLoadingList(false);
     }
   }
 
   function logout() {
-    if (view === "form" && formDirty && !window.confirm("تغییرات ذخیره‌نشده پاک می‌شوند. از پنل خارج می‌شوید؟")) return;
-    void fetch("/api/admin/session", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      credentials: "same-origin",
-      body: JSON.stringify({ action: "logout" }),
-    }).catch(() => {
-      // Local state is still cleared even when the logout request fails.
-    });
+    void (async () => {
+      if (view === "form" && formDirty) {
+        const leave = await confirm({
+          title: "خروج از پنل",
+          description: "تغییرات ذخیره‌نشده این فرم پاک می‌شود. مطمئن هستید؟",
+          confirmLabel: "بله، خارج شو",
+          cancelLabel: "بمانم",
+          tone: "danger",
+        });
+        if (!leave) return;
+      }
 
-    setUnlocked(false);
-    setKeyInput("");
-    setProperties([]);
-    setPropertyOffset(0);
-    setPropertyHasMore(false);
-    setFilteredTotal(0);
-    setServerStats(null);
-    setForm(emptyForm());
-    setSelectedIds([]);
-    setFormDirty(false);
+      // Await the request: clearing local state before the cookie is dropped
+      // leaves a window where a refresh would silently sign the admin back in.
+      await fetch("/api/admin/session", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ action: "logout" }),
+      }).catch(() => {
+        // Local state is still cleared even when the logout request fails.
+      });
+
+      clearDraft(draftKeyRef.current);
+      setUnlocked(false);
+      setKeyInput("");
+      setProperties([]);
+      setPropertyHasMore(false);
+      setFilteredTotal(0);
+      setServerStats(null);
+      setForm(emptyForm());
+      setSelectedIds([]);
+      setFormDirty(false);
+      setDraftRestored(null);
+      setListError(null);
+      setDrawerOpen(false);
+      setView("dashboard");
+    })();
   }
 
   function toggleSelected(id: string) {
@@ -689,7 +944,16 @@ export function AdminPropertiesPage() {
   async function bulkSetStatus(status: PublishStatus) {
     const ids = Array.from(new Set(selectedIds));
     if (!ids.length || bulkBusy) return;
-    if (status === "archived" && !confirm("آرشیو " + ids.length.toLocaleString("fa-IR") + " فایل انتخاب‌شده؟")) return;
+    if (status === "archived") {
+      const ok = await confirm({
+        title: "بایگانی گروهی فایل‌ها",
+        description: `${ids.length.toLocaleString("fa-IR")} فایل انتخاب‌شده از سایت عمومی حذف و بایگانی می‌شود. ادامه می‌دهید؟`,
+        items: properties.filter((item) => ids.includes(item.id)).map((item) => item.title),
+        confirmLabel: "بله، بایگانی کن",
+        tone: "danger",
+      });
+      if (!ok) return;
+    }
 
     setBulkBusy(true);
     try {
@@ -747,7 +1011,16 @@ export function AdminPropertiesPage() {
   async function bulkDelete() {
     const ids = Array.from(new Set(selectedIds));
     if (!ids.length || bulkBusy) return;
-    if (!confirm("حذف دائمی " + ids.length.toLocaleString("fa-IR") + " فایل انتخاب‌شده؟ این عمل قابل بازگشت نیست.")) return;
+
+    const selected = properties.filter((item) => ids.includes(item.id));
+    const ok = await confirm({
+      title: "حذف همیشگی فایل‌ها",
+      description: `${ids.length.toLocaleString("fa-IR")} فایل انتخاب‌شده برای همیشه حذف می‌شود. این عمل قابل بازگشت نیست و صفحه عمومی آن‌ها هم از دست می‌رود.`,
+      items: selected.map((item) => item.title),
+      confirmLabel: "حذف دائمی",
+      tone: "danger",
+    });
+    if (!ok) return;
 
     setBulkBusy(true);
     try {
@@ -769,21 +1042,9 @@ export function AdminPropertiesPage() {
       const requestId = ++propertyRequestId.current;
       setSelectedIds([]);
       setLoadingList(true);
+      setListError(null);
 
-      const filterData = {
-        limit: 50,
-        offset: 0,
-        status:
-          listFilter !== "all" && listFilter !== "featured"
-            ? listFilter
-            : undefined,
-        transactionType: listTransaction !== "all" ? listTransaction : undefined,
-        propertyType: listType !== "all" ? listType : undefined,
-        neighborhood: listNeighborhood || undefined,
-        featuredOnly: listFilter === "featured",
-        search: query.trim() || undefined,
-        sort: listSort,
-      };
+      const filterData = currentListFilters((page - 1) * pageSize, pageSize);
       void Promise.all([
         listAdminProperties({ data: filterData }),
         countFilteredAdminProperties({ data: filterData }),
@@ -791,13 +1052,14 @@ export function AdminPropertiesPage() {
         .then(([rows, filteredCount]) => {
           if (requestId !== propertyRequestId.current) return;
           setProperties(rows);
-          setPropertyOffset(rows.length);
-          setFilteredTotal(filteredCount);
+              setFilteredTotal(filteredCount);
           setPropertyHasMore(rows.length < filteredCount);
+          const lastPage = Math.max(1, Math.ceil(filteredCount / pageSize));
+          if (page > lastPage) setPage(lastPage);
         })
         .catch((error) => {
           if (requestId !== propertyRequestId.current) return;
-          toast.error(error instanceof Error ? error.message : "اعمال فیلترها انجام نشد.");
+          setListError(adminErrorMessage(error, "اعمال فیلترها انجام نشد."));
         })
         .finally(() => {
           if (requestId === propertyRequestId.current) setLoadingList(false);
@@ -805,7 +1067,41 @@ export function AdminPropertiesPage() {
     }, 350);
 
     return () => window.clearTimeout(timer);
-  }, [unlocked, query, listFilter, listTransaction, listType, listNeighborhood, listSort]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    unlocked,
+    query,
+    page,
+    pageSize,
+    listFilter,
+    listTransaction,
+    listType,
+    listNeighborhood,
+    listMedia,
+    listPriceMin,
+    listPriceMax,
+    listAreaMin,
+    listBedroomsMin,
+    listSort,
+  ]);
+
+  // Any filter change invalidates the current page number; jumping back to
+  // page 1 is what the user expects from a narrowed result set.
+  useEffect(() => {
+    setPage(1);
+  }, [
+    query,
+    listFilter,
+    listTransaction,
+    listType,
+    listNeighborhood,
+    listMedia,
+    listPriceMin,
+    listPriceMax,
+    listAreaMin,
+    listBedroomsMin,
+    listSort,
+  ]);
 
   const filtered = properties;
 
@@ -826,34 +1122,11 @@ export function AdminPropertiesPage() {
 
 
 
-  async function loadMoreProperties() {
-    if (!unlocked || loadingList || !propertyHasMore) return;
-
-    const requestId = propertyRequestId.current;
-    const requestedOffset = propertyOffset;
-    setLoadingList(true);
-    try {
-      const rows = await listAdminProperties({
-        data: currentListFilters(requestedOffset, 50),
-      });
-
-      // A filter/search change can start another request while this page is
-      // in flight. Never append the old result to the new list.
-      if (propertyRequestId.current !== requestId) return;
-
-      setProperties((current) => [...current, ...rows]);
-      setPropertyOffset((current) => current + rows.length);
-      setPropertyHasMore(requestedOffset + rows.length < filteredTotal);
-    } catch (error) {
-      if (propertyRequestId.current !== requestId) return;
-      toast.error(error instanceof Error ? error.message : "بارگذاری فایل‌های بیشتر انجام نشد.");
-    } finally {
-      if (propertyRequestId.current === requestId) setLoadingList(false);
-    }
-  }
-
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
+    // A ref guard, not just `disabled={saving}`: two clicks inside the same
+    // render pass both see `saving === false`.
+    if (submitting.current) return;
     if (!unlocked) {
       toast.error("ابتدا وارد پنل شوید.");
       return;
@@ -909,6 +1182,7 @@ export function AdminPropertiesPage() {
     }
 
     setSaving(true);
+    submitting.current = true;
     try {
       const result = await saveProperty({
         data: {
@@ -963,59 +1237,86 @@ export function AdminPropertiesPage() {
         },
       });
       toast.success(form.id ? "فایل به‌روزرسانی شد." : "فایل جدید ذخیره شد.");
+      clearDraft(draftKeyRef.current);
       setForm(propertyToForm(result));
       setFormDirty(false);
+      setDraftRestored(null);
       const history = await listPropertyChangeHistory({ data: { id: result.id, limit: 10 } }).catch(() => []);
       setChangeHistory(history);
       await refresh();
       setView("list");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "ذخیره انجام نشد.");
+      toast.error(adminErrorMessage(error, "ذخیره انجام نشد. دوباره تلاش کنید."));
     } finally {
+      submitting.current = false;
       setSaving(false);
     }
   }
 
+  const submitGuardReady = async (message: string) =>
+    confirm({
+      title: "تغییرات ذخیره نشده دارید",
+      description: `${message} اگر ادامه دهید، تغییرات ذخیره‌نشده از بین می‌رود.`,
+      confirmLabel: "بله، ادامه بده",
+      cancelLabel: "بمانم",
+      tone: "danger",
+    });
+
   function startNew() {
-    if (view === "form" && formDirty && !window.confirm("تغییرات ذخیره‌نشده این فایل از بین می‌رود. فایل جدید را باز می‌کنید؟")) {
-      return;
-    }
-    setForm(emptyForm());
-    setChangeHistory([]);
-    setFormDirty(false);
-    setView("form");
+    void (async () => {
+      if (view === "form" && formDirty && !(await submitGuardReady("فایل جدید را باز می‌کنید."))) return;
+      clearDraft(draftKeyRef.current);
+      setForm(emptyForm());
+      setChangeHistory([]);
+      setFormDirty(false);
+      setDraftRestored(null);
+      setView("form");
+    })();
   }
 
   function editProperty(property: Property) {
-    if (view === "form" && formDirty && !window.confirm("تغییرات ذخیره‌نشده این فایل از بین می‌رود. فایل دیگری را ویرایش می‌کنید؟")) {
-      return;
-    }
-    setForm(propertyToForm(property));
-    setFormDirty(false);
-    setView("form");
+    void (async () => {
+      if (view === "form" && formDirty && !(await submitGuardReady("فایل دیگری را ویرایش می‌کنید."))) return;
+      clearDraft(draftKeyRef.current);
+      setForm(propertyToForm(property));
+      setFormDirty(false);
+      setDraftRestored(null);
+      setView("form");
+    })();
   }
 
   function duplicateProperty(property: Property) {
-    if (view === "form" && formDirty && !window.confirm("تغییرات ذخیره‌نشده این فایل از بین می‌رود. فایل را با یک کپی جدید جایگزین می‌کنید؟")) {
-      return;
-    }
-    const base = propertyToForm(property);
-    setForm({
-      ...base,
-      id: undefined,
-      title: `${base.title} (کپی)`,
-      status: "draft",
-      featured: false,
-      featuredUntil: "",
-    });
-    setFormDirty(false);
-    setView("form");
+    void (async () => {
+      if (view === "form" && formDirty && !(await submitGuardReady("فایل را با یک کپی جدید جایگزین می‌کنید."))) return;
+      clearDraft(draftKeyRef.current);
+      const base = propertyToForm(property);
+      setForm({
+        ...base,
+        id: undefined,
+        title: `${base.title} (کپی)`,
+        status: "draft",
+        featured: false,
+        featuredUntil: "",
+      });
+      setFormDirty(false);
+      setDraftRestored(null);
+      setView("form");
+    })();
   }
 
   async function quickSetStatus(property: Property, status: PublishStatus) {
-    if (status === "archived" && !confirm(`بایگانی «${property.title}»؟`)) return;
+    if (status === "archived") {
+      const ok = await confirm({
+        title: "بایگانی فایل",
+        description: `فایل «${property.title}» از صفحه عمومی حذف و بایگانی می‌شود.`,
+        confirmLabel: "بله، بایگانی کن",
+        tone: "danger",
+      });
+      if (!ok) return;
+    }
+    if (busyRowId) return;
+    setBusyRowId(property.id);
     try {
-      setSaving(true);
       const base = propertyToForm(property);
       if ([base.price, base.deposit, base.rent].some(hasInvalidMoney)) {
         throw new Error("مبلغ ذخیره‌شده برای این فایل نامعتبر است؛ ابتدا آن را اصلاح کنید.");
@@ -1079,21 +1380,34 @@ export function AdminPropertiesPage() {
       toast.success(status === "published" ? "فایل فوراً منتشر شد." : "فایل بایگانی شد.");
       await refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "تغییر وضعیت انجام نشد.");
+      toast.error(adminErrorMessage(error, "تغییر وضعیت انجام نشد."));
     } finally {
-      setSaving(false);
+      setBusyRowId(null);
     }
   }
 
   async function removeProperty(property: Property) {
-    if (!confirm(`حذف «${property.title}»؟ این عمل قابل بازگشت نیست.`)) return;
+    const ok = await confirm({
+      title: "حذف فایل",
+      description: `فایل «${property.title}» برای همیشه حذف می‌شود. این عمل قابل بازگشت نیست.`,
+      confirmLabel: "حذف دائمی",
+      tone: "danger",
+    });
+    if (!ok) return;
+    if (busyRowId) return;
+    setBusyRowId(property.id);
     try {
       await deleteProperty({ data: { id: property.id } });
       toast.success("فایل حذف شد.");
-      if (form.id === property.id) setForm(emptyForm());
+      if (form.id === property.id) {
+        clearDraft(property.id);
+        setForm(emptyForm());
+      }
       await refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "حذف انجام نشد.");
+      toast.error(adminErrorMessage(error, "حذف انجام نشد."));
+    } finally {
+      setBusyRowId(null);
     }
   }
 
@@ -1106,7 +1420,10 @@ export function AdminPropertiesPage() {
           <span className="kicker">پنل داخلی هیرمند</span>
           <h1>در حال بررسی نشست</h1>
           <p>اعتبار نشست مدیریت بررسی می‌شود…</p>
-          <RefreshCw size={24} className="admin-spin" />
+          <div style={{ display: "grid", gap: 10, marginTop: 20 }} aria-hidden="true">
+            <span className="admin-skeleton admin-skeleton-line" style={{ width: "100%", height: 14 }} />
+            <span className="admin-skeleton admin-skeleton-line" style={{ width: "70%", height: 14 }} />
+          </div>
         </div>
       </div>
     );
@@ -1121,28 +1438,37 @@ export function AdminPropertiesPage() {
           <span className="kicker">پنل داخلی هیرمند</span>
           <h1>ورود به مدیریت</h1>
           <p>برای ورود، کلید مدیریت را وارد کنید. این بخش فقط برای مدیریت داخلی هیرمند است.</p>
-          <div className="admin-key-row">
-            <input
-              type="password"
-              dir="ltr"
-              value={keyInput}
-              onChange={(e) => setKeyInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void unlock();
-              }}
-              placeholder="کلید مدیریت"
-            />
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              void unlock();
+            }}
+          >
+            <label className="field" style={{ marginBottom: 12 }}>
+              <span>کلید مدیریت</span>
+              <input
+                type="password"
+                dir="ltr"
+                autoComplete="current-password"
+                value={keyInput}
+                onChange={(e) => setKeyInput(e.target.value)}
+                placeholder="••••••••••"
+              />
+            </label>
             <button
-              type="button"
+              type="submit"
               className="btn-gold"
+              style={{ width: "100%" }}
               disabled={loadingList || !keyInput.trim()}
-              onClick={() => void unlock()}
             >
               {loadingList ? <RefreshCw size={16} className="admin-spin" /> : <KeyRound size={16} />}
-              ورود
+              {loadingList ? "در حال بررسی…" : "ورود"}
             </button>
-          </div>
-          <div style={{ marginTop: 20, textAlign: "center" }}>
+          </form>
+          <p style={{ marginTop: 14, fontSize: ".78rem" }}>
+            پس از چند تلاش ناموفق، ورود موقتاً محدود می‌شود تا کلید قابل حدس نباشد.
+          </p>
+          <div style={{ marginTop: 16, textAlign: "center" }}>
             <Link to="/" className="btn-ghost">
               بازگشت به سایت
             </Link>
@@ -1152,77 +1478,52 @@ export function AdminPropertiesPage() {
     );
   }
 
-  return (
-    <div className="admin-app">
-      <Toaster position="top-center" dir="rtl" richColors closeButton />
-      <style dangerouslySetInnerHTML={{ __html: ADMIN_CSS }} />
-      <aside className="admin-sidebar">
+  function renderSidebarBody(extra?: React.ReactNode) {
+    return (
+      <>
         <div className="admin-sidebar-brand">
-          <Building2 size={22} color="#f7f5ef" />
+          <Building2 size={22} color="#f7f5ef" aria-hidden="true" />
           <div>
             <strong>هیرمند</strong>
-            <small>پنل مدیریت فایل‌ها</small>
+            <small>پنل مدیریت</small>
           </div>
+          {extra}
         </div>
-        <nav className="admin-sidebar-nav">
+        <nav className="admin-sidebar-nav" aria-label="ناوبری اصلی مدیریت">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = view === item.view;
+            return (
+              <button
+                key={item.view}
+                type="button"
+                className={"admin-nav-btn" + (active ? " is-active" : "")}
+                aria-current={active ? "page" : undefined}
+                onClick={() => navigateTo(item.view)}
+              >
+                <Icon size={18} aria-hidden="true" />
+                {item.label}
+              </button>
+            );
+          })}
           <button
             type="button"
-            className={`admin-nav-btn${view === "dashboard" ? " is-active" : ""}`}
-            onClick={() => navigateTo("dashboard")}
-          >
-            <BarChart3 size={18} />
-            داشبورد
-          </button>
-          <button
-            type="button"
-            className={`admin-nav-btn${view === "list" ? " is-active" : ""}`}
-            onClick={() => navigateTo("list")}
-          >
-            <LayoutDashboard size={18} />
-            فهرست فایل‌ها
-          </button>
-          <button
-            type="button"
-            className={`admin-nav-btn${view === "form" && !form.id ? " is-active" : ""}`}
+            className={"admin-nav-btn" + (view === "form" && !form.id ? " is-active" : "")}
             onClick={startNew}
           >
-            <Plus size={18} />
-            افزودن فایل
+            <Plus size={18} aria-hidden="true" />
+            فایل جدید
           </button>
           {form.id ? (
             <button
               type="button"
-              className={`admin-nav-btn${view === "form" && form.id ? " is-active" : ""}`}
+              className={"admin-nav-btn" + (view === "form" ? " is-active" : "")}
               onClick={() => navigateTo("form")}
             >
-              <FileEdit size={18} />
-              ویرایش فعلی
+              <FileEdit size={18} aria-hidden="true" />
+              ویرایش «{form.title.slice(0, 18) || "فایل فعلی"}»
             </button>
           ) : null}
-          <button type="button" className={"admin-nav-btn" + (view === "music" ? " is-active" : "")} onClick={() => navigateTo("music")}>
-            <Music2 size={18} />
-            موسیقی سایت
-          </button>
-          <button type="button" className={"admin-nav-btn" + (view === "leads" ? " is-active" : "")} onClick={() => navigateTo("leads")}>
-            <UsersRound size={18} />
-            درخواست‌ها
-          </button>
-          <button type="button" className={"admin-nav-btn" + (view === "partners" ? " is-active" : "")} onClick={() => navigateTo("partners")}>
-            <UsersRound size={18} />
-            همکاران و کد رهگیری
-          </button>
-          <button type="button" className={"admin-nav-btn" + (view === "consultants" ? " is-active" : "")} onClick={() => navigateTo("consultants")}>
-            <UsersRound size={18} />
-            مشاورین و اعضای بنگاه
-          </button>
-          <button type="button" className={"admin-nav-btn" + (view === "attendance" ? " is-active" : "")} onClick={() => navigateTo("attendance")}>
-            <Clock3 size={18} />
-            ساعت ورود و خروج
-          </button>
-          <button type="button" className={"admin-nav-btn" + (view === "divar" ? " is-active" : "")} onClick={() => navigateTo("divar")}>
-            <Globe2 size={18} />
-            فایل‌های دیوار
-          </button>
         </nav>
         <div className="admin-sidebar-foot">
           <button
@@ -1231,23 +1532,64 @@ export function AdminPropertiesPage() {
             onClick={() => void refresh()}
             disabled={loadingList}
           >
-            <RefreshCw size={18} className={loadingList ? "admin-spin" : undefined} />
+            <RefreshCw size={18} className={loadingList ? "admin-spin" : undefined} aria-hidden="true" />
             به‌روزرسانی
           </button>
           <Link to="/" className="admin-nav-btn">
-            <Home size={18} />
+            <Home size={18} aria-hidden="true" />
             سایت
           </Link>
           <button type="button" className="admin-nav-btn" onClick={logout}>
-            <LogOut size={18} />
+            <LogOut size={18} aria-hidden="true" />
             خروج
           </button>
         </div>
-      </aside>
+      </>
+    );
+  }
+
+  return (
+    <div className="admin-app">
+      <Toaster position="top-center" dir="rtl" richColors closeButton />
+      <style dangerouslySetInnerHTML={{ __html: ADMIN_CSS }} />
+      {confirmDialog}
+      <aside className="admin-sidebar">{renderSidebarBody()}</aside>
+
+      {drawerOpen ? (
+        <>
+          <div
+            className="admin-drawer-overlay"
+            role="presentation"
+            onClick={() => setDrawerOpen(false)}
+          />
+          <div className="admin-drawer" role="dialog" aria-modal="true" aria-label="ناوبری مدیریت">
+            {renderSidebarBody(
+              <button
+                type="button"
+                className="admin-icon-btn"
+                style={{ marginInlineStart: "auto" }}
+                onClick={() => setDrawerOpen(false)}
+                aria-label="بستن منو"
+              >
+                <X size={16} />
+              </button>,
+            )}
+          </div>
+        </>
+      ) : null}
 
       <div className="admin-main">
         <header className="admin-topbar">
-          <div>
+          <button
+            type="button"
+            className="admin-drawer-trigger"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="باز کردن منوی مدیریت"
+            aria-expanded={drawerOpen}
+          >
+            <Menu size={20} />
+          </button>
+          <div style={{ minWidth: 0 }}>
             <h1>
               {view === "dashboard"
                 ? "داشبورد مدیریت"
@@ -1341,34 +1683,28 @@ export function AdminPropertiesPage() {
                 <div className="admin-panel-head">
                   <div>
                     <span className="kicker">فایل‌ها</span>
-                    <h2>{filteredTotal.toLocaleString("fa-IR")} مورد مطابق فیلتر</h2>
+                    <h2>{fa(filteredTotal)} مورد مطابق فیلتر</h2>
                   </div>
                   <div className="admin-list-toolbar" style={{ width: "100%" }}>
                     <label className="admin-search" style={{ flex: 1 }}>
-                      <Search size={16} />
+                      <Search size={16} aria-hidden="true" />
                       <input
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        placeholder="جستجو عنوان، محله، مشاور یا مالک…"
+                        placeholder="جستجو بر اساس کد فایل، عنوان، محله، مشاور، مالک یا تلفن…"
+                        aria-label="جستجوی فایل‌ها"
                       />
                     </label>
-                    <button type="button" className="btn-ghost" onClick={() => {
-                      setQuery("");
-                      setListTransaction("all");
-                      setListType("all");
-                      setListNeighborhood("");
-                      setListSort("newest");
-                    }}>
+                    <button type="button" className="btn-ghost" onClick={clearAllFilters} disabled={!activeFilterChips.length && !query}>
                       <Filter size={15} /> پاک‌سازی فیلتر
                     </button>
                   </div>
                   <div className="admin-filter-row">
                     <select value={listTransaction} onChange={(e) => setListTransaction(e.target.value as typeof listTransaction)} aria-label="فیلتر معامله">
                       <option value="all">همه معاملات</option>
-                      <option value="sell">فروش</option>
-                      <option value="rent">اجاره</option>
-                      <option value="mortgage">رهن</option>
-                      <option value="buy">درخواست خرید</option>
+                      {TX_OPTIONS.map((item) => (
+                        <option key={item.value} value={item.value}>{item.label}</option>
+                      ))}
                     </select>
                     <select value={listType} onChange={(e) => setListType(e.target.value as typeof listType)} aria-label="فیلتر نوع ملک">
                       <option value="all">همه انواع ملک</option>
@@ -1378,50 +1714,84 @@ export function AdminPropertiesPage() {
                       <option value="">همه محله‌ها</option>
                       {neighborhoodOptions.map((name) => <option key={name} value={name}>{name}</option>)}
                     </select>
-                    <select value={listSort} onChange={(e) => setListSort(e.target.value as typeof listSort)} aria-label="مرتب‌سازی">
-                      <option value="newest">آخرین تغییر</option>
-                      <option value="title">عنوان الفبایی</option>
-                      <option value="price_desc">بیشترین قیمت</option>
+                    <select value={listMedia} onChange={(e) => setListMedia(e.target.value as MediaFilter)} aria-label="فیلتر تصویر">
+                      <option value="all">همه (تصویر و بدون تصویر)</option>
+                      <option value="with">دارای تصویر</option>
+                      <option value="without">بدون تصویر</option>
                     </select>
-                    <div className="admin-results-meta"><ArrowUpDown size={14} /> {filtered.length.toLocaleString("fa-IR")} مورد نمایش‌داده‌شده</div>
+                    <label className="admin-search" style={{ minWidth: 130 }}>
+                      <span className="sr-only">حداقل قیمت (تومان)</span>
+                      <input
+                        inputMode="numeric"
+                        value={listPriceMin}
+                        onChange={(e) => setListPriceMin(e.target.value)}
+                        placeholder="قیمت از"
+                        aria-label="حداقل قیمت به تومان"
+                      />
+                    </label>
+                    <label className="admin-search" style={{ minWidth: 130 }}>
+                      <span className="sr-only">حداکثر قیمت (تومان)</span>
+                      <input
+                        inputMode="numeric"
+                        value={listPriceMax}
+                        onChange={(e) => setListPriceMax(e.target.value)}
+                        placeholder="قیمت تا"
+                        aria-label="حداکثر قیمت به تومان"
+                      />
+                    </label>
+                    <label className="admin-search" style={{ minWidth: 120 }}>
+                      <span className="sr-only">حداقل متراژ</span>
+                      <input
+                        inputMode="numeric"
+                        value={listAreaMin}
+                        onChange={(e) => setListAreaMin(e.target.value)}
+                        placeholder="متراژ از"
+                        aria-label="حداقل متراژ"
+                      />
+                    </label>
+                    <label className="admin-search" style={{ minWidth: 110 }}>
+                      <span className="sr-only">حداقل تعداد خواب</span>
+                      <input
+                        inputMode="numeric"
+                        value={listBedroomsMin}
+                        onChange={(e) => setListBedroomsMin(e.target.value)}
+                        placeholder="خواب از"
+                        aria-label="حداقل تعداد خواب"
+                      />
+                    </label>
+                    <select value={listSort} onChange={(e) => setListSort(e.target.value as ListSort)} aria-label="مرتب‌سازی">
+                      {LIST_SORT_OPTIONS.map((item) => (
+                        <option key={item.value} value={item.value}>{item.label}</option>
+                      ))}
+                    </select>
+                    <div className="admin-results-meta">
+                      <ArrowUpDown size={14} aria-hidden="true" />
+                      {fa(filtered.length)} مورد در این صفحه
+                    </div>
                   </div>
+                  {activeFilterChips.length ? (
+                    <div className="admin-filter-chips" style={{ marginTop: 10 }}>
+                      {activeFilterChips.map((chip) => (
+                        <span key={chip.key} className="admin-filter-chip">
+                          {chip.label}
+                          <button type="button" onClick={chip.clear} aria-label={`حذف فیلتر ${chip.label}`}>
+                            <X size={13} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                   <div className="admin-list-toolbar" style={{ marginTop: 10, justifyContent: "space-between" }}>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                      <button type="button" className="btn-ghost" onClick={toggleSelectAllVisible}>
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        onClick={toggleSelectAllVisible}
+                        disabled={filtered.length === 0}
+                      >
                         <CheckSquare size={15} />
-                        {filtered.length > 0 && filtered.every((item) => selectedIds.includes(item.id)) ? "لغو انتخاب نمایش‌داده‌شده" : "انتخاب نمایش‌داده‌شده"}
+                        {filtered.length > 0 && filtered.every((item) => selectedIds.includes(item.id)) ? "لغو انتخاب این صفحه" : "انتخاب این صفحه"}
                       </button>
-                      {selectedIds.length > 0 ? (
-                        <>
-                          <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetStatus("published")}>انتشار ({selectedIds.length.toLocaleString("fa-IR")})</button>
-                          <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetStatus("draft")}>پیش‌نویس</button>
-                          <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetStatus("archived")}>بایگانی</button>
-                          <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetFeatured(true)}><Star size={15} /> ویژه</button>
-                          <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetFeatured(false)}>حذف ویژه</button>
-                          {TEAM.length > 0 ? (
-                            <select
-                              className="admin-lead-status-select"
-                              disabled={bulkBusy}
-                              defaultValue=""
-                              aria-label="تخصیص مشاور به فایل‌های انتخاب‌شده"
-                              onChange={(e) => {
-                                const member = assignmentConsultants.find((item) => item.phone === e.target.value);
-                                if (member) void bulkAssignConsultant(member);
-                                e.currentTarget.value = "";
-                              }}
-                            >
-                              <option value="">تخصیص مشاور…</option>
-                              {assignmentConsultants.filter((member) => member.isActive).map((member) => (
-                                <option key={member.phone} value={member.phone}>
-                                  {member.name}
-                                </option>
-                              ))}
-                            </select>
-                          ) : null}
-                          <button type="button" className="btn-ghost danger" disabled={bulkBusy} onClick={() => void bulkDelete()}><Trash2 size={15} /> حذف گروهی</button>
-                          <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => setSelectedIds([])}>پاک کردن انتخاب</button>
-                        </>
-                      ) : null}
                     </div>
                     <button type="button" className="btn-ghost" onClick={() => void exportProperties()}>
                       <Download size={15} /> خروجی کامل CSV
@@ -1429,7 +1799,50 @@ export function AdminPropertiesPage() {
                   </div>
                 </div>
 
-                {filtered.length === 0 ? (
+                {listError ? (
+                  <div style={{ padding: "14px 20px" }}>
+                    <AdminErrorBanner
+                      message={listError}
+                      onRetry={() => void refresh()}
+                      onDismiss={() => setListError(null)}
+                    />
+                  </div>
+                ) : null}
+
+                {selectedIds.length > 0 ? (
+                  <div className="admin-bulk-bar">
+                    <strong>{fa(selectedIds.length)} فایل انتخاب شده</strong>
+                    <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetStatus("published")}>انتشار</button>
+                    <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetStatus("draft")}>پیش‌نویس</button>
+                    <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetStatus("archived")}>بایگانی</button>
+                    <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetFeatured(true)}><Star size={15} /> ویژه</button>
+                    <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => void bulkSetFeatured(false)}>حذف ویژه</button>
+                    {assignmentConsultants.some((member) => member.isActive) ? (
+                      <select
+                        className="admin-lead-status-select"
+                        disabled={bulkBusy}
+                        defaultValue=""
+                        aria-label="تخصیص مشاور به فایل‌های انتخاب‌شده"
+                        onChange={(e) => {
+                          const member = assignmentConsultants.find((item) => item.phone === e.target.value);
+                          if (member) void bulkAssignConsultant(member);
+                          e.currentTarget.value = "";
+                        }}
+                      >
+                        <option value="">تخصیص مشاور…</option>
+                        {assignmentConsultants.filter((member) => member.isActive).map((member) => (
+                          <option key={member.phone} value={member.phone}>{member.name}</option>
+                        ))}
+                      </select>
+                    ) : null}
+                    <button type="button" className="btn-ghost danger" disabled={bulkBusy} onClick={() => void bulkDelete()}><Trash2 size={15} /> حذف گروهی</button>
+                    <button type="button" className="btn-ghost" disabled={bulkBusy} onClick={() => setSelectedIds([])}>پاک کردن انتخاب</button>
+                  </div>
+                ) : null}
+
+                {loadingList && filtered.length === 0 ? (
+                  <AdminListSkeleton rows={6} />
+                ) : filtered.length === 0 ? (
                   <div className="admin-empty">
                     <Building2 size={28} />
                     <strong>فایلی نیست</strong>
@@ -1442,8 +1855,11 @@ export function AdminPropertiesPage() {
                 ) : (
                   <div className="admin-property-list">
                     {filtered.map((property) => (
-                      <article key={property.id} className="admin-property-card">
-                        <div className="admin-property-select">
+                      <article
+                        key={property.id}
+                        className={"admin-property-card" + (busyRowId === property.id ? " is-busy" : "")}
+                      >
+                        <label className="admin-property-select">
                           <input
                             type="checkbox"
                             aria-label={"انتخاب " + property.title}
@@ -1451,7 +1867,7 @@ export function AdminPropertiesPage() {
                             onChange={() => toggleSelected(property.id)}
                             className="admin-row-checkbox"
                           />
-                        </div>
+                        </label>
                         <div className="admin-property-thumb">
                           <img
                             src={property.images[0] || getPropertyFallbackImage(property.propertyType, property.id)}
@@ -1504,6 +1920,7 @@ export function AdminPropertiesPage() {
                               className="admin-icon-btn"
                               title="انتشار سریع"
                               aria-label={"انتشار سریع «" + property.title + "»"}
+                              disabled={busyRowId === property.id}
                               onClick={() => void quickSetStatus(property, "published")}
                             >
                               <Save size={16} />
@@ -1514,6 +1931,7 @@ export function AdminPropertiesPage() {
                               className="admin-icon-btn"
                               title="بایگانی سریع"
                               aria-label={"بایگانی سریع «" + property.title + "»"}
+                              disabled={busyRowId === property.id}
                               onClick={() => void quickSetStatus(property, "archived")}
                             >
                               <X size={16} />
@@ -1531,15 +1949,15 @@ export function AdminPropertiesPage() {
                           <button
                             type="button"
                             className="admin-icon-btn"
-                            title="کپی"
-                            aria-label={"کپی «" + property.title + "»"}
+                            title="کپی فایل"
+                            aria-label={"ساخت کپی از «" + property.title + "»"}
                             onClick={() => duplicateProperty(property)}
                           >
                             <Copy size={16} />
                           </button>
                           <a
                             className="admin-icon-btn"
-                            title="مشاهده عمومی"
+                            title="مشاهده در سایت"
                             aria-label={"مشاهده عمومی «" + property.title + "»"}
                             href={propertyPath(property)}
                             target="_blank"
@@ -1550,8 +1968,9 @@ export function AdminPropertiesPage() {
                           <button
                             type="button"
                             className="admin-icon-btn danger"
-                            title="حذف"
+                            title="حذف فایل"
                             aria-label={"حذف «" + property.title + "»"}
+                            disabled={busyRowId === property.id}
                             onClick={() => void removeProperty(property)}
                           >
                             <Trash2 size={16} />
@@ -1562,21 +1981,18 @@ export function AdminPropertiesPage() {
                   </div>
                 )}
 
-                {propertyHasMore ? (
-                  <div className="admin-properties-load-more" style={{ display: "flex", justifyContent: "center", padding: 18 }}>
-                    <button
-                      type="button"
-                      className="btn-ghost"
-                      onClick={() => void loadMoreProperties()}
-                      disabled={loadingList}
-                    >
-                      {loadingList ? "در حال بارگذاری…" : "نمایش فایل‌های بیشتر"}
-                    </button>
-                    <small>
-                      نمایش {properties.length.toLocaleString("fa-IR")} از{" "}
-                      {filteredTotal.toLocaleString("fa-IR")} نتیجه فیلترشده
-                    </small>
-                  </div>
+                {propertyHasMore || filteredTotal > pageSize ? (
+                  <AdminPagination
+                    page={page}
+                    pageSize={pageSize}
+                    total={filteredTotal}
+                    busy={loadingList}
+                    onPageChange={setPage}
+                    onPageSizeChange={(size) => {
+                      setPageSize(size);
+                      setPage(1);
+                    }}
+                  />
                 ) : null}
               </section>
             </>
@@ -1591,9 +2007,35 @@ export function AdminPropertiesPage() {
 
           {view === "form" ? (
             <form className="admin-form-wrap" onSubmit={onSubmit}>
+              {draftRestored ? (
+                <div style={{ marginBottom: 14 }}>
+                  <AdminErrorBanner
+                    message="یک پیش‌نویس ذخیره‌نشده از این فایل بازیابی شد. اگر نمی‌خواهید، آن را دور بریزید."
+                    onDismiss={() => {
+                      clearDraft(draftKeyRef.current);
+                      setDraftRestored(null);
+                      if (form.id) setForm(propertyToForm(properties.find((item) => item.id === form.id) ?? ({} as Property)));
+                      else setForm(emptyForm());
+                      setFormDirty(false);
+                    }}
+                  />
+                </div>
+              ) : null}
+
+              <nav className="admin-section-nav" aria-label="بخش‌های فرم ملک">
+                <a href="#section-basics">اطلاعات پایه</a>
+                <a href="#section-specs">مشخصات</a>
+                <a href="#section-pricing">قیمت</a>
+                <a href="#section-location">موقعیت</a>
+                <a href="#section-media">رسانه</a>
+                <a href="#section-publish">مشاور و انتشار</a>
+                <a href="#section-owner">اطلاعات صاحب فایل</a>
+                {form.id ? <a href="#section-history">تاریخچه</a> : null}
+              </nav>
+
               <div className="admin-form-sections">
-                <fieldset className="admin-section">
-                  <legend>اطلاعات اصلی</legend>
+                <fieldset className="admin-section" id="section-basics">
+                  <legend>اطلاعات پایه</legend>
                   <div className="admin-form-grid">
                     <label className="field admin-span-2">
                       <span>عنوان</span>
@@ -1666,7 +2108,7 @@ export function AdminPropertiesPage() {
                   </div>
                 </fieldset>
 
-                <fieldset className="admin-section">
+                <fieldset className="admin-section" id="section-location">
                   <legend>موقعیت و حریم خصوصی آدرس</legend>
                   <AdminLocationPicker
                     neighborhood={form.neighborhood}
@@ -1704,8 +2146,8 @@ export function AdminPropertiesPage() {
                   />
                 </fieldset>
 
-                <fieldset className="admin-section">
-                  <legend>مشخصات</legend>
+                <fieldset className="admin-section" id="section-specs">
+                  <legend>مشخصات و امکانات</legend>
                   <div className="admin-form-grid admin-form-grid-dense">
                     <label className="field">
                       <span>متراژ (م²)</span>
@@ -1919,7 +2361,7 @@ export function AdminPropertiesPage() {
                   </div>
                 </fieldset>
 
-                <fieldset className="admin-section">
+                <fieldset className="admin-section" id="section-pricing">
                   <legend>قیمت و شرایط مالی</legend>
                   <AdminPricingPanel
                     transactionType={form.transactionType}
@@ -1942,15 +2384,17 @@ export function AdminPropertiesPage() {
                   </div>
                 </fieldset>
 
-                <fieldset className="admin-section">
+                <fieldset className="admin-section" id="section-media">
                   <legend>رسانه (تصویر و ویدیو)</legend>
                   <AdminMediaField
                     value={form.images}
                     onChange={(next) => update("images", next)}
+                    propertyType={form.propertyType}
+                    propertyId={form.id}
                   />
                 </fieldset>
 
-                <fieldset className="admin-section">
+                <fieldset className="admin-section" id="section-publish">
                   <legend>مشاور و وضعیت انتشار</legend>
                   <AdminConsultantPicker
                     contactName={form.contactName}
@@ -2020,7 +2464,7 @@ export function AdminPropertiesPage() {
                 </fieldset>
               </div>
 
-                <fieldset className="admin-section admin-owner-section">
+                <fieldset className="admin-section admin-owner-section" id="section-owner">
                   <legend>اطلاعات صاحب فایل — خصوصی</legend>
                   <div className="admin-private-notice">
                     این بخش فقط برای مدیریت هیرمند است و اطلاعات صاحب فایل در صفحه عمومی ملک یا کارت فایل نمایش داده نمی‌شود.
@@ -2059,7 +2503,7 @@ export function AdminPropertiesPage() {
                 </fieldset>
 
               {form.id ? (
-                <fieldset className="admin-section">
+                <fieldset className="admin-section" id="section-history">
                   <legend>تاریخچه فایل</legend>
                   {changeHistory.length === 0 ? (
                     <div className="admin-empty">
@@ -2134,14 +2578,15 @@ export function AdminPropertiesPage() {
               <div className="admin-sticky-bar">
                 <div className="admin-sticky-bar-info">
                   مشاور: <strong>{form.contactName || "—"}</strong>
+                  {formDirty ? " · تغییرات ذخیره‌نشده" : " · همه‌چیز ذخیره شده"}
                 </div>
                 <div className="admin-sticky-actions">
-                  <button type="button" className="btn-ghost" onClick={() => navigateTo("list")}>
+                  <button type="button" className="btn-ghost" onClick={() => navigateTo("list")} disabled={saving}>
                     انصراف
                   </button>
-                  <button type="submit" className="btn-gold" disabled={saving}>
+                  <button type="submit" className="btn-gold" disabled={saving} aria-busy={saving}>
                     {saving ? <RefreshCw size={16} className="admin-spin" /> : <Save size={16} />}
-                    ذخیره
+                    {saving ? "در حال ذخیره…" : "ذخیره"}
                   </button>
                 </div>
               </div>
@@ -2152,7 +2597,7 @@ export function AdminPropertiesPage() {
 
       <nav
         className={"admin-mobile-nav" + (view === "form" ? " is-form-active" : "")}
-        aria-label="ناوبری مدیریت"
+        aria-label="ناوبری سریع مدیریت"
       >
         <button
           type="button"
@@ -2181,29 +2626,13 @@ export function AdminPropertiesPage() {
           <Plus size={20} strokeWidth={2.25} />
           <span>جدید</span>
         </button>
-        <button type="button" className={view === "music" ? "is-active" : ""} onClick={() => navigateTo("music")} title="مدیریت موسیقی">
-          <Music2 size={19} strokeWidth={2.1} />
-          <span>موسیقی</span>
-        </button>
         <button type="button" className={view === "leads" ? "is-active" : ""} onClick={() => navigateTo("leads")} title="درخواست‌های مشتریان">
           <UsersRound size={19} strokeWidth={2.1} />
           <span>درخواست‌ها</span>
         </button>
-        <button type="button" className={view === "consultants" ? "is-active" : ""} onClick={() => navigateTo("consultants")} title="مشاورین و اعضای بنگاه">
-          <UsersRound size={19} strokeWidth={2.1} />
-          <span>مشاورین</span>
-        </button>
-        <button type="button" className={view === "partners" ? "is-active" : ""} onClick={() => navigateTo("partners")} title="همکاران و کد رهگیری">
-          <UsersRound size={19} strokeWidth={2.1} />
-          <span>همکاران</span>
-        </button>
-        <button type="button" className={view === "attendance" ? "is-active" : ""} onClick={() => navigateTo("attendance")} title="ساعت ورود و خروج">
-          <Clock3 size={19} strokeWidth={2.1} />
-          <span>حضور</span>
-        </button>
-        <button type="button" className={view === "divar" ? "is-active" : ""} onClick={() => navigateTo("divar")} title="فایل‌های دیوار">
-          <Globe2 size={19} strokeWidth={2.1} />
-          <span>دیوار</span>
+        <button type="button" onClick={() => setDrawerOpen(true)} title="باز کردن منوی کامل">
+          <Menu size={19} strokeWidth={2.1} />
+          <span>منو</span>
         </button>
         <Link to="/" className="admin-mobile-site" title="مشاهده سایت">
           <Home size={19} strokeWidth={2.1} />

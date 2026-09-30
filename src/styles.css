@@ -9448,3 +9448,30 @@ a.btn-ghost[href^="https://wa.me/"] svg {
 .pcard-specs {
   background: #F1EAE0 !important;
 }
+
+/* -------------------------------------------------------------------------
+   Sonner richColors: AA correction
+   Sonner's light-theme richColors text colours land at 3.1:1 - 4.35:1 on their
+   own tinted backgrounds, under the 4.5:1 bar the rest of the site holds to.
+   Re-deriving each token at a readable lightness keeps the success / error /
+   warning / info colour coding instead of dropping richColors.
+   ------------------------------------------------------------------------- */
+:root [data-sonner-toaster][data-sonner-theme="light"] {
+  --success-text: hsl(140, 80%, 22%);
+  --info-text: hsl(210, 88%, 36%);
+  --warning-text: hsl(31, 92%, 33%);
+  --error-text: hsl(0, 78%, 36%);
+}
+
+/* Sonner ships a 20x20 close button, well under the 44px touch target the
+   rest of the site holds to. Grow the hit area with an overlay rather than the
+   button, so the toast keeps its current size and no layout shifts. */
+[data-sonner-toast] [data-close-button] {
+  position: relative;
+}
+
+[data-sonner-toast] [data-close-button]::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+}

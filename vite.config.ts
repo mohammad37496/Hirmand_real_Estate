@@ -167,6 +167,10 @@ export default defineConfig(({ command, isPreview }) => ({
     grokPwaPlugin(),
     tailwindcss(),
     tanstackStart(),
+    // Nitro is registered for the build and the preview server only. Turning
+    // `dev: true` on here would make `/api/*` answer during `vite dev`, but it
+    // also swaps out the SSR environment that `pgliteBootstrapPlugin` above
+    // loads `/src/lib/db.ts` through, and the dev server then fails to start.
     ...(command === "build" || isPreview
       ? [
           nitro({

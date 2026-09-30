@@ -11,6 +11,7 @@ import {
   verifyAdminSessionToken,
 } from "@/lib/admin-session.server";
 import { deleteStoredMedia } from "@/lib/media-store.server";
+import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 import {
   ALLOWED_AUDIO_TYPE_SET,
   MAX_AUDIO_BYTES,
@@ -44,6 +45,8 @@ export default defineEventHandler(async (event) => {
       statusMessage: "نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.",
     });
   }
+
+  assertSameOrigin(event);
 
   if (dbSource === "unconfigured") {
     if (body.action === "list") return { tracks: [] };

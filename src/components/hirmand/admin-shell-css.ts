@@ -1084,4 +1084,325 @@ export const ADMIN_CSS = `
   .admin-property-owner summary{font-size:.66rem;padding:6px 8px}
   .admin-property-owner-details{font-size:.64rem;padding:7px 8px 8px}
 }
+
+/* =========================================================================
+   Hirmand Admin 4.0 - token scope, feedback and layout primitives
+   =========================================================================
+   Token scope.
+   The panel is a LIGHT workspace (paper page, white cards) with a dark navy
+   sidebar and topbar - the direction the "Admin 3.0 canonical light workspace"
+   pass established. What was still broken are the leftovers from the earlier
+   dark-shell era: helper text and accents tuned for #111315 and left at
+   near-white / light brass, which is invisible on a white card. Pinning the
+   tokens once, scoped to .admin-app, corrects every child at the source
+   instead of patching component by component.
+   ========================================================================= */
+.admin-app,.admin-login{
+  --card:#ffffff;
+  --card-2:#fbf8f2;
+  --surface:#ffffff;
+  --surface-2:#fbf8f2;
+  --fg:#152430;
+  --muted:#4b5862;
+  --subtle:#5b6870;
+  --line:#e2dacb;
+  --brass-100:#f7efdd;
+  --brass-300:#d9bd7c;
+  --brass-600:#8a5e14;
+  --brass-700:#7a5414;
+  --navy-900:#0b1a2b;
+  color-scheme:light;
+}
+.admin-app .admin-money-hint,
+.admin-app .admin-price-calc-note,
+.admin-app .admin-field-help,
+.admin-app .admin-private-notice{color:var(--subtle)}
+.admin-app .admin-section input[type=checkbox],
+.admin-app .admin-checks input[type=checkbox]{accent-color:var(--brass-600)}
+.admin-app ::placeholder{color:#8d99a2}
+.admin-app select option{background:#fff;color:var(--fg)}
+
+/* Accents inherited from the dark shell must be text-safe on white cards. */
+.admin-main .admin-panel-head .kicker,
+.admin-main .admin-dashboard .kicker,
+.admin-main .kicker{color:var(--brass-700)}
+.admin-main .admin-music-index{color:#5f6b74}
+.admin-main .admin-lead-card small,
+.admin-main .admin-lead-created-at,
+.admin-main .admin-lead-budget span,
+.admin-main .admin-results-meta{color:var(--subtle)}
+
+/* --- Private owner callout ------------------------------------------------ */
+.admin-property-owner{
+  margin-top:8px;
+  border:1px solid #eadfcf;
+  border-radius:11px;
+  background:#fffdf8;
+}
+.admin-property-owner summary{color:#7a5414}
+.admin-property-owner summary::after{color:#a07a3a}
+.admin-property-owner[open] summary{border-bottom:1px solid #eee2d0;background:#fff9ef}
+.admin-property-owner-details{color:#56636f}
+.admin-property-owner-details strong{color:#263746}
+
+/* --- Skeletons ---------------------------------------------------------- */
+.admin-skeleton{
+  position:relative;
+  overflow:hidden;
+  border-radius:10px;
+  background:rgb(11 26 43 / .08);
+}
+.admin-skeleton::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  transform:translateX(-100%);
+  background:linear-gradient(90deg,transparent,rgb(11 26 43 / .09),transparent);
+  animation:admin-shimmer 1.3s infinite;
+}
+@keyframes admin-shimmer{100%{transform:translateX(100%)}}
+.admin-skeleton-row{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line)}
+.admin-skeleton-stack{display:flex;flex-direction:column;gap:10px;padding:20px}
+.admin-skeleton-line{height:12px;border-radius:999px}
+
+/* --- Modal dialog ------------------------------------------------------- */
+.admin-dialog-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:3200;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  background:rgb(11 26 43 / .55);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  animation:admin-fade .14s ease-out;
+}
+@keyframes admin-fade{from{opacity:0}to{opacity:1}}
+.admin-dialog{
+  width:min(100%,520px);
+  max-height:min(86vh,720px);
+  overflow:auto;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:linear-gradient(180deg,#ffffff,#fbf8f2);
+  box-shadow:0 32px 80px rgb(11 26 43 / .3);
+  padding:24px;
+  animation:admin-dialog-in .16s ease-out;
+}
+@keyframes admin-dialog-in{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+.admin-dialog-icon{
+  width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
+  margin-bottom:14px;background:var(--brass-100);color:var(--brass-700);
+  border:1px solid var(--brass-300);
+}
+.admin-dialog[data-tone=danger] .admin-dialog-icon{background:#fdeceb;color:#a32c22;border-color:#f2c3bf}
+.admin-dialog h3{margin:0 0 8px;font-size:1.08rem;font-weight:700;color:var(--fg)}
+.admin-dialog p{margin:0;color:var(--muted);font-size:.9rem;line-height:2}
+.admin-dialog-list{
+  margin:14px 0 0;padding:12px 14px;border-radius:12px;
+  background:rgb(11 26 43 / .03);border:1px solid var(--line);
+  font-size:.82rem;color:var(--muted);line-height:2;max-height:190px;overflow:auto;
+}
+.admin-dialog-actions{display:flex;gap:10px;justify-content:flex-start;margin-top:22px;flex-wrap:wrap}
+.admin-dialog-actions .btn-gold,.admin-dialog-actions .btn-ghost,.admin-dialog-actions .btn-danger-solid{flex:1 1 140px}
+.btn-danger-solid{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-height:44px;padding:9px 16px;border-radius:999px;border:1px solid transparent;
+  font:inherit;font-size:.88rem;font-weight:700;cursor:pointer;
+  color:#fff;background:#a32c22;transition:filter .12s;
+}
+.btn-danger-solid:hover{filter:brightness(1.08)}
+.btn-danger-solid:disabled{opacity:.55;cursor:not-allowed}
+
+/* --- Filter chips + toolbar --------------------------------------------- */
+.admin-filter-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.admin-filter-chip{
+  display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:5px 12px;
+  border-radius:999px;border:1px solid var(--brass-300);background:var(--brass-100);
+  color:var(--brass-700);font:inherit;font-size:.78rem;font-weight:600;cursor:pointer;
+}
+.admin-filter-chip:hover{background:#f2e6cd}
+.admin-filter-chip button{
+  border:0;background:transparent;color:inherit;cursor:pointer;padding:0;display:grid;place-items:center;opacity:.75;
+}
+.admin-filter-chip button:hover{opacity:1}
+.admin-filter-row select,.admin-filter-row input{
+  min-height:42px;padding:8px 12px;border-radius:11px;
+  border:1px solid var(--line);background:#fff;
+  color:var(--fg);font:inherit;font-size:.85rem;max-width:100%;
+}
+.admin-results-meta{display:flex;align-items:center;gap:6px;color:var(--subtle);font-size:.8rem}
+.admin-bulk-bar{
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+  padding:12px 20px;border-top:1px solid var(--brass-300);
+  background:var(--brass-100);color:var(--fg);
+}
+
+/* --- Pagination --------------------------------------------------------- */
+.admin-pagination{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:16px 20px;border-top:1px solid var(--line);
+}
+.admin-pagination-pages{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.admin-page-btn{
+  min-width:40px;height:40px;padding:0 12px;border-radius:11px;
+  border:1px solid var(--line);background:#fff;
+  color:var(--fg);font:inherit;font-size:.84rem;font-weight:600;cursor:pointer;
+  display:inline-grid;place-items:center;transition:background .15s,border-color .15s;
+}
+.admin-page-btn:hover:not(:disabled){border-color:var(--brass-600);background:var(--brass-100)}
+.admin-page-btn.is-active{background:var(--navy-900);color:#fff;border-color:var(--navy-900)}
+.admin-page-btn:disabled{opacity:.45;cursor:not-allowed}
+.admin-pagination-meta{color:var(--subtle);font-size:.8rem}
+.admin-page-ellipsis{color:var(--subtle);padding:0 2px}
+
+/* --- Row busy state ------------------------------------------------------ */
+.admin-property-card.is-busy{opacity:.6;pointer-events:none}
+.admin-icon-btn.is-busy svg{animation:admin-spin .8s linear infinite}
+
+/* --- Topbar + drawer trigger -------------------------------------------- */
+.admin-drawer-trigger{display:none}
+.admin-drawer-overlay{display:none}
+.admin-section-nav{
+  position:sticky;top:0;z-index:15;
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+  padding:10px 0;margin-bottom:14px;
+  background:linear-gradient(180deg,var(--paper,#fbf8f2) 72%,rgb(251 248 242 / 0));
+}
+.admin-section-nav a{
+  display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:999px;
+  border:1px solid var(--line);background:#fff;
+  color:var(--muted);text-decoration:none;font-size:.78rem;font-weight:600;
+}
+.admin-section-nav a:hover{border-color:var(--brass-600);color:var(--fg);background:var(--brass-100)}
+
+@media(max-width:1100px){
+  .admin-content{padding:18px}
+  .admin-sidebar{width:212px}
+  .admin-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:900px){
+  .admin-app{flex-direction:column}
+  .admin-sidebar{display:none}
+  .admin-topbar{padding:12px 16px}
+  .admin-topbar h1{font-size:1rem}
+  .admin-drawer-trigger{
+    display:inline-grid;place-items:center;flex:0 0 auto;
+    width:44px;height:44px;border-radius:12px;
+    border:1px solid var(--line);background:#fff;color:var(--navy-900);cursor:pointer;
+  }
+  .admin-drawer-overlay{
+    display:block;position:fixed;inset:0;z-index:3100;
+    background:rgb(11 26 43 / .5);backdrop-filter:blur(4px);
+    animation:admin-fade .14s ease-out;
+  }
+  .admin-drawer{
+    position:fixed;inset-block:0;inset-inline-end:0;z-index:3101;
+    width:min(86vw,320px);display:flex;flex-direction:column;
+    background:linear-gradient(180deg,#ffffff,#f7f4ee);
+    border-inline-start:1px solid var(--line);
+    box-shadow:-24px 0 60px rgb(11 26 43 / .28);
+    animation:admin-drawer-in .2s ease-out;
+  }
+  @keyframes admin-drawer-in{from{transform:translateX(-100%)}to{transform:none}}
+  .admin-drawer .admin-sidebar-brand{padding:18px 16px}
+  .admin-drawer .admin-sidebar-nav{overflow-y:auto;flex:1}
+  .admin-mobile-nav{display:none}
+  .admin-sticky-bar{left:0;right:0;padding:10px 16px}
+}
+@media(max-width:640px){
+  .admin-content{padding:14px}
+  .admin-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .admin-stat-card{padding:14px 12px}
+  .admin-stat-card strong{font-size:1.3rem}
+  .admin-panel-head{padding:14px}
+  .admin-property-card{grid-template-columns:64px 1fr;gap:12px;padding:12px 14px}
+  .admin-property-thumb{width:64px;height:52px}
+  .admin-property-actions{grid-column:1/-1;justify-content:flex-start}
+  .admin-pagination{padding:14px}
+  .admin-pagination-pages{width:100%;justify-content:center}
+  .admin-dialog{padding:20px;border-radius:18px}
+  .admin-dialog-actions{flex-direction:column-reverse}
+  .admin-dialog-actions .btn-gold,.admin-dialog-actions .btn-ghost,.admin-dialog-actions .btn-danger-solid{width:100%}
+  .admin-mobile-nav{left:6px;right:6px;bottom:6px;min-height:58px}
+  .admin-mobile-nav button,.admin-mobile-site{flex:0 0 62px;min-width:62px;min-height:48px}
+  .admin-section-nav{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+  .admin-section-nav::-webkit-scrollbar{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .admin-skeleton::after{animation:none}
+  .admin-dialog,.admin-dialog-backdrop,.admin-drawer{animation:none}
+}
+
+/* --- Media field: progress, retry queue and broken-file handling -------- */
+.admin-upload-progress{
+  width:min(340px,100%);height:8px;border-radius:999px;
+  background:rgb(11 26 43 / .12);overflow:hidden;margin-top:10px;
+}
+.admin-upload-progress span{display:block;height:100%;background:var(--brass-600);border-radius:999px;transition:width .2s ease}
+.admin-media-failures{
+  margin-top:14px;border:1px solid #f2c3bf;border-radius:14px;
+  background:#fdf2f1;padding:12px 14px;
+}
+.admin-media-failures-head{display:flex;align-items:center;gap:8px;color:#a32c22;font-size:.86rem;margin-bottom:8px}
+.admin-media-failures-head strong{flex:1}
+.admin-media-failure{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:8px 0;border-top:1px solid #f4d9d6;font-size:.8rem;color:var(--muted);
+}
+.admin-media-failure-name{flex:1;min-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--fg);font-weight:600}
+.admin-media-failure-error{flex:2;min-width:160px;color:#a32c22}
+.admin-media-item img.is-broken{filter:grayscale(1) opacity(.45)}
+.admin-media-item:has(img[data-broken])::after{
+  content:"فایل پیدا نشد";
+  position:absolute;inset-inline-start:6px;top:6px;
+  font-size:.62rem;font-weight:700;color:#a32c22;
+  background:#fdf2f1;border:1px solid #f2c3bf;
+  border-radius:999px;padding:2px 7px;pointer-events:none;
+}
+.admin-media-pick{position:absolute;inset-inline-end:6px;bottom:6px;z-index:2}
+.admin-media-pick input{width:20px;height:20px;accent-color:var(--brass-600);cursor:pointer}
+
+/* --- Leads: inline note editor + library health strip ------------------ */
+.admin-lead-note-editor{
+  margin-top:10px;padding:12px;border-radius:12px;
+  border:1px solid var(--brass-300);background:var(--brass-100);
+}
+.admin-lead-note-editor textarea{
+  width:100%;min-height:92px;padding:10px 12px;border-radius:12px;
+  border:1px solid var(--line);background:#fff;
+  color:var(--fg);font:inherit;resize:vertical;
+}
+.admin-lead-note-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.admin-dashboard-health{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:14px;margin-bottom:22px;
+}
+@media(max-width:640px){
+  .admin-dashboard-health{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .admin-lead-note-actions .btn-gold,.admin-lead-note-actions .btn-ghost{flex:1 1 auto}
+}
+
+/* --- Mobile touch targets --------------------------------------------- */
+/* The bulk-select checkbox and the music drag handle are visually compact by
+   design. Rather than inflate the artwork, the checkbox sits inside a <label>
+   and the handle keeps its icon while the target grows to 44px. */
+.admin-property-select{
+  min-width:44px;min-height:44px;cursor:pointer;
+}
+@media(max-width:640px){
+  /* The phone link is the primary action on a lead card, so it gets a real
+     tap height instead of the 28px the inline-flex text link gave it. */
+  .admin-lead-phone{min-height:40px;padding:0 4px}
+}
+@media(max-width:640px){
+  /* A lead card is a two-column grid whose auto-sized column is sized by its
+     buttons. On a phone that column ate the content column down to ~26px and
+     wrapped every matched-property title one word per line, so stack instead. */
+  .admin-lead-card{grid-template-columns:minmax(0,1fr)}
+  .admin-lead-card>.admin-property-actions,
+  .admin-lead-card>.admin-lead-actions{grid-column:1/-1;justify-content:flex-start}
+  .admin-lead-matches a{min-height:32px;display:inline-flex;align-items:center}
+}
 `;

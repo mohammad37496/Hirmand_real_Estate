@@ -103,7 +103,7 @@ const PARTNER_CSS = `
 .admin-partner-status.status-pending{background:rgba(154,99,47,.1);border-color:rgba(154,99,47,.32);color:#6f4318}
 .admin-partner-stamp-panel{border:1px solid rgb(0 0 0 / .1);border-radius:13px;background:rgb(0 0 0 / .02);padding:12px}
 .admin-partner-stamp-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
-.admin-partner-stamp-head .kicker{display:block;font-size:.64rem;color:rgb(0 0 0 / .52);font-weight:700;letter-spacing:.06em;margin-bottom:2px}
+.admin-partner-stamp-head .kicker{display:block;font-size:.64rem;color:#5f6b74;font-weight:700;letter-spacing:.06em;margin-bottom:2px}
 .admin-partner-stamp-head strong{font-size:.82rem;color:#111315}
 .admin-partner-stamp-count{font-size:.7rem;font-weight:700;color:#111315}
 .admin-partner-stamp-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
@@ -529,7 +529,7 @@ export function AdminPartnerManager() {
           <div className="admin-partner-toolbar">
   <label className="admin-search" style={{ maxWidth: 420 }}>
     <UsersRound size={16} />
-    <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="جستجوی نام املاک، مسئول، تلفن یا کد..." />
+    <input value={search} onChange={(e) => setSearch(e.target.value)} aria-label="جستجوی دفاتر همکار" placeholder="جستجوی نام املاک، مسئول، تلفن یا کد..." />
   </label>
   <select className="admin-partner-status-filter" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "suspended")} aria-label="فیلتر وضعیت حساب">
     <option value="all">همه حساب‌ها</option>

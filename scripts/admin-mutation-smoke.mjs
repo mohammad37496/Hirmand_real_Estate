@@ -25,7 +25,18 @@ try {
 
     const page = await context.newPage();
     await page.goto(baseUrl + "/admin", { waitUntil: "domcontentloaded", timeout: 45000 });
-    await page.getByRole("button", { name: "افزودن فایل", exact: true }).click();
+    // Open the form through the sidebar's "new property" control, which is
+    // always rendered. The empty-state "افزودن فایل" button only exists when
+    // the database holds zero properties, so it disappeared as soon as the
+    // browser-smoke fixture was seeded — the smoke was passing or failing on
+    // the state of the database rather than on the code under test. Scoping to
+    // the desktop sidebar also keeps it unambiguous: the topbar carries a
+    // second button with the same label, and the mobile drawer reuses the
+    // same nav markup under a different wrapper.
+    await page
+      .locator(".admin-sidebar .admin-sidebar-nav")
+      .getByRole("button", { name: "فایل جدید" })
+      .click();
 
     const form = page.locator("form.admin-form-wrap");
     await form.waitFor({ state: "visible", timeout: 10000 });
@@ -57,7 +68,7 @@ try {
       await page
         .getByText("فایل جدید ذخیره شد.", { exact: true })
         .waitFor({ state: "visible", timeout: 60000 });
-    } catch (error) {
+    } catch {
       // Report the toast the form actually raised. A bare timeout here hid a
       // validation rejection behind an unhelpful Playwright message.
       const toasts = await page.locator("[data-sonner-toast]").allInnerTexts().catch(() => []);

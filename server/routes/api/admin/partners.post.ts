@@ -1,6 +1,7 @@
 import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
 import { z } from "zod";
 import { verifyAdminSessionToken, ADMIN_SESSION_COOKIE } from "@/lib/admin-session.server";
+import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 import {
   claimPartnerReward,
   createPartnerAccount,
@@ -24,6 +25,7 @@ export default defineEventHandler(async (event) => {
   }
 
   setResponseHeader(event, "cache-control", "no-store");
+  assertSameOrigin(event);
   const body = (await readBody(event).catch(() => ({}))) as {
     action?:
       | "list"

@@ -612,16 +612,19 @@ const MUSIC_ADMIN_CSS = `
 .admin-music-upload-progress small{color:rgb(0 0 0 / .64);font-size:.74rem}
 .admin-music-hint{margin:0;padding:12px 20px;border-bottom:1px solid rgb(0 0 0 / .07);color:rgb(0 0 0 / .58);font-size:.76rem;line-height:1.9}
 .admin-music-saving{color:rgb(0 0 0 / .5);font-size:.7rem;font-weight:600}
-.admin-music-row{grid-template-columns:26px 44px minmax(0,1fr) auto!important}
+/* The first track is the drag handle and the second the EQ bars. The handle's
+   column is 44px, not 26px: a 26px column clipped the 44px button and left a
+   tap target well under the 44px the rest of the panel holds to. */
+.admin-music-row{grid-template-columns:44px 44px minmax(0,1fr) auto!important}
 .admin-music-row.is-playing{background:rgb(0 0 0 / .035)}
 .admin-music-row.is-dragging{opacity:.45}
 .admin-music-row.is-drop-target{box-shadow:inset 0 2px 0 #111315;background:rgb(0 0 0 / .04)}
-.admin-music-handle{display:grid;place-items:center;width:26px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:rgb(0 0 0 / .35);cursor:grab}
+.admin-music-handle{display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:transparent;color:rgb(0 0 0 / .35);cursor:grab}
 .admin-music-handle:hover{color:#111315;background:rgb(0 0 0 / .05)}
 .admin-music-handle:active{cursor:grabbing}
 .admin-music-handle:focus-visible{outline:2px solid #111315;outline-offset:2px}
 @media (max-width:640px){
-  .admin-music-row{grid-template-columns:26px 40px minmax(0,1fr)!important}
+  .admin-music-row{grid-template-columns:44px 40px minmax(0,1fr)!important}
   .admin-music-row>.admin-property-actions{grid-column:3;justify-content:flex-start;padding-top:6px}
 }
 .admin-music-index{color:rgb(0 0 0 / .45);font-size:.7rem;font-variant-numeric:tabular-nums}
@@ -649,6 +652,6 @@ const MUSIC_ADMIN_CSS = `
 .admin-music-upload-bar,.admin-music-progress{background:#e8edf2!important}.admin-music-upload-bar span,.admin-music-progress span{background:linear-gradient(90deg,#8a5e14,#c08a2a)!important}
 .admin-music-row{border-color:#e5eaf0!important;background:#fff!important}.admin-music-row.is-playing{background:#fffaf2!important}.admin-music-row.is-drop-target{box-shadow:inset 0 2px 0 #c08a2a!important;background:#fffaf2!important}
 .admin-music-handle{color:#8a959f!important}.admin-music-handle:hover{color:#8a5e14!important;background:#f7efe2!important}
-.admin-music-index{color:#8a959f!important}.admin-music-eq i{background:#c08a2a!important}.admin-music-seek input{accent-color:#a96f18!important}
+.admin-music-index{color:#5f6b74!important}.admin-music-eq i{background:#c08a2a!important}.admin-music-seek input{accent-color:#a96f18!important}
 .admin-music-active{background:#eef8f2!important;color:#18794e!important;border-color:#bfe5cc!important}.admin-music-inactive{background:#f2f4f7!important;color:#66717d!important;border-color:#d7dfe6!important}
 `;

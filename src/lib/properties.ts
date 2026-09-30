@@ -4,6 +4,7 @@ import { cachedPropertyRead, clearPropertyReadCache } from "@/lib/property-read-
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
 import { nullableMoneyFieldSchema } from "@/lib/property-input-normalization";
 import { decodeSlugCandidates, legacyIdFragments } from "@/lib/property-slug";
 import { calculateBudgetMatch, DEFAULT_MATCH_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
@@ -299,7 +300,12 @@ const idSchema = z.object({
 
 async function requireAdmin() {
   const session = getCookie(ADMIN_SESSION_COOKIE);
-  if (await verifyAdminSessionToken(session)) return;
+  if (await verifyAdminSessionToken(session)) {
+    // Cookie plus origin: hiding the UI is never the control, so every
+    // mutation re-checks that the request came from the panel itself.
+    assertAdminServerFnOrigin();
+    return;
+  }
 
   throw new Error("نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.");
 }
@@ -892,7 +898,25 @@ const adminListSchema = z.object({
   neighborhood: z.string().trim().max(80).optional(),
   featuredOnly: z.boolean().optional().default(false),
   search: z.string().trim().max(80).optional(),
-  sort: z.enum(["newest", "title", "price_desc"]).optional().default("newest"),
+  /** Tri-state: true = only rows with media, false = only rows without. */
+  hasImages: z.boolean().optional(),
+  minPrice: z.number().int().min(0).max(999999999999999).optional(),
+  maxPrice: z.number().int().min(0).max(999999999999999).optional(),
+  minArea: z.number().int().min(0).max(100000).optional(),
+  maxArea: z.number().int().min(0).max(100000).optional(),
+  minBedrooms: z.number().int().min(0).max(30).optional(),
+  sort: z
+    .enum([
+      "newest",
+      "oldest",
+      "updated",
+      "title",
+      "price_asc",
+      "price_desc",
+      "area_desc",
+    ])
+    .optional()
+    .default("newest"),
 });
 
 const adminBulkSchema = z.object({
@@ -920,8 +944,18 @@ function adminFilterParams(data: z.infer<typeof adminListSchema>) {
     data.neighborhood?.trim() || null,
     data.featuredOnly ?? false,
     data.search?.trim() || null,
+    data.hasImages ?? null,
+    data.minPrice ?? null,
+    data.maxPrice ?? null,
+    data.minArea ?? null,
+    data.maxArea ?? null,
+    data.minBedrooms ?? null,
   ];
 }
+
+const ADMIN_PRICE_EXPR =
+  "case when transaction_type = 'rent' then coalesce(rent, deposit) " +
+  "when transaction_type = 'mortgage' then deposit else price end";
 
 function adminPropertyWhereSql() {
   return [
@@ -931,12 +965,28 @@ function adminPropertyWhereSql() {
     "and ($4::text is null or neighborhood = $4)",
     "and ($5::boolean is false or (featured = true and (featured_until is null or featured_until >= current_timestamp)))",
     "and ($6::text is null or title ilike '%' || $6 || '%' or neighborhood ilike '%' || $6 || '%' or coalesce(address, '') ilike '%' || $6 || '%' or contact_name ilike '%' || $6 || '%' or contact_phone ilike '%' || $6 || '%' or owner_name ilike '%' || $6 || '%' or owner_phone ilike '%' || $6 || '%' or owner_info ilike '%' || $6 || '%' or id ilike '%' || $6 || '%')",
+    // Media is a jsonb array, so `jsonb_array_length` needs an empty-array
+    // guard — a null column would otherwise raise instead of returning 0.
+    "and ($7::boolean is null or (coalesce(jsonb_array_length(images), 0) > 0) = $7)",
+    `and ($8::bigint is null or ${ADMIN_PRICE_EXPR} >= $8)`,
+    `and ($9::bigint is null or ${ADMIN_PRICE_EXPR} <= $9)`,
+    "and ($10::int is null or area_m2 >= $10)",
+    "and ($11::int is null or area_m2 <= $11)",
+    "and ($12::int is null or bedrooms >= $12)",
   ].join(" ");
 }
 
-const ADMIN_PRICE_EXPR =
-  "case when transaction_type = 'rent' then coalesce(rent, deposit) " +
-  "when transaction_type = 'mortgage' then deposit else price end";
+const ADMIN_SORT_CLAUSE = `
+  order by
+    case when $13::text = 'title' then title end asc nulls last,
+    case when $13::text = 'price_desc' then ${ADMIN_PRICE_EXPR} end desc nulls last,
+    case when $13::text = 'price_asc' then ${ADMIN_PRICE_EXPR} end asc nulls last,
+    case when $13::text = 'area_desc' then area_m2 end desc nulls last,
+    case when $13::text = 'oldest' then created_at end asc nulls last,
+    case when $13::text = 'updated' then updated_at end desc nulls last,
+    case when $13::text = 'newest' then created_at end desc nulls last,
+    updated_at desc,
+    created_at desc`;
 
 export const listAdminProperties = createServerFn({ method: "POST" })
   .validator(adminListSchema)
@@ -949,12 +999,8 @@ export const listAdminProperties = createServerFn({ method: "POST" })
       `select ${LIST_COLUMNS}
        from properties
        where ${adminPropertyWhereSql()}
-       order by
-         case when $7::text = 'title' then title end asc nulls last,
-         case when $7::text = 'price_desc' then ${ADMIN_PRICE_EXPR} end desc nulls last,
-         updated_at desc,
-         created_at desc
-       limit $8 offset $9`,
+       ${ADMIN_SORT_CLAUSE}
+       limit $14 offset $15`,
       [...filters, data.sort, data.limit, data.offset],
     );
     return rows.map((row) => mapProperty(row, { admin: true }));

@@ -1,8 +1,25 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarDays, Download, ExternalLink, Loader2, MessageCircle, Phone, Search, Trash2, UserRound } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  CalendarDays,
+  Download,
+  ExternalLink,
+  MessageCircle,
+  NotebookPen,
+  Phone,
+  RefreshCw,
+  Search,
+  Trash2,
+  UserRound,
+} from "lucide-react";
 import { toast } from "sonner";
 import { SITE } from "@/lib/site";
 import { formatToman } from "@/lib/money";
+import {
+  AdminErrorBanner,
+  AdminListSkeleton,
+  AdminPagination,
+} from "@/components/hirmand/admin-ui";
+import { adminErrorMessage, fa, useConfirmDialog } from "@/components/hirmand/admin-ui-utils";
 import { PROPERTY_OTHER_AMENITY_OPTIONS } from "@/lib/property-options";
 import { daysUntilDateOnly, formatPersianDate } from "@/lib/persian-date";
 
@@ -102,20 +119,52 @@ function amenityLabel(value: string) {
   return PROPERTY_OTHER_AMENITY_OPTIONS.find((item) => item.value === value)?.label ?? value;
 }
 
+const PAGE_SIZE = 25;
+
 export function AdminLeadManager() {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | LeadStatus>("all");
+  const [sort, setSort] = useState<"newest" | "oldest" | "name" | "follow_up">("newest");
+  const [page, setPage] = useState(1);
   const [exporting, setExporting] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [openNoteId, setOpenNoteId] = useState<string | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
+  const requestId = useRef(0);
+
+  // Search runs on the server; debounce so each keystroke does not hit the DB.
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedQuery(query), 350);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedQuery, statusFilter, sort]);
 
   const load = useCallback(async () => {
+    const currentRequest = ++requestId.current;
     setLoading(true);
+    setLoadError(null);
     try {
       const response = await fetch("/api/leads-admin", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "list" }),
+        body: JSON.stringify({
+          action: "list",
+          query: debouncedQuery.trim() || undefined,
+          status: statusFilter === "all" ? undefined : statusFilter,
+          sort,
+          limit: PAGE_SIZE,
+          offset: (page - 1) * PAGE_SIZE,
+        }),
       });
       if (!response.ok) {
         const failure = (await response.json().catch(() => null)) as
@@ -123,96 +172,89 @@ export function AdminLeadManager() {
           | null;
         throw new Error(failure?.statusMessage || failure?.message || "بارگذاری درخواست‌ها انجام نشد.");
       }
-      const data = (await response.json()) as { leads?: Lead[] };
+      const data = (await response.json()) as { leads?: Lead[]; total?: number };
+      // A slow page-1 request must never overwrite page 2.
+      if (currentRequest !== requestId.current) return;
       setLeads(Array.isArray(data.leads) ? data.leads : []);
+      setTotal(typeof data.total === "number" ? data.total : 0);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "بارگذاری درخواست‌ها انجام نشد.");
+      if (currentRequest !== requestId.current) return;
+      setLoadError(adminErrorMessage(error, "بارگذاری درخواست‌ها انجام نشد."));
     } finally {
-      setLoading(false);
+      if (currentRequest === requestId.current) setLoading(false);
     }
-  }, []);
+  }, [debouncedQuery, statusFilter, sort, page]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  async function updateStatus(id: string, status: LeadStatus) {
-    try {
-      const response = await fetch("/api/leads-admin", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "status", id, status }),
-      });
-      if (!response.ok) {
-        const result = (await response.json().catch(() => null)) as
-          | { statusMessage?: string; message?: string }
-          | null;
-        throw new Error(result?.statusMessage || result?.message || "تغییر وضعیت انجام نشد.");
-      }
-      setLeads((prev) => prev.map((lead) => (lead.id === id ? { ...lead, status } : lead)));
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "تغییر وضعیت انجام نشد.");
-    }
-  }
-
-  async function remove(id: string) {
-    if (!confirm("این درخواست حذف شود؟")) return;
-    try {
-      const response = await fetch("/api/leads-admin", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "delete", id }),
-      });
-      if (!response.ok) {
-        const failure = (await response.json().catch(() => null)) as
-          | { statusMessage?: string; message?: string }
-          | null;
-        throw new Error(failure?.statusMessage || failure?.message || "حذف درخواست انجام نشد.");
-      }
-      setLeads((prev) => prev.filter((lead) => lead.id !== id));
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "حذف درخواست انجام نشد.");
-    }
-  }
-
-  const filteredLeads = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return leads.filter((lead) => {
-      if (statusFilter !== "all" && lead.status !== statusFilter) return false;
-      if (!q) return true;
-      return [
-        lead.name,
-        lead.phone,
-        lead.peopleCount == null ? "" : String(lead.peopleCount),
-        lead.job,
-        lead.deal,
-        lead.propertyType,
-        lead.neighborhood,
-        lead.floorPreference,
-        lead.requestedAmenities.join(" "),
-        lead.consultant,
-        lead.note,
-        lead.budgetDeposit == null ? "" : String(lead.budgetDeposit),
-        lead.budgetRent == null ? "" : String(lead.budgetRent),
-        lead.budgetPurchase == null ? "" : String(lead.budgetPurchase),
-        lead.budgetSale == null ? "" : String(lead.budgetSale),
-        lead.budgetDepositMin == null ? "" : String(lead.budgetDepositMin),
-        lead.budgetDepositMax == null ? "" : String(lead.budgetDepositMax),
-        lead.budgetRentMin == null ? "" : String(lead.budgetRentMin),
-        lead.budgetRentMax == null ? "" : String(lead.budgetRentMax),
-        lead.budgetPurchaseMin == null ? "" : String(lead.budgetPurchaseMin),
-        lead.budgetPurchaseMax == null ? "" : String(lead.budgetPurchaseMax),
-        lead.budgetSaleMin == null ? "" : String(lead.budgetSaleMin),
-        lead.budgetSaleMax == null ? "" : String(lead.budgetSaleMax),
-        lead.requestedBedrooms == null ? "" : String(lead.requestedBedrooms),
-        lead.leaseDeadline == null ? "" : lead.leaseDeadline,
-        lead.leaseDeadline ? formatPersianDate(lead.leaseDeadline) : "",
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(q);
+  async function postLead(body: Record<string, unknown>) {
+    const response = await fetch("/api/leads-admin", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
     });
-  }, [leads, query, statusFilter]);
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as
+        | { statusMessage?: string; message?: string }
+        | null;
+      throw new Error(result?.statusMessage || result?.message || "درخواست انجام نشد.");
+    }
+    return response;
+  }
+
+  async function updateStatus(id: string, status: LeadStatus) {
+    if (busyId) return;
+    setBusyId(id);
+    try {
+      await postLead({ action: "status", id, status });
+      setLeads((prev) => prev.map((lead) => (lead.id === id ? { ...lead, status } : lead)));
+      toast.success("وضعیت درخواست به‌روزرسانی شد.");
+    } catch (error) {
+      toast.error(adminErrorMessage(error, "تغییر وضعیت انجام نشد."));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function saveNote(id: string) {
+    if (savingNote) return;
+    setSavingNote(true);
+    try {
+      await postLead({ action: "note", id, note: noteDraft });
+      setLeads((prev) => prev.map((lead) => (lead.id === id ? { ...lead, note: noteDraft } : lead)));
+      setOpenNoteId(null);
+      toast.success("یادداشت ذخیره شد.");
+    } catch (error) {
+      toast.error(adminErrorMessage(error, "ذخیره یادداشت انجام نشد."));
+    } finally {
+      setSavingNote(false);
+    }
+  }
+
+  async function remove(id: string, name: string) {
+    const ok = await confirm({
+      title: "حذف درخواست",
+      description: `درخواست «${name}» برای همیشه حذف می‌شود.`,
+      confirmLabel: "حذف دائمی",
+      tone: "danger",
+    });
+    if (!ok) return;
+    if (busyId) return;
+    setBusyId(id);
+    try {
+      await postLead({ action: "delete", id });
+      toast.success("درخواست حذف شد.");
+      await load();
+    } catch (error) {
+      toast.error(adminErrorMessage(error, "حذف درخواست انجام نشد."));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  const filteredLeads = leads;
 
   function budgetWhatsappHref(lead: Lead) {
     const phone = lead.phone
@@ -294,23 +336,23 @@ export function AdminLeadManager() {
 
   return (
     <div className="admin-lead-manager">
+      {confirmDialog}
       <section className="admin-panel">
         <div className="admin-panel-head">
           <div>
-            <span className="kicker">CRM</span>
+            <span className="kicker">CRM درخواست‌ها</span>
             <h2>
-              {filteredLeads.length.toLocaleString("fa-IR")} درخواست
-              {" · "}
-              {filteredLeads.filter((lead) => lead.status === "new").length.toLocaleString("fa-IR")} جدید
+              {fa(total)} درخواست
+              {statusFilter === "all" && !debouncedQuery ? "" : " مطابق فیلتر فعلی"}
             </h2>
           </div>
           <div className="admin-list-toolbar">
             <label className="admin-search">
-              <Search size={16} />
+              <Search size={16} aria-hidden="true" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="جستجوی نام، تلفن، محله…"
+                placeholder="جستجوی نام، تلفن، محله، مشاور یا یادداشت…"
                 aria-label="جستجوی درخواست‌ها"
               />
             </label>
@@ -329,26 +371,45 @@ export function AdminLeadManager() {
               <option value="closed">ناموفق / بسته‌شده</option>
               <option value="spam">اسپم</option>
             </select>
+            <select
+              className="admin-lead-status-select"
+              value={sort}
+              onChange={(event) => setSort(event.target.value as typeof sort)}
+              aria-label="مرتب‌سازی درخواست‌ها"
+            >
+              <option value="newest">جدیدترین</option>
+              <option value="oldest">قدیمی‌ترین</option>
+              <option value="name">نام مشتری</option>
+              <option value="follow_up">نزدیک‌ترین پیگیری</option>
+            </select>
             <button type="button" className="btn-ghost" onClick={() => void exportCsv()} disabled={exporting}>
               <Download size={16} />
               {exporting ? "در حال ساخت…" : "خروجی CSV"}
             </button>
-            <button type="button" className="btn-ghost" onClick={() => void load()}>
+            <button type="button" className="btn-ghost" onClick={() => void load()} disabled={loading}>
+              <RefreshCw size={16} className={loading ? "admin-spin" : undefined} />
               به‌روزرسانی
             </button>
           </div>
         </div>
 
-        {loading ? (
-          <div className="admin-empty">
-            <Loader2 size={24} className="admin-spin" />
-            <strong>در حال بارگذاری درخواست‌ها...</strong>
+        {loadError ? (
+          <div style={{ padding: "14px 20px" }}>
+            <AdminErrorBanner
+              message={loadError}
+              onRetry={() => void load()}
+              onDismiss={() => setLoadError(null)}
+            />
           </div>
-        ) : leads.length === 0 ? (
+        ) : null}
+
+        {loading && filteredLeads.length === 0 ? (
+          <AdminListSkeleton rows={5} />
+        ) : total === 0 && !debouncedQuery && statusFilter === "all" ? (
           <div className="admin-empty">
             <UserRound size={30} />
             <strong>هنوز درخواستی ثبت نشده</strong>
-            <p>Leadهای فرم درخواست ملک اینجا نمایش داده می‌شوند.</p>
+            <p>درخواست‌های فرم ملک و بودجه‌یابی اینجا نمایش داده می‌شوند.</p>
           </div>
         ) : filteredLeads.length === 0 ? (
           <div className="admin-empty">
@@ -488,8 +549,39 @@ export function AdminLeadManager() {
                       </div>
                     </div>
                   ) : null}
-                  {lead.note ? <div className="admin-lead-note">{lead.note}</div> : null}
-                  <small>{formatDate(lead.createdAt)}</small>
+                  {lead.note ? (
+                    <div className="admin-lead-note">
+                      <strong>یادداشت: </strong>
+                      {lead.note}
+                    </div>
+                  ) : null}
+                  {openNoteId === lead.id ? (
+                    <div className="admin-lead-note-editor">
+                      <label className="field">
+                        <span>یادداشت و پیگیری داخلی این درخواست</span>
+                        <textarea
+                          rows={4}
+                          value={noteDraft}
+                          onChange={(event) => setNoteDraft(event.target.value)}
+                          placeholder="مثلاً: تماس گرفته شد، منتظر تأیید بودجه از مشتری…"
+                        />
+                      </label>
+                      <div className="admin-lead-note-actions">
+                        <button
+                          type="button"
+                          className="btn-gold"
+                          onClick={() => void saveNote(lead.id)}
+                          disabled={savingNote}
+                        >
+                          {savingNote ? "در حال ذخیره…" : "ذخیره یادداشت"}
+                        </button>
+                        <button type="button" className="btn-ghost" onClick={() => setOpenNoteId(null)}>
+                          انصراف
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                  <small>ثبت: {formatDate(lead.createdAt)}</small>
                 </div>
 
                 <div className="admin-lead-actions">
@@ -530,8 +622,9 @@ export function AdminLeadManager() {
                   <select
                     className="admin-lead-status-select"
                     value={lead.status}
+                    disabled={busyId === lead.id}
                     onChange={(event) => void updateStatus(lead.id, event.target.value as LeadStatus)}
-                    aria-label="وضعیت درخواست"
+                    aria-label={"وضعیت درخواست " + lead.name}
                   >
                     <option value="new">جدید</option>
                     <option value="contacted">تماس گرفته شد</option>
@@ -543,9 +636,23 @@ export function AdminLeadManager() {
                   </select>
                   <button
                     type="button"
+                    className="admin-icon-btn"
+                    title="ثبت یادداشت"
+                    aria-label={"ثبت یادداشت برای " + lead.name}
+                    onClick={() => {
+                      setNoteDraft(lead.note ?? "");
+                      setOpenNoteId(lead.id);
+                    }}
+                  >
+                    <NotebookPen size={16} />
+                  </button>
+                  <button
+                    type="button"
                     className="admin-icon-btn danger"
-                    onClick={() => void remove(lead.id)}
-                    title="حذف"
+                    title="حذف درخواست"
+                    aria-label={"حذف درخواست " + lead.name}
+                    disabled={busyId === lead.id}
+                    onClick={() => void remove(lead.id, lead.name)}
                   >
                     <Trash2 size={16} />
                   </button>
@@ -554,6 +661,16 @@ export function AdminLeadManager() {
             ))}
           </div>
         )}
+
+        {total > PAGE_SIZE ? (
+          <AdminPagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={total}
+            busy={loading}
+            onPageChange={setPage}
+          />
+        ) : null}
       </section>
     </div>
   );
