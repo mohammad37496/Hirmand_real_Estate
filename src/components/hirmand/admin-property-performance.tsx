@@ -38,6 +38,7 @@ type PerformanceData = {
     rent: number | null;
     updatedAt: string;
     publishedAt: string | null;
+    contactName: string;
   } | null;
   events: {
     property_view: number;
