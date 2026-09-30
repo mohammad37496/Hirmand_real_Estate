@@ -15,7 +15,7 @@ function cleanText(value:unknown,max=300){return typeof value==="string"?value.t
 function serializeDocument(row:Record<string,unknown>){
   return {id:String(row.id),leadId:row.lead_id==null?null:String(row.lead_id),propertyId:row.property_id==null?null:String(row.property_id),
     leadName:String(row.lead_name??""),propertyTitle:String(row.property_title??""),title:String(row.title??""),documentType:String(row.document_type??"other"),
-    status:String(row.status??"pending"),fileUrl:String(row.file_url??""),fileName:String(row.file_name??""),mimeType:String(row.mime_type??"application/octet-stream"),
+    status:String(row.status??"pending"),fileUrl: row.media_id != null ? "/api/admin-document-media/" + String(row.media_id) : String(row.file_url ?? ""),fileName:String(row.file_name??""),mimeType:String(row.mime_type??"application/octet-stream"),
     sizeBytes:Number(row.size_bytes)||0,notes:String(row.notes??""),dueAt:row.due_at==null?null:new Date(String(row.due_at)).toISOString(),
     createdAt:new Date(String(row.created_at)).toISOString(),updatedAt:new Date(String(row.updated_at)).toISOString()};
 }
