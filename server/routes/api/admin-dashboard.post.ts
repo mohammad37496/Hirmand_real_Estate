@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const sql = await getSql();
-  const [propertyStats, leadStats, propertyTypes, leadDays, musicStats, recentLeads, visitorStats, activeVisitorStats, visitorDays, topPages, topProperties, eventStats, visitorSources, followUps, consultantStats, consultantPerformance] = await Promise.all([    sql.query<Record<string, unknown>>(
+  const [propertyStats, leadStats, propertyTypes, leadDays, musicStats, recentLeads, visitorStats, activeVisitorStats, visitorDays, topPages, topProperties, eventStats, visitorSources, followUps, consultantStats, consultantPerformance, leadSla] = await Promise.all([    sql.query<Record<string, unknown>>(
       `select
         count(*)::int as total,
         count(*) filter (where status = 'published')::int as published,
@@ -247,6 +247,26 @@ export default defineEventHandler(async (event) => {
       return [{}];
     }),
     sql.query<Record<string, unknown>>(
+      `select
+         count(*) filter (
+           where l.status in ('new','contacted','follow_up')
+             and l.created_at < current_timestamp - interval '24 hours'
+             and not exists (
+               select 1 from lead_activities a
+               where a.lead_id = l.id
+                 and a.activity_type in ('call','whatsapp','visit')
+             )
+         )::int as overdue,
+         count(*) filter (
+           where l.status = 'new'
+             and l.created_at < current_timestamp - interval '4 hours'
+         )::int as new_over_4h
+       from leads l`
+    ).catch((error) => {
+      console.error("[admin-dashboard] lead SLA unavailable", error);
+      return [{}];
+    }),
+    sql.query<Record<string, unknown>>(
       `with file_stats as (
          select lower(trim(contact_name)) as key,
                 count(*) filter (where status = 'published')::int as files
@@ -388,6 +408,10 @@ export default defineEventHandler(async (event) => {
     followUps: {
       due: Number(followUp.due) || 0,
       next7: Number(followUp.next7) || 0,
+    },
+    leadSla: {
+      overdue: Number((leadSla[0] ?? {}).overdue) || 0,
+      newOver4Hours: Number((leadSla[0] ?? {}).new_over_4h) || 0,
     },
     consultantPerformance: consultantPerformance.map((row) => ({
       id: String(row.id),
