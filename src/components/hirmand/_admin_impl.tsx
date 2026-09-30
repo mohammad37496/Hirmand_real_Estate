@@ -348,7 +348,8 @@ function getPublishReadinessForForm(form: FormState) {
     latitude: form.latitude,
     longitude: form.longitude,
   });
-}function toDateTimeLocal(value: string | null | undefined) {
+}
+function toDateTimeLocal(value: string | null | undefined) {
   if (!value) return "";
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return "";
