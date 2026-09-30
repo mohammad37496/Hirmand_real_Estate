@@ -18,6 +18,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { AdminCardSkeleton, AdminErrorBanner } from "@/components/hirmand/admin-ui";
+import { AdminCampaignLinkBuilder } from "@/components/hirmand/admin-campaign-link-builder";
 import { fa, faBytes } from "@/components/hirmand/admin-ui-utils";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
@@ -758,6 +759,8 @@ export function AdminDashboard({
           </div>
         </section>
       </div>
+
+      <AdminCampaignLinkBuilder />
 
       <section className="admin-panel" style={{ marginTop: 18 }}>
         <div className="admin-panel-head">
