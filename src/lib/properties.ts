@@ -25,6 +25,7 @@ import {
 } from "@/lib/property-options";
 
 export type PropertyStatus = "draft" | "published" | "archived";
+export type PropertyAvailabilityStatus = "available" | "reserved" | "sold" | "rented" | "unavailable";
 export type PropertyTransaction = "buy" | "sell" | "rent" | "mortgage";
 export type PropertyType =
   | "apartment"
@@ -43,6 +44,7 @@ export type Property = {
   id: string;
   slug: string;
   status: PropertyStatus;
+  availabilityStatus: PropertyAvailabilityStatus;
   featured: boolean;
   featuredUntil?: string | null;
   title: string;
@@ -93,6 +95,7 @@ export type Property = {
 export type PropertyHistoryState = {
   title: string | null;
   status: PropertyStatus | null;
+  availabilityStatus: PropertyAvailabilityStatus | null;
   featured: boolean | null;
   price: string | null;
   deposit: string | null;
@@ -109,6 +112,7 @@ export type PropertyCardData = Pick<
   | "id"
   | "slug"
   | "status"
+  | "availabilityStatus"
   | "featured"
   | "title"
   | "transactionType"
@@ -271,6 +275,7 @@ export const propertyInputSchema = z.object({
   ownerPhone: z.string().trim().max(30).optional().default(""),
   ownerInfo: z.string().trim().max(2000).optional().default(""),
   status: z.enum(["draft", "published", "archived"]).default("published"),
+  availabilityStatus: z.enum(["available","reserved","sold","rented","unavailable"]).default("available"),
   featured: z.boolean().default(false),
   featuredUntil: z.string().trim().max(80).nullable().optional().default(null),
   latitude: z.number().finite().min(-90).max(90).nullable().optional().default(null),
@@ -349,6 +354,10 @@ function mapProperty(row: Record<string, unknown>, options: { admin?: boolean } 
     id: String(row.id),
     slug: String(row.slug),
     status: row.status as PropertyStatus,
+    availabilityStatus:
+      row.availability_status === "reserved" || row.availability_status === "sold" || row.availability_status === "rented" || row.availability_status === "unavailable"
+        ? row.availability_status
+        : "available",
     featured: Boolean(row.featured),
     featuredUntil: row.featured_until ? new Date(String(row.featured_until)).toISOString() : null,
     title: String(row.title),
@@ -400,7 +409,7 @@ function mapProperty(row: Record<string, unknown>, options: { admin?: boolean } 
 }
 
 const LIST_COLUMNS = `
-  id, slug, status, featured, featured_until, title, transaction_type, property_type, city,
+  id, slug, status, availability_status, featured, featured_until, title, transaction_type, property_type, city,
   neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
   built_year, parking, elevator, storage, painted, wallpaper, convertible, cabinet_type, flooring_type, cooling_system,
   heating_system, wall_closet_type, other_amenities, price, deposit, rent,
@@ -411,7 +420,7 @@ const LIST_COLUMNS = `
 `;
 
 const CARD_COLUMNS = `
-  id, slug, status, featured, featured_until, title, transaction_type, property_type,
+  id, slug, status, availability_status, featured, featured_until, title, transaction_type, property_type,
   neighborhood, area_m2, bedrooms, parking, elevator, price, deposit, rent,
   nullif(images->>0, '') as image,
   price_drop_percent,
@@ -423,6 +432,10 @@ function mapPropertyCard(row: Record<string, unknown>): PropertyCardData {
     id: String(row.id),
     slug: String(row.slug),
     status: row.status as PropertyStatus,
+    availabilityStatus:
+      row.availability_status === "reserved" || row.availability_status === "sold" || row.availability_status === "rented" || row.availability_status === "unavailable"
+        ? row.availability_status
+        : "available",
     featured: Boolean(row.featured),
     featuredUntil: row.featured_until ? new Date(String(row.featured_until)).toISOString() : null,
     title: String(row.title),
@@ -444,7 +457,7 @@ function mapPropertyCard(row: Record<string, unknown>): PropertyCardData {
 }
 
 const DETAIL_COLUMNS = `
-  id, slug, status, featured, featured_until, title, transaction_type, property_type, city,
+  id, slug, status, availability_status, featured, featured_until, title, transaction_type, property_type, city,
   neighborhood, address, area_m2, bedrooms, bathrooms, floor, total_floors,
   built_year, parking, elevator, storage, painted, wallpaper, convertible, cabinet_type, flooring_type, cooling_system,
   heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
@@ -1156,6 +1169,7 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
            jsonb_build_object(
              'title', p.title,
              'status', p.status,
+             'availabilityStatus', p.availability_status,
              'featured', p.featured,
              'price', p.price,
              'deposit', p.deposit,
@@ -1228,6 +1242,7 @@ export const bulkSetPropertyFeatured = createServerFn({ method: "POST" })
            jsonb_build_object(
              'title', p.title,
              'status', p.status,
+             'availabilityStatus', p.availability_status,
              'featured', p.featured,
              'price', p.price,
              'deposit', p.deposit,
@@ -1420,7 +1435,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
         features, images, contact_name, contact_phone, published_at, featured_until,
         latitude, longitude, floor_label, painted, wallpaper, convertible, orientation,
-        owner_name, owner_phone, owner_info
+        owner_name, owner_phone, owner_info, availability_status
       ) values (
         $1, $2, $3, $4, $5, $6, $7, 'اصفهان',
         $8, $9, $10::integer, $11::smallint, $12::smallint, $13::smallint, $14::smallint,
@@ -1428,7 +1443,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         $22::text, $23::text, $24::jsonb, $25::numeric, $26::numeric, $27::numeric, $28::text,
         $29::jsonb, $30::jsonb, $31::text, $32::text, $33::timestamptz, $34::timestamptz,
         $35::double precision, $36::double precision, $37::text, $38::boolean, $39::boolean, $40::boolean, $41::text,
-        $42::text, $43::text, $44::text
+        $42::text, $43::text, $44::text, $45::text
       )
       on conflict (id) do update set
         slug = excluded.slug,
@@ -1468,6 +1483,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         owner_name = excluded.owner_name,
         owner_phone = excluded.owner_phone,
         owner_info = excluded.owner_info,
+        availability_status = excluded.availability_status,
         previous_price = properties.price,
         previous_deposit = properties.deposit,
         previous_rent = properties.rent,
@@ -1614,6 +1630,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         data.ownerName.trim(),
         data.ownerPhone.trim(),
         data.ownerInfo.trim(),
+        data.availabilityStatus,
       ],
     );
 
@@ -1668,6 +1685,7 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
         return {
           title: null,
           status: null,
+          availabilityStatus: null,
           featured: null,
           price: null,
           deposit: null,
@@ -1685,6 +1703,10 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
         status:
           row.status === "draft" || row.status === "published" || row.status === "archived"
             ? row.status
+            : null,
+        availabilityStatus:
+          row.availabilityStatus === "reserved" || row.availabilityStatus === "sold" || row.availabilityStatus === "rented" || row.availabilityStatus === "unavailable" || row.availabilityStatus === "available"
+            ? row.availabilityStatus
             : null,
         featured: typeof row.featured === "boolean" ? row.featured : null,
         price: row.price == null ? null : String(row.price),
@@ -1707,6 +1729,7 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
         changedAt: new Date(String(row.changed_at)).toISOString(),
         beforeTitle: before.title,
         beforeStatus: before.status,
+        beforeAvailabilityStatus: before.availabilityStatus,
         beforeFeatured: before.featured,
         beforePrice: before.price,
         beforeDeposit: before.deposit,
@@ -1715,6 +1738,7 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
         beforeContactPhone: before.contactPhone,
         afterTitle: after.title,
         afterStatus: after.status,
+        afterAvailabilityStatus: after.availabilityStatus,
         afterFeatured: after.featured,
         afterPrice: after.price,
         afterDeposit: after.deposit,

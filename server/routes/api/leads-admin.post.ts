@@ -4,6 +4,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-sessi
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 
 type Status = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
+type VisitStatus = "none" | "requested" | "confirmed" | "completed" | "cancelled";
 
 const STATUSES: Status[] = ["new", "contacted", "follow_up", "visited", "contract", "closed", "spam"];
 
@@ -66,7 +67,7 @@ function csvDate(value: unknown) {
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
   const body = (await readBody(event)) as {
-    action?: "list" | "status" | "delete" | "export" | "note" | "follow_up" | "activity" | "activities";
+    action?: "list" | "status" | "visit_status" | "delete" | "export" | "note" | "follow_up" | "activity" | "activities";
     id?: string;
     status?: Status;
     query?: string;
@@ -79,6 +80,7 @@ export default defineEventHandler(async (event) => {
     activityTitle?: string;
     activityNote?: string;
     activityMetadata?: Record<string, unknown>;
+    visitStatus?: VisitStatus;
   };
 
   if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
@@ -122,7 +124,7 @@ export default defineEventHandler(async (event) => {
     const rows = await sql.query<Record<string, unknown>>(
       "select name, phone, people_count, job, deal, property_type, neighborhood, consultant, status, note, source, " +
         "acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, follow_up_at, last_contacted_at, " +
-        "lease_deadline, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_deposit_min, budget_deposit_max, budget_rent_min, budget_rent_max, budget_purchase_min, budget_purchase_max, budget_sale_min, budget_sale_max, budget_equivalent, budget_bedrooms, floor_preference, requested_bedrooms, requested_amenities, match_count, created_at " +
+        "property_id, visit_preferred_at, visit_requested_at, visit_status, lease_deadline, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_deposit_min, budget_deposit_max, budget_rent_min, budget_rent_max, budget_purchase_min, budget_purchase_max, budget_sale_min, budget_sale_max, budget_equivalent, budget_bedrooms, floor_preference, requested_bedrooms, requested_amenities, match_count, created_at " +
         "from leads where " + conditions.join(" and ") +
         " order by created_at desc limit 50000",
       params,
@@ -137,7 +139,14 @@ export default defineEventHandler(async (event) => {
       closed: "ناموفق / بسته‌شده",
       spam: "اسپم",
     };
-    const header = ["نام", "تلفن", "تعداد نفرات", "شغل", "معامله", "نوع ملک", "محله", "طبقه", "مشاور", "وضعیت", "منبع جذب", "رهن از", "رهن تا", "اجاره از", "اجاره تا", "خرید از", "خرید تا", "فروش از", "فروش تا", "معادل رهنی", "خواب موردنظر", "خواب بودجه‌یابی", "تعداد فایل پیشنهادی", "امکانات موردنظر", "توضیحات", "مهلت رهن و اجاره", "تاریخ"];
+    const visitLabels: Record<VisitStatus, string> = {
+      none: "بدون بازدید",
+      requested: "درخواست بازدید",
+      confirmed: "تأییدشده",
+      completed: "انجام‌شده",
+      cancelled: "لغوشده",
+    };
+    const header = ["نام", "تلفن", "تعداد نفرات", "شغل", "معامله", "نوع ملک", "محله", "طبقه", "مشاور", "وضعیت", "وضعیت بازدید", "زمان بازدید", "منبع جذب", "رهن از", "رهن تا", "اجاره از", "اجاره تا", "خرید از", "خرید تا", "فروش از", "فروش تا", "معادل رهنی", "خواب موردنظر", "خواب بودجه‌یابی", "تعداد فایل پیشنهادی", "امکانات موردنظر", "توضیحات", "مهلت رهن و اجاره", "تاریخ"];
     const lines = [
       header.map(csvCell).join(","),
       ...rows.map((row) =>
@@ -152,6 +161,8 @@ export default defineEventHandler(async (event) => {
           row.floor_preference,
           row.consultant,
           labels[String(row.status) as Status] ?? row.status,
+          visitLabels[String(row.visit_status) as VisitStatus] ?? "بدون بازدید",
+          row.visit_preferred_at == null ? "" : csvDate(row.visit_preferred_at),
           row.acquisition_source ?? row.source,
           row.budget_deposit_min ?? row.budget_deposit,
           row.budget_deposit_max ?? row.budget_deposit,
@@ -216,7 +227,7 @@ export default defineEventHandler(async (event) => {
     const [rows, countRows] = await Promise.all([
       sql.query<Record<string, unknown>>(
         "select id,name,phone,people_count,job,deal,property_type,neighborhood,floor_preference,consultant,note,status,source, " +
-          "acquisition_source,acquisition_medium,acquisition_campaign,acquisition_referrer,follow_up_at,last_contacted_at,lease_deadline, " +
+          "acquisition_source,acquisition_medium,acquisition_campaign,acquisition_referrer,follow_up_at,last_contacted_at,property_id,visit_preferred_at,visit_requested_at,visit_status,lease_deadline, " +
           "budget_deposit,budget_rent,budget_purchase,budget_sale,budget_deposit_min,budget_deposit_max,budget_rent_min,budget_rent_max,budget_purchase_min,budget_purchase_max,budget_sale_min,budget_sale_max,budget_equivalent,budget_bedrooms,budget_rate,requested_bedrooms,requested_amenities,matched_properties,match_count,created_at " +
           `from leads where ${conditions.join(" and ")} order by ${orderBy} ` +
           `limit $${limitIndex} offset $${offsetIndex}`,
@@ -251,6 +262,13 @@ export default defineEventHandler(async (event) => {
         acquisitionCampaign: row.acquisition_campaign == null ? null : String(row.acquisition_campaign),
         acquisitionReferrer: row.acquisition_referrer == null ? null : String(row.acquisition_referrer),
         followUpAt: row.follow_up_at == null ? null : new Date(String(row.follow_up_at)).toISOString(),
+        propertyId: row.property_id == null ? null : String(row.property_id),
+        visitPreferredAt: row.visit_preferred_at == null ? null : new Date(String(row.visit_preferred_at)).toISOString(),
+        visitRequestedAt: row.visit_requested_at == null ? null : new Date(String(row.visit_requested_at)).toISOString(),
+        visitStatus:
+          row.visit_status === "requested" || row.visit_status === "confirmed" || row.visit_status === "completed" || row.visit_status === "cancelled"
+            ? row.visit_status
+            : "none",
         lastContactedAt: row.last_contacted_at == null ? null : new Date(String(row.last_contacted_at)).toISOString(),
         leaseDeadline: row.lease_deadline == null ? null : String(row.lease_deadline),
         budgetDeposit: row.budget_deposit == null ? null : Number(row.budget_deposit),
@@ -310,6 +328,23 @@ export default defineEventHandler(async (event) => {
       ],
     ).catch(() => {});
     return { success: true };
+  }
+
+  if (body.action === "visit_status") {
+    const visitStatus = body.visitStatus;
+    if (!visitStatus || !["none","requested","confirmed","completed","cancelled"].includes(visitStatus)) {
+      throw createError({ statusCode: 400, statusMessage: "وضعیت بازدید معتبر نیست." });
+    }
+    const rows = await sql.query<{ id: string }>(
+      "update leads set visit_status=$2, updated_at=current_timestamp where id=$1 returning id",
+      [body.id, visitStatus],
+    );
+    if (!rows[0]) throw createError({ statusCode: 404, statusMessage: "درخواست پیدا نشد." });
+    await sql.query(
+      "insert into lead_activities (lead_id, activity_type, title, note, metadata) values ($1,'visit',$2,$3,$4::jsonb)",
+      [body.id, "وضعیت بازدید تغییر کرد", "وضعیت بازدید: " + visitStatus, "", JSON.stringify({ visitStatus })],
+    ).catch(() => {});
+    return { success: true, visitStatus };
   }
 
   if (body.action === "note") {

@@ -10,7 +10,9 @@ export type AnalyticsEvent =
   | "budget_match_submit"
   | "budget_match_contact"
   | "search_share"
-  | "property_search";
+  | "property_search"
+  | "visit_request_click"
+  | "visit_request";
 
 export function trackAnalyticsEvent(
   event: AnalyticsEvent,

@@ -111,6 +111,16 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
   const code = property.id.slice(-6).toUpperCase();
   const prices = priceLines(property);
   const unitPrice = unitPriceLabel(property);
+  const availabilityLabel =
+    property.availabilityStatus === "reserved"
+      ? "رزرو موقت"
+      : property.availabilityStatus === "sold"
+        ? "فروخته‌شده"
+        : property.availabilityStatus === "rented"
+          ? "اجاره‌داده‌شده"
+          : property.availabilityStatus === "unavailable"
+            ? "فعلاً ناموجود"
+            : "موجود";
 
   return (
     <article className="pcard">
@@ -135,6 +145,13 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
               <span className="pcard-badge pcard-badge-featured">ویژه</span>
             ) : null}
             <span className="pcard-badge pcard-badge-transaction">{transaction}</span>
+            <span className={
+              property.availabilityStatus === "available"
+                ? "pcard-badge pcard-badge-availability pcard-badge-availability-ok"
+                : "pcard-badge pcard-badge-availability"
+            }>
+              {availabilityLabel}
+            </span>
           </div>
           {property.priceDropPercent && property.priceDropPercent > 0 ? (
             <span className="pcard-badge pcard-badge-discount">

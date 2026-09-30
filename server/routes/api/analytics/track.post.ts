@@ -23,6 +23,8 @@ const EVENT_NAMES = new Set([
   "budget_match_contact",
   "search_share",
   "property_search",
+  "visit_request_click",
+  "visit_request",
   "heartbeat",
 ]);
 
