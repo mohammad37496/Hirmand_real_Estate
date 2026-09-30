@@ -8,7 +8,7 @@ const ALLOWED=new Set(["application/pdf","image/jpeg","image/png","image/webp"])
 function mimeFromFilename(filename:string){const ext=filename.split(".").pop()?.toLowerCase()??"";if(ext==="pdf")return"application/pdf";if(ext==="jpg"||ext==="jpeg")return"image/jpeg";if(ext==="png")return"image/png";if(ext==="webp")return"image/webp";return"";}
 
 export default defineEventHandler((event)=>handleChunkedUpload(event,{
-  kind:"admin-document",pathPrefix:"admin/documents",maxBytes:MAX_BYTES,textFields:[
+  kind:"admin-document",pathPrefix:"admin/documents",maxBytes:MAX_BYTES,databaseOnly:true,textFields:[
     {column:"title",label:"عنوان سند",required:true,maxLength:160},{column:"artist",label:"اطلاعات سند",required:true,maxLength:1800},
   ],
   resolveContentType:({filename,declared})=>ALLOWED.has(declared)?declared:ALLOWED.has(mimeFromFilename(filename))?mimeFromFilename(filename):null,
