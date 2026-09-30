@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { PROPERTY_OTHER_AMENITY_OPTIONS, labelForOption, PROPERTY_CABINET_OPTIONS, PROPERTY_FLOORING_OPTIONS, PROPERTY_COOLING_OPTIONS, PROPERTY_HEATING_OPTIONS, PROPERTY_WALL_CLOSET_OPTIONS } from "@/lib/property-options";
 import { formatToman } from "@/lib/money";
 import { propertyPath } from "@/lib/property-path";
+import { SITE } from "@/lib/site";
 
 type MatchMode = "price" | "amenities" | "both" | "smart";
 
@@ -214,6 +215,8 @@ export function AdminMatchingManager() {
   const [matching, setMatching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [activities, setActivities] = useState<Array<{ id:number; type:string; title:string; note:string; createdAt:string }>>([]);
+  const [feedbackBusy, setFeedbackBusy] = useState<string | null>(null);
 
   const loadLeads = async () => {
     setLoadingLeads(true);
@@ -254,6 +257,75 @@ export function AdminMatchingManager() {
 
   const selectedLead = leads.find((lead) => lead.id === selectedLeadId) ?? null;
 
+  async function loadActivities(leadId: string) {
+    try {
+      const response = await fetch("/api/leads-admin", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: "activities", id: leadId }),
+      });
+      const data = await response.json().catch(() => ({}));
+      setActivities(Array.isArray(data.activities) ? data.activities : []);
+    } catch {
+      setActivities([]);
+    }
+  }
+
+  function phoneIntl(phone: string) {
+    const normalized = phone
+      .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+      .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+      .replace(/[\s\-()]/g, "");
+    return normalized.startsWith("0098")
+      ? normalized.slice(2)
+      : normalized.startsWith("98")
+        ? normalized
+        : normalized.replace(/^0/, "98");
+  }
+
+  function whatsappForLead(lead: Lead, selectedMatches: MatchProperty[]) {
+    const lines = [
+      "سلام " + lead.name + "،",
+      "فایل‌هایی که بر اساس درخواست شما در هیرمند پیشنهاد شده:",
+      ...selectedMatches.slice(0, 8).map((item, index) =>
+        (index + 1) + ". " + item.title + " — " + SITE.url + propertyPath(item)
+      ),
+      "",
+      "برای هماهنگی بازدید با ما در تماس باشید.",
+    ];
+    return "https://wa.me/" + phoneIntl(lead.phone) + "?text=" + encodeURIComponent(lines.join("\n"));
+  }
+
+  async function submitFeedback(match: MatchProperty, feedback: "sent" | "liked" | "rejected" | "visited") {
+    if (!selectedLeadId || feedbackBusy) return;
+    setFeedbackBusy(match.id);
+    try {
+      const response = await fetch("/api/admin-match", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "feedback",
+          leadId: selectedLeadId,
+          propertyId: match.id,
+          propertyTitle: match.title,
+          feedback,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.statusMessage || "ثبت نتیجه فایل انجام نشد.");
+      toast.success(
+        feedback === "sent" ? "ارسال فایل ثبت شد." :
+        feedback === "liked" ? "پسند مشتری ثبت شد." :
+        feedback === "rejected" ? "رد فایل ثبت شد." : "بازدید ثبت شد.",
+      );
+      await loadActivities(selectedLeadId);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "ثبت نتیجه فایل انجام نشد.");
+    } finally {
+      setFeedbackBusy(null);
+    }
+  }
+
   async function runMatch() {
     if (!selectedLeadId || matching) return;
     setMatching(true);
@@ -268,6 +340,7 @@ export function AdminMatchingManager() {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data?.statusMessage || data?.message || "مچ کردن انجام نشد.");
       setMatches(Array.isArray(data.matches) ? data.matches : []);
+      await loadActivities(selectedLeadId);
       if (!data.matches?.length) toast.info("برای این درخواست، فایل دارای سیگنال تطبیق پیدا نشد.");
     } catch (e) {
       const message = e instanceof Error ? e.message : "مچ کردن انجام نشد.";
@@ -279,8 +352,12 @@ export function AdminMatchingManager() {
   }
 
   useEffect(() => {
-    if (!selectedLeadId) return;
+    if (!selectedLeadId) {
+      setActivities([]);
+      return;
+    }
     setExpandedId(null);
+    setActivities([]);
     void runMatch();
     // runMatch intentionally stays out of the dependency list: it is an event-style helper.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -393,6 +470,20 @@ export function AdminMatchingManager() {
                 ) : null}
               </section>
 
+              <section className="admin-panel admin-matching-activity">
+                <div className="admin-panel-head">
+                  <div><span className="kicker">سوابق مشتری</span><h2>تاریخچه پیگیری</h2></div>
+                  <span className="admin-dashboard-summary">{activities.length.toLocaleString("fa-IR")} رویداد</span>
+                </div>
+                {activities.length ? (
+                  <div className="admin-matching-timeline">
+                    {activities.slice(0, 12).map((item) => (
+                      <div key={item.id}><span></span><div><strong>{item.title}</strong><small>{new Date(item.createdAt).toLocaleString("fa-IR")}</small>{item.note ? <p>{item.note}</p> : null}</div></div>
+                    ))}
+                  </div>
+                ) : <div className="admin-matching-empty">هنوز سابقه‌ای برای این مشتری ثبت نشده است.</div>}
+              </section>
+
               <section className="admin-panel admin-matching-controls">
                 <div className="admin-panel-head">
                   <div>
@@ -403,6 +494,14 @@ export function AdminMatchingManager() {
                     {matching ? <RefreshCw size={16} className="admin-spin" /> : <Sparkles size={16} />}
                     {matching ? "در حال مچ کردن…" : "مچ مجدد"}
                   </button>
+                </div>
+                <div className="admin-matching-send-all">
+                  {matches.length ? (
+                    <a className="btn-gold" href={whatsappForLead(selectedLead, matches)} target="_blank" rel="noopener noreferrer"
+                      onClick={() => void Promise.all(matches.slice(0, 8).map((item) => submitFeedback(item, "sent")))}>
+                      <Phone size={15} /> ارسال فایل‌های پیشنهادی در واتساپ
+                    </a>
+                  ) : null}
                 </div>
                 <div className="admin-matching-modes">
                   {(Object.entries(MODE_META) as Array<[MatchMode, typeof MODE_META.smart]>).map(([value, meta]) => (
@@ -461,6 +560,10 @@ export function AdminMatchingManager() {
 
                           <div className="admin-matching-card-actions">
                             <a className="btn-gold" href={propertyPath(match)} target="_blank" rel="noreferrer">باز کردن فایل</a>
+                            <button type="button" className="btn-ghost" onClick={() => void submitFeedback(match, "sent")} disabled={feedbackBusy === match.id}>ارسال شد</button>
+                            <button type="button" className="btn-ghost" onClick={() => void submitFeedback(match, "liked")} disabled={feedbackBusy === match.id}>پسندید</button>
+                            <button type="button" className="btn-ghost" onClick={() => void submitFeedback(match, "rejected")} disabled={feedbackBusy === match.id}>رد شد</button>
+                            <button type="button" className="btn-ghost" onClick={() => void submitFeedback(match, "visited")} disabled={feedbackBusy === match.id}>بازدید</button>
                             <button type="button" className="btn-ghost" onClick={() => setExpandedId(open ? null : match.id)}>
                               <ChevronDown size={16} />
                               {open ? "بستن مشخصات کامل" : "مشاهده مشخصات کامل"}
