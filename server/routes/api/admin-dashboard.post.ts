@@ -313,7 +313,7 @@ export default defineEventHandler(async (event) => {
        limit 12
       `).catch((error) => {
       console.error("[admin-dashboard] consultant performance unavailable", error);
-      return [];
+      return [] as Record<string, unknown>[];
     }),
   ]);
   const p = propertyStats[0] ?? {};
