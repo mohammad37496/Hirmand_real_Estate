@@ -31,6 +31,7 @@ import {
   UserCog,
   WalletCards,
   DatabaseBackup,
+  ListTodo,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import { isInvalidIntegerInput, normalizeMoneyText } from "@/lib/property-input-normalization";
@@ -76,6 +77,7 @@ import { AdminOwnerManager } from "@/components/hirmand/admin-owner-manager";
 import { AdminFinanceManager } from "@/components/hirmand/admin-finance-manager";
 import { AdminBackupManager } from "@/components/hirmand/admin-backup-manager";
 import { AdminOperationsCenter } from "@/components/hirmand/admin-operations-center";
+import { AdminProductivityCenter } from "@/components/hirmand/admin-productivity-center";
 import {
   PROPERTY_CABINET_OPTIONS,
   PROPERTY_COOLING_OPTIONS,
@@ -86,7 +88,7 @@ import {
 } from "@/lib/property-options";
 
 type PublishStatus = "draft" | "published" | "archived";
-type ViewMode = "dashboard" | "list" | "form" | "music" | "leads" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup";
+type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -458,6 +460,7 @@ export function AdminPropertiesPage() {
   const navItems = useMemo(
     () => [
       { view: "dashboard" as ViewMode, label: "داشبورد", icon: BarChart3 },
+      { view: "productivity" as ViewMode, label: "مرکز مدیریت", icon: ListTodo },
       { view: "list" as ViewMode, label: "فایل‌های ملک", icon: LayoutDashboard },
       { view: "leads" as ViewMode, label: "درخواست‌ها", icon: UsersRound },
       { view: "consultants" as ViewMode, label: "مشاوران", icon: UsersRound },
@@ -1606,7 +1609,9 @@ export function AdminPropertiesPage() {
             <h1>
               {view === "dashboard"
                 ? "داشبورد مدیریت"
-                : view === "list"
+                : view === "productivity"
+                  ? "مرکز مدیریت"
+                  : view === "list"
                   ? "فهرست فایل‌ها"
                   : view === "music"
                     ? "موسیقی سایت"
@@ -1634,7 +1639,9 @@ export function AdminPropertiesPage() {
             <p>
               {view === "dashboard"
                 ? "نمای کلی فایل‌ها، ورودی مشتری و وضعیت پیگیری"
-                : view === "list"
+                : view === "productivity"
+                  ? "وظایف، تقویم کاری، هشدارها، سلامت فایل‌ها و فید فعالیت‌ها"
+                  : view === "list"
                   ? `${stats.total.toLocaleString("fa-IR")} فایل در سیستم`
                   : view === "leads"
                     ? "مدیریت Leadها و پیگیری مشتریان"
@@ -2035,6 +2042,7 @@ export function AdminPropertiesPage() {
             </>
           ) : null}
 
+          {view === "productivity" ? <AdminProductivityCenter /> : null}
           {view === "music" ? <AdminMusicManager /> : null}
           {view === "leads" ? <AdminLeadManager /> : null}
           {view === "partners" ? <AdminPartnerManager /> : null}
