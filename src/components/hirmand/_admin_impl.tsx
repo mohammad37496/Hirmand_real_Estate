@@ -67,6 +67,7 @@ import { AdminPartnerManager } from "@/components/hirmand/admin-partner-manager"
 import { AdminConsultantManager } from "@/components/hirmand/admin-consultant-manager";
 import { AdminDivarFiles } from "@/components/hirmand/admin-divar-files";
 import { AdminAttendanceManager } from "@/components/hirmand/admin-attendance-manager";
+import { AdminMatchingManager } from "@/components/hirmand/admin-matching-manager";
 import {
   PROPERTY_CABINET_OPTIONS,
   PROPERTY_COOLING_OPTIONS,
@@ -77,7 +78,7 @@ import {
 } from "@/lib/property-options";
 
 type PublishStatus = "draft" | "published" | "archived";
-type ViewMode = "dashboard" | "list" | "form" | "music" | "leads" | "partners" | "divar" | "consultants" | "attendance";
+type ViewMode = "dashboard" | "list" | "form" | "music" | "leads" | "partners" | "divar" | "consultants" | "attendance" | "matching";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -455,6 +456,7 @@ export function AdminPropertiesPage() {
       { view: "partners" as ViewMode, label: "همکاران", icon: UsersRound },
       { view: "music" as ViewMode, label: "موسیقی", icon: Music2 },
       { view: "attendance" as ViewMode, label: "حضور و غیاب", icon: Clock3 },
+      { view: "matching" as ViewMode, label: "مچ کردن", icon: GitCompareArrows },
       { view: "divar" as ViewMode, label: "فایل‌های دیوار", icon: Globe2 },
     ],
     [],
@@ -1605,7 +1607,9 @@ export function AdminPropertiesPage() {
                           ? "مشاورین و اعضای بنگاه"
                           : view === "attendance"
                             ? "ساعت ورود و خروج"
-                            : view === "divar"
+                            : view === "matching"
+                              ? "مچ کردن درخواست‌ها"
+                              : view === "divar"
                           ? "فایل‌های دیوار"
                           : form.id
                         ? "ویرایش فایل"
@@ -2003,6 +2007,7 @@ export function AdminPropertiesPage() {
           {view === "partners" ? <AdminPartnerManager /> : null}
           {view === "consultants" ? <AdminConsultantManager /> : null}
           {view === "attendance" ? <AdminAttendanceManager /> : null}
+          {view === "matching" ? <AdminMatchingManager /> : null}
           {view === "divar" ? <AdminDivarFiles /> : null}
 
           {view === "form" ? (
