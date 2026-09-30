@@ -6,6 +6,25 @@ import { DEFAULT_MATCH_RAHN_RATE } from "@/lib/budget-matching";
 
 const VISITOR_COOKIE = "hirmand_visitor_id";
 
+async function createAutomaticFollowUp(sql: Awaited<ReturnType<typeof getSql>>, input: {
+  leadId: string;
+  title: string;
+  description: string;
+  assignee?: string;
+  priority: "normal" | "high" | "urgent";
+  dueMinutes: number;
+}) {
+  try {
+    const dueAt = new Date(Date.now() + input.dueMinutes * 60_000).toISOString();
+    await sql.query(
+      "insert into admin_tasks(id,title,description,status,priority,due_at,assignee,entity_type,entity_id) values($1,$2,$3,'open',$4,$5,$6,'lead',$7)",
+      [crypto.randomUUID(), input.title, input.description, input.priority, dueAt, input.assignee?.trim() || "", input.leadId],
+    );
+  } catch (error) {
+    console.error("[leads] automatic follow-up creation failed", error);
+  }
+}
+
 const matchSchema = z.object({
   slug: z.string().trim().min(1).max(220),
   title: z.string().trim().min(1).max(180),
@@ -264,6 +283,14 @@ export default defineEventHandler(async (event) => {
         JSON.stringify({ propertyId: property.id, visitPreferredAt: visitDate.toISOString() }),
       ],
     ).catch(() => {});
+    await createAutomaticFollowUp(sql, {
+      leadId: rows[0].id,
+      title: "پیگیری فوری درخواست بازدید: " + property.title,
+      description: "مشتری برای این فایل درخواست بازدید ثبت کرده است؛ زمان پیشنهادی: " + visitDate.toLocaleString("fa-IR"),
+      assignee: property.contact_name || parsed.data.consultant,
+      priority: "urgent",
+      dueMinutes: 60,
+    });
     return { success: true, duplicate: false, id: rows[0].id, visitRequested: true };
   }
   const rows = await sql.query<{ id: string }>(
@@ -318,5 +345,22 @@ export default defineEventHandler(async (event) => {
       parsed.data.requestedBedrooms ?? null,
     ],
   );
-  return { success: true, id: rows[0]?.id ?? null, duplicate: false };
+  const createdLeadId = rows[0]?.id ?? null;
+  if (createdLeadId) {
+    await sql.query(
+      "insert into lead_activities (lead_id, activity_type, title, note, metadata) values ($1,'follow_up',$2,$3,$4::jsonb)",
+      [createdLeadId, "لید جدید ثبت شد", "پیگیری اولیه در مرکز مدیریت برای این درخواست ساخته شد.", JSON.stringify({ source: parsed.data.source })],
+    ).catch(() => {});
+    await createAutomaticFollowUp(sql, {
+      leadId: createdLeadId,
+      title: parsed.data.source === "budget_match" ? "پیگیری لید بودجه‌ای: " + parsed.data.name : "تماس اولیه با لید: " + parsed.data.name,
+      description: parsed.data.source === "budget_match"
+        ? "لید از جستجوی بودجه ثبت شده؛ فایل‌های پیشنهادی و بودجه مشتری را بررسی و تماس بگیرید."
+        : "لید جدید سایت است؛ اطلاعات درخواست را بررسی و تماس اولیه را انجام دهید.",
+      assignee: parsed.data.consultant,
+      priority: parsed.data.source === "budget_match" ? "high" : "normal",
+      dueMinutes: 24 * 60,
+    });
+  }
+  return { success: true, id: createdLeadId, duplicate: false };
 });
