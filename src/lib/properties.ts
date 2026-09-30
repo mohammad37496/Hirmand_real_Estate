@@ -10,6 +10,7 @@ import { decodeSlugCandidates, legacyIdFragments } from "@/lib/property-slug";
 import { calculateBudgetMatch, DEFAULT_MATCH_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
 import { MAX_PROPERTY_MEDIA, isAllowedMediaRef } from "@/lib/media";
 import { deleteStoredMedia } from "@/lib/media-store.server";
+import { getPublishReadiness } from "@/lib/property-publish-readiness";
 import {
   PROPERTY_CABINET_OPTIONS,
   PROPERTY_COOLING_OPTIONS,
@@ -1117,11 +1118,42 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
     const sql = await getSql();
 
     const beforeRows = await sql.query<Record<string, unknown>>(
-      `select id, title, status, featured, price, deposit, rent, contact_name, contact_phone, owner_name, owner_phone, owner_info
+      `select id, title, status, featured, price, deposit, rent, contact_name, contact_phone,
+              owner_name, owner_phone, owner_info, neighborhood, transaction_type, description,
+              area_m2, features, images, latitude, longitude
        from properties
        where id = any($1::text[])`,
       [data.ids],
     );
+
+    if (data.status === "published") {
+      const blocked = beforeRows
+        .map((row) => {
+          const readiness = getPublishReadiness({
+            transactionType: String(row.transaction_type ?? "sell") as "sell" | "buy" | "rent" | "mortgage",
+            title: String(row.title ?? ""),
+            neighborhood: String(row.neighborhood ?? ""),
+            description: String(row.description ?? ""),
+            contactName: String(row.contact_name ?? ""),
+            contactPhone: String(row.contact_phone ?? ""),
+            price: row.price == null ? "" : String(row.price),
+            deposit: row.deposit == null ? "" : String(row.deposit),
+            rent: row.rent == null ? "" : String(row.rent),
+            imageCount: parseJsonArray(row.images).length,
+            areaM2: row.area_m2 == null ? "" : String(row.area_m2),
+            features: parseJsonArray(row.features).join("\n"),
+            latitude: numberOrNull(row.latitude),
+            longitude: numberOrNull(row.longitude),
+          });
+          return readiness.ready ? null : { title: String(row.title ?? "فایل"), blockers: readiness.blockers };
+        })
+        .filter((item): item is { title: string; blockers: string[] } => Boolean(item));
+
+      if (blocked.length) {
+        const detail = blocked.slice(0, 5).map((item) => item.title + ": " + item.blockers.join(" ")).join(" | ");
+        throw new Error("انتشار گروهی متوقف شد. " + detail);
+      }
+    }
 
     const rows = await sql.query<Record<string, unknown>>(
       `update properties
@@ -1409,6 +1441,28 @@ export const saveProperty = createServerFn({ method: "POST" })
       [id],
     );
     const existing = existingRows[0] ?? null;
+    if (data.status === "published" && (!existing || existing.status !== "published")) {
+      const readiness = getPublishReadiness({
+        transactionType: data.transactionType,
+        title: data.title,
+        neighborhood: data.neighborhood,
+        description: data.description,
+        contactName: data.contactName,
+        contactPhone: data.contactPhone,
+        price: data.price ?? "",
+        deposit: data.deposit ?? "",
+        rent: data.rent ?? "",
+        imageCount: data.images.length,
+        areaM2: data.areaM2 == null ? "" : String(data.areaM2),
+        features: data.features.join("\n"),
+        latitude: data.latitude ?? null,
+        longitude: data.longitude ?? null,
+      });
+      if (!readiness.ready) {
+        throw new Error("انتشار فایل متوقف شد: " + readiness.blockers.join(" "));
+      }
+    }
+
     const existingSlug = typeof existing?.slug === "string" ? existing.slug.trim() : "";
     const slug = existingSlug || `${slugify(data.title)}-${id.slice(0, 8)}`;
     const featuredUntil = data.featured && data.featuredUntil

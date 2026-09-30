@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { AdminCardSkeleton, AdminErrorBanner } from "@/components/hirmand/admin-ui";
 import { AdminCampaignLinkBuilder } from "@/components/hirmand/admin-campaign-link-builder";
+import { AdminCampaignPerformance } from "@/components/hirmand/admin-campaign-performance";
 import { AdminActionCenter } from "@/components/hirmand/admin-action-center";
 import { AdminSalesControlCenter } from "@/components/hirmand/admin-sales-control-center";
 import { AdminPropertyLifecyclePanel } from "@/components/hirmand/admin-property-lifecycle-panel";
@@ -769,6 +770,8 @@ export function AdminDashboard({
       <AdminActionCenter onOpenProperties={onOpenProperties} onOpenLeads={onOpenLeads} onOpenProductivity={onOpenProductivity} />
 
       <AdminCampaignLinkBuilder />
+
+      <AdminCampaignPerformance />
 
       <AdminNeighborhoodDemandRadar />
 

@@ -281,6 +281,29 @@ export const stubAdminApi = {
     });
   },
 
+  "**/api/admin-campaign-performance": async (route) => {
+    let body = {};
+    try {
+      body = route.request().postDataJSON() ?? {};
+    } catch {
+      body = {};
+    }
+    const days = [7, 30, 90].includes(Number(body.days)) ? Number(body.days) : 30;
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        days,
+        rows: [
+          { source: "instagram", medium: "story", campaign: "baharestan", leads: 18, contacted: 14, visits: 7, contracts: 3, contactRate: 77.8, contractRate: 16.7 },
+          { source: "google", medium: "organic", campaign: "بدون کمپین", leads: 12, contacted: 9, visits: 4, contracts: 2, contactRate: 75, contractRate: 16.7 },
+        ],
+        totals: { campaigns: 2, leads: 30, contacted: 23, visits: 11, contracts: 5 },
+      }),
+    });
+  },
+
+
   "**/api/leads-admin": async (route) => {
     let body = {};
     try {
