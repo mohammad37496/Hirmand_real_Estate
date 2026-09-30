@@ -66,7 +66,7 @@ function csvDate(value: unknown) {
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
   const body = (await readBody(event)) as {
-    action?: "list" | "status" | "delete" | "export" | "note";
+    action?: "list" | "status" | "delete" | "export" | "note" | "follow_up" | "activity" | "activities";
     id?: string;
     status?: Status;
     query?: string;
@@ -74,6 +74,11 @@ export default defineEventHandler(async (event) => {
     sort?: string;
     limit?: number;
     offset?: number;
+    followUpAt?: string | null;
+    activityType?: "note" | "call" | "whatsapp" | "match" | "visit" | "follow_up" | "status" | "document";
+    activityTitle?: string;
+    activityNote?: string;
+    activityMetadata?: Record<string, unknown>;
   };
 
   if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
@@ -308,6 +313,73 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 404, statusMessage: "درخواست پیدا نشد." });
     }
     return { success: true, note: rows[0].note ?? "" };
+  }
+
+  if (body.action === "follow_up") {
+    const raw = body.followUpAt;
+    const followUpAt =
+      raw == null || raw === ""
+        ? null
+        : (() => {
+            const date = new Date(String(raw));
+            return Number.isFinite(date.getTime()) ? date.toISOString() : null;
+          })();
+    if (raw != null && raw !== "" && followUpAt == null) {
+      throw createError({ statusCode: 400, statusMessage: "زمان پیگیری نامعتبر است." });
+    }
+
+    const rows = await sql.query<{ id: string; follow_up_at: string | null }>(
+      "update leads set follow_up_at=$2, status=case when $2 is not null and status='new' then 'follow_up' else status end, updated_at=current_timestamp where id=$1 returning id, follow_up_at",
+      [body.id, followUpAt],
+    );
+    if (!rows[0]) throw createError({ statusCode: 404, statusMessage: "درخواست پیدا نشد." });
+
+    await sql.query(
+      "insert into lead_activities (lead_id, activity_type, title, note, metadata) values ($1,'follow_up',$2,$3,$4::jsonb)",
+      [
+        body.id,
+        followUpAt ? "پیگیری زمان‌بندی شد" : "پیگیری حذف شد",
+        followUpAt ? "زمان پیگیری: " + followUpAt : "زمان پیگیری بعدی پاک شد.",
+        JSON.stringify({ followUpAt }),
+      ],
+    );
+    return { success: true, followUpAt: rows[0].follow_up_at };
+  }
+
+  if (body.action === "activity") {
+    const allowed = ["note","call","whatsapp","match","visit","follow_up","status","document"];
+    const activityType = typeof body.activityType === "string" && allowed.includes(body.activityType)
+      ? body.activityType
+      : "note";
+    const title = typeof body.activityTitle === "string" ? body.activityTitle.trim().slice(0, 180) : "";
+    const note = typeof body.activityNote === "string" ? body.activityNote.trim().slice(0, 4000) : "";
+    if (!title && !note) {
+      throw createError({ statusCode: 400, statusMessage: "عنوان یا توضیح فعالیت را وارد کنید." });
+    }
+
+    const rows = await sql.query<{ id: number; created_at: string }>(
+      "insert into lead_activities (lead_id, activity_type, title, note, metadata) values ($1,$2,$3,$4,$5::jsonb) returning id, created_at",
+      [body.id, activityType, title || "فعالیت", note, JSON.stringify(body.activityMetadata ?? {})],
+    );
+    if (!rows[0]) throw createError({ statusCode: 500, statusMessage: "ثبت فعالیت انجام نشد." });
+    return { success: true, id: Number(rows[0].id), createdAt: new Date(String(rows[0].created_at)).toISOString() };
+  }
+
+  if (body.action === "activities") {
+    const rows = await sql.query<Record<string, unknown>>(
+      "select id, activity_type, title, note, metadata, created_at from lead_activities where lead_id=$1 order by created_at desc, id desc limit 100",
+      [body.id],
+    );
+    return {
+      activities: rows.map((row) => ({
+        id: Number(row.id),
+        type: String(row.activity_type),
+        title: String(row.title ?? ""),
+        note: String(row.note ?? ""),
+        metadata: row.metadata ?? {},
+        createdAt: new Date(String(row.created_at)).toISOString(),
+      })),
+    };
   }
 
   if (body.action === "delete") {
