@@ -39,7 +39,7 @@ import { listNeighborhoodNames } from "@/lib/neighborhoods";
 import { listConsultants, type Consultant } from "@/lib/consultants";
 import { propertyPath } from "@/lib/property-path";
 import { getPropertyFallbackImage } from "@/lib/property-fallback-images";
-import type { Property, PropertyType, PropertyTransaction } from "@/lib/properties";
+import type { Property, PropertyAvailabilityStatus, PropertyType, PropertyTransaction } from "@/lib/properties";
 import {
   bulkAssignPropertyConsultant,
   bulkDeleteProperties,
@@ -88,6 +88,13 @@ import {
 } from "@/lib/property-options";
 
 type PublishStatus = "draft" | "published" | "archived";
+const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
+  available: "موجود",
+  reserved: "رزرو موقت",
+  sold: "فروخته‌شده",
+  rented: "اجاره‌داده‌شده",
+  unavailable: "فعلاً ناموجود",
+};
 type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
@@ -195,6 +202,7 @@ type FormState = {
   ownerPhone: string;
   ownerInfo: string;
   status: PublishStatus;
+  availabilityStatus: PropertyAvailabilityStatus;
   featured: boolean;
   featuredUntil: string;
   latitude: number | null;
@@ -253,6 +261,7 @@ function emptyForm(): FormState {
     ownerPhone: "",
     ownerInfo: "",
     status: "draft",
+    availabilityStatus: "available",
     featured: false,
     featuredUntil: "",
     latitude: null,
@@ -408,6 +417,7 @@ function propertyToForm(property: Property): FormState {
     ownerPhone: property.ownerPhone ?? "",
     ownerInfo: property.ownerInfo ?? "",
     status: property.status,
+    availabilityStatus: property.availabilityStatus,
     featured: property.featured,
     featuredUntil: toDateTimeLocal(property.featuredUntil),
     latitude: property.latitude,
@@ -1242,6 +1252,7 @@ export function AdminPropertiesPage() {
           latitude: form.latitude,
           longitude: form.longitude,
           status: form.status,
+          availabilityStatus: form.availabilityStatus,
           featured: form.featured,
           featuredUntil: form.featuredUntil
             ? (() => {
@@ -1311,6 +1322,7 @@ export function AdminPropertiesPage() {
         id: undefined,
         title: `${base.title} (کپی)`,
         status: "draft",
+        availabilityStatus: "available",
         featured: false,
         featuredUntil: "",
       });
@@ -1382,6 +1394,7 @@ export function AdminPropertiesPage() {
           latitude: base.latitude,
           longitude: base.longitude,
           status,
+          availabilityStatus: base.availabilityStatus,
           featured: base.featured,
           featuredUntil: base.featuredUntil
             ? (() => {
@@ -2473,7 +2486,7 @@ export function AdminPropertiesPage() {
                       />
                     </label>
                     <label className="field">
-                      <span>وضعیت</span>
+                      <span>وضعیت انتشار</span>
                       <select
                         value={form.status}
                         onChange={(e) => update("status", e.target.value as PublishStatus)}
@@ -2481,6 +2494,17 @@ export function AdminPropertiesPage() {
                         <option value="published">منتشرشده</option>
                         <option value="draft">پیش‌نویس</option>
                         <option value="archived">بایگانی</option>
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span>وضعیت معامله</span>
+                      <select
+                        value={form.availabilityStatus}
+                        onChange={(e) => update("availabilityStatus", e.target.value as PropertyAvailabilityStatus)}
+                      >
+                        {Object.entries(AVAILABILITY_LABEL).map(([value, label]) => (
+                          <option key={value} value={value}>{label}</option>
+                        ))}
                       </select>
                     </label>
                     <label
