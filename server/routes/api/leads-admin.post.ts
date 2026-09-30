@@ -300,6 +300,15 @@ export default defineEventHandler(async (event) => {
     if (!rows[0]) {
       throw createError({ statusCode: 404, statusMessage: "درخواست پیدا نشد." });
     }
+    await sql.query(
+      "insert into lead_activities (lead_id, activity_type, title, note, metadata) values ($1,'status',$2,$3,$4::jsonb)",
+      [
+        body.id,
+        "وضعیت تغییر کرد",
+        "وضعیت جدید: " + (body.status ?? ""),
+        JSON.stringify({ status: body.status }),
+      ],
+    ).catch(() => {});
     return { success: true };
   }
 
@@ -312,6 +321,10 @@ export default defineEventHandler(async (event) => {
     if (!rows[0]) {
       throw createError({ statusCode: 404, statusMessage: "درخواست پیدا نشد." });
     }
+    await sql.query(
+      "insert into lead_activities (lead_id, activity_type, title, note) values ($1,'note',$2,$3)",
+      [body.id, "یادداشت داخلی به‌روزرسانی شد", rows[0].note ?? ""],
+    ).catch(() => {});
     return { success: true, note: rows[0].note ?? "" };
   }
 
