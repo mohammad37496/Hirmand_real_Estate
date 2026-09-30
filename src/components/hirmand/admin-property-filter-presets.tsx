@@ -38,7 +38,7 @@ export function AdminPropertyFilterPresets(props: {
 
   function persist(next: Preset[]) {
     setPresets(next);
-    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
+    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch (error) { void error; }
   }
 
   function save() {
