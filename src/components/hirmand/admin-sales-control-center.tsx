@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   Clock3,
   Eye,
-  Filter,
   Phone,
   RefreshCw,
   Search,
@@ -21,6 +20,7 @@ type ConsultantRow = {
   active: boolean;
   files: number;
   leads: number;
+  periodLeads: number;
   activeLeads: number;
   new7d: number;
   overdueLeads: number;
@@ -76,7 +76,7 @@ export function AdminSalesControlCenter({ onOpenLeads, onOpenProperties }: Props
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async (nextDays = days) => {
+  const load = useCallback(async (nextDays: 7 | 30 | 90 = 30) => {
     setLoading(true);
     try {
       const response = await fetch("/api/admin-sales-control-center", {
@@ -97,11 +97,11 @@ export function AdminSalesControlCenter({ onOpenLeads, onOpenProperties }: Props
     } finally {
       setLoading(false);
     }
-  }, [days]);
+  }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void load(days);
+  }, [days, load]);
 
   const rows = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase("fa-IR");
@@ -112,11 +112,6 @@ export function AdminSalesControlCenter({ onOpenLeads, onOpenProperties }: Props
     });
   }, [data, onlyActive, query]);
 
-  const maxActiveLeads = useMemo(
-    () => Math.max(1, ...(data?.consultants.map((item) => item.activeLeads) ?? [0])),
-    [data],
-  );
-  const pipelineTotal = Object.values(data?.pipeline ?? {}).reduce((sum, value) => sum + value, 0);
 
   return (
     <section className="admin-panel admin-sales-control" aria-label="مرکز کنترل فروش مشاوران">
@@ -322,7 +317,7 @@ export function AdminSalesControlCenter({ onOpenLeads, onOpenProperties }: Props
                     <button type="button" className="btn-ghost" onClick={() => setExpandedId(null)}>بستن</button>
                   </div>
                   <div className="admin-sales-detail-grid">
-                    <div className="admin-sales-detail-chip"><span>کل لید دوره</span><strong>{fa(item.leads)}</strong></div>
+                    <div className="admin-sales-detail-chip"><span>لید دوره</span><strong>{fa(item.periodLeads)}</strong></div>
                     <div className="admin-sales-detail-chip"><span>لید فعال</span><strong>{fa(item.activeLeads)}</strong></div>
                     <div className="admin-sales-detail-chip"><span>پیگیری ۷ روز</span><strong>{fa(item.nextFollowUps)}</strong></div>
                     <div className="admin-sales-detail-chip"><span>بازدید درخواستی</span><strong>{fa(item.visitRequests)}</strong></div>
