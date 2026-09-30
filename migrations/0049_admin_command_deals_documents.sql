@@ -2,7 +2,7 @@
 alter table leads
   add column if not exists deal_stage text not null default 'qualification';
 
-drop constraint if exists leads_deal_stage_check on leads;
+alter table leads drop constraint if exists leads_deal_stage_check;
 alter table leads
   add constraint leads_deal_stage_check
   check (deal_stage in (
