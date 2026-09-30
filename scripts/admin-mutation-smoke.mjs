@@ -23,6 +23,80 @@ try {
       throw new Error("Admin session login failed: HTTP " + login.status());
     }
 
+    // Exercise the new admin operational APIs against the migrated PostgreSQL schema.
+    async function postAdminApi(path, data) {
+      const response = await context.request.post(baseUrl + path, {
+        data,
+        headers: { origin: baseUrl },
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error("Admin API " + path + " failed: HTTP " + response.status() + " " + JSON.stringify(body));
+      }
+      return body;
+    }
+
+    const commandSummary = await postAdminApi("/api/admin-lead-command", { action: "summary" });
+    for (const key of ["overdue", "today", "newLeads", "upcomingVisits", "unassigned"]) {
+      if (typeof commandSummary.stats?.[key] !== "number") throw new Error("Lead command summary is missing stat " + key);
+    }
+
+    const integritySummary = await postAdminApi("/api/admin-property-integrity", { action: "summary" });
+    for (const key of ["issues", "high", "duplicateGroups"]) {
+      if (typeof integritySummary.stats?.[key] !== "number") throw new Error("Property integrity summary is missing stat " + key);
+    }
+
+    const dealSummary = await postAdminApi("/api/admin-deals-documents", { action: "summary" });
+    for (const key of ["qualification", "property_selection", "viewing", "negotiation"]) {
+      if (typeof dealSummary.stages?.[key] !== "number") throw new Error("Deal summary is missing stage " + key);
+    }
+
+    const smokeLeadId = "admin-command-smoke-" + Date.now();
+    const client = await pool.connect();
+    try {
+      await client.query(
+        "insert into leads(id,name,phone,deal,property_type,neighborhood,status) values($1,$2,$3,$4,$5,$6,'new')",
+        [smokeLeadId, "smoke lead", "09120000000", "خرید", "آپارتمان", "مرکز شهر"],
+      );
+
+      const stageResult = await postAdminApi("/api/admin-deals-documents", {
+        action: "stage", leadId: smokeLeadId, stage: "viewing",
+      });
+      if (stageResult.stage !== "viewing") throw new Error("Deal stage mutation did not return viewing.");
+
+      const followUpAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+      const followResult = await postAdminApi("/api/admin-lead-command", {
+        action: "follow_up", id: smokeLeadId, followUpAt,
+      });
+      if (!followResult.followUpAt) throw new Error("Lead follow-up mutation did not persist.");
+
+      const persistedLead = await client.query(
+        "select deal_stage,follow_up_at from leads where id=$1",
+        [smokeLeadId],
+      );
+      const leadRow = persistedLead.rows[0];
+      if (!leadRow || leadRow.deal_stage !== "viewing") throw new Error("Deal stage was not persisted in PostgreSQL.");
+      if (!leadRow.follow_up_at) throw new Error("Lead follow-up was not persisted in PostgreSQL.");
+
+      const afterSummary = await postAdminApi("/api/admin-lead-command", { action: "summary" });
+      if (!(afterSummary.items || []).some((item) => item.id === smokeLeadId && item.dealStage === "viewing")) {
+        throw new Error("Lead command summary does not expose the mutated lead.");
+      }
+
+      console.log(JSON.stringify({
+        ok: true,
+        adminOperationalApis: true,
+        leadCommandStats: commandSummary.stats,
+        integrityStats: integritySummary.stats,
+        dealStages: dealSummary.stages,
+        smokeLeadId,
+      }, null, 2));
+    } finally {
+      await client.query("delete from lead_activities where lead_id = $1", [smokeLeadId]);
+      await client.query("delete from leads where id = $1", [smokeLeadId]);
+      client.release();
+    }
+
     const page = await context.newPage();
     await page.goto(baseUrl + "/admin", { waitUntil: "domcontentloaded", timeout: 45000 });
     // Open the form through the sidebar's "new property" control, which is
