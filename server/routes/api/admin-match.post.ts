@@ -1,4 +1,4 @@
-import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
+import { createError, defineEventHandler, getCookie, readBody, setResponseHeader, type H3Event } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
@@ -197,7 +197,7 @@ function serializeProperty(row: Record<string, unknown>, score: number, reasons:
   };
 }
 
-async function requireAdmin(event: Parameters<typeof defineEventHandler>[0]) {
+async function requireAdmin(event: H3Event) {
   if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
     throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست. دوباره وارد پنل شوید." });
   }
