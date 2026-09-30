@@ -11,6 +11,7 @@ export type AnalyticsEvent =
   | "budget_match_contact"
   | "search_share"
   | "property_search"
+  | "property_price_watch"
   | "visit_request_click"
   | "visit_request";
 
