@@ -52,9 +52,9 @@ try {
     }
 
     const smokeLeadId = "admin-command-smoke-" + Date.now();
-    const client = await pool.connect();
+    const smokeClient = await pool.connect();
     try {
-      await client.query(
+      await smokeClient.query(
         "insert into leads(id,name,phone,deal,property_type,neighborhood,status) values($1,$2,$3,$4,$5,$6,'new')",
         [smokeLeadId, "smoke lead", "09120000000", "خرید", "آپارتمان", "مرکز شهر"],
       );
@@ -70,7 +70,7 @@ try {
       });
       if (!followResult.followUpAt) throw new Error("Lead follow-up mutation did not persist.");
 
-      const persistedLead = await client.query(
+      const persistedLead = await smokeClient.query(
         "select deal_stage,follow_up_at from leads where id=$1",
         [smokeLeadId],
       );
@@ -92,9 +92,9 @@ try {
         smokeLeadId,
       }, null, 2));
     } finally {
-      await client.query("delete from lead_activities where lead_id = $1", [smokeLeadId]);
-      await client.query("delete from leads where id = $1", [smokeLeadId]);
-      client.release();
+      await smokeClient.query("delete from lead_activities where lead_id = $1", [smokeLeadId]);
+      await smokeClient.query("delete from leads where id = $1", [smokeLeadId]);
+      smokeClient.release();
     }
 
     const page = await context.newPage();
