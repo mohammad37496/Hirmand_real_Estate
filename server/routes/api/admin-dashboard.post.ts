@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const sql = await getSql();
-  const [propertyStats, leadStats, propertyTypes, leadDays, musicStats, recentLeads, visitorStats, activeVisitorStats, visitorDays, topPages, topProperties, eventStats, visitorSources, followUps, consultantStats] = await Promise.all([    sql.query<Record<string, unknown>>(
+  const [propertyStats, leadStats, propertyTypes, leadDays, musicStats, recentLeads, visitorStats, activeVisitorStats, visitorDays, topPages, topProperties, eventStats, visitorSources, followUps, consultantStats, consultantPerformance] = await Promise.all([    sql.query<Record<string, unknown>>(
       `select
         count(*)::int as total,
         count(*) filter (where status = 'published')::int as published,
@@ -246,6 +246,54 @@ export default defineEventHandler(async (event) => {
       console.error("[admin-dashboard] consultant stats unavailable", error);
       return [{}];
     }),
+    sql.query<Record<string, unknown>>(
+      `with file_stats as (
+         select lower(trim(contact_name)) as key,
+                count(*) filter (where status = 'published')::int as files
+         from properties
+         where coalesce(trim(contact_name), '') <> ''
+         group by lower(trim(contact_name))
+       ),
+       lead_stats as (
+         select lower(trim(consultant)) as key,
+                count(*)::int as leads,
+                count(*) filter (where status = 'contract')::int as contracts
+         from leads
+         where coalesce(trim(consultant), '') <> ''
+           and created_at >= current_timestamp - interval '30 days'
+         group by lower(trim(consultant))
+       ),
+       event_stats as (
+         select lower(trim(p.contact_name)) as key,
+                count(*) filter (where e.event_name = 'property_view')::int as views,
+                count(*) filter (where e.event_name = 'call_click')::int as calls,
+                count(*) filter (where e.event_name = 'whatsapp_click')::int as whatsapp
+         from properties p
+         join site_events e on e.property_slug = p.slug
+         where coalesce(trim(p.contact_name), '') <> ''
+           and e.day >= (current_timestamp at time zone 'Asia/Tehran')::date - 29
+         group by lower(trim(p.contact_name))
+       )
+       select c.id, c.name, c.phone, c.is_active,
+              coalesce(fs.files, 0)::int as files,
+              coalesce(ls.leads, 0)::int as leads,
+              coalesce(ls.contracts, 0)::int as contracts,
+              coalesce(es.views, 0)::int as views,
+              coalesce(es.calls, 0)::int as calls,
+              coalesce(es.whatsapp, 0)::int as whatsapp
+       from consultants c
+       left join file_stats fs on fs.key = lower(trim(c.name))
+       left join lead_stats ls on ls.key = lower(trim(c.name))
+       left join event_stats es on es.key = lower(trim(c.name))
+       where coalesce(fs.files, 0) > 0
+          or coalesce(ls.leads, 0) > 0
+          or coalesce(es.views, 0) > 0
+       order by leads desc, views desc, files desc, name asc
+       limit 12
+      `).catch((error) => {
+      console.error("[admin-dashboard] consultant performance unavailable", error);
+      return [];
+    }),
   ]);
   const p = propertyStats[0] ?? {};
   const l = leadStats[0] ?? {};
@@ -341,6 +389,18 @@ export default defineEventHandler(async (event) => {
       due: Number(followUp.due) || 0,
       next7: Number(followUp.next7) || 0,
     },
+    consultantPerformance: consultantPerformance.map((row) => ({
+      id: String(row.id),
+      name: String(row.name ?? ""),
+      phone: String(row.phone ?? ""),
+      active: Boolean(row.is_active),
+      files: Number(row.files) || 0,
+      leads: Number(row.leads) || 0,
+      contracts: Number(row.contracts) || 0,
+      views: Number(row.views) || 0,
+      calls: Number(row.calls) || 0,
+      whatsapp: Number(row.whatsapp) || 0,
+    })),
     recentLeads: recentLeads.map((row) => ({
       id: String(row.id),
       name: String(row.name),
