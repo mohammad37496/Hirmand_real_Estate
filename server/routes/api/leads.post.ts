@@ -3,6 +3,7 @@ import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { buildBudgetLeadNote, budgetEquivalent } from "@/lib/budget-lead";
 import { DEFAULT_MATCH_RAHN_RATE } from "@/lib/budget-matching";
+import { autoMatchLead } from "@/lib/lead-smart-matcher.server";
 
 const VISITOR_COOKIE = "hirmand_visitor_id";
 
@@ -241,6 +242,11 @@ export default defineEventHandler(async (event) => {
           parsed.data.requestedBedrooms ?? null,
         ],
       );
+      try {
+        await autoMatchLead(sql, existing[0].id, { mode: "smart", limit: 8 });
+      } catch (error) {
+        console.error("[leads] automatic smart matching failed for duplicate budget lead", error);
+      }
       return { success: true, duplicate: true, updated: true, id: existing[0].id };
     }
     return { success: true, duplicate: true, id: existing[0].id };
@@ -347,6 +353,16 @@ export default defineEventHandler(async (event) => {
   );
   const createdLeadId = rows[0]?.id ?? null;
   if (createdLeadId) {
+    if (parsed.data.deal === "خرید" || parsed.data.deal === "فروش" || parsed.data.deal === "رهن" || parsed.data.deal === "اجاره") {
+      try {
+        const automaticMatches = await autoMatchLead(sql, createdLeadId, { mode: "smart", limit: 8 });
+        if (automaticMatches.count > 0) {
+          console.info("[leads] automatic smart matching completed", { leadId: createdLeadId, count: automaticMatches.count });
+        }
+      } catch (error) {
+        console.error("[leads] automatic smart matching failed", error);
+      }
+    }
     await sql.query(
       "insert into lead_activities (lead_id, activity_type, title, note, metadata) values ($1,'follow_up',$2,$3,$4::jsonb)",
       [createdLeadId, "لید جدید ثبت شد", "پیگیری اولیه در مرکز مدیریت برای این درخواست ساخته شد.", JSON.stringify({ source: parsed.data.source })],
