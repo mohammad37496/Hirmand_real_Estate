@@ -13,7 +13,12 @@ async function requireAdmin(event:H3Event){
 }
 
 function parseAmount(value:unknown){
-  const n=Number(String(value??"").replace(/[۰-۹]/g,d=>String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[٬،,s]/g,""));
+  const n = Number(
+    String(value ?? "")
+      .replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
+      .replace(/[٬،,]/g, "")
+      .replaceAll(" ", ""),
+  );
   return Number.isSafeInteger(n)&&n>=0?n:null;
 }
 
