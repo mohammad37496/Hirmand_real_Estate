@@ -177,7 +177,7 @@ export default defineEventHandler(async (event) => {
     if (parsed.data.propertyId && parsed.data.visitPreferredAt) {
       const visitDate = new Date(parsed.data.visitPreferredAt);
       const propertyRows = await sql.query<{ id: string }>(
-        "select id from properties where id::text = $1 and status = 'published' limit 1",
+        "select id, availability_status from properties where id::text = $1 and status = 'published' and availability_status not in ('sold','rented','unavailable') limit 1",
         [parsed.data.propertyId],
       );
       if (!propertyRows[0]) throw createError({ statusCode: 404, statusMessage: "فایل موردنظر برای بازدید در دسترس نیست." });
@@ -262,7 +262,7 @@ export default defineEventHandler(async (event) => {
   if (parsed.data.propertyId && parsed.data.visitPreferredAt) {
     const visitDate = new Date(parsed.data.visitPreferredAt);
     const propertyRows = await sql.query<{ id: string; title: string; property_type: string; neighborhood: string; contact_name: string }>(
-      "select id, title, property_type, neighborhood, contact_name from properties where id::text = $1 and status = 'published' limit 1",
+      "select id, title, property_type, neighborhood, contact_name, availability_status from properties where id::text = $1 and status = 'published' and availability_status not in ('sold','rented','unavailable') limit 1",
       [parsed.data.propertyId],
     );
     const property = propertyRows[0];
