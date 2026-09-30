@@ -94,7 +94,8 @@ async function loadSummary(sql: Awaited<ReturnType<typeof getSql>>) {
       "select 'property'::text as source, id::text as item_id, action::text as event_name, " +
       "coalesce(after_state->>'title', before_state->>'title', 'فایل')::text as title, changed_at as created_at from property_change_history " +
       "union all select 'lead'::text, id::text, activity_type::text, nullif(trim(title),'')::text, created_at from lead_activities " +
-      "union all select 'partner'::text, id::text, action::text, nullif(trim(note),'')::text, created_at from partner_audit_logs" +
+      "union all select 'partner'::text, id::text, action::text, nullif(trim(note),'')::text, created_at from partner_audit_logs " +
+      "union all select 'task'::text, id::text, status::text, nullif(trim(title),'')::text, updated_at from admin_tasks" +
       ") activity order by created_at desc limit 36"
     ),
     Promise.all([
