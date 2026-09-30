@@ -57,7 +57,7 @@ try {
       await page
         .getByText("فایل جدید ذخیره شد.", { exact: true })
         .waitFor({ state: "visible", timeout: 60000 });
-    } catch (error) {
+    } catch {
       // Report the toast the form actually raised. A bare timeout here hid a
       // validation rejection behind an unhelpful Playwright message.
       const toasts = await page.locator("[data-sonner-toast]").allInnerTexts().catch(() => []);

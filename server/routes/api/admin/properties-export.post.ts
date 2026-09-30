@@ -1,6 +1,7 @@
 import { createError, defineEventHandler, getCookie, setResponseHeader } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 
 function csvCell(value: unknown) {
   let text = String(value ?? "").replace(/\r?\n/g, " ");
@@ -10,6 +11,7 @@ function csvCell(value: unknown) {
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
+  assertSameOrigin(event);
   if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
     throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست." });
   }

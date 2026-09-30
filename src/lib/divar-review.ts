@@ -13,6 +13,7 @@ import { getCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
 import {
   CATEGORIES,
   DIVAR_API,
@@ -34,7 +35,10 @@ import {
  * import-protection plugin then fails the production build.
  */
 async function requireAdmin() {
-  if (await verifyAdminSessionToken(getCookie(ADMIN_SESSION_COOKIE))) return;
+  if (await verifyAdminSessionToken(getCookie(ADMIN_SESSION_COOKIE))) {
+    assertAdminServerFnOrigin();
+    return;
+  }
   throw new Error("نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.");
 }
 

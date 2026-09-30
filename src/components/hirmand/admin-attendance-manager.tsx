@@ -328,6 +328,10 @@ export function AdminAttendanceManager() {
     }
   }
 
+  // Bootstraps the consultant list and the first day's report, once. `refresh`
+  // is intentionally not a dependency: it reads the mode/anchor/filter state
+  // that this mount pass is establishing, so re-running on those changes would
+  // re-fetch on every filter click before the list is even in place.
   useEffect(() => {
     void (async () => {
       try {
@@ -342,6 +346,7 @@ export function AdminAttendanceManager() {
       }
       await refresh("day", tehranToday(), "all");
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function updateForm<K extends keyof ReturnType<typeof emptyForm>>(key: K, value: ReturnType<typeof emptyForm>[K]) {
@@ -697,7 +702,7 @@ export function AdminAttendanceManager() {
                 <Download size={16} />
               </button>
               <button type="button" className="admin-icon-btn admin-attendance-print" onClick={() => window.print()} title="چاپ گزارش" aria-label="چاپ گزارش">
-                <Download size={16} style={{ transform: "rotate(180deg)" }} />
+                <Printer size={16} />
               </button>
             </div>
           </div>

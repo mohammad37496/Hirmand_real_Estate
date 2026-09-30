@@ -1,8 +1,49 @@
 import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 
 type Status = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
+
+const STATUSES: Status[] = ["new", "contacted", "follow_up", "visited", "contract", "closed", "spam"];
+
+const SEARCHABLE_LEAD_COLUMNS = [
+  "name",
+  "phone",
+  "job",
+  "deal",
+  "property_type",
+  "neighborhood",
+  "consultant",
+  "note",
+  "acquisition_source",
+  "budget_deposit::text",
+  "budget_rent::text",
+  "budget_purchase::text",
+  "budget_sale::text",
+  "budget_equivalent::text",
+  "floor_preference",
+];
+
+const LIST_LIMIT = 50;
+const LIST_MAX_OFFSET = 100000;
+
+function parseListInput(body: Record<string, unknown>) {
+  const status = typeof body.status === "string" ? body.status : "";
+  const sortRaw = typeof body.sort === "string" ? body.sort : "newest";
+  const sort = ["newest", "oldest", "name", "follow_up"].includes(sortRaw)
+    ? (sortRaw as "newest" | "oldest" | "name" | "follow_up")
+    : "newest";
+  const query = typeof body.query === "string" ? body.query.trim().slice(0, 80) : "";
+  const limit = Math.min(100, Math.max(1, Number(body.limit) || LIST_LIMIT));
+  const offset = Math.min(LIST_MAX_OFFSET, Math.max(0, Number(body.offset) || 0));
+
+  if (status && !STATUSES.includes(status as Status)) {
+    throw createError({ statusCode: 400, statusMessage: "فیلتر وضعیت نامعتبر است." });
+  }
+
+  return { status: status as Status | "", sort, query, limit, offset };
+}
 
 function csvCell(value: unknown) {
   let text = String(value ?? "").replace(/\r?\n/g, " ");
@@ -25,10 +66,14 @@ function csvDate(value: unknown) {
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
   const body = (await readBody(event)) as {
-    action?: "list" | "status" | "delete" | "export";
+    action?: "list" | "status" | "delete" | "export" | "note";
     id?: string;
     status?: Status;
     query?: string;
+    note?: string;
+    sort?: string;
+    limit?: number;
+    offset?: number;
   };
 
   if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
@@ -38,7 +83,9 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  if (dbSource === "unconfigured") return { leads: [] };
+  assertSameOrigin(event);
+
+  if (dbSource === "unconfigured") return { leads: [], total: 0 };
   const sql = await getSql();
 
   if (body.action === "export") {
@@ -128,13 +175,56 @@ export default defineEventHandler(async (event) => {
   }
 
   if ((body.action ?? "list") === "list") {
-    const rows = await sql.query<Record<string, unknown>>(
-      "select id,name,phone,people_count,job,deal,property_type,neighborhood,floor_preference,consultant,note,status,source, " +
-        "acquisition_source,acquisition_medium,acquisition_campaign,acquisition_referrer,follow_up_at,last_contacted_at,lease_deadline, " +
-        "budget_deposit,budget_rent,budget_purchase,budget_sale,budget_deposit_min,budget_deposit_max,budget_rent_min,budget_rent_max,budget_purchase_min,budget_purchase_max,budget_sale_min,budget_sale_max,budget_equivalent,budget_bedrooms,budget_rate,requested_bedrooms,requested_amenities,matched_properties,match_count,created_at " +
-        "from leads order by created_at desc limit 300",
-    );
+    const { status, sort, query, limit, offset } = parseListInput(body as Record<string, unknown>);
+
+    const conditions: string[] = ["true"];
+    const params: unknown[] = [];
+    if (status) {
+      params.push(status);
+      conditions.push(`status = $${params.length}`);
+    }
+    if (query) {
+      params.push(`%${query}%`);
+      const index = params.length;
+      conditions.push(
+        "(" +
+          SEARCHABLE_LEAD_COLUMNS.map((column) => `${column} ilike $${index}`).join(" or ") +
+          ")",
+      );
+    }
+
+    // `follow_up_at desc nulls last` surfaces the leads that need attention
+    // first; everything else falls back to the most recent submissions.
+    const orderBy =
+      sort === "oldest"
+        ? "created_at asc"
+        : sort === "name"
+          ? "name asc nulls last"
+          : sort === "follow_up"
+            ? "follow_up_at desc nulls last, created_at desc"
+            : "created_at desc";
+
+    params.push(limit, offset);
+    const limitIndex = params.length - 1;
+    const offsetIndex = params.length;
+
+    const [rows, countRows] = await Promise.all([
+      sql.query<Record<string, unknown>>(
+        "select id,name,phone,people_count,job,deal,property_type,neighborhood,floor_preference,consultant,note,status,source, " +
+          "acquisition_source,acquisition_medium,acquisition_campaign,acquisition_referrer,follow_up_at,last_contacted_at,lease_deadline, " +
+          "budget_deposit,budget_rent,budget_purchase,budget_sale,budget_deposit_min,budget_deposit_max,budget_rent_min,budget_rent_max,budget_purchase_min,budget_purchase_max,budget_sale_min,budget_sale_max,budget_equivalent,budget_bedrooms,budget_rate,requested_bedrooms,requested_amenities,matched_properties,match_count,created_at " +
+          `from leads where ${conditions.join(" and ")} order by ${orderBy} ` +
+          `limit $${limitIndex} offset $${offsetIndex}`,
+        params,
+      ),
+      sql.query<{ count: number }>(
+        `select count(*)::int as count from leads where ${conditions.join(" and ")}`,
+        params.slice(0, params.length - 2),
+      ),
+    ]);
+
     return {
+      total: Number(countRows[0]?.count) || 0,
       leads: rows.map((row) => ({
         id: String(row.id),
         name: String(row.name),
@@ -188,7 +278,7 @@ export default defineEventHandler(async (event) => {
   }
 
   if (body.action === "status") {
-    if (!body.status || !["new", "contacted", "follow_up", "visited", "contract", "closed", "spam"].includes(body.status)) {
+    if (!body.status || !STATUSES.includes(body.status)) {
       throw createError({
         statusCode: 400,
         statusMessage: "وضعیت درخواست معتبر نیست.",
@@ -206,6 +296,18 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 404, statusMessage: "درخواست پیدا نشد." });
     }
     return { success: true };
+  }
+
+  if (body.action === "note") {
+    const note = typeof body.note === "string" ? body.note.trim().slice(0, 4000) : "";
+    const rows = await sql.query<{ note: string | null }>(
+      "update leads set note=$2, updated_at=current_timestamp where id=$1 returning note",
+      [body.id, note],
+    );
+    if (!rows[0]) {
+      throw createError({ statusCode: 404, statusMessage: "درخواست پیدا نشد." });
+    }
+    return { success: true, note: rows[0].note ?? "" };
   }
 
   if (body.action === "delete") {

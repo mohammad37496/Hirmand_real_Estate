@@ -3,6 +3,7 @@ import { getCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
 
 export type AttendanceSession = {
   clockIn: string;
@@ -33,7 +34,10 @@ type AttendanceRow = {
 
 async function requireAdmin() {
   const session = getCookie(ADMIN_SESSION_COOKIE);
-  if (await verifyAdminSessionToken(session)) return;
+  if (await verifyAdminSessionToken(session)) {
+    assertAdminServerFnOrigin();
+    return;
+  }
   throw new Error("نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.");
 }
 

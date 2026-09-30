@@ -1,11 +1,13 @@
 import { createError, defineEventHandler, getCookie, setResponseHeader } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
+  assertSameOrigin(event);
   if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
     throw createError({
       statusCode: 401,
@@ -15,11 +17,12 @@ export default defineEventHandler(async (event) => {
 
   if (dbSource === "unconfigured") {
     return {
-      properties: { total: 0, published: 0, draft: 0, archived: 0, featured: 0 },
+      properties: { total: 0, published: 0, draft: 0, archived: 0, featured: 0, withoutImages: 0, newLast7: 0, incomplete: 0 },
+      consultants: { total: 0, active: 0, withFiles: 0, withLeads: 0 },
       leads: { total: 0, new: 0, contacted: 0, follow_up: 0, visited: 0, contract: 0, closed: 0, spam: 0, today: 0, last7: 0, last30: 0 },
       propertyTypes: [],
       leadDays: [],
-      music: { total: 0, active: 0 },
+      music: { total: 0, active: 0, sizeBytes: 0 },
       visitors: { today: 0, last7: 0, last30: 0, pageviewsToday: 0, pageviewsLast7: 0, pageviewsLast30: 0, activeNow: 0 },
       visitorDays: [],
       topPages: [],
@@ -32,14 +35,20 @@ export default defineEventHandler(async (event) => {
   }
 
   const sql = await getSql();
-  const [propertyStats, leadStats, propertyTypes, leadDays, musicStats, recentLeads, visitorStats, activeVisitorStats, visitorDays, topPages, topProperties, eventStats, visitorSources, followUps] = await Promise.all([
-    sql.query<Record<string, unknown>>(`
-      select
+  const [propertyStats, leadStats, propertyTypes, leadDays, musicStats, recentLeads, visitorStats, activeVisitorStats, visitorDays, topPages, topProperties, eventStats, visitorSources, followUps, consultantStats] = await Promise.all([    sql.query<Record<string, unknown>>(
+      `select
         count(*)::int as total,
         count(*) filter (where status = 'published')::int as published,
         count(*) filter (where status = 'draft')::int as draft,
         count(*) filter (where status = 'archived')::int as archived,
-        count(*) filter (where featured = true)::int as featured
+        count(*) filter (where featured = true)::int as featured,
+        count(*) filter (where coalesce(jsonb_array_length(images), 0) = 0)::int as without_images,
+        count(*) filter (where created_at >= current_timestamp - interval '7 days')::int as new_last7,
+        count(*) filter (
+          where coalesce(jsonb_array_length(images), 0) = 0
+             or coalesce(length(trim(description)), 0) < 120
+             or coalesce(trim(neighborhood), '') = ''
+        )::int as incomplete
       from properties
     `),
     sql.query<Record<string, unknown>>(`
@@ -79,10 +88,12 @@ export default defineEventHandler(async (event) => {
       )
       group by (created_at at time zone 'Asia/Tehran')::date
       order by day asc
-    `),
-    sql.query<Record<string, unknown>>(`
-      select count(*)::int as total, count(*) filter (where active = true)::int as active
-      from music_tracks
+    `),    sql.query<Record<string, unknown>>(
+      `select
+        count(*)::int as total,
+        count(*) filter (where active = true)::int as active,
+        coalesce(sum(size_bytes), 0)::bigint as size_bytes
+       from music_tracks
     `),
     sql.query<Record<string, unknown>>(`
       select id, name, phone, deal, neighborhood, status, created_at
@@ -201,14 +212,38 @@ export default defineEventHandler(async (event) => {
     `).catch((error) => {
       console.error("[admin-dashboard] visitor sources unavailable", error);
       return [];
-    }),
-    sql.query<Record<string, unknown>>(`
-      select
+    }),    sql.query<Record<string, unknown>>(
+      `select
         count(*) filter (where status in ('new','contacted','follow_up','visited','contract') and follow_up_at <= current_timestamp)::int as due,
         count(*) filter (where status in ('new','contacted','follow_up','visited','contract') and follow_up_at > current_timestamp and follow_up_at <= current_timestamp + interval '7 days')::int as next7
       from leads
     `).catch((error) => {
       console.error("[admin-dashboard] follow-up stats unavailable", error);
+      return [{}];
+    }),
+    sql.query<Record<string, unknown>>(
+      `select
+        (select count(*)::int from consultants) as total,
+        (select count(*)::int from consultants where is_active = true) as active,
+        (
+          select count(*)::int
+          from (
+            select contact_name, contact_phone
+            from properties
+            where coalesce(trim(contact_name), '') <> ''
+            group by contact_name, contact_phone
+          ) assigned
+          inner join consultants c
+            on lower(c.name) = lower(assigned.contact_name)
+            and c.phone = assigned.contact_phone
+        ) as consultants_with_files,
+        (
+          select count(distinct lower(coalesce(consultant, '')))::int
+          from leads
+          where coalesce(trim(consultant), '') <> ''
+        ) as consultants_with_leads
+    `).catch((error) => {
+      console.error("[admin-dashboard] consultant stats unavailable", error);
       return [{}];
     }),
   ]);
@@ -218,6 +253,7 @@ export default defineEventHandler(async (event) => {
   const v = (visitorStats[0] ?? {}) as Record<string, unknown>;
   const active = (activeVisitorStats[0] ?? {}) as Record<string, unknown>;
   const followUp = (followUps[0] ?? {}) as Record<string, unknown>;
+  const c = (consultantStats[0] ?? {}) as Record<string, unknown>;
 
   return {
     properties: {
@@ -226,6 +262,15 @@ export default defineEventHandler(async (event) => {
       draft: Number(p.draft) || 0,
       archived: Number(p.archived) || 0,
       featured: Number(p.featured) || 0,
+      withoutImages: Number(p.without_images) || 0,
+      newLast7: Number(p.new_last7) || 0,
+      incomplete: Number(p.incomplete) || 0,
+    },
+    consultants: {
+      total: Number(c.total) || 0,
+      active: Number(c.active) || 0,
+      withFiles: Number(c.consultants_with_files) || 0,
+      withLeads: Number(c.consultants_with_leads) || 0,
     },
     leads: {
       total: Number(l.total) || 0,
@@ -251,6 +296,7 @@ export default defineEventHandler(async (event) => {
     music: {
       total: Number(m.total) || 0,
       active: Number(m.active) || 0,
+      sizeBytes: Number(m.size_bytes) || 0,
     },
     visitors: {
       today: Number(v.today) || 0,

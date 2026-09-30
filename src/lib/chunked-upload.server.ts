@@ -20,14 +20,27 @@ import {
   ADMIN_SESSION_COOKIE,
   verifyAdminSessionToken,
 } from "@/lib/admin-session.server";
-import { dbSource, getSql } from "@/lib/db";
 import {
+  assertSameOrigin,
+  clientFingerprint,
+  consumeAdminAttempt,
+  tooManyAttemptsError,
+} from "@/lib/admin-rate-limit.server";
+import { dbSource, getSql } from "@/lib/db";
+import { contentMatchesDeclaredType } from "@/lib/file-signature.server";
+import {
+  deleteStoredMedia,
+  getMediaMeta,
   pruneStaleUploadSessions,
+  readMediaRange,
   storeAssembledUpload,
   type StoredMedia,
 } from "@/lib/media-store.server";
 
 export const DEFAULT_CHUNK_SIZE = 2 * 1024 * 1024;
+
+/** Enough bytes to identify every container we accept. */
+const SIGNATURE_PROBE_BYTES = 32;
 
 type SessionRow = Record<string, unknown>;
 
@@ -59,8 +72,44 @@ export type ChunkedUploadConfig = {
   }) => Promise<unknown>;
 };
 
+const SIGNATURE_REJECTION = Symbol("signature-rejection");
+
+function isSignatureRejection(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as { rejection?: symbol }).rejection === SIGNATURE_REJECTION
+  );
+}
+
 function httpError(message: string, statusCode = 400) {
   return createError({ statusCode, statusMessage: message });
+}
+
+function signatureRejection(message: string) {
+  const error = new Error(message);
+  (error as Error & { rejection?: symbol }).rejection = SIGNATURE_REJECTION;
+  return error;
+}
+
+/**
+ * Verifies the assembled object really is the media type the upload claimed.
+ * Object-store uploads cannot be byte-inspected cheaply, so they are trusted
+ * there (the CDN only ever serves what we uploaded); database-backed media is
+ * always checked.
+ */
+async function assertStoredContentType(stored: StoredMedia, declaredType: string) {
+  if (stored.storage !== "database" || !stored.id) return;
+
+  const meta = await getMediaMeta(stored.id);
+  if (!meta) throw signatureRejection("فایل آپلودشده پیدا نشد.");
+
+  const probe = await readMediaRange(stored.id, 0, SIGNATURE_PROBE_BYTES - 1);
+  if (!probe || !probe.bytes.length) throw signatureRejection("فایل آپلودشده خالی است.");
+
+  if (!contentMatchesDeclaredType(probe.bytes, declaredType)) {
+    throw signatureRejection("محتوای فایل با نوع اعلام‌شده هم‌خوانی ندارد.");
+  }
 }
 
 function safePathSegment(filename: string): string {
@@ -97,6 +146,8 @@ export async function handleChunkedUpload(
       503,
     );
   }
+
+  assertSameOrigin(event);
 
   const chunkSize = config.chunkSize ?? DEFAULT_CHUNK_SIZE;
   const maxChunkBytes = chunkSize + 512 * 1024;
@@ -159,6 +210,11 @@ export async function handleChunkedUpload(
   const action = body && typeof body === "object" ? body.action : undefined;
 
   if (action === "begin") {
+    // Uploads are expensive (staging rows plus an assembled object), so an
+    // authenticated but scripted client cannot open them without bound.
+    const attempt = await consumeAdminAttempt(`upload:${clientFingerprint(event)}`);
+    if (!attempt.allowed) throw tooManyAttemptsError(attempt.retryAfterSeconds);
+
     const payload = (body ?? {}) as Record<string, unknown>;
     const filename = typeof payload.filename === "string" ? payload.filename.trim() : "";
     const declared =
@@ -280,12 +336,19 @@ export async function handleChunkedUpload(
       );
     }
 
+    let stored: StoredMedia | null = null;
     try {
-      const stored = await storeAssembledUpload({
+      stored = await storeAssembledUpload({
         pathname: String(session.pathname),
         contentType: String(session.content_type),
         sessionId: uploadId,
       });
+
+      // The declared type and the extension are both attacker-controlled. Read
+      // the real header bytes back and refuse anything that is not what we are
+      // about to persist, so a disguised HTML/SVG payload can never be served
+      // from our own origin.
+      await assertStoredContentType(stored, String(session.content_type));
 
       const result = await config.finish({
         stored,
@@ -307,6 +370,22 @@ export async function handleChunkedUpload(
       await sql.query("delete from media_upload_sessions where id = $1", [uploadId]);
       return { ...resultObject, storage: stored.storage };
     } catch (error) {
+      if (isSignatureRejection(error)) {
+        // Drop the object we just staged plus its chunks: keeping either would
+        // leave an orphan file nothing will ever reference.
+        await deleteStoredMedia(stored?.url).catch(() => undefined);
+        await sql
+          .query("delete from media_upload_sessions where id = $1", [uploadId])
+          .catch(() => undefined);
+        console.warn(
+          `[upload] rejected ${session.kind} upload ${uploadId}: content does not match declared type`,
+        );
+        throw httpError(
+          error instanceof Error ? error.message : "محتوای فایل با نوع اعلام‌شده هم‌خوانی ندارد.",
+          415,
+        );
+      }
+
       // Leave an assembled object retryable, but do not leave a permanently
       // locked session if a transient database/network error occurred.
       await sql.query(

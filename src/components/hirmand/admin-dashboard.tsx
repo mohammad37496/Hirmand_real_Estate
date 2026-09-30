@@ -7,14 +7,18 @@ import {
   Clock3,
   Eye,
   Globe2,
+  ImageOff,
   Music2,
   Phone,
   Plus,
   RefreshCw,
+  Sparkles,
+  Star,
   UserRound,
   UsersRound,
 } from "lucide-react";
-import { toast } from "sonner";
+import { AdminCardSkeleton, AdminErrorBanner } from "@/components/hirmand/admin-ui";
+import { fa, faBytes } from "@/components/hirmand/admin-ui-utils";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 
@@ -25,6 +29,15 @@ type DashboardData = {
     draft: number;
     archived: number;
     featured: number;
+    withoutImages: number;
+    newLast7: number;
+    incomplete: number;
+  };
+  consultants: {
+    total: number;
+    active: number;
+    withFiles: number;
+    withLeads: number;
   };
   leads: {
     total: number;
@@ -41,7 +54,7 @@ type DashboardData = {
   };
   propertyTypes: { type: string; count: number }[];
   leadDays: { day: string; count: number }[];
-  music: { total: number; active: number };
+  music: { total: number; active: number; sizeBytes: number };
   visitors: {
     today: number;
     last7: number;
@@ -171,6 +184,7 @@ export function AdminDashboard({
 }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const load = useCallback(async (silent = false) => {
@@ -188,9 +202,10 @@ export function AdminDashboard({
         throw new Error(result?.statusMessage || result?.message || "بارگذاری داشبورد انجام نشد.");
       }
       setData((await response.json()) as DashboardData);
+      setLoadError(null);
       setLastUpdated(new Date());
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "بارگذاری داشبورد انجام نشد.");
+      setLoadError(error instanceof Error ? error.message : "بارگذاری داشبورد انجام نشد.");
     } finally {
       setLoading(false);
     }
@@ -244,13 +259,15 @@ export function AdminDashboard({
   if (loading || !data) {
     return (
       <div className="admin-dashboard">
-        <section className="admin-panel">
-          <div className="admin-empty">
-            <RefreshCw size={26} className="admin-spin" />
-            <strong>در حال ساخت داشبورد...</strong>
-            <p>آمار فایل‌ها و درخواست‌های مشتری از دیتابیس خوانده می‌شود.</p>
+        {loadError ? (
+          <div style={{ marginBottom: 16 }}>
+            <AdminErrorBanner message={loadError} onRetry={() => void load()} />
           </div>
-        </section>
+        ) : null}
+        <AdminCardSkeleton count={7} height={92} />
+        <div style={{ marginTop: 18 }}>
+          <AdminCardSkeleton count={4} height={150} />
+        </div>
       </div>
     );
   }
@@ -261,6 +278,8 @@ export function AdminDashboard({
     { label: "فایل‌های منتشرشده", value: data.properties.published, icon: BarChart3, tone: "green" },
     { label: "درخواست‌های جدید", value: data.leads.new, icon: UsersRound, tone: "amber" },
     { label: "لید در ۳۰ روز", value: data.leads.last30, icon: UserRound, tone: "blue" },
+    { label: "فایل‌های جدید ۷ روز", value: data.properties.newLast7, icon: Sparkles, tone: "green" },
+    { label: "فایل‌های بدون تصویر", value: data.properties.withoutImages, icon: ImageOff, tone: "amber" },
   ] as const;
 
   const leadStatuses = [
@@ -276,6 +295,11 @@ export function AdminDashboard({
   return (
     <div className="admin-dashboard">
       <style>{`.admin-funnel-row{display:flex;flex-direction:column}`}</style>
+      {loadError ? (
+        <div style={{ marginBottom: 16 }}>
+          <AdminErrorBanner message={loadError} onRetry={() => void load()} />
+        </div>
+      ) : null}
       <div className="admin-dashboard-stats">
         <button type="button" className="admin-dashboard-stat" data-tone="red" onClick={onOpenLeads}>
           <span className="admin-dashboard-stat-icon"><Phone size={19} /></span>
@@ -318,6 +342,68 @@ export function AdminDashboard({
           );
         })}
       </div>
+
+      <section className="admin-dashboard-health" aria-label="سلامت کتابخانه فایل‌ها و تیم">
+        <button type="button" className="admin-dashboard-stat" data-tone="red" onClick={onOpenProperties}>
+          <span className="admin-dashboard-stat-icon"><ImageOff size={19} /></span>
+          <span>
+            <small>فایل‌های نیازمند تکمیل</small>
+            <strong>{fa(data.properties.incomplete)}</strong>
+          </span>
+          <ArrowLeft size={16} />
+        </button>
+        <button type="button" className="admin-dashboard-stat" data-tone="gold" onClick={onOpenProperties}>
+          <span className="admin-dashboard-stat-icon"><Star size={19} /></span>
+          <span>
+            <small>فایل‌های ویژه فعال</small>
+            <strong>{fa(data.properties.featured)}</strong>
+          </span>
+          <ArrowLeft size={16} />
+        </button>
+        <button type="button" className="admin-dashboard-stat" data-tone="blue" onClick={onOpenConsultants}>
+          <span className="admin-dashboard-stat-icon"><UsersRound size={19} /></span>
+          <span>
+            <small>مشاور فعال</small>
+            <strong>
+              {fa(data.consultants.active)}
+              <em style={{ fontStyle: "normal", fontSize: ".7rem", opacity: .7 }}>
+                {" "}از {fa(data.consultants.total)}
+              </em>
+            </strong>
+          </span>
+          <ArrowLeft size={16} />
+        </button>
+        <button type="button" className="admin-dashboard-stat" data-tone="green" onClick={onOpenConsultants}>
+          <span className="admin-dashboard-stat-icon"><UserRound size={19} /></span>
+          <span>
+            <small>مشاور دارای فایل / لید</small>
+            <strong>
+              {fa(data.consultants.withFiles)} / {fa(data.consultants.withLeads)}
+            </strong>
+          </span>
+          <ArrowLeft size={16} />
+        </button>
+        <button type="button" className="admin-dashboard-stat" data-tone="amber" onClick={onOpenMusic}>
+          <span className="admin-dashboard-stat-icon"><Music2 size={19} /></span>
+          <span>
+            <small>کتابخانه موسیقی</small>
+            <strong>
+              {fa(data.music.active)}
+              <em style={{ fontStyle: "normal", fontSize: ".7rem", opacity: .7 }}>
+                {" "}از {fa(data.music.total)} · {faBytes(data.music.sizeBytes)}
+              </em>
+            </strong>
+          </span>
+          <ArrowLeft size={16} />
+        </button>
+        <div className="admin-dashboard-stat" data-tone="blue">
+          <span className="admin-dashboard-stat-icon"><Clock3 size={19} /></span>
+          <span>
+            <small>بازدید ۷ روز اخیر</small>
+            <strong>{fa(data.visitors.last7)}</strong>
+          </span>
+        </div>
+      </section>
 
       <section className="admin-dashboard-quick-actions" aria-label="میانبرهای مدیریتی">
         <div className="admin-dashboard-quick-intro">
