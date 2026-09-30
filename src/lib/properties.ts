@@ -1685,6 +1685,7 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
         return {
           title: null,
           status: null,
+          availabilityStatus: null,
           featured: null,
           price: null,
           deposit: null,
@@ -1728,6 +1729,7 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
         changedAt: new Date(String(row.changed_at)).toISOString(),
         beforeTitle: before.title,
         beforeStatus: before.status,
+        beforeAvailabilityStatus: before.availabilityStatus,
         beforeFeatured: before.featured,
         beforePrice: before.price,
         beforeDeposit: before.deposit,
@@ -1736,6 +1738,7 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
         beforeContactPhone: before.contactPhone,
         afterTitle: after.title,
         afterStatus: after.status,
+        afterAvailabilityStatus: after.availabilityStatus,
         afterFeatured: after.featured,
         afterPrice: after.price,
         afterDeposit: after.deposit,
