@@ -22,6 +22,10 @@ function normalizeMoney(value: unknown) {
 }
 
 function alertType(previous: Record<string, unknown>, current: Record<string, unknown>) {
+  if (String(previous.availability ?? "") !== String(current.availability ?? "")) {
+    return "availability_change" as const;
+  }
+
   const previousPrice = normalizeMoney(previous.price);
   const currentPrice = normalizeMoney(current.price);
   const previousDeposit = normalizeMoney(previous.deposit);
@@ -71,7 +75,7 @@ export default defineEventHandler(async (event) => {
     if (!parsed.data.slug) throw createError({ statusCode: 400, statusMessage: "فایل مشخص نشده است." });
 
     const propertyRows = await sql.query<Record<string, unknown>>(
-      "select id, slug, price, deposit, rent from properties where status='published' and slug=$1 limit 1",
+      "select id, slug, price, deposit, rent, availability_status from properties where status='published' and slug=$1 limit 1",
       [parsed.data.slug],
     );
     const property = propertyRows[0];
@@ -80,8 +84,8 @@ export default defineEventHandler(async (event) => {
     if (parsed.data.action === "subscribe") {
       await sql.query(
         `insert into property_watch_subscriptions
-          (visitor_id, property_id, property_slug, price, deposit, rent, enabled, updated_at)
-         values ($1,$2,$3,$4,$5,$6,true,current_timestamp)
+          (visitor_id, property_id, property_slug, price, deposit, rent, availability_status, enabled, updated_at)
+         values ($1,$2,$3,$4,$5,$6,$7,true,current_timestamp)
          on conflict (visitor_id, property_id)
          do update set
            property_slug=excluded.property_slug,
@@ -97,6 +101,7 @@ export default defineEventHandler(async (event) => {
           normalizeMoney(property.price),
           normalizeMoney(property.deposit),
           normalizeMoney(property.rent),
+          String(property.availability_status ?? "available"),
         ],
       );
     } else {
@@ -121,6 +126,7 @@ export default defineEventHandler(async (event) => {
        s.price as watched_price,
        s.deposit as watched_deposit,
        s.rent as watched_rent,
+       s.availability_status as watched_availability,
        p.title,
        p.price,
        p.deposit,
@@ -140,11 +146,13 @@ export default defineEventHandler(async (event) => {
       price: row.watched_price,
       deposit: row.watched_deposit,
       rent: row.watched_rent,
+      availability: row.watched_availability,
     };
     const current = {
       price: row.price,
       deposit: row.deposit,
       rent: row.rent,
+      availability: row.availability_status,
     };
     const kind = alertType(previous, current);
     if (!kind) continue;
@@ -164,13 +172,15 @@ export default defineEventHandler(async (event) => {
       const previousAmount = normalizeMoney(row.watched_price ?? row.watched_deposit ?? row.watched_rent);
       const currentAmount = normalizeMoney(row.price ?? row.deposit ?? row.rent);
       const direction = currentAmount != null && previousAmount != null && currentAmount < previousAmount ? "کاهش" : "تغییر";
-      const message = row.title + " · " + direction + " قیمت/شرایط فایل";
+      const message = kind === "availability_change"
+        ? row.title + " · وضعیت فایل از " + String(row.watched_availability ?? "نامشخص") + " به " + String(row.availability_status ?? "نامشخص") + " تغییر کرد."
+        : row.title + " · " + direction + " قیمت/شرایط فایل";
       await sql.query(
         `insert into property_watch_alerts
           (visitor_id, property_id, property_slug, alert_type,
            previous_price, current_price, previous_deposit, current_deposit,
-           previous_rent, current_rent, message)
-         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+           previous_rent, current_rent, previous_availability, current_availability, message)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
         [
           visitorId,
           String(row.property_id),
@@ -182,6 +192,8 @@ export default defineEventHandler(async (event) => {
           normalizeMoney(row.deposit),
           normalizeMoney(row.watched_rent),
           normalizeMoney(row.rent),
+          String(row.watched_availability ?? "available"),
+          String(row.availability_status ?? "available"),
           message,
         ],
       );
@@ -189,13 +201,14 @@ export default defineEventHandler(async (event) => {
 
     await sql.query(
       `update property_watch_subscriptions
-       set price=$2, deposit=$3, rent=$4, last_notified_at=current_timestamp, updated_at=current_timestamp
-       where visitor_id=$1 and property_id=$5`,
+       set price=$2, deposit=$3, rent=$4, availability_status=$5, last_notified_at=current_timestamp, updated_at=current_timestamp
+       where visitor_id=$1 and property_id=$6`,
       [
         visitorId,
         normalizeMoney(row.price),
         normalizeMoney(row.deposit),
         normalizeMoney(row.rent),
+        String(row.availability_status ?? "available"),
         String(row.property_id),
       ],
     );
@@ -206,6 +219,7 @@ export default defineEventHandler(async (event) => {
             previous_price, current_price,
             previous_deposit, current_deposit,
             previous_rent, current_rent,
+            previous_availability, current_availability,
             created_at
      from property_watch_alerts
      where visitor_id=$1 and seen_at is null
@@ -237,6 +251,8 @@ export default defineEventHandler(async (event) => {
       currentDeposit: normalizeMoney(row.current_deposit),
       previousRent: normalizeMoney(row.previous_rent),
       currentRent: normalizeMoney(row.current_rent),
+      previousAvailability: row.previous_availability == null ? null : String(row.previous_availability),
+      currentAvailability: row.current_availability == null ? null : String(row.current_availability),
       createdAt: new Date(String(row.created_at)).toISOString(),
     })),
   };
