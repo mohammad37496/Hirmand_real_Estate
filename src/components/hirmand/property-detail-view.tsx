@@ -1104,27 +1104,31 @@ export function PropertyDetailView({
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ action: "sync" }),
     })
-      .then((response) => response.ok ? response.json() as Promise<{ alerts?: Array<{ message: string }> }> : null)
+      .then((response) => response.ok
+        ? response.json() as Promise<{
+            subscriptions?: Array<{ slug: string }>;
+            alerts?: Array<{ id: string; message: string }>;
+          }>
+        : null)
       .then((result) => {
         if (ignoreWatchSync) return;
-        if (result?.alerts?.length) {
-          for (const alert of result.alerts.slice(0, 3)) {
+        setPriceWatchEnabled(Boolean(result?.subscriptions?.some((item) => item.slug === viewedPropertySlug)));
+        const alerts = result?.alerts ?? [];
+        if (alerts.length) {
+          for (const alert of alerts.slice(0, 3)) {
             toast.success(alert.message);
           }
+          void fetch("/api/property-watch", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              action: "seen",
+              alertIds: alerts.map((alert) => Number(alert.id)).filter(Number.isFinite),
+            }),
+          }).catch(() => {});
         }
       })
       .catch(() => {});
-
-    try {
-      const raw = localStorage.getItem("hirmand-price-watch");
-      const parsed = raw ? JSON.parse(raw) : {};
-      const watches = parsed && typeof parsed === "object" && !Array.isArray(parsed)
-        ? parsed as Record<string, string>
-        : {};
-      setPriceWatchEnabled(Boolean(watches[viewedPropertySlug]));
-    } catch {
-      setPriceWatchEnabled(false);
-    }
 
     return () => {
       cancelled = true;
