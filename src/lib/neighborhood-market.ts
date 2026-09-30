@@ -53,7 +53,7 @@ export const getNeighborhoodMarketSnapshot = createServerFn({ method: "GET" })
         async () => {
           const sql = await getSql();
           const rows = await sql.query<Record<string, unknown>>(
-            \`with neighborhood_files as (
+            `with neighborhood_files as (
                select slug, transaction_type, price, rent, area_m2, published_at, price_drop_percent
                from properties
                where status='published'
@@ -87,7 +87,7 @@ export const getNeighborhoodMarketSnapshot = createServerFn({ method: "GET" })
                coalesce((select favorites from event_stats),0)::int as favorites_30d,
                coalesce((select calls from event_stats),0)::int as calls_30d,
                coalesce((select visits from event_stats),0)::int as viewing_requests_30d
-             from neighborhood_files\`,
+             from neighborhood_files`,
             [data.neighborhood],
           );
 
