@@ -80,6 +80,8 @@ import { AdminBackupManager } from "@/components/hirmand/admin-backup-manager";
 import { AdminOperationsCenter } from "@/components/hirmand/admin-operations-center";
 import { AdminProductivityCenter } from "@/components/hirmand/admin-productivity-center";
 import { AdminPropertyPerformance } from "@/components/hirmand/admin-property-performance";
+import { AdminCommandPalette } from "@/components/hirmand/admin-command-palette";
+import { AdminPropertyFilterPresets } from "@/components/hirmand/admin-property-filter-presets";
 import "@/admin-property-performance.css";
 import {
   PROPERTY_CABINET_OPTIONS,
@@ -993,16 +995,16 @@ export function AdminPropertiesPage() {
   async function bulkSetStatus(status: PublishStatus) {
     const ids = Array.from(new Set(selectedIds));
     if (!ids.length || bulkBusy) return;
-    if (status === "archived") {
-      const ok = await confirm({
-        title: "بایگانی گروهی فایل‌ها",
-        description: `${ids.length.toLocaleString("fa-IR")} فایل انتخاب‌شده از سایت عمومی حذف و بایگانی می‌شود. ادامه می‌دهید؟`,
-        items: properties.filter((item) => ids.includes(item.id)).map((item) => item.title),
-        confirmLabel: "بله، بایگانی کن",
-        tone: "danger",
-      });
-      if (!ok) return;
-    }
+    const selected = properties.filter((item) => ids.includes(item.id));
+    const actionLabel = status === "published" ? "انتشار" : status === "draft" ? "بازگشت به پیش‌نویس" : "بایگانی";
+    const ok = await confirm({
+      title: "پیش‌نمایش عملیات گروهی · " + actionLabel,
+      description: ids.length.toLocaleString("fa-IR") + " فایل انتخاب‌شده با عملیات «" + actionLabel + "» تغییر می‌کنند.",
+      items: selected.map((item) => item.title),
+      confirmLabel: "ادامه و اجرای عملیات",
+      tone: status === "archived" ? "danger" : "default",
+    });
+    if (!ok) return;
 
     setBulkBusy(true);
     try {
@@ -1020,6 +1022,16 @@ export function AdminPropertiesPage() {
   async function bulkSetFeatured(featured: boolean) {
     const ids = Array.from(new Set(selectedIds));
     if (!ids.length || bulkBusy) return;
+    const selected = properties.filter((item) => ids.includes(item.id));
+    const actionLabel = featured ? "ویژه کردن" : "حذف ویژه";
+    const ok = await confirm({
+      title: "پیش‌نمایش عملیات گروهی · " + actionLabel,
+      description: ids.length.toLocaleString("fa-IR") + " فایل انتخاب‌شده با این عملیات تغییر می‌کنند.",
+      items: selected.map((item) => item.title),
+      confirmLabel: "ادامه و اجرای عملیات",
+      tone: "default",
+    });
+    if (!ok) return;
 
     setBulkBusy(true);
     try {
@@ -1037,15 +1049,20 @@ export function AdminPropertiesPage() {
   async function bulkAssignConsultant(member: { name: string; phone: string }) {
     const ids = Array.from(new Set(selectedIds));
     if (!ids.length || bulkBusy) return;
+    const selected = properties.filter((item) => ids.includes(item.id));
+    const ok = await confirm({
+      title: "پیش‌نمایش تخصیص گروهی",
+      description: ids.length.toLocaleString("fa-IR") + " فایل انتخاب‌شده به مشاور «" + member.name + "» واگذار می‌شوند.",
+      items: selected.map((item) => item.title),
+      confirmLabel: "تأیید تخصیص",
+      tone: "default",
+    });
+    if (!ok) return;
 
     setBulkBusy(true);
     try {
       const result = await bulkAssignPropertyConsultant({
-        data: {
-          ids,
-          contactName: member.name,
-          contactPhone: member.phone,
-        },
+        data: { ids, contactName: member.name, contactPhone: member.phone },
       });
       setSelectedIds([]);
       await refresh();
@@ -1063,7 +1080,7 @@ export function AdminPropertiesPage() {
 
     const selected = properties.filter((item) => ids.includes(item.id));
     const ok = await confirm({
-      title: "حذف همیشگی فایل‌ها",
+      title: "پیش‌نمایش حذف گروهی فایل‌ها",
       description: `${ids.length.toLocaleString("fa-IR")} فایل انتخاب‌شده برای همیشه حذف می‌شود. این عمل قابل بازگشت نیست و صفحه عمومی آن‌ها هم از دست می‌رود.`,
       items: selected.map((item) => item.title),
       confirmLabel: "حذف دائمی",
@@ -1706,6 +1723,12 @@ export function AdminPropertiesPage() {
                     : "مشاور مسئول را انتخاب کنید"}            </p>
           </div>
           <div className="admin-topbar-actions">
+            <AdminCommandPalette
+              items={navItems.map((item) => ({ id: item.view, label: item.label }))}
+              onSelect={(id) => navigateTo(id as ViewMode)}
+              onNewProperty={startNew}
+              onRefresh={() => void refresh()}
+            />
             {view === "dashboard" || view === "list" ? (
               <button type="button" className="btn-gold" onClick={startNew}>
                 <Plus size={16} />
@@ -1788,6 +1811,35 @@ export function AdminPropertiesPage() {
                       <Filter size={15} /> پاک‌سازی فیلتر
                     </button>
                   </div>
+                  <AdminPropertyFilterPresets
+                    state={{
+                      query,
+                      listFilter,
+                      listTransaction,
+                      listType,
+                      listNeighborhood,
+                      listSort,
+                      listMedia,
+                      listPriceMin,
+                      listPriceMax,
+                      listAreaMin,
+                      listBedroomsMin,
+                    }}
+                    onApply={(preset) => {
+                      setQuery(preset.query);
+                      setListFilter(preset.listFilter as typeof listFilter);
+                      setListTransaction(preset.listTransaction as typeof listTransaction);
+                      setListType(preset.listType as typeof listType);
+                      setListNeighborhood(preset.listNeighborhood);
+                      setListSort(preset.listSort as typeof listSort);
+                      setListMedia(preset.listMedia as MediaFilter);
+                      setListPriceMin(preset.listPriceMin);
+                      setListPriceMax(preset.listPriceMax);
+                      setListAreaMin(preset.listAreaMin);
+                      setListBedroomsMin(preset.listBedroomsMin);
+                      setPage(1);
+                    }}
+                  />
                   <div className="admin-filter-row">
                     <select value={listTransaction} onChange={(e) => setListTransaction(e.target.value as typeof listTransaction)} aria-label="فیلتر معامله">
                       <option value="all">همه معاملات</option>
