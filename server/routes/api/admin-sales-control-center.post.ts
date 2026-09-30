@@ -52,6 +52,7 @@ export default defineEventHandler(async (event) => {
          select
            lower(trim(consultant)) as key,
            count(*)::int as leads,
+           count(*) filter (where created_at >= current_timestamp - interval '${days} days')::int as period_leads,
            count(*) filter (where status in ('new','contacted','follow_up','visited'))::int as active_leads,
            count(*) filter (where created_at >= current_timestamp - interval '7 days')::int as new_7d,
            count(*) filter (
@@ -93,6 +94,7 @@ export default defineEventHandler(async (event) => {
          c.is_active,
          coalesce(fs.files, 0)::int as files,
          coalesce(ls.leads, 0)::int as leads,
+         coalesce(ls.period_leads, 0)::int as period_leads,
          coalesce(ls.active_leads, 0)::int as active_leads,
          coalesce(ls.new_7d, 0)::int as new_7d,
          coalesce(ls.overdue_leads, 0)::int as overdue_leads,
