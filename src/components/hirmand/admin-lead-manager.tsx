@@ -413,6 +413,8 @@ export function AdminLeadManager() {
   return (
     <div className="admin-lead-manager">
       {confirmDialog}
+      <AdminLeadAssignmentBalancer />
+      <AdminLeadDedupe />
       <section className="admin-panel">
         <div className="admin-panel-head">
           <div>
