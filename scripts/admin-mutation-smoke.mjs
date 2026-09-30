@@ -25,9 +25,13 @@ try {
 
     const page = await context.newPage();
     await page.goto(baseUrl + "/admin", { waitUntil: "domcontentloaded", timeout: 45000 });
-    const adminCookies = await context.cookies(baseUrl);
-    const cookieHeader = adminCookies.map(({ name, value }) => name + "=" + value).join("; ");
-    if (!cookieHeader) throw new Error("Admin session cookie was not stored after login.");
+    const setCookieHeaders = login
+      .headersArray()
+      .filter(({ name }) => name.toLowerCase() === "set-cookie")
+      .map(({ value }) => value.split(";", 1)[0])
+      .filter(Boolean);
+    const cookieHeader = setCookieHeaders.join("; ");
+    if (!cookieHeader) throw new Error("Admin session cookie was not returned by the login response.");
 
     const postAdminApi = async (path, data) => {
       const response = await context.request.post(baseUrl + path, {
