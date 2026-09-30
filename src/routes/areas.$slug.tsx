@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, MapPinned, Phone } from "lucide-react";
 import { listPublishedProperties } from "@/lib/properties";
+import { getNeighborhoodMarketSnapshot, type NeighborhoodMarketSnapshot } from "@/lib/neighborhood-market";
 import { findAreaBySlug, areaHead, areaJsonLd, areaPath, allAreas } from "@/lib/areas";
 import { breadcrumbJsonLd } from "@/lib/seo";
 import { SITE } from "@/lib/site";
@@ -10,15 +11,16 @@ import { PropertyCard } from "@/components/hirmand/property-showcase";
 export const Route = createFileRoute("/areas/$slug")({
   loader: async ({ params }) => {
     const area = findAreaBySlug(params.slug);
-    if (!area) return { area: null, properties: [] as Awaited<ReturnType<typeof listPublishedProperties>> };
+    if (!area) return { area: null, properties: [] as Awaited<ReturnType<typeof listPublishedProperties>>, market: null as NeighborhoodMarketSnapshot | null };
     try {
-      const properties = await listPublishedProperties({
-        data: { neighborhood: area.name },
-      });
-      return { area, properties };
+      const [properties, market] = await Promise.all([
+        listPublishedProperties({ data: { neighborhood: area.name } }),
+        getNeighborhoodMarketSnapshot({ data: { neighborhood: area.name } }),
+      ]);
+      return { area, properties, market };
     } catch (error) {
       console.error("[area] properties loader failed", error);
-      return { area, properties: [] };
+      return { area, properties: [], market: null };
     }
   },
   head: ({ loaderData, params }) => areaHead(loaderData?.area ?? null, params.slug),
@@ -26,7 +28,7 @@ export const Route = createFileRoute("/areas/$slug")({
 });
 
 function AreaPage() {
-  const { area, properties } = Route.useLoaderData();
+  const { area, properties, market } = Route.useLoaderData();
 
   if (!area) {
     return (
@@ -121,6 +123,42 @@ function AreaPage() {
                 </a>
               </div>
             </div>
+
+            {market ? (
+              <section style={{ marginTop: 28, padding: 18, border: "1px solid var(--line)", borderRadius: 20, background: "var(--card)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
+                  <div>
+                    <span className="kicker">تصویر بازار داخلی هیرمند</span>
+                    <h2 style={{ fontSize: "1.15rem", margin: "4px 0 0" }}>نبض بازار {area.name}</h2>
+                  </div>
+                  <small style={{ color: "var(--subtle)" }}>فایل‌های منتشرشده و رفتار ۳۰ روز اخیر سایت</small>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(145px,1fr))", gap: 10, marginTop: 14 }}>
+                  {[
+                    ["فایل فعال", market.activeFiles.toLocaleString("fa-IR")],
+                    ["فروش", market.saleFiles.toLocaleString("fa-IR")],
+                    ["رهن و اجاره", market.rentFiles.toLocaleString("fa-IR")],
+                    ["فایل جدید ۳۰ روزه", market.newFiles30d.toLocaleString("fa-IR")],
+                    ["کاهش قیمت", market.priceDropFiles.toLocaleString("fa-IR")],
+                    ["بازدید ۳۰ روزه", market.views30d.toLocaleString("fa-IR")],
+                  ].map(([label, value]) => (
+                    <div key={label} style={{ padding: 12, borderRadius: 14, background: "var(--card-2)", border: "1px solid var(--line)" }}>
+                      <span style={{ display: "block", color: "var(--subtle)", fontSize: ".72rem" }}>{label}</span>
+                      <strong style={{ display: "block", marginTop: 5, fontSize: "1.02rem", color: "var(--navy-900)" }}>{value}</strong>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ margin: "12px 0 0", color: "var(--muted)", lineHeight: 1.9, fontSize: ".84rem" }}>
+                  {market.saleAvgPerM2 != null ? (
+                    <>میانگین تقریبی قیمت فروش هر متر: <strong>{market.saleAvgPerM2.toLocaleString("fa-IR")} تومان</strong>. </>
+                  ) : null}
+                  {market.rentAvg != null ? (
+                    <>میانگین اجاره ثبت‌شده: <strong>{market.rentAvg.toLocaleString("fa-IR")} تومان</strong>. </>
+                  ) : null}
+                  در ۳۰ روز اخیر {market.favorites30d.toLocaleString("fa-IR")} ذخیره، {market.calls30d.toLocaleString("fa-IR")} تماس/واتساپ و {market.viewingRequests30d.toLocaleString("fa-IR")} درخواست بازدید ثبت شده است.
+                </p>
+              </section>
+            ) : null}
 
             <section style={{ marginTop: 28 }}>
               <h2 style={{ fontSize: "1.15rem", marginBottom: 12 }}>
