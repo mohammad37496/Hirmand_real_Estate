@@ -16,7 +16,11 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # A cold runner can spend 10+ minutes in `playwright install --with-deps`
+    # alone, and this job is timed including that. At 20 minutes the job was
+    # cancelled mid-download before any project code ran, which reads as a
+    # failure in the checks list but is only a slow install.
+    timeout-minutes: 40
     env:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/hirmand_verify
       BROWSER_SMOKE_PROPERTY_ID: browser-smoke-property-001
