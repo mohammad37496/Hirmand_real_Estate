@@ -50,10 +50,11 @@ export const getNeighborhoodMarketSnapshot = createServerFn({ method: "GET" })
 
     if (dbSource === "unconfigured") return empty();
 
-    return cachedPropertyRead(
-      "neighborhood-market:" + data.neighborhood,
-      15 * 60_000,
-      async () => {
+    try {
+      return await cachedPropertyRead(
+        "neighborhood-market:" + data.neighborhood,
+        15 * 60_000,
+        async () => {
         const sql = await getSql();
         const rows = await sql.query<Record<string, unknown>>(
           `with neighborhood_files as (
@@ -129,6 +130,10 @@ export const getNeighborhoodMarketSnapshot = createServerFn({ method: "GET" })
           viewingRequests30d: Number(row.viewing_requests_30d) || 0,
           generatedAt: new Date().toISOString(),
         };
-      },
-    );
+        },
+      );
+    } catch (error) {
+      console.warn("[neighborhood-market] snapshot unavailable", error);
+      return empty();
+    }
   });
