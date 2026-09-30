@@ -40,7 +40,7 @@ function nextActionFor(row: Record<string, unknown>) {
   return "پیگیری مشتری";
 }
 async function loadData(sql: Awaited<ReturnType<typeof getSql>>) {
-  const rows = await sql.query<Record<string, unknown>>(\`
+  const rows = await sql.query<Record<string, unknown>>(`
     select l.id,l.name,l.phone,l.status,l.consultant,l.deal,l.property_type,l.neighborhood,
            l.follow_up_at,l.last_contacted_at,l.visit_preferred_at,l.visit_requested_at,l.visit_status,
            l.property_id,l.created_at,l.updated_at,l.deal_stage,p.slug as property_slug,p.title as property_title
@@ -54,7 +54,7 @@ async function loadData(sql: Awaited<ReturnType<typeof getSql>>) {
        else 3 end,
        l.follow_up_at asc nulls last,l.visit_preferred_at asc nulls last,l.created_at asc
      limit 320
-  \`, [ACTIVE_STATUSES]);
+  `, [ACTIVE_STATUSES]);
   const items = rows.map((row) => {
     const followUpAt=row.follow_up_at==null?null:new Date(String(row.follow_up_at)).toISOString();
     const visitPreferredAt=row.visit_preferred_at==null?null:new Date(String(row.visit_preferred_at)).toISOString();
@@ -89,7 +89,7 @@ export default defineEventHandler(async (event) => {
     if(!id||!ACTIVE_STATUSES.concat(["closed","spam"]).includes(body.status as LeadStatus)) throw createError({statusCode:400,statusMessage:"وضعیت لید نامعتبر است."});
     const rows=await sql.query<{id:string;status:string}>("update leads set status=$2,updated_at=current_timestamp where id=$1 returning id,status",[id,body.status]);
     if(!rows[0]) throw createError({statusCode:404,statusMessage:"لید پیدا نشد."});
-    await sql.query(\`insert into lead_activities(lead_id,activity_type,title,note,metadata) values($1,'status',$2,$3,$4::jsonb)\`,[id,"تغییر وضعیت از مرکز فرمان","وضعیت به "+body.status+" تغییر کرد.",JSON.stringify({status:body.status})]);
+    await sql.query(`insert into lead_activities(lead_id,activity_type,title,note,metadata) values($1,'status',$2,$3,$4::jsonb)`,[id,"تغییر وضعیت از مرکز فرمان","وضعیت به "+body.status+" تغییر کرد.",JSON.stringify({status:body.status})]);
     return {success:true,status:rows[0].status};
   }
   if(body.action==="follow_up"){
@@ -97,7 +97,7 @@ export default defineEventHandler(async (event) => {
     const followUpAt=nullableDate(body.followUpAt);
     const rows=await sql.query<{id:string;follow_up_at:string|null}>("update leads set follow_up_at=$2,updated_at=current_timestamp where id=$1 returning id,follow_up_at",[id,followUpAt]);
     if(!rows[0]) throw createError({statusCode:404,statusMessage:"لید پیدا نشد."});
-    await sql.query(\`insert into lead_activities(lead_id,activity_type,title,note,metadata) values($1,'follow_up',$2,$3,$4::jsonb)\`,[id,followUpAt?"پیگیری جدید ثبت شد":"پیگیری حذف شد",followUpAt?"زمان پیگیری از مرکز فرمان تنظیم شد.":"موعد پیگیری پاک شد.",JSON.stringify({followUpAt})]);
+    await sql.query(`insert into lead_activities(lead_id,activity_type,title,note,metadata) values($1,'follow_up',$2,$3,$4::jsonb)`,[id,followUpAt?"پیگیری جدید ثبت شد":"پیگیری حذف شد",followUpAt?"زمان پیگیری از مرکز فرمان تنظیم شد.":"موعد پیگیری پاک شد.",JSON.stringify({followUpAt})]);
     return {success:true,followUpAt};
   }
   if(body.action==="assign"){
@@ -105,16 +105,16 @@ export default defineEventHandler(async (event) => {
     const consultant=cleanText(body.consultant,120); if(!consultant) throw createError({statusCode:400,statusMessage:"نام مشاور مشخص نیست."});
     const rows=await sql.query<{id:string;consultant:string}>("update leads set consultant=$2,updated_at=current_timestamp where id=$1 returning id,consultant",[id,consultant]);
     if(!rows[0]) throw createError({statusCode:404,statusMessage:"لید پیدا نشد."});
-    await sql.query(\`insert into lead_activities(lead_id,activity_type,title,note,metadata) values($1,'status',$2,$3,$4::jsonb)\`,[id,"تخصیص مشاور","لید از مرکز فرمان به "+consultant+" تخصیص داده شد.",JSON.stringify({consultant})]);
+    await sql.query(`insert into lead_activities(lead_id,activity_type,title,note,metadata) values($1,'status',$2,$3,$4::jsonb)`,[id,"تخصیص مشاور","لید از مرکز فرمان به "+consultant+" تخصیص داده شد.",JSON.stringify({consultant})]);
     return {success:true,consultant:rows[0].consultant};
   }
   if(body.action==="create_task"){
     if(!id) throw createError({statusCode:400,statusMessage:"شناسه لید نامعتبر است."});
     const title=cleanText(body.title,180); if(!title) throw createError({statusCode:400,statusMessage:"عنوان وظیفه مشخص نیست."});
     const description=cleanText(body.description,1200); const priority=["low","normal","high","urgent"].includes(body.priority??"")?body.priority:"normal";
-    const task=await sql.query<{id:string}>(\`insert into admin_tasks(id,title,description,status,priority,due_at,assignee,entity_type,entity_id)
-      values($1,$2,$3,'open',$4,current_timestamp,'','lead',$5) returning id\`,[crypto.randomUUID(),title,description,priority,id]);
-    await sql.query(\`insert into lead_activities(lead_id,activity_type,title,note,metadata) values($1,'follow_up',$2,$3,$4::jsonb)\`,[id,"وظیفه مدیریتی ساخته شد",title,JSON.stringify({taskId:task[0]?.id??""})]);
+    const task=await sql.query<{id:string}>(`insert into admin_tasks(id,title,description,status,priority,due_at,assignee,entity_type,entity_id)
+      values($1,$2,$3,'open',$4,current_timestamp,'','lead',$5) returning id`,[crypto.randomUUID(),title,description,priority,id]);
+    await sql.query(`insert into lead_activities(lead_id,activity_type,title,note,metadata) values($1,'follow_up',$2,$3,$4::jsonb)`,[id,"وظیفه مدیریتی ساخته شد",title,JSON.stringify({taskId:task[0]?.id??""})]);
     return {success:true,taskId:task[0]?.id??null};
   }
   return loadData(sql);
