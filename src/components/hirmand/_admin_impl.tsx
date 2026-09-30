@@ -28,6 +28,9 @@ import {
   CheckSquare,
   ChevronDown,
   Clock3,
+  UserCog,
+  WalletCards,
+  DatabaseBackup,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import { isInvalidIntegerInput, normalizeMoneyText } from "@/lib/property-input-normalization";
@@ -69,6 +72,9 @@ import { AdminConsultantManager } from "@/components/hirmand/admin-consultant-ma
 import { AdminDivarFiles } from "@/components/hirmand/admin-divar-files";
 import { AdminAttendanceManager } from "@/components/hirmand/admin-attendance-manager";
 import { AdminMatchingManager } from "@/components/hirmand/admin-matching-manager";
+import { AdminOwnerManager } from "@/components/hirmand/admin-owner-manager";
+import { AdminFinanceManager } from "@/components/hirmand/admin-finance-manager";
+import { AdminBackupManager } from "@/components/hirmand/admin-backup-manager";
 import {
   PROPERTY_CABINET_OPTIONS,
   PROPERTY_COOLING_OPTIONS,
@@ -79,7 +85,7 @@ import {
 } from "@/lib/property-options";
 
 type PublishStatus = "draft" | "published" | "archived";
-type ViewMode = "dashboard" | "list" | "form" | "music" | "leads" | "partners" | "divar" | "consultants" | "attendance" | "matching";
+type ViewMode = "dashboard" | "list" | "form" | "music" | "leads" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -458,6 +464,9 @@ export function AdminPropertiesPage() {
       { view: "music" as ViewMode, label: "موسیقی", icon: Music2 },
       { view: "attendance" as ViewMode, label: "حضور و غیاب", icon: Clock3 },
       { view: "matching" as ViewMode, label: "مچ کردن", icon: GitCompareArrows },
+      { view: "owners" as ViewMode, label: "مالکین", icon: UserCog },
+      { view: "finance" as ViewMode, label: "دفتر مالی", icon: WalletCards },
+      { view: "backup" as ViewMode, label: "پشتیبان", icon: DatabaseBackup },
       { view: "divar" as ViewMode, label: "فایل‌های دیوار", icon: Globe2 },
     ],
     [],
@@ -1610,7 +1619,13 @@ export function AdminPropertiesPage() {
                             ? "ساعت ورود و خروج"
                             : view === "matching"
                               ? "مچ کردن درخواست‌ها"
-                              : view === "divar"
+                              : view === "owners"
+                                ? "مالکین و سبد فایل‌ها"
+                                : view === "finance"
+                                  ? "دفتر مالی و تسویه"
+                                  : view === "backup"
+                                    ? "پشتیبان‌گیری"
+                                    : view === "divar"
                           ? "فایل‌های دیوار"
                           : form.id
                         ? "ویرایش فایل"
@@ -1626,7 +1641,13 @@ export function AdminPropertiesPage() {
                       ? "ثبت حضور اعضای بنگاه و گزارش ساعت‌های ورود و خروج"
                       : view === "matching"
                         ? "تطبیق درخواست‌های مشتری با فایل‌های منتشرشده سایت"
-                        : view === "divar"
+                        : view === "owners"
+                          ? "فهرست مالکین و همه فایل‌های وابسته"
+                          : view === "finance"
+                            ? "ثبت درآمد و هزینه‌های دفتر"
+                            : view === "backup"
+                              ? "دانلود نسخه امن از اطلاعات مدیریتی"
+                              : view === "divar"
                         ? "دریافت، فیلتر و ورود فایل‌های شخصی از دیوار"
                         : form.contactName
                     ? `مشاور مسئول: ${form.contactName}${formDirty ? " · تغییرات ذخیره‌نشده" : ""}`
@@ -2011,6 +2032,9 @@ export function AdminPropertiesPage() {
           {view === "consultants" ? <AdminConsultantManager /> : null}
           {view === "attendance" ? <AdminAttendanceManager /> : null}
           {view === "matching" ? <AdminMatchingManager /> : null}
+          {view === "owners" ? <AdminOwnerManager /> : null}
+          {view === "finance" ? <AdminFinanceManager /> : null}
+          {view === "backup" ? <AdminBackupManager /> : null}
           {view === "divar" ? <AdminDivarFiles /> : null}
 
           {view === "form" ? (
