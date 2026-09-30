@@ -28,7 +28,7 @@ export function AdminLeadCommandCenter(){
       <div className="alc-stat"><small>بازدید نزدیک</small><strong>{data?.stats.upcomingVisits.toLocaleString("fa-IR")}</strong></div>
       <div className="alc-stat"><small>بدون مشاور</small><strong>{data?.stats.unassigned.toLocaleString("fa-IR")}</strong></div>
     </div>
-    <div className="alc-queues">{QUEUES.slice(0,4).map(([key,label])=>{const items=data?.queues[key]??[];return <div className="alc-queue" key={key}>
+    <div className="alc-queues">{QUEUES.map(([key,label])=>{const items=data?.queues[key]??[];return <div className="alc-queue" key={key}>
       <div className="alc-queue-title"><strong>{label}</strong><span className="admin-dashboard-summary">{items.length.toLocaleString("fa-IR")}</span></div>
       {items.length?<div className="alc-queue-list">{items.slice(0,6).map(item=><article className="alc-row" data-priority={item.priority} key={item.id}>
         <span className="alc-icon">{item.priority==="urgent"?<XCircle size={15}/>:<Clock3 size={15}/>}</span>
