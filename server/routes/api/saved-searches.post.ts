@@ -1,4 +1,4 @@
-import { createError, defineEventHandler, getCookie, readBody, setCookie, setResponseHeader, type H3Event } from "h3";
+import { createError, defineEventHandler, readBody, setResponseHeader } from "h3";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
@@ -130,21 +130,6 @@ function buildFilterSql(searchParams: URLSearchParams, values: unknown[]) {
   return where;
 }
 
-async function ensureVisitor(event: H3Event): Promise<string> {
-  const existing = getCookie(event, COOKIE_NAME);
-  if (validVisitorId(existing)) return existing;
-
-  const visitorId = crypto.randomUUID();
-  setCookie(event, COOKIE_NAME, visitorId, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production" || process.env.VERCEL === "1",
-    path: "/",
-    maxAge: COOKIE_MAX_AGE,
-  });
-  return visitorId;
-}
-
 async function persistItem(sql: Awaited<ReturnType<typeof getSql>>, visitorId: string, userId: string | null, item: SearchItem) {
   await sql.query(
     `insert into customer_saved_searches (id, visitor_id, user_id, client_id, name, params, enabled, last_checked_at, updated_at)
@@ -223,13 +208,13 @@ async function collectAlerts(sql: Awaited<ReturnType<typeof getSql>>, ownerId: s
     }
 
     await sql.query(
-      "update customer_saved_searches set last_checked_at=current_timestamp where id=$1 and visitor_id=$2",
+      "update customer_saved_searches set last_checked_at=current_timestamp where id=$1 and ${ownerColumn}=$2",
       [search.id, visitorId],
     );
   }
 
   await sql.query(
-    "delete from customer_saved_search_alerts where visitor_id=$1 and created_at < current_timestamp - interval '120 days'",
+    "delete from customer_saved_search_alerts where ${ownerColumn}=$1 and created_at < current_timestamp - interval '120 days'",
     [ownerId],
   );
 }
@@ -250,7 +235,7 @@ async function listData(sql: Awaited<ReturnType<typeof getSql>>, ownerId: string
        where ${ownerColumn}=$1 and seen_at is null
        order by created_at desc
        limit 30`,
-      [visitorId],
+      [ownerId],
     ),
   ]);
 
@@ -307,14 +292,14 @@ export default defineEventHandler(async (event) => {
     for (const item of parsed.data.items) await persistItem(sql, visitorId, userId, item);
     await sql.query(
       `delete from customer_saved_searches
-       where visitor_id=$1
+       where ${ownerColumn}=$1
          and id not in (
            select id from customer_saved_searches
-           where visitor_id=$1
+           where ${ownerColumn}=$1
            order by updated_at desc
            limit 10
          )`,
-      [visitorId],
+      [ownerId],
     );
   }
 
