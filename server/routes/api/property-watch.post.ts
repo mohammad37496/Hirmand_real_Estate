@@ -109,11 +109,12 @@ export default defineEventHandler(async (event) => {
       { price: row.price, deposit: row.deposit, rent: row.rent, availability: row.availability_status },
     );
     if (!kind && !targetReached) continue;
+    const alertKind = kind ?? "price_drop";
 
     const existing = await sql.query<{ id: string }>(
       "select id::text as id from property_watch_alerts where " + ownerColumn + "=$1 and property_id=$2 " +
       "and alert_type=$3 and created_at >= current_timestamp - interval '3 days' and seen_at is null limit 1",
-      [ownerId, String(row.property_id), kind],
+      [ownerId, String(row.property_id), alertKind],
     );
     if (!existing[0]) {
       const previousAmount = normalizeMoney(row.watched_price ?? row.watched_deposit ?? row.watched_rent);
@@ -130,7 +131,7 @@ export default defineEventHandler(async (event) => {
         "previous_rent, current_rent, previous_availability, current_availability, message) " +
         "values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)",
         [
-          visitorId, userId, String(row.property_id), String(row.property_slug), kind,
+          visitorId, userId, String(row.property_id), String(row.property_slug), alertKind,
           normalizeMoney(row.watched_price), normalizeMoney(row.price),
           normalizeMoney(row.watched_deposit), normalizeMoney(row.deposit),
           normalizeMoney(row.watched_rent), normalizeMoney(row.rent),
