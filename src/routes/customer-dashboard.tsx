@@ -3,6 +3,7 @@ import {
   BellRing,
   Bookmark,
   CalendarDays,
+  PhoneCall,
   ChevronLeft,
   ExternalLink,
   FileHeart,
@@ -20,6 +21,9 @@ import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties"
 import { SITE } from "@/lib/site";
 import { customerFetch } from "@/lib/customer-fetch";
 import "@/customer-dashboard.css";
+import { CustomerPushSettings } from "@/components/hirmand/customer-push-settings";
+
+type CallbackItem = { id: string; name: string; phone: string; preferredAt: string | null; propertyTitle: string; note: string; status: string; createdAt: string; };
 
 type DashboardResponse = {
   enabled?: boolean;
@@ -88,6 +92,7 @@ function CustomerDashboardPage() {
   const [favoriteProperties, setFavoriteProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [callbacks, setCallbacks] = useState<CallbackItem[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -99,6 +104,9 @@ function CustomerDashboardPage() {
       const next = await response.json().catch(() => null) as DashboardResponse | null;
       if (!response.ok) throw new Error("داشبورد در دسترس نیست.");
       setData(next);
+      const callbackResponse = await customerFetch("/api/callback-request", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "list" }), credentials: "same-origin", cache: "no-store" });
+      const callbackData = await callbackResponse.json().catch(() => null) as { callbacks?: CallbackItem[] } | null;
+      setCallbacks(Array.isArray(callbackData?.callbacks) ? callbackData!.callbacks : []);
 
       const slugs = (next?.favorites ?? []).map((item) => item.slug);
       if (slugs.length) {
@@ -141,7 +149,7 @@ function CustomerDashboardPage() {
           <div className="customer-dashboard-hero-copy">
             <span className="kicker"><UserRound size={14} /> پنل مشتری</span>
             <h1>داشبورد من</h1>
-            <p>فایل‌های منتخب، جست‌وجوهای فعال و درخواست‌های این مرورگر را از یکجا مدیریت و پیگیری کنید.</p>
+            <p>فایل‌های منتخب، جست‌وجوها، درخواست تماس، بازدید و گفت‌وگوهای شما در یک حساب همگام می‌شوند.</p>
           </div>
           <div className="customer-dashboard-hero-actions">
             <Link to="/properties" className="btn-ghost"><Search size={15} /> جست‌وجوی فایل</Link>
@@ -262,6 +270,30 @@ function CustomerDashboardPage() {
                 )}
               </section>
             </div>
+
+            <section className="customer-dashboard-card">
+              <div className="customer-dashboard-section-head">
+                <div><span className="kicker"><PhoneCall size={13} /> ارتباط مستقیم</span><h2>تماس‌های درخواستی و اعلان‌ها</h2></div>
+                <CustomerPushSettings compact />
+              </div>
+              {callbacks.length ? (
+                <div className="customer-dashboard-requests">
+                  {callbacks.slice(0, 5).map((item) => (
+                    <article key={item.id}>
+                      <div className="customer-dashboard-request-main">
+                        <strong>{item.propertyTitle || "درخواست تماس با هیرمند"}</strong>
+                        <small>{item.preferredAt ? formatDate(item.preferredAt) : formatDate(item.createdAt)}</small>
+                      </div>
+                      <div className="customer-dashboard-request-badges"><span>{({ new: "جدید", contacted: "تماس گرفته شد", scheduled: "زمان‌بندی شد", completed: "انجام شد", cancelled: "لغو شد" } as Record<string,string>)[item.status] ?? item.status}</span></div>
+                      {item.note ? <small className="customer-dashboard-muted">{item.note}</small> : null}
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="customer-dashboard-empty compact"><PhoneCall size={22} /><strong>هنوز درخواست تماسی ثبت نکرده‌اید.</strong><p>از دکمه تماس شناور، درخواست تماس با زمان دلخواه ثبت کنید.</p></div>
+              )}
+              <p className="customer-dashboard-muted">گفت‌وگوی آنلاین از دکمه پیام پایین صفحه در دسترس است. اعلان مرورگر نیز برای تغییرات جدید قابل فعال‌سازی است.</p>
+            </section>
 
             <section className="customer-dashboard-tip">
               <Sparkles size={18} />
