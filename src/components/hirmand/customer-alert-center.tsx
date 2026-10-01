@@ -51,7 +51,7 @@ export function CustomerAlertCenter() {
           void navigator.serviceWorker.ready.then((registration) =>
             registration.showNotification("هیرمند", {
               body: alert.message,
-              icon: "/__grok/icon-180.png",
+              icon: "/og.jpg",
               badge: "/__grok/icon-180.png",
               data: { url: "/properties/" + alert.slug },
             }),
