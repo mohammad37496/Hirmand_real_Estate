@@ -5,6 +5,8 @@ import "@/customer-alert-center.css";
 
 type AlertItem = {
   id: string;
+  source: "search" | "watch";
+  sourceId: string;
   slug: string;
   type: string;
   title: string;
@@ -18,16 +20,16 @@ type AlertResponse = {
   alerts?: AlertItem[];
 };
 
-async function fetchAlerts(body: Record<string, unknown>) {
-  const response = await fetch("/api/saved-searches", {
+async function fetchJson(path: string, body?: Record<string, unknown>) {
+  const response = await fetch(path, body ? {
     method: "POST",
     headers: { "content-type": "application/json" },
     credentials: "same-origin",
     body: JSON.stringify(body),
-  });
-  const data = (await response.json().catch(() => null)) as AlertResponse | { statusMessage?: string } | null;
-  if (!response.ok) throw new Error((data as { statusMessage?: string } | null)?.statusMessage || "اعلان‌ها در دسترس نیستند.");
-  return data as AlertResponse;
+  } : { credentials: "same-origin" });
+  const data = await response.json().catch(() => null) as { statusMessage?: string } | null;
+  if (!response.ok) throw new Error(data?.statusMessage || "اعلان‌ها در دسترس نیستند.");
+  return data;
 }
 
 export function CustomerAlertCenter() {
@@ -39,12 +41,40 @@ export function CustomerAlertCenter() {
 
   const load = useCallback(async (silent = true) => {
     try {
-      const data = await fetchAlerts({ action: "list" });
-      setEnabled(Boolean(data.enabled));
-      setAlerts(Array.isArray(data.alerts) ? data.alerts : []);
-      setSearchCount(Array.isArray(data.searches) ? data.searches.length : 0);
+      const [searchData, watchData] = await Promise.all([
+        fetchJson("/api/saved-searches", { action: "list" }) as Promise<AlertResponse>,
+        fetchJson("/api/property-watch", { action: "sync" }) as Promise<{
+          ok?: boolean;
+          enabled?: boolean;
+          subscriptions?: Array<{ slug: string }>;
+          alerts?: Array<{ id: string; slug: string; type: string; message: string; createdAt: string }>;
+        }>,
+      ]);
 
-      for (const alert of data.alerts ?? []) {
+      const searchAlerts: AlertItem[] = (searchData.alerts ?? []).map((alert) => ({
+        ...alert,
+        source: "search" as const,
+        sourceId: alert.id,
+      }));
+      const watchAlerts: AlertItem[] = (watchData.alerts ?? []).map((alert) => ({
+        id: "watch:" + alert.id,
+        source: "watch" as const,
+        sourceId: alert.id,
+        slug: alert.slug,
+        type: alert.type,
+        title: "پیگیری فایل",
+        message: alert.message,
+        createdAt: alert.createdAt,
+      }));
+      const mergedAlerts = [...searchAlerts, ...watchAlerts]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 30);
+
+      setEnabled(Boolean(searchData.enabled || watchData.enabled));
+      setAlerts(mergedAlerts);
+      setSearchCount(Array.isArray(searchData.searches) ? searchData.searches.length : 0);
+
+      for (const alert of mergedAlerts) {
         if (seenInBrowser.current.has(alert.id)) continue;
         seenInBrowser.current.add(alert.id);
         if (typeof Notification !== "undefined" && Notification.permission === "granted" && "serviceWorker" in navigator) {
@@ -87,8 +117,14 @@ export function CustomerAlertCenter() {
 
   async function markSeen(ids: string[]) {
     if (!ids.length) return;
+    const selected = alerts.filter((item) => ids.includes(item.id));
+    const searchIds = selected.filter((item) => item.source === "search").map((item) => Number(item.sourceId)).filter(Number.isFinite);
+    const watchIds = selected.filter((item) => item.source === "watch").map((item) => Number(item.sourceId)).filter(Number.isFinite);
     try {
-      await fetchAlerts({ action: "seen", alertIds: ids.map((id) => Number(id)).filter(Number.isFinite) });
+      await Promise.all([
+        searchIds.length ? fetchJson("/api/saved-searches", { action: "seen", alertIds: searchIds }) : Promise.resolve(),
+        watchIds.length ? fetchJson("/api/property-watch", { action: "seen", alertIds: watchIds }) : Promise.resolve(),
+      ]);
       setAlerts((current) => current.filter((item) => !ids.includes(item.id)));
     } catch {
       toast.error("علامت‌گذاری اعلان انجام نشد.");
