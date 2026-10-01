@@ -57,7 +57,7 @@ export function SiteChrome({
       </div>
       <SiteUtilities />
       <CustomerAlertCenter />
-      <CustomerEngagement />
+      <CustomerEngagement propertyId={engagementProperty?.id} propertyTitle={engagementProperty?.title} />
       <CallMenu className="floating-call-menu" buttonClassName="floating-call" label="تماس" />
       <Toaster
         dir="rtl"
