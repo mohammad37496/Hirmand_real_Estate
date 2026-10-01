@@ -22,6 +22,7 @@ import { SITE } from "@/lib/site";
 import { customerFetch } from "@/lib/customer-fetch";
 import "@/customer-dashboard.css";
 import { CustomerPushSettings } from "@/components/hirmand/customer-push-settings";
+import { SmartRecommendations } from "@/components/hirmand/smart-recommendations";
 
 type CallbackItem = { id: string; name: string; phone: string; preferredAt: string | null; propertyTitle: string; note: string; status: string; createdAt: string; };
 
@@ -298,6 +299,8 @@ function CustomerDashboardPage() {
               )}
               <p className="customer-dashboard-muted">گفت‌وگوی آنلاین از دکمه پیام پایین صفحه در دسترس است. اعلان مرورگر نیز برای تغییرات جدید قابل فعال‌سازی است.</p>
             </section>
+
+            <SmartRecommendations />
 
             <section className="customer-dashboard-tip">
               <Sparkles size={18} />
