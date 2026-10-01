@@ -1,4 +1,4 @@
-import { createError, defineEventHandler, getCookie, readBody, setCookie, setResponseHeader } from "h3";
+import { createError, defineEventHandler, getCookie, readBody, setCookie, setResponseHeader, type H3Event } from "h3";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
@@ -129,7 +129,7 @@ function buildFilterSql(searchParams: URLSearchParams, values: unknown[]) {
   return where;
 }
 
-async function ensureVisitor(event: Parameters<Parameters<typeof defineEventHandler>[0]>[0]) {
+async function ensureVisitor(event: H3Event) {
   let visitorId = getCookie(event, COOKIE_NAME);
   if (!validVisitorId(visitorId)) {
     visitorId = crypto.randomUUID();
