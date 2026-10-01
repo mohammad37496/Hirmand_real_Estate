@@ -65,3 +65,7 @@
   .property-price-history-change{grid-template-columns:1fr auto 1fr;}
   .property-price-history-change span{grid-column:1/-1;}
 }
+.property-price-history-change small{grid-column:1/-1;justify-self:start;font-size:.68rem;font-weight:800}
+.property-price-history-change small.is-drop{color:#a33b32}
+.property-price-history-change small.is-rise{color:#6f6b52}
+.property-price-history-change strong.is-drop{font-weight:900}
