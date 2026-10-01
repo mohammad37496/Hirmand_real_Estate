@@ -1,6 +1,7 @@
 import { Clock3, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { listPublishedPropertyCardsBySlugs, type PropertyCardData } from "@/lib/properties";
+import { customerFetch } from "@/lib/customer-fetch";
 import { PropertyCard } from "./property-showcase";
 import "@/smart-recommendations.css";
 
@@ -33,7 +34,7 @@ export function SmartRecommendations() {
   useEffect(() => {
     let cancelled = false;
 
-    void fetch("/api/customer-recommendations", { credentials: "same-origin", cache: "no-store" })
+    void customerFetch("/api/customer-recommendations", { credentials: "same-origin", cache: "no-store" })
       .then(async (response) => {
         const data = await response.json().catch(() => null) as RecommendationResponse | null;
         if (!response.ok || !data?.enabled || cancelled) return null;
