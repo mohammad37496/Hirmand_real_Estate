@@ -99,6 +99,7 @@ import { formatToman } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
 import { getPropertyFallbackImage, getPropertyFallbackImages, getPropertyFallbackLegacyImage, isPropertyFallbackImage } from "@/lib/property-fallback-images";
+import { customerFetch } from "@/lib/customer-fetch";
 import { areaSlug } from "@/lib/areas";
 import { propertyPath } from "@/lib/property-path";
 import { TEAM } from "@/lib/site";
