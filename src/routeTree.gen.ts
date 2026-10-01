@@ -316,6 +316,9 @@ export interface RootRouteChildren {
   ToolsRahnRentRoute: typeof ToolsRahnRentRoute
   ToolsIndexRoute: typeof ToolsIndexRoute
   VSlugIdRoute: typeof VSlugIdRoute
+  LoginRoute: typeof LoginRoute
+  CustomerDashboardRoute: typeof CustomerDashboardRoute
+  RequestTrackingRoute: typeof RequestTrackingRoute
 }
 
 declare module '@tanstack/react-router' {
