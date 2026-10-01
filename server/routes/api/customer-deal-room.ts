@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "private, no-store");
   const rawQuery = getQuery(event) as Record<string, unknown>;
   const body = event.req.method === "GET" ? {} : await readBody(event).catch(() => ({}));
-  const parsed = schema.safeParse({ ...body, ...(rawQuery.action ? { action: rawQuery.action } : {}), ...(rawQuery.token ? { token: rawQuery.token } : {}), ...(rawQuery.roomId ? { roomId: rawQuery.roomId } : {}) });
+  const parsed = schema.safeParse({ ...body, action: (rawQuery.action ? rawQuery.action : event.req.method === "GET" ? "get" : undefined), ...(rawQuery.token ? { token: rawQuery.token } : {}), ...(rawQuery.roomId ? { roomId: rawQuery.roomId } : {}) });
   if (!parsed.success) throw createError({ statusCode: 422, statusMessage: "درخواست اتاق معامله نامعتبر است." });
   if (dbSource === "unconfigured") return { enabled: false, rooms: [], room: null };
 
