@@ -16,7 +16,12 @@ import { CustomerEngagement } from "./customer-engagement";
 export function SiteChrome({
   children,
   className,
+  engagementProperty,
 }: {
+  children: ReactNode;
+  className?: string;
+  engagementProperty?: { id?: string; title?: string };
+
   children: ReactNode;
   className?: string;
 }) {
