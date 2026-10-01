@@ -396,11 +396,11 @@ function PropertiesIndexPage() {
       .then(async (response) => {
         const data = await response.json().catch(() => null) as {
           enabled?: boolean;
-          searches?: SavedSearch[];
+          searches?: Array<{ clientId: string; name: string; params: string }>;
         } | null;
         if (!response.ok || !data?.enabled || !Array.isArray(data.searches)) return;
         const merged = data.searches.slice(0, MAX_SAVED_SEARCHES).map((item) => ({
-          id: String(item.id),
+          id: String(item.clientId),
           name: String(item.name),
           params: String(item.params),
         }));
