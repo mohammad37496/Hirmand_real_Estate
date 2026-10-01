@@ -1,26 +1,15 @@
-import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
-import { auth } from "@/lib/auth/server";
+import { createError, defineEventHandler, getCookie, setResponseHeader } from "h3";
+import { getCustomerIdentity } from "@/lib/customer-identity.server";
 import { getSql } from "@/lib/db";
 
 const COOKIE_NAME = "hirmand_visitor_id";
 
-function headersFromEvent(event: Parameters<typeof defineEventHandler>[0] extends never ? never : any) {
-  const headers = new Headers();
-  const source = event.node.req.headers;
-  for (const [key, value] of Object.entries(source)) {
-    if (value == null) continue;
-    headers.set(key, Array.isArray(value) ? value.join(",") : String(value));
-  }
-  return headers;
-}
+
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
-  const session = await auth.api.getSession({ headers: headersFromEvent(event) }).catch(() => null);
-  const userId = session?.user?.id ? String(session.user.id) : "";
+  const { visitorId, userId } = await getCustomerIdentity(event);
   if (!userId) throw createError({ statusCode: 401, statusMessage: "ابتدا وارد حساب کاربری شوید." });
-
-  const visitorId = getCookie(event, COOKIE_NAME);
   if (!visitorId || !/^[a-f0-9-]{20,80}$/i.test(visitorId)) {
     return { linked: true, moved: 0 };
   }
