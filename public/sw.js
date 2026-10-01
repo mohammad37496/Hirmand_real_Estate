@@ -1,4 +1,4 @@
-const CACHE_NAME = "hirmand-shell-v6";
+const CACHE_NAME = "hirmand-shell-v7";
 const APP_SHELL = ["/", "/properties", "/favorites"];
 
 self.addEventListener("install", (event) => {
@@ -17,6 +17,41 @@ self.addEventListener("activate", (event) => {
       ),
     ).then(() => self.clients.claim()),
   );
+});
+
+self.addEventListener("push", (event) => {
+  event.waitUntil((async () => {
+    let payload = {};
+    try { payload = event.data?.json?.() ?? {}; } catch { payload = { body: event.data?.text?.() ?? "" }; }
+    const title = String(payload.title || "هیرمند");
+    const body = String(payload.body || "یک به‌روزرسانی جدید برای شما آماده است.");
+    const url = typeof payload.url === "string" && payload.url.startsWith("/") ? payload.url : "/customer-dashboard";
+    await self.registration.showNotification(title, {
+      body,
+      icon: "/og.jpg",
+      badge: "/__grok/icon-180.png",
+      tag: typeof payload.tag === "string" ? payload.tag : "hirmand-customer",
+      data: { url },
+      dir: "rtl",
+      lang: "fa",
+    });
+  })());
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification?.data?.url;
+  event.waitUntil((async () => {
+    const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const client of clients) {
+      if ("focus" in client) {
+        await client.focus();
+        if (url && "navigate" in client) await client.navigate(new URL(url, self.location.origin).href);
+        return;
+      }
+    }
+    if (self.clients.openWindow && url) await self.clients.openWindow(new URL(url, self.location.origin).href);
+  })());
 });
 
 self.addEventListener("message", (event) => {
