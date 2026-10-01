@@ -142,6 +142,7 @@ export default defineEventHandler(async (event) => {
       parking: Boolean(row.parking),
       elevator: Boolean(row.elevator),
       storage: Boolean(row.storage),
+      otherAmenities: Array.isArray(row.other_amenities) ? row.other_amenities.filter((value): value is string => typeof value === "string") : [],
       status: "published" as const,
       availabilityStatus: String(row.availability_status ?? "available"),
       featured: Boolean(row.featured),
@@ -207,9 +208,9 @@ export default defineEventHandler(async (event) => {
         id === "parking" ? item.parking :
         id === "elevator" ? item.elevator :
         id === "storage" ? item.storage :
-        id === "balcony" ? false :
-        id === "yard" ? false :
-        id === "master_bedroom" ? false : false;
+        id === "balcony" ? item.otherAmenities.some(value => ["balcony", "terrace"].includes(value)) :
+        id === "yard" ? item.otherAmenities.some(value => ["yard", "private_yard"].includes(value)) :
+        id === "master_bedroom" ? item.otherAmenities.includes("master_bedroom") : false;
       const mustHaveMissing = profile.mustHaveAmenities.filter((id) => !amenitySatisfied(id));
       const requestedMatched = profile.requestedAmenities.filter(amenitySatisfied);
       if (mustHaveMissing.length) {
