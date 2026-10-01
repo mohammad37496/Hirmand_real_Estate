@@ -19,7 +19,7 @@ function readRecentSlugs() {
     const raw = localStorage.getItem(RECENT_PROPERTIES_KEY);
     const parsed = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed)
-      ? parsed.filter((item): item is string => typeof item === "string" && item.trim()).slice(0, 6)
+      ? parsed.filter((item): item is string => typeof item === "string" && item.trim().length > 0).slice(0, 6)
       : [];
   } catch {
     return [];
