@@ -1,5 +1,6 @@
 import { createError, defineEventHandler, getCookie, setResponseHeader } from "h3";
 import { getCustomerIdentity } from "@/lib/customer-identity.server";
+import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 import { getSql } from "@/lib/db";
 
 const COOKIE_NAME = "hirmand_visitor_id";
@@ -7,6 +8,7 @@ const COOKIE_NAME = "hirmand_visitor_id";
 
 
 export default defineEventHandler(async (event) => {
+  assertSameOrigin(event);
   setResponseHeader(event, "cache-control", "no-store");
   const { visitorId, userId } = await getCustomerIdentity(event);
   if (!userId) throw createError({ statusCode: 401, statusMessage: "ابتدا وارد حساب کاربری شوید." });
