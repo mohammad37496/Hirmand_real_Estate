@@ -2,13 +2,6 @@ import { createError, defineEventHandler, setResponseHeader } from "h3";
 import { getCustomerIdentity } from "@/lib/customer-identity.server";
 import { dbSource, getSql } from "@/lib/db";
 
-const COOKIE_NAME = "hirmand_visitor_id";
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
-
-function validVisitorId(value: string | undefined) {
-  return Boolean(value && /^[a-f0-9-]{20,80}$/i.test(value));
-}
-
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
   if (dbSource === "unconfigured") {
