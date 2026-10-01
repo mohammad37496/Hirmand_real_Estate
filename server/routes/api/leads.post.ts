@@ -340,7 +340,7 @@ export default defineEventHandler(async (event) => {
       visitRequested: true,
     };
   }
-  const rows = await sql.query<{ id: string }>(
+  const rows = await sql.query<{ id: string; tracking_token: string }>(
     `insert into leads (
       id, tracking_token, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source,
       acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, acquisition_landing_path,
