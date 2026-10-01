@@ -21,9 +21,6 @@ export function SiteChrome({
   children: ReactNode;
   className?: string;
   engagementProperty?: { id?: string; title?: string };
-
-  children: ReactNode;
-  className?: string;
 }) {
   return (
     <>
