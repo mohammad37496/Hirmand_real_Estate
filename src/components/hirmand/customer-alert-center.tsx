@@ -160,6 +160,7 @@ export function CustomerAlertCenter() {
           <div className="customer-alert-search-summary">
             <Search size={16} aria-hidden="true" />
             <span>{searchCount ? searchCount.toLocaleString("fa-IR") + " جست‌وجوی ذخیره‌شده و فعال" : "هنوز جست‌وجویی برای اعلان ذخیره نشده"}</span>
+            <a href="/customer-dashboard"><ExternalLink size={14} /> داشبورد من</a>
             <a href="/properties"><ExternalLink size={14} /> فایل‌ها</a>
           </div>
 
