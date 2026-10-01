@@ -19,16 +19,21 @@ export default defineEventHandler(async (event) => {
   const ownerId = userId ?? visitorId;
   const ownerColumn = userId ? "user_id" : "visitor_id";
   const sql = await getSql();
-  const [favoriteRows, searchRows, candidateRows] = await Promise.all([
+  const [favoriteRows, searchRows, watchRows, candidateRows] = await Promise.all([
     sql.query<Record<string, unknown>>(
       "select p.transaction_type, p.property_type, p.neighborhood, p.area_m2, " +
-      "case when p.transaction_type='rent' then coalesce(p.rent,p.deposit) when p.transaction_type='mortgage' then p.deposit else p.price end as price " +
+      "case when p.transaction_type='rent' then coalesce(p.rent,p.deposit) when p.transaction_type='mortgage' then p.deposit else p.price end as price, " +
+      "f.category, f.private_note, f.priority " +
       "from customer_favorites f join properties p on p.slug=f.property_slug and p.status='published' " +
-      "where f." + ownerColumn + "=$1 order by f.updated_at desc limit 12",
+      "where f." + ownerColumn + "=$1 order by f.priority desc, f.updated_at desc limit 12",
       [ownerId],
     ),
     sql.query<{ params: string }>(
       "select params from customer_saved_searches where " + ownerColumn + "=$1 and enabled=true order by updated_at desc limit 5",
+      [ownerId],
+    ),
+    sql.query<Record<string, unknown>>(
+      "select property_slug, target_price from property_watch_subscriptions where " + ownerColumn + "=$1 and enabled=true and target_price is not null limit 40",
       [ownerId],
     ),
     sql.query<Record<string, unknown>>(
@@ -54,7 +59,13 @@ export default defineEventHandler(async (event) => {
     neighborhood: String(row.neighborhood ?? ""),
     price: row.price == null ? null : Number(row.price),
     areaM2: row.area_m2 == null ? null : Number(row.area_m2),
+    category: String(row.category ?? "عمومی"),
+    priority: Number(row.priority ?? 0),
+    hasNote: Boolean(String(row.private_note ?? "").trim()),
   }));
+  const targetPrices = watchRows
+    .map((row) => row.target_price == null ? null : Number(row.target_price))
+    .filter((value): value is number => value != null && Number.isFinite(value) && value > 0);
   const searches = searchRows.map((row) => {
     const params = new URLSearchParams(String(row.params));
     return {
@@ -73,9 +84,11 @@ export default defineEventHandler(async (event) => {
   const typeWeights = new Map<string, number>();
   const neighborhoodWeights = new Map<string, number>();
   for (const item of favorites) {
-    if (item.transactionType) txWeights.set(item.transactionType, (txWeights.get(item.transactionType) ?? 0) + 4);
-    if (item.propertyType) typeWeights.set(item.propertyType, (typeWeights.get(item.propertyType) ?? 0) + 3);
-    if (item.neighborhood) neighborhoodWeights.set(item.neighborhood, (neighborhoodWeights.get(item.neighborhood) ?? 0) + 2);
+    const priorityBoost = Math.max(0, Math.min(3, item.priority));
+    const categoryBoost = item.category === "مهم" ? 2 : item.category === "بررسی" ? 1 : 0;
+    if (item.transactionType) txWeights.set(item.transactionType, (txWeights.get(item.transactionType) ?? 0) + 4 + priorityBoost);
+    if (item.propertyType) typeWeights.set(item.propertyType, (typeWeights.get(item.propertyType) ?? 0) + 3 + priorityBoost);
+    if (item.neighborhood) neighborhoodWeights.set(item.neighborhood, (neighborhoodWeights.get(item.neighborhood) ?? 0) + 2 + categoryBoost);
   }
   for (const item of searches) {
     if (item.transactionType) txWeights.set(item.transactionType, (txWeights.get(item.transactionType) ?? 0) + 5);
@@ -136,6 +149,19 @@ export default defineEventHandler(async (event) => {
         score += 2;
       }
     }
+    if (candidatePrice != null && targetPrices.length) {
+      const closestTarget = targetPrices.reduce((best, target) =>
+        Math.abs(target - candidatePrice) < Math.abs(best - candidatePrice) ? target : best,
+      );
+      const targetDistance = Math.abs(candidatePrice - closestTarget) / closestTarget;
+      if (candidatePrice <= closestTarget) {
+        score += 6;
+        reasons.push("در محدوده قیمت هدف شما");
+      } else if (targetDistance <= 0.12) {
+        score += 3;
+        reasons.push("نزدیک به قیمت هدف");
+      }
+    }
     if (item.areaM2 != null && avgArea != null && avgArea > 0) {
       const distance = Math.abs(item.areaM2 - avgArea) / avgArea;
       if (distance <= 0.20) {
@@ -173,5 +199,9 @@ export default defineEventHandler(async (event) => {
       reason: entry.reasons.slice(0, 2).join(" · ") || "بر اساس فعالیت شما",
     }));
 
-  return { enabled: true, items, reason: favorites.length || searches.length ? "personalized" : "empty" };
+  return {
+    enabled: true,
+    items,
+    reason: favorites.length || searches.length || targetPrices.length ? "personalized" : "empty",
+  };
 });
