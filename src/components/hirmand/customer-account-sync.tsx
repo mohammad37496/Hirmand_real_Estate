@@ -75,6 +75,9 @@ export function CustomerAccountSync() {
           }),
         }).catch(() => undefined);
       }
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("hirmand:account-synced"));
+      }
     })();
   }, [isPending, user]);
 
