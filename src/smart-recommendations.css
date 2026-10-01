@@ -1,0 +1,3 @@
+.smart-recommendation-card{display:grid;gap:7px;min-width:0}
+.smart-recommendation-reason{display:flex;align-items:flex-start;gap:6px;margin-top:-2px;padding:9px 11px;border:1px solid rgba(15,118,110,.14);border-radius:12px;background:rgba(15,118,110,.055);color:#356b64;font-size:.69rem;line-height:1.7}
+.smart-recommendation-reason svg{margin-top:2px;flex:none}
