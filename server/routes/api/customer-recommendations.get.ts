@@ -107,6 +107,8 @@ export default defineEventHandler(async (event) => {
       deposit: row.deposit == null ? null : String(row.deposit),
       rent: row.rent == null ? null : String(row.rent),
       image: row.image ? String(row.image) : null,
+      status: "published" as const,
+      availabilityStatus: String(row.availability_status ?? "available"),
       featured: Boolean(row.featured),
       publishedAt: row.published_at ? new Date(String(row.published_at)).toISOString() : null,
     };
