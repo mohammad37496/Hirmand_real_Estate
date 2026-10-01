@@ -6,13 +6,6 @@ import { DEFAULT_MATCH_RAHN_RATE } from "@/lib/budget-matching";
 import { autoMatchLead } from "@/lib/lead-smart-matcher.server";
 import { getCustomerIdentity } from "@/lib/customer-identity.server";
 
-const VISITOR_COOKIE = "hirmand_visitor_id";
-const VISITOR_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
-
-function validVisitorId(value: string | undefined) {
-  return Boolean(value && /^[a-f0-9-]{20,80}$/i.test(value));
-}
-
 async function createAutomaticFollowUp(sql: Awaited<ReturnType<typeof getSql>>, input: {
   leadId: string;
   title: string;
