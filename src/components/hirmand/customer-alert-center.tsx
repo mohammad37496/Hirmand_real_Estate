@@ -1,5 +1,5 @@
 import { Bell, BellRing, CheckCheck, ExternalLink, Search, Settings2, Tag, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import "@/customer-alert-center.css";
 
@@ -37,7 +37,7 @@ export function CustomerAlertCenter() {
   const [open, setOpen] = useState(false);
   const seenInBrowser = useRef(new Set<string>());
 
-  async function load(silent = true) {
+  const load = useCallback(async (silent = true) => {
     try {
       const data = await fetchAlerts({ action: "list" });
       setEnabled(Boolean(data.enabled));
@@ -63,13 +63,13 @@ export function CustomerAlertCenter() {
     } catch (error) {
       if (!silent) toast.error(error instanceof Error ? error.message : "اعلان‌ها در دسترس نیستند.");
     }
-  }
+  }, []);
 
   useEffect(() => {
     void load(true);
     const interval = window.setInterval(() => void load(true), 60_000);
     return () => window.clearInterval(interval);
-  }, []);
+  }, [load]);
 
   async function enableNotifications() {
     if (typeof Notification === "undefined") {
