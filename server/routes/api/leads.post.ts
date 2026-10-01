@@ -254,12 +254,31 @@ export default defineEventHandler(async (event) => {
 
   if (parsed.data.propertyId && parsed.data.visitPreferredAt) {
     const visitDate = new Date(parsed.data.visitPreferredAt);
-    const propertyRows = await sql.query<{ id: string; title: string; property_type: string; neighborhood: string; contact_name: string }>(
+    const propertyRows = await sql.query<{ id: string; title: string; property_type: string; neighborhood: string; contact_name: string; availability_status: string }>(
       "select id, title, property_type, neighborhood, contact_name, availability_status from properties where id::text = $1 and status = 'published' and availability_status not in ('sold','rented','unavailable') limit 1",
       [parsed.data.propertyId],
     );
     const property = propertyRows[0];
     if (!property) throw createError({ statusCode: 404, statusMessage: "فایل موردنظر برای بازدید در دسترس نیست." });
+
+    const conflicts = await sql.query<{ id: string }>(
+      `select id
+       from leads
+       where property_id::text = $1
+         and visit_status in ('requested','confirmed')
+         and visit_preferred_at is not null
+         and visit_preferred_at >= $2::timestamptz - interval '60 minutes'
+         and visit_preferred_at < $2::timestamptz + interval '60 minutes'
+       limit 1`,
+      [property.id, visitDate.toISOString()],
+    );
+    if (conflicts[0]) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: "این بازه برای بازدید قبلاً رزرو شده است؛ لطفاً زمان دیگری انتخاب کنید.",
+      });
+    }
+
     const rows = await sql.query<{ id: string }>(
       "insert into leads (id, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source, follow_up_at, floor_preference, property_id, visit_preferred_at, visit_requested_at, visit_status) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'website',current_timestamp + interval '4 hours',$11,$12,$13,current_timestamp,'requested') returning id",
       [
