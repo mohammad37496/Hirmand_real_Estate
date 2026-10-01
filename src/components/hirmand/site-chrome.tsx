@@ -11,6 +11,7 @@ import { VisitorTracker } from "./visitor-tracker";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { SiteUtilities } from "./site-utilities";
 import { CustomerAlertCenter } from "./customer-alert-center";
+import { CustomerEngagement } from "./customer-engagement";
 
 export function SiteChrome({
   children,
@@ -56,6 +57,7 @@ export function SiteChrome({
       </div>
       <SiteUtilities />
       <CustomerAlertCenter />
+      <CustomerEngagement />
       <CallMenu className="floating-call-menu" buttonClassName="floating-call" label="تماس" />
       <Toaster
         dir="rtl"
