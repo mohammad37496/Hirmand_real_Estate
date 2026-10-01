@@ -9,14 +9,7 @@ function validVisitorId(value: string | undefined) {
 }
 
 function requestHeaders(event: H3Event) {
-  const headers = new Headers();
-  const source = event.node?.req?.headers ?? {};
-  for (const [key, value] of Object.entries(source)) {
-    if (value == null) continue;
-    if (Array.isArray(value)) headers.set(key, value.join(","));
-    else headers.set(key, String(value));
-  }
-  return headers;
+  return new Headers(event.req.headers);
 }
 
 export async function getCustomerIdentity(event: H3Event) {
