@@ -10,6 +10,7 @@ import { scrollToId } from "./scroll";
 import { VisitorTracker } from "./visitor-tracker";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { SiteUtilities } from "./site-utilities";
+import { CustomerAlertCenter } from "./customer-alert-center";
 
 export function SiteChrome({
   children,
@@ -50,6 +51,7 @@ export function SiteChrome({
         </Link>
       </div>
       <SiteUtilities />
+      <CustomerAlertCenter />
       <CallMenu className="floating-call-menu" buttonClassName="floating-call" label="تماس" />
       <Toaster
         dir="rtl"
