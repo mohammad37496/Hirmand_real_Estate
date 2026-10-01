@@ -116,6 +116,12 @@ import {
   labelForOption,
 } from "@/lib/property-options";
 
+function historyAmount(item: PropertyPriceHistoryItem, transactionType: Property["transactionType"]) {
+  const value = transactionType === "rent" ? item.newRent : transactionType === "mortgage" ? item.newDeposit : item.newPrice;
+  const n = value == null ? null : Number(value);
+  return n != null && Number.isFinite(n) && n > 0 ? n : null;
+}
+
 function priceChangePercent(previous: string | null, next: string | null) {
   if (!previous || !next) return null;
   const before = Number(previous);
@@ -1080,6 +1086,35 @@ export function PropertyDetailView({
   const viewedPropertySlug = property?.slug;
   const [priceHistory, setPriceHistory] = useState<PropertyPriceHistoryItem[]>([]);
   const [priceWatchEnabled, setPriceWatchEnabled] = useState(false);
+  const priceChart = useMemo(() => {
+    if (!property || !priceHistory.length) return null;
+    const values = [...priceHistory]
+      .reverse()
+      .map((item) => ({ date: item.changedAt, value: historyAmount(item, property.transactionType) }))
+      .filter((item): item is { date: string; value: number } => item.value != null);
+    const current = historyAmount({
+      changedAt: new Date().toISOString(),
+      previousPrice: null,
+      newPrice: property.price,
+      previousDeposit: null,
+      newDeposit: property.deposit,
+      previousRent: null,
+      newRent: property.rent,
+    }, property.transactionType);
+    if (current != null) values.push({ date: new Date().toISOString(), value: current });
+    if (values.length < 2) return null;
+    const min = Math.min(...values.map(item => item.value));
+    const max = Math.max(...values.map(item => item.value));
+    const span = Math.max(1, max - min);
+    const points = values.map((item, index) => ({
+      x: 8 + (index * 184) / (values.length - 1),
+      y: 60 - ((item.value - min) / span) * 48,
+      value: item.value,
+      date: item.date,
+    }));
+    return { points, min, max };
+  }, [priceHistory, property]);
+
 
   // The gallery list is derived before the early return below: a hook that only
   // runs for a present property would break React's hook order the moment the
@@ -1664,6 +1699,21 @@ export function PropertyDetailView({
                     {priceHistory.length.toLocaleString("fa-IR")} تغییر ثبت‌شده
                   </span>
                 </div>
+                {priceChart ? (
+                  <div className="property-price-chart" role="img" aria-label="نمودار روند قیمت فایل">
+                    <div className="property-price-chart-labels">
+                      <span>بیشینه {formatToman(priceChart.max)} تومان</span>
+                      <span>کمینه {formatToman(priceChart.min)} تومان</span>
+                    </div>
+                    <svg viewBox="0 0 200 72" preserveAspectRatio="none" aria-hidden="true">
+                      <path d={"M " + priceChart.points.map(point => point.x.toFixed(1) + " " + point.y.toFixed(1)).join(" L ")} fill="none" stroke="currentColor" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
+                      {priceChart.points.map((point, index) => (
+                        <circle key={point.date + "-" + index} cx={point.x} cy={point.y} r="2.2" fill="currentColor" />
+                      ))}
+                    </svg>
+                    <div className="property-price-chart-current">اکنون: <strong>{property.transactionType === "rent" ? formatToman(Number(property.rent ?? 0)) : property.transactionType === "mortgage" ? formatToman(Number(property.deposit ?? 0)) : formatToman(Number(property.price ?? 0))} تومان</strong></div>
+                  </div>
+                ) : null}
                 <div className="property-price-history-list">
                   {priceHistory.map((item, index) => {
                     const changes: Array<{ label: string; previous: string | null; next: string | null }> = [];
