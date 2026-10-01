@@ -2,7 +2,6 @@ import { Check, Heart, LoaderCircle, Save, Target, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SERVICES } from "@/lib/site";
 import { customerFetch } from "@/lib/customer-fetch";
-import { formatToman } from "@/lib/money";
 import "@/customer-needs-profile.css";
 
 type Profile = {
