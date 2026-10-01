@@ -59,7 +59,9 @@ export function CustomerPushSettings({compact=false}:{compact?:boolean}) {
     }finally{setBusy(false);}
   }
 
-  if(status==="unsupported") return <div className="customer-push-note"><ShieldCheck size={15}/><span>اعلان داخل سایت فعال است؛ Push این مرورگر/حالت را پشتیبانی نمی‌کند.</span></div>;
+  if(status==="unsupported") return compact ? <div className="customer-push-note"><ShieldCheck size={15}/><span>اعلان داخل سایت فعال است؛ Push این مرورگر/حالت را پشتیبانی نمی‌کند.</span></div> : null;
+  if(!compact && status==="unknown") return null;
+  if(!compact && status!=="on" && !configured) return null;
 
   return (
     <button type="button" className={compact?"customer-push-inline":"customer-engage-fab customer-push-fab"} onClick={()=>void(status==="on"?disable():enable())} disabled={busy} aria-label={status==="on"?"غیرفعال‌کردن اعلان‌ها":"فعال‌سازی اعلان‌ها"}>
