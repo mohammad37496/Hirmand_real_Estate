@@ -76,18 +76,17 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
       if (!response.ok) throw new Error(data?.statusMessage || data?.message || "ساعت‌های بازدید بارگذاری نشدند.");
       const nextSlots = Array.isArray(data?.slots) ? data.slots : [];
       setSlots(nextSlots);
-      const selected = nextSlots.find((slot) => slot.time === time);
-      if (!selected?.available) {
-        const first = nextSlots.find((slot) => slot.available);
-        setTime(first?.time ?? "");
-      }
+      setTime((current) => {
+        const selected = nextSlots.find((slot) => slot.time === current && slot.available);
+        return selected?.time ?? nextSlots.find((slot) => slot.available)?.time ?? "";
+      });
     } catch (cause) {
       setSlots([]);
       setError(cause instanceof Error ? cause.message : "ساعت‌های بازدید بارگذاری نشدند.");
     } finally {
       setLoadingSlots(false);
     }
-  }, [property.id, time]);
+  }, [property.id]);
 
   useEffect(() => {
     if (!open || done) return;
