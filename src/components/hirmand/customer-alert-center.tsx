@@ -127,7 +127,7 @@ export function CustomerAlertCenter() {
             <a href="/properties"><ExternalLink size={14} /> فایل‌ها</a>
           </div>
 
-          {searchCount && Notification.permission !== "granted" ? (
+          {searchCount && typeof Notification !== "undefined" && Notification.permission !== "granted" ? (
             <button type="button" className="customer-alert-enable" onClick={() => void enableNotifications()}>
               <Settings2 size={15} /> فعال‌سازی اعلان مرورگر
             </button>
