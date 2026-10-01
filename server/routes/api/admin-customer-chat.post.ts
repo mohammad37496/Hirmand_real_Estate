@@ -12,10 +12,6 @@ const schema = z.object({
   consultantName: z.string().trim().max(120).optional(),
 });
 
-async function requireAdmin(event: Parameters<typeof defineEventHandler>[0]) {
-  void event;
-}
-
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
   if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
