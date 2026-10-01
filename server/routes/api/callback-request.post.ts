@@ -47,6 +47,8 @@ export default defineEventHandler(async (event) => {
     };
   }
 
+  if (!parsed.data.name || !parsed.data.phone) throw createError({ statusCode: 400, statusMessage: "نام و شماره موبایل را وارد کنید." });
+
   let preferredAt: string | null = null;
   if (parsed.data.preferredAt) {
     const date = new Date(parsed.data.preferredAt);
