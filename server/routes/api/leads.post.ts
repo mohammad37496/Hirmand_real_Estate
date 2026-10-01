@@ -160,8 +160,11 @@ export default defineEventHandler(async (event) => {
       console.error("[leads] acquisition lookup unavailable", error);
     }
   }
-  const existing = await sql.query<{ id: string }>(
-    `select id from leads where phone = $1 and created_at > current_timestamp - interval '10 minutes' limit 1`,
+  const existing = await sql.query<{ id: string; tracking_token: string | null }>(
+    `select id, tracking_token
+     from leads
+     where phone = $1 and created_at > current_timestamp - interval '10 minutes'
+     limit 1`,
     [parsed.data.phone],
   );
 
@@ -247,9 +250,20 @@ export default defineEventHandler(async (event) => {
       } catch (error) {
         console.error("[leads] automatic smart matching failed for duplicate budget lead", error);
       }
-      return { success: true, duplicate: true, updated: true, id: existing[0].id };
+      return {
+      success: true,
+      duplicate: true,
+      updated: true,
+      id: existing[0].id,
+      trackingToken: existing[0].tracking_token,
+    };
     }
-    return { success: true, duplicate: true, id: existing[0].id };
+    return {
+      success: true,
+      duplicate: true,
+      id: existing[0].id,
+      trackingToken: existing[0].tracking_token,
+    };
   }
 
   if (parsed.data.propertyId && parsed.data.visitPreferredAt) {
@@ -279,10 +293,12 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const rows = await sql.query<{ id: string }>(
-      "insert into leads (id, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source, follow_up_at, floor_preference, property_id, visit_preferred_at, visit_requested_at, visit_status) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'website',current_timestamp + interval '4 hours',$11,$12,$13,current_timestamp,'requested') returning id",
+    const trackingToken = crypto.randomUUID().replace(/-/g, "");
+    const rows = await sql.query<{ id: string; tracking_token: string }>(
+      "insert into leads (id, tracking_token, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source, follow_up_at, floor_preference, property_id, visit_preferred_at, visit_requested_at, visit_status) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'website',current_timestamp + interval '4 hours',$12,$13,$14,current_timestamp,'requested') returning id, tracking_token",
       [
         crypto.randomUUID(),
+        trackingToken,
         parsed.data.name,
         parsed.data.phone,
         parsed.data.peopleCount ?? null,
@@ -316,11 +332,17 @@ export default defineEventHandler(async (event) => {
       priority: "urgent",
       dueMinutes: 60,
     });
-    return { success: true, duplicate: false, id: rows[0].id, visitRequested: true };
+    return {
+      success: true,
+      duplicate: false,
+      id: rows[0].id,
+      trackingToken: rows[0].tracking_token,
+      visitRequested: true,
+    };
   }
   const rows = await sql.query<{ id: string }>(
     `insert into leads (
-      id, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source,
+      id, tracking_token, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source,
       acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, acquisition_landing_path,
       follow_up_at, lease_deadline, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_rate, budget_equivalent, budget_bedrooms,
       floor_preference, matched_properties, match_count,
@@ -328,10 +350,11 @@ export default defineEventHandler(async (event) => {
       budget_purchase_min, budget_purchase_max, budget_sale_min, budget_sale_max,
       requested_amenities, requested_bedrooms
     )
-    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,current_timestamp + interval '24 hours',$17,$18,$19,$20,$21,$22,$23,$24,$25,$26::jsonb,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36::jsonb,$37)
-    returning id`,
+    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,current_timestamp + interval '24 hours',$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37::jsonb,$38)
+    returning id, tracking_token`,
     [
       crypto.randomUUID(),
+      crypto.randomUUID().replace(/-/g, ""),
       parsed.data.name,
       parsed.data.phone,
       parsed.data.peopleCount ?? null,
