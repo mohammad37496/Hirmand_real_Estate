@@ -1,0 +1,21 @@
+.admin-viewing-calendar{margin-bottom:16px}
+.admin-viewing-days{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.admin-viewing-day{border:1px solid rgba(0,0,0,.07);border-radius:16px;background:#fff;overflow:hidden}
+.admin-viewing-day>header{display:flex;align-items:center;gap:8px;padding:12px 14px;background:#faf9f6;border-bottom:1px solid rgba(0,0,0,.06)}
+.admin-viewing-day>header strong{font-size:.82rem}
+.admin-viewing-day>header span{margin-inline-start:auto;color:#777;font-size:.72rem}
+.admin-viewing-list{display:grid}
+.admin-viewing-card{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;padding:12px;border-bottom:1px solid rgba(0,0,0,.05);position:relative}
+.admin-viewing-card:last-child{border-bottom:0}
+.admin-viewing-time{font-size:1rem;font-weight:900;color:#17304b}
+.admin-viewing-main{min-width:0;display:grid;gap:3px}
+.admin-viewing-main strong{font-size:.82rem}
+.admin-viewing-main a{display:inline-flex;align-items:center;gap:5px;width:max-content;color:#48647e;text-decoration:none;font-size:.74rem}
+.admin-viewing-main span{font-size:.75rem;color:#56524b;line-height:1.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.admin-viewing-main small{color:#8a6229;font-size:.68rem}
+.admin-viewing-status{grid-column:2;justify-self:start;margin-top:2px;padding:4px 8px;border-radius:999px;font-size:.65rem;font-weight:800}
+.admin-viewing-status.is-requested{background:rgba(152,113,55,.1);color:#7d5a25}
+.admin-viewing-status.is-confirmed{background:rgba(55,113,70,.08);color:#356b46}
+.admin-viewing-empty{display:grid;place-items:center;gap:7px;padding:26px;text-align:center;color:#777}
+.admin-viewing-empty strong{color:#3f3c37}
+.admin-viewing-empty span{font-size:.76rem}
