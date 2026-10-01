@@ -378,7 +378,42 @@ function PropertiesIndexPage() {
   }, []);
 
   useEffect(() => {
-    setSavedSearches(readSavedSearches());
+    const localSavedSearches = readSavedSearches();
+    setSavedSearches(localSavedSearches);
+    void fetch("/api/saved-searches", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        action: "sync",
+        items: localSavedSearches.map((item) => ({
+          clientId: item.id,
+          name: item.name,
+          params: item.params,
+        })),
+      }),
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => null) as {
+          enabled?: boolean;
+          searches?: SavedSearch[];
+        } | null;
+        if (!response.ok || !data?.enabled || !Array.isArray(data.searches)) return;
+        const merged = data.searches.slice(0, MAX_SAVED_SEARCHES).map((item) => ({
+          id: String(item.id),
+          name: String(item.name),
+          params: String(item.params),
+        }));
+        setSavedSearches(merged);
+        try {
+          localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(merged));
+        } catch {
+          // Server sync succeeded; local persistence is only a convenience.
+        }
+      })
+      .catch(() => {
+        // Online alert sync is optional; local saved searches remain available.
+      });
     const params = new URLSearchParams(window.location.search);
     const tx = validTransaction(params.get("transaction") ?? "");
     const type = validPropertyType(params.get("type") ?? "");
@@ -697,7 +732,7 @@ function PropertiesIndexPage() {
     return params;
   }
 
-  function saveCurrentSearch() {
+  async function saveCurrentSearch() {
     const params = currentFilterParams();
     if (!params.toString()) {
       toast.info("اول چند فیلتر یا یک عبارت جست‌وجو انتخاب کنید.");
@@ -719,9 +754,25 @@ function PropertiesIndexPage() {
       localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(next));
       setSavedSearches(next);
       setSavedSearchId(entry.id);
-      toast.success("جست‌وجو ذخیره شد.");
     } catch {
       toast.error("ذخیره جست‌وجو در این مرورگر ممکن نشد.");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/saved-searches", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          action: "save",
+          item: { clientId: entry.id, name: entry.name, params: entry.params },
+        }),
+      });
+      if (!response.ok) throw new Error("online sync failed");
+      toast.success("جست‌وجو ذخیره شد؛ اعلان فایل جدید و کاهش قیمت فعال است.");
+    } catch {
+      toast.success("جست‌وجو در مرورگر ذخیره شد؛ اعلان آنلاین فعال نشد.");
     }
   }
 
@@ -770,17 +821,30 @@ function PropertiesIndexPage() {
     toast.success("جست‌وجوی ذخیره‌شده اعمال شد.");
   }
 
-  function deleteSavedSearch() {
+  async function deleteSavedSearch() {
     if (!savedSearchId) return;
-    const next = savedSearches.filter((item) => item.id !== savedSearchId);
+    const deletingId = savedSearchId;
+    const next = savedSearches.filter((item) => item.id !== deletingId);
     try {
       localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(next));
       setSavedSearches(next);
       setSavedSearchId("");
-      toast.success("جست‌وجوی ذخیره‌شده حذف شد.");
     } catch {
       toast.error("حذف جست‌وجو انجام نشد.");
+      return;
     }
+
+    try {
+      await fetch("/api/saved-searches", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ action: "delete", clientId: deletingId }),
+      });
+    } catch {
+      // Local deletion is still valid when the remote cleanup is unavailable.
+    }
+    toast.success("جست‌وجوی ذخیره‌شده حذف شد.");
   }
 
   function resetFilters() {
