@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarDays, Check, Clock3, LoaderCircle, X } from "lucide-react";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import type { PropertyAvailabilityStatus } from "@/lib/properties";
@@ -63,7 +63,7 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
   const visitAllowed = property.availabilityStatus === "available" || property.availabilityStatus === "reserved";
   const minimumDate = useMemo(() => todayIsoDate(), []);
 
-  async function loadSlots(selectedDate: string) {
+  const loadSlots = useCallback(async (selectedDate: string) => {
     if (!property.id || !selectedDate) return;
     setLoadingSlots(true);
     setError("");
@@ -87,12 +87,12 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
     } finally {
       setLoadingSlots(false);
     }
-  }
+  }, [property.id, time]);
 
   useEffect(() => {
     if (!open || done) return;
     void loadSlots(date);
-  }, [open, date, property.id, done]);
+  }, [open, date, done, loadSlots]);
 
   function close() {
     if (busy) return;
