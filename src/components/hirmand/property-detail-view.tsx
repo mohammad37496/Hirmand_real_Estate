@@ -101,6 +101,7 @@ import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
 import { getPropertyFallbackImage, getPropertyFallbackImages, getPropertyFallbackLegacyImage, isPropertyFallbackImage } from "@/lib/property-fallback-images";
 import { customerFetch } from "@/lib/customer-fetch";
 import { PropertyPriceTarget } from "@/components/hirmand/property-price-target";
+import { CustomerPropertyMatch } from "@/components/hirmand/customer-property-match";
 import { areaSlug } from "@/lib/areas";
 import { propertyPath } from "@/lib/property-path";
 import { TEAM } from "@/lib/site";
@@ -1489,6 +1490,7 @@ export function PropertyDetailView({
                   currentPrice={property.price}
                   currentDeposit={property.deposit}
                 />
+                <CustomerPropertyMatch slug={property.slug} />
 
                 <div className="property-summary-facts" aria-label="اطلاعات کلیدی فایل">
                   {property.areaM2 != null ? (
