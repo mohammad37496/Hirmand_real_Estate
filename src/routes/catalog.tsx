@@ -15,7 +15,7 @@ function readItems(){
   const raw=params.get("items")||localStorage.getItem(KEY)||"[]";
   try{
     const parsed=raw.startsWith("[")?JSON.parse(raw):raw.split(",");
-    return Array.from(new Set(parsed.filter((x:any)=>typeof x==="string").map((x:string)=>x.trim()).filter(Boolean))).slice(0,MAX);
+    return Array.from(new Set(parsed.filter((x): x is string => typeof x==="string").map((x)=>x.trim()).filter(Boolean))).slice(0,MAX);
   }catch{return [] as string[];}
 }
 function primaryPrice(p:Property){const value=p.transactionType==="rent"?p.rent:p.transactionType==="mortgage"?p.deposit:p.price;return value?formatToman(Number(value))+" تومان":"تماس برای قیمت";}
