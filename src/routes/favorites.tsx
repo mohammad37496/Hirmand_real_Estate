@@ -5,6 +5,7 @@ import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
 import { SITE } from "@/lib/site";
+import { customerFetch } from "@/lib/customer-fetch";
 
 const FAVORITES_KEY = "hirmand-favorite-properties";
 const RECENT_PROPERTIES_KEY = "hirmand-recent-properties";
@@ -65,7 +66,7 @@ function FavoritesPage() {
   useEffect(() => {
     let cancelled = false;
     const localFavoriteSlugs = readFavorites();
-    void fetch("/api/customer-favorites", {
+    void customerFetch("/api/customer-favorites", {
       method: "POST",
       headers: { "content-type": "application/json" },
       credentials: "same-origin",
