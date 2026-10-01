@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeftRight, Check, Heart, Share2, Trash2 } from "lucide-react";
+import { ArrowLeftRight, Heart, Share2, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { toast } from "sonner";
