@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeftRight, Heart, Share2, Trash2 } from "lucide-react";
+import { ArrowLeftRight, Heart, Printer, Share2, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { toast } from "sonner";
@@ -214,7 +214,13 @@ function ComparePage() {
                 >
                   <Share2 size={14} /> اشتراک‌گذاری مقایسه
                 </button>
-                <button type="button" className="properties-reset-btn" onClick={clearCompare}>
+                <a
+                  href={"/catalog?items=" + properties.map(property => encodeURIComponent(property.slug)).join(",")}
+                  className="properties-reset-btn"
+                >
+                  <Printer size={14} /> کاتالوگ / PDF
+                </a>
+                                <button type="button" className="properties-reset-btn" onClick={clearCompare}>
                   <Trash2 size={14} /> پاک‌کردن مقایسه
                 </button>
               </div>
