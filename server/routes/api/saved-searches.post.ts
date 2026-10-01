@@ -129,18 +129,18 @@ function buildFilterSql(searchParams: URLSearchParams, values: unknown[]) {
   return where;
 }
 
-async function ensureVisitor(event: H3Event) {
-  let visitorId = getCookie(event, COOKIE_NAME);
-  if (!validVisitorId(visitorId)) {
-    visitorId = crypto.randomUUID();
-    setCookie(event, COOKIE_NAME, visitorId, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production" || process.env.VERCEL === "1",
-      path: "/",
-      maxAge: COOKIE_MAX_AGE,
-    });
-  }
+async function ensureVisitor(event: H3Event): Promise<string> {
+  const existing = getCookie(event, COOKIE_NAME);
+  if (validVisitorId(existing)) return existing;
+
+  const visitorId = crypto.randomUUID();
+  setCookie(event, COOKIE_NAME, visitorId, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production" || process.env.VERCEL === "1",
+    path: "/",
+    maxAge: COOKIE_MAX_AGE,
+  });
   return visitorId;
 }
 
