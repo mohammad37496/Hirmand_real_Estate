@@ -78,6 +78,18 @@ function FavoritesPage() {
         const remote = cleanSlugs(data.slugs, 100);
         const merged = cleanSlugs([...localFavoriteSlugs, ...remote], 100);
         persistSlugs(FAVORITES_KEY, merged);
+        if (merged.length) {
+          void listPublishedPropertiesBySlugs({ data: { slugs: merged } })
+            .then((rows) => {
+              if (cancelled) return;
+              setProperties(rows);
+              setLoading(false);
+            })
+            .catch(() => undefined);
+        } else if (!cancelled) {
+          setProperties([]);
+          setLoading(false);
+        }
       })
       .catch(() => undefined);
 
