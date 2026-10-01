@@ -10,7 +10,7 @@ function validVisitorId(value: string | undefined) {
 
 function requestHeaders(event: H3Event) {
   const headers = new Headers();
-  const source = event.node.req.headers;
+  const source = event.node?.req?.headers ?? {};
   for (const [key, value] of Object.entries(source)) {
     if (value == null) continue;
     if (Array.isArray(value)) headers.set(key, value.join(","));
@@ -20,7 +20,7 @@ function requestHeaders(event: H3Event) {
 }
 
 export async function getCustomerIdentity(event: H3Event) {
-  let visitorId = getCookie(event, COOKIE_NAME);
+  let visitorId: string = getCookie(event, COOKIE_NAME) ?? "";
   if (!validVisitorId(visitorId)) {
     visitorId = crypto.randomUUID();
     setCookie(event, COOKIE_NAME, visitorId, {
@@ -40,9 +40,5 @@ export async function getCustomerIdentity(event: H3Event) {
     // Anonymous visitor is a supported state.
   }
 
-  return {
-    visitorId,
-    userId,
-    authenticated: Boolean(userId),
-  };
+  return { visitorId, userId, authenticated: Boolean(userId) };
 }
