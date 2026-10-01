@@ -20,6 +20,9 @@ export default defineEventHandler(async (event) => {
     sql.query("update property_watch_subscriptions set user_id=$1 where visitor_id=$2 and user_id is null", [userId, visitorId]),
     sql.query("update property_watch_alerts set user_id=$1 where visitor_id=$2 and user_id is null", [userId, visitorId]),
     sql.query("update leads set user_id=$1 where visitor_id=$2 and user_id is null", [userId, visitorId]),
+    sql.query("update customer_conversations set user_id=$1 where visitor_id=$2 and user_id is null", [userId, visitorId]),
+    sql.query("update callback_requests set user_id=$1 where visitor_id=$2 and user_id is null", [userId, visitorId]),
+    sql.query("update customer_push_subscriptions set user_id=$1 where visitor_id=$2 and user_id is null", [userId, visitorId]),
   ]);
   return { linked: true, moved: results.reduce((sum, item) => sum + item.length, 0) };
 });
