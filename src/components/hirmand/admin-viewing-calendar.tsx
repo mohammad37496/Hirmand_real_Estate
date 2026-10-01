@@ -1,5 +1,5 @@
 import { CalendarDays, Phone, RefreshCw } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "@/admin-viewing-calendar.css";
 
 type Item = {
@@ -40,7 +40,7 @@ export function AdminViewingCalendar() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch("/api/admin-viewing-calendar", {
@@ -53,13 +53,13 @@ export function AdminViewingCalendar() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     void load();
     const interval = window.setInterval(() => void load(), 60_000);
     return () => window.clearInterval(interval);
-  }, []);
+  }, [load]);
 
   const groups = useMemo(() => {
     const map = new Map<string, Item[]>();
