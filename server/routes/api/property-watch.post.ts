@@ -7,6 +7,7 @@ const inputSchema = z.object({
   action: z.enum(["subscribe", "unsubscribe", "sync", "seen"]),
   slug: z.string().trim().min(1).max(220).optional(),
   alertIds: z.array(z.coerce.number().int().positive()).max(100).optional().default([]),
+  targetPrice: z.coerce.number().positive().max(9999999999999999).optional(),
 });
 
 function normalizeMoney(value: unknown) {
@@ -59,15 +60,17 @@ export default defineEventHandler(async (event) => {
     if (parsed.data.action === "subscribe") {
       await sql.query(
         "insert into property_watch_subscriptions " +
-        "(visitor_id, user_id, property_id, property_slug, price, deposit, rent, availability_status, enabled, updated_at) " +
-        "values ($1,$2,$3,$4,$5,$6,$7,$8,true,current_timestamp) " +
+        "(visitor_id, user_id, property_id, property_slug, price, deposit, rent, availability_status, enabled, target_price, updated_at) " +
+        "values ($1,$2,$3,$4,$5,$6,$7,$8,true,$9,current_timestamp) " +
         "on conflict (visitor_id, property_id) do update set " +
         "user_id=coalesce(excluded.user_id, property_watch_subscriptions.user_id), property_slug=excluded.property_slug, " +
-        "price=excluded.price, deposit=excluded.deposit, rent=excluded.rent, availability_status=excluded.availability_status, enabled=true, updated_at=current_timestamp",
+        "price=excluded.price, deposit=excluded.deposit, rent=excluded.rent, availability_status=excluded.availability_status, " +
+        "enabled=true, target_price=coalesce(excluded.target_price, property_watch_subscriptions.target_price), updated_at=current_timestamp",
         [
           visitorId, userId, String(property.id), String(property.slug),
           normalizeMoney(property.price), normalizeMoney(property.deposit), normalizeMoney(property.rent),
           String(property.availability_status ?? "available"),
+          parsed.data.targetPrice ?? null,
         ],
       );
     } else {
@@ -87,7 +90,7 @@ export default defineEventHandler(async (event) => {
 
   const subscriptions = await sql.query<Record<string, unknown>>(
     "select s.property_id, s.property_slug, s.price as watched_price, s.deposit as watched_deposit, s.rent as watched_rent, " +
-    "s.availability_status as watched_availability, p.title, p.price, p.deposit, p.rent, p.availability_status, p.updated_at " +
+    "s.target_price, s.availability_status as watched_availability, p.title, p.price, p.deposit, p.rent, p.availability_status, p.updated_at " +
     "from property_watch_subscriptions s join properties p on p.id=s.property_id " +
     "where s." + ownerColumn + "=$1 and s.enabled=true and p.status='published' " +
     "order by s.updated_at desc limit 40",
@@ -95,11 +98,17 @@ export default defineEventHandler(async (event) => {
   );
 
   for (const row of subscriptions) {
+    const targetPrice = normalizeMoney(row.target_price);
+    const currentComparable = normalizeMoney(row.price ?? row.deposit ?? row.rent);
+    const watchedComparable = normalizeMoney(row.watched_price ?? row.watched_deposit ?? row.watched_rent);
+    const targetReached = targetPrice != null && currentComparable != null && currentComparable <= targetPrice &&
+      (watchedComparable == null || watchedComparable > targetPrice);
+
     const kind = alertType(
       { price: row.watched_price, deposit: row.watched_deposit, rent: row.watched_rent, availability: row.watched_availability },
       { price: row.price, deposit: row.deposit, rent: row.rent, availability: row.availability_status },
     );
-    if (!kind) continue;
+    if (!kind && !targetReached) continue;
 
     const existing = await sql.query<{ id: string }>(
       "select id::text as id from property_watch_alerts where " + ownerColumn + "=$1 and property_id=$2 " +
@@ -112,7 +121,9 @@ export default defineEventHandler(async (event) => {
       const direction = currentAmount != null && previousAmount != null && currentAmount < previousAmount ? "کاهش" : "تغییر";
       const message = kind === "availability_change"
         ? row.title + " · وضعیت فایل از " + String(row.watched_availability ?? "نامشخص") + " به " + String(row.availability_status ?? "نامشخص") + " تغییر کرد."
-        : row.title + " · " + direction + " قیمت/شرایط فایل";
+        : targetReached
+          ? row.title + " · قیمت فایل به هدف شما (" + formatAmount(targetPrice) + " تومان) رسید."
+          : row.title + " · " + direction + " قیمت/شرایط فایل";
       await sql.query(
         "insert into property_watch_alerts " +
         "(visitor_id, user_id, property_id, property_slug, alert_type, previous_price, current_price, previous_deposit, current_deposit, " +
@@ -154,6 +165,7 @@ export default defineEventHandler(async (event) => {
       availabilityStatus: String(row.availability_status ?? "available"),
       updatedAt: row.updated_at == null ? null : new Date(String(row.updated_at)).toISOString(),
       watchedPrice: normalizeMoney(row.watched_price),
+      targetPrice: normalizeMoney(row.target_price),
       currentPrice: normalizeMoney(row.price),
       currentPriceLabel: formatAmount(normalizeMoney(row.price)),
     })),
