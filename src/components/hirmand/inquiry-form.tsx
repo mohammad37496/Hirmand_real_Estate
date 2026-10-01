@@ -1,5 +1,5 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
-import { Phone, Send } from "lucide-react";
+import { Copy, ExternalLink, Phone, Send } from "lucide-react";
 import { toast } from "sonner";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SERVICES, SITE, TEAM } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -111,6 +111,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
   const [consultant, setConsultant] = useState<(typeof TEAM)[number]["id"]>(TEAM[0].id);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
+  const [trackingToken, setTrackingToken] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -359,12 +360,15 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
         }),
       });
       const result = (await response.json().catch(() => null)) as
-        | { success?: boolean; statusMessage?: string; message?: string }
+        | { success?: boolean; statusMessage?: string; message?: string; trackingToken?: string | null }
         | null;
       if (!response.ok || !result?.success) {
         throw new Error(result?.statusMessage || result?.message || "ثبت درخواست انجام نشد.");
       }
       trackAnalyticsEvent("inquiry_submit");
+      if (result.trackingToken) {
+        setTrackingToken(result.trackingToken);
+      }
       toast.success("درخواست شما با موفقیت برای تیم هیرمند ثبت شد.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "ثبت درخواست انجام نشد.");
@@ -373,6 +377,42 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
   }
 
   const waHref = `${selected.wa}?text=${encodeURIComponent(buildMessage())}`;
+
+  if (trackingToken) {
+    const trackingUrl = `${window.location.origin}/request-tracking?token=${encodeURIComponent(trackingToken)}`;
+    return (
+      <section className="inquiry-success-panel" aria-live="polite">
+        <div className="inquiry-success-icon">✓</div>
+        <span className="kicker">ثبت موفق</span>
+        <h3>درخواست شما ثبت شد.</h3>
+        <p>این کد را نگه دارید تا وضعیت درخواست و آخرین به‌روزرسانی‌های تیم هیرمند را هر زمان ببینید.</p>
+        <div className="inquiry-tracking-box">
+          <strong>{trackingToken}</strong>
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => {
+              if (!navigator.clipboard) {
+                toast.info("کد پیگیری: " + trackingToken);
+                return;
+              }
+              void navigator.clipboard.writeText(trackingToken).then(() => toast.success("کد پیگیری کپی شد."));
+            }}
+          >
+            <Copy size={14} /> کپی کد
+          </button>
+        </div>
+        <div className="inquiry-success-actions">
+          <a className="btn-gold" href={trackingUrl}>
+            <ExternalLink size={15} /> مشاهده وضعیت درخواست
+          </a>
+          <button type="button" className="btn-ghost" onClick={() => setTrackingToken("")}>
+            ثبت درخواست جدید
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <form className="inquiry-form" onSubmit={onSubmit} noValidate>

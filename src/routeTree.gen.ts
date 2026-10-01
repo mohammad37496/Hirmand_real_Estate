@@ -29,6 +29,11 @@ import { Route as ToolsDepositRouteImport } from './routes/tools/deposit'
 import { Route as ToolsLoanRouteImport } from './routes/tools/loan'
 import { Route as ToolsRahnRentRouteImport } from './routes/tools/rahn-rent'
 import { Route as VSlugIdRouteImport } from './routes/v.$slug.$id'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as CustomerDashboardRouteImport } from './routes/customer-dashboard'
+import { Route as RequestTrackingRouteImport } from './routes/request-tracking'
+import { Route as CatalogRouteImport } from './routes/catalog'
+import { Route as DealRoomRouteImport } from './routes/deal-room'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -130,6 +135,31 @@ const VSlugIdRoute = VSlugIdRouteImport.update({
   path: '/v/$slug/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomerDashboardRoute = CustomerDashboardRouteImport.update({
+  id: '/customer-dashboard',
+  path: '/customer-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RequestTrackingRoute = RequestTrackingRouteImport.update({
+  id: '/request-tracking',
+  path: '/request-tracking',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CatalogRoute = CatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DealRoomRoute = DealRoomRouteImport.update({
+  id: '/deal-room',
+  path: '/deal-room',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -152,6 +182,11 @@ export interface FileRoutesByFullPath {
   '/properties/': typeof PropertiesIndexRoute
   '/tools/': typeof ToolsIndexRoute
   '/v/$slug/$id': typeof VSlugIdRoute
+  '/login': typeof LoginRoute
+  '/customer-dashboard': typeof CustomerDashboardRoute
+  '/request-tracking': typeof RequestTrackingRoute
+  '/catalog': typeof CatalogRoute
+  '/deal-room': typeof DealRoomRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -172,6 +207,11 @@ export interface FileRoutesByTo {
   '/properties': typeof PropertiesIndexRoute
   '/tools': typeof ToolsIndexRoute
   '/v/$slug/$id': typeof VSlugIdRoute
+  '/login': typeof LoginRoute
+  '/customer-dashboard': typeof CustomerDashboardRoute
+  '/request-tracking': typeof RequestTrackingRoute
+  '/catalog': typeof CatalogRoute
+  '/deal-room': typeof DealRoomRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -195,6 +235,11 @@ export interface FileRoutesById {
   '/properties/': typeof PropertiesIndexRoute
   '/tools/': typeof ToolsIndexRoute
   '/v/$slug/$id': typeof VSlugIdRoute
+  '/login': typeof LoginRoute
+  '/customer-dashboard': typeof CustomerDashboardRoute
+  '/request-tracking': typeof RequestTrackingRoute
+  '/catalog': typeof CatalogRoute
+  '/deal-room': typeof DealRoomRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -219,6 +264,11 @@ export interface FileRouteTypes {
     | '/properties/'
     | '/tools/'
     | '/v/$slug/$id'
+    | '/login'
+    | '/customer-dashboard'
+    | '/request-tracking'
+    | '/catalog'
+    | '/deal-room'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -239,6 +289,11 @@ export interface FileRouteTypes {
     | '/properties'
     | '/tools'
     | '/v/$slug/$id'
+    | '/login'
+    | '/customer-dashboard'
+    | '/request-tracking'
+    | '/catalog'
+    | '/deal-room'
   id:
     | '__root__'
     | '/'
@@ -261,6 +316,11 @@ export interface FileRouteTypes {
     | '/properties/'
     | '/tools/'
     | '/v/$slug/$id'
+    | '/login'
+    | '/customer-dashboard'
+    | '/request-tracking'
+    | '/catalog'
+    | '/deal-room'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -280,6 +340,11 @@ export interface RootRouteChildren {
   ToolsRahnRentRoute: typeof ToolsRahnRentRoute
   ToolsIndexRoute: typeof ToolsIndexRoute
   VSlugIdRoute: typeof VSlugIdRoute
+  LoginRoute: typeof LoginRoute
+  CustomerDashboardRoute: typeof CustomerDashboardRoute
+  RequestTrackingRoute: typeof RequestTrackingRoute
+  CatalogRoute: typeof CatalogRoute
+  DealRoomRoute: typeof DealRoomRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -424,6 +489,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VSlugIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/customer-dashboard': {
+      id: '/customer-dashboard'
+      path: '/customer-dashboard'
+      fullPath: '/customer-dashboard'
+      preLoaderRoute: typeof CustomerDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/request-tracking': {
+      id: '/request-tracking'
+      path: '/request-tracking'
+      fullPath: '/request-tracking'
+      preLoaderRoute: typeof RequestTrackingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/catalog': {
+      id: '/catalog'
+      path: '/catalog'
+      fullPath: '/catalog'
+      preLoaderRoute: typeof CatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deal-room': {
+      id: '/deal-room'
+      path: '/deal-room'
+      fullPath: '/deal-room'
+      preLoaderRoute: typeof DealRoomRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -472,6 +572,11 @@ const rootRouteChildren: RootRouteChildren = {
   ToolsRahnRentRoute: ToolsRahnRentRoute,
   ToolsIndexRoute: ToolsIndexRoute,
   VSlugIdRoute: VSlugIdRoute,
+  LoginRoute: LoginRoute,
+  CustomerDashboardRoute: CustomerDashboardRoute,
+  RequestTrackingRoute: RequestTrackingRoute,
+  CatalogRoute: CatalogRoute,
+  DealRoomRoute: DealRoomRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

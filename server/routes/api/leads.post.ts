@@ -1,11 +1,10 @@
-import { createError, defineEventHandler, getCookie, readBody } from "h3";
+import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { buildBudgetLeadNote, budgetEquivalent } from "@/lib/budget-lead";
 import { DEFAULT_MATCH_RAHN_RATE } from "@/lib/budget-matching";
 import { autoMatchLead } from "@/lib/lead-smart-matcher.server";
-
-const VISITOR_COOKIE = "hirmand_visitor_id";
+import { getCustomerIdentity } from "@/lib/customer-identity.server";
 
 async function createAutomaticFollowUp(sql: Awaited<ReturnType<typeof getSql>>, input: {
   leadId: string;
@@ -116,7 +115,7 @@ export default defineEventHandler(async (event) => {
   if (!parsed.success) throw createError({ statusCode: 422, statusMessage: "اطلاعات درخواست ناقص یا نامعتبر است." });
   if (dbSource === "unconfigured") throw createError({ statusCode: 503, statusMessage: "ثبت آنلاین درخواست در حال حاضر فعال نیست." });
   const sql = await getSql();
-  const visitorId = getCookie(event, VISITOR_COOKIE);
+  const { visitorId, userId } = await getCustomerIdentity(event);
   let acquisition: {
     source: string | null;
     medium: string | null;
@@ -160,8 +159,11 @@ export default defineEventHandler(async (event) => {
       console.error("[leads] acquisition lookup unavailable", error);
     }
   }
-  const existing = await sql.query<{ id: string }>(
-    `select id from leads where phone = $1 and created_at > current_timestamp - interval '10 minutes' limit 1`,
+  const existing = await sql.query<{ id: string; tracking_token: string | null }>(
+    `select id, tracking_token
+     from leads
+     where phone = $1 and created_at > current_timestamp - interval '10 minutes'
+     limit 1`,
     [parsed.data.phone],
   );
 
@@ -247,23 +249,55 @@ export default defineEventHandler(async (event) => {
       } catch (error) {
         console.error("[leads] automatic smart matching failed for duplicate budget lead", error);
       }
-      return { success: true, duplicate: true, updated: true, id: existing[0].id };
+      return {
+      success: true,
+      duplicate: true,
+      updated: true,
+      id: existing[0].id,
+      trackingToken: existing[0].tracking_token,
+    };
     }
-    return { success: true, duplicate: true, id: existing[0].id };
+    return {
+      success: true,
+      duplicate: true,
+      id: existing[0].id,
+      trackingToken: existing[0].tracking_token,
+    };
   }
 
   if (parsed.data.propertyId && parsed.data.visitPreferredAt) {
     const visitDate = new Date(parsed.data.visitPreferredAt);
-    const propertyRows = await sql.query<{ id: string; title: string; property_type: string; neighborhood: string; contact_name: string }>(
+    const propertyRows = await sql.query<{ id: string; title: string; property_type: string; neighborhood: string; contact_name: string; availability_status: string }>(
       "select id, title, property_type, neighborhood, contact_name, availability_status from properties where id::text = $1 and status = 'published' and availability_status not in ('sold','rented','unavailable') limit 1",
       [parsed.data.propertyId],
     );
     const property = propertyRows[0];
     if (!property) throw createError({ statusCode: 404, statusMessage: "فایل موردنظر برای بازدید در دسترس نیست." });
-    const rows = await sql.query<{ id: string }>(
-      "insert into leads (id, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source, follow_up_at, floor_preference, property_id, visit_preferred_at, visit_requested_at, visit_status) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'website',current_timestamp + interval '4 hours',$11,$12,$13,current_timestamp,'requested') returning id",
+
+    const conflicts = await sql.query<{ id: string }>(
+      `select id
+       from leads
+       where property_id::text = $1
+         and visit_status in ('requested','confirmed')
+         and visit_preferred_at is not null
+         and visit_preferred_at >= $2::timestamptz - interval '60 minutes'
+         and visit_preferred_at < $2::timestamptz + interval '60 minutes'
+       limit 1`,
+      [property.id, visitDate.toISOString()],
+    );
+    if (conflicts[0]) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: "این بازه برای بازدید قبلاً رزرو شده است؛ لطفاً زمان دیگری انتخاب کنید.",
+      });
+    }
+
+    const trackingToken = crypto.randomUUID().replace(/-/g, "");
+    const rows = await sql.query<{ id: string; tracking_token: string }>(
+      "insert into leads (id, tracking_token, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source, follow_up_at, floor_preference, property_id, visit_preferred_at, visit_requested_at, visit_status) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'website',current_timestamp + interval '4 hours',$12,$13,$14,current_timestamp,'requested') returning id, tracking_token",
       [
         crypto.randomUUID(),
+        trackingToken,
         parsed.data.name,
         parsed.data.phone,
         parsed.data.peopleCount ?? null,
@@ -279,6 +313,7 @@ export default defineEventHandler(async (event) => {
       ],
     );
     if (!rows[0]) throw createError({ statusCode: 500, statusMessage: "ثبت درخواست بازدید انجام نشد." });
+    await sql.query("update leads set visitor_id=$1, user_id=$2 where id=$3", [visitorId, userId, rows[0].id]).catch((error) => console.error("[leads] visitor link failed", error));
     await sql.query(
       "insert into lead_activities (lead_id, activity_type, title, note, metadata) values ($1,'visit',$2,$3,$4::jsonb)",
       [
@@ -297,11 +332,17 @@ export default defineEventHandler(async (event) => {
       priority: "urgent",
       dueMinutes: 60,
     });
-    return { success: true, duplicate: false, id: rows[0].id, visitRequested: true };
+    return {
+      success: true,
+      duplicate: false,
+      id: rows[0].id,
+      trackingToken: rows[0].tracking_token,
+      visitRequested: true,
+    };
   }
-  const rows = await sql.query<{ id: string }>(
+  const rows = await sql.query<{ id: string; tracking_token: string }>(
     `insert into leads (
-      id, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source,
+      id, tracking_token, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source,
       acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, acquisition_landing_path,
       follow_up_at, lease_deadline, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_rate, budget_equivalent, budget_bedrooms,
       floor_preference, matched_properties, match_count,
@@ -309,10 +350,11 @@ export default defineEventHandler(async (event) => {
       budget_purchase_min, budget_purchase_max, budget_sale_min, budget_sale_max,
       requested_amenities, requested_bedrooms
     )
-    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,current_timestamp + interval '24 hours',$17,$18,$19,$20,$21,$22,$23,$24,$25,$26::jsonb,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36::jsonb,$37)
-    returning id`,
+    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,current_timestamp + interval '24 hours',$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37::jsonb,$38)
+    returning id, tracking_token`,
     [
       crypto.randomUUID(),
+      crypto.randomUUID().replace(/-/g, ""),
       parsed.data.name,
       parsed.data.phone,
       parsed.data.peopleCount ?? null,
@@ -353,6 +395,7 @@ export default defineEventHandler(async (event) => {
   );
   const createdLeadId = rows[0]?.id ?? null;
   if (createdLeadId) {
+    await sql.query("update leads set visitor_id=$1, user_id=$2 where id=$3", [visitorId, userId, createdLeadId]).catch((error) => console.error("[leads] visitor link failed", error));
     if (parsed.data.deal === "خرید" || parsed.data.deal === "فروش" || parsed.data.deal === "رهن" || parsed.data.deal === "اجاره") {
       try {
         const automaticMatches = await autoMatchLead(sql, createdLeadId, { mode: "smart", limit: 8 });
@@ -378,5 +421,10 @@ export default defineEventHandler(async (event) => {
       dueMinutes: 24 * 60,
     });
   }
-  return { success: true, id: createdLeadId, duplicate: false };
+  return {
+    success: true,
+    id: createdLeadId,
+    duplicate: false,
+    trackingToken: rows[0]?.tracking_token ?? null,
+  };
 });

@@ -31,7 +31,7 @@ export const Route = createFileRoute("/properties/$slug")({
           slug: property.slug,
           neighborhood: property.neighborhood,
           propertyType: property.propertyType,
-          limit: 6,
+          limit: 12,
         },
       });
     } catch (error) {

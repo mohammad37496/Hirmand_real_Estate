@@ -4,10 +4,14 @@ import { toast } from "sonner";
 import type { PropertyCardData } from "@/lib/properties";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { propertyPath } from "@/lib/property-path";
+import { customerFetch } from "@/lib/customer-fetch";
 
 const FAVORITES_KEY = "hirmand-favorite-properties";
 const COMPARE_KEY = "hirmand-compare-properties";
 const MAX_COMPARE = 3;
+const REMOTE_FAVORITES_CACHE = new Set<string>();
+let remoteFavoritesLoaded = false;
+let remoteFavoritesPromise: Promise<void> | null = null;
 
 function readCompare(): string[] {
   try {
@@ -63,6 +67,31 @@ function readFavorites(): string[] {
   }
 }
 
+async function loadRemoteFavorites() {
+  if (remoteFavoritesLoaded) return;
+  if (remoteFavoritesPromise) return remoteFavoritesPromise;
+  remoteFavoritesPromise = customerFetch("/api/customer-favorites", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify({ action: "list" }),
+  })
+    .then(async (response) => {
+      if (!response.ok) return;
+      const data = await response.json().catch(() => null) as { enabled?: boolean; slugs?: string[] } | null;
+      if (!data?.enabled || !Array.isArray(data.slugs)) return;
+      for (const slug of data.slugs) {
+        if (typeof slug === "string" && slug) REMOTE_FAVORITES_CACHE.add(slug);
+      }
+      remoteFavoritesLoaded = true;
+    })
+    .catch(() => undefined)
+    .finally(() => {
+      remoteFavoritesPromise = null;
+    });
+  return remoteFavoritesPromise;
+}
+
 function toggleFavorite(slug: string): { added: boolean; persisted: boolean } {
   const current = readFavorites();
   const exists = current.includes(slug);
@@ -114,8 +143,24 @@ export function PropertyActions({
   const [compared, setCompared] = useState(false);
 
   useEffect(() => {
+    let active = true;
     setFavorite(readFavorites().includes(property.slug));
     setCompared(readCompare().includes(property.slug));
+    const refreshRemote = () => {
+      remoteFavoritesLoaded = false;
+      REMOTE_FAVORITES_CACHE.clear();
+      void loadRemoteFavorites().then(() => {
+        if (active && remoteFavoritesLoaded) setFavorite(REMOTE_FAVORITES_CACHE.has(property.slug));
+      });
+    };
+    void loadRemoteFavorites().then(() => {
+      if (active && remoteFavoritesLoaded) setFavorite(REMOTE_FAVORITES_CACHE.has(property.slug));
+    });
+    window.addEventListener("hirmand:account-synced", refreshRemote);
+    return () => {
+      active = false;
+      window.removeEventListener("hirmand:account-synced", refreshRemote);
+    };
   }, [property.slug]);
 
   function onFavorite(event: MouseEvent<HTMLButtonElement>) {
@@ -127,6 +172,16 @@ export function PropertyActions({
       return;
     }
     setFavorite(result.added);
+    if (result.added) REMOTE_FAVORITES_CACHE.add(property.slug);
+    else REMOTE_FAVORITES_CACHE.delete(property.slug);
+    void customerFetch("/api/customer-favorites", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ action: "toggle", slug: property.slug }),
+    }).catch(() => {
+      // Local storage remains authoritative when the network is unavailable.
+    });
     trackAnalyticsEvent("property_favorite", property.slug);
     toast.success(result.added ? "فایل در ذخیره‌ها قرار گرفت." : "فایل از ذخیره‌ها حذف شد.");
   }

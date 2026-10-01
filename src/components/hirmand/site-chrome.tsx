@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Calculator, FileKey, WalletCards } from "lucide-react";
+import { Calculator, FileKey, LayoutDashboard, WalletCards } from "lucide-react";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 import { CallMenu } from "./call-menu";
@@ -10,13 +10,17 @@ import { scrollToId } from "./scroll";
 import { VisitorTracker } from "./visitor-tracker";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { SiteUtilities } from "./site-utilities";
+import { CustomerAlertCenter } from "./customer-alert-center";
+import { CustomerEngagement } from "./customer-engagement";
 
 export function SiteChrome({
   children,
   className,
+  engagementProperty,
 }: {
   children: ReactNode;
   className?: string;
+  engagementProperty?: { id?: string; title?: string };
 }) {
   return (
     <>
@@ -48,8 +52,14 @@ export function SiteChrome({
           <WalletCards size={17} />
           <span>بودجه‌یاب</span>
         </Link>
+        <Link to="/customer-dashboard" className="quick-action">
+          <LayoutDashboard size={17} />
+          <span>داشبورد من</span>
+        </Link>
       </div>
       <SiteUtilities />
+      <CustomerAlertCenter />
+      <CustomerEngagement propertyId={engagementProperty?.id} propertyTitle={engagementProperty?.title} />
       <CallMenu className="floating-call-menu" buttonClassName="floating-call" label="تماس" />
       <Toaster
         dir="rtl"

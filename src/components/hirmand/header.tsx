@@ -1,10 +1,12 @@
 import { useEffect, useState, type MouseEvent } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ArrowLeftRight, ChevronDown, Landmark, PiggyBank, WalletCards, Menu, X } from "lucide-react";
+import { ArrowLeftRight, ChevronDown, Landmark, PiggyBank, WalletCards, Menu, X, UserRound } from "lucide-react";
 import { NAV, SITE, TEAM } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { CallMenu } from "./call-menu";
 import { BrandLogo } from "./logo";
+import { authEnabled } from "@/lib/auth/client";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { scrollToId } from "./scroll";
 
 const FINANCE_NAV = [
@@ -20,6 +22,7 @@ export function Header() {
   const [financeOpen, setFinanceOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const onHome = pathname === "/";
+  const { user, isPending } = useCurrentUserState();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -137,6 +140,12 @@ export function Header() {
           >
             درخواست ملک
           </Link>
+          {!isPending && authEnabled ? (
+            <Link to={user ? "/customer-dashboard" : "/login"} className="header-account" onClick={closeMenu}>
+              <UserRound size={15} />
+              <span>{user ? "حساب من" : "ورود"}</span>
+            </Link>
+          ) : null}
           <CallMenu className="nav-call-menu" buttonClassName="nav-call" align="end" />
           <button
             type="button"
@@ -238,6 +247,11 @@ export function Header() {
         >
           درخواست ملک
         </Link>
+        {authEnabled ? (
+          <Link to={user ? "/customer-dashboard" : "/login"} className="mobile-menu-account" onClick={closeMenu}>
+            <UserRound size={16} /> {user ? "داشبورد حساب من" : "ورود به حساب مشتری"}
+          </Link>
+        ) : null}
         <div className="mobile-call-list">
           {TEAM.map((person) => (
             <a key={person.id} className="mobile-call" href={`tel:${person.phone}`} onClick={closeMenu}>

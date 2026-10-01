@@ -1,0 +1,7 @@
+.smart-recommendation-card{display:grid;gap:7px;min-width:0}
+.smart-recommendation-reason{display:flex;align-items:flex-start;gap:6px;margin-top:-2px;padding:9px 11px;border:1px solid rgba(15,118,110,.14);border-radius:12px;background:rgba(15,118,110,.055);color:#356b64;font-size:.69rem;line-height:1.7}
+.smart-recommendation-reason svg{margin-top:2px;flex:none}
+
+.smart-recommendation-meta{display:grid;gap:6px}
+.smart-recommendation-score{display:inline-flex;align-items:center;gap:6px;width:max-content;max-width:100%;padding:7px 10px;border-radius:999px;background:var(--navy-50,#f4f7fb);border:1px solid var(--line,#dfe5ec);color:var(--navy-800,#17324b);font-size:.72rem;font-weight:800}
+.smart-recommendation-score svg{color:var(--brass-700,#9a6b22)}

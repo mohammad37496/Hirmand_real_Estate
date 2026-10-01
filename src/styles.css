@@ -9475,3 +9475,23 @@ a.btn-ghost[href^="https://wa.me/"] svg {
   position: absolute;
   inset: -12px;
 }
+
+.inquiry-success-panel{grid-column:1/-1;display:grid;gap:12px;padding:24px;border:1px solid rgba(152,113,55,.2);border-radius:20px;background:linear-gradient(135deg,rgba(250,248,243,.98),rgba(255,255,255,.98));box-shadow:0 16px 50px rgba(0,0,0,.06)}
+.inquiry-success-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:50%;background:#356b46;color:#fff;font-size:1.2rem;font-weight:900}
+.inquiry-success-panel h3{margin:0;font-size:1.25rem;color:#17304b}
+.inquiry-success-panel>p{margin:0;color:#6a665f;line-height:1.9}
+.inquiry-tracking-box{display:flex;align-items:center;gap:10px;padding:13px 14px;border:1px dashed rgba(152,113,55,.35);border-radius:14px;background:#fff}
+.inquiry-tracking-box strong{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.08em;color:#17304b;overflow-wrap:anywhere}
+.inquiry-tracking-box .btn-ghost{margin-inline-start:auto;white-space:nowrap}
+.inquiry-success-actions{display:flex;flex-wrap:wrap;gap:8px}
+@media(max-width:650px){.inquiry-success-panel{padding:18px}.inquiry-tracking-box{align-items:flex-start;flex-direction:column}.inquiry-tracking-box .btn-ghost{margin-inline-start:0}.inquiry-success-actions>*{flex:1 1 100%;justify-content:center;text-align:center}}
+.property-viewing-tracking{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:12px;padding:12px;border:1px dashed rgba(152,113,55,.3);border-radius:14px;background:#faf9f6}
+.property-viewing-tracking>span{grid-column:1/-1;font-size:.7rem;color:#777}
+.property-viewing-tracking>strong{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere;color:#17304b}
+.property-viewing-tracking>a{grid-column:1/-1;justify-self:start}
+@media(max-width:520px){.property-viewing-tracking{grid-template-columns:1fr}.property-viewing-tracking>a{width:100%;justify-content:center}}
+
+/* Customer account access */
+.header-account{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 12px;border:1px solid rgba(15,118,110,.18);border-radius:12px;color:var(--gold);background:rgba(15,118,110,.055);font-size:.72rem;font-weight:800;text-decoration:none;white-space:nowrap}
+.header-account:hover{background:rgba(15,118,110,.10)}
+.mobile-menu-account{display:flex;align-items:center;gap:8px;margin:8px 14px;padding:12px 13px;border:1px solid var(--border);border-radius:13px;color:var(--gold);text-decoration:none;font-weight:800;font-size:.78rem;background:rgba(15,118,110,.045)}

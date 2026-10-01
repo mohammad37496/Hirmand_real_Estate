@@ -99,6 +99,9 @@ import { formatToman } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
 import { getPropertyFallbackImage, getPropertyFallbackImages, getPropertyFallbackLegacyImage, isPropertyFallbackImage } from "@/lib/property-fallback-images";
+import { customerFetch } from "@/lib/customer-fetch";
+import { PropertyPriceTarget } from "@/components/hirmand/property-price-target";
+import { CustomerPropertyMatch } from "@/components/hirmand/customer-property-match";
 import { areaSlug } from "@/lib/areas";
 import { propertyPath } from "@/lib/property-path";
 import { TEAM } from "@/lib/site";
@@ -112,6 +115,20 @@ import {
   PROPERTY_WALL_CLOSET_OPTIONS,
   labelForOption,
 } from "@/lib/property-options";
+
+function historyAmount(item: PropertyPriceHistoryItem, transactionType: Property["transactionType"]) {
+  const value = transactionType === "rent" ? item.newRent : transactionType === "mortgage" ? item.newDeposit : item.newPrice;
+  const n = value == null ? null : Number(value);
+  return n != null && Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function priceChangePercent(previous: string | null, next: string | null) {
+  if (!previous || !next) return null;
+  const before = Number(previous);
+  const after = Number(next);
+  if (!Number.isFinite(before) || !Number.isFinite(after) || before <= 0) return null;
+  return Math.round(((after - before) / before) * 10) / 10;
+}
 
 function propertyAmenityLabel(value: string) {
   if (value.startsWith("cooling:")) {
@@ -1069,6 +1086,35 @@ export function PropertyDetailView({
   const viewedPropertySlug = property?.slug;
   const [priceHistory, setPriceHistory] = useState<PropertyPriceHistoryItem[]>([]);
   const [priceWatchEnabled, setPriceWatchEnabled] = useState(false);
+  const priceChart = useMemo(() => {
+    if (!property || !priceHistory.length) return null;
+    const values = [...priceHistory]
+      .reverse()
+      .map((item) => ({ date: item.changedAt, value: historyAmount(item, property.transactionType) }))
+      .filter((item): item is { date: string; value: number } => item.value != null);
+    const current = historyAmount({
+      changedAt: new Date().toISOString(),
+      previousPrice: null,
+      newPrice: property.price,
+      previousDeposit: null,
+      newDeposit: property.deposit,
+      previousRent: null,
+      newRent: property.rent,
+    }, property.transactionType);
+    if (current != null) values.push({ date: new Date().toISOString(), value: current });
+    if (values.length < 2) return null;
+    const min = Math.min(...values.map(item => item.value));
+    const max = Math.max(...values.map(item => item.value));
+    const span = Math.max(1, max - min);
+    const points = values.map((item, index) => ({
+      x: 8 + (index * 184) / (values.length - 1),
+      y: 60 - ((item.value - min) / span) * 48,
+      value: item.value,
+      date: item.date,
+    }));
+    return { points, min, max };
+  }, [priceHistory, property]);
+
 
   // The gallery list is derived before the early return below: a hook that only
   // runs for a present property would break React's hook order the moment the
@@ -1081,6 +1127,21 @@ export function PropertyDetailView({
       ? ownedImages
       : getPropertyFallbackImages(property?.propertyType ?? "apartment");
   }, [property?.images, property?.propertyType]);
+
+  const relatedGroups = useMemo(() => {
+    if (!property) return { sameNeighborhood: [], cheaper: [], larger: [] as Property[] };
+    const sameNeighborhood = related.filter(item => item.neighborhood === property.neighborhood).slice(0, 4);
+    const basePrice = property.price ? Number(property.price) : null;
+    const cheaper = related
+      .filter(item => basePrice != null && item.price != null && Number(item.price) < basePrice)
+      .sort((a,b) => Number(b.price) - Number(a.price))
+      .slice(0, 4);
+    const larger = related
+      .filter(item => property.areaM2 != null && item.areaM2 != null && item.areaM2 > property.areaM2)
+      .sort((a,b) => (a.areaM2 ?? 0) - (b.areaM2 ?? 0))
+      .slice(0, 4);
+    return { sameNeighborhood, cheaper, larger };
+  }, [property, related]);
 
   useEffect(() => {
     if (!viewedPropertySlug || typeof window === "undefined") {
@@ -1099,7 +1160,7 @@ export function PropertyDetailView({
       });
 
     let ignoreWatchSync = false;
-    void fetch("/api/property-watch", {
+    void customerFetch("/api/property-watch", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ action: "sync" }),
@@ -1118,7 +1179,7 @@ export function PropertyDetailView({
           for (const alert of alerts.slice(0, 3)) {
             toast.success(alert.message);
           }
-          void fetch("/api/property-watch", {
+          void customerFetch("/api/property-watch", {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({
@@ -1345,7 +1406,7 @@ export function PropertyDetailView({
   ];
 
   return (
-    <SiteChrome>
+    <SiteChrome engagementProperty={{ id: property.id, title: property.title }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(propertyJsonLd(property)) }}
@@ -1473,6 +1534,13 @@ export function PropertyDetailView({
                   <Bell size={16} aria-hidden="true" />
                   <span>{priceWatchEnabled ? "در حال پیگیری قیمت" : "پیگیری تغییر قیمت"}</span>
                 </button>
+                <PropertyPriceTarget
+                  slug={property.slug}
+                  transactionType={property.transactionType}
+                  currentPrice={property.price}
+                  currentDeposit={property.deposit}
+                />
+                <CustomerPropertyMatch slug={property.slug} />
 
                 <div className="property-summary-facts" aria-label="اطلاعات کلیدی فایل">
                   {property.areaM2 != null ? (
@@ -1646,6 +1714,21 @@ export function PropertyDetailView({
                     {priceHistory.length.toLocaleString("fa-IR")} تغییر ثبت‌شده
                   </span>
                 </div>
+                {priceChart ? (
+                  <div className="property-price-chart" role="img" aria-label="نمودار روند قیمت فایل">
+                    <div className="property-price-chart-labels">
+                      <span>بیشینه {formatToman(priceChart.max)} تومان</span>
+                      <span>کمینه {formatToman(priceChart.min)} تومان</span>
+                    </div>
+                    <svg viewBox="0 0 200 72" preserveAspectRatio="none" aria-hidden="true">
+                      <path d={"M " + priceChart.points.map(point => point.x.toFixed(1) + " " + point.y.toFixed(1)).join(" L ")} fill="none" stroke="currentColor" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
+                      {priceChart.points.map((point, index) => (
+                        <circle key={point.date + "-" + index} cx={point.x} cy={point.y} r="2.2" fill="currentColor" />
+                      ))}
+                    </svg>
+                    <div className="property-price-chart-current">اکنون: <strong>{property.transactionType === "rent" ? formatToman(Number(property.rent ?? 0)) : property.transactionType === "mortgage" ? formatToman(Number(property.deposit ?? 0)) : formatToman(Number(property.price ?? 0))} تومان</strong></div>
+                  </div>
+                ) : null}
                 <div className="property-price-history-list">
                   {priceHistory.map((item, index) => {
                     const changes: Array<{ label: string; previous: string | null; next: string | null }> = [];
@@ -1669,12 +1752,18 @@ export function PropertyDetailView({
                           {changes.map((change) => {
                             const previous = change.previous ? formatToman(Number(change.previous)) + " تومان" : "ثبت نشده";
                             const nextValue = change.next ? formatToman(Number(change.next)) + " تومان" : "حذف شد";
+                            const percent = priceChangePercent(change.previous, change.next);
                             return (
                               <div className="property-price-history-change" key={change.label}>
                                 <span>{change.label}</span>
                                 <strong>{previous}</strong>
                                 <b>→</b>
-                                <strong className="is-current">{nextValue}</strong>
+                                <strong className={percent != null && percent < 0 ? "is-current is-drop" : "is-current"}>{nextValue}</strong>
+                                {percent != null ? (
+                                  <small className={percent < 0 ? "is-drop" : "is-rise"}>
+                                    {percent > 0 ? "٪" + Math.abs(percent).toLocaleString("fa-IR") + " افزایش" : percent < 0 ? "٪" + Math.abs(percent).toLocaleString("fa-IR") + " کاهش" : "بدون تغییر"}
+                                  </small>
+                                ) : null}
                               </div>
                             );
                           })}
@@ -1838,17 +1927,37 @@ export function PropertyDetailView({
         </div>
 
         {related.length ? (
-          <section className="property-related" aria-labelledby="related-properties-title">
+          <section className="property-related property-related-smart" aria-labelledby="related-properties-title">
             <div className="section-head">
               <span className="kicker">پیشنهاد هیرمند</span>
-              <h2 id="related-properties-title">فایل‌های مشابه</h2>
-              <p>چند گزینه نزدیک به این فایل، بر اساس محله و نوع ملک.</p>
+              <h2 id="related-properties-title">فایل‌های مرتبط</h2>
+              <p>چند مسیر مختلف برای پیدا کردن گزینه‌ای متناسب‌تر با این فایل.</p>
             </div>
-            <div className="property-grid">
-              {related.map((item) => (
-                <PropertyCard key={item.id} property={item} />
-              ))}
-            </div>
+
+            {relatedGroups.sameNeighborhood.length ? (
+              <div className="property-related-group">
+                <div className="property-related-group-head"><strong>همان محله</strong><span>گزینه‌های نزدیک در {property.neighborhood}</span></div>
+                <div className="property-grid">{relatedGroups.sameNeighborhood.map(item => <PropertyCard key={"area-"+item.id} property={item} />)}</div>
+              </div>
+            ) : null}
+
+            {relatedGroups.cheaper.length ? (
+              <div className="property-related-group">
+                <div className="property-related-group-head"><strong>گزینه‌های اقتصادی‌تر</strong><span>فایل‌هایی با قیمت پایین‌تر از این ملک</span></div>
+                <div className="property-grid">{relatedGroups.cheaper.map(item => <PropertyCard key={"cheap-"+item.id} property={item} />)}</div>
+              </div>
+            ) : null}
+
+            {relatedGroups.larger.length ? (
+              <div className="property-related-group">
+                <div className="property-related-group-head"><strong>متراژ بیشتر</strong><span>گزینه‌هایی با فضای بیشتر</span></div>
+                <div className="property-grid">{relatedGroups.larger.map(item => <PropertyCard key={"large-"+item.id} property={item} />)}</div>
+              </div>
+            ) : null}
+
+            {!relatedGroups.sameNeighborhood.length && !relatedGroups.cheaper.length && !relatedGroups.larger.length ? (
+              <div className="property-grid">{related.slice(0, 6).map(item => <PropertyCard key={item.id} property={item} />)}</div>
+            ) : null}
           </section>
         ) : null}
       </main>

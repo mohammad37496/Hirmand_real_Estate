@@ -1,12 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeftRight, Heart, Trash2 } from "lucide-react";
+import { ArrowLeftRight, Heart, Printer, Share2, Trash2, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
+import { toast } from "sonner";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
 import { SITE } from "@/lib/site";
 import { formatToman } from "@/lib/money";
 import { propertyPath } from "@/lib/property-path";
+import { customerFetch } from "@/lib/customer-fetch";
 
 const PROPERTY_ORIENTATION_LABELS: Record<NonNullable<Property["orientation"]>, string> = {
   north: "شمالی",
@@ -62,6 +64,41 @@ const PROPERTY_TYPE_LABEL: Record<Property["propertyType"], string> = {
   commercial: "تجاری",
 };
 
+function readCompareFromUrl() {
+  try {
+    const raw = new URLSearchParams(window.location.search).get("items") ?? "";
+    if (!raw) return [];
+    return Array.from(new Set(
+      raw.split(",").map((item) => decodeURIComponent(item).trim()).filter((item) => item.length > 0 && item.length <= 220),
+    )).slice(0, MAX_COMPARE);
+  } catch {
+    return [];
+  }
+}
+
+async function shareCompare(slugs: string[]) {
+  const url = new URL("/compare", window.location.origin);
+  url.searchParams.set("items", slugs.map((slug) => encodeURIComponent(slug)).join(","));
+  const shareData = {
+    title: "مقایسه فایل‌های هیرمند",
+    text: "مقایسه چند فایل ملکی در هیرمند",
+    url: url.toString(),
+  };
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+      return true;
+    }
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(url.toString());
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 function valueMoney(value: string | null) {
   if (!value) return "—";
   const parsed = Number(value);
@@ -76,6 +113,7 @@ function valuePerM2(property: Property) {
 function ComparePage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const [roomBusy, setRoomBusy] = useState(false);
 
   function removeFromCompare(slug: string) {
     const next = readCompare().filter((item) => item !== slug);
@@ -89,7 +127,15 @@ function ComparePage() {
 
   useEffect(() => {
     let cancelled = false;
-    const slugs = readCompare();
+    const fromUrl = readCompareFromUrl();
+    if (fromUrl.length) {
+      try {
+        localStorage.setItem(COMPARE_KEY, JSON.stringify(fromUrl));
+      } catch {
+        // Ignore storage failures.
+      }
+    }
+    const slugs = fromUrl.length ? fromUrl : readCompare();
     if (!slugs.length) {
       setLoading(false);
       return () => {
@@ -162,9 +208,41 @@ function ComparePage() {
           <>
             <div className="compare-toolbar">
               <span>{properties.length.toLocaleString("fa-IR")} فایل انتخاب شده</span>
-              <button type="button" className="properties-reset-btn" onClick={clearCompare}>
-                <Trash2 size={14} /> پاک‌کردن مقایسه
-              </button>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  className="properties-reset-btn"
+                  onClick={() => void shareCompare(properties.map((property) => property.slug)).then((copied) => copied && toast.success("لینک مقایسه کپی شد."))}
+                >
+                  <Share2 size={14} /> اشتراک‌گذاری مقایسه
+                </button>
+                <a
+                  href={"/catalog?items=" + properties.map(property => encodeURIComponent(property.slug)).join(",")}
+                  className="properties-reset-btn"
+                >
+                  <Printer size={14} /> کاتالوگ / PDF
+                </a>
+                                <button
+                  type="button"
+                  className="properties-reset-btn"
+                  disabled={roomBusy}
+                  onClick={async()=>{
+                    setRoomBusy(true);
+                    try{
+                      const response=await customerFetch("/api/customer-deal-room",{method:"POST",headers:{"content-type":"application/json"},credentials:"same-origin",body:JSON.stringify({action:"create",slugs:properties.map(p=>p.slug),name:"اتاق معامله من"})});
+                      const data=await response.json().catch(()=>null) as {room?:{id:string};statusMessage?:string};
+                      if(!response.ok||!data?.room?.id)throw new Error(data?.statusMessage||"اتاق معامله ساخته نشد.");
+                      window.location.assign("/deal-room?id="+encodeURIComponent(data.room.id));
+                    }catch(e){toast.error(e instanceof Error?e.message:"اتاق معامله ساخته نشد.");}
+                    finally{setRoomBusy(false);}
+                  }}
+                >
+                  <Users size={14} /> {roomBusy ? "در حال ساخت…" : "ساخت اتاق معامله"}
+                </button>
+                <button type="button" className="properties-reset-btn" onClick={clearCompare}>
+                  <Trash2 size={14} /> پاک‌کردن مقایسه
+                </button>
+              </div>
             </div>
 
             <div className="compare-grid">

@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { CalendarDays, Check, Clock3, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { CalendarDays, Check, Clock3, Copy, ExternalLink, LoaderCircle, X } from "lucide-react";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import type { PropertyAvailabilityStatus } from "@/lib/properties";
 import "@/property-viewing-request.css";
@@ -45,6 +45,8 @@ function toIranIso(date: string, time: string) {
   return new Date(`${date}T${time}:00+03:30`).toISOString();
 }
 
+type Slot = { time: string; available: boolean };
+
 export function PropertyViewingRequest({ property }: PropertyViewingRequestProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -53,11 +55,44 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
   const [time, setTime] = useState("17:00");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [slots, setSlots] = useState<Slot[]>([]);
   const [done, setDone] = useState(false);
+  const [trackingToken, setTrackingToken] = useState("");
   const [error, setError] = useState("");
 
   const visitAllowed = property.availabilityStatus === "available" || property.availabilityStatus === "reserved";
   const minimumDate = useMemo(() => todayIsoDate(), []);
+
+  const loadSlots = useCallback(async (selectedDate: string) => {
+    if (!property.id || !selectedDate) return;
+    setLoadingSlots(true);
+    setError("");
+    try {
+      const query = new URLSearchParams({ propertyId: property.id, date: selectedDate });
+      const response = await fetch("/api/visit-availability?" + query.toString(), {
+        credentials: "same-origin",
+      });
+      const data = await response.json().catch(() => null) as { slots?: Slot[]; message?: string; statusMessage?: string } | null;
+      if (!response.ok) throw new Error(data?.statusMessage || data?.message || "ساعت‌های بازدید بارگذاری نشدند.");
+      const nextSlots = Array.isArray(data?.slots) ? data.slots : [];
+      setSlots(nextSlots);
+      setTime((current) => {
+        const selected = nextSlots.find((slot) => slot.time === current && slot.available);
+        return selected?.time ?? nextSlots.find((slot) => slot.available)?.time ?? "";
+      });
+    } catch (cause) {
+      setSlots([]);
+      setError(cause instanceof Error ? cause.message : "ساعت‌های بازدید بارگذاری نشدند.");
+    } finally {
+      setLoadingSlots(false);
+    }
+  }, [property.id]);
+
+  useEffect(() => {
+    if (!open || done) return;
+    void loadSlots(date);
+  }, [open, date, done, loadSlots]);
 
   function close() {
     if (busy) return;
@@ -78,6 +113,13 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
     }
     if (!date || !time) {
       setError("روز و ساعت بازدید را مشخص کنید.");
+      return;
+    }
+
+    const selectedSlot = slots.find((slot) => slot.time === time);
+    if (selectedSlot && !selectedSlot.available) {
+      setError("این ساعت همین حالا رزرو شده است؛ یک زمان دیگر انتخاب کنید.");
+      await loadSlots(date);
       return;
     }
 
@@ -115,8 +157,10 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.success) {
+        if (response.status === 409) await loadSlots(date);
         throw new Error(payload?.statusMessage || payload?.message || "ثبت درخواست بازدید انجام نشد.");
       }
+      setTrackingToken(typeof payload?.trackingToken === "string" ? payload.trackingToken : "");
       setDone(true);
       trackAnalyticsEvent("visit_request", property.slug);
     } catch (cause) {
@@ -125,6 +169,8 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
       setBusy(false);
     }
   }
+
+  const availableCount = slots.filter((slot) => slot.available).length;
 
   return (
     <>
@@ -136,6 +182,8 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
           setOpen(true);
           setError("");
           setDone(false);
+          setDate((current) => current || todayIsoDate());
+          setTime((current) => current || "17:00");
           trackAnalyticsEvent("visit_request_click", property.slug);
         }}
       >
@@ -147,12 +195,7 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
         <div className="property-viewing-overlay" role="presentation" onMouseDown={(event) => {
           if (event.target === event.currentTarget) close();
         }}>
-          <section
-            className="property-viewing-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="property-viewing-title"
-          >
+          <section className="property-viewing-modal" role="dialog" aria-modal="true" aria-labelledby="property-viewing-title">
             <button type="button" className="property-viewing-close" onClick={close} aria-label="بستن">
               <X size={19} />
             </button>
@@ -162,9 +205,26 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
                 <div className="property-viewing-success-icon"><Check size={25} /></div>
                 <span className="kicker">درخواست ثبت شد</span>
                 <h2>درخواست بازدید شما دریافت شد.</h2>
-                <p>
-                  زمان پیشنهادی شما ثبت شد. مشاور هیرمند برای هماهنگی نهایی با شما تماس می‌گیرد.
-                </p>
+                <p>زمان پیشنهادی شما ثبت شد. مشاور هیرمند برای هماهنگی نهایی با شما تماس می‌گیرد.</p>
+                {trackingToken ? (
+                  <div className="property-viewing-tracking">
+                    <span>کد پیگیری</span>
+                    <strong>{trackingToken}</strong>
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      onClick={() => {
+                        if (!navigator.clipboard) return;
+                        void navigator.clipboard.writeText(trackingToken).then(() => undefined);
+                      }}
+                    >
+                      <Copy size={14} /> کپی
+                    </button>
+                    <a className="text-link" href={"/request-tracking?token=" + encodeURIComponent(trackingToken)}>
+                      <ExternalLink size={14} /> مشاهده وضعیت
+                    </a>
+                  </div>
+                ) : null}
                 <div className="property-viewing-summary">
                   <strong>{property.title}</strong>
                   <span><CalendarDays size={15} /> {date}</span>
@@ -177,9 +237,7 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
                 <div className="property-viewing-head">
                   <span className="kicker">هماهنگی بازدید</span>
                   <h2 id="property-viewing-title">برای این فایل زمان مناسب انتخاب کنید.</h2>
-                  <p>
-                    فایل «{property.title}» · {property.neighborhood}
-                  </p>
+                  <p>فایل «{property.title}» · {property.neighborhood}</p>
                 </div>
 
                 <div className="property-viewing-grid">
@@ -189,39 +247,44 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
                   </label>
                   <label className="field">
                     <span>شماره موبایل</span>
-                    <input
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      inputMode="tel"
-                      dir="ltr"
-                      autoComplete="tel"
-                      placeholder="0912..."
-                    />
+                    <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" dir="ltr" autoComplete="tel" placeholder="0912..." />
                   </label>
                   <label className="field">
                     <span>روز پیشنهادی</span>
-                    <input
-                      type="date"
-                      value={date}
-                      min={minimumDate}
-                      onChange={(e) => setDate(e.target.value)}
-                      dir="ltr"
-                    />
+                    <input type="date" value={date} min={minimumDate} onChange={(e) => setDate(e.target.value)} dir="ltr" />
                   </label>
-                  <label className="field">
-                    <span>ساعت پیشنهادی</span>
-                    <select value={time} onChange={(e) => setTime(e.target.value)} dir="ltr">
-                      {TIMES.map((item) => <option key={item} value={item}>{item}</option>)}
-                    </select>
-                  </label>
+
+                  <div className="field property-viewing-time-field">
+                    <span>ساعت‌های آزاد بازدید</span>
+                    <div className="property-viewing-slot-meta">
+                      <small>{loadingSlots ? "در حال بررسی ظرفیت…" : `${availableCount.toLocaleString("fa-IR")} زمان آزاد`}</small>
+                      <small>مدت هر بازدید: حدود ۶۰ دقیقه</small>
+                    </div>
+                    <div className="property-viewing-slots" role="group" aria-label="ساعت‌های آزاد بازدید" aria-busy={loadingSlots}>
+                      {TIMES.map((item) => {
+                        const slot = slots.find((candidate) => candidate.time === item);
+                        const available = slot ? slot.available : !loadingSlots;
+                        const selected = time === item;
+                        return (
+                          <button
+                            type="button"
+                            key={item}
+                            className={"property-viewing-slot" + (selected ? " is-selected" : "") + (!available ? " is-unavailable" : "")}
+                            onClick={() => setTime(item)}
+                            disabled={loadingSlots || !available}
+                            aria-pressed={selected}
+                          >
+                            {loadingSlots ? <LoaderCircle size={13} className="property-viewing-slot-spin" aria-hidden="true" /> : null}
+                            {item}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <label className="field property-viewing-note">
                     <span>توضیح کوتاه (اختیاری)</span>
-                    <textarea
-                      rows={3}
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      placeholder="مثلاً بازدید دو نفره یا هماهنگی با مشاور..."
-                    />
+                    <textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="مثلاً بازدید دو نفره یا هماهنگی با مشاور..." />
                   </label>
                 </div>
 
@@ -229,7 +292,7 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
 
                 <div className="property-viewing-actions">
                   <button type="button" className="btn-ghost" onClick={close} disabled={busy}>انصراف</button>
-                  <button type="button" className="btn-gold" onClick={submit} disabled={busy}>
+                  <button type="button" className="btn-gold" onClick={submit} disabled={busy || loadingSlots || !time}>
                     <CalendarDays size={17} />
                     {busy ? "در حال ثبت..." : "ثبت درخواست بازدید"}
                   </button>
