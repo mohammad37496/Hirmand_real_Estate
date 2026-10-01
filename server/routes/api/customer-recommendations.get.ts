@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
     ),
     sql.query<Record<string, unknown>>(
       "select transaction_type, property_type, neighborhoods, min_price, max_price, min_area, max_area, bedrooms, requested_amenities, must_have_amenities from customer_need_profiles where visitor_id=$1 or ($2 is not null and user_id=$2) order by case when visitor_id=$1 then 0 else 1 end limit 1",
-      [ownerId === visitorId ? visitorId : visitorId, userId],
+      [visitorId, userId],
     ),
     sql.query<Record<string, unknown>>(
       "select p.id::text as id, p.slug, p.title, p.transaction_type, p.property_type, p.neighborhood, p.area_m2, p.bedrooms, " +
