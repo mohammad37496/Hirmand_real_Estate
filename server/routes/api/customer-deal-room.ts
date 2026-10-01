@@ -39,6 +39,7 @@ export default defineEventHandler(async (event) => {
   const ownerId = userId ?? visitorId;
 
   async function fetchRoom(id: string, token?: string) {
+    const shared = Boolean(token);
     const roomRows = token
       ? await sql.query<Record<string, unknown>>("select id,name,status,share_token,notes,created_at,updated_at from customer_deal_rooms where share_token=$1 and status='open' limit 1", [token])
       : await sql.query<Record<string, unknown>>("select id,name,status,share_token,notes,created_at,updated_at from customer_deal_rooms where id=$1 and "+ownerColumn+"=$2 limit 1", [id, ownerId]);
@@ -55,12 +56,12 @@ export default defineEventHandler(async (event) => {
       name: String(room.name),
       status: String(room.status),
       shareToken: room.share_token ? String(room.share_token) : null,
-      notes: String(room.notes ?? ""),
+      notes: shared ? "" : String(room.notes ?? ""),
       createdAt: new Date(String(room.created_at)).toISOString(),
       updatedAt: new Date(String(room.updated_at)).toISOString(),
       items: items.map((row) => ({
         slug: String(row.property_slug),
-        privateNote: String(row.private_note ?? ""),
+        privateNote: shared ? "" : String(row.private_note ?? ""),
         title: row.title ? String(row.title) : "فایل حذف‌شده",
         propertyId: row.property_id ? String(row.property_id) : null,
         transactionType: row.transaction_type ? String(row.transaction_type) : "",
@@ -74,7 +75,7 @@ export default defineEventHandler(async (event) => {
         availabilityStatus: row.availability_status ? String(row.availability_status) : "available",
         image: row.image ? String(row.image) : null,
       })),
-      documents: docs.map((row) => ({
+      documents: shared ? [] : docs.map((row) => ({
         id: String(row.id), title: String(row.title), url: String(row.url),
         kind: String(row.kind ?? "link"), note: String(row.note ?? ""),
         createdAt: new Date(String(row.created_at)).toISOString(),
