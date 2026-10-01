@@ -23,6 +23,7 @@ import { customerFetch } from "@/lib/customer-fetch";
 import "@/customer-dashboard.css";
 import { CustomerPushSettings } from "@/components/hirmand/customer-push-settings";
 import { SmartRecommendations } from "@/components/hirmand/smart-recommendations";
+import { CustomerNeedsProfile } from "@/components/hirmand/customer-needs-profile";
 
 type CallbackItem = { id: string; name: string; phone: string; preferredAt: string | null; propertyTitle: string; note: string; status: string; createdAt: string; };
 
@@ -94,6 +95,7 @@ function CustomerDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [callbacks, setCallbacks] = useState<CallbackItem[]>([]);
+  const [dealRoomBusy, setDealRoomBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -201,10 +203,32 @@ function CustomerDashboardPage() {
               </section>
             ) : null}
 
+            <CustomerNeedsProfile />
+
             <section className="customer-dashboard-card">
               <div className="customer-dashboard-section-head">
                 <div><span className="kicker"><Heart size={13} /> منتخب‌ها</span><h2>فایل‌های ذخیره‌شده</h2></div>
-                <Link to="/favorites" className="btn-ghost">همه منتخب‌ها <ChevronLeft size={14} /></Link>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"flex-end"}}>
+                  <button
+                    type="button"
+                    className="btn-gold"
+                    disabled={dealRoomBusy || !(data?.favorites?.length)}
+                    onClick={async()=>{
+                      const slugs=(data?.favorites ?? []).slice(0,30).map(item=>item.slug);
+                      setDealRoomBusy(true);
+                      try{
+                        const response=await customerFetch("/api/customer-deal-room",{method:"POST",headers:{"content-type":"application/json"},credentials:"same-origin",body:JSON.stringify({action:"create",slugs,name:"اتاق معامله من"})});
+                        const payload=await response.json().catch(()=>null) as {room?:{id:string};statusMessage?:string};
+                        if(!response.ok||!payload?.room?.id) throw new Error(payload?.statusMessage||"اتاق معامله ساخته نشد.");
+                        window.location.assign("/deal-room?id="+encodeURIComponent(payload.room.id));
+                      }catch(e){toast.error(e instanceof Error?e.message:"اتاق معامله ساخته نشد.");}
+                      finally{setDealRoomBusy(false);}
+                    }}
+                  >
+                    <Users size={14} /> {dealRoomBusy ? "در حال ساخت…" : "ساخت اتاق معامله"}
+                  </button>
+                  <a href="/favorites" className="btn-ghost">همه منتخب‌ها <ChevronLeft size={14} /></a>
+                </div>
               </div>
               {favoriteLoading ? (
                 <div className="customer-dashboard-empty compact"><RefreshCw size={22} className="admin-spin" /></div>
