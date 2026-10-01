@@ -26,6 +26,7 @@ import {
 } from "@/lib/properties";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
+import { SmartPropertyAssistant } from "@/components/hirmand/smart-property-assistant";
 import { PROPERTY_TYPES, NEIGHBORHOOD_NAMES, SERVICES } from "@/lib/site";
 import {
   PROPERTY_CABINET_OPTIONS,
@@ -1056,6 +1057,7 @@ function PropertiesIndexPage() {
             </dl>
           </div>
 
+          <SmartPropertyAssistant />
           <div className="pf-toolbar">
             <label className="pf-search">
               <Search size={18} aria-hidden="true" />
