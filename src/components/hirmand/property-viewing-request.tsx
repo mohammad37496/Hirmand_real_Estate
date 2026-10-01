@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarDays, Check, Clock3, LoaderCircle, X } from "lucide-react";
+import { CalendarDays, Check, Clock3, Copy, ExternalLink, LoaderCircle, X } from "lucide-react";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import type { PropertyAvailabilityStatus } from "@/lib/properties";
 import "@/property-viewing-request.css";
@@ -58,6 +58,7 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [done, setDone] = useState(false);
+  const [trackingToken, setTrackingToken] = useState("");
   const [error, setError] = useState("");
 
   const visitAllowed = property.availabilityStatus === "available" || property.availabilityStatus === "reserved";
@@ -159,6 +160,7 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
         if (response.status === 409) await loadSlots(date);
         throw new Error(payload?.statusMessage || payload?.message || "ثبت درخواست بازدید انجام نشد.");
       }
+      setTrackingToken(typeof payload?.trackingToken === "string" ? payload.trackingToken : "");
       setDone(true);
       trackAnalyticsEvent("visit_request", property.slug);
     } catch (cause) {
@@ -204,6 +206,25 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
                 <span className="kicker">درخواست ثبت شد</span>
                 <h2>درخواست بازدید شما دریافت شد.</h2>
                 <p>زمان پیشنهادی شما ثبت شد. مشاور هیرمند برای هماهنگی نهایی با شما تماس می‌گیرد.</p>
+                {trackingToken ? (
+                  <div className="property-viewing-tracking">
+                    <span>کد پیگیری</span>
+                    <strong>{trackingToken}</strong>
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      onClick={() => {
+                        if (!navigator.clipboard) return;
+                        void navigator.clipboard.writeText(trackingToken).then(() => undefined);
+                      }}
+                    >
+                      <Copy size={14} /> کپی
+                    </button>
+                    <a className="text-link" href={"/request-tracking?token=" + encodeURIComponent(trackingToken)}>
+                      <ExternalLink size={14} /> مشاهده وضعیت
+                    </a>
+                  </div>
+                ) : null}
                 <div className="property-viewing-summary">
                   <strong>{property.title}</strong>
                   <span><CalendarDays size={15} /> {date}</span>
