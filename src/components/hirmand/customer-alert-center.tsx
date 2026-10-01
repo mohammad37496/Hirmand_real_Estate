@@ -2,6 +2,7 @@ import { Bell, BellRing, CheckCheck, ExternalLink, Search, Settings2, Tag, X } f
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import "@/customer-alert-center.css";
+import { customerFetch } from "@/lib/customer-fetch";
 
 type AlertItem = {
   id: string;
@@ -21,7 +22,7 @@ type AlertResponse = {
 };
 
 async function fetchJson(path: string, body?: Record<string, unknown>) {
-  const response = await fetch(path, body ? {
+  const response = await customerFetch(path, body ? {
     method: "POST",
     headers: { "content-type": "application/json" },
     credentials: "same-origin",
