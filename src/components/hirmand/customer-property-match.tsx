@@ -1,5 +1,5 @@
 import { CheckCircle2, Target } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { customerFetch } from "@/lib/customer-fetch";
 import "@/customer-property-match.css";
 
@@ -20,7 +20,7 @@ export function CustomerPropertyMatch({ slug }: { slug: string }) {
   return <aside className="customer-property-match" aria-label="امتیاز تطابق فایل با نیاز شما">
     <div className="customer-property-match-top">
       <div><span className="kicker"><Target size={13}/> تطابق هوشمند</span><strong>{data.score.toLocaleString("fa-IR")}٪</strong></div>
-      <div className="customer-property-match-ring" style={{"--match":data.score} as React.CSSProperties}><span>{data.score.toLocaleString("fa-IR")}٪</span></div>
+      <div className="customer-property-match-ring" style={{"--match":data.score} as CSSProperties}><span>{data.score.toLocaleString("fa-IR")}٪</span></div>
     </div>
     <div className="customer-property-match-reasons">
       {(data.reasons??[]).slice(0,4).map(reason=><span key={reason}><CheckCircle2 size={13}/>{reason}</span>)}
