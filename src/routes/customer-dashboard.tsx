@@ -104,9 +104,13 @@ function CustomerDashboardPage() {
       const next = await response.json().catch(() => null) as DashboardResponse | null;
       if (!response.ok) throw new Error("داشبورد در دسترس نیست.");
       setData(next);
-      const callbackResponse = await customerFetch("/api/callback-request", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "list" }), credentials: "same-origin", cache: "no-store" });
-      const callbackData = await callbackResponse.json().catch(() => null) as { callbacks?: CallbackItem[] } | null;
-      setCallbacks(Array.isArray(callbackData?.callbacks) ? callbackData!.callbacks : []);
+      try {
+        const callbackResponse = await customerFetch("/api/callback-request", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "list" }), credentials: "same-origin", cache: "no-store" });
+        const callbackData = await callbackResponse.json().catch(() => null) as { callbacks?: CallbackItem[] } | null;
+        setCallbacks(Array.isArray(callbackData?.callbacks) ? callbackData.callbacks : []);
+      } catch {
+        setCallbacks([]);
+      }
 
       const slugs = (next?.favorites ?? []).map((item) => item.slug);
       if (slugs.length) {
