@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { customerFetch } from "@/lib/customer-fetch";
 import { formatToman } from "@/lib/money";
 import { SITE } from "@/lib/site";
-import "@/deal-room.css";
+import "../deal-room.css";
 
 type RoomItem = { slug:string; title:string; neighborhood:string; areaM2:number|null; bedrooms:number|null; price:string|null; deposit:string|null; rent:string|null; availabilityStatus:string; image:string|null; privateNote:string };
 type RoomDoc = { id:string; title:string; url:string; kind:string; note:string; createdAt:string };
