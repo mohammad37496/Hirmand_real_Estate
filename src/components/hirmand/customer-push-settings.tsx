@@ -22,9 +22,18 @@ export function CustomerPushSettings({compact=false}:{compact?:boolean}) {
   useEffect(()=>{
     let active=true;
     void fetch("/api/push-config",{cache:"no-store"}).then((r)=>r.json()).then((data:{configured?:boolean})=>{if(active)setConfigured(Boolean(data.configured));}).catch(()=>{});
-    if(!supported()) setStatus("unsupported");
-    else if(Notification.permission==="granted") setStatus("on");
-    else setStatus("off");
+    if(!supported()) {
+      setStatus("unsupported");
+    } else {
+      void navigator.serviceWorker.register("/sw.js")
+        .then((registration) => registration.pushManager.getSubscription())
+        .then((subscription) => {
+          if(active) setStatus(subscription ? "on" : "off");
+        })
+        .catch(() => {
+          if(active) setStatus(Notification.permission === "granted" ? "off" : "off");
+        });
+    }
     return()=>{active=false;};
   },[]);
 
