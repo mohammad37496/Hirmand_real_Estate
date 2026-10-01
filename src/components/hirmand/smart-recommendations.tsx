@@ -7,7 +7,7 @@ import "@/smart-recommendations.css";
 
 const RECENT_PROPERTIES_KEY = "hirmand-recent-properties";
 
-type RecommendationItem = PropertyCardData & { reason?: string };
+type RecommendationItem = PropertyCardData & { reason?: string; matchScore?: number };
 
 type RecommendationResponse = {
   enabled?: boolean;
@@ -86,9 +86,16 @@ export function SmartRecommendations() {
         {properties.map((property) => (
           <div className="smart-recommendation-card" key={property.id}>
             <PropertyCard property={property} />
-            {"reason" in property && property.reason ? (
-              <div className="smart-recommendation-reason"><Sparkles size={13} /> {property.reason}</div>
-            ) : null}
+            <div className="smart-recommendation-meta">
+              {typeof property.matchScore === "number" ? (
+                <span className="smart-recommendation-score" aria-label={`درصد تطابق ${property.matchScore}`}>
+                  <Sparkles size={13} /> {property.matchScore.toLocaleString("fa-IR")}٪ تطابق
+                </span>
+              ) : null}
+              {"reason" in property && property.reason ? (
+                <span className="smart-recommendation-reason"><Sparkles size={13} /> {property.reason}</span>
+              ) : null}
+            </div>
           </div>
         ))}
       </div>
