@@ -329,7 +329,7 @@ export default defineEventHandler(async (event) => {
       ],
     );
     if (!rows[0]) throw createError({ statusCode: 500, statusMessage: "ثبت درخواست بازدید انجام نشد." });
-    await sql.query("update leads set visitor_id=$1 where id=$2", [visitorId, rows[0].id]);
+    await sql.query("update leads set visitor_id=$1 where id=$2", [visitorId, rows[0].id]).catch((error) => console.error("[leads] visitor link failed", error));
     await sql.query(
       "insert into lead_activities (lead_id, activity_type, title, note, metadata) values ($1,'visit',$2,$3,$4::jsonb)",
       [
@@ -411,7 +411,7 @@ export default defineEventHandler(async (event) => {
   );
   const createdLeadId = rows[0]?.id ?? null;
   if (createdLeadId) {
-    await sql.query("update leads set visitor_id=$1 where id=$2", [visitorId, createdLeadId]);
+    await sql.query("update leads set visitor_id=$1 where id=$2", [visitorId, createdLeadId]).catch((error) => console.error("[leads] visitor link failed", error));
     if (parsed.data.deal === "خرید" || parsed.data.deal === "فروش" || parsed.data.deal === "رهن" || parsed.data.deal === "اجاره") {
       try {
         const automaticMatches = await autoMatchLead(sql, createdLeadId, { mode: "smart", limit: 8 });
