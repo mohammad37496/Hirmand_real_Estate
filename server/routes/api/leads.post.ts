@@ -1,9 +1,10 @@
-import { createError, defineEventHandler, getCookie, readBody, setCookie } from "h3";
+import { createError, defineEventHandler, readBody } from "h3";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { buildBudgetLeadNote, budgetEquivalent } from "@/lib/budget-lead";
 import { DEFAULT_MATCH_RAHN_RATE } from "@/lib/budget-matching";
 import { autoMatchLead } from "@/lib/lead-smart-matcher.server";
+import { getCustomerIdentity } from "@/lib/customer-identity.server";
 
 const VISITOR_COOKIE = "hirmand_visitor_id";
 const VISITOR_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
@@ -121,17 +122,7 @@ export default defineEventHandler(async (event) => {
   if (!parsed.success) throw createError({ statusCode: 422, statusMessage: "اطلاعات درخواست ناقص یا نامعتبر است." });
   if (dbSource === "unconfigured") throw createError({ statusCode: 503, statusMessage: "ثبت آنلاین درخواست در حال حاضر فعال نیست." });
   const sql = await getSql();
-  let visitorId = getCookie(event, VISITOR_COOKIE);
-  if (!validVisitorId(visitorId)) {
-    visitorId = crypto.randomUUID();
-    setCookie(event, VISITOR_COOKIE, visitorId, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production" || process.env.VERCEL === "1",
-      path: "/",
-      maxAge: VISITOR_COOKIE_MAX_AGE,
-    });
-  }
+  const { visitorId, userId } = await getCustomerIdentity(event);
   let acquisition: {
     source: string | null;
     medium: string | null;
@@ -329,7 +320,7 @@ export default defineEventHandler(async (event) => {
       ],
     );
     if (!rows[0]) throw createError({ statusCode: 500, statusMessage: "ثبت درخواست بازدید انجام نشد." });
-    await sql.query("update leads set visitor_id=$1 where id=$2", [visitorId, rows[0].id]).catch((error) => console.error("[leads] visitor link failed", error));
+    await sql.query("update leads set visitor_id=$1, user_id=$2 where id=$3", [visitorId, userId, rows[0].id]).catch((error) => console.error("[leads] visitor link failed", error));
     await sql.query(
       "insert into lead_activities (lead_id, activity_type, title, note, metadata) values ($1,'visit',$2,$3,$4::jsonb)",
       [
@@ -411,7 +402,7 @@ export default defineEventHandler(async (event) => {
   );
   const createdLeadId = rows[0]?.id ?? null;
   if (createdLeadId) {
-    await sql.query("update leads set visitor_id=$1 where id=$2", [visitorId, createdLeadId]).catch((error) => console.error("[leads] visitor link failed", error));
+    await sql.query("update leads set visitor_id=$1, user_id=$2 where id=$3", [visitorId, userId, createdLeadId]).catch((error) => console.error("[leads] visitor link failed", error));
     if (parsed.data.deal === "خرید" || parsed.data.deal === "فروش" || parsed.data.deal === "رهن" || parsed.data.deal === "اجاره") {
       try {
         const automaticMatches = await autoMatchLead(sql, createdLeadId, { mode: "smart", limit: 8 });
