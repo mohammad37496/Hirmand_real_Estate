@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { MusicPlayer } from "@/components/hirmand/music-player";
+import { CustomerAccountSync } from "@/components/hirmand/customer-account-sync";
 import { SITE } from "@/lib/site";
 import appCss from "../styles.css?url";
 import propertiesProCss from "../properties-pro.css?url";
@@ -91,6 +92,7 @@ function RootDocument() {
         <PwaRegistrar />
         <PreviewHostBridge />
         <AuthProvider>
+          <CustomerAccountSync />
           <Outlet />
           <MusicPlayer />
         </AuthProvider>
