@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import type { PropertyCardData } from "@/lib/properties";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { propertyPath } from "@/lib/property-path";
+import { customerFetch } from "@/lib/customer-fetch";
 
 const FAVORITES_KEY = "hirmand-favorite-properties";
 const COMPARE_KEY = "hirmand-compare-properties";
@@ -69,7 +70,7 @@ function readFavorites(): string[] {
 async function loadRemoteFavorites() {
   if (remoteFavoritesLoaded) return;
   if (remoteFavoritesPromise) return remoteFavoritesPromise;
-  remoteFavoritesPromise = fetch("/api/customer-favorites", {
+  remoteFavoritesPromise = customerFetch("/api/customer-favorites", {
     method: "POST",
     headers: { "content-type": "application/json" },
     credentials: "same-origin",
@@ -145,11 +146,20 @@ export function PropertyActions({
     let active = true;
     setFavorite(readFavorites().includes(property.slug));
     setCompared(readCompare().includes(property.slug));
+    const refreshRemote = () => {
+      remoteFavoritesLoaded = false;
+      REMOTE_FAVORITES_CACHE.clear();
+      void loadRemoteFavorites().then(() => {
+        if (active && remoteFavoritesLoaded) setFavorite(REMOTE_FAVORITES_CACHE.has(property.slug));
+      });
+    };
     void loadRemoteFavorites().then(() => {
       if (active && remoteFavoritesLoaded) setFavorite(REMOTE_FAVORITES_CACHE.has(property.slug));
     });
+    window.addEventListener("hirmand:account-synced", refreshRemote);
     return () => {
       active = false;
+      window.removeEventListener("hirmand:account-synced", refreshRemote);
     };
   }, [property.slug]);
 
@@ -164,7 +174,7 @@ export function PropertyActions({
     setFavorite(result.added);
     if (result.added) REMOTE_FAVORITES_CACHE.add(property.slug);
     else REMOTE_FAVORITES_CACHE.delete(property.slug);
-    void fetch("/api/customer-favorites", {
+    void customerFetch("/api/customer-favorites", {
       method: "POST",
       headers: { "content-type": "application/json" },
       credentials: "same-origin",
