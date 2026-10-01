@@ -3,6 +3,7 @@ import { CalendarDays, CheckCircle2, Clock3, ExternalLink, FileText, RefreshCw, 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { SITE } from "@/lib/site";
+import "@/request-tracking.css";
 
 type TrackingResponse = {
   enabled?: boolean;
