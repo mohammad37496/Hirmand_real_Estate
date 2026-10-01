@@ -1,4 +1,5 @@
-import { createError, defineEventHandler, getCookie, setCookie, setResponseHeader } from "h3";
+import { createError, defineEventHandler, setResponseHeader } from "h3";
+import { getCustomerIdentity } from "@/lib/customer-identity.server";
 import { dbSource, getSql } from "@/lib/db";
 
 const COOKIE_NAME = "hirmand_visitor_id";
@@ -20,18 +21,9 @@ export default defineEventHandler(async (event) => {
     };
   }
 
-  let visitorId = getCookie(event, COOKIE_NAME);
-  if (!validVisitorId(visitorId)) {
-    visitorId = crypto.randomUUID();
-    setCookie(event, COOKIE_NAME, visitorId, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production" || process.env.VERCEL === "1",
-      path: "/",
-      maxAge: COOKIE_MAX_AGE,
-    });
-  }
-  if (!visitorId) throw createError({ statusCode: 500, statusMessage: "شناسه بازدیدکننده ساخته نشد." });
+  const { visitorId, userId } = await getCustomerIdentity(event);
+  const ownerId = userId ?? visitorId;
+  const ownerColumn = userId ? "user_id" : "visitor_id";
 
   const sql = await getSql();
   const [favoriteRows, searchRows, requestRows, alertRows, watchRows] = await Promise.all([
@@ -39,31 +31,31 @@ export default defineEventHandler(async (event) => {
       "select p.id::text as id, p.slug, p.title, p.transaction_type, p.property_type, p.neighborhood, " +
       "p.area_m2, p.bedrooms, p.price, p.deposit, p.rent, p.availability_status, nullif(p.images->>0, '') as image, f.updated_at " +
       "from customer_favorites f join properties p on p.slug=f.property_slug and p.status='published' " +
-      "where f.visitor_id=$1 order by f.updated_at desc limit 24",
-      [visitorId],
+      "where f." + ownerColumn + "=$1 order by f.updated_at desc limit 24",
+      [ownerId],
     ),
     sql.query<Record<string, unknown>>(
       "select client_id, name, params, updated_at from customer_saved_searches " +
-      "where visitor_id=$1 and enabled=true order by updated_at desc limit 10",
-      [visitorId],
+      "where " + ownerColumn + "=$1 and enabled=true order by updated_at desc limit 10",
+      [ownerId],
     ),
     sql.query<Record<string, unknown>>(
       "select l.id::text as id, l.tracking_token, l.deal, l.property_type, l.neighborhood, l.status, l.visit_status, " +
       "l.visit_preferred_at, l.created_at, l.updated_at, p.title as property_title, p.slug as property_slug " +
       "from leads l left join properties p on p.id::text=l.property_id::text " +
-      "where l.visitor_id=$1 order by l.created_at desc limit 20",
-      [visitorId],
+      "where l." + ownerColumn + "=$1 order by l.created_at desc limit 20",
+      [ownerId],
     ),
     sql.query<{ count: number }>(
       "select count(*)::int as count from (" +
-      "select id from customer_saved_search_alerts where visitor_id=$1 and seen_at is null " +
-      "union all select id from property_watch_alerts where visitor_id=$1 and seen_at is null" +
+      "select id from customer_saved_search_alerts where " + ownerColumn + "=$1 and seen_at is null " +
+      "union all select id from property_watch_alerts where " + ownerColumn + "=$1 and seen_at is null" +
       ") alerts",
-      [visitorId],
+      [ownerId],
     ),
     sql.query<{ count: number }>(
-      "select count(*)::int as count from property_watch_subscriptions where visitor_id=$1 and enabled=true",
-      [visitorId],
+      "select count(*)::int as count from property_watch_subscriptions where " + ownerColumn + "=$1 and enabled=true",
+      [ownerId],
     ),
   ]);
 
