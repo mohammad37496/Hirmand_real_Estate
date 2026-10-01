@@ -1,10 +1,7 @@
-import { createError, defineEventHandler, getCookie, setResponseHeader } from "h3";
+import { createError, defineEventHandler, setResponseHeader } from "h3";
 import { getCustomerIdentity } from "@/lib/customer-identity.server";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 import { getSql } from "@/lib/db";
-
-const COOKIE_NAME = "hirmand_visitor_id";
-
 
 
 export default defineEventHandler(async (event) => {
