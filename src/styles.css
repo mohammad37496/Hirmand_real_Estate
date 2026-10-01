@@ -9490,3 +9490,8 @@ a.btn-ghost[href^="https://wa.me/"] svg {
 .property-viewing-tracking>strong{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere;color:#17304b}
 .property-viewing-tracking>a{grid-column:1/-1;justify-self:start}
 @media(max-width:520px){.property-viewing-tracking{grid-template-columns:1fr}.property-viewing-tracking>a{width:100%;justify-content:center}}
+
+/* Customer account access */
+.header-account{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 12px;border:1px solid rgba(15,118,110,.18);border-radius:12px;color:var(--gold);background:rgba(15,118,110,.055);font-size:.72rem;font-weight:800;text-decoration:none;white-space:nowrap}
+.header-account:hover{background:rgba(15,118,110,.10)}
+.mobile-menu-account{display:flex;align-items:center;gap:8px;margin:8px 14px;padding:12px 13px;border:1px solid var(--border);border-radius:13px;color:var(--gold);text-decoration:none;font-weight:800;font-size:.78rem;background:rgba(15,118,110,.045)}
