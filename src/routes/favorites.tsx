@@ -64,7 +64,24 @@ function FavoritesPage() {
 
   useEffect(() => {
     let cancelled = false;
-    const favoriteSlugs = readFavorites();
+    const localFavoriteSlugs = readFavorites();
+    void fetch("/api/customer-favorites", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ action: "sync", slugs: localFavoriteSlugs }),
+    })
+      .then(async (response) => {
+        if (!response.ok) return;
+        const data = await response.json().catch(() => null) as { enabled?: boolean; slugs?: string[] } | null;
+        if (!data?.enabled || !Array.isArray(data.slugs) || cancelled) return;
+        const remote = cleanSlugs(data.slugs, 100);
+        const merged = cleanSlugs([...localFavoriteSlugs, ...remote], 100);
+        persistSlugs(FAVORITES_KEY, merged);
+      })
+      .catch(() => undefined);
+
+    const favoriteSlugs = localFavoriteSlugs;
     const recentSlugs = readRecent();
 
     if (favoriteSlugs.length) {
