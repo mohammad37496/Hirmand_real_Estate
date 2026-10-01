@@ -1,5 +1,5 @@
 import { MessageCircle, PhoneCall, RefreshCw, Send, UserRound } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { TEAM } from "@/lib/site";
 import "@/customer-engagement.css";
@@ -18,13 +18,13 @@ export function AdminCustomerInbox(){
   const [loading,setLoading]=useState(true);
   const [busy,setBusy]=useState(false);
 
-  async function post(path:string,body:Record<string,unknown>){
+  const post=useCallback(async(path:string,body:Record<string,unknown>)=>{
     const response=await fetch(path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
     const data=await response.json().catch(()=>null) as {statusMessage?:string};
     if(!response.ok) throw new Error(data?.statusMessage||"عملیات انجام نشد.");
     return data as any;
-  }
-  async function load(){
+  },[]);
+  const load=useCallback(async()=>{
     setLoading(true);
     try{
       const [chat,cb]=await Promise.all([post("/api/admin-customer-chat",{action:"list"}),post("/api/admin-callback-requests",{action:"list"})]);
@@ -33,13 +33,13 @@ export function AdminCustomerInbox(){
       setSelected((current)=>current??next[0]?.id??null);
     }catch(e){toast.error(e instanceof Error?e.message:"صندوق مشتریان بارگذاری نشد.");}
     finally{setLoading(false);}
-  }
-  useEffect(()=>{void load();const t=window.setInterval(()=>void load(),15000);return()=>window.clearInterval(t);},[]);
+  },[post]);
+  useEffect(()=>{void load();const t=window.setInterval(()=>void load(),15000);return()=>window.clearInterval(t);},[load]);
   useEffect(()=>{
     if(!selected||tab!=="chat") return;
     const read=()=>void post("/api/admin-customer-chat",{action:"messages",conversationId:selected}).then((data)=>setMessages(Array.isArray(data.messages)?data.messages:[])).catch(()=>{});
     read(); const t=window.setInterval(read,10000); return()=>window.clearInterval(t);
-  },[selected,tab]);
+  },[selected,tab,post]);
 
   const selectedConversation=useMemo(()=>conversations.find((item)=>item.id===selected)??null,[conversations,selected]);
 
