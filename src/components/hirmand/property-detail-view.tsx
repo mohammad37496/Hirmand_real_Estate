@@ -1099,7 +1099,7 @@ export function PropertyDetailView({
       });
 
     let ignoreWatchSync = false;
-    void fetch("/api/property-watch", {
+    void customerFetch("/api/property-watch", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ action: "sync" }),
@@ -1118,7 +1118,7 @@ export function PropertyDetailView({
           for (const alert of alerts.slice(0, 3)) {
             toast.success(alert.message);
           }
-          void fetch("/api/property-watch", {
+          void customerFetch("/api/property-watch", {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({
