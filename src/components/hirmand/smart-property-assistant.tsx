@@ -81,8 +81,8 @@ export function SmartPropertyAssistant(){
     <div className="smart-property-assistant-compose">
       <textarea value={text} onChange={e=>setText(e.target.value)} rows={3} placeholder="شرایط ملک دلخواهتان را طبیعی بنویسید…" />
       <div className="smart-property-assistant-actions">
-        <button type="button" className="btn-ghost" onClick={voice}><Mic2 size={15}/> گفتار</button>
-        <button type="button" className="btn-gold" onClick={search} disabled={!text.trim()}><Search size={15}/> پیدا کردن فایل</button>
+        <button type="button" className="btn-ghost" onClick={voice} disabled={busy}><Mic2 size={15}/> گفتار</button>
+        <button type="button" className="btn-gold" onClick={search} disabled={busy || !text.trim()}><Search size={15}/> پیدا کردن فایل</button>
       </div>
     </div>
     {chips.length?<div className="smart-property-assistant-chips">{chips.map(c=><span key={c}>{c}<X size={11}/></span>)}</div>:null}
