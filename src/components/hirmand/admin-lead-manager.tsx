@@ -26,6 +26,7 @@ import { daysUntilDateOnly, formatPersianDate } from "@/lib/persian-date";
 import { AdminLeadDedupe } from "@/components/hirmand/admin-lead-dedupe";
 import { AdminLeadAssignmentBalancer } from "@/components/hirmand/admin-lead-assignment-balancer";
 import { AdminViewingCalendar } from "@/components/hirmand/admin-viewing-calendar";
+import { AdminCustomerInbox } from "@/components/hirmand/admin-customer-inbox";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 type VisitStatus = "none" | "requested" | "confirmed" | "completed" | "cancelled";
@@ -414,6 +415,7 @@ export function AdminLeadManager() {
   return (
     <div className="admin-lead-manager">
       {confirmDialog}
+      <AdminCustomerInbox />
       <AdminViewingCalendar />
       <AdminLeadAssignmentBalancer />
       <AdminLeadDedupe />
