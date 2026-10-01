@@ -1128,6 +1128,21 @@ export function PropertyDetailView({
       : getPropertyFallbackImages(property?.propertyType ?? "apartment");
   }, [property?.images, property?.propertyType]);
 
+  const relatedGroups = useMemo(() => {
+    if (!property) return { sameNeighborhood: [], cheaper: [], larger: [] as Property[] };
+    const sameNeighborhood = related.filter(item => item.neighborhood === property.neighborhood).slice(0, 4);
+    const basePrice = property.price ? Number(property.price) : null;
+    const cheaper = related
+      .filter(item => basePrice != null && item.price != null && Number(item.price) < basePrice)
+      .sort((a,b) => Number(b.price) - Number(a.price))
+      .slice(0, 4);
+    const larger = related
+      .filter(item => property.areaM2 != null && item.areaM2 != null && item.areaM2 > property.areaM2)
+      .sort((a,b) => (a.areaM2 ?? 0) - (b.areaM2 ?? 0))
+      .slice(0, 4);
+    return { sameNeighborhood, cheaper, larger };
+  }, [property, related]);
+
   useEffect(() => {
     if (!viewedPropertySlug || typeof window === "undefined") {
       setPriceHistory([]);
@@ -1912,17 +1927,37 @@ export function PropertyDetailView({
         </div>
 
         {related.length ? (
-          <section className="property-related" aria-labelledby="related-properties-title">
+          <section className="property-related property-related-smart" aria-labelledby="related-properties-title">
             <div className="section-head">
               <span className="kicker">پیشنهاد هیرمند</span>
-              <h2 id="related-properties-title">فایل‌های مشابه</h2>
-              <p>چند گزینه نزدیک به این فایل، بر اساس محله و نوع ملک.</p>
+              <h2 id="related-properties-title">فایل‌های مرتبط</h2>
+              <p>چند مسیر مختلف برای پیدا کردن گزینه‌ای متناسب‌تر با این فایل.</p>
             </div>
-            <div className="property-grid">
-              {related.map((item) => (
-                <PropertyCard key={item.id} property={item} />
-              ))}
-            </div>
+
+            {relatedGroups.sameNeighborhood.length ? (
+              <div className="property-related-group">
+                <div className="property-related-group-head"><strong>همان محله</strong><span>گزینه‌های نزدیک در {property.neighborhood}</span></div>
+                <div className="property-grid">{relatedGroups.sameNeighborhood.map(item => <PropertyCard key={"area-"+item.id} property={item} />)}</div>
+              </div>
+            ) : null}
+
+            {relatedGroups.cheaper.length ? (
+              <div className="property-related-group">
+                <div className="property-related-group-head"><strong>گزینه‌های اقتصادی‌تر</strong><span>فایل‌هایی با قیمت پایین‌تر از این ملک</span></div>
+                <div className="property-grid">{relatedGroups.cheaper.map(item => <PropertyCard key={"cheap-"+item.id} property={item} />)}</div>
+              </div>
+            ) : null}
+
+            {relatedGroups.larger.length ? (
+              <div className="property-related-group">
+                <div className="property-related-group-head"><strong>متراژ بیشتر</strong><span>گزینه‌هایی با فضای بیشتر</span></div>
+                <div className="property-grid">{relatedGroups.larger.map(item => <PropertyCard key={"large-"+item.id} property={item} />)}</div>
+              </div>
+            ) : null}
+
+            {!relatedGroups.sameNeighborhood.length && !relatedGroups.cheaper.length && !relatedGroups.larger.length ? (
+              <div className="property-grid">{related.slice(0, 6).map(item => <PropertyCard key={item.id} property={item} />)}</div>
+            ) : null}
           </section>
         ) : null}
       </main>
