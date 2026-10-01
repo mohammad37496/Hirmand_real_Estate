@@ -50,6 +50,6 @@ function CatalogPage(){
       {p.images[0]?<img src={p.images[0]} alt="" loading="lazy"/>:<div className="property-catalog-placeholder"/>}
       <div className="property-catalog-copy"><span className="property-catalog-index">فایل {index.toLocaleString("fa-IR")}</span><h2>{p.title}</h2><p>{tx[p.transactionType]||p.transactionType} · {p.neighborhood}{p.areaM2?" · "+p.areaM2.toLocaleString("fa-IR")+" متر":""}{p.bedrooms!=null?" · "+p.bedrooms.toLocaleString("fa-IR")+" خواب":""}</p><strong>{primaryPrice(p)}</strong><div className="property-catalog-specs"><span>{p.parking?"پارکینگ دارد":"بدون پارکینگ"}</span><span>{p.elevator?"آسانسور دارد":"بدون آسانسور"}</span><span>{p.storage?"انباری دارد":"بدون انباری"}</span></div><a href={"/properties/"+encodeURIComponent(p.slug)}>مشاهده فایل در سایت</a></div>
     </article>)}</section>:<section className="property-catalog-empty"><strong>فایلی برای کاتالوگ پیدا نشد.</strong><a href="/compare" className="btn-gold">بازگشت به مقایسه</a></section>}
-    <footer className="property-catalog-footer"><strong>{SITE.nameFa}</strong><span>{SITE.phoneDisplay ?? ""}</span><span>{SITE.url}</span></footer>
+    <footer className="property-catalog-footer"><strong>{SITE.nameFa}</strong><span>{SITE.phone.mobileDisplay} · {SITE.phone.officeDisplay}</span><span>{SITE.url}</span></footer>
   </main>;
 }
