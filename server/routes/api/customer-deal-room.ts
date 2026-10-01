@@ -22,10 +22,6 @@ function cleanSlugs(values: string[] | undefined) {
   return Array.from(new Set((values ?? []).map((v) => v.trim()).filter(Boolean))).slice(0, 30);
 }
 
-async function owner(event: Parameters<ReturnType<typeof defineEventHandler>>[0]) {
-  return getCustomerIdentity(event as never);
-}
-
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "private, no-store");
   const rawQuery = getQuery(event) as Record<string, unknown>;
