@@ -100,6 +100,7 @@ import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
 import { getPropertyFallbackImage, getPropertyFallbackImages, getPropertyFallbackLegacyImage, isPropertyFallbackImage } from "@/lib/property-fallback-images";
 import { customerFetch } from "@/lib/customer-fetch";
+import { PropertyPriceTarget } from "@/components/hirmand/property-price-target";
 import { areaSlug } from "@/lib/areas";
 import { propertyPath } from "@/lib/property-path";
 import { TEAM } from "@/lib/site";
@@ -1474,6 +1475,12 @@ export function PropertyDetailView({
                   <Bell size={16} aria-hidden="true" />
                   <span>{priceWatchEnabled ? "در حال پیگیری قیمت" : "پیگیری تغییر قیمت"}</span>
                 </button>
+                <PropertyPriceTarget
+                  slug={property.slug}
+                  transactionType={property.transactionType}
+                  currentPrice={property.price}
+                  currentDeposit={property.deposit}
+                />
 
                 <div className="property-summary-facts" aria-label="اطلاعات کلیدی فایل">
                   {property.areaM2 != null ? (
