@@ -32,6 +32,8 @@ import { Route as VSlugIdRouteImport } from './routes/v.$slug.$id'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CustomerDashboardRouteImport } from './routes/customer-dashboard'
 import { Route as RequestTrackingRouteImport } from './routes/request-tracking'
+import { Route as CatalogRouteImport } from './routes/catalog'
+import { Route as DealRoomRouteImport } from './routes/deal-room'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -148,6 +150,16 @@ const RequestTrackingRoute = RequestTrackingRouteImport.update({
   path: '/request-tracking',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CatalogRoute = CatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DealRoomRoute = DealRoomRouteImport.update({
+  id: '/deal-room',
+  path: '/deal-room',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -173,6 +185,8 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/customer-dashboard': typeof CustomerDashboardRoute
   '/request-tracking': typeof RequestTrackingRoute
+  '/catalog': typeof CatalogRoute
+  '/deal-room': typeof DealRoomRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -196,6 +210,8 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/customer-dashboard': typeof CustomerDashboardRoute
   '/request-tracking': typeof RequestTrackingRoute
+  '/catalog': typeof CatalogRoute
+  '/deal-room': typeof DealRoomRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -222,6 +238,8 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/customer-dashboard': typeof CustomerDashboardRoute
   '/request-tracking': typeof RequestTrackingRoute
+  '/catalog': typeof CatalogRoute
+  '/deal-room': typeof DealRoomRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -249,6 +267,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/customer-dashboard'
     | '/request-tracking'
+    | '/catalog'
+    | '/deal-room'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -272,6 +292,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/customer-dashboard'
     | '/request-tracking'
+    | '/catalog'
+    | '/deal-room'
   id:
     | '__root__'
     | '/'
@@ -297,6 +319,8 @@ export interface FileRouteTypes {
     | '/login'
     | '/customer-dashboard'
     | '/request-tracking'
+    | '/catalog'
+    | '/deal-room'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -319,6 +343,8 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   CustomerDashboardRoute: typeof CustomerDashboardRoute
   RequestTrackingRoute: typeof RequestTrackingRoute
+  CatalogRoute: typeof CatalogRoute
+  DealRoomRoute: typeof DealRoomRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -484,6 +510,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RequestTrackingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/catalog': {
+      id: '/catalog'
+      path: '/catalog'
+      fullPath: '/catalog'
+      preLoaderRoute: typeof CatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deal-room': {
+      id: '/deal-room'
+      path: '/deal-room'
+      fullPath: '/deal-room'
+      preLoaderRoute: typeof DealRoomRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -535,6 +575,8 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   CustomerDashboardRoute: CustomerDashboardRoute,
   RequestTrackingRoute: RequestTrackingRoute,
+  CatalogRoute: CatalogRoute,
+  DealRoomRoute: DealRoomRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
