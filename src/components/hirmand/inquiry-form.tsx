@@ -391,7 +391,13 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
           <button
             type="button"
             className="btn-ghost"
-            onClick={() => void navigator.clipboard?.writeText(trackingToken).then(() => toast.success("کد پیگیری کپی شد."))}
+            onClick={() => {
+              if (!navigator.clipboard) {
+                toast.info("کد پیگیری: " + trackingToken);
+                return;
+              }
+              void navigator.clipboard.writeText(trackingToken).then(() => toast.success("کد پیگیری کپی شد."));
+            }}
           >
             <Copy size={14} /> کپی کد
           </button>
