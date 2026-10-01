@@ -420,5 +420,10 @@ export default defineEventHandler(async (event) => {
       dueMinutes: 24 * 60,
     });
   }
-  return { success: true, id: createdLeadId, duplicate: false };
+  return {
+    success: true,
+    id: createdLeadId,
+    duplicate: false,
+    trackingToken: rows[0]?.tracking_token ?? null,
+  };
 });
