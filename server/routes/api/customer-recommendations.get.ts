@@ -2,18 +2,12 @@ import { defineEventHandler, setResponseHeader } from "h3";
 import { getCustomerIdentity } from "@/lib/customer-identity.server";
 import { dbSource, getSql } from "@/lib/db";
 
-const COOKIE_NAME = "hirmand_visitor_id";
-
-function validVisitorId(value: string | undefined) {
-  return Boolean(value && /^[a-f0-9-]{20,80}$/i.test(value));
-}
-
 function numberFrom(value: string | null) {
   if (!value) return null;
   const normalized = value
     .replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
     .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
-  const parsed = Number(normalized.replace(/[^d.-]/g, ""));
+  const parsed = Number(normalized.replace(/[^\d.-]/g, ""));
   return Number.isFinite(parsed) ? parsed : null;
 }
 
@@ -34,7 +28,7 @@ export default defineEventHandler(async (event) => {
       [ownerId],
     ),
     sql.query<{ params: string }>(
-      "select params from customer_saved_searches where visitor_id=$1 and enabled=true order by updated_at desc limit 5",
+      "select params from customer_saved_searches where " + ownerColumn + "=$1 and enabled=true order by updated_at desc limit 5",
       [ownerId],
     ),
     sql.query<Record<string, unknown>>(
