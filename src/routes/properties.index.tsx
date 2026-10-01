@@ -37,6 +37,7 @@ import {
 } from "@/lib/property-options";
 import { absoluteUrl, socialMeta } from "@/lib/seo";
 import { listNeighborhoodNames } from "@/lib/neighborhoods";
+import { customerFetch } from "@/lib/customer-fetch";
 
 const PAGE_SIZE = 48;
 const SAVED_SEARCHES_KEY = "hirmand-saved-searches";
@@ -380,7 +381,7 @@ function PropertiesIndexPage() {
   useEffect(() => {
     const localSavedSearches = readSavedSearches();
     setSavedSearches(localSavedSearches);
-    void fetch("/api/saved-searches", {
+    void customerFetch("/api/saved-searches", {
       method: "POST",
       headers: { "content-type": "application/json" },
       credentials: "same-origin",
