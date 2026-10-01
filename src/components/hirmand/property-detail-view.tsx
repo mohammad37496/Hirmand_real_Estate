@@ -1347,7 +1347,7 @@ export function PropertyDetailView({
   ];
 
   return (
-    <SiteChrome>
+    <SiteChrome engagementProperty={{ id: property.id, title: property.title }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(propertyJsonLd(property)) }}
