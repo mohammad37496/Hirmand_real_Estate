@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Calculator, FileKey, WalletCards } from "lucide-react";
+import { Calculator, FileKey, LayoutDashboard, WalletCards } from "lucide-react";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 import { CallMenu } from "./call-menu";
@@ -48,6 +48,10 @@ export function SiteChrome({
         <Link to="/budget-match" className="quick-action">
           <WalletCards size={17} />
           <span>بودجه‌یاب</span>
+        </Link>
+        <Link to="/customer-dashboard" className="quick-action">
+          <LayoutDashboard size={17} />
+          <span>داشبورد من</span>
         </Link>
       </div>
       <SiteUtilities />
