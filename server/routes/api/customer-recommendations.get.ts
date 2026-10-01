@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   const ownerId = userId ?? visitorId;
   const ownerColumn = userId ? "user_id" : "visitor_id";
   const sql = await getSql();
-  const [favoriteRows, searchRows, watchRows, candidateRows] = await Promise.all([
+  const [favoriteRows, searchRows, watchRows, profileRows, candidateRows] = await Promise.all([
     sql.query<Record<string, unknown>>(
       "select p.transaction_type, p.property_type, p.neighborhood, p.area_m2, " +
       "case when p.transaction_type='rent' then coalesce(p.rent,p.deposit) when p.transaction_type='mortgage' then p.deposit else p.price end as price, " +
@@ -37,6 +37,10 @@ export default defineEventHandler(async (event) => {
       [ownerId],
     ),
     sql.query<Record<string, unknown>>(
+      "select transaction_type, property_type, neighborhoods, min_price, max_price, min_area, max_area, bedrooms, requested_amenities, must_have_amenities from customer_need_profiles where visitor_id=$1 or ($2 is not null and user_id=$2) order by case when visitor_id=$1 then 0 else 1 end limit 1",
+      [ownerId === visitorId ? visitorId : visitorId, userId],
+    ),
+    sql.query<Record<string, unknown>>(
       "select p.id::text as id, p.slug, p.title, p.transaction_type, p.property_type, p.neighborhood, p.area_m2, p.bedrooms, " +
       "case when p.transaction_type='rent' then coalesce(p.rent,p.deposit) when p.transaction_type='mortgage' then p.deposit else p.price end as price, " +
       "p.deposit, p.rent, nullif(p.images->>0,'') as image, p.featured, p.published_at, p.created_at " +
@@ -52,6 +56,20 @@ export default defineEventHandler(async (event) => {
       [ownerId],
     )).map((row) => String(row.property_slug)),
   );
+
+  const profileRow = profileRows[0] ?? null;
+  const profile = profileRow ? {
+    transactionType: String(profileRow.transaction_type ?? ""),
+    propertyType: String(profileRow.property_type ?? ""),
+    neighborhoods: Array.isArray(profileRow.neighborhoods) ? profileRow.neighborhoods.filter((x): x is string => typeof x === "string") : [],
+    minPrice: profileRow.min_price == null ? null : Number(profileRow.min_price),
+    maxPrice: profileRow.max_price == null ? null : Number(profileRow.max_price),
+    minArea: profileRow.min_area == null ? null : Number(profileRow.min_area),
+    maxArea: profileRow.max_area == null ? null : Number(profileRow.max_area),
+    bedrooms: profileRow.bedrooms == null ? null : Number(profileRow.bedrooms),
+    requestedAmenities: Array.isArray(profileRow.requested_amenities) ? profileRow.requested_amenities.filter((x): x is string => typeof x === "string") : [],
+    mustHaveAmenities: Array.isArray(profileRow.must_have_amenities) ? profileRow.must_have_amenities.filter((x): x is string => typeof x === "string") : [],
+  };
 
   const favorites = favoriteRows.map((row) => ({
     transactionType: String(row.transaction_type ?? ""),
@@ -90,6 +108,12 @@ export default defineEventHandler(async (event) => {
     if (item.propertyType) typeWeights.set(item.propertyType, (typeWeights.get(item.propertyType) ?? 0) + 3 + priorityBoost);
     if (item.neighborhood) neighborhoodWeights.set(item.neighborhood, (neighborhoodWeights.get(item.neighborhood) ?? 0) + 2 + categoryBoost);
   }
+  if (profile?.transactionType) txWeights.set(profile.transactionType, (txWeights.get(profile.transactionType) ?? 0) + 6);
+  if (profile?.propertyType) typeWeights.set(profile.propertyType, (typeWeights.get(profile.propertyType) ?? 0) + 5);
+  for (const neighborhood of profile?.neighborhoods ?? []) {
+    neighborhoodWeights.set(neighborhood, (neighborhoodWeights.get(neighborhood) ?? 0) + 4);
+  }
+
   for (const item of searches) {
     if (item.transactionType) txWeights.set(item.transactionType, (txWeights.get(item.transactionType) ?? 0) + 5);
     if (item.propertyType) typeWeights.set(item.propertyType, (typeWeights.get(item.propertyType) ?? 0) + 4);
@@ -175,6 +199,27 @@ export default defineEventHandler(async (event) => {
       }
     }
 
+    if (profile) {
+      let profileCompatible = true;
+      if (profile.transactionType && profile.transactionType !== item.transactionType) profileCompatible = false;
+      if (profile.propertyType && profile.propertyType !== item.propertyType) profileCompatible = false;
+      if (profile.neighborhoods.length && !profile.neighborhoods.some((area) => item.neighborhood.includes(area))) profileCompatible = false;
+      if (profile.minPrice != null && candidatePrice != null && candidatePrice < profile.minPrice) profileCompatible = false;
+      if (profile.maxPrice != null && candidatePrice != null && candidatePrice > profile.maxPrice) profileCompatible = false;
+      if (profile.minArea != null && item.areaM2 != null && item.areaM2 < profile.minArea) profileCompatible = false;
+      if (profile.maxArea != null && item.areaM2 != null && item.areaM2 > profile.maxArea) profileCompatible = false;
+      if (profile.bedrooms != null && item.bedrooms != null && item.bedrooms < profile.bedrooms) profileCompatible = false;
+      if (profileCompatible) {
+        score += 8;
+        reasons.push("با پروفایل نیاز شما هم‌خوان است");
+      } else {
+        const hardMismatch =
+          (profile.transactionType && profile.transactionType !== item.transactionType) ||
+          (profile.propertyType && profile.propertyType !== item.propertyType);
+        if (hardMismatch) return { item, score: -1, maxScore: 100, reasons: [] as string[] };
+      }
+    }
+
     for (const search of searches) {
       const outOfPrice =
         (search.minPrice != null && candidatePrice != null && candidatePrice < search.minPrice) ||
@@ -203,12 +248,12 @@ export default defineEventHandler(async (event) => {
     .map((entry) => ({
       ...entry.item,
       matchScore: Math.round((entry.score / entry.maxScore) * 100),
-      reason: entry.reasons.slice(0, 2).join(" · ") || "بر اساس فعالیت شما",
+      reason: entry.reasons.slice(0, 2).join(" · ") || "بر اساس پروفایل و فعالیت شما",
     }));
 
   return {
     enabled: true,
     items,
-    reason: favorites.length || searches.length || targetPrices.length ? "personalized" : "empty",
+    reason: favorites.length || searches.length || targetPrices.length || profile ? "personalized" : "empty",
   };
 });
