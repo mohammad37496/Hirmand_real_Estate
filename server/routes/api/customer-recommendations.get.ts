@@ -69,7 +69,7 @@ export default defineEventHandler(async (event) => {
     bedrooms: profileRow.bedrooms == null ? null : Number(profileRow.bedrooms),
     requestedAmenities: Array.isArray(profileRow.requested_amenities) ? profileRow.requested_amenities.filter((x): x is string => typeof x === "string") : [],
     mustHaveAmenities: Array.isArray(profileRow.must_have_amenities) ? profileRow.must_have_amenities.filter((x): x is string => typeof x === "string") : [],
-  };
+  } : null;
 
   const favorites = favoriteRows.map((row) => ({
     transactionType: String(row.transaction_type ?? ""),
