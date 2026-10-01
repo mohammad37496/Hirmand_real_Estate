@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
       [visitorId, userId],
     ),
     sql.query<Record<string, unknown>>(
-      "select transaction_type,property_type,neighborhood,area_m2,bedrooms,price,deposit,rent,parking,elevator,storage from properties where status='published' and slug=$1 limit 1",
+      "select transaction_type,property_type,neighborhood,area_m2,bedrooms,price,deposit,rent,parking,elevator,storage,other_amenities from properties where status='published' and slug=$1 limit 1",
       [slug],
     ),
   ]);
@@ -66,10 +66,14 @@ export default defineEventHandler(async (event) => {
     if (check.ok) { score += check.points; reasons.push(check.reason); }
   }
 
+  const amenities = list(property.other_amenities);
   const amenity = (id:string) =>
     id==="parking" ? Boolean(property.parking) :
     id==="elevator" ? Boolean(property.elevator) :
-    id==="storage" ? Boolean(property.storage) : false;
+    id==="storage" ? Boolean(property.storage) :
+    id==="balcony" ? amenities.some(value=>["balcony","terrace"].includes(value)) :
+    id==="yard" ? amenities.some(value=>["yard","private_yard"].includes(value)) :
+    id==="master_bedroom" ? amenities.includes("master_bedroom") : false;
   const missing = mustHave.filter(id=>!amenity(id));
   score -= missing.length * 8;
   if (requested.some(amenity)) reasons.push("چند مورد از امکانات مهم شما را دارد");
