@@ -2,6 +2,7 @@ import { createError, defineEventHandler, getCookie, readBody, setCookie, setRes
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
+import { getCustomerIdentity } from "@/lib/customer-identity.server";
 
 const COOKIE_NAME = "hirmand_visitor_id";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
@@ -42,7 +43,7 @@ export default defineEventHandler(async (event) => {
   if (!parsed.success) throw createError({ statusCode: 422, statusMessage: "درخواست ذخیره‌ها نامعتبر است." });
   if (dbSource === "unconfigured") return { enabled: false, slugs: [] };
 
-  const visitorId = await ensureVisitor(event);
+  const { visitorId, userId } = await getCustomerIdentity(event);
   const sql = await getSql();
 
   if (parsed.data.action === "sync") {
@@ -62,14 +63,14 @@ export default defineEventHandler(async (event) => {
   if (parsed.data.action === "toggle") {
     if (!parsed.data.slug) throw createError({ statusCode: 400, statusMessage: "فایل مشخص نشده است." });
     const existing = await sql.query<{ property_slug: string }>(
-      "select property_slug from customer_favorites where visitor_id=$1 and property_slug=$2 limit 1",
-      [visitorId, parsed.data.slug],
+      "select property_slug from customer_favorites where ${userId ? "user_id=$1" : "visitor_id=$1"} and property_slug=$2 limit 1",
+      [visitorId, userId, parsed.data.slug],
     );
     if (existing[0]) {
-      await sql.query("delete from customer_favorites where visitor_id=$1 and property_slug=$2", [visitorId, parsed.data.slug]);
+      await sql.query(`delete from customer_favorites where ${userId ? "user_id=$1" : "visitor_id=$1"} and property_slug=$2`, [userId ?? visitorId, parsed.data.slug]);
     } else {
       await sql.query(
-        "insert into customer_favorites(visitor_id, property_slug) values($1,$2) on conflict(visitor_id, property_slug) do update set updated_at=current_timestamp",
+        "insert into customer_favorites(visitor_id, user_id, property_slug) values($1,$2,$3) on conflict(visitor_id, property_slug) do update set user_id=coalesce(excluded.user_id, customer_favorites.user_id), updated_at=current_timestamp",
         [visitorId, parsed.data.slug],
       );
     }
