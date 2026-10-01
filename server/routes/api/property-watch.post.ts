@@ -7,7 +7,7 @@ const inputSchema = z.object({
   action: z.enum(["subscribe", "unsubscribe", "sync", "seen"]),
   slug: z.string().trim().min(1).max(220).optional(),
   alertIds: z.array(z.coerce.number().int().positive()).max(100).optional().default([]),
-  targetPrice: z.coerce.number().positive().max(9999999999999999).optional(),
+  targetPrice: z.coerce.number().positive().max(Number.MAX_SAFE_INTEGER).optional(),
 });
 
 function normalizeMoney(value: unknown) {
