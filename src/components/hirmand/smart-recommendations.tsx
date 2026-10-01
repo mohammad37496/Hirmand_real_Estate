@@ -2,6 +2,7 @@ import { Clock3, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { listPublishedPropertyCardsBySlugs, type PropertyCardData } from "@/lib/properties";
 import { PropertyCard } from "./property-showcase";
+import "@/smart-recommendations.css";
 
 const RECENT_PROPERTIES_KEY = "hirmand-recent-properties";
 
