@@ -13,15 +13,16 @@ export function PropertyPriceTarget({
 }: {
   slug: string;
   transactionType: string;
-  currentPrice: number | null;
-  currentDeposit: number | null;
+  currentPrice: number | string | null;
+  currentDeposit: number | string | null;
 }) {
   const [open,setOpen]=useState(false);
   const [target,setTarget]=useState("");
   const [busy,setBusy]=useState(false);
   const [done,setDone]=useState(false);
 
-  const current = transactionType === "rent" || transactionType === "mortgage" ? currentDeposit : currentPrice;
+  const rawCurrent = transactionType === "rent" || transactionType === "mortgage" ? currentDeposit : currentPrice;
+  const current = rawCurrent == null || rawCurrent === "" ? null : Number(rawCurrent);
   const label = transactionType === "rent" || transactionType === "mortgage" ? "سقف رهن هدف" : "سقف قیمت هدف";
 
   async function save(){
