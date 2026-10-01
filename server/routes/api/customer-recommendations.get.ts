@@ -1,4 +1,5 @@
-import { defineEventHandler, getCookie, setResponseHeader } from "h3";
+import { defineEventHandler, setResponseHeader } from "h3";
+import { getCustomerIdentity } from "@/lib/customer-identity.server";
 import { dbSource, getSql } from "@/lib/db";
 
 const COOKIE_NAME = "hirmand_visitor_id";
@@ -20,21 +21,21 @@ export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "private, no-store");
   if (dbSource === "unconfigured") return { enabled: false, items: [], reason: "" };
 
-  const visitorId = getCookie(event, COOKIE_NAME);
-  if (!validVisitorId(visitorId)) return { enabled: true, items: [], reason: "empty" };
-
+  const { visitorId, userId } = await getCustomerIdentity(event);
+  const ownerId = userId ?? visitorId;
+  const ownerColumn = userId ? "user_id" : "visitor_id";
   const sql = await getSql();
   const [favoriteRows, searchRows, candidateRows] = await Promise.all([
     sql.query<Record<string, unknown>>(
       "select p.transaction_type, p.property_type, p.neighborhood, p.area_m2, " +
       "case when p.transaction_type='rent' then coalesce(p.rent,p.deposit) when p.transaction_type='mortgage' then p.deposit else p.price end as price " +
       "from customer_favorites f join properties p on p.slug=f.property_slug and p.status='published' " +
-      "where f.visitor_id=$1 order by f.updated_at desc limit 12",
-      [visitorId],
+      "where f." + ownerColumn + "=$1 order by f.updated_at desc limit 12",
+      [ownerId],
     ),
     sql.query<{ params: string }>(
       "select params from customer_saved_searches where visitor_id=$1 and enabled=true order by updated_at desc limit 5",
-      [visitorId],
+      [ownerId],
     ),
     sql.query<Record<string, unknown>>(
       "select p.id::text as id, p.slug, p.title, p.transaction_type, p.property_type, p.neighborhood, p.area_m2, p.bedrooms, " +
@@ -48,8 +49,8 @@ export default defineEventHandler(async (event) => {
 
   const favoriteSlugs = new Set(
     (await sql.query<{ property_slug: string }>(
-      "select property_slug from customer_favorites where visitor_id=$1 limit 100",
-      [visitorId],
+      "select property_slug from customer_favorites where " + ownerColumn + "=$1 limit 100",
+      [ownerId],
     )).map((row) => String(row.property_slug)),
   );
 
