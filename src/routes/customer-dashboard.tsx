@@ -13,8 +13,10 @@ import {
   Search,
   Sparkles,
   UserRound,
+  Users,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
