@@ -121,52 +121,57 @@ export default defineEventHandler(async (event) => {
       publishedAt: row.published_at ? new Date(String(row.published_at)).toISOString() : null,
     };
 
-    if (favoriteSlugs.has(item.slug)) return { item, score: -999, reasons: [] as string[] };
+    if (favoriteSlugs.has(item.slug)) return { item, score: -1, maxScore: 100, reasons: [] as string[] };
 
-    let score = item.featured ? 2 : 0;
+    let score = 0;
+    const maxScore = 100;
     const reasons: string[] = [];
 
     if (txWeights.has(item.transactionType)) {
-      score += txWeights.get(item.transactionType) ?? 0;
-      reasons.push("نوع معامله مشابه انتخاب‌های شما");
+      score += 20;
+      reasons.push("نوع معامله مطابق انتخاب‌های شما");
     }
     if (typeWeights.has(item.propertyType)) {
-      score += typeWeights.get(item.propertyType) ?? 0;
-      reasons.push("نوع ملک مشابه");
+      score += 20;
+      reasons.push("نوع ملک مطابق سلیقه شما");
     }
     if (neighborhoodWeights.has(item.neighborhood)) {
-      score += neighborhoodWeights.get(item.neighborhood) ?? 0;
-      reasons.push("محله مشابه");
+      score += 15;
+      reasons.push("محله مورد علاقه شما");
     }
 
     const candidatePrice = row.price == null ? null : Number(row.price);
     if (candidatePrice != null && avgPrice != null && avgPrice > 0) {
       const distance = Math.abs(candidatePrice - avgPrice) / avgPrice;
       if (distance <= 0.15) {
-        score += 4;
+        score += 15;
         reasons.push("قیمت نزدیک به انتخاب‌های شما");
       } else if (distance <= 0.30) {
-        score += 2;
+        score += 8;
       }
     }
+
+    if (item.areaM2 != null && avgArea != null && avgArea > 0) {
+      const distance = Math.abs(item.areaM2 - avgArea) / avgArea;
+      if (distance <= 0.20) {
+        score += 10;
+        reasons.push("متراژ نزدیک به انتخاب‌های شما");
+      } else if (distance <= 0.35) {
+        score += 5;
+      }
+    }
+
     if (candidatePrice != null && targetPrices.length) {
       const closestTarget = targetPrices.reduce((best, target) =>
         Math.abs(target - candidatePrice) < Math.abs(best - candidatePrice) ? target : best,
       );
       const targetDistance = Math.abs(candidatePrice - closestTarget) / closestTarget;
       if (candidatePrice <= closestTarget) {
-        score += 6;
+        score += 10;
         reasons.push("در محدوده قیمت هدف شما");
       } else if (targetDistance <= 0.12) {
-        score += 3;
+        score += 5;
         reasons.push("نزدیک به قیمت هدف");
-      }
-    }
-    if (item.areaM2 != null && avgArea != null && avgArea > 0) {
-      const distance = Math.abs(item.areaM2 - avgArea) / avgArea;
-      if (distance <= 0.20) {
-        score += 2;
-        reasons.push("متراژ نزدیک");
       }
     }
 
@@ -182,12 +187,13 @@ export default defineEventHandler(async (event) => {
       if (search.transactionType && search.transactionType !== item.transactionType) continue;
       if (search.propertyType && search.propertyType !== item.propertyType) continue;
       if (search.neighborhood && !item.neighborhood.includes(search.neighborhood)) continue;
-      score += 7;
+      score += 10;
       reasons.push("منطبق با یکی از جست‌وجوهای شما");
       break;
     }
 
-    return { item, score, reasons };
+    if (item.featured && score > 0) score += 2;
+    return { item, score: Math.min(maxScore, score), maxScore, reasons };
   });
 
   const items = scored
@@ -196,6 +202,7 @@ export default defineEventHandler(async (event) => {
     .slice(0, 8)
     .map((entry) => ({
       ...entry.item,
+      matchScore: Math.round((entry.score / entry.maxScore) * 100),
       reason: entry.reasons.slice(0, 2).join(" · ") || "بر اساس فعالیت شما",
     }));
 
