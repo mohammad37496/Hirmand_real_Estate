@@ -115,6 +115,14 @@ import {
   labelForOption,
 } from "@/lib/property-options";
 
+function priceChangePercent(previous: string | null, next: string | null) {
+  if (!previous || !next) return null;
+  const before = Number(previous);
+  const after = Number(next);
+  if (!Number.isFinite(before) || !Number.isFinite(after) || before <= 0) return null;
+  return Math.round(((after - before) / before) * 10) / 10;
+}
+
 function propertyAmenityLabel(value: string) {
   if (value.startsWith("cooling:")) {
     return labelForOption(PROPERTY_COOLING_OPTIONS, value.slice("cooling:".length));
@@ -1677,12 +1685,18 @@ export function PropertyDetailView({
                           {changes.map((change) => {
                             const previous = change.previous ? formatToman(Number(change.previous)) + " تومان" : "ثبت نشده";
                             const nextValue = change.next ? formatToman(Number(change.next)) + " تومان" : "حذف شد";
+                            const percent = priceChangePercent(change.previous, change.next);
                             return (
                               <div className="property-price-history-change" key={change.label}>
                                 <span>{change.label}</span>
                                 <strong>{previous}</strong>
                                 <b>→</b>
-                                <strong className="is-current">{nextValue}</strong>
+                                <strong className={percent != null && percent < 0 ? "is-current is-drop" : "is-current"}>{nextValue}</strong>
+                                {percent != null ? (
+                                  <small className={percent < 0 ? "is-drop" : "is-rise"}>
+                                    {percent > 0 ? "٪" + Math.abs(percent).toLocaleString("fa-IR") + " افزایش" : percent < 0 ? "٪" + Math.abs(percent).toLocaleString("fa-IR") + " کاهش" : "بدون تغییر"}
+                                  </small>
+                                ) : null}
                               </div>
                             );
                           })}
