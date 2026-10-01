@@ -2,6 +2,7 @@ import { createError, defineEventHandler, getCookie, readBody, setCookie, setRes
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
+import { getCustomerIdentity } from "@/lib/customer-identity.server";
 
 const COOKIE_NAME = "hirmand_visitor_id";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
@@ -144,9 +145,9 @@ async function ensureVisitor(event: H3Event): Promise<string> {
   return visitorId;
 }
 
-async function persistItem(sql: Awaited<ReturnType<typeof getSql>>, visitorId: string, item: SearchItem) {
+async function persistItem(sql: Awaited<ReturnType<typeof getSql>>, visitorId: string, userId: string | null, item: SearchItem) {
   await sql.query(
-    `insert into customer_saved_searches (id, visitor_id, client_id, name, params, enabled, last_checked_at, updated_at)
+    `insert into customer_saved_searches (id, visitor_id, user_id, client_id, name, params, enabled, last_checked_at, updated_at)
      values (gen_random_uuid(), $1, $2, $3, $4, true, current_timestamp, current_timestamp)
      on conflict (visitor_id, client_id)
      do update set
@@ -155,11 +156,11 @@ async function persistItem(sql: Awaited<ReturnType<typeof getSql>>, visitorId: s
        enabled=true,
        last_checked_at=current_timestamp,
        updated_at=current_timestamp`,
-    [visitorId, item.clientId, item.name, item.params],
+    [visitorId, userId, item.clientId, item.name, item.params],
   );
 }
 
-async function collectAlerts(sql: Awaited<ReturnType<typeof getSql>>, visitorId: string) {
+async function collectAlerts(sql: Awaited<ReturnType<typeof getSql>>, ownerId: string, ownerColumn: "user_id" | "visitor_id", userId: string | null, visitorId: string) {
   const searches = await sql.query<{
     id: string;
     client_id: string;
@@ -169,10 +170,10 @@ async function collectAlerts(sql: Awaited<ReturnType<typeof getSql>>, visitorId:
   }>(
     `select id::text, client_id, name, params, last_checked_at
      from customer_saved_searches
-     where visitor_id=$1 and enabled=true
+     where ${ownerColumn}=$1 and enabled=true
      order by updated_at desc
      limit 10`,
-    [visitorId],
+    [ownerId],
   );
 
   for (const search of searches) {
@@ -214,10 +215,10 @@ async function collectAlerts(sql: Awaited<ReturnType<typeof getSql>>, visitorId:
 
       await sql.query(
         `insert into customer_saved_search_alerts
-          (saved_search_id, visitor_id, property_id, property_slug, alert_type, event_key, title, message)
-         values ($1,$2,$3,$4,$5,$6,$7,$8)
+          (saved_search_id, visitor_id, user_id, property_id, property_slug, alert_type, event_key, title, message)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9)
          on conflict (event_key) do nothing`,
-        [search.id, visitorId, String(row.id), String(row.slug), alertType, eventKey, title, message],
+        [search.id, visitorId, userId, String(row.id), String(row.slug), alertType, eventKey, title, message],
       );
     }
 
@@ -229,24 +230,24 @@ async function collectAlerts(sql: Awaited<ReturnType<typeof getSql>>, visitorId:
 
   await sql.query(
     "delete from customer_saved_search_alerts where visitor_id=$1 and created_at < current_timestamp - interval '120 days'",
-    [visitorId],
+    [ownerId],
   );
 }
 
-async function listData(sql: Awaited<ReturnType<typeof getSql>>, visitorId: string) {
+async function listData(sql: Awaited<ReturnType<typeof getSql>>, ownerId: string, ownerColumn: "user_id" | "visitor_id") {
   const [searches, alerts] = await Promise.all([
     sql.query<Record<string, unknown>>(
       `select client_id, name, params, enabled, updated_at
        from customer_saved_searches
-       where visitor_id=$1 and enabled=true
+       where ${ownerColumn}=$1 and enabled=true
        order by updated_at desc
        limit 10`,
-      [visitorId],
+      [ownerId],
     ),
     sql.query<Record<string, unknown>>(
       `select id::text as id, property_slug, alert_type, title, message, created_at
        from customer_saved_search_alerts
-       where visitor_id=$1 and seen_at is null
+       where ${ownerColumn}=$1 and seen_at is null
        order by created_at desc
        limit 30`,
       [visitorId],
@@ -281,18 +282,20 @@ export default defineEventHandler(async (event) => {
   }
   if (dbSource === "unconfigured") return { enabled: false, searches: [], alerts: [] };
 
-  const visitorId = await ensureVisitor(event);
+  const { visitorId, userId } = await getCustomerIdentity(event);
+  const ownerId = userId ?? visitorId;
+  const ownerColumn = userId ? "user_id" : "visitor_id";
   const sql = await getSql();
 
   if (parsed.data.action === "save") {
     if (!parsed.data.item) throw createError({ statusCode: 400, statusMessage: "جست‌وجویی برای ذخیره ارسال نشده است." });
-    await persistItem(sql, visitorId, parsed.data.item);
+    await persistItem(sql, visitorId, userId, parsed.data.item);
     await sql.query(
       `delete from customer_saved_searches
-       where visitor_id=$1
+       where ${ownerColumn}=$1
          and id not in (
            select id from customer_saved_searches
-           where visitor_id=$1
+           where ${ownerColumn}=$1
            order by updated_at desc
            limit 10
          )`,
@@ -301,7 +304,7 @@ export default defineEventHandler(async (event) => {
   }
 
   if (parsed.data.action === "sync") {
-    for (const item of parsed.data.items) await persistItem(sql, visitorId, item);
+    for (const item of parsed.data.items) await persistItem(sql, visitorId, userId, item);
     await sql.query(
       `delete from customer_saved_searches
        where visitor_id=$1
@@ -317,19 +320,19 @@ export default defineEventHandler(async (event) => {
 
   if (parsed.data.action === "delete") {
     if (!parsed.data.clientId) throw createError({ statusCode: 400, statusMessage: "شناسه جست‌وجو مشخص نیست." });
-    await sql.query("delete from customer_saved_searches where visitor_id=$1 and client_id=$2", [visitorId, parsed.data.clientId]);
+    await sql.query(`delete from customer_saved_searches where ${ownerColumn}=$1 and client_id=$2`, [ownerId, parsed.data.clientId]);
   }
 
   if (parsed.data.action === "seen" && parsed.data.alertIds.length) {
-    await sql.query("update customer_saved_search_alerts set seen_at=current_timestamp where visitor_id=$1 and id=any($2::bigint[])", [visitorId, parsed.data.alertIds]);
+    await sql.query(`update customer_saved_search_alerts set seen_at=current_timestamp where ${ownerColumn}=$1 and id=any($2::bigint[])`, [ownerId, parsed.data.alertIds]);
   }
 
   if (parsed.data.action !== "seen") {
-    await collectAlerts(sql, visitorId);
+    await collectAlerts(sql, ownerId, ownerColumn, userId, visitorId);
   }
 
   return {
     enabled: true,
-    ...(await listData(sql, visitorId)),
+    ...(await listData(sql, ownerId, ownerColumn)),
   };
 });
