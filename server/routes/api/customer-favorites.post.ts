@@ -7,9 +7,12 @@ import { getCustomerIdentity } from "@/lib/customer-identity.server";
 const MAX_FAVORITES = 100;
 
 const bodySchema = z.object({
-  action: z.enum(["list", "sync", "toggle", "clear"]),
+  action: z.enum(["list", "sync", "toggle", "clear", "update_meta"]),
   slugs: z.array(z.string().trim().min(1).max(220)).max(MAX_FAVORITES).optional().default([]),
   slug: z.string().trim().min(1).max(220).optional(),
+  category: z.string().trim().min(1).max(40).optional(),
+  privateNote: z.string().trim().max(1000).optional(),
+  priority: z.coerce.number().int().min(0).max(3).optional(),
 });
 
 function clean(slugs: string[]) {
@@ -67,8 +70,26 @@ export default defineEventHandler(async (event) => {
     await sql.query(`delete from customer_favorites where ${ownerColumn}=$1`, [ownerId]);
   }
 
-  const rows = await sql.query<{ property_slug: string }>(
-    `select property_slug
+  if (parsed.data.action === "update_meta") {
+    if (!parsed.data.slug) throw createError({ statusCode: 400, statusMessage: "فایل مشخص نشده است." });
+    if (parsed.data.category === undefined && parsed.data.privateNote === undefined && parsed.data.priority === undefined) {
+      throw createError({ statusCode: 400, statusMessage: "اطلاعاتی برای ویرایش ارسال نشده است." });
+    }
+    const updated = await sql.query(
+      `update customer_favorites
+       set category=coalesce($3, category),
+           private_note=coalesce($4, private_note),
+           priority=coalesce($5, priority),
+           updated_at=current_timestamp
+       where ${ownerColumn}=$1 and property_slug=$2
+       returning property_slug, category, private_note, priority`,
+      [ownerId, parsed.data.slug, parsed.data.category ?? null, parsed.data.privateNote ?? null, parsed.data.priority ?? null],
+    );
+    if (!updated[0]) throw createError({ statusCode: 404, statusMessage: "این فایل در ذخیره‌های شما نیست." });
+  }
+
+  const rows = await sql.query<{ property_slug: string; category: string; private_note: string; priority: number }>(
+    `select property_slug, category, private_note, priority
      from customer_favorites
      where ${ownerColumn}=$1
      order by updated_at desc
@@ -76,5 +97,14 @@ export default defineEventHandler(async (event) => {
     [ownerId],
   );
 
-  return { enabled: true, slugs: rows.map((row) => String(row.property_slug)) };
+  return {
+    enabled: true,
+    slugs: rows.map((row) => String(row.property_slug)),
+    metadata: rows.map((row) => ({
+      slug: String(row.property_slug),
+      category: String(row.category || "عمومی"),
+      privateNote: String(row.private_note || ""),
+      priority: Number(row.priority || 0),
+    })),
+  };
 });
