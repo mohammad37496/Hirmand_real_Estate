@@ -9,9 +9,9 @@ const DEALS:[string,string][]=[["خرید","buy"],["فروش","sell"],["اجار
 const TYPES:[string,string][]=[["آپارتمان","apartment"],["ویلا","villa"],["باغ","villa"],["اداری","office"],["تجاری","commercial"],["زمین","land"],["خانه اصیل","heritage"]];
 
 function digits(value:string){return value.replace(/[۰-۹]/g,d=>String(DIGITS.indexOf(d))).replace(/[,،]/g,"");}
-function amount(raw:string){const n=Number(digits(raw).replace(/[^d.]/g,""));return Number.isFinite(n)?n:undefined;}
+function amount(raw:string){const n=Number(digits(raw).replace(/[^0-9.]/g,""));return Number.isFinite(n)?n:undefined;}
 function parsePrice(text:string){
-  const m=text.match(/(?:تا|حدود|زیر|کمتر از|حداکثر|حداکثر تا|بودجه.{0,8})(?:s*)([۰-۹\d.,]+)\s*(میلیارد|میلیون)?/);
+  const m=text.match(/(?:تا|حدود|زیر|کمتر از|حداکثر|حداکثر تا|بودجه.{0,8})(?:\s*)([۰-۹\d.,]+)\s*(میلیارد|میلیون)?/);
   if(!m)return undefined;
   const n=amount(m[1]??""); if(n==null)return undefined;
   return Math.round(n*((m[2]==="میلیارد")?1_000_000_000:(m[2]==="میلیون"?1_000_000:1)));
@@ -68,10 +68,22 @@ export function SmartPropertyAssistant(){
     window.setTimeout(()=>window.location.assign("/properties?"+parsed.params.toString()),180);
   }
   function voice(){
-    const Recognition=(window as Window & { SpeechRecognition?: any; webkitSpeechRecognition?: any }).SpeechRecognition ?? (window as Window & { webkitSpeechRecognition?: any }).webkitSpeechRecognition;
-    if(!Recognition){setHint("تشخیص صدا در این مرورگر در دسترس نیست.");return;}
-    const recognition=new Recognition(); recognition.lang="fa-IR"; recognition.interimResults=false; recognition.maxAlternatives=1;
-    recognition.onresult=(event:any)=>{setText(event.results?.[0]?.[0]?.transcript??"");};
+    type SpeechWindow = Window & {
+      SpeechRecognition?: new () => SpeechRecognitionLike;
+      webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+    };
+    type SpeechRecognitionLike = {
+      lang: string;
+      interimResults: boolean;
+      maxAlternatives: number;
+      onresult: ((event: { results?: ArrayLike<ArrayLike<{ transcript?: string }>> }) => void) | null;
+      onerror: (() => void) | null;
+      start: () => void;
+    };
+    const recognitionClass = (window as SpeechWindow).SpeechRecognition ?? (window as SpeechWindow).webkitSpeechRecognition;
+    if(!recognitionClass){setHint("تشخیص صدا در این مرورگر در دسترس نیست.");return;}
+    const recognition=Object.assign(new recognitionClass(),{lang:"fa-IR",interimResults:false,maxAlternatives:1});
+    recognition.onresult=(event)=>{setText(event.results?.[0]?.[0]?.transcript??"");};
     recognition.onerror=()=>setHint("تشخیص صدا انجام نشد؛ متن را وارد کنید.");
     recognition.start();
   }
