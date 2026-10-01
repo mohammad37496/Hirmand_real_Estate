@@ -18,6 +18,7 @@ import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
 import { SITE } from "@/lib/site";
+import { customerFetch } from "@/lib/customer-fetch";
 import "@/customer-dashboard.css";
 
 type DashboardResponse = {
@@ -91,7 +92,7 @@ function CustomerDashboardPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/customer-dashboard", {
+      const response = await customerFetch("/api/customer-dashboard", {
         credentials: "same-origin",
         cache: "no-store",
       });
