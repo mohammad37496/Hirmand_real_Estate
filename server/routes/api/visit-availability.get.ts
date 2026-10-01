@@ -56,7 +56,8 @@ export default defineEventHandler(async (event) => {
   const busy = rows.map((row) => new Date(String(row.visit_preferred_at)).getTime()).filter(Number.isFinite);
   const slots = TIMES.map((time) => {
     const slot = toIranDate(date, time).getTime();
-    const available = !busy.some((existing) => Math.abs(existing - slot) < 60 * 60 * 1000);
+    const startsSoonEnough = slot >= Date.now() + 30 * 60 * 1000;
+    const available = startsSoonEnough && !busy.some((existing) => Math.abs(existing - slot) < 60 * 60 * 1000);
     return { time, available };
   });
 
