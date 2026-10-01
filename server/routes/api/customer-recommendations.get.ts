@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
     sql.query<Record<string, unknown>>(
       "select p.id::text as id, p.slug, p.title, p.transaction_type, p.property_type, p.neighborhood, p.area_m2, p.bedrooms, " +
       "case when p.transaction_type='rent' then coalesce(p.rent,p.deposit) when p.transaction_type='mortgage' then p.deposit else p.price end as price, " +
-      "p.deposit, p.rent, nullif(p.images->>0,'') as image, p.featured, p.published_at, p.created_at " +
+      "p.deposit, p.rent, p.parking, p.elevator, p.storage, p.other_amenities, nullif(p.images->>0,'') as image, p.featured, p.published_at, p.created_at " +
       "from properties p where p.status='published' order by " +
       "case when p.featured=true and (p.featured_until is null or p.featured_until>=current_timestamp) then 0 else 1 end, " +
       "p.published_at desc nulls last, p.created_at desc limit 160",
@@ -139,6 +139,9 @@ export default defineEventHandler(async (event) => {
       deposit: row.deposit == null ? null : String(row.deposit),
       rent: row.rent == null ? null : String(row.rent),
       image: row.image ? String(row.image) : null,
+      parking: Boolean(row.parking),
+      elevator: Boolean(row.elevator),
+      storage: Boolean(row.storage),
       status: "published" as const,
       availabilityStatus: String(row.availability_status ?? "available"),
       featured: Boolean(row.featured),
@@ -200,6 +203,22 @@ export default defineEventHandler(async (event) => {
     }
 
     if (profile) {
+      const amenitySatisfied = (id: string) =>
+        id === "parking" ? item.parking :
+        id === "elevator" ? item.elevator :
+        id === "storage" ? item.storage :
+        id === "balcony" ? false :
+        id === "yard" ? false :
+        id === "master_bedroom" ? false : false;
+      const mustHaveMissing = profile.mustHaveAmenities.filter((id) => !amenitySatisfied(id));
+      const requestedMatched = profile.requestedAmenities.filter(amenitySatisfied);
+      if (mustHaveMissing.length) {
+        score -= mustHaveMissing.length * 8;
+      }
+      if (requestedMatched.length) {
+        score += Math.min(12, requestedMatched.length * 4);
+        reasons.push("بخشی از امکانات مهم شما را دارد");
+      }
       let profileCompatible = true;
       if (profile.transactionType && profile.transactionType !== item.transactionType) profileCompatible = false;
       if (profile.propertyType && profile.propertyType !== item.propertyType) profileCompatible = false;
