@@ -25,6 +25,7 @@ const EVENT_NAMES = new Set([
   "property_search",
   "visit_request_click",
   "visit_request",
+  "property_report",
   "heartbeat",
 ]);
 
