@@ -42,8 +42,11 @@ export default defineEventHandler(async (event) => {
 
   const sql = await getSql();
   const rows = await sql.query<Record<string, unknown>>(
-    "select l.public_tracking_token,l.status,l.created_at,l.updated_at,l.consultant,l.deal,l.property_type,l.neighborhood,l.visit_requested_at,l.visit_preferred_at,l.visit_status,p.title as property_title,p.slug as property_slug " +
+    "select l.public_tracking_token,l.status,l.created_at,l.updated_at,l.consultant,l.deal,l.property_type,l.neighborhood,l.visit_requested_at,l.visit_preferred_at,l.visit_status," +
+      "cps.status as customer_property_submission_status,cps.review_note as customer_property_submission_review_note," +
+      "p.title as property_title,p.slug as property_slug " +
       "from leads l left join properties p on p.id::text=l.property_id::text " +
+      "left join customer_property_submissions cps on cps.public_tracking_token=l.public_tracking_token " +
       "where l.public_tracking_token=$1 limit 1",
     [code],
   );
