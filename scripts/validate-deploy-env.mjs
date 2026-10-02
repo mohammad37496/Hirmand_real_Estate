@@ -6,6 +6,10 @@ import {
   listDbRelatedEnvKeys,
 } from "./resolve-database-url.mjs";
 
+// Liara may invoke Vite directly instead of npm run build, which skips the prebuild lifecycle.
+// Generate self-hosted property fallback photos here too; the generator is idempotent.
+await import("./generate-fallback-assets.mjs");
+
 const isProduction = process.env.NODE_ENV === "production";
 const runtime = resolveDatabaseUrl();
 const migration = resolveMigrationDatabaseUrl();
