@@ -1,11 +1,12 @@
 import { useEffect, useState, type MouseEvent } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ArrowLeftRight, ChevronDown, Landmark, PiggyBank, WalletCards, Menu, X } from "lucide-react";
-import { NAV, SITE, TEAM } from "@/lib/site";
+import { NAV, SITE } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { CallMenu } from "./call-menu";
 import { BrandLogo } from "./logo";
 import { scrollToId } from "./scroll";
+import { useConsultants } from "./consultants-context";
 
 const FINANCE_NAV = [
   { id: "rahn", label: "رهن به اجاره", href: "/tools/rahn-rent", icon: ArrowLeftRight, text: "تبدیل ترکیب رهن و اجاره" },
@@ -20,6 +21,7 @@ export function Header() {
   const [financeOpen, setFinanceOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const onHome = pathname === "/";
+  const consultants = useConsultants();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -239,7 +241,7 @@ export function Header() {
           درخواست ملک
         </Link>
         <div className="mobile-call-list">
-          {TEAM.map((person) => (
+          {consultants.map((person) => (
             <a key={person.id} className="mobile-call" href={`tel:${person.phone}`} onClick={closeMenu}>
               تماس با {person.name}
             </a>
