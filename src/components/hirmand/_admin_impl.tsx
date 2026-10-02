@@ -1109,10 +1109,10 @@ export function AdminPropertiesPage() {
 
     const selected = properties.filter((item) => ids.includes(item.id));
     const ok = await confirm({
-      title: "پیش‌نمایش حذف گروهی فایل‌ها",
-      description: `${ids.length.toLocaleString("fa-IR")} فایل انتخاب‌شده برای همیشه حذف می‌شود. این عمل قابل بازگشت نیست و صفحه عمومی آن‌ها هم از دست می‌رود.`,
+      title: "انتقال گروهی به سطل بازیابی",
+      description: `${ids.length.toLocaleString("fa-IR")} فایل انتخاب‌شده به سطل بازیابی منتقل می‌شود. رسانه‌های آن‌ها حفظ می‌شود و بعداً امکان بازیابی یا حذف دائمی دارید.`,
       items: selected.map((item) => item.title),
-      confirmLabel: "حذف دائمی",
+      confirmLabel: "انتقال به سطل",
       tone: "danger",
     });
     if (!ok) return;
@@ -1122,7 +1122,7 @@ export function AdminPropertiesPage() {
       const result = await bulkDeleteProperties({ data: { ids } });
       setSelectedIds([]);
       await refresh();
-      toast.success((result.deleted || ids.length).toLocaleString("fa-IR") + " فایل حذف شد.");
+      toast.success((result.deleted || ids.length).toLocaleString("fa-IR") + " فایل به سطل بازیابی منتقل شد.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حذف گروهی کامل نشد.");
     } finally {
