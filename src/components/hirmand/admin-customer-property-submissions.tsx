@@ -60,7 +60,7 @@ export function AdminCustomerPropertySubmissions() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [consultant, setConsultant] = useState(TEAM[0]);
+  const [consultant, setConsultant] = useState<(typeof TEAM)[number]>(TEAM[0]);
   const [selected, setSelected] = useState<Submission | null>(null);
   const [reviewNote, setReviewNote] = useState("");
   const [statusFilter, setStatusFilter] = useState<"pending" | "approved" | "rejected">("pending");
