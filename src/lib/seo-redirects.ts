@@ -5,7 +5,7 @@ import { verifyAdminSessionToken, ADMIN_SESSION_COOKIE } from "@/lib/admin-sessi
 import { getCookie } from "@tanstack/react-start/server";
 import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
 
-type RedirectRow={id:number;sourcePath:string;targetPath:string;statusCode:301|302|307|308;active:boolean;hitCount:number;lastHitAt:string|null;createdAt:string;updatedAt:string};
+export type RedirectRow={id:number;sourcePath:string;targetPath:string;statusCode:301|302|307|308;active:boolean;hitCount:number;lastHitAt:string|null;createdAt:string;updatedAt:string};
 type NotFoundRow={id:number;path:string;hitCount:number;referrer:string;userAgent:string;firstSeenAt:string;lastSeenAt:string};
 const statusSchema=z.union([z.literal(301),z.literal(302),z.literal(307),z.literal(308)]);
 
@@ -70,25 +70,22 @@ export const upsertAdminRedirect=createServerFn({method:"POST"}).validator(z.obj
   const source=cleanSource(data.sourcePath), target=cleanTarget(data.targetPath);
   if(source===target) throw new Error("مبدأ و مقصد ریدایرکت نباید یکسان باشند.");
   const sql=await getSql();
-  const rows=await sql.query<Record<string,unknown>>(
-    `insert into site_redirects(id,source_path,target_path,status_code,active,updated_at)
-     values ($1,$2,$3,$4,$5,current_timestamp)
-     on conflict (source_path) do update set
-       target_path=excluded.target_path,status_code=excluded.status_code,active=excluded.active,updated_at=current_timestamp
-     returning id,source_path,target_path,status_code,active,hit_count,last_hit_at,created_at,updated_at`,
-    [data.id??null,source,target,data.statusCode,data.active]
-  ).catch(async(error)=>{
-    if(data.id==null&&String(error).includes("site_redirects_id")) {
-      return sql.query<Record<string,unknown>>(
+  const rows= data.id
+    ? await sql.query<Record<string,unknown>>(
+        `update site_redirects
+         set source_path=$2,target_path=$3,status_code=$4,active=$5,updated_at=current_timestamp
+         where id=$1
+         returning id,source_path,target_path,status_code,active,hit_count,last_hit_at,created_at,updated_at`,
+        [data.id,source,target,data.statusCode,data.active],
+      )
+    : await sql.query<Record<string,unknown>>(
         `insert into site_redirects(source_path,target_path,status_code,active,updated_at)
          values ($1,$2,$3,$4,current_timestamp)
-         on conflict (source_path) do update set target_path=excluded.target_path,status_code=excluded.status_code,active=excluded.active,updated_at=current_timestamp
+         on conflict (source_path) do update set
+           target_path=excluded.target_path,status_code=excluded.status_code,active=excluded.active,updated_at=current_timestamp
          returning id,source_path,target_path,status_code,active,hit_count,last_hit_at,created_at,updated_at`,
-        [source,target,data.statusCode,data.active]
+        [source,target,data.statusCode,data.active],
       );
-    }
-    throw error;
-  });
   return mapRedirect(rows[0]!);
 });
 
