@@ -1694,29 +1694,6 @@ export function PropertyDetailView({
             </div>
         </section>
 
-        <PropertyDecisionTools property={property} />
-        <PropertyVisitChecklist property={property} />
-        <PropertyOfferMessage property={property} />
-        <PropertyPaymentPlanner property={property} />
-        <PropertyDealChecklist property={property} />
-        <PropertyDealRoom property={property} />
-        <PropertyRiskRadar property={property} />
-        <PropertyDocumentPack property={property} />
-        <PropertyPhotoNotes property={property} />
-        <PropertyDecisionReadiness property={property} />
-        <PropertyScenarioAnalysis property={property} />
-        <PropertyPersonalScore property={property} />
-        <PropertyVisitOutcome property={property} />
-        <PropertyReviewAlerts property={property} />
-        <PropertyFollowUpReminder property={property} />
-        <PropertyDecisionDossier property={property} />
-        <PropertyNegotiationLog property={property} />
-        <PropertyOwnershipCost property={property} />
-        <PropertyQuestionLog property={property} />
-        <PropertyRenovationTracker property={property} />
-        <PropertyInquiryTools property={property} />
-        <PropertyVisitReport property={property} />
-
         <section className="property-detail-content">
           <article className="property-detail-main">
             <section className="property-divar-specs" aria-labelledby="property-specs-title">
@@ -1983,6 +1960,63 @@ export function PropertyDetailView({
               </section>
             ) : null}
 
+            <section className="property-decision-suite" aria-labelledby="property-decision-suite-title">
+              <header className="property-decision-suite-head">
+                <div>
+                  <span className="kicker">بررسی و تصمیم</span>
+                  <h2 id="property-decision-suite-title">ابزارهای بررسی، تصمیم و معامله</h2>
+                  <p>بعد از آشنایی با مشخصات، توضیحات و موقعیت ملک، این ابزارها برای بررسی دقیق‌تر، مذاکره و هماهنگی معامله در اختیار شما هستند.</p>
+                </div>
+                <span className="property-decision-suite-badge">مرحله‌به‌مرحله · اختیاری</span>
+              </header>
+
+              <div className="property-decision-suite-section">
+                <header className="property-decision-suite-section-head">
+                  <span className="property-decision-suite-index">۰۱</span>
+                  <div>
+                    <strong>ارزیابی و تصمیم‌گیری</strong>
+                    <span>اول ریسک‌ها و تناسب فایل را بررسی کنید؛ بعد سراغ معامله بروید.</span>
+                  </div>
+                </header>
+                <div className="property-decision-suite-stack">
+                  <PropertyDecisionTools property={property} />
+                  <PropertyVisitChecklist property={property} />
+                  <PropertyDecisionReadiness property={property} />
+                  <PropertyScenarioAnalysis property={property} />
+                  <PropertyPersonalScore property={property} />
+                  <PropertyRiskRadar property={property} />
+                  <PropertyReviewAlerts property={property} />
+                  <PropertyVisitOutcome property={property} />
+                </div>
+              </div>
+
+              <div className="property-decision-suite-section">
+                <header className="property-decision-suite-section-head">
+                  <span className="property-decision-suite-index">۰۲</span>
+                  <div>
+                    <strong>مذاکره و آماده‌سازی معامله</strong>
+                    <span>از برآورد هزینه تا پیشنهاد، پرداخت، مدارک و صورت‌جلسه تحویل.</span>
+                  </div>
+                </header>
+                <div className="property-decision-suite-stack">
+                  <PropertyOwnershipCost property={property} />
+                  <PropertyOfferMessage property={property} />
+                  <PropertyNegotiationLog property={property} />
+                  <PropertyPaymentPlanner property={property} />
+                  <PropertyDealChecklist property={property} />
+                  <PropertyDealRoom property={property} />
+                  <PropertyDocumentPack property={property} />
+                  <PropertyQuestionLog property={property} />
+                  <PropertyInquiryTools property={property} />
+                  <PropertyVisitReport property={property} />
+                  <PropertyFollowUpReminder property={property} />
+                  <PropertyRenovationTracker property={property} />
+                  <PropertyPhotoNotes property={property} />
+                  <PropertyDecisionDossier property={property} />
+                </div>
+              </div>
+            </section>
+
             <section className="property-final-cta" aria-label="درخواست بازدید و اطلاعات بیشتر">
               <div>
                 <span className="kicker">قدم بعدی</span>
@@ -2020,7 +2054,6 @@ export function PropertyDetailView({
               </div>
             </section>
 
-            <PropertyConvertSlider property={property} />
 
             <Link
               to="/properties"
