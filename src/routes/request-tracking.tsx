@@ -285,6 +285,17 @@ function RequestTrackingPage() {
                 </div>
               ) : null}
 
+              {result.callbackPreferredAt ? (
+                <div className="request-tracking-notice">
+                  زمان تماس پیشنهادی: <strong>{new Date(result.callbackPreferredAt).toLocaleString("fa-IR")}</strong>
+                </div>
+              ) : null}
+              {result.offerAmount ? (
+                <div className="request-tracking-notice">
+                  پیشنهاد قیمت ثبت‌شده: <strong>{Number(result.offerAmount).toLocaleString("fa-IR")} تومان</strong>
+                  {result.offerConditions ? <span> · {result.offerConditions}</span> : null}
+                </div>
+              ) : null}
               {result.customerPropertySubmissionStatus === "rejected" ? (
                 <div className="request-tracking-revision">
                   <div>
