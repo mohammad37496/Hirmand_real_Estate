@@ -195,9 +195,16 @@ export function trackingHead() {
 export function propertyJsonLd(property: Property) {
   const url = absoluteUrl(propertyPath(property));
   const image = property.images.map(shareableImageUrl).filter(Boolean);
+  const availabilityByStatus: Record<Property["availabilityStatus"], string> = {
+    available: "https://schema.org/InStock",
+    reserved: "https://schema.org/LimitedAvailability",
+    sold: "https://schema.org/SoldOut",
+    rented: "https://schema.org/OutOfStock",
+    unavailable: "https://schema.org/OutOfStock",
+  };
   const offers: Record<string, unknown> = {
     "@type": "Offer",
-    availability: "https://schema.org/InStock",
+    availability: availabilityByStatus[property.availabilityStatus],
     priceCurrency: "IRR",
     url,
     seller: {
