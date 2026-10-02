@@ -39,7 +39,7 @@ function GuidesPage() {
       const haystack = [item.title, item.summary, item.category, ...item.points].join(" ");
       return matchesCategory && (!q || haystack.includes(q));
     });
-  }, [category, query]);
+  }, [guides, category, query]);
 
   async function shareGuide(guide: Guide) {
     const url = new URL("/guides?guide=" + guide.id, window.location.origin).toString();
