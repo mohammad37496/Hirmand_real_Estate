@@ -20,6 +20,7 @@ import { Route as FileCodeRouteImport } from './routes/file-code'
 import { Route as SubmitPropertyRouteImport } from './routes/submit-property'
 import { Route as PropertiesRouteImport } from './routes/properties'
 import { Route as TrackingRouteImport } from './routes/tracking'
+import { Route as RequestTrackingRouteImport } from './routes/request-tracking'
 import { Route as MyHirmandRouteImport } from './routes/my-hirmand'
 import { Route as AreasSlugRouteImport } from './routes/areas.$slug'
 import { Route as ConsultantsIndexRouteImport } from './routes/consultants.index'
@@ -86,6 +87,11 @@ const PropertiesRoute = PropertiesRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const TrackingRoute = TrackingRouteImport.update({
+const RequestTrackingRoute = RequestTrackingRouteImport.update({
+  id: '/request-tracking',
+  path: '/request-tracking',
+  getParentRoute: () => rootRouteImport,
+} as any)
   id: '/tracking',
   path: '/tracking',
   getParentRoute: () => rootRouteImport,
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/submit-property': typeof SubmitPropertyRoute
   '/properties': typeof PropertiesRouteWithChildren
   '/tracking': typeof TrackingRoute
+  '/request-tracking': typeof RequestTrackingRoute
   '/my-hirmand': typeof MyHirmandRoute
   '/areas/$slug': typeof AreasSlugRoute
   '/consultants/$id': typeof ConsultantsIdRoute
@@ -194,8 +201,11 @@ export interface FileRoutesByTo {
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
   '/favorites': typeof FavoritesRoute
+  '/file-code': typeof FileCodeRoute
+  '/submit-property': typeof SubmitPropertyRoute
   '/guides': typeof GuidesRoute
   '/tracking': typeof TrackingRoute
+  '/request-tracking': typeof RequestTrackingRoute
   '/my-hirmand': typeof MyHirmandRoute
   '/areas/$slug': typeof AreasSlugRoute
   '/consultants/$id': typeof ConsultantsIdRoute
@@ -219,9 +229,12 @@ export interface FileRoutesById {
   '/compare': typeof CompareRoute
   '/consultants': typeof ConsultantsRouteWithChildren
   '/favorites': typeof FavoritesRoute
+  '/file-code': typeof FileCodeRoute
+  '/submit-property': typeof SubmitPropertyRoute
   '/guides': typeof GuidesRoute
   '/properties': typeof PropertiesRouteWithChildren
   '/tracking': typeof TrackingRoute
+  '/request-tracking': typeof RequestTrackingRoute
   '/my-hirmand': typeof MyHirmandRoute
   '/areas/$slug': typeof AreasSlugRoute
   '/consultants/$id': typeof ConsultantsIdRoute
@@ -250,6 +263,9 @@ export interface FileRouteTypes {
     | '/submit-property'
     | '/properties'
     | '/tracking'
+    | '/file-code
+    | '/submit-property
+    | '/request-tracking
     | '/my-hirmand'
     | '/areas/$slug'
     | '/consultants/$id'
@@ -316,6 +332,7 @@ export interface RootRouteChildren {
   CompareRoute: typeof CompareRoute
   ConsultantsRoute: typeof ConsultantsRouteWithChildren
   FavoritesRoute: typeof FavoritesRoute
+  RequestTrackingRoute: typeof RequestTrackingRoute
   GuidesRoute: typeof GuidesRoute
   FileCodeRoute: typeof FileCodeRoute
   SubmitPropertyRoute: typeof SubmitPropertyRoute
@@ -381,6 +398,27 @@ declare module '@tanstack/react-router' {
       path: '/guides'
       fullPath: '/guides'
       preLoaderRoute: typeof GuidesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/request-tracking': {
+      id: '/request-tracking'
+      path: '/request-tracking'
+      fullPath: '/request-tracking'
+      preLoaderRoute: typeof RequestTrackingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/file-code': {
+      id: '/file-code'
+      path: '/file-code'
+      fullPath: '/file-code'
+      preLoaderRoute: typeof FileCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/submit-property': {
+      id: '/submit-property'
+      path: '/submit-property'
+      fullPath: '/submit-property'
+      preLoaderRoute: typeof SubmitPropertyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/properties': {
@@ -538,6 +576,7 @@ const rootRouteChildren: RootRouteChildren = {
   SubmitPropertyRoute: SubmitPropertyRoute,
   PropertiesRoute: PropertiesRouteWithChildren,
   TrackingRoute: TrackingRoute,
+  RequestTrackingRoute: RequestTrackingRoute,
   MyHirmandRoute: MyHirmandRoute,
   AreasSlugRoute: AreasSlugRoute,
   FileIdRoute: FileIdRoute,
