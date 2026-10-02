@@ -59,6 +59,7 @@ function NotificationsPage() {
       }
       safeWrite(SEEN_AT_KEY, new Date().toISOString());
     } catch {
+      // Keep the existing notification feed when a source temporarily fails.
     } finally { setLoading(false); }
   }
 
