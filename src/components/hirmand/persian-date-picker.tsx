@@ -31,6 +31,7 @@ export function PersianDatePicker({
 }: PersianDatePickerProps) {
   const [open, setOpen] = useState(false);
   const selectedDate = dateOnlyToLocalDate(value);
+  const minDate = minValue ? dateOnlyToLocalDate(minValue) : undefined;
 
   useEffect(() => {
     if (!open) return;
@@ -110,7 +111,7 @@ export function PersianDatePicker({
             navLayout="after"
             reverseYears
             showOutsideDays
-            disabled={minValue ? { before: dateOnlyToLocalDate(minValue) } : undefined}
+            disabled={minDate ? { before: minDate } : undefined}
           />
 
           {value ? (
