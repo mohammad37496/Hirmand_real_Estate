@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Calculator, CircleDollarSign, Gauge, ShieldCheck, TrendingUp } from "lucide-react";
+import { Calculator, CircleDollarSign, Gauge, ShieldCheck, TrendingUp, Wallet } from "lucide-react";
 import { calculateLoan } from "@/lib/finance";
 import { formatToman } from "@/lib/money";
 import type { Property } from "@/lib/properties";
@@ -40,6 +40,8 @@ export function PropertyDecisionTools({ property }: { property: Property }) {
   const [downPaymentPercent, setDownPaymentPercent] = useState(30);
   const [annualRate, setAnnualRate] = useState(20.5);
   const [months, setMonths] = useState(60);
+  const [vacancyPercent, setVacancyPercent] = useState(5);
+  const [maintenancePercent, setMaintenancePercent] = useState(3);
 
   const propertyPrice = amount(property.price);
   const downPayment = Math.round(propertyPrice * downPaymentPercent / 100);
@@ -49,6 +51,12 @@ export function PropertyDecisionTools({ property }: { property: Property }) {
   const rent = amount(property.rent);
   const grossYield = propertyPrice > 0 && rent > 0 ? (rent * 12 / propertyPrice) * 100 : null;
   const grossPayback = grossYield && grossYield > 0 ? 100 / grossYield : null;
+  const annualRent = rent * 12;
+  const vacancyLoss = annualRent * vacancyPercent / 100;
+  const maintenanceCost = annualRent * maintenancePercent / 100;
+  const annualDebtService = loan ? loan.installment * 12 : 0;
+  const netAnnualCashflow = annualRent - vacancyLoss - maintenanceCost - annualDebtService;
+  const netMonthlyCashflow = netAnnualCashflow / 12;
   const info = completeness(property);
 
   const money = (value: number) => formatToman(value) + " تومان";
@@ -58,7 +66,7 @@ export function PropertyDecisionTools({ property }: { property: Property }) {
       <header className="property-decision-tools-head">
         <div>
           <span className="kicker">ابزار تصمیم‌گیری</span>
-          <h2 id="property-decision-tools-title">سه شاخص برای بررسی این فایل</h2>
+          <h2 id="property-decision-tools-title">چهار ابزار برای بررسی این فایل</h2>
           <p>اعداد این بخش بر پایه اطلاعات همین فایل و سناریوی انتخابی شما محاسبه می‌شوند.</p>
         </div>
         <span className="property-decision-freshness"><Gauge size={15} /> به‌روزرسانی فایل: {freshnessLabel(property.updatedAt)}</span>
@@ -115,6 +123,35 @@ export function PropertyDecisionTools({ property }: { property: Property }) {
             </div>
           ) : (
             <p className="property-decision-empty">برای محاسبه بازده، هم قیمت فروش و هم اجاره ماهانه باید در فایل ثبت شده باشد.</p>
+          )}
+        </article>
+
+        <article className="property-decision-card">
+          <div className="property-decision-card-head">
+            <span className="property-decision-icon"><Wallet size={18} /></span>
+            <div><strong>جریان نقدی خالص</strong><small>سناریوی سرمایه‌گذاری با همین قیمت و اجاره</small></div>
+          </div>
+          {propertyPrice > 0 && rent > 0 ? (
+            <>
+              <div className="property-decision-fields">
+                <label>
+                  <span>خالی‌ماندن سالانه: {vacancyPercent.toLocaleString("fa-IR")}٪</span>
+                  <input type="range" min="0" max="25" step="1" value={vacancyPercent} onChange={(event) => setVacancyPercent(Number(event.target.value))} />
+                </label>
+                <label>
+                  <span>نگهداری سالانه: {maintenancePercent.toLocaleString("fa-IR")}٪</span>
+                  <input type="range" min="0" max="15" step="1" value={maintenancePercent} onChange={(event) => setMaintenancePercent(Number(event.target.value))} />
+                </label>
+              </div>
+              <div className="property-decision-metrics">
+                <div><span>درآمد مؤثر سالانه</span><strong>{money(annualRent - vacancyLoss)}</strong></div>
+                <div><span>هزینه نگهداری</span><strong>{money(maintenanceCost)}</strong></div>
+                <div className="is-highlight"><span>جریان نقدی ماهانه پس از قسط</span><strong>{money(netMonthlyCashflow)}</strong></div>
+              </div>
+              <small className="property-decision-note">قسط از سناریوی وام همین بخش گرفته می‌شود. مالیات، بیمه، هزینه‌های معامله و تعمیرات اساسی در این برآورد نیست.</small>
+            </>
+          ) : (
+            <p className="property-decision-empty">برای محاسبه جریان نقدی، هم قیمت فروش و هم اجاره ماهانه باید ثبت شده باشد.</p>
           )}
         </article>
 
