@@ -1087,7 +1087,7 @@ const ADMIN_PRICE_EXPR =
 function adminPropertyWhereSql() {
   return [
     "deleted_at is null",
-    "($1::text is null or status = $1)",
+    "and ($1::text is null or status = $1)",
     "and ($2::text is null or transaction_type = $2)",
     "and ($3::text is null or property_type = $3)",
     "and ($4::text is null or neighborhood = $4)",
@@ -1152,9 +1152,9 @@ export const countAdminProperties = createServerFn({ method: "POST" })
       `select
          count(*)::int as total,
          count(*) filter (where status = 'published' and deleted_at is null)::int as published,
-         count(*) filter (where status = 'draft')::int as draft,
-         count(*) filter (where status = 'archived')::int as archived,
-         count(*) filter (where featured = true and (featured_until is null or featured_until >= current_timestamp))::int as featured
+         count(*) filter (where status = 'draft' and deleted_at is null)::int as draft,
+         count(*) filter (where status = 'archived' and deleted_at is null)::int as archived,
+         count(*) filter (where featured = true and deleted_at is null and (featured_until is null or featured_until >= current_timestamp))::int as featured
        from properties`,
     );
     const row = rows[0];
