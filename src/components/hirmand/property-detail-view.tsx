@@ -357,6 +357,15 @@ function whatsappLink(phone: string, title: string) {
   const text = encodeURIComponent(`سلام، درباره فایل «${title}» از سایت هیرمند پیام می‌دهم.`);
   return `https://wa.me/${intl}?text=${text}`;
 }
+function similarRequestHref(property: Property) {
+  const params = new URLSearchParams({
+    transaction: property.transactionType,
+    type: property.propertyType,
+    neighborhood: property.neighborhood,
+  });
+  return `/?${params.toString()}#inquiry`;
+}
+
 
 async function shareCurrentProperty(property: Pick<Property, "id" | "slug" | "title">) {
   if (typeof window === "undefined") return;
@@ -1464,7 +1473,20 @@ export function PropertyDetailView({
                   <span>ابزارهای فایل</span>
                   <span>ذخیره، اشتراک، چاپ و مقایسه</span>
                 </div>
-                <PropertyActions property={property} />
+                <div className="property-detail-tools-row">
+                  <PropertyActions property={property} />
+                  <Link
+                    to="/"
+                    search={{}}
+                    hash="inquiry"
+                    className="property-similar-request-btn"
+                    href={similarRequestHref(property)}
+                    onClick={() => trackAnalyticsEvent("inquiry_click", property.slug)}
+                  >
+                    <Sparkles size={16} aria-hidden="true" />
+                    درخواست فایل مشابه
+                  </Link>
+                </div>
                 <button
                   type="button"
                   className={"property-price-watch-button" + (priceWatchEnabled ? " is-active" : "")}
