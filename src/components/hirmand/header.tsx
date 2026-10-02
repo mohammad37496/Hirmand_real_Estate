@@ -1,6 +1,6 @@
 import { useEffect, useState, type MouseEvent } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ArrowLeftRight, ChevronDown, Landmark, PiggyBank, WalletCards, Menu, X } from "lucide-react";
+import { ArrowLeftRight, ChevronDown, Hash, Landmark, PiggyBank, WalletCards, Menu, X } from "lucide-react";
 import { NAV, SITE } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { CallMenu } from "./call-menu";
@@ -128,6 +128,9 @@ export function Header() {
         </nav>
 
         <div className="nav-actions">
+          <Link to="/file-code" className="header-inquiry">
+            <Hash size={15} /> کد فایل
+          </Link>
           <Link
             to="/"
             hash="inquiry"
@@ -229,6 +232,9 @@ export function Header() {
             </Link>
           );
         })}
+        <Link to="/file-code" className="mobile-menu-inquiry" onClick={closeMenu}>
+          <Hash size={15} /> جستجوی کد فایل
+        </Link>
         <Link
           to="/"
           hash="inquiry"
