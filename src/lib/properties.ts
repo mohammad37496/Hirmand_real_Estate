@@ -637,6 +637,31 @@ export const listPublishedPropertiesByContact = createServerFn({ method: "GET" }
     return rows.map((row) => mapProperty(row));
   });
 
+export const getPublishedPropertyByFileCode = createServerFn({ method: "GET" })
+  .validator(z.object({ code: z.string().trim().regex(/^[a-f0-9]{6}$/i) }))
+  .handler(async ({ data }) => {
+    if (dbSource === "unconfigured") return null;
+    const code = data.code.trim().toLowerCase();
+    setResponseHeader("cache-control", "public, max-age=30, s-maxage=120, stale-while-revalidate=600");
+    return cachedPropertyRead(
+      `property-code:${code}`,
+      30_000,
+      async () => {
+        const sql = await getSql();
+        const rows = await sql.query<Record<string, unknown>>(
+          `select ${DETAIL_COLUMNS}
+           from properties
+           where status = 'published'
+             and lower(right(replace(id::text, '-', ''), 6)) = $1
+           order by published_at desc nulls last, created_at desc
+           limit 1`,
+          [code],
+        );
+        return rows[0] ? mapProperty(rows[0]) : null;
+      },
+    );
+  });
+
 export const getPublishedPropertyById = createServerFn({ method: "GET" })
   .validator(z.object({ id: z.string().trim().min(1).max(120) }))
   .handler(async ({ data }) => {
