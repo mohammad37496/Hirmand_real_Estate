@@ -23,6 +23,7 @@ import adminMobileClarityCss from "../admin-mobile-clarity.css?url";
 import adminMatchingCss from "../admin-matching.css?url";
 import adminOpsCss from "../admin-ops.css?url";
 import smartToolsCss from "../smart-tools.css?url";
+import desktopNavReadabilityCss from "../desktop-nav-readability.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -67,6 +68,7 @@ export const Route = createRootRoute({
       { rel: "stylesheet", href: adminMatchingCss },
       { rel: "stylesheet", href: adminOpsCss },
       { rel: "stylesheet", href: smartToolsCss },
+      { rel: "stylesheet", href: desktopNavReadabilityCss },
     ],
   }),
   component: RootDocument,
@@ -101,7 +103,6 @@ function RootDocument() {
     </html>
   );
 }
-
 
 function NotFoundPage() {
   return (
