@@ -1405,4 +1405,87 @@ export const ADMIN_CSS = `
   .admin-lead-card>.admin-lead-actions{grid-column:1/-1;justify-content:flex-start}
   .admin-lead-matches a{min-height:32px;display:inline-flex;align-items:center}
 }
+/* ==========================================================================
+   Hirmand Admin — CRM SLA, price history and contract checklist
+   ========================================================================== */
+.admin-sla-controls{
+  display:flex;gap:9px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid #eee8df;background:#fcfaf7;
+}
+.admin-sla-controls label{display:grid;gap:5px;color:#65727b;font-size:.64rem;font-weight:800}
+.admin-sla-controls select,
+.admin-price-history .admin-panel-head select{
+  min-height:38px;padding:7px 10px;border:1px solid #dfd7ca;border-radius:10px;background:#fff;color:var(--fg);font:inherit;font-size:.7rem;
+}
+.admin-sla-grid{
+  display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:14px;padding:15px 18px 18px;
+}
+.admin-sla-grid>div{
+  min-width:0;border:1px solid #e5ded4;border-radius:14px;background:#fff;overflow:hidden;
+}
+.admin-sla-grid header{
+  display:flex;justify-content:space-between;gap:10px;align-items:center;padding:11px 13px;border-bottom:1px solid #eee8df;background:#fbf9f6;
+}
+.admin-sla-grid header strong{color:var(--navy-900);font-size:.75rem}.admin-sla-grid header small{color:#78838a;font-size:.6rem}
+.admin-sla-row,.admin-sla-consultant{
+  display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:9px;align-items:center;padding:10px 12px;border-bottom:1px solid #f0ebe3;
+}
+.admin-sla-row:last-child,.admin-sla-consultant:last-child{border-bottom:0}
+.admin-sla-row>div,.admin-sla-consultant>div{min-width:0}
+.admin-sla-row strong,.admin-sla-consultant strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--navy-900);font-size:.68rem}
+.admin-sla-row small,.admin-sla-consultant small{display:block;margin-top:2px;color:#7b858d;font-size:.57rem;line-height:1.7}
+.admin-sla-row>span,.admin-sla-consultant>span{color:#62717a;font-size:.58rem;white-space:nowrap}
+.admin-sla-row.is-breached>span,.admin-sla-consultant>span.is-breached{color:#a33a31;font-weight:800}
+.admin-sla-row>a{
+  width:32px;height:32px;display:grid;place-items:center;border:1px solid #ddd5c8;border-radius:9px;background:#fff;color:#45647c;text-decoration:none;
+}
+.admin-price-list{padding:0 18px 18px}
+.admin-price-row{
+  display:grid;grid-template-columns:34px minmax(0,1fr) auto auto;gap:11px;align-items:center;padding:12px 0;border-bottom:1px solid #eee8df;
+}
+.admin-price-row:last-child{border-bottom:0}
+.admin-price-icon{
+  width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#f2f0eb;color:#707a82;
+}
+.admin-price-icon[data-direction="down"]{background:#edf5ee;color:#397049}.admin-price-icon[data-direction="up"]{background:#fff4e8;color:#9a691d}
+.admin-price-main{min-width:0}
+.admin-price-main>div{display:flex;align-items:center;gap:7px;min-width:0}
+.admin-price-main strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--navy-900);font-size:.7rem}
+.admin-price-main span{flex:none;padding:3px 6px;border:1px solid #e4ddd2;border-radius:999px;background:#faf8f4;color:#6d7880;font-size:.53rem}
+.admin-price-main small{display:block;margin-top:4px;color:#7b858d;font-size:.58rem}
+.admin-price-values{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;direction:ltr}
+.admin-price-values span,.admin-price-values strong{font-size:.6rem;color:#66737b}
+.admin-price-values strong{color:var(--navy-900);font-weight:850}.admin-price-values b{color:#a49a8a}
+.admin-price-values em{padding:3px 6px;border-radius:999px;font-style:normal;font-size:.55rem;font-weight:850;background:#f2f0eb;color:#67747c}
+.admin-price-values em[data-direction="down"]{background:#edf5ee;color:#397049}.admin-price-values em[data-direction="up"]{background:#fff4e8;color:#9a691d}
+.admin-contract-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:15px 18px 18px}
+.admin-contract-card{
+  border:1px solid #e2dbcf;border-radius:15px;background:linear-gradient(180deg,#fff,#fbf9f5);padding:13px;box-shadow:0 7px 20px rgb(11 26 43 / 4%);
+}
+.admin-contract-card>header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.admin-contract-card>header strong{display:block;color:var(--navy-900);font-size:.75rem}.admin-contract-card>header small{display:block;margin-top:3px;color:#7a858d;font-size:.58rem}
+.admin-contract-card>header>b{color:#8a5e14;font-size:.73rem}
+.admin-contract-card>p{margin:9px 0;color:#66737c;font-size:.61rem;line-height:1.8}
+.admin-contract-card>p span{color:var(--navy-900);font-weight:800}
+.admin-contract-progress{height:7px;border-radius:999px;background:#eee9e1;overflow:hidden;margin:8px 0 10px}
+.admin-contract-progress span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#9a7431,#d1b06c)}
+.admin-contract-checks{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:11px}
+.admin-contract-checks label{
+  display:flex;align-items:flex-start;gap:6px;min-height:33px;padding:7px 8px;border:1px solid #e5ded4;border-radius:9px;background:#fff;color:#68757d;font-size:.59rem;line-height:1.7;
+}
+.admin-contract-checks label.is-done{background:#f4f8f4;color:#416a4b;border-color:#d6e4d7}
+.admin-contract-checks input{margin-top:2px;accent-color:#8a5e14}
+.admin-contract-card>.btn-ghost{width:100%;min-height:35px;font-size:.62rem}
+@media(max-width:900px){
+  .admin-sla-grid,.admin-contract-grid{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .admin-sla-grid{padding:10px 12px 13px}.admin-sla-grid header{padding:9px 10px}
+  .admin-sla-row{grid-template-columns:minmax(0,1fr) auto auto;padding:9px 10px}.admin-sla-row>span{font-size:.54rem}
+  .admin-price-list{padding:0 12px 13px}
+  .admin-price-row{grid-template-columns:32px minmax(0,1fr);gap:8px}
+  .admin-price-values{grid-column:2;justify-content:flex-start}.admin-price-row>.btn-ghost{grid-column:2;width:max-content}
+  .admin-contract-grid{padding:10px 12px 13px}.admin-contract-card{padding:11px}
+  .admin-contract-checks{grid-template-columns:1fr}
+}
+
 `;
