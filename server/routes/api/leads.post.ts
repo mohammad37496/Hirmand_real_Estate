@@ -113,7 +113,12 @@ const schema = z.object({
   if (value.visitPreferredAt && !value.propertyId) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["propertyId"], message: "برای درخواست بازدید، فایل مشخص نشده است." });
   }
-  if (value.propertyId && !value.visitPreferredAt && value.offerAmount == null) {
+  if (
+    value.propertyId &&
+    !value.visitPreferredAt &&
+    value.offerAmount == null &&
+    value.deal !== "درخواست مدارک"
+  ) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["visitPreferredAt"], message: "زمان پیشنهادی بازدید مشخص نشده است." });
   }
   if (value.leaseDeadline) {
@@ -417,6 +422,63 @@ export default defineEventHandler(async (event) => {
     });
     return { success: true, duplicate: false, id: rows[0].id, visitRequested: true, trackingToken };
   }
+  if (parsed.data.deal === "درخواست مدارک" && parsed.data.propertyId) {
+    const propertyRows = await sql.query<{
+      id: string;
+      title: string;
+      property_type: string;
+      neighborhood: string;
+      contact_name: string;
+    }>(
+      "select id,title,property_type,neighborhood,contact_name from properties where id::text=$1 and status='published' and availability_status not in ('sold','rented','unavailable') limit 1",
+      [parsed.data.propertyId],
+    );
+    const property = propertyRows[0];
+    if (!property) throw createError({ statusCode: 404, statusMessage: "این فایل دیگر برای دریافت درخواست مدارک در دسترس نیست." });
+
+    const trackingToken = createPublicTrackingToken();
+    const requestNote = parsed.data.note.trim() || "درخواست بررسی مدارک و شرایط معامله";
+    const rows = await sql.query<{ id: string }>(
+      "insert into leads (id,name,phone,people_count,job,deal,property_type,neighborhood,consultant,note,source,property_id,follow_up_at,public_tracking_token) values ($1,$2,$3,$4,$5,'درخواست مدارک',$6,$7,$8,$9,'website',$10,current_timestamp + interval '2 hours',$11) returning id",
+      [
+        crypto.randomUUID(),
+        parsed.data.name,
+        parsed.data.phone,
+        parsed.data.peopleCount ?? null,
+        parsed.data.job,
+        property.property_type,
+        property.neighborhood,
+        property.contact_name || parsed.data.consultant,
+        requestNote,
+        property.id,
+        trackingToken,
+      ],
+    );
+    if (!rows[0]) throw createError({ statusCode: 500, statusMessage: "درخواست بررسی مدارک ثبت نشد." });
+
+    await sql.query(
+      "insert into lead_activities (lead_id,activity_type,title,note,metadata) values ($1,'note',$2,$3,$4::jsonb)",
+      [
+        rows[0].id,
+        "درخواست بررسی مدارک آنلاین",
+        "فایل: " + property.title,
+        requestNote,
+        JSON.stringify({ propertyId: property.id, requestType: "document_review" }),
+      ],
+    ).catch(() => {});
+
+    await createAutomaticFollowUp(sql, {
+      leadId: rows[0].id,
+      title: "بررسی مدارک: " + property.title,
+      description: "مشتری درخواست بررسی مدارک و شرایط این فایل را ثبت کرده است؛ جزئیات درخواست در یادداشت لید موجود است.",
+      assignee: property.contact_name || parsed.data.consultant,
+      priority: "high",
+      dueMinutes: 120,
+    });
+
+    return { success: true, id: rows[0].id, documentRequest: true, trackingToken };
+  }
+
   const trackingToken = createPublicTrackingToken();
   const rows = await sql.query<{ id: string }>(
     `insert into leads (
