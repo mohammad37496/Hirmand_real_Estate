@@ -2557,9 +2557,9 @@ export function AdminPropertiesPage() {
                   propertyType={form.propertyType}
                   neighborhood={form.neighborhood}
                   areaM2={numberOrNull(form.areaM2)}
-                  price={moneyOrNull(form.price)}
-                  deposit={moneyOrNull(form.deposit)}
-                  rent={moneyOrNull(form.rent)}
+                  price={numberOrNull(form.price)}
+                  deposit={numberOrNull(form.deposit)}
+                  rent={numberOrNull(form.rent)}
                 />
 
                 <fieldset className="admin-section" id="section-publish">
