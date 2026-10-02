@@ -563,3 +563,83 @@
     padding:0 9px 9px;
   }
 }
+
+
+/* Phase 2 — lightweight local navigation for long property pages. */
+.property-detail-section-nav{
+  position:sticky;
+  top:82px;
+  z-index:20;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+  margin:12px 0 0;
+  padding:7px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  border:1px solid var(--line);
+  border-radius:15px;
+  background:rgba(247,244,238,.94);
+  box-shadow:0 8px 22px rgba(11,26,43,.045);
+  backdrop-filter:blur(10px);
+}
+
+.property-detail-section-nav::-webkit-scrollbar{display:none}
+
+.property-detail-section-nav-label{
+  flex:0 0 auto;
+  padding:0 7px 0 9px;
+  color:var(--subtle);
+  font-size:.62rem;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+.property-detail-section-nav a{
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  min-height:32px;
+  padding:5px 11px;
+  border:1px solid transparent;
+  border-radius:10px;
+  color:var(--navy-900);
+  font-size:.66rem;
+  font-weight:800;
+  line-height:1.5;
+  text-decoration:none;
+  white-space:nowrap;
+  transition:background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease;
+}
+
+.property-detail-section-nav a:hover{
+  border-color:var(--brass-300);
+  background:var(--brass-100);
+  color:var(--brass-800);
+  transform:translateY(-1px);
+}
+
+.property-detail-section-nav a:focus-visible{
+  outline:2px solid var(--brass-500);
+  outline-offset:2px;
+}
+
+@media (max-width:760px){
+  .property-detail-section-nav{
+    position:sticky;
+    top:70px;
+    margin-top:9px;
+    padding:6px;
+  }
+
+  .property-detail-section-nav-label{
+    display:none;
+  }
+
+  .property-detail-section-nav a{
+    min-height:31px;
+    padding-inline:10px;
+    font-size:.63rem;
+  }
+}
