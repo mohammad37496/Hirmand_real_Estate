@@ -2,6 +2,7 @@ import { useEffect,useMemo,useState } from "react";
 import { ArrowDownCircle,ArrowUpCircle,Plus,RefreshCw,Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatToman } from "@/lib/money";
+import { todayDateOnly } from "@/lib/persian-date";
 import { PersianDatePicker } from "./persian-date-picker";
 
 type Kind="income"|"expense";
@@ -15,7 +16,7 @@ export function AdminFinanceManager(){
   const [kind,setKind]=useState<Kind>("income");
   const [title,setTitle]=useState("");
   const [amount,setAmount]=useState("");
-  const [date,setDate]=useState(new Date().toISOString().slice(0,10));
+  const [date,setDate]=useState(todayDateOnly());
   const [consultant,setConsultant]=useState("");
   const [category,setCategory]=useState("");
   const [note,setNote]=useState("");
