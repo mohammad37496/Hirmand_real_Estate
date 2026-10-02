@@ -181,6 +181,7 @@ export interface FileRoutesByTo {
   '/compare': typeof CompareRoute
   '/favorites': typeof FavoritesRoute
   '/tracking': typeof TrackingRoute
+  '/my-hirmand': typeof MyHirmandRoute
   '/areas/$slug': typeof AreasSlugRoute
   '/consultants/$id': typeof ConsultantsIdRoute
   '/file/$id': typeof FileIdRoute
@@ -230,6 +231,7 @@ export interface FileRouteTypes {
     | '/submit-property'
     | '/properties'
     | '/tracking'
+    | '/my-hirmand'
     | '/areas/$slug'
     | '/consultants/$id'
     | '/file/$id'
@@ -250,6 +252,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/favorites'
     | '/tracking'
+    | '/my-hirmand'
     | '/areas/$slug'
     | '/consultants/$id'
     | '/file/$id'
