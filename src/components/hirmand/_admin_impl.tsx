@@ -1758,8 +1758,14 @@ export function AdminPropertiesPage() {
                                               ? "تنظیمات سایت و SEO"
                                               : view === "mediaHealth"
                                                 ? "سلامت و پاک‌سازی رسانه‌ها"
-                                    : view === "divar"
-                          ? "فایل‌های دیوار"
+                                                : view === "security"
+                                                  ? "امنیت مدیران"
+                                                  : view === "seoRedirects"
+                                                    ? "ریدایرکت و ۴۰۴"
+                                                    : view === "contentStudio"
+                                                      ? "استودیو محتوا"
+                                                      : view === "divar"
+                                                        ? "فایل‌های دیوار"
                           : form.id
                         ? "ویرایش فایل"
                         : "افزودن فایل جدید"}            </h1>
