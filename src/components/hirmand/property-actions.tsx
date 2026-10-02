@@ -419,6 +419,7 @@ export function PropertyActions({
   const qrImageUrl = "https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=12&data=" + encodeURIComponent(qrTarget);
 
   return (
+    <>
     <div className={`property-actions${compact ? " property-actions-compact" : ""}`}>
       <button
         type="button"
@@ -640,5 +641,6 @@ export function PropertyActions({
         </section>
       </div>
     ) : null}
+    </>
   );
 }
