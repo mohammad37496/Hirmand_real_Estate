@@ -483,7 +483,7 @@ const DETAIL_COLUMNS = `
   built_year, parking, elevator, storage, painted, wallpaper, convertible, cabinet_type, flooring_type, cooling_system,
   heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
-  latitude, longitude, price_drop_percent, floor_label, orientation,
+  latitude, longitude, price_drop_percent, virtual_tour_url, floor_label, orientation,
   owner_name, owner_phone, owner_info, internal_priority, internal_note
 `;
 
