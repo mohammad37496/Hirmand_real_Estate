@@ -802,6 +802,18 @@ export function SitePage({ initialProperties = [] }: { initialProperties?: Prope
   });
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const transaction = SERVICES.find((item) => item.id === params.get("transaction"))?.title;
+    const propertyType = PROPERTY_TYPES.find((item) => item.id === params.get("type"))?.title;
+    const neighborhood = params.get("neighborhood")?.trim() || "";
+    if (transaction || propertyType || neighborhood) {
+      setDraft((prev) => ({
+        deal: transaction || prev.deal,
+        propertyType: propertyType || prev.propertyType,
+        neighborhood: neighborhood || prev.neighborhood,
+      }));
+    }
+
     const hash = window.location.hash.replace("#", "");
     if (!hash) return;
     const timer = window.setTimeout(() => {
