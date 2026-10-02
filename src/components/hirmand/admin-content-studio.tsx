@@ -13,8 +13,8 @@ type Kind="guide"|"faq";
 type Draft={id:string;kind:Kind;category:string;title:string;summary:string;answer:string;points:string[];sortOrder:number;active:boolean};
 
 const blank=(kind:Kind):Draft=>({id:"",kind,category:kind==="guide"?"خرید":"عمومی",title:"",summary:"",answer:"",points:[""],sortOrder:0,active:true});
-const guideDraft=(x:GuideContent):Draft=>({id:x.id,kind:"guide",category:x.category,title:x.title,summary:x.summary,answer:"",points:x.points.length?x.points:[""],sortOrder:0,active:true});
-const faqDraft=(x:FaqContent):Draft=>({id:x.id,kind:"faq",category:x.category,title:x.question,summary:"",answer:x.answer,points:[],sortOrder:0,active:true});
+const guideDraft=(x:GuideContent):Draft=>({id:x.id,kind:"guide",category:x.category,title:x.title,summary:x.summary,answer:"",points:x.points.length?x.points:[""],sortOrder:x.sortOrder,active:x.active});
+const faqDraft=(x:FaqContent):Draft=>({id:x.id,kind:"faq",category:x.category,title:x.question,summary:"",answer:x.answer,points:[],sortOrder:x.sortOrder,active:x.active});
 
 export function AdminContentStudio(){
   const [tab,setTab]=useState<Kind>("guide");
