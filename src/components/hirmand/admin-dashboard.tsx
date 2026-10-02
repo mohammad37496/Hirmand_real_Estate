@@ -24,6 +24,7 @@ import { AdminActionCenter } from "@/components/hirmand/admin-action-center";
 import { AdminSalesControlCenter } from "@/components/hirmand/admin-sales-control-center";
 import { AdminPropertyLifecyclePanel } from "@/components/hirmand/admin-property-lifecycle-panel";
 import { AdminNeighborhoodDemandRadar } from "@/components/hirmand/admin-neighborhood-demand-radar";
+import { AdminCustomerPropertySubmissions } from "@/components/hirmand/admin-customer-property-submissions";
 import { AdminAgenda } from "@/components/hirmand/admin-agenda";
 import { AdminVisitFeedback } from "@/components/hirmand/admin-visit-feedback";
 import { AdminPropertyReports } from "@/components/hirmand/admin-property-reports";
@@ -370,6 +371,8 @@ export function AdminDashboard({
       </div>
 
       <AdminAgenda onOpenLeads={onOpenLeads} />
+
+      <AdminCustomerPropertySubmissions />
 
       <section className="admin-dashboard-health" aria-label="سلامت کتابخانه فایل‌ها و تیم">
         <button type="button" className="admin-dashboard-stat" data-tone="red" onClick={onOpenProperties}>
