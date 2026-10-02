@@ -1482,11 +1482,7 @@ export function PropertyDetailView({
                       {TYPE_LABEL[property.propertyType]}
                     </span>
                     <span
-                      className={
-                        property.availabilityStatus === "available"
-                          ? "property-availability-badge property-availability-badge-available"
-                          : "property-availability-badge"
-                      }
+                      className={"property-availability-badge property-availability-badge-" + property.availabilityStatus}
                     >
                       {PROPERTY_AVAILABILITY_LABELS[property.availabilityStatus]}
                     </span>
@@ -1505,8 +1501,7 @@ export function PropertyDetailView({
                   <p className="property-detail-meta">
                     <MapPinned size={17} aria-hidden="true" />
                     <span>
-                      {property.neighborhood}
-                      {property.address ? ` · ${property.address}` : ""}
+                      اصفهان · {property.neighborhood} · موقعیت تقریبی
                     </span>
                   </p>
                 </div>
