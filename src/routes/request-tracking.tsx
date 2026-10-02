@@ -20,6 +20,8 @@ type TrackingResult = {
   neighborhood: string;
   visitRequestedAt?: string | null;
   visitPreferredAt: string | null;
+  customerPropertySubmissionStatus?: "pending" | "approved" | "rejected" | null;
+  customerPropertySubmissionReviewNote?: string;
   timeline?: Array<{ type: "created" | "status" | "visit"; label: string; note: string; at: string | null }>;
   property: { title: string; slug: string } | null;
 };
@@ -280,6 +282,19 @@ function RequestTrackingPage() {
                       <ArrowRight size={16} />
                     </Link>
                   ) : null}
+                </div>
+              ) : null}
+
+              {result.customerPropertySubmissionStatus === "rejected" ? (
+                <div className="request-tracking-revision">
+                  <div>
+                    <span className="kicker">نیازمند اصلاح</span>
+                    <h3>اطلاعات ملک نیاز به اصلاح دارد.</h3>
+                    <p>{result.customerPropertySubmissionReviewNote || "مواردی که کارشناس اعلام کرده را اصلاح کنید و دوباره ارسال کنید."}</p>
+                  </div>
+                  <a className="btn-gold" href={"/submit-property?code=" + encodeURIComponent(result.trackingCode)}>
+                    اصلاح و ارسال مجدد
+                  </a>
                 </div>
               ) : null}
 
