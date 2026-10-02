@@ -91,6 +91,11 @@ function ValuationPage() {
     rows: PropertyCardData[];
   } | null>(null);
   const [error, setError] = useState("");
+  const [requestName, setRequestName] = useState("");
+  const [requestPhone, setRequestPhone] = useState("");
+  const [requestBusy, setRequestBusy] = useState(false);
+  const [requestDone, setRequestDone] = useState(false);
+  const [requestError, setRequestError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -209,6 +214,46 @@ function ValuationPage() {
         </section>
       </section>
 
+      {result ? (
+        <section className="valuation-request-card" aria-labelledby="valuation-request-title">
+          <div>
+            <span className="kicker">ادامه با مشاور</span>
+            <h2 id="valuation-request-title">ارزیابی دقیق‌تر می‌خواهید؟</h2>
+            <p>درخواست شما در CRM هیرمند ثبت می‌شود تا مشاور برای بررسی اطلاعات ملک با شما تماس بگیرد.</p>
+          </div>
+          {requestDone ? <div className="valuation-request-success">✓ درخواست ارزیابی ثبت شد.</div> : (
+            <>
+              <div className="valuation-request-grid">
+                <label><span>نام و نام خانوادگی</span><input value={requestName} onChange={(e)=>setRequestName(e.target.value)} autoComplete="name" /></label>
+                <label><span>شماره موبایل</span><input value={requestPhone} onChange={(e)=>setRequestPhone(e.target.value)} inputMode="tel" dir="ltr" placeholder="0912..." /></label>
+              </div>
+              {requestError ? <p className="valuation-request-error" role="alert">{requestError}</p> : null}
+              <button type="button" className="btn-gold" disabled={requestBusy} onClick={() => {
+                const phone = requestPhone.replace(/[۰-۹]/g,d=>String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[٠-٩]/g,d=>String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/\D/g,"");
+                if (requestName.trim().length < 2) return setRequestError("نام و نام خانوادگی را وارد کنید.");
+                if (!/^09\d{9}$/.test(phone)) return setRequestError("شماره موبایل معتبر وارد کنید.");
+                setRequestBusy(true); setRequestError("");
+                void fetch("/api/leads", {
+                  method:"POST", headers:{"content-type":"application/json"},
+                  body:JSON.stringify({
+                    name:requestName.trim(), phone, peopleCount:1, job:"مالک",
+                    deal:"ارزیابی ملک", propertyType, neighborhood, consultant:"",
+                    note:"درخواست ارزیابی پس از برآورد آنلاین · متراژ: "+validArea+" متر · خواب: "+(validBedrooms ?? "ثبت نشده")+" · برآورد میانی: "+Math.round(result.estimate).toLocaleString("fa-IR")+" تومان",
+                    source:"website", matches:[]
+                  })
+                }).then(async response=>{
+                  const payload=await response.json().catch(()=>null);
+                  if(!response.ok || !payload?.success) throw new Error(payload?.statusMessage||payload?.message||"ثبت درخواست ارزیابی انجام نشد.");
+                  setRequestDone(true);
+                }).catch(error=>setRequestError(error instanceof Error?error.message:"ثبت درخواست ارزیابی انجام نشد."))
+                .finally(()=>setRequestBusy(false));
+              }}>
+                {requestBusy ? "در حال ثبت…" : "درخواست تماس مشاور برای ارزیابی"}
+              </button>
+            </>
+          )}
+        </section>
+      ) : null}
       <section className="valuation-footer-card"><div><span className="kicker">مرحله بعد</span><h2>برای قیمت‌گذاری دقیق‌تر، فایل‌های واقعی همان محله را ببینید.</h2><p>می‌توانید همین حالا فایل‌های مشابه را مقایسه کنید یا با مشاور هیرمند برای بررسی شرایط ملک صحبت کنید.</p></div><div className="valuation-footer-actions"><Link to="/compare" className="btn-ghost">مقایسه فایل‌ها</Link><Link to="/properties" className="btn-gold">مشاهده فایل‌های مشابه</Link></div></section>
     </main>
   );
