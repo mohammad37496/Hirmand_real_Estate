@@ -6,7 +6,7 @@ import { TEAM } from "@/lib/site";
 import { clearPropertyReadCache, propertyInputSchema } from "@/lib/properties";
 import { getPublishReadiness } from "@/lib/property-publish-readiness";
 
-type Action = "list" | "approve" | "reject";
+type Action = "list" | "approve" | "reject" | "update";
 
 function slugify(value: string) {
   const normalized = value.trim().toLowerCase()
@@ -38,11 +38,16 @@ export default defineEventHandler(async (event) => {
     reviewNote?: string;
     consultantName?: string;
     consultantPhone?: string;
+    query?: string;
+    patch?: Record<string, unknown>;
   };
   const action = body.action ?? "list";
   const sql = await getSql();
 
   if (action === "list") {
+    const status = body.status && ["pending","approved","rejected"].includes(body.status) ? body.status : "pending";
+    const query = typeof body.query === "string" ? body.query.trim().slice(0, 80) : "";
+    const pattern = "%" + query.replace(/[\\%_]/g, "\\  if (action === "list") {
     const status = body.status && ["pending","approved","rejected"].includes(body.status) ? body.status : "pending";
     const rows = await sql.query<Record<string, unknown>>(
       "select id,lead_id,public_tracking_token,status,owner_name,owner_phone,property_data,review_note,property_id,created_at,reviewed_at from customer_property_submissions where status=$1 order by created_at desc limit 40",
@@ -53,6 +58,22 @@ export default defineEventHandler(async (event) => {
     );
     return {
       total: Number(countRows[0]?.count) || 0,
+      submissions: rows.map((row) => ({
+") + "%";
+    const rows = await sql.query<Record<string, unknown>>(
+      "select id,lead_id,public_tracking_token,status,owner_name,owner_phone,property_data,review_note,property_id,created_at,reviewed_at from customer_property_submissions where status=$1 and ($2='' or owner_name ilike $3 escape '\\' or owner_phone ilike $3 escape '\\' or public_tracking_token ilike $3 escape '\\' or coalesce(property_data->>'title','') ilike $3 escape '\\' or coalesce(property_data->>'neighborhood','') ilike $3 escape '\\') order by created_at desc limit 40",
+      [status, query, pattern],
+    );
+    const countRows = await sql.query<{ status: string; count: number }>(
+      "select status,count(*)::int as count from customer_property_submissions group by status",
+    );
+    const counts = { pending: 0, approved: 0, rejected: 0 };
+    for (const row of countRows) {
+      if (row.status === "pending" || row.status === "approved" || row.status === "rejected") counts[row.status] = Number(row.count) || 0;
+    }
+    return {
+      total: rows.length,
+      counts,
       submissions: rows.map((row) => ({
         id: String(row.id),
         leadId: row.lead_id == null ? null : String(row.lead_id),
@@ -85,6 +106,88 @@ export default defineEventHandler(async (event) => {
   }
   if (action === "approve" && String(submission.status) === "rejected") {
     throw createError({ statusCode: 409, statusMessage: "این درخواست قبلاً رد شده است." });
+  }
+
+  if (action === "update") {
+    if (String(submission.status) !== "pending") {
+      throw createError({ statusCode: 409, statusMessage: "فقط درخواست‌های در انتظار بررسی قابل ویرایش هستند." });
+    }
+    const patch = body.patch && typeof body.patch === "object" ? body.patch : {};
+    const current = (submission.property_data && typeof submission.property_data === "object"
+      ? submission.property_data
+      : {}) as Record<string, unknown>;
+    const next = { ...current };
+    const editableKeys = [
+      "title","neighborhood","address","areaM2","bedrooms","bathrooms","floor","totalFloors",
+      "builtYear","orientation","cabinetType","flooringType","coolingSystem","heatingSystem",
+      "wallClosetType","price","deposit","rent","description","features",
+    ] as const;
+    for (const key of editableKeys) {
+      if (Object.prototype.hasOwnProperty.call(patch, key)) next[key] = patch[key];
+    }
+
+    const title = String(next.title ?? "").trim();
+    const neighborhood = String(next.neighborhood ?? "").trim();
+    const description = String(next.description ?? "").trim();
+    const area = next.areaM2 == null || next.areaM2 === "" ? null : Number(next.areaM2);
+    const parseOptionalInt = (value: unknown) => value == null || value === "" ? null : Number(value);
+    if (title.length < 8 || title.length > 180) throw createError({ statusCode: 422, statusMessage: "عنوان ملک باید بین ۸ تا ۱۸۰ کاراکتر باشد." });
+    if (neighborhood.length < 2 || neighborhood.length > 80) throw createError({ statusCode: 422, statusMessage: "محله ملک معتبر نیست." });
+    if (description.length < 80 || description.length > 5000) throw createError({ statusCode: 422, statusMessage: "توضیحات ملک باید حداقل ۸۰ کاراکتر باشد." });
+    if (area != null && (!Number.isInteger(area) || area < 1 || area > 100000)) throw createError({ statusCode: 422, statusMessage: "متراژ ملک معتبر نیست." });
+
+    for (const [key, max] of [["bedrooms",30],["bathrooms",30],["floor",200],["totalFloors",200],["builtYear",2500]] as const) {
+      const value = parseOptionalInt(next[key]);
+      if (value != null && (!Number.isInteger(value) || (key === "floor" ? value < -60 || value > max : value < (key === "builtYear" ? 1200 : 0) || value > max))) {
+        throw createError({ statusCode: 422, statusMessage: "مقدار " + key + " معتبر نیست." });
+      }
+      next[key] = value;
+    }
+    for (const key of ["price","deposit","rent"]) {
+      const value = next[key];
+      if (value != null && value !== "" && !/^\d{1,20}$/.test(String(value))) {
+        throw createError({ statusCode: 422, statusMessage: "مبلغ مالی واردشده معتبر نیست." });
+      }
+      next[key] = value == null || value === "" ? null : String(value);
+    }
+    if (!Array.isArray(next.features) || next.features.some((item) => typeof item !== "string") || next.features.length > 20) {
+      throw createError({ statusCode: 422, statusMessage: "ویژگی‌های ملک معتبر نیست." });
+    }
+    next.features = next.features.map((item) => item.trim()).filter(Boolean).slice(0, 20);
+    next.title = title;
+    next.neighborhood = neighborhood;
+    next.address = String(next.address ?? "").trim().slice(0, 240);
+    next.description = description;
+
+    await sql.query(
+      "update customer_property_submissions set property_data=$2::jsonb, review_note=$3, updated_at=current_timestamp where id=$1",
+      [body.id, JSON.stringify(next), "ویرایش اطلاعات توسط مدیر قبل از انتشار."],
+    ).catch(async (error) => {
+      const message = String(error instanceof Error ? error.message : error);
+      if (!message.toLowerCase().includes("updated_at")) throw error;
+      await sql.query(
+        "update customer_property_submissions set property_data=$2::jsonb, review_note=$3 where id=$1",
+        [body.id, JSON.stringify(next), "ویرایش اطلاعات توسط مدیر قبل از انتشار."],
+      );
+    });
+
+    return {
+      success: true,
+      status: "pending",
+      submission: {
+        id: String(submission.id),
+        leadId: submission.lead_id == null ? null : String(submission.lead_id),
+        trackingToken: String(submission.public_tracking_token),
+        status: "pending",
+        ownerName: String(submission.owner_name ?? ""),
+        ownerPhone: String(submission.owner_phone ?? ""),
+        propertyData: next,
+        reviewNote: "ویرایش اطلاعات توسط مدیر قبل از انتشار.",
+        propertyId: submission.property_id == null ? null : String(submission.property_id),
+        createdAt: new Date(String(submission.created_at)).toISOString(),
+        reviewedAt: submission.reviewed_at == null ? null : new Date(String(submission.reviewed_at)).toISOString(),
+      },
+    };
   }
 
   if (action === "reject") {
