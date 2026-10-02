@@ -425,6 +425,8 @@ function mapProperty(row: Record<string, unknown>, options: { admin?: boolean } 
     latitude: isAdmin ? latitude : roundPublicCoordinate(latitude),
     longitude: isAdmin ? longitude : roundPublicCoordinate(longitude),
     priceDropPercent: numberOrNull(row.price_drop_percent),
+    lastVerifiedAt: row.last_verified_at ? new Date(String(row.last_verified_at)).toISOString() : null,
+    lastVerifiedBy: row.last_verified_by ? String(row.last_verified_by) : null,
   };
 }
 
@@ -436,6 +438,7 @@ const LIST_COLUMNS = `
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
   latitude, longitude, price_drop_percent, virtual_tour_url, floor_label, orientation,
   owner_name, owner_phone, owner_info, internal_priority, internal_note,
+  last_verified_at, last_verified_by,
   left(description, 280) as description
 `;
 
@@ -484,7 +487,8 @@ const DETAIL_COLUMNS = `
   heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
   latitude, longitude, price_drop_percent, virtual_tour_url, floor_label, orientation,
-  owner_name, owner_phone, owner_info, internal_priority, internal_note
+  owner_name, owner_phone, owner_info, internal_priority, internal_note,
+  last_verified_at, last_verified_by
 `;
 
 function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
