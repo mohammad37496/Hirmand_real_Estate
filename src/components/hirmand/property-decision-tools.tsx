@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Calculator, CircleDollarSign, Gauge, ShieldCheck, TrendingUp, Wallet } from "lucide-react";
+import { Calculator, Gauge, ShieldCheck, TrendingUp, Wallet } from "lucide-react";
 import { calculateLoan } from "@/lib/finance";
 import { formatToman } from "@/lib/money";
 import type { Property } from "@/lib/properties";
