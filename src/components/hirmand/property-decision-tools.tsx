@@ -1,0 +1,141 @@
+import { useMemo, useState } from "react";
+import { Calculator, CircleDollarSign, Gauge, ShieldCheck, TrendingUp } from "lucide-react";
+import { calculateLoan } from "@/lib/finance";
+import { formatToman } from "@/lib/money";
+import type { Property } from "@/lib/properties";
+import "@/property-decision-tools.css";
+
+function amount(value: string | null | undefined) {
+  const n = Number(String(value ?? "").replace(/,/g, "").trim());
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function freshnessLabel(updatedAt: string) {
+  const ageDays = Math.max(0, Math.floor((Date.now() - new Date(updatedAt).getTime()) / 86_400_000));
+  if (ageDays === 0) return "امروز";
+  if (ageDays === 1) return "دیروز";
+  if (ageDays < 7) return ageDays.toLocaleString("fa-IR") + " روز پیش";
+  if (ageDays < 30) return Math.floor(ageDays / 7).toLocaleString("fa-IR") + " هفته پیش";
+  return Math.floor(ageDays / 30).toLocaleString("fa-IR") + " ماه پیش";
+}
+
+function completeness(property: Property) {
+  const checks = [
+    Boolean(property.title.trim()),
+    property.images.length > 0,
+    property.areaM2 != null && property.areaM2 > 0,
+    Boolean(property.price || property.deposit || property.rent),
+    Boolean(property.neighborhood.trim()),
+    property.bedrooms != null,
+    property.bathrooms != null,
+    property.description.trim().length >= 120,
+    property.otherAmenities.length + Number(property.parking) + Number(property.elevator) + Number(property.storage) > 0,
+    property.latitude != null && property.longitude != null,
+  ];
+  const score = Math.round((checks.filter(Boolean).length / checks.length) * 100);
+  return { score, completed: checks.filter(Boolean).length, total: checks.length };
+}
+
+export function PropertyDecisionTools({ property }: { property: Property }) {
+  const [downPaymentPercent, setDownPaymentPercent] = useState(30);
+  const [annualRate, setAnnualRate] = useState(20.5);
+  const [months, setMonths] = useState(60);
+
+  const propertyPrice = amount(property.price);
+  const downPayment = Math.round(propertyPrice * downPaymentPercent / 100);
+  const loanAmount = Math.max(0, propertyPrice - downPayment);
+  const loan = useMemo(() => calculateLoan(loanAmount, annualRate, months, "annuity"), [loanAmount, annualRate, months]);
+
+  const rent = amount(property.rent);
+  const grossYield = propertyPrice > 0 && rent > 0 ? (rent * 12 / propertyPrice) * 100 : null;
+  const grossPayback = grossYield && grossYield > 0 ? 100 / grossYield : null;
+  const info = completeness(property);
+
+  const money = (value: number) => formatToman(value) + " تومان";
+
+  return (
+    <section className="property-decision-tools" aria-labelledby="property-decision-tools-title">
+      <header className="property-decision-tools-head">
+        <div>
+          <span className="kicker">ابزار تصمیم‌گیری</span>
+          <h2 id="property-decision-tools-title">سه شاخص برای بررسی این فایل</h2>
+          <p>اعداد این بخش بر پایه اطلاعات همین فایل و سناریوی انتخابی شما محاسبه می‌شوند.</p>
+        </div>
+        <span className="property-decision-freshness"><Gauge size={15} /> به‌روزرسانی فایل: {freshnessLabel(property.updatedAt)}</span>
+      </header>
+
+      <div className="property-decision-grid">
+        <article className="property-decision-card">
+          <div className="property-decision-card-head">
+            <span className="property-decision-icon"><Calculator size={18} /></span>
+            <div><strong>توان خرید</strong><small>سناریوی خرید همین فایل</small></div>
+          </div>
+          {propertyPrice > 0 ? (
+            <>
+              <div className="property-decision-fields">
+                <label>
+                  <span>پیش‌پرداخت: {downPaymentPercent.toLocaleString("fa-IR")}٪</span>
+                  <input type="range" min="10" max="80" step="5" value={downPaymentPercent} onChange={(event) => setDownPaymentPercent(Number(event.target.value))} />
+                </label>
+                <label>
+                  <span>نرخ سالانه: {annualRate.toLocaleString("fa-IR", { maximumFractionDigits: 1 })}٪</span>
+                  <input type="range" min="0" max="30" step="0.5" value={annualRate} onChange={(event) => setAnnualRate(Number(event.target.value))} />
+                </label>
+                <label>
+                  <span>مدت: {months.toLocaleString("fa-IR")} ماه</span>
+                  <input type="range" min="12" max="120" step="12" value={months} onChange={(event) => setMonths(Number(event.target.value))} />
+                </label>
+              </div>
+              <div className="property-decision-metrics">
+                <div><span>پیش‌پرداخت</span><strong>{money(downPayment)}</strong></div>
+                <div><span>مبلغ وام</span><strong>{money(loanAmount)}</strong></div>
+                <div className="is-highlight"><span>قسط ماهانه تقریبی</span><strong>{loan ? money(loan.installment) : "—"}</strong></div>
+              </div>
+              <small className="property-decision-note">این محاسبه فقط یک سناریوی عددی است و هزینه‌های معامله، شرایط بانکی و اعتبارسنجی را شامل نمی‌شود.</small>
+            </>
+          ) : (
+            <p className="property-decision-empty">برای این فایل قیمت فروش عددی ثبت نشده است.</p>
+          )}
+        </article>
+
+        <article className="property-decision-card">
+          <div className="property-decision-card-head">
+            <span className="property-decision-icon"><TrendingUp size={18} /></span>
+            <div><strong>بازده اجاره</strong><small>شاخص اولیه سرمایه‌گذاری</small></div>
+          </div>
+          {propertyPrice > 0 && rent > 0 ? (
+            <div className="property-decision-investment">
+              <div className="property-decision-big-number">{grossYield!.toLocaleString("fa-IR", { maximumFractionDigits: 2 })}٪ <small>بازده ناخالص سالانه</small></div>
+              <div className="property-decision-metrics">
+                <div><span>اجاره ماهانه</span><strong>{money(rent)}</strong></div>
+                <div><span>درآمد سالانه</span><strong>{money(rent * 12)}</strong></div>
+                <div><span>بازگشت اسمی سرمایه</span><strong>{grossPayback!.toLocaleString("fa-IR", { maximumFractionDigits: 1 })} سال</strong></div>
+              </div>
+              <small className="property-decision-note">این شاخص ناخالص است و هزینه‌های نگهداری، خالی‌ماندن ملک، مالیات و هزینه‌های معامله در آن لحاظ نشده‌اند.</small>
+            </div>
+          ) : (
+            <p className="property-decision-empty">برای محاسبه بازده، هم قیمت فروش و هم اجاره ماهانه باید در فایل ثبت شده باشد.</p>
+          )}
+        </article>
+
+        <article className="property-decision-card">
+          <div className="property-decision-card-head">
+            <span className="property-decision-icon"><ShieldCheck size={18} /></span>
+            <div><strong>کامل‌بودن اطلاعات</strong><small>بر اساس داده‌های ثبت‌شده</small></div>
+          </div>
+          <div className="property-completeness">
+            <div className="property-completeness-score">{info.score.toLocaleString("fa-IR")}٪</div>
+            <div className="property-completeness-bar"><span style={{ width: info.score + "%" }} /></div>
+            <p>{info.completed.toLocaleString("fa-IR")} مورد از {info.total.toLocaleString("fa-IR")} شاخص اطلاعاتی تکمیل شده است.</p>
+          </div>
+          <div className="property-decision-metrics">
+            <div><span>تصویر</span><strong>{property.images.length ? "ثبت شده" : "ندارد"}</strong></div>
+            <div><span>مختصات نقشه</span><strong>{property.latitude != null && property.longitude != null ? "ثبت شده" : "ندارد"}</strong></div>
+            <div><span>توضیحات</span><strong>{property.description.trim().length >= 120 ? "کامل" : "کوتاه"}</strong></div>
+          </div>
+          <small className="property-decision-note">این امتیاز کیفیت یا ارزش ملک را قضاوت نمی‌کند؛ فقط میزان کامل‌بودن داده‌های قابل‌نمایش فایل را نشان می‌دهد.</small>
+        </article>
+      </div>
+    </section>
+  );
+}
