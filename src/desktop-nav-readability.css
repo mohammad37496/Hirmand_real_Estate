@@ -7,6 +7,27 @@
     position: relative;
   }
 
+  /* Keep the mark visually present in the desktop header without changing
+     the mobile logo sizing rules. */
+  .site-nav .nav-brand {
+    flex: 0 0 auto;
+    min-width: 148px;
+    white-space: nowrap;
+  }
+
+  .site-nav .nav-brand .brand-logo-nav {
+    width: auto;
+    height: 56px !important;
+    max-width: 78px;
+    flex: 0 0 auto;
+    object-fit: contain;
+    object-position: center;
+  }
+
+  .site-nav .nav-brand > span {
+    flex: 0 0 auto;
+  }
+
   .site-nav .nav-links {
     color: var(--navy-900);
     background: rgb(255 255 255 / 94%);
