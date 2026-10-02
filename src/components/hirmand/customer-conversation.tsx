@@ -1,5 +1,5 @@
 import { MessageCircle, RefreshCw, Send, ShieldCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "@/customer-conversation.css";
 
 type ChatMessage = {
@@ -36,7 +36,7 @@ export function CustomerConversation({ code, customerName = "" }: Props) {
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState("");
 
-  async function load() {
+  const load = useCallback(async () => {
     if (!code) return;
     setBusy(true);
     try {
@@ -52,13 +52,13 @@ export function CustomerConversation({ code, customerName = "" }: Props) {
     } finally {
       setBusy(false);
     }
-  }
+  }, [code]);
 
   useEffect(() => {
     void load();
     const timer = window.setInterval(() => void load(), 30_000);
     return () => window.clearInterval(timer);
-  }, [code]);
+  }, [code, load]);
 
   async function sendMessage() {
     const clean = text.trim();
