@@ -51,7 +51,6 @@ function mediaItems(data: Record<string, unknown>) {
 
 export function AdminCustomerPropertySubmissions() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [consultant, setConsultant] = useState(TEAM[0]);
@@ -75,7 +74,6 @@ export function AdminCustomerPropertySubmissions() {
       const data = await response.json().catch(() => null) as { submissions?:Submission[]; total?:number; counts?:{pending:number;approved:number;rejected:number}; statusMessage?:string } | null;
       if (!response.ok) throw new Error(data?.statusMessage || "صف ثبت ملک مشتری بارگذاری نشد.");
       setSubmissions(Array.isArray(data?.submissions) ? data.submissions : []);
-      setTotal(Number(data?.total) || 0);
       setCounts({
         pending: Number(data?.counts?.pending) || 0,
         approved: Number(data?.counts?.approved) || 0,
@@ -273,7 +271,7 @@ export function AdminCustomerPropertySubmissions() {
                   {statusFilter === "pending" && editDraft ? (
                     <div className="admin-customer-submission-edit">
                       <div className="admin-customer-submission-edit-head">
-                        <div><span className="kicker">ویرایش پیش از انتشار</span><strong>اصلاح اطلاعات فایل قبل از تأیید</strong></div>
+                        <div><span className="kicker"><Pencil size={13}/> ویرایش پیش از انتشار</span><strong>اصلاح اطلاعات فایل قبل از تأیید</strong></div>
                         <button type="button" className="btn-gold" onClick={()=>void saveDraft()} disabled={savingDraft}><Save size={15}/>{savingDraft ? "در حال ذخیره…" : "ذخیره ویرایش"}</button>
                       </div>
                       <div className="admin-customer-submission-edit-grid">
