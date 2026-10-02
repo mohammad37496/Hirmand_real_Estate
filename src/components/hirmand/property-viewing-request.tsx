@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { CalendarDays, Check, Clock3, Download, ExternalLink, X } from "lucide-react";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import { formatPersianDate } from "@/lib/persian-date";
+import { PersianDatePicker } from "./persian-date-picker";
 import type { PropertyAvailabilityStatus } from "@/lib/properties";
 import "@/property-viewing-request.css";
 
@@ -254,7 +256,7 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
                 </p>
                 <div className="property-viewing-summary">
                   <strong>{property.title}</strong>
-                  <span><CalendarDays size={15} /> {date}</span>
+                  <span><CalendarDays size={15} /> {formatPersianDate(date)}</span>
                   <span><Clock3 size={15} /> {time}</span>
                 </div>
                 <div className="property-viewing-tracking">
@@ -313,12 +315,12 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
                   </label>
                   <label className="field">
                     <span>روز پیشنهادی</span>
-                    <input
-                      type="date"
+                    <PersianDatePicker
                       value={date}
-                      min={minimumDate}
-                      onChange={(e) => setDate(e.target.value)}
-                      dir="ltr"
+                      onChange={setDate}
+                      title="روز پیشنهادی بازدید"
+                      minValue={minimumDate}
+                      hint="تاریخ را با تقویم شمسی انتخاب کنید."
                     />
                   </label>
                   <label className="field">
