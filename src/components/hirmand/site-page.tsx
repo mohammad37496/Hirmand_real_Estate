@@ -704,7 +704,7 @@ function Contact() {
   );
 }
 
-function FAQ({ items }: { items: Array<{ q: string; a: string }> }) {
+function FAQ({ items }: { items: ReadonlyArray<{ q: string; a: string }> }) {
   const [orderedFaqs, setOrderedFaqs] = useState<Array<{ q: string; a: string }>>([...items]);
 
   useEffect(() => {
@@ -801,7 +801,7 @@ export function SitePage({
 }: {
   initialProperties?: PropertyCardData[];
   announcement?: string;
-  faqItems?: Array<{ q: string; a: string }>;
+  faqItems?: ReadonlyArray<{ q: string; a: string }>;
 }) {
   const [draft, setDraft] = useState<InquiryDraft>({
     deal: "خرید",
