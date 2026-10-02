@@ -229,6 +229,9 @@ export interface FileRoutesByTo {
   '/tools': typeof ToolsIndexRoute
   '/valuation': typeof ValuationRoute
   '/v/$slug/$id': typeof VSlugIdRoute
+  '/smart-search': typeof SmartSearchRoute
+  '/nearby': typeof NearbyRoute
+  '/notifications': typeof NotificationsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -258,6 +261,9 @@ export interface FileRoutesById {
   '/tools/': typeof ToolsIndexRoute
   '/valuation': typeof ValuationRoute
   '/v/$slug/$id': typeof VSlugIdRoute
+  '/smart-search': typeof SmartSearchRoute
+  '/nearby': typeof NearbyRoute
+  '/notifications': typeof NotificationsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -564,6 +570,9 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VSlugIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/smart-search': { id: '/smart-search', path: '/smart-search', fullPath: '/smart-search', preLoaderRoute: typeof SmartSearchRouteImport, parentRoute: typeof rootRouteImport }
+    '/nearby': { id: '/nearby', path: '/nearby', fullPath: '/nearby', preLoaderRoute: typeof NearbyRouteImport, parentRoute: typeof rootRouteImport }
+    '/notifications': { id: '/notifications', path: '/notifications', fullPath: '/notifications', preLoaderRoute: typeof NotificationsRouteImport, parentRoute: typeof rootRouteImport }
   }
 }
 
