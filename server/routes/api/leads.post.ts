@@ -7,6 +7,12 @@ import { autoMatchLead } from "@/lib/lead-smart-matcher.server";
 
 const VISITOR_COOKIE = "hirmand_visitor_id";
 
+const PROPERTY_SERVICE_REQUEST_DEALS = new Set([
+  "درخواست کارشناسی فنی",
+  "درخواست محتوای جدید",
+  "بررسی حقوقی معامله",
+]);
+
 function createPublicTrackingToken() {
   const year = new Date().getFullYear().toString().slice(-2);
   const random = crypto.randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase();
@@ -118,7 +124,8 @@ const schema = z.object({
     !value.visitPreferredAt &&
     value.offerAmount == null &&
     value.deal !== "درخواست مدارک" &&
-    value.deal !== "درخواست تأمین مالی"
+    value.deal !== "درخواست تأمین مالی" &&
+    !PROPERTY_SERVICE_REQUEST_DEALS.has(value.deal)
   ) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["visitPreferredAt"], message: "زمان پیشنهادی بازدید مشخص نشده است." });
   }
@@ -228,7 +235,7 @@ export default defineEventHandler(async (event) => {
     ? buildBudgetLeadNote(budgetPayload)
     : parsed.data.note;
 
-  if (existing[0] && !(parsed.data.propertyId && parsed.data.visitPreferredAt) && !parsed.data.callbackPreferredAt && parsed.data.offerAmount == null) {
+  if (existing[0] && !(parsed.data.propertyId && parsed.data.visitPreferredAt) && !parsed.data.callbackPreferredAt && parsed.data.offerAmount == null && !PROPERTY_SERVICE_REQUEST_DEALS.has(parsed.data.deal)) {
     if (parsed.data.source === "budget_match") {
       await sql.query(
         `update leads
@@ -329,6 +336,77 @@ export default defineEventHandler(async (event) => {
       dueMinutes: Math.max(30, Math.round((callbackDate.getTime() - Date.now()) / 60_000)),
     });
     return { success: true, id: rows[0].id, callbackRequested: true, trackingToken };
+  }
+
+  if (parsed.data.propertyId && PROPERTY_SERVICE_REQUEST_DEALS.has(parsed.data.deal)) {
+    const propertyRows = await sql.query<{
+      id: string;
+      title: string;
+      property_type: string;
+      neighborhood: string;
+      contact_name: string;
+    }>(
+      "select id,title,property_type,neighborhood,contact_name from properties where id::text=$1 and status='published' and availability_status not in ('sold','rented','unavailable') limit 1",
+      [parsed.data.propertyId],
+    );
+    const property = propertyRows[0];
+    if (!property) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: "این فایل دیگر برای ثبت درخواست تخصصی در دسترس نیست.",
+      });
+    }
+
+    const requestType =
+      parsed.data.deal === "درخواست کارشناسی فنی"
+        ? "technical_inspection"
+        : parsed.data.deal === "درخواست محتوای جدید"
+          ? "fresh_media"
+          : "legal_review";
+    const trackingToken = createPublicTrackingToken();
+    const requestNote = parsed.data.note.trim() || parsed.data.deal;
+    const rows = await sql.query<{ id: string }>(
+      "insert into leads (id,name,phone,people_count,job,deal,property_type,neighborhood,consultant,note,source,property_id,follow_up_at,public_tracking_token) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'website',$11,current_timestamp + interval '2 hours',$12) returning id",
+      [
+        crypto.randomUUID(),
+        parsed.data.name,
+        parsed.data.phone,
+        parsed.data.peopleCount ?? null,
+        parsed.data.job,
+        parsed.data.deal,
+        property.property_type,
+        property.neighborhood,
+        property.contact_name || parsed.data.consultant,
+        "فایل: " + property.title + "\n" + requestNote,
+        property.id,
+        trackingToken,
+      ],
+    );
+    if (!rows[0]) {
+      throw createError({ statusCode: 500, statusMessage: "درخواست تخصصی ثبت نشد." });
+    }
+
+    await sql.query(
+      "insert into lead_activities (lead_id,activity_type,title,note,metadata) values ($1,'note',$2,$3,$4::jsonb)",
+      [
+        rows[0].id,
+        parsed.data.deal + " آنلاین ثبت شد",
+        "فایل: " + property.title,
+        requestNote,
+        JSON.stringify({ propertyId: property.id, requestType }),
+      ],
+    ).catch(() => {});
+
+    await createAutomaticFollowUp(sql, {
+      leadId: rows[0].id,
+      title: "پیگیری " + parsed.data.deal + ": " + property.title,
+      description: "مشتری برای این فایل یک سرویس تخصصی درخواست کرده است؛ جزئیات در یادداشت لید ثبت شده.",
+      assignee: property.contact_name || parsed.data.consultant,
+      priority: "high",
+      dueMinutes: 120,
+    });
+
+    return { success: true, id: rows[0].id, expertServiceRequest: requestType, trackingToken };
   }
 
   if (parsed.data.deal === "پیشنهاد قیمت" && parsed.data.offerAmount != null && parsed.data.propertyId) {
