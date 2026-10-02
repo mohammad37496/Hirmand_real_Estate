@@ -70,6 +70,7 @@ import { toast } from "sonner";
 import { WhatsAppIcon } from "@/components/hirmand/social-icons";
 import "@/property-price-history.css";
 import "@/property-feature-enhancements.css";
+import "@/property-new-features.css";
 import "@/property-decision-dossier.css";
 import "@/property-question-log.css";
 import "@/property-negotiation-log.css";
@@ -106,6 +107,9 @@ import { PropertyViewingRequest } from "@/components/hirmand/property-viewing-re
 import { PropertyVirtualTour } from "@/components/hirmand/property-virtual-tour";
 import { PropertyQuestions } from "@/components/hirmand/property-questions";
 import { PropertyOpenHouse } from "@/components/hirmand/property-open-house";
+import { PropertyFloorPlan } from "@/components/hirmand/property-floor-plan";
+import { PropertyNearbyServices } from "@/components/hirmand/property-nearby-services";
+import { PropertyDocumentRequest } from "@/components/hirmand/property-document-request";
 import { PropertyNeighborhoodInsight } from "@/components/hirmand/property-neighborhood-insight";
 import { PropertyReport } from "@/components/hirmand/property-report";
 import { PropertyCallbackRequest } from "@/components/hirmand/property-callback-request";
@@ -1747,6 +1751,8 @@ export function PropertyDetailView({
           {(property.latitude != null && property.longitude != null) || property.neighborhood ? (
             <a href="#property-location-section">موقعیت</a>
           ) : null}
+          <a href="#property-floor-plan">پلان</a>
+          <a href="#property-nearby-services">اطراف ملک</a>
           <a href="#property-questions">پرسش‌ها</a>
           <a href="#property-open-house">اوپن‌هاوس</a>
           <a href="#property-tools-section">ابزارها</a>
@@ -2093,6 +2099,9 @@ export function PropertyDetailView({
               </section>
             ) : null}
 
+            <PropertyFloorPlan property={property} />
+            <PropertyNearbyServices property={property} />
+            <PropertyDocumentRequest property={property} />
             <PropertyVirtualTour property={property} />
             <PropertyNeighborhoodInsight property={property} />
             <PropertyReport property={property} />
