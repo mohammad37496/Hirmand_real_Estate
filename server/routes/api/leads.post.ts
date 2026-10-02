@@ -7,6 +7,12 @@ import { autoMatchLead } from "@/lib/lead-smart-matcher.server";
 
 const VISITOR_COOKIE = "hirmand_visitor_id";
 
+function createPublicTrackingToken() {
+  const year = new Date().getFullYear().toString().slice(-2);
+  const random = crypto.randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase();
+  return `HIR-${year}-${random}`;
+}
+
 async function createAutomaticFollowUp(sql: Awaited<ReturnType<typeof getSql>>, input: {
   leadId: string;
   title: string;
@@ -160,8 +166,8 @@ export default defineEventHandler(async (event) => {
       console.error("[leads] acquisition lookup unavailable", error);
     }
   }
-  const existing = await sql.query<{ id: string }>(
-    `select id from leads where phone = $1 and created_at > current_timestamp - interval '10 minutes' limit 1`,
+  const existing = await sql.query<{ id: string; public_tracking_token: string | null }>(
+    `select id, public_tracking_token from leads where phone = $1 and created_at > current_timestamp - interval '10 minutes' limit 1`,
     [parsed.data.phone],
   );
 
@@ -247,9 +253,25 @@ export default defineEventHandler(async (event) => {
       } catch (error) {
         console.error("[leads] automatic smart matching failed for duplicate budget lead", error);
       }
-      return { success: true, duplicate: true, updated: true, id: existing[0].id };
+      const trackingToken =
+        existing[0].public_tracking_token || createPublicTrackingToken();
+      if (!existing[0].public_tracking_token) {
+        await sql.query(
+          "update leads set public_tracking_token=$2 where id=$1",
+          [existing[0].id, trackingToken],
+        );
+      }
+      return { success: true, duplicate: true, updated: true, id: existing[0].id, trackingToken };
     }
-    return { success: true, duplicate: true, id: existing[0].id };
+    const trackingToken =
+      existing[0].public_tracking_token || createPublicTrackingToken();
+    if (!existing[0].public_tracking_token) {
+      await sql.query(
+        "update leads set public_tracking_token=$2 where id=$1",
+        [existing[0].id, trackingToken],
+      );
+    }
+    return { success: true, duplicate: true, id: existing[0].id, trackingToken };
   }
 
   if (parsed.data.propertyId && parsed.data.visitPreferredAt) {
@@ -260,8 +282,9 @@ export default defineEventHandler(async (event) => {
     );
     const property = propertyRows[0];
     if (!property) throw createError({ statusCode: 404, statusMessage: "فایل موردنظر برای بازدید در دسترس نیست." });
+    const trackingToken = createPublicTrackingToken();
     const rows = await sql.query<{ id: string }>(
-      "insert into leads (id, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source, follow_up_at, floor_preference, property_id, visit_preferred_at, visit_requested_at, visit_status) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'website',current_timestamp + interval '4 hours',$11,$12,$13,current_timestamp,'requested') returning id",
+      "insert into leads (id, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source, follow_up_at, floor_preference, property_id, visit_preferred_at, visit_requested_at, visit_status, public_tracking_token) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'website',current_timestamp + interval '4 hours',$11,$12,$13,current_timestamp,'requested',$14) returning id",
       [
         crypto.randomUUID(),
         parsed.data.name,
@@ -276,6 +299,7 @@ export default defineEventHandler(async (event) => {
         parsed.data.floorPreference,
         property.id,
         visitDate.toISOString(),
+        trackingToken,
       ],
     );
     if (!rows[0]) throw createError({ statusCode: 500, statusMessage: "ثبت درخواست بازدید انجام نشد." });
@@ -297,8 +321,9 @@ export default defineEventHandler(async (event) => {
       priority: "urgent",
       dueMinutes: 60,
     });
-    return { success: true, duplicate: false, id: rows[0].id, visitRequested: true };
+    return { success: true, duplicate: false, id: rows[0].id, visitRequested: true, trackingToken };
   }
+  const trackingToken = createPublicTrackingToken();
   const rows = await sql.query<{ id: string }>(
     `insert into leads (
       id, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source,
@@ -307,9 +332,9 @@ export default defineEventHandler(async (event) => {
       floor_preference, matched_properties, match_count,
       budget_deposit_min, budget_deposit_max, budget_rent_min, budget_rent_max,
       budget_purchase_min, budget_purchase_max, budget_sale_min, budget_sale_max,
-      requested_amenities, requested_bedrooms
+      requested_amenities, requested_bedrooms, public_tracking_token
     )
-    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,current_timestamp + interval '24 hours',$17,$18,$19,$20,$21,$22,$23,$24,$25,$26::jsonb,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36::jsonb,$37)
+    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,current_timestamp + interval '24 hours',$17,$18,$19,$20,$21,$22,$23,$24,$25,$26::jsonb,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36::jsonb,$37,$38)
     returning id`,
     [
       crypto.randomUUID(),
@@ -349,6 +374,7 @@ export default defineEventHandler(async (event) => {
       budgetSale || null,
       JSON.stringify(parsed.data.requestedAmenities),
       parsed.data.requestedBedrooms ?? null,
+      trackingToken,
     ],
   );
   const createdLeadId = rows[0]?.id ?? null;
@@ -378,5 +404,5 @@ export default defineEventHandler(async (event) => {
       dueMinutes: 24 * 60,
     });
   }
-  return { success: true, id: createdLeadId, duplicate: false };
+  return { success: true, id: createdLeadId, duplicate: false, trackingToken };
 });
