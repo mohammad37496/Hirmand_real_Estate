@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
 
   const sql = await getSql();
   const rows = await sql.query<Record<string, unknown>>(
-    "select l.public_tracking_token,l.status,l.created_at,l.updated_at,l.consultant,l.deal,l.property_type,l.neighborhood,l.visit_preferred_at,l.visit_status,p.title as property_title,p.slug as property_slug " +
+    "select l.public_tracking_token,l.status,l.created_at,l.updated_at,l.consultant,l.deal,l.property_type,l.neighborhood,l.visit_requested_at,l.visit_preferred_at,l.visit_status,p.title as property_title,p.slug as property_slug " +
       "from leads l left join properties p on p.id::text=l.property_id::text " +
       "where l.public_tracking_token=$1 limit 1",
     [code],
@@ -55,6 +55,40 @@ export default defineEventHandler(async (event) => {
 
   const status = String(row.status || "new") as LeadStatus;
   const visitStatus = String(row.visit_status || "none") as VisitStatus;
+  const createdAt = row.created_at ? new Date(String(row.created_at)).toISOString() : null;
+  const updatedAt = row.updated_at ? new Date(String(row.updated_at)).toISOString() : null;
+  const visitRequestedAt = row.visit_requested_at ? new Date(String(row.visit_requested_at)).toISOString() : null;
+  const visitPreferredAt = row.visit_preferred_at ? new Date(String(row.visit_preferred_at)).toISOString() : null;
+
+  const timeline: Array<{
+    type: "created" | "status" | "visit";
+    label: string;
+    note: string;
+    at: string | null;
+  }> = [];
+
+  if (createdAt) {
+    timeline.push({ type: "created", label: "درخواست ثبت شد", note: "درخواست شما با موفقیت در سامانه هیرمند ثبت شد.", at: createdAt });
+  }
+  if (updatedAt && createdAt && new Date(updatedAt).getTime() > new Date(createdAt).getTime() + 1000) {
+    timeline.push({ type: "status", label: "وضعیت درخواست به‌روزرسانی شد", note: STATUS_LABEL[status] ?? "در حال پیگیری", at: updatedAt });
+  }
+  if (visitRequestedAt) {
+    timeline.push({ type: "visit", label: "درخواست بازدید ثبت شد", note: VISIT_LABEL[visitStatus] ?? "بازدید در حال هماهنگی است.", at: visitRequestedAt });
+  }
+  if (visitPreferredAt) {
+    timeline.push({ type: "visit", label: "زمان بازدید ثبت شد", note: "زمان پیشنهادی: " + new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tehran" }).format(new Date(visitPreferredAt)), at: visitPreferredAt });
+  }
+  if (updatedAt && (visitStatus === "confirmed" || visitStatus === "completed" || visitStatus === "cancelled")) {
+    timeline.push({
+      type: "visit",
+      label: visitStatus === "confirmed" ? "بازدید تأیید شد" : visitStatus === "completed" ? "بازدید انجام شد" : "بازدید لغو شد",
+      note: VISIT_LABEL[visitStatus],
+      at: updatedAt,
+    });
+  }
+
+  timeline.sort((a, b) => (a.at ? new Date(a.at).getTime() : 0) - (b.at ? new Date(b.at).getTime() : 0));
 
   return {
     success: true,
@@ -63,13 +97,15 @@ export default defineEventHandler(async (event) => {
     statusLabel: STATUS_LABEL[status] ?? "در حال پیگیری",
     visitStatus,
     visitStatusLabel: VISIT_LABEL[visitStatus] ?? "بدون درخواست بازدید",
-    createdAt: row.created_at ? new Date(String(row.created_at)).toISOString() : null,
-    updatedAt: row.updated_at ? new Date(String(row.updated_at)).toISOString() : null,
+    createdAt,
+    updatedAt,
     consultant: row.consultant ? String(row.consultant) : "",
     deal: row.deal ? String(row.deal) : "",
     propertyType: row.property_type ? String(row.property_type) : "",
     neighborhood: row.neighborhood ? String(row.neighborhood) : "",
-    visitPreferredAt: row.visit_preferred_at ? new Date(String(row.visit_preferred_at)).toISOString() : null,
+    visitRequestedAt,
+    visitPreferredAt,
+    timeline,
     property: row.property_title
       ? {
           title: String(row.property_title),
