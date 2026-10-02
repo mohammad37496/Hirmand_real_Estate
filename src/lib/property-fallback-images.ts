@@ -3,11 +3,12 @@ import type { PropertyType } from "@/lib/properties";
 type FallbackMap = Record<PropertyType, readonly string[]>;
 
 /**
- * Curated, self-hosted fallback photography.
+ * Curated, self-hosted fallback artwork.
  *
- * The JPG files are downloaded from the source manifest during the build and
- * are then served from the same origin. The existing SVG assets remain as a
- * zero-network emergency fallback if a photo cannot be prepared.
+ * These assets are committed to the repository and served from the same origin,
+ * so a missing/blocked listing photo never requires a third-party fallback.
+ * SVG is used here intentionally: it is the only complete local asset family
+ * currently present in the repository.
  */
 export const PROPERTY_FALLBACK_IMAGES: FallbackMap = {
   apartment: [
