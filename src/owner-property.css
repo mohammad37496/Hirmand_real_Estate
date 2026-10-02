@@ -42,3 +42,8 @@
 @keyframes customer-property-spin{to{transform:rotate(360deg)}}
 @media(max-width:850px){.customer-property-grid{grid-template-columns:1fr}.customer-property-wide{grid-column:auto}.customer-property-media-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.customer-property-section{padding:17px}.customer-property-intro{padding:20px}.customer-property-submit-actions{display:grid;grid-template-columns:1fr}.customer-property-submit-actions>*{width:100%}.customer-property-media-grid{grid-template-columns:1fr 1fr}.customer-property-media img,.customer-property-media video{height:125px}}
+
+.customer-property-draft-status{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:9px 12px;border:1px dashed var(--line);border-radius:11px;color:var(--muted);font-size:.68rem}
+.customer-property-draft-status button{border:0;background:transparent;color:var(--brass-700,#8c6426);font:inherit;font-weight:800;cursor:pointer}
+.customer-property-draft-status button:hover{text-decoration:underline}
+@media(max-width:560px){.customer-property-draft-status{align-items:flex-start;flex-direction:column}}
