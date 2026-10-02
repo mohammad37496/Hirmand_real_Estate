@@ -18,7 +18,7 @@ function Home() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(enhancedOrganizationJsonLd()) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(enhancedOrganizationJsonLd(settings)) }}
       />
       <script
         type="application/ld+json"
