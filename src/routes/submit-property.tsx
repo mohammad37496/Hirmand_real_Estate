@@ -113,6 +113,7 @@ function SubmitPropertyPage() {
         throw new Error(payload?.statusMessage || payload?.message || "ثبت ملک انجام نشد.");
       }
       setDone(payload.trackingToken || "");
+      if (payload.trackingToken) rememberCustomerTrackingCode(String(payload.trackingToken));
       toast.success("اطلاعات ملک برای کارشناسان هیرمند ارسال شد.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "ثبت ملک انجام نشد.");
