@@ -1,4 +1,4 @@
-import { createError, defineEventHandler, getCookie, getHeader, readBody, setResponseHeader } from "h3";
+import { createError, defineEventHandler, getCookie, getHeader, readBody, setResponseHeader, type H3Event } from "h3";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
@@ -20,7 +20,7 @@ type MediaIssue = {
   reason: string;
 };
 
-function toPublicUrl(event: Parameters<typeof defineEventHandler>[0] extends never ? never : any, value: string) {
+function toPublicUrl(event: H3Event, value: string) {
   const trimmed = value.trim();
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
   const proto = getHeader(event, "x-forwarded-proto")?.split(",")[0]?.trim() || "https";
@@ -57,7 +57,7 @@ async function fetchWithTimeout(url: string, timeoutMs = 3500) {
   }
 }
 
-async function inspectMedia(event: any, item: { propertyId: string; slug: string; title: string; neighborhood: string; url: string }): Promise<MediaIssue | null> {
+async function inspectMedia(event: H3Event, item: { propertyId: string; slug: string; title: string; neighborhood: string; url: string }): Promise<MediaIssue | null> {
   let response: Response | null = null;
   try {
     const absolute = toPublicUrl(event, item.url);
@@ -82,7 +82,7 @@ async function inspectMedia(event: any, item: { propertyId: string; slug: string
   }
 }
 
-async function scanMedia(event: any, rows: Array<Record<string, unknown>>) {
+async function scanMedia(event: H3Event, rows: Array<Record<string, unknown>>) {
   const queue: Array<{ propertyId: string; slug: string; title: string; neighborhood: string; url: string }> = [];
   for (const row of rows) {
     const images = Array.isArray(row.images) ? row.images : [];
