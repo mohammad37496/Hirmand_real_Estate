@@ -22,6 +22,7 @@ import propertyDetailLightThemeCss from "../property-detail-light-theme.css?url"
 import adminMobileClarityCss from "../admin-mobile-clarity.css?url";
 import adminMatchingCss from "../admin-matching.css?url";
 import adminOpsCss from "../admin-ops.css?url";
+import smartToolsCss from "../smart-tools.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -65,6 +66,7 @@ export const Route = createRootRoute({
       { rel: "stylesheet", href: adminMobileClarityCss },
       { rel: "stylesheet", href: adminMatchingCss },
       { rel: "stylesheet", href: adminOpsCss },
+      { rel: "stylesheet", href: smartToolsCss },
     ],
   }),
   component: RootDocument,
