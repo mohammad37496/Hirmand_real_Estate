@@ -98,6 +98,9 @@ import { PropertyActions } from "@/components/hirmand/property-actions";
 import { PropertyViewingRequest } from "@/components/hirmand/property-viewing-request";
 import { PropertyDecisionTools } from "@/components/hirmand/property-decision-tools";
 import { PropertyVisitChecklist } from "@/components/hirmand/property-visit-checklist";
+import { PropertyOfferMessage } from "@/components/hirmand/property-offer-message";
+import { PropertyPaymentPlanner } from "@/components/hirmand/property-payment-planner";
+import { PropertyDealChecklist } from "@/components/hirmand/property-deal-checklist";
 import { formatToman } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
@@ -1666,6 +1669,9 @@ export function PropertyDetailView({
 
         <PropertyDecisionTools property={property} />
         <PropertyVisitChecklist property={property} />
+        <PropertyOfferMessage property={property} />
+        <PropertyPaymentPlanner property={property} />
+        <PropertyDealChecklist property={property} />
 
         <section className="property-detail-content">
           <article className="property-detail-main">
