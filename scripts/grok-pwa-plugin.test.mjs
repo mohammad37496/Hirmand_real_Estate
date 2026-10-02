@@ -477,7 +477,27 @@ test("renders the manifest with the per-app name", () => {
   const manifest = JSON.parse(renderWebManifest("wild-race.grok.me"));
   assert.equal(manifest.name, "Wild Race");
   assert.equal(manifest.short_name, "Wild Race");
-  assert.equal(manifest.icons[0].src, "/__grok/icon-180.png");
+  assert.equal(manifest.start_url, "/?source=pwa");
+  assert.equal(manifest.icons[0].src, "/pwa/icon-192.png");
+  assert.equal(manifest.icons[1].src, "/pwa/icon-512.png");
+  assert.equal(manifest.shortcuts.length, 4);
+});
+
+test("uses project site identity for the installed Hirmand manifest", () => {
+  const manifest = JSON.parse(renderWebManifest("custom.example.com", {
+    site: {
+      title: "گروه مشاورین املاک هیرمند",
+      short_name: "هیرمند",
+      description: "خرید، فروش، رهن و اجاره ملک در اصفهان",
+      theme_color: "#0b1a2b",
+      background_color: "#f7f3ea",
+    },
+  }));
+  assert.equal(manifest.name, "گروه مشاورین املاک هیرمند");
+  assert.equal(manifest.short_name, "هیرمند");
+  assert.equal(manifest.theme_color, "#0b1a2b");
+  assert.equal(manifest.icons.some((icon) => icon.purpose === "maskable"), true);
+  assert.equal(manifest.shortcuts.some((shortcut) => shortcut.url === "/nearby"), true);
 });
 
 // Tripwires: the deployed-app path only works if Nitro scans server/ — an
