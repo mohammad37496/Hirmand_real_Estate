@@ -1841,24 +1841,19 @@ export function PropertyDetailView({
               <div className="property-description-copy">
                 <p className="property-description-lead">{descriptionSummary}</p>
 
-                <details className="property-description-full">
-                  <summary>
-                    <span>مشاهده توضیحات کامل فایل</span>
-                    <ChevronDown size={17} aria-hidden="true" />
-                  </summary>
-                  <div className="property-description-full-body">
-                    {descriptionParagraphs.length ? (
-                      descriptionParagraphs.map((paragraph, index) => (
-                        <p key={index}>{paragraph}</p>
-                      ))
-                    ) : (
-                      <p>
-                        برای این فایل توضیح متنی ثبت نشده است. برای دریافت جزئیات کامل، شرایط معامله و هماهنگی
-                        بازدید با مشاور فایل در تماس باشید.
-                      </p>
-                    )}
-                  </div>
-                </details>
+                {descriptionParagraphs.length > 1 ? (
+                  <details className="property-description-full">
+                    <summary>
+                      <span>مشاهده توضیحات کامل فایل</span>
+                      <ChevronDown size={17} aria-hidden="true" />
+                    </summary>
+                    <div className="property-description-full-body">
+                      {descriptionParagraphs.slice(1).map((paragraph, index) => (
+                        <p key={index + 1}>{paragraph}</p>
+                      ))}
+                    </div>
+                  </details>
+                ) : null}
               </div>
 
               {property.features.length ? (
