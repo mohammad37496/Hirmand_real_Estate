@@ -43,7 +43,7 @@ import {
   HardDrive,
   Route as RouteIcon,
   History,
-  RotateCcw,
+  Target,
   CircleCheck,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
