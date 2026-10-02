@@ -2,7 +2,8 @@
 alter table customer_property_submissions
   add column if not exists priority text not null default 'normal'
     check (priority in ('low','normal','high')),
-  add column if not exists updated_at timestamptz not null default current_timestamp;
+  add column if not exists updated_at timestamptz not null default current_timestamp,
+  add column if not exists queue_started_at timestamptz not null default current_timestamp;
 
 create index if not exists customer_property_submissions_priority_idx
   on customer_property_submissions (status, priority, created_at desc);
