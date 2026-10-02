@@ -261,8 +261,10 @@ export function AdminCustomerPropertySubmissions() {
                   <div className="admin-customer-submission-owner"><strong>{submission.ownerName}</strong><a href={"tel:"+submission.ownerPhone}><Phone size={14}/>{submission.ownerPhone}</a><span dir="ltr">{submission.trackingToken}</span></div>
                   <div className="admin-customer-submission-actions">
                     <button type="button" className="btn-ghost" onClick={()=>openSubmission(submission)}>{selectedOpen ? "بستن جزئیات" : "جزئیات و رسانه‌ها"}</button>
-                    <button type="button" className="btn-gold" disabled={busyId===submission.id} onClick={()=>void act("approve",submission)}><CheckCircle2 size={15}/> تأیید و انتشار</button>
-                    <button type="button" className="btn-ghost danger" disabled={busyId===submission.id} onClick={()=>void act("reject",submission)}><XCircle size={15}/> رد</button>
+                    {submission.status === "pending" ? <>
+                      <button type="button" className="btn-gold" disabled={busyId===submission.id} onClick={()=>void act("approve",submission)}><CheckCircle2 size={15}/> تأیید و انتشار</button>
+                      <button type="button" className="btn-ghost danger" disabled={busyId===submission.id} onClick={()=>void act("reject",submission)}><XCircle size={15}/> رد</button>
+                    </> : null}
                   </div>
                 </div>
               </div>
@@ -299,7 +301,11 @@ export function AdminCustomerPropertySubmissions() {
                     <div className="wide"><span>توضیحات</span><p>{String(data.description ?? "—")}</p></div>
                   </div>
                   {media.length ? <div className="admin-customer-submission-media">{media.map((src)=><div key={src}>{isVideoUrl(src)?<video src={src} controls preload="metadata"/>:<img src={src} alt="" loading="lazy"/>}{isVideo(src)?<small><Film size={12}/> ویدئو</small>:null}</div>)}</div> : null}
-                  <label className="field"><span>یادداشت بررسی (اختیاری)</span><textarea rows={3} value={reviewNote} onChange={(e)=>setReviewNote(e.target.value)} placeholder="مثلاً سند بررسی شد، قیمت نیاز به تأیید دارد…"/></label>
+                  {statusFilter === "pending" ? (
+                    <label className="field"><span>یادداشت بررسی (اختیاری)</span><textarea rows={3} value={reviewNote} onChange={(e)=>setReviewNote(e.target.value)} placeholder="مثلاً سند بررسی شد، قیمت نیاز به تأیید دارد…"/></label>
+                  ) : submission.reviewNote ? (
+                    <div className="admin-customer-review-note"><span>یادداشت بررسی</span><p>{submission.reviewNote}</p></div>
+                  ) : null}
                   {submission.propertyId ? <a className="btn-ghost" href={"/properties/" + String(data.slug ?? "")} target="_blank" rel="noreferrer"><ExternalLink size={15}/> مشاهده فایل منتشرشده</a> : null}
                 </div>
               ) : null}
