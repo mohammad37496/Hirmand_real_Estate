@@ -132,7 +132,7 @@ export default defineEventHandler(async (event) => {
 
     const previousReviewNote = String(submission.review_note ?? "").trim();
     await sql.query(
-      "update customer_property_submissions set status='pending', review_note='', reviewed_at=null, updated_at=current_timestamp, owner_name=$2, owner_phone=$3, property_data=$4::jsonb where id=$1",
+      "update customer_property_submissions set status='pending', review_note='', reviewed_at=null, updated_at=current_timestamp, queue_started_at=current_timestamp, owner_name=$2, owner_phone=$3, property_data=$4::jsonb where id=$1",
       [submission.id, parsed.data.ownerName, parsed.data.ownerPhone, JSON.stringify(parsed.data)],
     );
     await sql.query(
@@ -207,7 +207,7 @@ export default defineEventHandler(async (event) => {
       ],
     );
     await sql.query(
-      "insert into customer_property_submissions (id,lead_id,public_tracking_token,status,owner_name,owner_phone,property_data) values ($1,$2,$3,'pending',$4,$5,$6::jsonb)",
+      "insert into customer_property_submissions (id,lead_id,public_tracking_token,status,owner_name,owner_phone,property_data,queue_started_at) values ($1,$2,$3,'pending',$4,$5,$6::jsonb,current_timestamp)",
       [
         submissionId,
         leadId,
