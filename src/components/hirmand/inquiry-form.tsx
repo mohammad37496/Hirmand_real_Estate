@@ -1,7 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { Phone, Send } from "lucide-react";
 import { toast } from "sonner";
-import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SERVICES, SITE, TEAM } from "@/lib/site";
+import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SERVICES, SITE } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { formatToman, parseAmount, tomanToWords } from "@/lib/money";
 import { PROPERTY_OTHER_AMENITY_OPTIONS } from "@/lib/property-options";
@@ -9,6 +9,7 @@ import { listNeighborhoodNames } from "@/lib/neighborhoods";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { formatPersianDate } from "@/lib/persian-date";
 import { PersianDatePicker } from "./persian-date-picker";
+import { useConsultants } from "./consultants-context";
 
 export type InquiryDraft = {
   deal: string;
@@ -108,9 +109,17 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
   const [requestedAmenities, setRequestedAmenities] = useState<string[]>([]);
   const [amenitiesOpen, setAmenitiesOpen] = useState(false);
   const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>(NEIGHBORHOOD_NAMES);
-  const [consultant, setConsultant] = useState<(typeof TEAM)[number]["id"]>(TEAM[0].id);
+  const consultants = useConsultants();
+  const [consultant, setConsultant] = useState<string>("");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!consultants.length) return;
+    setConsultant((current) =>
+      consultants.some((person) => person.id === current) ? current : consultants[0].id,
+    );
+  }, [consultants]);
 
   useEffect(() => {
     let cancelled = false;
@@ -174,7 +183,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
     setLeaseDeadline("");
   }
 
-  const selected = TEAM.find((person) => person.id === consultant) ?? TEAM[0];
+  const selected = consultants.find((person) => person.id === consultant) ?? consultants[0];
 
   function buildMessage() {
     return [
@@ -225,7 +234,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
             } as Record<string, string>)[value] ?? value;
           }).join("، ")
         : "",
-      `مشاور: ${selected.name}`,
+      `مشاور: ${selected?.name ?? "مشاور هیرمند"}`,
       note ? `توضیح: ${note}` : "",
     ]
       .filter(Boolean)
@@ -707,9 +716,9 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
         <select
           id="inq-consultant"
           value={consultant}
-          onChange={(event) => setConsultant(event.target.value as (typeof TEAM)[number]["id"])}
+          onChange={(event) => setConsultant(event.target.value as string)}
         >
-          {TEAM.map((person) => (
+          {consultants.map((person) => (
             <option key={person.id} value={person.id}>
               {person.name} — {person.role}
             </option>
