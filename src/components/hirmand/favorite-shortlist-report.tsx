@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { Check, ClipboardCopy, Printer, Share2, X } from "lucide-react";
 import type { Property } from "@/lib/properties";
 import { formatToman } from "@/lib/money";
-import { propertyPath } from "@/lib/property-path";
 import "@/favorite-shortlist-report.css";
 
 function num(v:string|null|undefined){const n=Number(String(v??"").replace(/[,٬]/g,""));return Number.isFinite(n)&&n>0?n:0}
