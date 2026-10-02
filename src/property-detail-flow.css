@@ -643,3 +643,128 @@
     font-size:.63rem;
   }
 }
+
+
+/* Phase 3 — hierarchy for price, trust, and readable description. */
+.property-price-updated{
+  display:block;
+  margin-top:7px;
+  color:var(--subtle);
+  font-size:.61rem;
+  line-height:1.8;
+}
+
+.property-price-updated time{
+  color:var(--muted);
+  font-weight:750;
+}
+
+.property-trust-strip{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px 11px;
+  margin-top:10px;
+  padding-top:9px;
+  border-top:1px solid var(--line-2);
+  color:var(--subtle);
+  font-size:.59rem;
+  line-height:1.8;
+}
+
+.property-trust-strip span{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  min-width:0;
+  white-space:nowrap;
+}
+
+.property-trust-strip svg{
+  flex:0 0 auto;
+  color:var(--brass-700);
+}
+
+.property-description-lead{
+  max-width:76ch;
+  margin:0 !important;
+  color:var(--navy-900);
+  font-size:1rem !important;
+  font-weight:750 !important;
+  line-height:2 !important;
+}
+
+.property-description-full{
+  margin-top:13px;
+  border-top:1px solid var(--line-2);
+}
+
+.property-description-full > summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  min-height:42px;
+  color:var(--navy-900);
+  cursor:pointer;
+  list-style:none;
+  font-size:.7rem;
+  font-weight:800;
+}
+
+.property-description-full > summary::-webkit-details-marker{display:none}
+.property-description-full > summary::marker{content:""}
+
+.property-description-full > summary svg{
+  flex:0 0 auto;
+  color:var(--brass-700);
+  transition:transform .18s ease;
+}
+
+.property-description-full[open] > summary svg{
+  transform:rotate(180deg);
+}
+
+.property-description-full > summary:focus-visible{
+  outline:2px solid var(--brass-500);
+  outline-offset:2px;
+}
+
+.property-description-full-body{
+  max-width:82ch;
+  padding:3px 0 1px;
+}
+
+.property-description-full-body p + p{
+  margin-top:12px;
+}
+
+.property-description-full-body > p:first-child{
+  margin-top:0;
+}
+
+@media (max-width:760px){
+  .property-trust-strip{
+    gap:5px 9px;
+    font-size:.55rem;
+  }
+
+  .property-trust-strip span{
+    white-space:normal;
+  }
+
+  .property-description-lead{
+    font-size:.93rem !important;
+    line-height:2 !important;
+  }
+
+  .property-description-full{
+    margin-top:10px;
+  }
+}
+
+@media (max-width:420px){
+  .property-trust-strip span:nth-child(3){
+    display:none;
+  }
+}
