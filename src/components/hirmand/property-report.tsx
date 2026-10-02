@@ -31,6 +31,15 @@ function typeLabel(property: Property) {
   return "تجاری";
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function buildReportHtml(property: Property, url: string) {
   const specs = [
     ["نوع معامله", txLabel(property)],
@@ -49,16 +58,25 @@ function buildReportHtml(property: Property, url: string) {
     ...property.otherAmenities,
   ].filter(Boolean);
 
-  const specRows = specs.map(([label, value]) => '<div class="spec"><span>' + label + '</span><strong>' + value + '</strong></div>').join("");
-  const amenitiesHtml = amenities.length ? '<div class="chips">' + amenities.map((item) => '<span>' + item + '</span>').join("") + '</div>' : '<p class="muted">امکانات تکمیلی ثبت نشده است.</p>';
+  const specRows = specs.map(([label, value]) => '<div class="spec"><span>' + escapeHtml(label) + '</span><strong>' + escapeHtml(value) + '</strong></div>').join("");
+  const amenitiesHtml = amenities.length ? '<div class="chips">' + amenities.map((item) => '<span>' + escapeHtml(item) + '</span>').join("") + '</div>' : '<p class="muted">امکانات تکمیلی ثبت نشده است.</p>';
   const firstImage = property.images[0] && /^https:\/\//i.test(property.images[0]) ? property.images[0] : "";
-  return '<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>گزارش فایل - ' + property.title + '</title><style>' +
+  const title = escapeHtml(property.title);
+  const code = escapeHtml(property.id.slice(-6).toUpperCase());
+  const urlText = escapeHtml(url);
+  const neighborhood = escapeHtml(property.neighborhood);
+  const description = escapeHtml(normalize(property.description));
+  const contactName = escapeHtml(normalize(property.contactName));
+  const contactPhone = escapeHtml(normalize(property.contactPhone));
+  const tx = escapeHtml(txLabel(property));
+  const type = escapeHtml(typeLabel(property));
+  return '<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>گزارش فایل - ' + title + '</title><style>' +
     'body{font-family:Tahoma,Arial,sans-serif;background:#f4f0e9;color:#182331;margin:0;padding:30px;line-height:1.9}.sheet{max-width:900px;margin:auto;background:#fffdf9;border:1px solid #d9d0c3;border-radius:24px;padding:28px}.brand{color:#8a5e14;font-weight:800;letter-spacing:.02em}.top{display:flex;justify-content:space-between;gap:20px}.title{font-size:25px;color:#0b1a2b;margin:7px 0}.code{font-family:monospace;color:#8a5e14}.image{width:100%;max-height:380px;object-fit:cover;border-radius:18px;margin:18px 0;background:#e9e1d7}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.spec{padding:11px;border:1px solid #e5ddd3;border-radius:13px;background:#f7f4ee}.spec span{display:block;color:#6b7480;font-size:11px}.spec strong{display:block;color:#0b1a2b;font-size:13px}.price{font-size:21px;color:#8a5e14;font-weight:800;margin:18px 0}.chips{display:flex;flex-wrap:wrap;gap:7px}.chips span{padding:5px 9px;border-radius:999px;background:#f1eae0;font-size:11px}.muted{color:#6d7782;font-size:12px}.desc{white-space:pre-wrap}.footer{margin-top:22px;padding-top:14px;border-top:1px solid #e5ddd3;color:#69737e;font-size:11px}@media(max-width:700px){body{padding:12px}.sheet{padding:16px}.grid{grid-template-columns:1fr 1fr}.top{flex-direction:column}}@media print{body{background:#fff;padding:0}.sheet{border:0;box-shadow:none}}' +
     '</style></head><body><main class="sheet"><div class="top"><div><div class="brand">' + SITE.nameFa + '</div><h1 class="title">' + property.title + '</h1><div class="code">کد فایل: ' + property.id.slice(-6).toUpperCase() + '</div></div><div class="code">' + txLabel(property) + ' · ' + typeLabel(property) + '</div></div>' +
     (firstImage ? '<img class="image" src="' + firstImage + '" alt="تصویر فایل">' : '') +
-    '<div class="price">' + (property.transactionType === "rent" ? "رهن: " + money(property.deposit) + " · اجاره: " + money(property.rent) : property.transactionType === "mortgage" ? "رهن: " + money(property.deposit) : "قیمت: " + money(property.price)) + '</div>' +
-    '<div class="grid">' + specRows + '</div><h2>امکانات</h2>' + amenitiesHtml + '<h2>توضیحات</h2><p class="desc">' + normalize(property.description) + '</p>' +
-    '<div class="footer">مشاور: ' + normalize(property.contactName) + ' · ' + normalize(property.contactPhone) + '<br>لینک فایل: ' + url + '<br>' + SITE.nameFa + '</div></main></body></html>';
+    '<div class="price">' + escapeHtml(property.transactionType === "rent" ? "رهن: " + money(property.deposit) + " · اجاره: " + money(property.rent) : property.transactionType === "mortgage" ? "رهن: " + money(property.deposit) : "قیمت: " + money(property.price)) + '</div>' +
+    '<div class="grid">' + specRows + '</div><div class="muted">محله: ' + neighborhood + '</div><h2>امکانات</h2>' + amenitiesHtml + '<h2>توضیحات</h2><p class="desc">' + description + '</p>' +
+    '<div class="footer">مشاور: ' + contactName + ' · ' + contactPhone + '<br>لینک فایل: ' + urlText + '<br>' + escapeHtml(SITE.nameFa) + '</div></main></body></html>';
 }
 
 export function PropertyReport({ property }: { property: Property }) {
