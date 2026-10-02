@@ -15,6 +15,7 @@ import { Route as BudgetMatchRouteImport } from './routes/budget-match'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ConsultantsRouteImport } from './routes/consultants'
 import { Route as FavoritesRouteImport } from './routes/favorites'
+import { Route as SubmitPropertyRouteImport } from './routes/submit-property'
 import { Route as PropertiesRouteImport } from './routes/properties'
 import { Route as TrackingRouteImport } from './routes/tracking'
 import { Route as AreasSlugRouteImport } from './routes/areas.$slug'
@@ -58,6 +59,11 @@ const ConsultantsRoute = ConsultantsRouteImport.update({
 const FavoritesRoute = FavoritesRouteImport.update({
   id: '/favorites',
   path: '/favorites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubmitPropertyRoute = SubmitPropertyRouteImport.update({
+  id: '/submit-property',
+  path: '/submit-property',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PropertiesRoute = PropertiesRouteImport.update({
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/compare': typeof CompareRoute
   '/consultants': typeof ConsultantsRouteWithChildren
   '/favorites': typeof FavoritesRoute
+  '/submit-property': typeof SubmitPropertyRoute
   '/properties': typeof PropertiesRouteWithChildren
   '/tracking': typeof TrackingRoute
   '/areas/$slug': typeof AreasSlugRoute
@@ -270,6 +277,7 @@ export interface RootRouteChildren {
   CompareRoute: typeof CompareRoute
   ConsultantsRoute: typeof ConsultantsRouteWithChildren
   FavoritesRoute: typeof FavoritesRoute
+  SubmitPropertyRoute: typeof SubmitPropertyRoute
   PropertiesRoute: typeof PropertiesRouteWithChildren
   TrackingRoute: typeof TrackingRoute
   AreasSlugRoute: typeof AreasSlugRoute
@@ -462,6 +470,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompareRoute: CompareRoute,
   ConsultantsRoute: ConsultantsRouteWithChildren,
   FavoritesRoute: FavoritesRoute,
+  SubmitPropertyRoute: SubmitPropertyRoute,
   PropertiesRoute: PropertiesRouteWithChildren,
   TrackingRoute: TrackingRoute,
   AreasSlugRoute: AreasSlugRoute,
