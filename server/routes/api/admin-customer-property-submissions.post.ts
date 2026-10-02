@@ -4,7 +4,8 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-sessi
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 import { TEAM } from "@/lib/site";
 import { isAllowedMediaRef, isVideoUrl } from "@/lib/media";
-import { clearPropertyReadCache, propertyInputSchema } from "@/lib/properties";
+import { propertyInputSchema } from "@/lib/properties";
+import { clearPropertyReadCache } from "@/lib/property-read-cache.server";
 import { getPublishReadiness } from "@/lib/property-publish-readiness";
 
 type Action = "list" | "approve" | "reject" | "update" | "set_priority" | "history" | "bulk_set_priority" | "bulk_reject" | "export" | "assign_consultant";
