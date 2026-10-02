@@ -1703,9 +1703,20 @@ export function PropertyDetailView({
             </div>
         </section>
 
+        <nav className="property-detail-section-nav" aria-label="بخش‌های اصلی فایل">
+          <span className="property-detail-section-nav-label">پرش سریع</span>
+          <a href="#property-specs-section">مشخصات</a>
+          <a href="#property-description-section">توضیحات</a>
+          {priceHistory.length ? <a href="#property-price-history-section">تاریخچه قیمت</a> : null}
+          {(property.latitude != null && property.longitude != null) || property.neighborhood ? (
+            <a href="#property-location-section">موقعیت</a>
+          ) : null}
+          <a href="#property-tools-section">ابزارها</a>
+        </nav>
+
         <section className="property-detail-content">
           <article className="property-detail-main">
-            <section className="property-divar-specs" aria-labelledby="property-specs-title">
+            <section id="property-specs-section" className="property-divar-specs" aria-labelledby="property-specs-title">
               <details className="property-specs-accordion" open>
                 <summary className="property-specs-accordion-summary">
                   <span className="property-specs-accordion-heading">
@@ -1793,7 +1804,7 @@ export function PropertyDetailView({
               </details>
             </section>
 
-            <section className="property-detail-body" aria-labelledby="property-description-title">
+            <section id="property-description-section" className="property-detail-body" aria-labelledby="property-description-title">
               <div className="property-section-heading">
                 <div>
                   <span className="kicker">توضیحات فایل</span>
@@ -1849,7 +1860,7 @@ export function PropertyDetailView({
             </section>
 
             {priceHistory.length ? (
-              <section className="property-price-history" aria-labelledby="property-price-history-title">
+              <section id="property-price-history-section" className="property-price-history" aria-labelledby="property-price-history-title">
                 <div className="property-section-heading">
                   <div>
                     <span className="kicker">شفافیت قیمت</span>
@@ -1903,7 +1914,7 @@ export function PropertyDetailView({
             ) : null}
 
             {(property.latitude != null && property.longitude != null) || property.neighborhood ? (
-              <section className="property-location-section" aria-labelledby="property-location-title">
+              <section id="property-location-section" className="property-location-section" aria-labelledby="property-location-title">
                 <div className="property-section-heading">
                   <div>
                     <span className="kicker">موقعیت</span>
@@ -1969,7 +1980,7 @@ export function PropertyDetailView({
               </section>
             ) : null}
 
-            <section className="property-tool-center" aria-labelledby="property-tool-center-title">
+            <section id="property-tools-section" className="property-tool-center" aria-labelledby="property-tool-center-title">
               <header className="property-tool-center-head">
                 <div>
                   <span className="kicker">ابزارهای تکمیلی فایل</span>
