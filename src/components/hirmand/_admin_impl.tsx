@@ -2903,7 +2903,7 @@ export function AdminPropertiesPage() {
                             <div>
                               <span>{changes.join(" · ")}</span>
                               <strong>
-                                {new Date(item.changedAt).toLocaleDateString("fa-IR")} ·{" "}
+                                {new Date(item.changedAt).toLocaleDateString("fa-IR-u-ca-persian")} ·{" "}
                                 {new Date(item.changedAt).toLocaleTimeString("fa-IR", {
                                   hour: "2-digit",
                                   minute: "2-digit",
