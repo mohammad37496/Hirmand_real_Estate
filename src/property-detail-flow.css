@@ -768,3 +768,28 @@
     display:none;
   }
 }
+
+
+/* Phase 3 — personal workspace is available, but visually secondary. */
+.property-tool-personal{
+  border-color:rgba(192,138,42,.28);
+  background:
+    linear-gradient(180deg,rgba(192,138,42,.045),transparent 190px),
+    rgba(255,255,255,.52);
+}
+
+.property-tool-personal .property-tool-category-index{
+  background:var(--brass-700);
+}
+
+.property-tool-personal[open]{
+  background:
+    linear-gradient(180deg,rgba(192,138,42,.055),transparent 220px),
+    rgba(255,255,255,.76);
+}
+
+.property-tool-personal .property-tool-category-count{
+  color:var(--brass-800);
+  background:var(--brass-100);
+  border:1px solid var(--brass-300);
+}
