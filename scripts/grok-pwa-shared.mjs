@@ -151,35 +151,37 @@ export function stripInstallParams(url) {
   return rest ? `${path}?${rest}` : path;
 }
 
-export function renderInstallPageHtml(template, { host, url } = {}) {
+export function renderInstallPageHtml(template, { host, url, appName } = {}) {
+  const resolvedName = String(appName ?? "").trim() || appNameFromHost(host);
   return String(template)
-    .replaceAll("{{APP_NAME}}", escapeHtml(appNameFromHost(host)))
+    .replaceAll("{{APP_NAME}}", escapeHtml(resolvedName))
     .replaceAll("{{APP_URL}}", escapeHtml(stripInstallParams(url)));
 }
 
-export function renderWebManifest(hostHeader) {
-  const name = appNameFromHost(hostHeader);
-  return JSON.stringify(
-    {
-      name,
-      short_name: name,
-      id: "/",
-      start_url: "/",
-      scope: "/",
-      display: "standalone",
-      background_color: "#000000",
-      theme_color: "#000000",
-      icons: [
-        {
-          src: "/__grok/icon-180.png",
-          sizes: "180x180",
-          type: "image/png",
-        },
-      ],
-    },
-    null,
-    2,
-  );
+export function renderWebManifest(hostHeader, { site = {} } = {}) {
+  const name = String(site.title ?? "").trim() || appNameFromHost(hostHeader);
+  const shortName = String(site.short_name ?? "").trim() || (name === "گروه مشاورین املاک هیرمند" ? "هیرمند" : name);
+  const description = String(site.description ?? "").trim() || "خرید، فروش، رهن و اجاره ملک در اصفهان";
+  const themeColor = String(site.theme_color ?? "").trim() || "#0b1a2b";
+  const backgroundColor = String(site.background_color ?? "").trim() || "#f7f3ea";
+  return JSON.stringify({
+    name, short_name: shortName, id: "/", start_url: "/?source=pwa", scope: "/",
+    display: "standalone", display_override: ["standalone", "minimal-ui"],
+    background_color: backgroundColor, theme_color: themeColor, description, lang: "fa", dir: "rtl",
+    orientation: "any", categories: ["business", "lifestyle"],
+    icons: [
+      { src: "/pwa/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/pwa/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/pwa/icon-maskable.svg", sizes: "any", type: "image/svg+xml", purpose: "maskable" },
+      { src: "/pwa/icon-monochrome.svg", sizes: "any", type: "image/svg+xml", purpose: "monochrome" }
+    ],
+    shortcuts: [
+      { name: "فایل‌های ملکی", short_name: "فایل‌ها", description: "مشاهده فایل‌های ملکی هیرمند", url: "/properties", icons: [{ src: "/pwa/shortcut-properties.svg", sizes: "any", type: "image/svg+xml" }] },
+      { name: "ذخیره‌های من", short_name: "ذخیره‌ها", description: "فایل‌های ذخیره‌شده من", url: "/favorites", icons: [{ src: "/pwa/shortcut-favorites.svg", sizes: "any", type: "image/svg+xml" }] },
+      { name: "جستجوی هوشمند", short_name: "جستجو", description: "جستجوی سریع ملک", url: "/smart-search", icons: [{ src: "/pwa/shortcut-search.svg", sizes: "any", type: "image/svg+xml" }] },
+      { name: "ملک‌های نزدیک من", short_name: "نزدیک من", description: "فایل‌های نزدیک موقعیت فعلی", url: "/nearby", icons: [{ src: "/pwa/shortcut-nearby.svg", sizes: "any", type: "image/svg+xml" }] }
+    ]
+  }, null, 2);
 }
 
 export function grokPwaHeadTags(appName = DEFAULT_APP_NAME) {
@@ -187,16 +189,16 @@ export function grokPwaHeadTags(appName = DEFAULT_APP_NAME) {
     // Standalone display comes from the manifest ("display": "standalone");
     // the legacy *-web-app-capable metas it replaces are deliberately absent.
     ["manifest", '<link rel="manifest" href="/__grok/manifest.webmanifest">'],
-    ["apple-touch-icon", '<link rel="apple-touch-icon" href="/__grok/icon-180.png">'],
+    ["apple-touch-icon", '<link rel="apple-touch-icon" href="/pwa/icon-180.png">'],
     [
       "apple-mobile-web-app-title",
       `<meta name="apple-mobile-web-app-title" content="${escapeHtml(appName)}">`,
     ],
     [
       "apple-mobile-web-app-status-bar-style",
-      '<meta name="apple-mobile-web-app-status-bar-style" content="black">',
+      '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
     ],
-    ["theme-color", '<meta name="theme-color" content="#000000">'],
+    ["theme-color", '<meta name="theme-color" content="#0b1a2b">'],
   ];
 }
 
