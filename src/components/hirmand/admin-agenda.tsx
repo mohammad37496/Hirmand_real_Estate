@@ -9,7 +9,7 @@ type AgendaData = {
   upcomingCallbacks: Array<{ id:string; name:string; phone:string; deal:string; neighborhood:string; consultant:string; callbackPreferredAt:string }>;
 };
 
-function formatDate(value:string){ try{return new Intl.DateTimeFormat("fa-IR",{dateStyle:"short",timeStyle:"short",timeZone:"Asia/Tehran"}).format(new Date(value));}catch{return value;} }
+function formatDate(value:string){ try{return new Intl.DateTimeFormat("fa-IR-u-ca-persian",{dateStyle:"short",timeStyle:"short",timeZone:"Asia/Tehran"}).format(new Date(value));}catch{return value;} }
 
 function AgendaRow({name,phone,label,detail,tone,date,onOpenLeads}:{name:string;phone:string;label:string;detail:string;tone:"danger"|"gold";date:string;onOpenLeads:()=>void}){
   return <div className="admin-agenda-row"><span className="admin-agenda-icon" data-tone={tone}>{tone==="danger"?<AlertCircle size={16}/>:<CalendarDays size={16}/>}</span><div className="admin-agenda-main"><div className="admin-agenda-head"><strong>{name}</strong><span>{label}</span></div><p>{detail}</p><small>{formatDate(date)}</small></div><div className="admin-agenda-actions">{phone?<a href={"tel:"+phone} title="تماس"><Phone size={15}/></a>:null}<button type="button" onClick={onOpenLeads}>لید</button></div></div>;
