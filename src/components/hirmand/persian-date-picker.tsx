@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CalendarDays, Clock3, RotateCcw, X } from "lucide-react";
+import { CalendarDays, RotateCcw, X } from "lucide-react";
 import { DayPicker, faIR } from "react-day-picker/persian";
 import "react-day-picker/style.css";
 import { dateOnlyToLocalDate, formatPersianDateWithWeekday, localDateToDateOnly } from "@/lib/persian-date";
@@ -23,6 +23,9 @@ export function PersianDatePicker({
   const selectedDate=dateOnlyToLocalDate(value);
   const minDate=minValue?dateOnlyToLocalDate(minValue):undefined;
   const maxDate=maxValue?dateOnlyToLocalDate(maxValue):undefined;
+  const disabledDays = minDate || maxDate
+    ? { ...(minDate ? { before: minDate } : {}), ...(maxDate ? { after: maxDate } : {}) }
+    : undefined;
 
   useEffect(()=>{
     if(!open)return;
@@ -48,7 +51,7 @@ export function PersianDatePicker({
       <div className="persian-date-picker-head"><div><span>{title}</span><strong>{value?formatPersianDateWithWeekday(value):"یک تاریخ انتخاب کنید"}</strong></div>
         <button type="button" className="persian-date-picker-close" onClick={()=>setOpen(false)} aria-label="بستن تقویم"><X size={16}/></button>
       </div>
-      <DayPicker mode="single" selected={selectedDate} onSelect={selectDate} defaultMonth={selectedDate??new Date()} locale={faIR} dir="rtl" numerals="arabext" captionLayout="dropdown" navLayout="after" reverseYears showOutsideDays disabled={{...(minDate?{before:minDate}:{}),...(maxDate?{after:maxDate}:{})}} />
+      <DayPicker mode="single" selected={selectedDate} onSelect={selectDate} defaultMonth={selectedDate??new Date()} locale={faIR} dir="rtl" numerals="arabext" captionLayout="dropdown" navLayout="after" reverseYears showOutsideDays disabled={disabledDays} />
       {value?<button type="button" className="persian-date-picker-reset" onClick={()=>{onChange("");setOpen(false)}}><RotateCcw size={14}/> حذف تاریخ انتخاب‌شده</button>:null}
     </div>:null}
   </div>;
