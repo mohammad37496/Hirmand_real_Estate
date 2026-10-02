@@ -328,6 +328,36 @@ function mapsLink(latitude: number | null, longitude: number | null, neighborhoo
   }
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`اصفهان ${neighborhood}`)}`;
 }
+function openDirectionsFromHere(latitude: number | null, longitude: number | null, neighborhood: string) {
+  if (typeof window === "undefined") return;
+  const popup = window.open("about:blank", "_blank", "noopener,noreferrer");
+  const destination = latitude != null && longitude != null
+    ? `${latitude},${longitude}`
+    : `اصفهان ${neighborhood}`;
+
+  if (!navigator.geolocation) {
+    const href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&travelmode=driving`;
+    if (popup) popup.location.href = href;
+    else window.location.href = href;
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const origin = `${position.coords.latitude},${position.coords.longitude}`;
+      const href = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&travelmode=driving`;
+      if (popup) popup.location.href = href;
+      else window.location.href = href;
+    },
+    () => {
+      const href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}&travelmode=driving`;
+      if (popup) popup.location.href = href;
+      else window.location.href = href;
+      toast.info("دسترسی به موقعیت فعلی داده نشد؛ مسیر تا محدوده فایل باز شد.");
+    },
+    { enableHighAccuracy: true, timeout: 8000, maximumAge: 120000 },
+  );
+}
 
 function osmEmbedUrl(latitude: number, longitude: number) {
   const delta = 0.012;
@@ -1817,14 +1847,23 @@ export function PropertyDetailView({
                     />
                     <div className="property-map-actions">
                       <span>اصفهان · {property.neighborhood} · موقعیت تقریبی</span>
-                      <a
-                        href={mapsLink(property.latitude, property.longitude, property.neighborhood)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-ghost"
-                      >
-                        <ExternalLink size={15} aria-hidden="true" /> باز کردن در نقشه
-                      </a>
+                      <div className="property-map-action-group">
+                        <button
+                          type="button"
+                          className="btn-gold"
+                          onClick={() => openDirectionsFromHere(property.latitude, property.longitude, property.neighborhood)}
+                        >
+                          <Navigation size={15} aria-hidden="true" /> مسیریابی از موقعیت من
+                        </button>
+                        <a
+                          href={mapsLink(property.latitude, property.longitude, property.neighborhood)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn-ghost"
+                        >
+                          <ExternalLink size={15} aria-hidden="true" /> باز کردن در نقشه
+                        </a>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -1834,14 +1873,23 @@ export function PropertyDetailView({
                       <strong>محدوده تقریبی فایل</strong>
                       <p>اصفهان، {property.neighborhood}</p>
                     </div>
-                    <a
-                      href={mapsLink(null, null, property.neighborhood)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-ghost"
-                    >
-                      <ExternalLink size={15} aria-hidden="true" /> جستجو در نقشه
-                    </a>
+                    <div className="property-map-action-group">
+                      <button
+                        type="button"
+                        className="btn-gold"
+                        onClick={() => openDirectionsFromHere(null, null, property.neighborhood)}
+                      >
+                        <Navigation size={15} aria-hidden="true" /> مسیریابی از موقعیت من
+                      </button>
+                      <a
+                        href={mapsLink(null, null, property.neighborhood)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-ghost"
+                      >
+                        <ExternalLink size={15} aria-hidden="true" /> جستجو در نقشه
+                      </a>
+                    </div>
                   </div>
                 )}
               </section>
