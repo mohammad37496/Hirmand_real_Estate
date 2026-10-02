@@ -1230,12 +1230,15 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
     const rows = await sql.query<Record<string, unknown>>(
       `update properties
        set status = $1,
+           publish_at = case when $1 = 'draft' then publish_at else null end,
+           unpublish_at = case when $1 = 'published' then unpublish_at else null end,
            published_at = case
              when $1 = 'published' then coalesce(published_at, current_timestamp)
              else null
            end,
            updated_at = current_timestamp
        where id = any($2::text[])
+         and deleted_at is null
        returning id, title, status, featured, price, deposit, rent, contact_name, contact_phone, owner_name, owner_phone, owner_info`,
       [data.status, data.ids],
     );
@@ -1390,6 +1393,7 @@ export const bulkAssignPropertyConsultant = createServerFn({ method: "POST" })
            contact_phone = $2,
            updated_at = current_timestamp
        where id = any($3::text[])
+         and deleted_at is null
        returning id, contact_name, contact_phone`,
       [data.contactName, data.contactPhone, data.ids],
     );
@@ -1635,6 +1639,40 @@ export const updatePropertySchedule = createServerFn({ method: "POST" })
     if (data.publishAt && data.unpublishAt && new Date(data.unpublishAt) <= new Date(data.publishAt)) {
       throw new Error("زمان پایان انتشار باید بعد از زمان شروع باشد.");
     }
+
+    const currentRows = await sql.query<Record<string, unknown>>(
+      `select transaction_type, title, neighborhood, description, contact_name, contact_phone,
+              price, deposit, rent, images, area_m2, features, latitude, longitude, status
+       from properties
+       where id = $1 and deleted_at is null
+       limit 1`,
+      [data.id],
+    );
+    const current = currentRows[0];
+    if (!current) throw new Error("فایل برای زمان‌بندی پیدا نشد.");
+
+    if (data.publishAt && String(current.status) === "draft") {
+      const readiness = getPublishReadiness({
+        transactionType: String(current.transaction_type ?? "sell") as "sell" | "buy" | "rent" | "mortgage",
+        title: String(current.title ?? ""),
+        neighborhood: String(current.neighborhood ?? ""),
+        description: String(current.description ?? ""),
+        contactName: String(current.contact_name ?? ""),
+        contactPhone: String(current.contact_phone ?? ""),
+        price: current.price == null ? "" : String(current.price),
+        deposit: current.deposit == null ? "" : String(current.deposit),
+        rent: current.rent == null ? "" : String(current.rent),
+        imageCount: parseJsonArray(current.images).length,
+        areaM2: current.area_m2 == null ? "" : String(current.area_m2),
+        features: parseJsonArray(current.features).join("\n"),
+        latitude: numberOrNull(current.latitude),
+        longitude: numberOrNull(current.longitude),
+      });
+      if (!readiness.ready) {
+        throw new Error("زمان‌بندی انتشار متوقف شد: " + readiness.blockers.join(" "));
+      }
+    }
+
     const rows = await sql.query<Record<string, unknown>>(
       `update properties
        set publish_at = $2::timestamptz,
