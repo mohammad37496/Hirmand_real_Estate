@@ -152,7 +152,7 @@ const STATUS_LABEL: Record<LeadStatus, string> = {
 
 function formatDate(value: string) {
   try {
-    return new Intl.DateTimeFormat("fa-IR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
+    return new Intl.DateTimeFormat("fa-IR-u-ca-persian", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
   } catch {
     return value;
   }
@@ -178,7 +178,7 @@ function tehranDateKey(offset = 0) {
 
 function formatDay(value: string) {
   try {
-    return new Intl.DateTimeFormat("fa-IR", {
+    return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
       weekday: "short",
       timeZone: "Asia/Tehran",
     }).format(new Date(value + "T12:00:00+03:30"));
