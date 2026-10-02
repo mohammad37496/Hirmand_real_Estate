@@ -42,6 +42,9 @@ import {
   Settings,
   HardDrive,
   Route as RouteIcon,
+  Gauge,
+  History,
+  ClipboardCheck,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import { isInvalidIntegerInput, normalizeMoneyText } from "@/lib/property-input-normalization";
@@ -105,6 +108,9 @@ import { AdminMediaHealth } from "@/components/hirmand/admin-media-health";
 import { AdminSecurityCenter } from "@/components/hirmand/admin-security-center";
 import { AdminSeoRedirects } from "@/components/hirmand/admin-seo-redirects";
 import { AdminContentStudio } from "@/components/hirmand/admin-content-studio";
+import { AdminLeadSlaCenter } from "@/components/hirmand/admin-lead-sla-center";
+import { AdminPriceHistoryCenter } from "@/components/hirmand/admin-price-history-center";
+import { AdminContractChecklist } from "@/components/hirmand/admin-contract-checklist";
 import "@/admin-site-settings.css";
 import "@/admin-security.css";
 import "@/admin-seo-redirects.css";
@@ -130,7 +136,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
+type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio" | "leadSla" | "priceHistory" | "contractChecklist";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -554,6 +560,9 @@ export function AdminPropertiesPage() {
       { view: "security" as ViewMode, label: "امنیت مدیران", icon: ShieldAlert },
       { view: "seoRedirects" as ViewMode, label: "ریدایرکت و ۴۰۴", icon: RouteIcon },
       { view: "contentStudio" as ViewMode, label: "استودیو محتوا", icon: FileText },
+      { view: "leadSla" as ViewMode, label: "SLA پاسخ‌گویی CRM", icon: Gauge },
+      { view: "priceHistory" as ViewMode, label: "تاریخچه قیمت فایل‌ها", icon: History },
+      { view: "contractChecklist" as ViewMode, label: "چک‌لیست قرارداد", icon: ClipboardCheck },
       { view: "divar" as ViewMode, label: "فایل‌های دیوار", icon: Globe2 },
     ],
     [],
@@ -1764,7 +1773,13 @@ export function AdminPropertiesPage() {
                                                     ? "ریدایرکت و ۴۰۴"
                                                     : view === "contentStudio"
                                                       ? "استودیو محتوا"
-                                                      : view === "divar"
+                                                      : view === "leadSla"
+                                                        ? "SLA پاسخ‌گویی به لیدها"
+                                                        : view === "priceHistory"
+                                                          ? "تاریخچه قیمت و تغییر شرایط فایل‌ها"
+                                                          : view === "contractChecklist"
+                                                            ? "چک‌لیست قرارداد و مدارک معامله"
+                                                            : view === "divar"
                                                         ? "فایل‌های دیوار"
                           : form.id
                         ? "ویرایش فایل"
@@ -1808,7 +1823,13 @@ export function AdminPropertiesPage() {
                                                 ? "مدیریت ریدایرکت‌های دائمی/موقت و گزارش خطاهای ۴۰۴"
                                                 : view === "contentStudio"
                                                   ? "ویرایش راهنماها و پرسش‌های متداول بدون تغییر کد"
-                              : view === "divar"
+                                                  : view === "leadSla"
+                                                    ? "اندازه‌گیری زمان اولین پاسخ و صف لیدهایی که از حد SLA عبور کرده‌اند"
+                                                    : view === "priceHistory"
+                                                      ? "مشاهده روند واقعی تغییر قیمت، رهن و اجاره از تاریخچه ثبت‌شده فایل‌ها"
+                                                      : view === "contractChecklist"
+                                                        ? "پیگیری مرحله‌به‌مرحله مدارک و کارهای ضروری قراردادهای فعال"
+                                                        : view === "divar"
                         ? "دریافت، فیلتر و ورود فایل‌های شخصی از دیوار"
                         : form.contactName
                     ? `مشاور مسئول: ${form.contactName}${formDirty ? " · تغییرات ذخیره‌نشده" : ""}`
@@ -2251,6 +2272,9 @@ export function AdminPropertiesPage() {
           {view === "security" ? <AdminSecurityCenter /> : null}
           {view === "seoRedirects" ? <AdminSeoRedirects /> : null}
           {view === "contentStudio" ? <AdminContentStudio /> : null}
+          {view === "leadSla" ? <AdminLeadSlaCenter /> : null}
+          {view === "priceHistory" ? <AdminPriceHistoryCenter /> : null}
+          {view === "contractChecklist" ? <AdminContractChecklist /> : null}
           {view === "divar" ? <AdminDivarFiles /> : null}
 
           {view === "form" ? (
