@@ -13,7 +13,7 @@ export default async function seoRedirectMiddleware(
   if (method !== "GET" && method !== "HEAD") return next();
 
   const path = event.url.pathname;
-  if (path.startsWith("/api/") || path.startsWith("/__grok/") || path === "/admin") return next();
+  if (path.startsWith("/api/") || path.startsWith("/__grok/") || path === "/admin" || path.startsWith("/admin/")) return next();
 
   const match = await resolvePublicRedirect(path + event.url.search);
   if (!match) return next();
