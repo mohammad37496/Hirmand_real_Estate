@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CalendarClock, CheckCircle2, WalletCards } from "lucide-react";
 import type { Property } from "@/lib/properties";
 import { formatToman } from "@/lib/money";
+import { PersianDatePicker } from "./persian-date-picker";
 import "@/property-deal-execution.css";
 
 function amount(value: string | null | undefined) {
@@ -73,8 +74,8 @@ export function PropertyPaymentPlanner({ property }: { property: Property }) {
             <label className="property-deal-field"><span>تعداد اقساط: {fa(installments)}</span><input type="range" min="1" max="36" step="1" value={installments} onChange={(e) => setInstallments(Number(e.target.value))} /></label>
             <label className="property-deal-field"><span>مبلغ هر قسط دلخواه (اختیاری)</span><input inputMode="numeric" value={monthlyAmount} onChange={(e) => setMonthlyAmount(e.target.value)} placeholder={formatToman(defaultMonthly) + " تومان"} /></label>
             <div className="property-deal-date-row">
-              <label className="property-deal-field"><span>تاریخ اولین پرداخت</span><input type="date" value={firstPaymentDate} onChange={(e) => setFirstPaymentDate(e.target.value)} /></label>
-              <label className="property-deal-field"><span>تاریخ تحویل</span><input type="date" value={handoverDate} onChange={(e) => setHandoverDate(e.target.value)} /></label>
+              <label className="property-deal-field"><span>تاریخ اولین پرداخت</span><PersianDatePicker value={firstPaymentDate} onChange={setFirstPaymentDate} title="تاریخ اولین پرداخت" hint="تاریخ را با تقویم شمسی انتخاب کنید." /></label>
+              <label className="property-deal-field"><span>تاریخ تحویل</span><PersianDatePicker value={handoverDate} onChange={setHandoverDate} title="تاریخ تحویل" hint="تاریخ را با تقویم شمسی انتخاب کنید." /></label>
             </div>
           </div>
           <div className="property-payment-preview">
