@@ -660,6 +660,20 @@ function ResilientImage({
   const current = candidates[Math.min(attempt, Math.max(0, candidates.length - 1))] ?? fallback;
 
   if (failed) {
+    if (fallbackLegacy) {
+      return (
+        <img
+          src={fallbackLegacy}
+          alt={alt}
+          className={className}
+          loading={loading}
+          fetchPriority={fetchPriority}
+          itemProp={itemProp}
+          referrerPolicy="no-referrer"
+          decoding="async"
+        />
+      );
+    }
     return (
       <span className="property-image-fallback" role="img" aria-label={alt}>
         <span>تصویر در دسترس نیست</span>
@@ -955,7 +969,7 @@ function Gallery({
               {isVideoUrl(src) ? (
                 <video src={src} muted playsInline preload="none" aria-hidden="true" />
               ) : (
-                <ResilientImage src={src} fallback={fallback} alt="" loading="lazy" />
+                <ResilientImage src={src} fallback={fallback} fallbackLegacy={fallbackLegacy} alt="" loading="lazy" />
               )}
               <span className="property-gallery-thumb-number">
                 {(index + 1).toLocaleString("fa-IR")}
@@ -1071,7 +1085,7 @@ function Gallery({
                     {isVideoUrl(src) ? (
                       <video src={src} muted playsInline preload="metadata" aria-hidden="true" />
                     ) : (
-                      <ResilientImage src={src} fallback={fallback} alt="" loading="lazy" />
+                      <ResilientImage src={src} fallback={fallback} fallbackLegacy={fallbackLegacy} alt="" loading="lazy" />
                     )}
                   </button>
                 ))}
