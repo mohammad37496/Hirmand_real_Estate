@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { FavoriteScoreCompare } from "@/components/hirmand/favorite-score-compare";
 import { FavoriteListingChanges } from "@/components/hirmand/favorite-listing-changes";
+import { FavoritesBudgetDashboard } from "@/components/hirmand/favorites-budget-dashboard";
 import { FavoritesViewingRoute } from "@/components/hirmand/favorites-viewing-route";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
@@ -11,6 +12,7 @@ import { SITE } from "@/lib/site";
 import { toast } from "sonner";
 import "@/favorites-personal.css";
 import "@/favorites-change-tracker.css";
+import "@/favorite-budget-dashboard.css";
 import "@/favorites-route-planner.css";
 
 const FAVORITES_KEY = "hirmand-favorite-properties";
@@ -410,6 +412,7 @@ function FavoritesPage() {
         </header>
 
         <FavoriteListingChanges properties={properties} />
+        <FavoritesBudgetDashboard properties={properties} />
         <FavoritesViewingRoute properties={properties} />
 
         {planOpen ? (
