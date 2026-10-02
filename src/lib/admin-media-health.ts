@@ -82,7 +82,7 @@ export const cleanupAdminMedia = createServerFn({ method: "POST" })
     const sql = await getSql();
 
     const orphanRows = await sql.query<{ id: string }>(
-      "delete from media_objects m where m.pathname like 'properties/%' and not exists (select 1 from properties p cross join lateral jsonb_array_elements_text(coalesce(p.images, '[]'::jsonb)) refs(value) where p.deleted_at is null and regexp_replace(refs.value, '^.*/api/media/', '') = m.id) returning m.id",
+      "delete from media_objects m where m.pathname like 'properties/uploads/%' and not exists (select 1 from properties p cross join lateral jsonb_array_elements_text(coalesce(p.images, '[]'::jsonb)) refs(value) where p.deleted_at is null and regexp_replace(refs.value, '^.*/api/media/', '') = m.id) returning m.id",
     );
 
     const staleRows = await sql.query<{ id: string }>(
