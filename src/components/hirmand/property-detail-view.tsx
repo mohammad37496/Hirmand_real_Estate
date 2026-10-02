@@ -1863,17 +1863,36 @@ export function PropertyDetailView({
               {property.features.length ? (
                 <div className="property-features">
                   <div className="property-section-subheading">
-                    <h3>ویژگی‌ها و امکانات</h3>
+                    <h3>ویژگی‌های ثبت‌شده در آگهی</h3>
                     <span>{property.features.length.toLocaleString("fa-IR")} مورد</span>
                   </div>
-                  <ul>
-                    {property.features.map((f, index) => (
+
+                  <ul className="property-features-preview">
+                    {property.features.slice(0, 6).map((f, index) => (
                       <li key={f + "-" + index}>
                         <Check size={15} aria-hidden="true" />
                         <span>{f}</span>
                       </li>
                     ))}
                   </ul>
+
+                  {property.features.length > 6 ? (
+                    <details className="property-features-more">
+                      <summary>
+                        <span>مشاهده تمام ویژگی‌های آگهی</span>
+                        <small>{(property.features.length - 6).toLocaleString("fa-IR")} مورد دیگر</small>
+                        <ChevronDown size={16} aria-hidden="true" />
+                      </summary>
+                      <ul>
+                        {property.features.slice(6).map((f, index) => (
+                          <li key={f + "-more-" + index}>
+                            <Check size={15} aria-hidden="true" />
+                            <span>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  ) : null}
                 </div>
               ) : null}
             </section>
