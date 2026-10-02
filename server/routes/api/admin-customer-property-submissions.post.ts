@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
       submissions: rows.map((row) => ({
 ") + "%";
     const rows = await sql.query<Record<string, unknown>>(
-      "select id,lead_id,public_tracking_token,status,owner_name,owner_phone,property_data,review_note,property_id,created_at,reviewed_at from customer_property_submissions where status=$1 and ($2='' or owner_name ilike $3 escape '\\' or owner_phone ilike $3 escape '\\' or public_tracking_token ilike $3 escape '\\' or coalesce(property_data->>'title','') ilike $3 escape '\\' or coalesce(property_data->>'neighborhood','') ilike $3 escape '\\') order by created_at desc limit 40",
+      "select id,lead_id,public_tracking_token,status,owner_name,owner_phone,property_data,review_note,property_id,created_at,reviewed_at from customer_property_submissions where status=$1 and ($2='' or owner_name ilike $3 escape '\\' or owner_phone ilike $3 escape '\\' or public_tracking_token ilike $3 or coalesce(property_data->>'title','') ilike $3 or coalesce(property_data->>'neighborhood','') ilike $3) order by created_at desc limit 40",
       [status, query, pattern],
     );
     const countRows = await sql.query<{ status: string; count: number }>(
