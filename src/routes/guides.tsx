@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft, BookOpen, CheckCircle2, Search, Share2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { SITE } from "@/lib/site";
@@ -30,6 +30,10 @@ function GuidesPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("همه");
   const [openId, setOpenId] = useState(GUIDES[0]!.id);
+  useEffect(() => {
+    const guideId = new URLSearchParams(window.location.search).get("guide");
+    if (guideId && GUIDES.some((item) => item.id === guideId)) setOpenId(guideId);
+  }, []);
   const categories = useMemo(() => ["همه", ...Array.from(new Set(GUIDES.map((item) => item.category)))], []);
   const visible = useMemo(() => {
     const q = query.trim();
