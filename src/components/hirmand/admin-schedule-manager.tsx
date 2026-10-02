@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CalendarClock, CheckCircle2, Clock3, RefreshCw, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { PersianDateTimePicker } from "./persian-date-time-picker";
 import {
   listAdminPropertySchedules,
   updatePropertySchedule,
@@ -157,28 +158,30 @@ export function AdminScheduleManager() {
                   <div className="admin-schedule-fields">
                     <label>
                       <span><Clock3 size={13} /> شروع نمایش</span>
-                      <input
-                        type="datetime-local"
+                      <PersianDateTimePicker
                         value={draft.publishAt}
-                        onChange={(event) =>
+                        onChange={(value) =>
                           setDrafts((current) => ({
                             ...current,
-                            [item.id]: { ...draft, publishAt: event.target.value },
+                            [item.id]: { ...draft, publishAt: value },
                           }))
                         }
+                        title="شروع نمایش"
+                        hint=""
                       />
                     </label>
                     <label>
                       <span><Clock3 size={13} /> پایان نمایش</span>
-                      <input
-                        type="datetime-local"
+                      <PersianDateTimePicker
                         value={draft.unpublishAt}
-                        onChange={(event) =>
+                        onChange={(value) =>
                           setDrafts((current) => ({
                             ...current,
-                            [item.id]: { ...draft, unpublishAt: event.target.value },
+                            [item.id]: { ...draft, unpublishAt: value },
                           }))
                         }
+                        title="پایان نمایش"
+                        hint=""
                       />
                     </label>
                   </div>
