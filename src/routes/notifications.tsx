@@ -21,7 +21,13 @@ export const Route = createFileRoute("/notifications")({
 });
 
 function safeRead(key: string) { try { return localStorage.getItem(key); } catch { return null; } }
-function safeWrite(key: string, value: string) {\n  try {\n    localStorage.setItem(key, value);\n  } catch {\n    // Storage can be blocked by privacy settings.\n  }\n}
+function safeWrite(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Storage can be blocked by privacy settings.
+  }
+}
 
 function NotificationsPage() {
   const [alerts, setAlerts] = useState<WatchAlert[]>([]);
