@@ -2019,7 +2019,7 @@ export function PropertyDetailView({
                       })}
                     </div>
                   </details>
-                ) : null
+                ) : null}
                 <p className="property-price-history-note">
                   این سابقه فقط تغییرات ثبت‌شده در سامانه هیرمند را نشان می‌دهد و جایگزین بررسی شرایط نهایی معامله نیست.
                 </p>
