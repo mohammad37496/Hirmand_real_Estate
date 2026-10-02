@@ -212,6 +212,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/consultants'
     | '/favorites'
+    | '/submit-property'
     | '/properties'
     | '/tracking'
     | '/areas/$slug'
