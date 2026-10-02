@@ -42,6 +42,9 @@ import {
   Settings,
   HardDrive,
   Route as RouteIcon,
+  CalendarCheck,
+  ClipboardCheck,
+  UploadCloud,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import { isInvalidIntegerInput, normalizeMoneyText } from "@/lib/property-input-normalization";
@@ -105,6 +108,9 @@ import { AdminMediaHealth } from "@/components/hirmand/admin-media-health";
 import { AdminSecurityCenter } from "@/components/hirmand/admin-security-center";
 import { AdminSeoRedirects } from "@/components/hirmand/admin-seo-redirects";
 import { AdminContentStudio } from "@/components/hirmand/admin-content-studio";
+import { AdminPropertyAvailabilityCenter } from "@/components/hirmand/admin-property-availability-center";
+import { AdminPropertyServiceRequests } from "@/components/hirmand/admin-property-service-requests";
+import { AdminPropertyCsvImport } from "@/components/hirmand/admin-property-csv-import";
 import "@/admin-site-settings.css";
 import "@/admin-security.css";
 import "@/admin-seo-redirects.css";
@@ -130,7 +136,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
+type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio" | "availability" | "serviceRequests" | "csvImport";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -554,6 +560,9 @@ export function AdminPropertiesPage() {
       { view: "security" as ViewMode, label: "امنیت مدیران", icon: ShieldAlert },
       { view: "seoRedirects" as ViewMode, label: "ریدایرکت و ۴۰۴", icon: RouteIcon },
       { view: "contentStudio" as ViewMode, label: "استودیو محتوا", icon: FileText },
+      { view: "availability" as ViewMode, label: "رزرو و وضعیت فایل", icon: CalendarCheck },
+      { view: "serviceRequests" as ViewMode, label: "خدمات و بررسی ملک", icon: ClipboardCheck },
+      { view: "csvImport" as ViewMode, label: "ورود گروهی CSV", icon: UploadCloud },
       { view: "divar" as ViewMode, label: "فایل‌های دیوار", icon: Globe2 },
     ],
     [],
@@ -1764,7 +1773,13 @@ export function AdminPropertiesPage() {
                                                     ? "ریدایرکت و ۴۰۴"
                                                     : view === "contentStudio"
                                                       ? "استودیو محتوا"
-                                                      : view === "divar"
+                                                      : view === "availability"
+                                                        ? "رزرو و وضعیت واقعی فایل‌ها"
+                                                        : view === "serviceRequests"
+                                                          ? "صف خدمات و بررسی ملک"
+                                                          : view === "csvImport"
+                                                            ? "ورود گروهی فایل‌ها از CSV"
+                                                            : view === "divar"
                                                         ? "فایل‌های دیوار"
                           : form.id
                         ? "ویرایش فایل"
@@ -1808,6 +1823,12 @@ export function AdminPropertiesPage() {
                                                 ? "مدیریت ریدایرکت‌های دائمی/موقت و گزارش خطاهای ۴۰۴"
                                                 : view === "contentStudio"
                                                   ? "ویرایش راهنماها و پرسش‌های متداول بدون تغییر کد"
+                                                  : view === "availability"
+                                                    ? "رزرو موقت، موجودی و وضعیت نهایی فایل‌ها را از یکجا کنترل کنید"
+                                                    : view === "serviceRequests"
+                                                      ? "درخواست‌های کارشناسی، حقوقی، محتوایی و تأیید اطلاعات را پیگیری کنید"
+                                                      : view === "csvImport"
+                                                        ? "ورود کنترل‌شده تا ۱۰۰ فایل با پیش‌نمایش و اعتبارسنجی قبل از ذخیره"
                               : view === "divar"
                         ? "دریافت، فیلتر و ورود فایل‌های شخصی از دیوار"
                         : form.contactName
@@ -2251,6 +2272,9 @@ export function AdminPropertiesPage() {
           {view === "security" ? <AdminSecurityCenter /> : null}
           {view === "seoRedirects" ? <AdminSeoRedirects /> : null}
           {view === "contentStudio" ? <AdminContentStudio /> : null}
+          {view === "availability" ? <AdminPropertyAvailabilityCenter /> : null}
+          {view === "serviceRequests" ? <AdminPropertyServiceRequests /> : null}
+          {view === "csvImport" ? <AdminPropertyCsvImport /> : null}
           {view === "divar" ? <AdminDivarFiles /> : null}
 
           {view === "form" ? (
