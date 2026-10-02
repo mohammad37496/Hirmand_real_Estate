@@ -118,6 +118,8 @@ import { PropertyRenovationTracker } from "@/components/hirmand/property-renovat
 import { PropertyVisitReport } from "@/components/hirmand/property-visit-report";
 import { PropertyNegotiationLog } from "@/components/hirmand/property-negotiation-log";
 import { PropertyOwnershipCost } from "@/components/hirmand/property-ownership-cost";
+import { PropertyDealRoom } from "@/components/hirmand/property-deal-room";
+import "@/property-deal-room.css";
 import { formatToman } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
@@ -1689,6 +1691,7 @@ export function PropertyDetailView({
         <PropertyOfferMessage property={property} />
         <PropertyPaymentPlanner property={property} />
         <PropertyDealChecklist property={property} />
+        <PropertyDealRoom property={property} />
         <PropertyScenarioAnalysis property={property} />
         <PropertyPersonalScore property={property} />
         <PropertyVisitOutcome property={property} />

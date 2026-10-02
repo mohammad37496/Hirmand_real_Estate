@@ -6,6 +6,7 @@ import { FavoriteScoreCompare } from "@/components/hirmand/favorite-score-compar
 import { FavoriteListingChanges } from "@/components/hirmand/favorite-listing-changes";
 import { FavoritesBudgetDashboard } from "@/components/hirmand/favorites-budget-dashboard";
 import { FavoritesViewingRoute } from "@/components/hirmand/favorites-viewing-route";
+import { BuyerFinancialProfile } from "@/components/hirmand/buyer-financial-profile";
 import { FavoriteWeightedMatrix } from "@/components/hirmand/favorite-weighted-matrix";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
@@ -14,6 +15,7 @@ import { toast } from "sonner";
 import "@/favorites-personal.css";
 import "@/favorites-change-tracker.css";
 import "@/favorite-budget-dashboard.css";
+import "@/buyer-financial-profile.css";
 import "@/favorites-route-planner.css";
 import "@/favorite-weighted-matrix.css";
 
@@ -413,6 +415,7 @@ function FavoritesPage() {
           </div>
         </header>
 
+        <BuyerFinancialProfile properties={properties} />
         <FavoriteListingChanges properties={properties} />
         <FavoritesBudgetDashboard properties={properties} />
         <FavoritesViewingRoute properties={properties} />
