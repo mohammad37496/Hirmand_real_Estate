@@ -480,9 +480,11 @@ function FavoritesPage() {
                           value={meta.tag ?? ""}
                           onChange={(event) => {
                             const value = event.target.value as FavoriteTag | "";
-                            value
-                              ? updateFavoriteMeta(property.slug, { tag: value })
-                              : updateFavoriteMeta(property.slug, { tag: undefined });
+                            if (value) {
+                              updateFavoriteMeta(property.slug, { tag: value });
+                            } else {
+                              updateFavoriteMeta(property.slug, { tag: undefined });
+                            }
                           }}
                         >
                           <option value="">بدون برچسب</option>
