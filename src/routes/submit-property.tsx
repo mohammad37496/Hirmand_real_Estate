@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CheckCircle2, FilePlus2, Film, Home, ImagePlus, Loader2, MapPin, Phone, Send, X } from "lucide-react";
+import { CheckCircle2, FilePlus2, Film, Home, ImagePlus, Loader2, MapPin, Phone, Send, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { PROPERTY_TYPES, SERVICES, NEIGHBORHOODS, SITE } from "@/lib/site";
@@ -426,10 +426,10 @@ function SubmitPropertyPage() {
         <section className="customer-property-section">
           <div className="customer-property-section-head"><span>۴</span><div><h2>امکانات ملک</h2><p>فقط امکانات واقعی را انتخاب کنید.</p></div></div>
           <div className="customer-property-checks">
-            {[
+            {([
               ["پارکینگ",parking,setParking],["آسانسور",elevator,setElevator],["انباری",storage,setStorage],
               ["رنگ‌شده",painted,setPainted],["کاغذدیواری",wallpaper,setWallpaper],["قابل تبدیل",convertible,setConvertible],
-            ].map(([label,checked,setter])=><label key={String(label)} className="customer-property-check"><input type="checkbox" checked={Boolean(checked)} onChange={(e)=>(setter as (value:boolean)=>void)(e.target.checked)}/><span>{label}</span></label>)}
+            ] as Array<[string, boolean, (value: boolean) => void]>).map(([label,checked,setter])=><label key={label} className="customer-property-check"><input type="checkbox" checked={checked} onChange={(e)=>setter(e.target.checked)}/><span>{label}</span></label>)}
           </div>
           <div className="customer-property-grid">
             <label className="field"><span>کابینت</span><select value={cabinetType} onChange={(e)=>setCabinetType(e.target.value)}><option value="">ثبت نشده</option>{PROPERTY_CABINET_OPTIONS.map(x=><option key={x.value} value={x.value}>{x.label}</option>)}</select></label>
