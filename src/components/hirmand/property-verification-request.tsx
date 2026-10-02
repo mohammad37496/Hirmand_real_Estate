@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle2, FileCheck2, Loader2, Send, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Loader2, Send, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import type { Property } from "@/lib/properties";
 import { trackAnalyticsEvent } from "@/lib/analytics";
@@ -23,7 +23,7 @@ export function PropertyVerificationRequest({ property }: { property: Property }
     const cleanName=name.trim();
     const cleanPhone=digits(phone);
     if (cleanName.length<2) { toast.error("نام و نام خانوادگی را وارد کنید."); return; }
-    if (!/^09\d{9}$/.test(cleanPhone)) { toast.error("شماره موبایل معتبر است."); return; }
+    if (!/^09\d{9}$/.test(cleanPhone)) { toast.error("شماره موبایل معتبر نیست."); return; }
     if (!checks.length) { toast.error("حداقل یک مورد برای بررسی انتخاب کنید."); return; }
 
     setBusy(true);
