@@ -24,6 +24,9 @@ const SEARCHABLE_LEAD_COLUMNS = [
   "budget_sale::text",
   "budget_equivalent::text",
   "floor_preference",
+  "callback_preferred_at::text",
+  "offer_amount::text",
+  "offer_conditions",
 ];
 
 const LIST_LIMIT = 50;
@@ -114,7 +117,7 @@ export default defineEventHandler(async (event) => {
       const index = params.length;
       conditions.push(
         "(" +
-          ["name", "phone", "deal", "property_type", "neighborhood", "consultant", "job", "note", "budget_deposit::text", "budget_rent::text", "budget_purchase::text", "budget_sale::text", "budget_deposit_min::text", "budget_deposit_max::text", "budget_rent_min::text", "budget_rent_max::text", "budget_purchase_min::text", "budget_purchase_max::text", "budget_sale_min::text", "budget_sale_max::text"]
+          ["name", "phone", "deal", "property_type", "neighborhood", "consultant", "job", "note", "callback_preferred_at::text", "offer_amount::text", "offer_conditions", "budget_deposit::text", "budget_rent::text", "budget_purchase::text", "budget_sale::text", "budget_deposit_min::text", "budget_deposit_max::text", "budget_rent_min::text", "budget_rent_max::text", "budget_purchase_min::text", "budget_purchase_max::text", "budget_sale_min::text", "budget_sale_max::text"]
             .map((column) => column + " ilike $" + index)
             .join(" or ") +
           ")",
@@ -124,7 +127,7 @@ export default defineEventHandler(async (event) => {
     const rows = await sql.query<Record<string, unknown>>(
       "select name, phone, people_count, job, deal, property_type, neighborhood, consultant, status, note, source, " +
         "acquisition_source, acquisition_medium, acquisition_campaign, acquisition_referrer, follow_up_at, last_contacted_at, " +
-        "property_id, visit_preferred_at, visit_requested_at, visit_status, lease_deadline, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_deposit_min, budget_deposit_max, budget_rent_min, budget_rent_max, budget_purchase_min, budget_purchase_max, budget_sale_min, budget_sale_max, budget_equivalent, budget_bedrooms, floor_preference, requested_bedrooms, requested_amenities, match_count, created_at " +
+        "property_id, visit_preferred_at, visit_requested_at, visit_status, callback_preferred_at, offer_amount, offer_conditions, lease_deadline, budget_deposit, budget_rent, budget_purchase, budget_sale, budget_deposit_min, budget_deposit_max, budget_rent_min, budget_rent_max, budget_purchase_min, budget_purchase_max, budget_sale_min, budget_sale_max, budget_equivalent, budget_bedrooms, floor_preference, requested_bedrooms, requested_amenities, match_count, created_at " +
         "from leads where " + conditions.join(" and ") +
         " order by created_at desc limit 50000",
       params,
@@ -146,7 +149,7 @@ export default defineEventHandler(async (event) => {
       completed: "انجام‌شده",
       cancelled: "لغوشده",
     };
-    const header = ["نام", "تلفن", "تعداد نفرات", "شغل", "معامله", "نوع ملک", "محله", "طبقه", "مشاور", "وضعیت", "وضعیت بازدید", "زمان بازدید", "منبع جذب", "رهن از", "رهن تا", "اجاره از", "اجاره تا", "خرید از", "خرید تا", "فروش از", "فروش تا", "معادل رهنی", "خواب موردنظر", "خواب بودجه‌یابی", "تعداد فایل پیشنهادی", "امکانات موردنظر", "توضیحات", "مهلت رهن و اجاره", "تاریخ"];
+    const header = ["نام", "تلفن", "تعداد نفرات", "شغل", "معامله", "نوع ملک", "محله", "طبقه", "مشاور", "وضعیت", "وضعیت بازدید", "زمان بازدید", "زمان تماس", "مبلغ پیشنهاد", "شرایط پیشنهاد", "منبع جذب", "رهن از", "رهن تا", "اجاره از", "اجاره تا", "خرید از", "خرید تا", "فروش از", "فروش تا", "معادل رهنی", "خواب موردنظر", "خواب بودجه‌یابی", "تعداد فایل پیشنهادی", "امکانات موردنظر", "توضیحات", "مهلت رهن و اجاره", "تاریخ"];
     const lines = [
       header.map(csvCell).join(","),
       ...rows.map((row) =>
@@ -163,6 +166,9 @@ export default defineEventHandler(async (event) => {
           labels[String(row.status) as Status] ?? row.status,
           visitLabels[String(row.visit_status) as VisitStatus] ?? "بدون بازدید",
           row.visit_preferred_at == null ? "" : csvDate(row.visit_preferred_at),
+          row.callback_preferred_at == null ? "" : csvDate(row.callback_preferred_at),
+          row.offer_amount == null ? "" : Number(row.offer_amount).toLocaleString("fa-IR"),
+          row.offer_conditions,
           row.acquisition_source ?? row.source,
           row.budget_deposit_min ?? row.budget_deposit,
           row.budget_deposit_max ?? row.budget_deposit,
