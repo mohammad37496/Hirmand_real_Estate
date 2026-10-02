@@ -148,3 +148,64 @@
     animation-iteration-count: 1 !important;
   }
 }
+
+
+/* Availability states: informative, but still inside the warm navy/brass language. */
+.property-detail-page .property-availability-badge {
+  position: relative;
+  gap: 6px;
+  border: 1px solid var(--hr-border-strong, var(--line));
+  background: var(--hr-panel-soft, var(--card-2));
+  color: var(--hr-navy, var(--navy-900));
+}
+
+.property-detail-page .property-availability-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.property-detail-page .property-availability-badge-available {
+  border-color: rgb(192 138 42 / 34%);
+  background: var(--hr-brass-soft, var(--brass-100));
+  color: var(--hr-brass, var(--brass-700));
+}
+
+.property-detail-page .property-availability-badge-reserved,
+.property-detail-page .property-availability-badge-unavailable {
+  border-color: rgb(11 26 43 / 14%);
+  background: rgb(11 26 43 / 5%);
+  color: var(--hr-navy, var(--navy-900));
+}
+
+.property-detail-page .property-availability-badge-sold,
+.property-detail-page .property-availability-badge-rented {
+  border-color: rgb(142 41 31 / 20%);
+  background: rgb(142 41 31 / 6%);
+  color: #7d332b;
+}
+
+.property-detail-page .property-detail-meta {
+  min-width: 0;
+}
+
+.property-detail-page .property-detail-meta span {
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .property-detail-page .property-availability-badge {
+    min-height: 27px;
+    padding-inline: 8px;
+    font-size: .59rem;
+  }
+
+  .property-detail-page .property-availability-badge::before {
+    width: 5px;
+    height: 5px;
+    flex-basis: 5px;
+  }
+}
