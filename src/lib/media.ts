@@ -109,8 +109,10 @@ export function detectRasterImageType(bytes: Uint8Array): RasterImageMime | "" {
 
 /** Detect image vs video from URL or MIME. */
 export function isVideoUrl(src: string): boolean {
-  const lower = src.toLowerCase().split("?")[0] ?? src;
-  return /\.(mp4|webm|mov|m4v|ogg)($|\/)/i.test(lower) || lower.includes("/video/");
+  const [pathname, query = ""] = src.toLowerCase().split("?", 2);
+  return /\.(mp4|webm|mov|m4v|ogg)($|\/)/i.test(pathname) ||
+    pathname.includes("/video/") ||
+    new URLSearchParams(query).get("type") === "video";
 }
 
 export function isImageUrl(src: string): boolean {
