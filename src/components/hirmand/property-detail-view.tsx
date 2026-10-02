@@ -69,6 +69,7 @@ import { PropertyConvertSlider } from "@/components/hirmand/property-convert-sli
 import { toast } from "sonner";
 import { WhatsAppIcon } from "@/components/hirmand/social-icons";
 import "@/property-price-history.css";
+import "@/property-decision-dossier.css";
 
 const PROPERTY_AVAILABILITY_LABELS: Record<Property["availabilityStatus"], string> = {
   available: "موجود",
@@ -106,6 +107,7 @@ import { PropertyPersonalScore } from "@/components/hirmand/property-personal-sc
 import { PropertyVisitOutcome } from "@/components/hirmand/property-visit-outcome";
 import { PropertyReviewAlerts } from "@/components/hirmand/property-review-alerts";
 import { PropertyFollowUpReminder } from "@/components/hirmand/property-follow-up-reminder";
+import { PropertyDecisionDossier } from "@/components/hirmand/property-decision-dossier";
 import { PropertyInquiryTools } from "@/components/hirmand/property-inquiry-tools";
 import { PropertyVisitReport } from "@/components/hirmand/property-visit-report";
 import { formatToman } from "@/lib/money";
@@ -1684,6 +1686,7 @@ export function PropertyDetailView({
         <PropertyVisitOutcome property={property} />
         <PropertyReviewAlerts property={property} />
         <PropertyFollowUpReminder property={property} />
+        <PropertyDecisionDossier property={property} />
         <PropertyInquiryTools property={property} />
         <PropertyVisitReport property={property} />
 

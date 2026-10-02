@@ -3,11 +3,15 @@ import { ArrowLeftRight, CalendarDays, CheckCircle2, Clock3, Heart, Link2, Loade
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { FavoriteScoreCompare } from "@/components/hirmand/favorite-score-compare";
+import { FavoriteListingChanges } from "@/components/hirmand/favorite-listing-changes";
+import { FavoritesViewingRoute } from "@/components/hirmand/favorites-viewing-route";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
 import { SITE } from "@/lib/site";
 import { toast } from "sonner";
 import "@/favorites-personal.css";
+import "@/favorites-change-tracker.css";
+import "@/favorites-route-planner.css";
 
 const FAVORITES_KEY = "hirmand-favorite-properties";
 const RECENT_PROPERTIES_KEY = "hirmand-recent-properties";
@@ -404,6 +408,9 @@ function FavoritesPage() {
             <Heart size={30} />
           </div>
         </header>
+
+        <FavoriteListingChanges properties={properties} />
+        <FavoritesViewingRoute properties={properties} />
 
         {planOpen ? (
           <div className="favorites-plan-backdrop" role="presentation" onMouseDown={(event) => {
