@@ -155,6 +155,7 @@ import { formatToman } from "@/lib/money";
 import { formatPersianDate } from "@/lib/persian-date";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
+import { isPermanentlyWatermarkedVideoUrl } from "@/lib/property-watermark";
 import { getPropertyFallbackImage, getPropertyFallbackImages, getPropertyFallbackLegacyImage, isPropertyFallbackImage } from "@/lib/property-fallback-images";
 import { areaSlug } from "@/lib/areas";
 import { SITE } from "@/lib/site";
@@ -916,7 +917,7 @@ function Gallery({
     <div className="property-gallery-wrap" role="region" aria-label={"گالری تصاویر " + title}>
       <div className="property-gallery">
         <div className="property-gallery-main">
-          <PropertyMediaWatermark />
+          {!isVideoUrl(current) || !isPermanentlyWatermarkedVideoUrl(current) ? <PropertyMediaWatermark /> : null}
           {isVideoUrl(current) ? (
             <VideoPlayer src={current} title={title} className="is-gallery" />
           ) : (
@@ -1044,7 +1045,7 @@ function Gallery({
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
               >
-                <PropertyMediaWatermark />
+                {!isVideoUrl(current) || !isPermanentlyWatermarkedVideoUrl(current) ? <PropertyMediaWatermark /> : null}
                 {isVideoUrl(current) ? (
                   <VideoPlayer src={current} title={title} autoPlay className="is-lightbox" />
                 ) : (
