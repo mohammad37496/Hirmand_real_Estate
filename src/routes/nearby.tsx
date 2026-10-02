@@ -102,7 +102,7 @@ function NearbyPage() {
             <div className="property-grid">
               {nearby.map(({ property, distance }) => (
                 <div key={property.id} className="nearby-card-wrap">
-                  {distance != null ? <div className="nearby-distance"><MapPin size={14} /> {distance < 1 ? Math.round(distance * 1000).toLocaleString("fa-IR") + " متر" : distance.toFixed(1).toLocaleString("fa-IR") + " کیلومتر"}</div> : null}
+                  {distance != null ? <div className="nearby-distance"><MapPin size={14} /> {distance < 1 ? Math.round(distance * 1000).toLocaleString("fa-IR") + " متر" : distance.toFixed(1) + " کیلومتر"}</div> : null}
                   <PropertyCard property={property} />
                 </div>
               ))}
