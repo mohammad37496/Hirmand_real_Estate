@@ -106,14 +106,15 @@ export function AdminCustomerPropertySubmissions() {
     if (!selected || !editDraft || savingDraft) return;
     setSavingDraft(true);
     try {
+      const digitize = (value: string) => value.replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit))).replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
       const numeric = (key: string) => {
-        const value = String(editDraft[key] ?? "").trim();
+        const value = digitize(String(editDraft[key] ?? "").trim()).replace(/[٬،,\s]/g, "");
         if (!value) return null;
         const parsed = Number(value);
         return Number.isFinite(parsed) && Number.isInteger(parsed) ? parsed : value;
       };
       const moneyValue = (key: string) => {
-        const value = String(editDraft[key] ?? "").replace(/[^0-9]/g, "");
+        const value = digitize(String(editDraft[key] ?? "")).replace(/[^0-9]/g, "");
         return value || null;
       };
       const featuresValue = String(editDraft.featuresText ?? String(editDraft.features ?? "")).split(/[،,\n]/).map((v) => v.trim()).filter(Boolean).slice(0,20);
