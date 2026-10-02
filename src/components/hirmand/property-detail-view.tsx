@@ -96,6 +96,7 @@ import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { PropertyActions } from "@/components/hirmand/property-actions";
 import { PropertyViewingRequest } from "@/components/hirmand/property-viewing-request";
+import { PropertyDecisionTools } from "@/components/hirmand/property-decision-tools";
 import { formatToman } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
@@ -1661,6 +1662,8 @@ export function PropertyDetailView({
               </header>
             </div>
         </section>
+
+        <PropertyDecisionTools property={property} />
 
         <section className="property-detail-content">
           <article className="property-detail-main">
