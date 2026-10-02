@@ -1,0 +1,38 @@
+.property-inquiry-tool,.property-visit-report{margin-top:24px;padding:22px;border:1px solid var(--line);border-radius:24px;background:var(--surface);box-shadow:0 10px 30px rgba(0,0,0,.05);}
+.property-inquiry-head h2,.property-visit-report-head h2{display:flex;align-items:center;gap:8px;margin:5px 0 6px;font-size:1.2rem;}
+.property-inquiry-head p,.property-visit-report-head p{color:var(--muted);font-size:.78rem;line-height:1.85;max-width:900px;}
+.property-inquiry-layout{display:grid;grid-template-columns:minmax(280px,.9fr) minmax(320px,1.1fr);gap:14px;margin-top:18px;}
+.property-inquiry-list{display:grid;gap:7px;align-content:start;}
+.property-inquiry-item{display:grid;grid-template-columns:auto 22px 1fr;align-items:start;gap:8px;padding:10px 11px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-size:.72rem;line-height:1.8;cursor:pointer;}
+.property-inquiry-item input{position:absolute;opacity:0;}
+.property-inquiry-check{width:22px;height:22px;border:1px solid var(--line-2);border-radius:6px;display:grid;place-items:center;color:var(--gold);margin-top:-1px;}
+.property-inquiry-item.is-selected{border-color:rgba(192,138,42,.35);background:rgba(192,138,42,.05);}
+.property-inquiry-preview{padding:15px;border:1px solid var(--line);border-radius:15px;background:var(--card);}
+.property-inquiry-preview-head{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);}
+.property-inquiry-preview pre{white-space:pre-wrap;margin:11px 0 14px;padding:13px;border-radius:12px;background:var(--card-2);font:inherit;font-size:.76rem;line-height:2;min-height:240px;}
+.property-inquiry-actions,.property-visit-report-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.property-inquiry-actions button,.property-visit-report-actions button{min-height:39px;}
+.property-visit-report-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;}
+.property-visit-report-actions button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-2);border-radius:10px;background:transparent;color:var(--fg);padding:0 12px;font:inherit;font-size:.71rem;font-weight:800;cursor:pointer;}
+.property-visit-report-actions button:first-child{background:var(--navy-900);border-color:var(--navy-900);color:#fff;}
+.property-visit-report-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:9px;margin-top:17px;}
+.property-visit-report-grid>div{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);display:grid;gap:4px;}
+.property-visit-report-grid strong{font-size:.85rem;}
+.property-visit-report-grid span{font-size:.67rem;color:var(--subtle);}
+.property-visit-report-notes{display:grid;gap:6px;margin-top:12px;}
+.property-visit-report-notes>span{font-size:.7rem;font-weight:800;color:var(--muted);}
+.property-visit-report-notes textarea{width:100%;border:1px solid var(--line-2);border-radius:12px;background:var(--card);color:var(--fg);padding:11px;font:inherit;font-size:.75rem;line-height:1.9;resize:vertical;}
+.property-visit-report-check-columns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
+.property-visit-report-check-columns>div{padding:13px;border:1px solid var(--line);border-radius:13px;background:var(--card);display:grid;gap:6px;}
+.property-visit-report-check-columns h3{font-size:.8rem;margin:0 0 4px;}
+.property-visit-report-check-columns span{font-size:.68rem;line-height:1.75;color:var(--subtle);}
+.property-visit-report-check-columns span.is-done{color:var(--fg);}
+.property-visit-report-footer{margin-top:12px;color:var(--subtle);font-size:.65rem;}
+@media(max-width:900px){.property-inquiry-layout,.property-visit-report-check-columns,.property-visit-report-grid{grid-template-columns:1fr;}}
+@media print{
+  body *{visibility:hidden !important;}
+  #visit-report,#visit-report *{visibility:visible !important;}
+  #visit-report{position:absolute;inset:0;margin:0;padding:24px;border:0;box-shadow:none;background:#fff;color:#111;}
+  .property-visit-report-actions,.property-visit-report-footer{display:none !important;}
+  .property-visit-report-notes textarea{border:1px solid #aaa;color:#111;}
+}
