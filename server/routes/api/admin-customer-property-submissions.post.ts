@@ -88,7 +88,7 @@ export default defineEventHandler(async (event) => {
         reviewedAt: row.reviewed_at == null ? null : new Date(String(row.reviewed_at)).toISOString(),
         priority: String(row.priority ?? "normal"),
         updatedAt: row.updated_at == null ? null : new Date(String(row.updated_at)).toISOString(),
-        ageHours: Math.max(0, (Date.now() - new Date(String(row.created_at)).getTime()) / 3600000),
+        ageHours: Math.max(0, (Date.now() - new Date(String(row.updated_at ?? row.created_at)).getTime()) / 3600000),
         possibleDuplicate: Boolean(row.possible_duplicate),
       })),
     };
@@ -253,7 +253,6 @@ export default defineEventHandler(async (event) => {
       "update customer_property_submissions set status='rejected', review_note=$2, reviewed_at=current_timestamp, updated_at=current_timestamp where id=$1",
       [body.id, reviewNote],
     );
-    await logReviewEvent(sql, body.id, "approve", typeof body.reviewNote === "string" ? body.reviewNote.trim() : "تأیید و انتشار شد.", { propertyId, propertySlug: slug, consultant: consultant.name });
     if (submission.lead_id) {
       await sql.query("update leads set status='closed', updated_at=current_timestamp where id=$1", [submission.lead_id]).catch(() => {});
       await sql.query(
@@ -375,6 +374,8 @@ export default defineEventHandler(async (event) => {
       "update customer_property_submissions set status='approved', property_id=$2, review_note=$3, reviewed_at=current_timestamp, updated_at=current_timestamp where id=$1",
       [body.id, propertyId, typeof body.reviewNote === "string" ? body.reviewNote.trim().slice(0,1200) : "تأیید و انتشار شد."],
     );
+    await logReviewEvent(sql, body.id, "approve", typeof body.reviewNote === "string" ? body.reviewNote.trim() : "تأیید و انتشار شد.", { propertyId, propertySlug: slug, consultant: consultant.name });
+
     if (submission.lead_id) {
       await sql.query("update leads set status='contacted', updated_at=current_timestamp where id=$1", [submission.lead_id]).catch(() => {});
       await sql.query(
