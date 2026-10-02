@@ -43,17 +43,38 @@ export default defineEventHandler(async (event) => {
     }
     const sql = await getSql();
     const visitorId = getCookie(event, VISITOR_COOKIE);
-    await sql.query(
-      "insert into property_reports(property_id,property_slug,property_title,report_type,note,visitor_id) values($1,$2,$3,$4,$5,$6)",
-      [
-        parsed.data.propertyId,
-        parsed.data.propertySlug,
-        parsed.data.propertyTitle,
-        parsed.data.reportType,
-        parsed.data.note,
-        visitorId && /^[a-f0-9-]{20,80}$/i.test(visitorId) ? visitorId : null,
-      ],
+    const propertyRows = await sql.query<{ id: string; slug: string; title: string }>(
+      "select id, slug, title from properties where id=$1 and slug=$2 and status='published' limit 1",
+      [parsed.data.propertyId, parsed.data.propertySlug],
     );
+    const property = propertyRows[0];
+    if (!property) {
+      throw createError({ statusCode: 404, statusMessage: "فایل موردنظر پیدا نشد." });
+    }
+
+    const normalizedVisitorId =
+      visitorId && /^[a-f0-9-]{20,80}$/i.test(visitorId) ? visitorId : null;
+
+    const duplicate = normalizedVisitorId
+      ? await sql.query<{ id: string }>(
+          "select id::text as id from property_reports where visitor_id=$1 and property_id=$2 and report_type=$3 and created_at >= current_timestamp - interval '3 minutes' limit 1",
+          [normalizedVisitorId, property.id, parsed.data.reportType],
+        )
+      : [];
+
+    if (!duplicate[0]) {
+      await sql.query(
+        "insert into property_reports(property_id,property_slug,property_title,report_type,note,visitor_id) values($1,$2,$3,$4,$5,$6)",
+        [
+          property.id,
+          property.slug,
+          property.title,
+          parsed.data.reportType,
+          parsed.data.note,
+          normalizedVisitorId,
+        ],
+      );
+    }
     return { ok: true };
   }
 
