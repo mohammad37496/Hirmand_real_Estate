@@ -97,6 +97,7 @@ import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { PropertyActions } from "@/components/hirmand/property-actions";
 import { PropertyViewingRequest } from "@/components/hirmand/property-viewing-request";
 import { PropertyDecisionTools } from "@/components/hirmand/property-decision-tools";
+import { PropertyVisitChecklist } from "@/components/hirmand/property-visit-checklist";
 import { formatToman } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
@@ -1664,6 +1665,7 @@ export function PropertyDetailView({
         </section>
 
         <PropertyDecisionTools property={property} />
+        <PropertyVisitChecklist property={property} />
 
         <section className="property-detail-content">
           <article className="property-detail-main">
