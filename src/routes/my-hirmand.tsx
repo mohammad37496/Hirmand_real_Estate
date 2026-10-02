@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarDays, CheckCircle2, Clock3, Copy, History, Home, RefreshCw, Trash2, UserRound } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
+import { OwnerPropertyStatus } from "@/components/hirmand/owner-property-status";
 import { SITE } from "@/lib/site";
 import { clearCustomerTrackingCodes, forgetCustomerTrackingCode, normalizeCustomerTrackingCode, readCustomerTrackingCodes, rememberCustomerTrackingCode, type CustomerTrackingSummary } from "@/lib/customer-tracking";
 import "@/my-hirmand.css";
@@ -137,6 +138,7 @@ function MyHirmandPage() {
           {items.length ? <button type="button" className="btn-ghost" onClick={() => { clearCustomerTrackingCodes(); setResults({}); setMessage("کدهای ذخیره‌شده از این دستگاه پاک شدند."); }}>پاک‌کردن همه</button> : null}
         </form>{message ? <p className="my-hirmand-message" role="status">{message}</p> : null}</section>
         {items.length ? <section className="my-hirmand-grid">{items.map((item) => <CustomerRequestCard key={item.trackingCode} item={item} result={results[item.trackingCode] ?? null} busy={Boolean(busy[item.trackingCode])} onRemove={() => { forgetCustomerTrackingCode(item.trackingCode); setResults((prev) => { const next = {...prev}; delete next[item.trackingCode]; return next; }); }} onCopy={() => copyCode(item.trackingCode)} />)}</section> : <section className="my-hirmand-empty"><div className="my-hirmand-empty-icon"><History size={24}/></div><h2>هنوز پرونده‌ای ذخیره نشده است.</h2><p>بعد از هر ثبت یا پیگیری درخواست، کد را می‌توانید در این دستگاه نگه دارید.</p><div><Link className="btn-gold" to="/request-tracking">پیگیری یک کد</Link><Link className="btn-ghost" to="/properties">مشاهده فایل‌ها</Link></div></section>}
+        <OwnerPropertyStatus />
         <section className="my-hirmand-note"><strong>حریم خصوصی</strong><p>این صفحه حساب کاربری دائمی ندارد؛ کدهای رهگیری فقط در حافظه مرورگر همین دستگاه ذخیره می‌شوند و نام و شماره موبایل شما نمایش داده نمی‌شود.</p></section>
       </main>
     </SiteChrome>

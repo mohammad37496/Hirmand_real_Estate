@@ -84,8 +84,10 @@ import { AdminOperationsCenter } from "@/components/hirmand/admin-operations-cen
 import { AdminProductivityCenter } from "@/components/hirmand/admin-productivity-center";
 import { AdminPropertyPerformance } from "@/components/hirmand/admin-property-performance";
 import { AdminCommandPalette } from "@/components/hirmand/admin-command-palette";
+import { AdminPropertyQuestions, AdminPropertyOpenHouse } from "@/components/hirmand/admin-property-features";
 import { AdminPropertyFilterPresets } from "@/components/hirmand/admin-property-filter-presets";
 import "@/admin-property-performance.css";
+import "@/property-feature-enhancements.css";
 import "@/admin-customer-inbox.css";
 import {
   PROPERTY_CABINET_OPTIONS,
@@ -2590,6 +2592,12 @@ export function AdminPropertiesPage() {
                   deposit={numberOrNull(form.deposit)}
                   rent={numberOrNull(form.rent)}
                 />
+                {form.id ? (
+                  <>
+                    <AdminPropertyQuestions propertyId={form.id} />
+                    <AdminPropertyOpenHouse propertyId={form.id} />
+                  </>
+                ) : null}
 
                 <fieldset className="admin-section" id="section-publish">
                   <legend>مشاور و وضعیت انتشار</legend>

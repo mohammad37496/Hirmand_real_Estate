@@ -69,6 +69,7 @@ import { PropertyConvertSlider } from "@/components/hirmand/property-convert-sli
 import { toast } from "sonner";
 import { WhatsAppIcon } from "@/components/hirmand/social-icons";
 import "@/property-price-history.css";
+import "@/property-feature-enhancements.css";
 import "@/property-decision-dossier.css";
 import "@/property-question-log.css";
 import "@/property-negotiation-log.css";
@@ -103,6 +104,8 @@ import { PropertyActions } from "@/components/hirmand/property-actions";
 import { PropertyMarketComparison } from "@/components/hirmand/property-market-comparison";
 import { PropertyViewingRequest } from "@/components/hirmand/property-viewing-request";
 import { PropertyVirtualTour } from "@/components/hirmand/property-virtual-tour";
+import { PropertyQuestions } from "@/components/hirmand/property-questions";
+import { PropertyOpenHouse } from "@/components/hirmand/property-open-house";
 import { PropertyNeighborhoodInsight } from "@/components/hirmand/property-neighborhood-insight";
 import { PropertyReport } from "@/components/hirmand/property-report";
 import { PropertyCallbackRequest } from "@/components/hirmand/property-callback-request";
@@ -1744,6 +1747,8 @@ export function PropertyDetailView({
           {(property.latitude != null && property.longitude != null) || property.neighborhood ? (
             <a href="#property-location-section">موقعیت</a>
           ) : null}
+          <a href="#property-questions">پرسش‌ها</a>
+          <a href="#property-open-house">اوپن‌هاوس</a>
           <a href="#property-tools-section">ابزارها</a>
         </nav>
 
@@ -2091,6 +2096,8 @@ export function PropertyDetailView({
             <PropertyVirtualTour property={property} />
             <PropertyNeighborhoodInsight property={property} />
             <PropertyReport property={property} />
+            <PropertyQuestions property={property} />
+            <PropertyOpenHouse property={property} />
 
             <section id="property-tools-section" className="property-tool-center" aria-labelledby="property-tool-center-title">
               <header className="property-tool-center-head">
