@@ -213,6 +213,8 @@ type FormState = {
   featuredUntil: string;
   latitude: number | null;
   longitude: number | null;
+  internalPriority: "low" | "normal" | "high" | "urgent";
+  internalNote: string;
 };
 
 const STATUS_LABEL: Record<PublishStatus, string> = {
@@ -272,6 +274,8 @@ function emptyForm(): FormState {
     featuredUntil: "",
     latitude: null,
     longitude: null,
+    internalPriority: "normal",
+    internalNote: "",
   };
 }
 
@@ -447,6 +451,8 @@ function propertyToForm(property: Property): FormState {
     featuredUntil: toDateTimeLocal(property.featuredUntil),
     latitude: property.latitude,
     longitude: property.longitude,
+    internalPriority: property.internalPriority ?? "normal",
+    internalNote: property.internalNote ?? "",
   };
 }
 
@@ -1301,6 +1307,8 @@ export function AdminPropertiesPage() {
           longitude: form.longitude,
           status: form.status,
           availabilityStatus: form.availabilityStatus,
+          internalPriority: form.internalPriority,
+          internalNote: form.internalNote.trim(),
           featured: form.featured,
           featuredUntil: form.featuredUntil
             ? (() => {
