@@ -28,11 +28,14 @@ const empty: SiteSettings = {
 };
 
 function Field(props: { label: string; value: string; onChange: (value: string) => void; multiline?: boolean; hint?: string }) {
-  const Input = props.multiline ? "textarea" : "input";
   return (
     <label className="admin-settings-field">
       <span>{props.label}</span>
-      <Input value={props.value} onChange={(event) => props.onChange(event.target.value)} rows={props.multiline ? 4 : undefined} />
+      {props.multiline ? (
+        <textarea rows={4} value={props.value} onChange={(event) => props.onChange(event.target.value)} />
+      ) : (
+        <input value={props.value} onChange={(event) => props.onChange(event.target.value)} />
+      )}
       {props.hint ? <small>{props.hint}</small> : null}
     </label>
   );
