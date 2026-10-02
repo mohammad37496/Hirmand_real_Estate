@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, CheckCircle2, ExternalLink, Eye, Film, History, ImageIcon, MapPin, Phone, Pencil, RefreshCw, Save, Search, Star, Timer, Trash2, XCircle } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, CheckCircle2, Download, ExternalLink, Eye, Film, History, ImageIcon, ListChecks, MapPin, Phone, Pencil, RefreshCw, Save, Search, Star, Timer, Trash2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { TEAM } from "@/lib/site";
 import { formatToman } from "@/lib/money";
@@ -64,6 +64,12 @@ export function AdminCustomerPropertySubmissions() {
   const [statusFilter, setStatusFilter] = useState<"pending" | "approved" | "rejected">("pending");
   const [searchQuery, setSearchQuery] = useState("");
   const [appliedQuery, setAppliedQuery] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [total, setTotal] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [counts, setCounts] = useState({ pending: 0, approved: 0, rejected: 0 });
   const [editDraft, setEditDraft] = useState<Record<string, unknown> | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
@@ -78,11 +84,12 @@ export function AdminCustomerPropertySubmissions() {
       const response = await fetch("/api/admin-customer-property-submissions", {
         method:"POST",
         headers:{"content-type":"application/json"},
-        body:JSON.stringify({ action:"list", status:statusFilter, query:appliedQuery }),
+        body:JSON.stringify({ action:"list", status:statusFilter, query:appliedQuery, fromDate, toDate, page, pageSize }),
       });
-      const data = await response.json().catch(() => null) as { submissions?:Submission[]; total?:number; counts?:{pending:number;approved:number;rejected:number}; statusMessage?:string } | null;
+      const data = await response.json().catch(() => null) as { submissions?:Submission[]; total?:number; page?:number; pageSize?:number; counts?:{pending:number;approved:number;rejected:number}; statusMessage?:string } | null;
       if (!response.ok) throw new Error(data?.statusMessage || "صف ثبت ملک مشتری بارگذاری نشد.");
       setSubmissions(Array.isArray(data?.submissions) ? data.submissions : []);
+      setTotal(Number(data?.total) || 0);
       setCounts({
         pending: Number(data?.counts?.pending) || 0,
         approved: Number(data?.counts?.approved) || 0,
@@ -93,7 +100,7 @@ export function AdminCustomerPropertySubmissions() {
     } finally {
       setLoading(false);
     }
-  }, [appliedQuery, statusFilter]);
+  }, [appliedQuery, statusFilter, fromDate, toDate, page, pageSize]);
 
   useEffect(() => {
     void load();
@@ -130,6 +137,89 @@ export function AdminCustomerPropertySubmissions() {
     const items = mediaDraftItems();
     const next = items.filter((_, itemIndex) => itemIndex !== index);
     setEditDraft((current) => ({ ...(current || {}), images: next }));
+  }
+
+  function toggleSelection(id: string) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAllCurrentPage() {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      const allSelected = submissions.length > 0 && submissions.every((item) => next.has(item.id));
+      if (allSelected) submissions.forEach((item) => next.delete(item.id));
+      else submissions.forEach((item) => next.add(item.id));
+      return next;
+    });
+  }
+
+  async function bulkSetPriority(priority: "low" | "normal" | "high") {
+    if (!selectedIds.size || statusFilter !== "pending") return;
+    try {
+      const response = await fetch("/api/admin-customer-property-submissions", {
+        method:"POST",
+        headers:{"content-type":"application/json"},
+        body:JSON.stringify({ action:"bulk_set_priority", ids:[...selectedIds], priority }),
+      });
+      const data = await response.json().catch(() => null) as { success?:boolean; updatedCount?:number; statusMessage?:string } | null;
+      if (!response.ok || !data?.success) throw new Error(data?.statusMessage || "تغییر گروهی اولویت انجام نشد.");
+      toast.success((Number(data.updatedCount) || 0).toLocaleString("fa-IR") + " پرونده بروزرسانی شد.");
+      setSelectedIds(new Set());
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تغییر گروهی اولویت انجام نشد.");
+    }
+  }
+
+  async function bulkReject() {
+    if (!selectedIds.size || statusFilter !== "pending") return;
+    const note = window.prompt("یادداشت رد برای پرونده‌های انتخاب‌شده (اختیاری):", reviewNote.trim()) ?? "";
+    if (!window.confirm("برای " + selectedIds.size.toLocaleString("fa-IR") + " پرونده درخواست رد ثبت شود؟")) return;
+    try {
+      const response = await fetch("/api/admin-customer-property-submissions", {
+        method:"POST",
+        headers:{"content-type":"application/json"},
+        body:JSON.stringify({ action:"bulk_reject", ids:[...selectedIds], reviewNote:note }),
+      });
+      const data = await response.json().catch(() => null) as { success?:boolean; updatedCount?:number; statusMessage?:string } | null;
+      if (!response.ok || !data?.success) throw new Error(data?.statusMessage || "رد گروهی انجام نشد.");
+      toast.success((Number(data.updatedCount) || 0).toLocaleString("fa-IR") + " پرونده رد شد.");
+      setSelectedIds(new Set());
+      setSelected(null);
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "رد گروهی انجام نشد.");
+    }
+  }
+
+  async function exportCsv() {
+    try {
+      const response = await fetch("/api/admin-customer-property-submissions", {
+        method:"POST",
+        headers:{"content-type":"application/json"},
+        body:JSON.stringify({ action:"export", status:statusFilter, query:appliedQuery, fromDate, toDate }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null) as { statusMessage?:string } | null;
+        throw new Error(data?.statusMessage || "خروجی CSV آماده نشد.");
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "hirmand-customer-submissions.csv";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      toast.success("خروجی CSV دانلود شد.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "خروجی CSV آماده نشد.");
+    }
   }
 
   async function setPriority(submission: Submission, priority: "low" | "normal" | "high") {
@@ -268,6 +358,8 @@ export function AdminCustomerPropertySubmissions() {
   }
 
   const pendingLabel = useMemo(() => counts.pending.toLocaleString("fa-IR") + " در انتظار بررسی", [counts.pending]);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const allCurrentPageSelected = submissions.length > 0 && submissions.every((item) => selectedIds.has(item.id));
 
   return (
     <section className="admin-customer-submissions admin-panel">
@@ -296,7 +388,7 @@ export function AdminCustomerPropertySubmissions() {
           ["approved","تأییدشده",counts.approved],
           ["rejected","ردشده",counts.rejected],
         ] as const).map(([value,label,count]) => (
-          <button type="button" key={value} className={statusFilter===value ? "is-active" : ""} onClick={()=>{setStatusFilter(value);setSelected(null);setEditDraft(null);}}>
+          <button type="button" key={value} className={statusFilter===value ? "is-active" : ""} onClick={()=>{setStatusFilter(value);setSelected(null);setEditDraft(null);setSelectedIds(new Set());setPage(1);}}>
             <span>{label}</span><strong>{count.toLocaleString("fa-IR")}</strong>
           </button>
         ))}
@@ -310,7 +402,23 @@ export function AdminCustomerPropertySubmissions() {
             <input value={searchQuery} onChange={(e)=>setSearchQuery(e.target.value)} onKeyDown={(e)=>{if(e.key==="Enter"){e.preventDefault();setAppliedQuery(searchQuery.trim());}}} placeholder="عنوان، محله، نام، موبایل یا کد رهگیری"/>
           </div>
         </label>
-        <button type="button" className="btn-ghost" onClick={()=>setAppliedQuery(searchQuery.trim())}><Search size={15}/> جست‌وجو</button>
+        <button type="button" className="btn-ghost" onClick={()=>{setAppliedQuery(searchQuery.trim());setPage(1);setSelectedIds(new Set());}}><Search size={15}/> جست‌وجو</button>
+        <label className="field">
+          <span>از تاریخ</span>
+          <input type="date" value={fromDate} max={toDate || undefined} onChange={(e)=>{setFromDate(e.target.value);setPage(1);setSelectedIds(new Set());}} />
+        </label>
+        <label className="field">
+          <span>تا تاریخ</span>
+          <input type="date" value={toDate} min={fromDate || undefined} onChange={(e)=>{setToDate(e.target.value);setPage(1);setSelectedIds(new Set());}} />
+        </label>
+        <label className="field">
+          <span>تعداد در صفحه</span>
+          <select value={pageSize} onChange={(e)=>{setPageSize(Number(e.target.value));setPage(1);setSelectedIds(new Set());}}>
+            <option value={10}>۱۰</option>
+            <option value={20}>۲۰</option>
+            <option value={40}>۴۰</option>
+          </select>
+        </label>
         <label className="field">
           <span>مشاور انتشار</span>
           <select value={consultant.phone} onChange={(e) => {
@@ -320,7 +428,12 @@ export function AdminCustomerPropertySubmissions() {
             {TEAM.map((person) => <option key={person.phone} value={person.phone}>{person.name} · {person.role}</option>)}
           </select>
         </label>
-        <div className="admin-customer-submissions-note">ابتدا اطلاعات و رسانه‌ها را بررسی کنید، سپس مشاور انتشار را انتخاب کرده و تأیید کنید.</div>
+        <button type="button" className="btn-ghost" onClick={()=>void exportCsv()}><Download size={15}/> خروجی CSV</button>
+        <div className="admin-customer-submissions-note">فیلترهای جست‌وجو و تاریخ روی خروجی CSV هم اعمال می‌شوند.</div>
+        <div className="admin-customer-bulk-toolbar">
+          <button type="button" className="btn-ghost" onClick={toggleAllCurrentPage} disabled={!submissions.length}><ListChecks size={15}/>{allCurrentPageSelected ? "لغو انتخاب صفحه" : "انتخاب همه این صفحه"}</button>
+          {selectedIds.size && statusFilter === "pending" ? <><select aria-label="اولویت گروهی" defaultValue="" onChange={(e)=>{if(e.target.value) void bulkSetPriority(e.target.value as "low"|"normal"|"high");e.currentTarget.value="";}}><option value="" disabled>اولویت گروهی…</option><option value="high">فوری</option><option value="normal">عادی</option><option value="low">کم</option></select><button type="button" className="btn-ghost danger" onClick={()=>void bulkReject()}><XCircle size={15}/> رد {selectedIds.size.toLocaleString("fa-IR")}</button></> : null}
+        </div>
       </div>
 
       {loading && !submissions.length ? <div className="admin-customer-submissions-empty">در حال دریافت درخواست‌های مشتری…</div> :
@@ -332,7 +445,10 @@ export function AdminCustomerPropertySubmissions() {
           const firstImage = media.find((src) => !isVideoUrl(src)) || "";
           const selectedOpen = selected?.id === submission.id;
           return (
-            <article key={submission.id} className={"admin-customer-submission-card" + (selectedOpen ? " is-open" : "")}>
+            <article key={submission.id} className={"admin-customer-submission-card" + (selectedOpen ? " is-open" : "") + (selectedIds.has(submission.id) ? " is-selected" : "")}>
+              <label className="admin-customer-submission-checkbox" title="انتخاب پرونده">
+                <input type="checkbox" checked={selectedIds.has(submission.id)} onChange={()=>toggleSelection(submission.id)} />
+              </label>
               <div className="admin-customer-submission-main">
                 <div className="admin-customer-submission-cover">
                   {firstImage ? <img src={firstImage} alt="" loading="lazy"/> : <ImageIcon size={25}/>}
@@ -478,6 +594,19 @@ export function AdminCustomerPropertySubmissions() {
           );
         })}
        </div>}
+       {submissions.length ? (
+         <div className="admin-customer-pagination">
+           <div className="admin-customer-pagination-meta">
+             <strong>{total.toLocaleString("fa-IR")} پرونده</strong>
+             <span>صفحه {page.toLocaleString("fa-IR")} از {totalPages.toLocaleString("fa-IR")}</span>
+             {selectedIds.size ? <span>{selectedIds.size.toLocaleString("fa-IR")} انتخاب شده</span> : null}
+           </div>
+           <div className="admin-customer-pagination-actions">
+             <button type="button" className="btn-ghost" onClick={()=>{setPage((value)=>Math.max(1,value-1));setSelectedIds(new Set());}} disabled={page<=1}><ArrowRight size={15}/> قبلی</button>
+             <button type="button" className="btn-ghost" onClick={()=>{setPage((value)=>Math.min(totalPages,value+1));setSelectedIds(new Set());}} disabled={page>=totalPages}><بعدی <ArrowLeft size={15}/></button>
+           </div>
+         </div>
+       ) : null}
     </section>
   );
 }
