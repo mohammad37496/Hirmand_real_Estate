@@ -1,5 +1,5 @@
 import { useEffect, useState, type MouseEvent } from "react";
-import { ArrowLeftRight, Download, Heart, Image as ImageIcon, Printer, Share2 } from "lucide-react";
+import { ArrowLeftRight, Heart, Image as ImageIcon, Printer, QrCode, Share2, X } from "lucide-react";
 import { toast } from "sonner";
 import type { PropertyCardData } from "@/lib/properties";
 import { trackAnalyticsEvent } from "@/lib/analytics";
@@ -32,12 +32,6 @@ const PROPERTY_TYPE_LABEL: Record<PropertyCardData["propertyType"], string> = {
   land: "زمین",
   commercial: "تجاری",
 };
-
-function shareCardImage(property: PropertyShareCardData) {
-  if (property.image) return property.image;
-  if (property.images?.[0]) return property.images[0];
-  return "";
-}
 
 function shareCardPrice(property: PropertyShareCardData) {
   const money = (value: string | null | undefined) => {
@@ -290,11 +284,20 @@ export function PropertyActions({
 }) {
   const [favorite, setFavorite] = useState(false);
   const [compared, setCompared] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
 
   useEffect(() => {
     setFavorite(readFavorites().includes(property.slug));
     setCompared(readCompare().includes(property.slug));
   }, [property.slug]);
+  useEffect(() => {
+    if (!qrOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setQrOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [qrOpen]);
 
   function onFavorite(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
@@ -319,6 +322,18 @@ export function PropertyActions({
     event.preventDefault();
     event.stopPropagation();
     void sharePropertyCard(property);
+  }
+
+  function onQr(event: MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    setQrOpen(true);
+  }
+
+  function closeQr(event?: MouseEvent) {
+    event?.preventDefault();
+    event?.stopPropagation();
+    setQrOpen(false);
   }
 
   function onPrint(event: MouseEvent<HTMLButtonElement>) {
@@ -347,6 +362,9 @@ export function PropertyActions({
     );
   }
 
+
+  const qrTarget = new URL(propertyPath(property), window.location.origin).toString();
+  const qrImageUrl = "https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=12&data=" + encodeURIComponent(qrTarget);
 
   return (
     <div className={`property-actions${compact ? " property-actions-compact" : ""}`}>
@@ -384,6 +402,16 @@ export function PropertyActions({
       <button
         type="button"
         className="property-action"
+        onClick={onQr}
+        aria-label="نمایش QR فایل"
+        title="QR فایل"
+      >
+        <QrCode size={compact ? 17 : 16} />
+        {!compact ? <span>QR فایل</span> : null}
+      </button>
+      <button
+        type="button"
+        className="property-action"
         onClick={onPrint}
         aria-label="چاپ فایل"
         title="چاپ فایل"
@@ -403,5 +431,82 @@ export function PropertyActions({
         {!compact ? <span>{compared ? "در مقایسه" : "مقایسه"}</span> : null}
       </button>
     </div>
+    {qrOpen ? (
+      <div
+        className="property-qr-backdrop"
+        role="presentation"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) closeQr(event);
+        }}
+      >
+        <section
+          className="property-qr-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={`property-qr-title-${property.id}`}
+          onMouseDown={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="property-qr-close"
+            onClick={(event) => closeQr(event)}
+            aria-label="بستن QR"
+            title="بستن"
+          >
+            <X size={18} />
+          </button>
+
+          <div className="property-qr-head">
+            <span className="property-qr-icon" aria-hidden="true"><QrCode size={22} /></span>
+            <div>
+              <span className="kicker">اشتراک سریع</span>
+              <h2 id={`property-qr-title-${property.id}`}>QR اختصاصی این فایل</h2>
+              <p>با اسکن این کد، صفحه جزئیات همین ملک باز می‌شود.</p>
+            </div>
+          </div>
+
+          <div className="property-qr-code-wrap">
+            <img
+              src={qrImageUrl}
+              alt={`QR فایل ${property.title}`}
+              className="property-qr-code"
+              width={360}
+              height={360}
+            />
+          </div>
+
+          <div className="property-qr-target" dir="ltr">{qrTarget}</div>
+
+          <div className="property-qr-actions">
+            <button
+              type="button"
+              className="btn-gold"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                void navigator.clipboard?.writeText(qrTarget).then(() => {
+                  toast.success("لینک فایل کپی شد.");
+                });
+              }}
+            >
+              کپی لینک فایل
+            </button>
+            <a
+              className="btn-ghost"
+              href={"https://api.qrserver.com/v1/create-qr-code/?size=1200x1200&margin=18&data=" + encodeURIComponent(qrTarget)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(event) => event.stopPropagation()}
+            >
+              باز کردن تصویر QR
+            </a>
+          </div>
+
+          <small className="property-qr-note">
+            مناسب برای چاپ روی کارت ویزیت، آگهی، شیشه دفتر و ارسال برای مشتری.
+          </small>
+        </section>
+      </div>
+    ) : null}
   );
 }
