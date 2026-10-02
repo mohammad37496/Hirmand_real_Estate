@@ -104,7 +104,7 @@ const VISIT_STATUS_LABEL: Record<VisitStatus, string> = {
 
 function formatDate(value: string) {
   try {
-    return new Intl.DateTimeFormat("fa-IR", {
+    return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
       dateStyle: "short",
       timeStyle: "short",
     }).format(new Date(value));
