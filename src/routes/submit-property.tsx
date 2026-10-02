@@ -133,7 +133,6 @@ function SubmitPropertyPage() {
       setMedia(Array.isArray(data.images) ? data.images.filter((v): v is string => typeof v === "string") : []);
       if (payload.reviewNote) toast.info("علت نیاز به اصلاح: " + payload.reviewNote);
     }).catch((error) => {
-      setEditToken("");
       setError(error instanceof Error ? error.message : "اطلاعات درخواست قابل دریافت نیست.");
     }).finally(() => setLoadingExisting(false));
   }, []);
