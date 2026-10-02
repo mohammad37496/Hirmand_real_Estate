@@ -36,7 +36,7 @@ export async function applyPropertyImageWatermark(
   file: File,
   settings: PropertyWatermarkSettings,
 ): Promise<File> {
-  if (!settings.enabled || !file.type.startsWith("image/")) return file;
+  if (!settings.enabled || !file.type.startsWith("image/") || file.type === "image/gif" || file.type === "image/svg+xml" || (!settings.showLogo && (!settings.showText || !settings.text.trim()))) return file;
 
   const objectUrl = URL.createObjectURL(file);
   try {
