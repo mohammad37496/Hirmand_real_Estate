@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { AlertTriangle, CheckCircle2, ClipboardWarning, Clock3 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ClipboardList, Clock3 } from "lucide-react";
 import type { Property } from "@/lib/properties";
 import "@/property-review-tools.css";
 
@@ -23,14 +23,14 @@ export function PropertyReviewAlerts({ property }: { property: Property }) {
   return (
     <section className="property-review-alerts" aria-labelledby="property-review-alerts-title">
       <header className="property-review-head">
-        <div><span className="kicker">کنترل قبل از تصمیم</span><h2 id="property-review-alerts-title"><ClipboardWarning size={20} /> مواردی که بهتر است دوباره بررسی شوند</h2><p>این بخش «ریسک قطعی» اعلام نمی‌کند؛ فقط بر اساس داده‌های فایل، سؤال‌ها و بررسی‌های مهم را اولویت‌بندی می‌کند.</p></div>
+        <div><span className="kicker">کنترل قبل از تصمیم</span><h2 id="property-review-alerts-title"><ClipboardList size={20} /> مواردی که بهتر است دوباره بررسی شوند</h2><p>این بخش «ریسک قطعی» اعلام نمی‌کند؛ فقط بر اساس داده‌های فایل، سؤال‌ها و بررسی‌های مهم را اولویت‌بندی می‌کند.</p></div>
         <div className="property-review-counts">
           {counts.high ? <span className="is-high">بالا {counts.high.toLocaleString("fa-IR")}</span> : null}
           {counts.medium ? <span className="is-medium">متوسط {counts.medium.toLocaleString("fa-IR")}</span> : null}
           {counts.low ? <span className="is-low">کم {counts.low.toLocaleString("fa-IR")}</span> : null}
         </div>
       </header>
-      {items.length ? <div className="property-review-list">{items.map((item) => <article key={item.stage + item.text} className={"property-review-item is-" + item.level}><span className="property-review-icon">{item.level === "high" ? <AlertTriangle size={16} /> : item.level === "medium" ? <Clock3 size={16} /> : <ClipboardWarning size={16} />}</span><div><strong>{item.stage}</strong><p>{item.text}</p></div></article>)}</div> : <div className="property-review-clean"><CheckCircle2 size={18} /> در داده‌های فعلی این فایل مورد ویژه‌ای برای پیگیری خودکار پیدا نشد؛ بررسی حضوری و قراردادی همچنان ضروری است.</div>}
+      {items.length ? <div className="property-review-list">{items.map((item) => <article key={item.stage + item.text} className={"property-review-item is-" + item.level}><span className="property-review-icon">{item.level === "high" ? <AlertTriangle size={16} /> : item.level === "medium" ? <Clock3 size={16} /> : <ClipboardList size={16} />}</span><div><strong>{item.stage}</strong><p>{item.text}</p></div></article>)}</div> : <div className="property-review-clean"><CheckCircle2 size={18} /> در داده‌های فعلی این فایل مورد ویژه‌ای برای پیگیری خودکار پیدا نشد؛ بررسی حضوری و قراردادی همچنان ضروری است.</div>}
     </section>
   );
 }
