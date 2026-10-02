@@ -1044,6 +1044,7 @@ function Gallery({
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
               >
+                <PropertyMediaWatermark />
                 {isVideoUrl(current) ? (
                   <VideoPlayer src={current} title={title} autoPlay className="is-lightbox" />
                 ) : (
