@@ -205,6 +205,7 @@ export interface FileRoutesById {
   '/favorites': typeof FavoritesRoute
   '/properties': typeof PropertiesRouteWithChildren
   '/tracking': typeof TrackingRoute
+  '/my-hirmand': typeof MyHirmandRoute
   '/areas/$slug': typeof AreasSlugRoute
   '/consultants/$id': typeof ConsultantsIdRoute
   '/file/$id': typeof FileIdRoute
@@ -275,6 +276,7 @@ export interface FileRouteTypes {
     | '/favorites'
     | '/properties'
     | '/tracking'
+    | '/my-hirmand'
     | '/areas/$slug'
     | '/consultants/$id'
     | '/file/$id'
