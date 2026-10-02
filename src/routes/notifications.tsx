@@ -6,10 +6,11 @@ import { listPublishedPropertyCards, type PropertyCardData } from "@/lib/propert
 import { absoluteUrl, socialMeta } from "@/lib/seo";
 
 type WatchAlert = { id: string; slug: string; type: string; message: string; createdAt: string };
-type FeedItem = { id: string; kind: "watch" | "drop" | "new"; title: string; text: string; href?: string; createdAt?: string; alertId?: string };
+type FeedItem = { id: string; kind: "watch" | "drop" | "new" | "saved-search"; title: string; text: string; href?: string; createdAt?: string; alertId?: string };
 
 const SEEN_AT_KEY = "hirmand-notification-seen-at";
 const SEEN_ALERTS_KEY = "hirmand-notification-alerts-seen";
+const SAVED_SEARCHES_KEY = "hirmand-saved-searches";
 
 export const Route = createFileRoute("/notifications")({
   head: () => {
@@ -21,6 +22,16 @@ export const Route = createFileRoute("/notifications")({
 });
 
 function safeRead(key: string) { try { return localStorage.getItem(key); } catch { return null; } }
+function readSavedSearches(): Array<{ id: string; name: string; params: string; alerts?: boolean; lastCheckedAt?: string }> {
+  try {
+    const raw = localStorage.getItem(SAVED_SEARCHES_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((item) => item && typeof item.id === "string" && typeof item.params === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 function safeWrite(key: string, value: string) {
   try {
     localStorage.setItem(key, value);
@@ -32,12 +43,14 @@ function safeWrite(key: string, value: string) {
 function NotificationsPage() {
   const [alerts, setAlerts] = useState<WatchAlert[]>([]);
   const [recent, setRecent] = useState<PropertyCardData[]>([]);
+  const [savedSearchMatches, setSavedSearchMatches] = useState<Array<{ id: string; name: string; count: number; createdAt: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [browserPermission, setBrowserPermission] = useState<NotificationPermission | "unsupported">("unsupported");
 
   async function refresh() {
     setLoading(true);
     try {
+      const savedSearches = readSavedSearches().filter((item) => item.alerts !== false && item.lastCheckedAt);
       const [watchResponse, latest] = await Promise.all([
         fetch("/api/property-watch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "sync" }) })
           .then((response) => response.json() as Promise<{ alerts?: WatchAlert[] }>),
@@ -46,14 +59,56 @@ function NotificationsPage() {
       const nextAlerts = Array.isArray(watchResponse.alerts) ? watchResponse.alerts : [];
       setAlerts(nextAlerts);
       setRecent(latest);
+
+      const searchMatches = await Promise.all(savedSearches.map(async (search) => {
+        try {
+          const params = new URLSearchParams(search.params);
+          const transactionType = ["sell", "buy", "rent", "mortgage"].includes(params.get("transaction") ?? "") ? params.get("transaction") as "sell" | "buy" | "rent" | "mortgage" : undefined;
+          const propertyType = params.get("type") || undefined;
+          const rows = await listPublishedPropertyCards({ data: {
+            q: params.get("q") || undefined,
+            transactionType,
+            propertyType: propertyType as never,
+            neighborhood: params.get("neighborhood") || undefined,
+            minArea: params.get("minArea") || undefined,
+            maxArea: params.get("maxArea") || undefined,
+            minPrice: params.get("minPrice") || undefined,
+            maxPrice: params.get("maxPrice") || undefined,
+            minBedrooms: params.get("bedrooms") || undefined,
+            sort: "newest",
+            offset: 0,
+          }});
+          const since = Date.parse(search.lastCheckedAt || "");
+          if (!Number.isFinite(since)) return null;
+          const matching = rows.filter((property) => {
+            const published = property.publishedAt ? Date.parse(property.publishedAt) : NaN;
+            return Number.isFinite(published) && published > since;
+          });
+          return matching.length ? {
+            id: search.id,
+            name: search.name,
+            count: matching.length,
+            createdAt: matching.reduce((latestAt, item) => Math.max(latestAt, Date.parse(item.publishedAt || "") || 0), 0) ? new Date(Math.max(...matching.map((item) => Date.parse(item.publishedAt || "") || 0))).toISOString() : new Date().toISOString(),
+          } : null;
+        } catch {
+          return null;
+        }
+      }));
+      const nextSearchMatches = searchMatches.filter((item): item is { id: string; name: string; count: number; createdAt: string } => Boolean(item));
+      setSavedSearchMatches(nextSearchMatches);
       if ("Notification" in window) setBrowserPermission(Notification.permission);
 
       const seen = new Set<string>(JSON.parse(safeRead(SEEN_ALERTS_KEY) ?? "[]"));
       const freshAlerts = nextAlerts.filter((alert) => !seen.has(alert.id));
-      if (Notification.permission === "granted" && freshAlerts.length) {
+      const freshSearches = nextSearchMatches.filter((item) => !seen.has("search:" + item.id));
+      if ("Notification" in window && Notification.permission === "granted" && (freshAlerts.length || freshSearches.length)) {
         for (const alert of freshAlerts.slice(0, 2)) {
           new Notification("هیرمند · اعلان ملک", { body: alert.message });
           seen.add(alert.id);
+        }
+        for (const item of freshSearches.slice(0, 1)) {
+          new Notification("هیرمند · فایل جدید مطابق جستجو", { body: item.name + " · " + item.count.toLocaleString("fa-IR") + " فایل جدید" });
+          seen.add("search:" + item.id);
         }
         safeWrite(SEEN_ALERTS_KEY, JSON.stringify([...seen].slice(-100)));
       }
@@ -75,6 +130,17 @@ function NotificationsPage() {
       createdAt: alert.createdAt,
       alertId: alert.id,
     }));
+    for (const item of savedSearchMatches) {
+      items.push({
+        id: "search:" + item.id,
+        kind: "saved-search",
+        title: "فایل جدید مطابق جستجوی «" + item.name + "»",
+        text: item.count.toLocaleString("fa-IR") + " فایل تازه با معیارهای جستجوی ذخیره‌شده پیدا شد.",
+        href: "/properties",
+        createdAt: item.createdAt,
+        alertId: "search:" + item.id,
+      });
+    }
     const seenAt = Date.parse(safeRead(SEEN_AT_KEY) ?? "");
     const windowStart = Number.isFinite(seenAt) ? seenAt : Date.now() - 48 * 60 * 60 * 1000;
     for (const property of recent) {
@@ -87,7 +153,7 @@ function NotificationsPage() {
       }
     }
     return items.sort((a, b) => Date.parse(b.createdAt ?? "") - Date.parse(a.createdAt ?? "")).slice(0, 30);
-  }, [alerts, recent]);
+  }, [alerts, recent, savedSearchMatches]);
 
   async function requestBrowserNotifications() {
     if (!("Notification" in window)) { setBrowserPermission("unsupported"); return; }
@@ -102,11 +168,13 @@ function NotificationsPage() {
       await fetch("/api/property-watch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "seen", alertIds: ids }) }).catch(() => {});
     }
     const alertSeen = new Set<string>(JSON.parse(safeRead(SEEN_ALERTS_KEY) ?? "[]"));
+    savedSearchMatches.forEach((item) => alertSeen.add("search:" + item.id));
     alerts.forEach((alert) => alertSeen.add(alert.id));
     safeWrite(SEEN_ALERTS_KEY, JSON.stringify([...alertSeen].slice(-100)));
     safeWrite(SEEN_AT_KEY, new Date().toISOString());
     setAlerts([]);
     setRecent([]);
+    setSavedSearchMatches([]);
   }
 
   return (
@@ -115,7 +183,7 @@ function NotificationsPage() {
         <section className="smart-tool-hero notification-hero">
           <span className="kicker">یک‌جا، بدون گم‌شدن اعلان</span>
           <h1>مرکز اعلان‌های هیرمند</h1>
-          <p>کاهش قیمت، تغییر وضعیت فایل‌های پیگیری‌شده و فایل‌های تازه در یک صفحه جمع می‌شوند.</p>
+          <p>کاهش قیمت، تغییر وضعیت فایل‌های پیگیری‌شده، فایل‌های تازه و نتیجه جستجوهای ذخیره‌شده در یک صفحه جمع می‌شوند.</p>
           <div className="notification-actions">
             <button type="button" className="btn-gold" onClick={() => void refresh()} disabled={loading}><RefreshCw size={16} /> {loading ? "در حال به‌روزرسانی…" : "به‌روزرسانی"}</button>
             {browserPermission !== "granted" && browserPermission !== "denied" && browserPermission !== "unsupported" ? <button type="button" className="btn-ghost" onClick={() => void requestBrowserNotifications()}><BellRing size={16} /> فعال‌سازی اعلان مرورگر</button> : null}
@@ -136,7 +204,7 @@ function NotificationsPage() {
                 {item.href ? <Link to={item.href} className="notification-open">باز کردن</Link> : null}
               </article>
             ))}
-          </div> : <section className="property-empty"><Bell size={28} /><strong>فعلاً اعلان فعالی ندارید.</strong><p>روی جزئیات فایل‌ها «پیگیری کاهش قیمت» را فعال کنید تا تغییرات مهم را از همین‌جا ببینید.</p><Link to="/properties" className="btn-gold">رفتن به فایل‌ها</Link></section>}
+          </div> : <section className="property-empty"><Bell size={28} /><strong>فعلاً اعلان فعالی ندارید.</strong><p>فایل جدید مطابق جستجوهای ذخیره‌شده یا تغییر مهم در فایل‌های پیگیری‌شده، از همین‌جا قابل مشاهده است.</p><Link to="/properties" className="btn-gold">رفتن به فایل‌ها</Link></section>}
         </section>
       </main>
     </SiteChrome>
