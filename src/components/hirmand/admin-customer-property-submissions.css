@@ -61,3 +61,7 @@
   .admin-customer-submission-edit-grid{grid-template-columns:1fr}
   .admin-customer-submission-edit-head{align-items:flex-start;flex-direction:column}
 }
+
+.admin-customer-review-note{padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:var(--card,#fff)}
+.admin-customer-review-note>span{display:block;color:var(--subtle);font-size:.62rem}
+.admin-customer-review-note p{margin:4px 0 0;color:var(--muted);font-size:.68rem;line-height:1.8;white-space:pre-wrap}
