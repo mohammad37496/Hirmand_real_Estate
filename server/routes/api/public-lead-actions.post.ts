@@ -67,6 +67,13 @@ export default defineEventHandler(async (event) => {
     if (!nextDate) {
       throw createError({ statusCode: 422, statusMessage: "زمان جدید باید معتبر و حداقل ۳۰ دقیقه از اکنون فاصله داشته باشد." });
     }
+    const conflictRows = await sql.query<{ id: string }>(
+      "select id from leads where property_id is not null and property_id::text=(select property_id::text from leads where id=$1) and id<>$1 and visit_status in ('requested','confirmed') and abs(extract(epoch from (visit_preferred_at - $2::timestamptz))) < 2700 limit 1",
+      [leadId, nextDate],
+    );
+    if (conflictRows[0]) {
+      throw createError({ statusCode: 409, statusMessage: "این بازه برای بازدید دیگری رزرو شده است. زمان دیگری را انتخاب کنید." });
+    }
     await sql.query(
       "update leads set visit_preferred_at=$2, visit_status='requested', updated_at=current_timestamp where id=$1",
       [leadId, nextDate],
