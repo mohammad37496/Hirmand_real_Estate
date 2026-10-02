@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
 
   const sql = await getSql();
   const rows = await sql.query<Record<string, unknown>>(
-    "select l.public_tracking_token,l.status,l.created_at,l.updated_at,l.consultant,l.deal,l.property_type,l.neighborhood,l.visit_requested_at,l.visit_preferred_at,l.visit_status," +
+    "select l.public_tracking_token,l.status,l.created_at,l.updated_at,l.consultant,l.deal,l.property_type,l.neighborhood,l.visit_requested_at,l.visit_preferred_at,l.visit_status,l.callback_preferred_at,l.offer_amount,l.offer_conditions," +
       "cps.status as customer_property_submission_status,cps.review_note as customer_property_submission_review_note," +
       "p.title as property_title,p.slug as property_slug " +
       "from leads l left join properties p on p.id::text=l.property_id::text " +
@@ -62,6 +62,9 @@ export default defineEventHandler(async (event) => {
   const updatedAt = row.updated_at ? new Date(String(row.updated_at)).toISOString() : null;
   const visitRequestedAt = row.visit_requested_at ? new Date(String(row.visit_requested_at)).toISOString() : null;
   const visitPreferredAt = row.visit_preferred_at ? new Date(String(row.visit_preferred_at)).toISOString() : null;
+  const callbackPreferredAt = row.callback_preferred_at ? new Date(String(row.callback_preferred_at)).toISOString() : null;
+  const offerAmount = row.offer_amount == null ? null : Number(row.offer_amount);
+  const offerConditions = String(row.offer_conditions ?? "");
   const customerPropertySubmissionStatus = row.customer_property_submission_status == null ? null : String(row.customer_property_submission_status);
   const customerPropertySubmissionReviewNote = row.customer_property_submission_review_note == null ? "" : String(row.customer_property_submission_review_note);
 
@@ -103,6 +106,12 @@ export default defineEventHandler(async (event) => {
   if (visitRequestedAt) {
     timeline.push({ type: "visit", label: "درخواست بازدید ثبت شد", note: VISIT_LABEL[visitStatus] ?? "بازدید در حال هماهنگی است.", at: visitRequestedAt });
   }
+  if (callbackPreferredAt) {
+    timeline.push({ type: "visit", label: "زمان تماس ثبت شد", note: "زمان پیشنهادی تماس: " + new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tehran" }).format(new Date(callbackPreferredAt)), at: callbackPreferredAt });
+  }
+  if (offerAmount != null && offerAmount > 0) {
+    timeline.push({ type: "status", label: "پیشنهاد قیمت ثبت شد", note: "مبلغ پیشنهاد: " + offerAmount.toLocaleString("fa-IR") + " تومان", at: updatedAt || createdAt });
+  }
   if (visitPreferredAt) {
     timeline.push({ type: "visit", label: "زمان بازدید ثبت شد", note: "زمان پیشنهادی: " + new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tehran" }).format(new Date(visitPreferredAt)), at: visitPreferredAt });
   }
@@ -132,6 +141,9 @@ export default defineEventHandler(async (event) => {
     neighborhood: row.neighborhood ? String(row.neighborhood) : "",
     visitRequestedAt,
     visitPreferredAt,
+    callbackPreferredAt,
+    offerAmount,
+    offerConditions,
     customerPropertySubmissionStatus,
     customerPropertySubmissionReviewNote,
     timeline,
