@@ -1,6 +1,6 @@
 import { useEffect, useState, type MouseEvent } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ArrowLeftRight, BadgeDollarSign, ChevronDown, Hash, Landmark, PiggyBank, WalletCards, Menu, X } from "lucide-react";
+import { ArrowLeftRight, BadgeDollarSign, Bell, ChevronDown, Hash, Landmark, LocateFixed, PiggyBank, Search, WalletCards, Menu, X } from "lucide-react";
 import { NAV, SITE } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { CallMenu } from "./call-menu";
@@ -129,6 +129,9 @@ export function Header() {
         </nav>
 
         <div className="nav-actions">
+          <Link to="/smart-search" className="header-inquiry"><Search size={15} /> جستجوی هوشمند</Link>
+          <Link to="/notifications" className="header-inquiry"><Bell size={15} /> اعلان‌ها</Link>
+          <Link to="/nearby" className="header-inquiry"><LocateFixed size={15} /> نزدیک من</Link>
           <Link to="/submit-property" className="header-inquiry">ثبت ملک</Link>
           <Link to="/file-code" className="header-inquiry">
             <Hash size={15} /> کد فایل
@@ -234,6 +237,9 @@ export function Header() {
             </Link>
           );
         })}
+        <Link to="/smart-search" className="mobile-menu-inquiry" onClick={closeMenu}><Search size={15} /> جستجوی هوشمند</Link>
+        <Link to="/notifications" className="mobile-menu-inquiry" onClick={closeMenu}><Bell size={15} /> اعلان‌ها</Link>
+        <Link to="/nearby" className="mobile-menu-inquiry" onClick={closeMenu}><LocateFixed size={15} /> فایل‌های نزدیک من</Link>
         <Link to="/file-code" className="mobile-menu-inquiry" onClick={closeMenu}>
           <Hash size={15} /> جستجوی کد فایل
         </Link>
