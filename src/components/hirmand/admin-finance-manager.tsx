@@ -81,7 +81,7 @@ export function AdminFinanceManager(){
         <span className={"admin-finance-icon "+item.kind}>{item.kind==="income"?<ArrowUpCircle size={19}/>:<ArrowDownCircle size={19}/>}</span>
         <div><strong>{item.title}</strong><small>{item.category||"بدون دسته"}{item.consultant?" · "+item.consultant:""}{item.note?" · "+item.note:""}</small></div>
         <span className={"admin-finance-amount "+item.kind}>{item.kind==="income"?"+":"−"} {formatToman(item.amount)}</span>
-        <time>{new Date(item.transactionDate+"T12:00:00").toLocaleDateString("fa-IR")}</time>
+        <time>{new Date(item.transactionDate+"T12:00:00").toLocaleDateString("fa-IR-u-ca-persian")}</time>
         <button className="admin-icon-btn" type="button" title="حذف" onClick={()=>void remove(item.id)}><Trash2 size={15}/></button>
       </article>)}</div>}
     </section>
