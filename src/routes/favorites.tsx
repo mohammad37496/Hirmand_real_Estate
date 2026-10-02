@@ -12,6 +12,7 @@ import { FavoriteMatchProfile } from "@/components/hirmand/favorite-match-profil
 import { FavoriteNeighborhoodSnapshot } from "@/components/hirmand/favorite-neighborhood-snapshot";
 import { FavoriteShortlistReport } from "@/components/hirmand/favorite-shortlist-report";
 import { WorkspaceBackupRestore } from "@/components/hirmand/workspace-backup-restore";
+import { CustomerWorkspaceSync } from "@/components/hirmand/customer-workspace-sync";
 import { FavoriteWeightedMatrix } from "@/components/hirmand/favorite-weighted-matrix";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
@@ -425,6 +426,7 @@ function FavoritesPage() {
           </div>
         </header>
 
+        <CustomerWorkspaceSync />
         <BuyerFinancialProfile properties={properties} />
         <FavoriteMatchProfile properties={properties} />
         <FavoriteActionCenter properties={properties} />
