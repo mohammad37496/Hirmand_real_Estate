@@ -209,3 +209,25 @@
     flex-basis: 5px;
   }
 }
+
+
+/* Closed listings: keep the CTA useful without implying an available viewing slot. */
+.property-detail-page .property-final-cta-closed {
+  background:
+    linear-gradient(135deg, rgb(11 26 43 / 2%), rgb(192 138 42 / 5%)),
+    var(--hr-panel, var(--card));
+}
+
+.property-detail-page .property-final-cta-closed .kicker {
+  color: var(--hr-muted, var(--muted));
+}
+
+.property-detail-page .property-final-cta-similar {
+  text-decoration: none;
+}
+
+@media (max-width: 760px) {
+  .property-detail-page .property-final-cta-closed .property-final-cta-actions {
+    grid-template-columns: 1fr;
+  }
+}
