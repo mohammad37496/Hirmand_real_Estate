@@ -10,6 +10,7 @@ import { decodeSlugCandidates, legacyIdFragments } from "@/lib/property-slug";
 import { calculateBudgetMatch, DEFAULT_MATCH_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
 import { MAX_PROPERTY_MEDIA, isAllowedMediaRef } from "@/lib/media";
 import { deleteStoredMedia } from "@/lib/media-store.server";
+import { writeAdminAuditLog } from "@/lib/admin-audit";
 import { getPublishReadiness } from "@/lib/property-publish-readiness";
 import {
   PROPERTY_CABINET_OPTIONS,
@@ -1288,6 +1289,11 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
         [beforePayload],
       );
     }
+    await writeAdminAuditLog({
+      action: "property.bulk_status",
+      entityType: "property",
+      metadata: { ids: data.ids, count: rows.length, status: data.status },
+    });
     clearPropertyReadCache();
     return { success: true, updated: rows.length };
   });
@@ -1497,6 +1503,11 @@ export const bulkDeleteProperties = createServerFn({ method: "POST" })
       );
     }
 
+    await writeAdminAuditLog({
+      action: "property.bulk_trashed",
+      entityType: "property",
+      metadata: { ids: data.ids, count: rows.length },
+    });
     clearPropertyReadCache();
     return { success: true, deleted: rows.length };
   });
@@ -1546,6 +1557,13 @@ export const restoreDeletedProperty = createServerFn({ method: "POST" })
         JSON.stringify({ status: String(rows[0].status ?? "draft") }),
       ],
     ).catch(() => {});
+    await writeAdminAuditLog({
+      action: "property.restored",
+      entityType: "property",
+      entityId: data.id,
+      entityTitle: String(rows[0].title ?? ""),
+      metadata: { restoredStatus: String(rows[0].status ?? "draft") },
+    });
     clearPropertyReadCache();
     return { success: true, restored: 1, title: String(rows[0].title ?? "") };
   });
@@ -1566,6 +1584,12 @@ export const permanentlyDeleteProperty = createServerFn({ method: "POST" })
       ? existing.images.filter((item): item is string => typeof item === "string")
       : [];
     await Promise.all(mediaUrls.map((url) => deleteStoredMedia(url)));
+    await writeAdminAuditLog({
+      action: "property.permanently_deleted",
+      entityType: "property",
+      entityId: data.id,
+      entityTitle: String(existing.title ?? ""),
+    });
     clearPropertyReadCache();
     return { success: true, deleted: 1, title: String(existing.title ?? "") };
   });
@@ -1621,6 +1645,16 @@ export const updatePropertySchedule = createServerFn({ method: "POST" })
       [data.id, data.publishAt ?? null, data.unpublishAt ?? null],
     );
     if (!rows[0]) throw new Error("فایل برای زمان‌بندی پیدا نشد.");
+    await writeAdminAuditLog({
+      action: "property.schedule_updated",
+      entityType: "property",
+      entityId: data.id,
+      entityTitle: String(rows[0].title ?? ""),
+      metadata: {
+        publishAt: rows[0].publish_at ?? null,
+        unpublishAt: rows[0].unpublish_at ?? null,
+      },
+    });
     clearPropertyReadCache();
     return {
       success: true,
@@ -1914,6 +1948,13 @@ export const saveProperty = createServerFn({ method: "POST" })
         JSON.stringify(mapProperty(rows[0], { admin: true })),
       ],
     );
+    await writeAdminAuditLog({
+      action: action === "created" ? "property.created" : "property.updated",
+      entityType: "property",
+      entityId: id,
+      entityTitle: String(rows[0]?.title ?? ""),
+      metadata: { status: rows[0]?.status ?? null },
+    });
 
     clearPropertyReadCache();
     return mapProperty(rows[0], { admin: true });
@@ -2052,6 +2093,13 @@ export const deleteProperty = createServerFn({ method: "POST" })
          values ($1, 'deleted', $2::jsonb, null)`,
         [data.id, JSON.stringify(mapProperty(existing, { admin: true }))],
       );
+      await writeAdminAuditLog({
+        action: "property.trashed",
+        entityType: "property",
+        entityId: data.id,
+        entityTitle: String(existing.title ?? ""),
+        metadata: { fromStatus: existing.status ?? null },
+      });
     }
 
     clearPropertyReadCache();
