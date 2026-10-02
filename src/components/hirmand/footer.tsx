@@ -1,26 +1,38 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { SITE } from "@/lib/site";
+import { getPublicSiteSettings, type SiteSettings } from "@/lib/site-settings";
 import { BrandLogo } from "./logo";
+import { useEffect, useState } from "react";
 import { scrollToId } from "./scroll";
 import { EitaaIcon, InstagramIcon, TelegramIcon, WhatsAppIcon } from "./social-icons";
 
 export function Footer() {
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
   const onHome = useRouterState({ select: (s) => s.location.pathname === "/" });
   const year = new Date().getFullYear();
 
+  useEffect(() => {
+    let cancelled = false;
+    void getPublicSiteSettings().then((value) => {
+      if (!cancelled) setSettings(value);
+    }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, []);
+
   const socials = [
-    { href: SITE.instagram, label: "اینستاگرام هیرمند", Icon: InstagramIcon },
-    { href: SITE.telegram, label: "تلگرام هیرمند", Icon: TelegramIcon },
-    { href: SITE.eitaa, label: "ایتا هیرمند", Icon: EitaaIcon },
-    { href: SITE.whatsappDirect, label: "واتساپ هیرمند", Icon: WhatsAppIcon },
+    { href: settings?.instagramUrl || SITE.instagram, label: "اینستاگرام هیرمند", Icon: InstagramIcon },
+    { href: settings?.telegramUrl || SITE.telegram, label: "تلگرام هیرمند", Icon: TelegramIcon },
+    { href: settings?.eitaaUrl || SITE.eitaa, label: "ایتا هیرمند", Icon: EitaaIcon },
+    { href: settings?.whatsappUrl || SITE.whatsappDirect, label: "واتساپ هیرمند", Icon: WhatsAppIcon },
   ] as const;
 
   return (
     <footer className="footer">
       <BrandLogo size="footer" />
       <h3>{SITE.nameFa}</h3>
-      <p>{SITE.tagline}</p>
-      <p className="footer-address">{SITE.address}</p>
+      <p>{settings?.footerTagline || SITE.tagline}</p>
+      <p className="footer-address">{settings?.address || SITE.address}</p>
+      {settings?.officeHours ? <p className="footer-address">{settings.officeHours}</p> : null}
 
       <div className="chip-row" style={{ justifyContent: "center", margin: "18px 0 8px" }} aria-label="شبکه‌های اجتماعی">
         {socials.map(({ href, label, Icon }) => (

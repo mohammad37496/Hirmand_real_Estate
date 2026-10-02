@@ -1,5 +1,6 @@
 import { SITE, TEAM } from "@/lib/site";
 import type { Property } from "@/lib/properties";
+import type { SiteSettings } from "@/lib/site-settings";
 import { propertyPath } from "@/lib/property-path";
 import { DB_MEDIA_PATH, isDivarRemoteHost } from "@/lib/media";
 import {
@@ -106,9 +107,10 @@ export function socialMeta(input: {
   ] as const;
 }
 
-export function homeHead() {
-  const title = SITE.title;
-  const description = SITE.description;
+export function homeHead(settings?: SiteSettings) {
+  const title = settings?.siteTitle?.trim() || SITE.title;
+  const description = settings?.siteDescription?.trim() || SITE.description;
+  const keywords = settings?.seoKeywords?.trim() || "املاک اصفهان, مشاور املاک اصفهان, خرید خانه اصفهان, فروش آپارتمان اصفهان, رهن و اجاره اصفهان, املاک هیرمند";
   const url = absoluteUrl("/");
   return {
     meta: [
@@ -116,20 +118,21 @@ export function homeHead() {
       { name: "description", content: description },
       {
         name: "keywords",
-        content:
-          "املاک اصفهان, مشاور املاک اصفهان, خرید خانه اصفهان, فروش آپارتمان اصفهان, رهن و اجاره اصفهان, املاک هیرمند, گروه مشاورین املاک هیرمند, املاک سیمین, مرداویج, جلفا, سپاهان شهر",
+        content: keywords,
       },
-      { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
-      { name: "googlebot", content: "index, follow" },
+      { name: "robots", content: settings?.noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
+      { name: "googlebot", content: settings?.noindex ? "noindex, nofollow" : "index, follow" },
       { name: "author", content: SITE.nameFa },
       { name: "geo.region", content: "IR-04" },
       { name: "geo.placename", content: "Isfahan" },
       { name: "geo.position", content: `${SITE.lat};${SITE.lng}` },
       { name: "ICBM", content: `${SITE.lat}, ${SITE.lng}` },
       { name: "language", content: "fa" },
-      ...(typeof import.meta !== "undefined" && import.meta.env?.VITE_GOOGLE_SITE_VERIFICATION
-        ? [{ name: "google-site-verification", content: import.meta.env.VITE_GOOGLE_SITE_VERIFICATION }]
-        : []),
+      ...(settings?.googleSiteVerification?.trim()
+        ? [{ name: "google-site-verification", content: settings.googleSiteVerification.trim() }]
+        : typeof import.meta !== "undefined" && import.meta.env?.VITE_GOOGLE_SITE_VERIFICATION
+          ? [{ name: "google-site-verification", content: import.meta.env.VITE_GOOGLE_SITE_VERIFICATION }]
+          : []),
       ...socialMeta({ title, description, url }),
     ],
     links: [
@@ -314,7 +317,17 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
   };
 }
 
-export function enhancedOrganizationJsonLd() {
+export function enhancedOrganizationJsonLd(settings?: SiteSettings) {
+  const description = settings?.siteDescription?.trim() || SITE.description;
+  const address = settings?.address?.trim() || SITE.address;
+  const mobile = settings?.phoneMobile?.trim() || SITE.phone.mobile;
+  const office = settings?.phoneOffice?.trim() || SITE.phone.office;
+  const sameAs = [
+    settings?.instagramUrl?.trim() || SITE.instagram,
+    settings?.telegramUrl?.trim() || SITE.telegram,
+    settings?.eitaaUrl?.trim() || SITE.eitaa,
+    settings?.whatsappUrl?.trim() || SITE.whatsappDirect,
+  ].filter(Boolean);
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -327,12 +340,16 @@ export function enhancedOrganizationJsonLd() {
         logo: absoluteUrl("/images/hirmand-logo.png"),
         image: [absoluteUrl("/images/hirmand-logo.png"), ogImageUrl()],
         founder: { "@type": "Person", name: "آقای شیخ" },
-        telephone: ["+989131056029", "+989183576883", "+983137850615"],
-        description: SITE.description,
+        telephone: [
+          `+98${mobile.replace(/^0/, "")}`,
+          `+98${office.replace(/^0/, "")}`,
+          "+989183576883",
+        ],
+        description,
         slogan: `${SITE.sloganStrong} ${SITE.sloganRest}`,
         address: {
           "@type": "PostalAddress",
-          streetAddress: "سه راه سیمین، خیابان جانبازان، بلوار شهید بخشی",
+          streetAddress: address.replace(/^اصفهان،\s*/,""),
           addressLocality: SITE.locality,
           addressRegion: "اصفهان",
           addressCountry: "IR",
@@ -368,14 +385,14 @@ export function enhancedOrganizationJsonLd() {
           jobTitle: person.role,
           telephone: `+98${person.phone.slice(1)}`,
         })),
-        sameAs: [SITE.instagram, SITE.telegram, SITE.eitaa, SITE.whatsappDirect].filter(Boolean),
+        sameAs,
       },
       {
         "@type": "WebSite",
         "@id": `${SITE.url}#website`,
         url: SITE.url,
         name: SITE.nameFa,
-        description: SITE.description,
+        description,
         inLanguage: "fa-IR",
         publisher: { "@id": `${SITE.url}#organization` },
         potentialAction: {
