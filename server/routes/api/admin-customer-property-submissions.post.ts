@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
     const query = typeof body.query === "string" ? body.query.trim().slice(0, 80) : "";
     const pattern = "%" + query + "%";
     const rows = await sql.query<Record<string, unknown>>(
-      "select s.id,s.lead_id,s.public_tracking_token,s.status,s.owner_name,s.owner_phone,s.property_data,s.review_note,s.property_id,s.created_at,s.reviewed_at,s.priority,s.updated_at,(
+      "select s.id,s.lead_id,s.public_tracking_token,s.status,s.owner_name,s.owner_phone,s.property_data,s.review_note,s.property_id,s.created_at,s.reviewed_at,s.priority,s.updated_at,s.queue_started_at,(
         exists(select 1 from customer_property_submissions d where d.id<>s.id and d.status in ('pending','approved') and (d.owner_phone=s.owner_phone or ((d.property_data->>'neighborhood')=(s.property_data->>'neighborhood') and (d.property_data->>'areaM2')=(s.property_data->>'areaM2') and lower(coalesce(d.property_data->>'title',''))=lower(coalesce(s.property_data->>'title','')))))
         or exists(select 1 from properties p where p.status <> 'archived' and (p.owner_phone=s.owner_phone or ((p.neighborhood=(s.property_data->>'neighborhood')) and coalesce(p.area_m2,0)::text=(s.property_data->>'areaM2') and lower(coalesce(p.title,''))=lower(coalesce(s.property_data->>'title','')))))
       ) as possible_duplicate from customer_property_submissions s where s.status=$1 and ($2='' or s.owner_name ilike $3 or s.owner_phone ilike $3 or s.public_tracking_token ilike $3 or coalesce(s.property_data->>'title','') ilike $3 or coalesce(s.property_data->>'neighborhood','') ilike $3) order by case s.priority when 'high' then 0 when 'normal' then 1 else 2 end, coalesce(s.updated_at,s.created_at) asc limit 40",
@@ -88,7 +88,7 @@ export default defineEventHandler(async (event) => {
         reviewedAt: row.reviewed_at == null ? null : new Date(String(row.reviewed_at)).toISOString(),
         priority: String(row.priority ?? "normal"),
         updatedAt: row.updated_at == null ? null : new Date(String(row.updated_at)).toISOString(),
-        ageHours: Math.max(0, (Date.now() - new Date(String(row.updated_at ?? row.created_at)).getTime()) / 3600000),
+        ageHours: Math.max(0, (Date.now() - new Date(String(row.queue_started_at ?? row.created_at)).getTime()) / 3600000),
         possibleDuplicate: Boolean(row.possible_duplicate),
       })),
     };
