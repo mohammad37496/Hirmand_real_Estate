@@ -2647,6 +2647,37 @@ export function AdminPropertiesPage() {
                 </fieldset>
               </div>
 
+                <fieldset className="admin-section" id="section-internal">
+                  <legend>یادداشت داخلی و اولویت فایل — خصوصی</legend>
+                  <div className="admin-private-notice">
+                    این اطلاعات فقط برای تیم هیرمند است و در صفحه عمومی ملک نمایش داده نمی‌شود.
+                  </div>
+                  <div className="admin-form-grid">
+                    <label className="field">
+                      <span>اولویت پیگیری فایل</span>
+                      <select
+                        value={form.internalPriority}
+                        onChange={(e) => update("internalPriority", e.target.value as FormState["internalPriority"])}
+                      >
+                        <option value="urgent">فوری</option>
+                        <option value="high">مهم</option>
+                        <option value="normal">عادی</option>
+                        <option value="low">کم‌اهمیت</option>
+                      </select>
+                    </label>
+                    <label className="field admin-span-2">
+                      <span>یادداشت داخلی</span>
+                      <textarea
+                        rows={4}
+                        value={form.internalNote}
+                        onChange={(e) => update("internalNote", e.target.value)}
+                        placeholder="زمان مناسب تماس، شرایط مالک، نکات مذاکره یا هر اطلاعات داخلی دیگر..."
+                        maxLength={3000}
+                      />
+                    </label>
+                  </div>
+                </fieldset>
+
                 <fieldset className="admin-section admin-owner-section" id="section-owner">
                   <legend>اطلاعات صاحب فایل — خصوصی</legend>
                   <div className="admin-private-notice">
