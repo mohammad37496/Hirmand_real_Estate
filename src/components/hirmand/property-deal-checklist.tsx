@@ -25,7 +25,9 @@ export function PropertyDealChecklist({ property }: { property: Property }) {
       const raw = localStorage.getItem(key);
       const saved = raw ? JSON.parse(raw) : null;
       if (Array.isArray(saved)) setChecked(ITEMS.map((_, index) => Boolean(saved[index])));
-    } catch {}
+    } catch {
+      // Keep the default unchecked state when browser storage is unavailable.
+    }
   }, [key]);
 
   const done = useMemo(() => checked.filter(Boolean).length, [checked]);
@@ -38,7 +40,11 @@ export function PropertyDealChecklist({ property }: { property: Property }) {
   function toggle(index: number) {
     setChecked((current) => {
       const next = current.map((value, itemIndex) => itemIndex === index ? !value : value);
-      try { localStorage.setItem(key, JSON.stringify(next)); } catch {}
+      try {
+        localStorage.setItem(key, JSON.stringify(next));
+      } catch {
+        // Keep the checklist usable in memory when storage is blocked.
+      }
       return next;
     });
   }
