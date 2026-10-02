@@ -292,6 +292,8 @@ export default defineEventHandler(async (event) => {
         budgetEquivalent: row.budget_equivalent == null ? null : Number(row.budget_equivalent),
         budgetBedrooms: row.budget_bedrooms == null ? null : Number(row.budget_bedrooms),
         budgetRate: row.budget_rate == null ? null : Number(row.budget_rate),
+        offerAmount: row.offer_amount == null ? null : Number(row.offer_amount),
+        offerConditions: row.offer_conditions == null ? null : String(row.offer_conditions),
         matchCount: Number(row.match_count) || 0,
         matchedProperties: Array.isArray(row.matched_properties) ? row.matched_properties : [],
         createdAt: new Date(String(row.created_at)).toISOString(),
