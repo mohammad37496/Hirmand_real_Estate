@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, CheckCircle2, ExternalLink, Film, ImageIcon, Phone, Pencil, RefreshCw, Save, Search, Star, Trash2, XCircle } from "lucide-react";
+import { ArrowDown, ArrowUp, CheckCircle2, ExternalLink, Film, ImageIcon, MapPin, Phone, Pencil, RefreshCw, Save, Search, Star, Trash2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { TEAM } from "@/lib/site";
 import { formatToman } from "@/lib/money";
@@ -19,6 +19,7 @@ type Submission = {
   propertyId: string | null;
   createdAt: string;
   reviewedAt: string | null;
+  possibleDuplicate?: boolean;
 };
 
 function faDate(value: string) {
@@ -228,6 +229,14 @@ export function AdminCustomerPropertySubmissions() {
         </button>
       </div>
 
+      <div className="admin-customer-submission-summary">
+        <div><span>کل ورودی</span><strong>{(counts.pending + counts.approved + counts.rejected).toLocaleString("fa-IR")}</strong></div>
+        <div><span>در صف</span><strong>{counts.pending.toLocaleString("fa-IR")}</strong></div>
+        <div><span>تأیید شده</span><strong>{counts.approved.toLocaleString("fa-IR")}</strong></div>
+        <div><span>رد شده</span><strong>{counts.rejected.toLocaleString("fa-IR")}</strong></div>
+        <div><span>نرخ تأیید</span><strong>{(counts.approved + counts.rejected) ? ((counts.approved / (counts.approved + counts.rejected)) * 100).toFixed(0) + "٪" : "—"}</strong></div>
+      </div>
+
       <div className="admin-customer-submissions-status-tabs">
         {([
           ["pending","در انتظار",counts.pending],
@@ -282,7 +291,7 @@ export function AdminCustomerPropertySubmissions() {
                     <small>{faDate(submission.createdAt)}</small>
                   </div>
                   <p>{String(data.neighborhood ?? "—")} · {String(data.areaM2 ?? "—")} متر · {priceText(data)}</p>
-                  <div className="admin-customer-submission-owner"><strong>{submission.ownerName}</strong><a href={"tel:"+submission.ownerPhone}><Phone size={14}/>{submission.ownerPhone}</a><span dir="ltr">{submission.trackingToken}</span></div>
+                  <div className="admin-customer-submission-owner"><strong>{submission.ownerName}</strong><a href={"tel:"+submission.ownerPhone}><Phone size={14}/>{submission.ownerPhone}</a><span dir="ltr">{submission.trackingToken}</span>{submission.possibleDuplicate?<span className="admin-customer-duplicate-badge">احتمال تکراری</span>:null}</div>
                   <div className="admin-customer-submission-actions">
                     <button type="button" className="btn-ghost" onClick={()=>openSubmission(submission)}>{selectedOpen ? "بستن جزئیات" : "جزئیات و رسانه‌ها"}</button>
                     {submission.status === "pending" ? <>
@@ -350,7 +359,7 @@ export function AdminCustomerPropertySubmissions() {
                     );
                   })() : null}
                   <div className="admin-customer-submission-detail-grid">
-                    <div><span>آدرس</span><strong>{String(data.address || "ثبت نشده")}</strong></div>
+                    <div><span>آدرس</span><strong>{String(data.address || "ثبت نشده")}</strong>{data.latitude != null && data.longitude != null ? <a className="admin-customer-map-link" href={"https://www.google.com/maps?q="+encodeURIComponent(String(data.latitude)+","+String(data.longitude))} target="_blank" rel="noreferrer"><MapPin size={12}/> مشاهده روی نقشه</a> : null}</div>
                     <div><span>خواب / حمام</span><strong>{String(data.bedrooms ?? "—")} / {String(data.bathrooms ?? "—")}</strong></div>
                     <div><span>طبقه</span><strong>{String(data.floor ?? "—")} از {String(data.totalFloors ?? "—")}</strong></div>
                     <div><span>سال ساخت</span><strong>{String(data.builtYear ?? "—")}</strong></div>
