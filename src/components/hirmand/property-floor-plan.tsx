@@ -43,7 +43,7 @@ function buildRooms(property: Property): Room[] {
     {
       id: "kitchen",
       label: "آشپزخانه",
-      detail: property.openKitchen ? "آشپزخانه باز" : "فضای خدماتی",
+      detail: property.otherAmenities.includes("open_kitchen") ? "آشپزخانه اپن" : "فضای خدماتی",
       kind: "kitchen",
     },
     {
