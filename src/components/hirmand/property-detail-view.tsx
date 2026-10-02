@@ -70,6 +70,8 @@ import { toast } from "sonner";
 import { WhatsAppIcon } from "@/components/hirmand/social-icons";
 import "@/property-price-history.css";
 import "@/property-decision-dossier.css";
+import "@/property-question-log.css";
+import "@/property-renovation-tracker.css";
 
 const PROPERTY_AVAILABILITY_LABELS: Record<Property["availabilityStatus"], string> = {
   available: "موجود",
@@ -109,6 +111,8 @@ import { PropertyReviewAlerts } from "@/components/hirmand/property-review-alert
 import { PropertyFollowUpReminder } from "@/components/hirmand/property-follow-up-reminder";
 import { PropertyDecisionDossier } from "@/components/hirmand/property-decision-dossier";
 import { PropertyInquiryTools } from "@/components/hirmand/property-inquiry-tools";
+import { PropertyQuestionLog } from "@/components/hirmand/property-question-log";
+import { PropertyRenovationTracker } from "@/components/hirmand/property-renovation-tracker";
 import { PropertyVisitReport } from "@/components/hirmand/property-visit-report";
 import { formatToman } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
@@ -1687,6 +1691,8 @@ export function PropertyDetailView({
         <PropertyReviewAlerts property={property} />
         <PropertyFollowUpReminder property={property} />
         <PropertyDecisionDossier property={property} />
+        <PropertyQuestionLog property={property} />
+        <PropertyRenovationTracker property={property} />
         <PropertyInquiryTools property={property} />
         <PropertyVisitReport property={property} />
 
