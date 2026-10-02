@@ -77,6 +77,15 @@ export default defineEventHandler(async (event) => {
   );
   const submission = rows[0];
   if (!submission) throw createError({ statusCode: 404, statusMessage: "درخواست ثبت ملک پیدا نشد." });
+  if (action === "approve" && String(submission.status) === "approved") {
+    return { success: true, status: "approved", propertyId: submission.property_id ? String(submission.property_id) : null };
+  }
+  if (action === "reject" && String(submission.status) !== "pending") {
+    throw createError({ statusCode: 409, statusMessage: "این درخواست قبلاً بررسی شده است." });
+  }
+  if (action === "approve" && String(submission.status) === "rejected") {
+    throw createError({ statusCode: 409, statusMessage: "این درخواست قبلاً رد شده است." });
+  }
 
   if (action === "reject") {
     const reviewNote = typeof body.reviewNote === "string" ? body.reviewNote.trim().slice(0, 1200) : "";
