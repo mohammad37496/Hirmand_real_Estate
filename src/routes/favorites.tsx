@@ -488,6 +488,7 @@ function FavoritesPage() {
             <strong>در حال بارگذاری فایل‌های ذخیره‌شده…</strong>
           </section>
         ) : properties.length ? (
+          <>
           <section className="favorites-filter-bar" aria-label="فیلتر و مرتب‌سازی فایل‌های ذخیره‌شده">
             <div className="favorites-filter-tabs">
               <button type="button" className={favoriteTagFilter === "all" ? "is-active" : ""} onClick={() => setFavoriteTagFilter("all")}>
@@ -576,6 +577,7 @@ function FavoritesPage() {
               <button type="button" className="btn-ghost" onClick={() => setFavoriteTagFilter("all")}>نمایش همه فایل‌ها</button>
             </section>
           )}
+          </>
         ) : (
           <section className="property-empty">
             <Heart size={26} />
