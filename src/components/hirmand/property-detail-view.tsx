@@ -1550,133 +1550,142 @@ export function PropertyDetailView({
                   </a>
                 </div>
 
-                <div className="property-tools-heading">
-                  <span>ابزارهای فایل</span>
-                  <span>ذخیره، اشتراک، چاپ و مقایسه</span>
-                </div>
-                <div className="property-detail-tools-row">
-                  <PropertyActions property={property} />
-                  <a
-                    href={similarRequestHref(property)}
-                    className="property-similar-request-btn"
-                    onClick={() => trackAnalyticsEvent("inquiry_click", property.slug)}
-                  >
-                    <Sparkles size={16} aria-hidden="true" />
-                    درخواست فایل مشابه
-                  </a>
-                  <button
-                    type="button"
-                    className="property-report-btn"
-                    onClick={() => {
-                      setReportOpen(true);
-                      setReportNote("");
-                      trackAnalyticsEvent("property_report", property.slug);
-                    }}
-                  >
-                    <Flag size={16} aria-hidden="true" />
-                    گزارش ایراد فایل
-                  </button>
-                </div>
-                {reportOpen ? (
-                  <div className="property-report-backdrop" role="presentation" onMouseDown={(event) => {
-                    if (event.target === event.currentTarget) setReportOpen(false);
-                  }}>
-                    <section className="property-report-dialog" role="dialog" aria-modal="true" aria-labelledby="property-report-title">
-                      <button type="button" className="property-report-close" onClick={() => setReportOpen(false)} aria-label="بستن">
-                        <X size={18} />
-                      </button>
-                      <span className="kicker">بازخورد فایل</span>
-                      <h2 id="property-report-title">اشکال این فایل را به هیرمند اطلاع دهید.</h2>
-                      <p>گزارش شما فقط برای بررسی اطلاعات همین فایل آماده می‌شود.</p>
-                      <div className="property-report-types">
-                        {[
-                          "قیمت یا مشخصات نادرست",
-                          "وضعیت فایل تغییر کرده",
-                          "تصویر یا توضیحات نامرتبط",
-                          "مشکل در موقعیت یا محله",
-                          "سایر",
-                        ].map((type) => (
-                          <button
-                            key={type}
-                            type="button"
-                            className={reportType === type ? "is-selected" : ""}
-                            onClick={() => setReportType(type)}
-                          >
-                            {type}
-                          </button>
-                        ))}
-                      </div>
-                      <label className="property-report-note field">
-                        <span>توضیح کوتاه (اختیاری)</span>
-                        <textarea
-                          rows={3}
-                          value={reportNote}
-                          onChange={(event) => setReportNote(event.target.value)}
-                          placeholder="مثلاً قیمت فایل تغییر کرده یا ملک اجاره رفته است..."
-                          maxLength={500}
-                        />
-                      </label>
-                      <div className="property-report-actions">
-                        <button type="button" className="btn-ghost" onClick={() => setReportOpen(false)} disabled={reportBusy}>انصراف</button>
-                        <button
-                          type="button"
-                          className="btn-gold"
-                          disabled={reportBusy}
-                          onClick={async () => {
-                            if (reportBusy) return;
-                            setReportBusy(true);
-                            try {
-                              const response = await fetch("/api/property-reports", {
-                                method: "POST",
-                                headers: { "content-type": "application/json" },
-                                body: JSON.stringify({
-                                  propertyId: property.id,
-                                  propertySlug: property.slug,
-                                  propertyTitle: property.title,
-                                  reportType,
-                                  note: reportNote,
-                                }),
-                              });
-                              const payload = await response.json().catch(() => null);
-                              if (!response.ok || !payload?.ok) {
-                                throw new Error(payload?.statusMessage || payload?.message || "ثبت گزارش انجام نشد.");
-                              }
-                              trackAnalyticsEvent("property_report", property.slug);
-                              setReportOpen(false);
-                              setReportNote("");
-                              toast.success("گزارش شما ثبت شد و برای بررسی تیم هیرمند ارسال شد.");
-                            } catch (error) {
-                              toast.error(error instanceof Error ? error.message : "ثبت گزارش انجام نشد؛ دوباره تلاش کنید.");
-                            } finally {
-                              setReportBusy(false);
-                            }
-                          }}
-                        >
-                          {reportBusy ? "در حال ثبت…" : "ثبت گزارش برای هیرمند"}
-                        </button>
-                        <a
-                          className="btn-ghost"
-                          href={propertyReportWhatsappHref(property, reportType, reportNote)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <WhatsAppIcon size={17} aria-hidden="true" />
-                          واتساپ هم ارسال کن
-                        </a>
-                      </div>
-                    </section>
-                  </div>
-                ) : null}
+                <details className="property-summary-utilities">
+                  <summary className="property-summary-utilities-summary">
+                    <span>
+                      <strong>اقدامات بیشتر</strong>
+                      <small>ذخیره، اشتراک، مقایسه، چاپ و ابزارهای فایل</small>
+                    </span>
+                    <ChevronDown size={17} aria-hidden="true" />
+                  </summary>
 
-                <button
-                  type="button"
-                  className={"property-price-watch-button" + (priceWatchEnabled ? " is-active" : "")}
-                  onClick={togglePriceWatch}
-                  aria-pressed={priceWatchEnabled}
-                >
-                  <Bell size={16} aria-hidden="true" />
-                  <span>{priceWatchEnabled ? "در حال پیگیری قیمت" : "پیگیری تغییر قیمت"}</span>
-                </button>
+                  <div className="property-summary-utilities-content">
+                    <div className="property-detail-tools-row">
+                      <PropertyActions property={property} />
+                      <a
+                        href={similarRequestHref(property)}
+                        className="property-similar-request-btn"
+                        onClick={() => trackAnalyticsEvent("inquiry_click", property.slug)}
+                      >
+                        <Sparkles size={16} aria-hidden="true" />
+                        درخواست فایل مشابه
+                      </a>
+                      <button
+                        type="button"
+                        className="property-report-btn"
+                        onClick={() => {
+                          setReportOpen(true);
+                          setReportNote("");
+                          trackAnalyticsEvent("property_report", property.slug);
+                        }}
+                      >
+                        <Flag size={16} aria-hidden="true" />
+                        گزارش ایراد فایل
+                      </button>
+                    </div>
+
+                    {reportOpen ? (
+                      <div className="property-report-backdrop" role="presentation" onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) setReportOpen(false);
+                      }}>
+                        <section className="property-report-dialog" role="dialog" aria-modal="true" aria-labelledby="property-report-title">
+                          <button type="button" className="property-report-close" onClick={() => setReportOpen(false)} aria-label="بستن">
+                            <X size={18} />
+                          </button>
+                          <span className="kicker">بازخورد فایل</span>
+                          <h2 id="property-report-title">اشکال این فایل را به هیرمند اطلاع دهید.</h2>
+                          <p>گزارش شما فقط برای بررسی اطلاعات همین فایل آماده می‌شود.</p>
+                          <div className="property-report-types">
+                            {[
+                              "قیمت یا مشخصات نادرست",
+                              "وضعیت فایل تغییر کرده",
+                              "تصویر یا توضیحات نامرتبط",
+                              "مشکل در موقعیت یا محله",
+                              "سایر",
+                            ].map((type) => (
+                              <button
+                                key={type}
+                                type="button"
+                                className={reportType === type ? "is-selected" : ""}
+                                onClick={() => setReportType(type)}
+                              >
+                                {type}
+                              </button>
+                            ))}
+                          </div>
+                          <label className="property-report-note field">
+                            <span>توضیح کوتاه (اختیاری)</span>
+                            <textarea
+                              rows={3}
+                              value={reportNote}
+                              onChange={(event) => setReportNote(event.target.value)}
+                              placeholder="مثلاً قیمت فایل تغییر کرده یا ملک اجاره رفته است..."
+                              maxLength={500}
+                            />
+                          </label>
+                          <div className="property-report-actions">
+                            <button type="button" className="btn-ghost" onClick={() => setReportOpen(false)} disabled={reportBusy}>انصراف</button>
+                            <button
+                              type="button"
+                              className="btn-gold"
+                              disabled={reportBusy}
+                              onClick={async () => {
+                                if (reportBusy) return;
+                                setReportBusy(true);
+                                try {
+                                  const response = await fetch("/api/property-reports", {
+                                    method: "POST",
+                                    headers: { "content-type": "application/json" },
+                                    body: JSON.stringify({
+                                      propertyId: property.id,
+                                      propertySlug: property.slug,
+                                      propertyTitle: property.title,
+                                      reportType,
+                                      note: reportNote,
+                                    }),
+                                  });
+                                  const payload = await response.json().catch(() => null);
+                                  if (!response.ok || !payload?.ok) {
+                                    throw new Error(payload?.statusMessage || payload?.message || "ثبت گزارش انجام نشد.");
+                                  }
+                                  trackAnalyticsEvent("property_report", property.slug);
+                                  setReportOpen(false);
+                                  setReportNote("");
+                                  toast.success("گزارش شما ثبت شد و برای بررسی تیم هیرمند ارسال شد.");
+                                } catch (error) {
+                                  toast.error(error instanceof Error ? error.message : "ثبت گزارش انجام نشد؛ دوباره تلاش کنید.");
+                                } finally {
+                                  setReportBusy(false);
+                                }
+                              }}
+                            >
+                              {reportBusy ? "در حال ثبت…" : "ثبت گزارش برای هیرمند"}
+                            </button>
+                            <a
+                              className="btn-ghost"
+                              href={propertyReportWhatsappHref(property, reportType, reportNote)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <WhatsAppIcon size={17} aria-hidden="true" />
+                              واتساپ هم ارسال کن
+                            </a>
+                          </div>
+                        </section>
+                      </div>
+                    ) : null}
+
+                    <button
+                      type="button"
+                      className={"property-price-watch-button" + (priceWatchEnabled ? " is-active" : "")}
+                      onClick={togglePriceWatch}
+                      aria-pressed={priceWatchEnabled}
+                    >
+                      <Bell size={16} aria-hidden="true" />
+                      <span>{priceWatchEnabled ? "در حال پیگیری قیمت" : "پیگیری تغییر قیمت"}</span>
+                    </button>
+                  </div>
+                </details>
 
                 <div className="property-summary-facts" aria-label="اطلاعات کلیدی فایل">
                   {property.areaM2 != null ? (
