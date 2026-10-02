@@ -107,7 +107,7 @@ export async function applyPropertyVideoWatermark(input: {
       const textX = settings.showLogo ? "w-104-text_w" : "w-24-text_w";
       const textY = "h-0.125*h-text_h/2";
       panelParts.push(
-        `drawtext=fontfile='${filterPath(fontPath!)}':textfile='${filterPath(textPath)}':fontcolor=white:fontsize=${fontSize}:x=${textX}:y=${textY}:fix_bounds=1:borderw=1:bordercolor=0x081320@0.35`,
+        `drawtext=fontfile='${filterPath(fontPath!)}':textfile='${filterPath(textPath)}':fontcolor=white:fontsize=${fontSize}:x=${textX}:y=${textY}:fix_bounds=1:borderw=1:bordercolor=0x081320@0.35:text_shaping=1`,
       );
     }
 
@@ -121,12 +121,12 @@ export async function applyPropertyVideoWatermark(input: {
     ];
 
     if (logoPath) {
-      args.push("-i", logoPath);
+      args.push("-loop", "1", "-i", logoPath);
       const overlayScale = Math.max(42, Math.round(58 * settings.size));
       filters.push(
         `[1:v]scale=${overlayScale}:-1[wm_logo]`,
         `[0:v]${panelParts.join(",")}[wm_base]`,
-        `[wm_base][wm_logo]overlay=x=w-82:y=h-0.085*h:shortest=1:format=auto[vout]`,
+        `[wm_base][wm_logo]overlay=x=w-82:y=h-0.085*h:eof_action=repeat:shortest=0:format=auto[vout]`,
       );
       args.push("-filter_complex", filters.join(";"), "-map", "[vout]");
     } else {
