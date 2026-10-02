@@ -27,6 +27,7 @@ import desktopNavReadabilityCss from "../desktop-nav-readability.css?url";
 import headerRedesignCss from "../header-redesign.css?url";
 import propertyDetailFlowCss from "../property-detail-flow.css?url";
 import propertyToolCenterCss from "../property-tool-center.css?url";
+import propertyDetailPolishCss from "../property-detail-polish.css?url";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -75,6 +76,7 @@ export const Route = createRootRoute({
       { rel: "stylesheet", href: headerRedesignCss },
       { rel: "stylesheet", href: propertyDetailFlowCss },
       { rel: "stylesheet", href: propertyToolCenterCss },
+      { rel: "stylesheet", href: propertyDetailPolishCss },
     ],
   }),
   component: RootDocument,
