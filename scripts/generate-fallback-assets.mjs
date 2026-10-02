@@ -70,14 +70,22 @@ async function download(url, output) {
 async function main() {
   mkdirSync(outputDir, { recursive: true });
 
+  const tasks = Object.entries(sources).flatMap(([type, urls]) =>
+    urls.map((url, index) => ({ type, url, index })),
+  );
+  const concurrency = 4;
+  let cursor = 0;
   let success = 0;
   let skipped = 0;
   let failed = 0;
 
-  for (const [type, urls] of Object.entries(sources)) {
-    for (let index = 0; index < urls.length; index += 1) {
-      const number = String(index + 1).padStart(2, "0");
-      const output = join(outputDir, type + "-" + number + ".jpg");
+  async function worker() {
+    while (true) {
+      const task = tasks[cursor++];
+      if (!task) return;
+
+      const number = String(task.index + 1).padStart(2, "0");
+      const output = join(outputDir, task.type + "-" + number + ".jpg");
 
       if (!forceRefresh && isUsableFile(output)) {
         skipped += 1;
@@ -85,22 +93,24 @@ async function main() {
       }
 
       try {
-        console.log("[fallback-assets] downloading " + type + "-" + number);
-        await download(urls[index], output);
+        console.log("[fallback-assets] downloading " + task.type + "-" + number);
+        await download(task.url, output);
         success += 1;
       } catch (error) {
         failed += 1;
         console.warn(
-          "[fallback-assets] skipped " + type + "-" + number + ": " +
+          "[fallback-assets] skipped " + task.type + "-" + number + ": " +
           (error instanceof Error ? error.message : String(error)),
         );
       }
     }
   }
 
+  await Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }, worker));
+
   console.log(
     "[fallback-assets] ready: " + success + " downloaded, " +
-    skipped + " cached, " + failed + " unavailable.",
+    skipped + " cached, " + failed + " unavailable. concurrency=" + concurrency,
   );
 }
 
