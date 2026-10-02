@@ -37,7 +37,7 @@ function todayKey() {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tehran", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 }
 function labelForDay(key: string) {
-  return new Intl.DateTimeFormat("fa-IR", { weekday: "short", month: "short", day: "numeric" }).format(new Date(key + "T12:00:00"));
+  return new Intl.DateTimeFormat("fa-IR-u-ca-persian", { weekday: "short", month: "short", day: "numeric" }).format(new Date(key + "T12:00:00"));
 }
 
 const CENTER_CSS = [
