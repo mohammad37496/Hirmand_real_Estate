@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { AlertTriangle, BadgeCheck, ExternalLink, Gauge, ImageOff, RefreshCw, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import "@/admin-property-quality.css";
@@ -59,8 +59,6 @@ export function AdminPropertyQualityCenter() {
     }
   }, []);
 
-  useEffect(() => { void scan(); }, [scan]);
-
   async function verify(propertyId: string) {
     setBusyId(propertyId);
     try {
@@ -97,7 +95,7 @@ export function AdminPropertyQualityCenter() {
       {!data ? (
         <div className="admin-property-quality-empty">
           <Gauge size={24} />
-          <strong>در حال آماده‌سازی اولین اسکن سلامت فایل‌ها…</strong>
+          <strong>برای شروع، اسکن سلامت فایل‌ها را اجرا کنید.</strong><small>در هر اسکن، بخشی از رسانه‌ها و همه فایل‌های فروش برای بررسی داده‌ای کنترل می‌شوند.</small>
         </div>
       ) : (
         <>
