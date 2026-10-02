@@ -11,6 +11,11 @@ import {
 await import("./generate-fallback-assets.mjs");
 
 const isProduction = process.env.NODE_ENV === "production";
+
+if (isProduction) {
+  const { ensureFfmpegBinary } = await import("./ensure-ffmpeg.mjs");
+  await ensureFfmpegBinary();
+}
 const runtime = resolveDatabaseUrl();
 const migration = resolveMigrationDatabaseUrl();
 
