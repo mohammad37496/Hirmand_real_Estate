@@ -2153,20 +2153,7 @@ export function PropertyDetailView({
             <div className="property-detail-aside-inner">
               <ConsultantCard property={property} />
 
-              <section className="property-quick-overview" aria-labelledby="property-quick-overview-title">
-                <div className="property-aside-heading">
-                  <span className="kicker">خلاصه فایل</span>
-                  <h2 id="property-quick-overview-title">قبل از تماس، این‌ها را بدانید</h2>
-                </div>
-                <div className="property-quick-overview-list">
-                  <div><span>نوع معامله</span><strong>{TX_LABEL[property.transactionType]}</strong></div>
-                  <div><span>نوع ملک</span><strong>{TYPE_LABEL[property.propertyType]}</strong></div>
-                  <div><span>محله</span><strong>{property.neighborhood}</strong></div>
-                  {property.floor != null ? <div><span>طبقه</span><strong>{property.floor.toLocaleString("fa-IR")}</strong></div> : null}
-                  {property.elevator ? <div><span>آسانسور</span><strong>دارد</strong></div> : null}
-                  {property.storage ? <div><span>انباری</span><strong>دارد</strong></div> : null}
-                </div>
-              </section>
+
             </div>
           </aside>
         </section>
