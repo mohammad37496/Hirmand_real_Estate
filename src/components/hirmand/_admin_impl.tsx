@@ -6,6 +6,7 @@ import {
   Copy,
   ExternalLink,
   FileEdit,
+  FileText,
   Home,
   KeyRound,
   LayoutDashboard,
@@ -40,6 +41,7 @@ import {
   ClipboardList,
   Settings,
   HardDrive,
+  Route as RouteIcon,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import { isInvalidIntegerInput, normalizeMoneyText } from "@/lib/property-input-normalization";
@@ -550,7 +552,7 @@ export function AdminPropertiesPage() {
       { view: "settings" as ViewMode, label: "تنظیمات سایت", icon: Settings },
       { view: "mediaHealth" as ViewMode, label: "سلامت رسانه", icon: HardDrive },
       { view: "security" as ViewMode, label: "امنیت مدیران", icon: ShieldAlert },
-      { view: "seoRedirects" as ViewMode, label: "ریدایرکت و ۴۰۴", icon: Route },
+      { view: "seoRedirects" as ViewMode, label: "ریدایرکت و ۴۰۴", icon: RouteIcon },
       { view: "contentStudio" as ViewMode, label: "استودیو محتوا", icon: FileText },
       { view: "divar" as ViewMode, label: "فایل‌های دیوار", icon: Globe2 },
     ],
