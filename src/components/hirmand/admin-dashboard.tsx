@@ -28,6 +28,7 @@ import { AdminCustomerPropertySubmissions } from "@/components/hirmand/admin-cus
 import { AdminAgenda } from "@/components/hirmand/admin-agenda";
 import { AdminVisitFeedback } from "@/components/hirmand/admin-visit-feedback";
 import { AdminPropertyReports } from "@/components/hirmand/admin-property-reports";
+import { AdminPropertyQualityCenter } from "@/components/hirmand/admin-property-quality-center";
 import { fa, faBytes } from "@/components/hirmand/admin-ui-utils";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
@@ -373,6 +374,7 @@ export function AdminDashboard({
       <AdminAgenda onOpenLeads={onOpenLeads} />
 
       <AdminCustomerPropertySubmissions />
+      <AdminPropertyQualityCenter />
 
       <section className="admin-dashboard-health" aria-label="سلامت کتابخانه فایل‌ها و تیم">
         <button type="button" className="admin-dashboard-stat" data-tone="red" onClick={onOpenProperties}>
