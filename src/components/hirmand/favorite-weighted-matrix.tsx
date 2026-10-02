@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Equalizer, SlidersHorizontal, Star } from "lucide-react";
+import { SlidersHorizontal, Star } from "lucide-react";
 import type { Property } from "@/lib/properties";
 import "@/favorite-weighted-matrix.css";
 
@@ -93,7 +93,7 @@ export function FavoriteWeightedMatrix({ properties }: { properties: Property[] 
       <header className="favorite-weighted-head">
         <div>
           <span className="kicker">تصمیم شخصی</span>
-          <h2 id="favorite-weighted-title"><Equalizer size={19} /> ماتریس وزن‌دهی فایل‌های منتخب</h2>
+          <h2 id="favorite-weighted-title"><SlidersHorizontal size={19} /> ماتریس وزن‌دهی فایل‌های منتخب</h2>
           <p>وزن هر معیار را خودتان تعیین می‌کنید؛ نتیجه فقط محاسبه امتیازهای شخصی ثبت‌شده شماست و ارزش‌گذاری کارشناسی ملک نیست.</p>
         </div>
         <SlidersHorizontal size={21} />
