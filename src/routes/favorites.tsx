@@ -6,6 +6,7 @@ import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
 import { SITE } from "@/lib/site";
 import { toast } from "sonner";
+import "@/favorites-personal.css";
 
 const FAVORITES_KEY = "hirmand-favorite-properties";
 const RECENT_PROPERTIES_KEY = "hirmand-recent-properties";
