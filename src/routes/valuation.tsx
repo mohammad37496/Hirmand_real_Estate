@@ -16,8 +16,8 @@ function toNumber(raw: string) {
   const normalized = raw
     .replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
     .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
-    .replace(/[٬،,\\s]/g, "");
-  if (!/^\\d+$/.test(normalized)) return null;
+    .replace(/[٬،,\s]/g, "");
+  if (!/^\d+$/.test(normalized)) return null;
   const value = Number(normalized);
   return Number.isFinite(value) && value > 0 ? value : null;
 }
