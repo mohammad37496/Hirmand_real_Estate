@@ -76,6 +76,8 @@ import { AdminPricingPanel } from "@/components/hirmand/admin-pricing-panel";
 import { AdminConsultantPicker } from "@/components/hirmand/admin-consultant-picker";
 import { AdminMusicManager } from "@/components/hirmand/admin-music-manager";
 import { AdminLeadManager } from "@/components/hirmand/admin-lead-manager";
+import { AdminLeadAssignmentBalancer } from "@/components/hirmand/admin-lead-assignment-balancer";
+import { AdminLeadDedupe } from "@/components/hirmand/admin-lead-dedupe";
 import { AdminCustomerInbox } from "@/components/hirmand/admin-customer-inbox";
 import { AdminDashboard } from "@/components/hirmand/admin-dashboard";
 import { ADMIN_CSS } from "@/components/hirmand/admin-shell-css";
@@ -105,6 +107,7 @@ import { AdminMediaHealth } from "@/components/hirmand/admin-media-health";
 import { AdminSecurityCenter } from "@/components/hirmand/admin-security-center";
 import { AdminSeoRedirects } from "@/components/hirmand/admin-seo-redirects";
 import { AdminContentStudio } from "@/components/hirmand/admin-content-studio";
+import { AdminPropertyQualityCenter } from "@/components/hirmand/admin-property-quality-center";
 import "@/admin-site-settings.css";
 import "@/admin-security.css";
 import "@/admin-seo-redirects.css";
@@ -130,7 +133,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
+type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "assignment" | "leadDedupe" | "quality" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -536,6 +539,9 @@ export function AdminPropertiesPage() {
       { view: "productivity" as ViewMode, label: "مرکز مدیریت", icon: ListTodo },
       { view: "list" as ViewMode, label: "فایل‌های ملک", icon: LayoutDashboard },
       { view: "leads" as ViewMode, label: "درخواست‌ها", icon: UsersRound },
+      { view: "assignment" as ViewMode, label: "تعادل بار لیدها", icon: GitCompareArrows },
+      { view: "leadDedupe" as ViewMode, label: "پاک‌سازی لیدهای تکراری", icon: ShieldCheck },
+      { view: "quality" as ViewMode, label: "مرکز کیفیت فایل‌ها", icon: HardDrive },
       { view: "messages" as ViewMode, label: "گفت‌وگوی مشتری", icon: MessageCircle },
       { view: "consultants" as ViewMode, label: "مشاوران", icon: UsersRound },
       { view: "partners" as ViewMode, label: "همکاران", icon: UsersRound },
@@ -1778,6 +1784,12 @@ export function AdminPropertiesPage() {
                   ? `${stats.total.toLocaleString("fa-IR")} فایل در سیستم`
                   : view === "leads"
                     ? "مدیریت Leadها و پیگیری مشتریان"
+                    : view === "assignment"
+                      ? "پیشنهاد تخصیص لیدهای بدون مشاور بر اساس بار واقعی هر مشاور"
+                      : view === "leadDedupe"
+                        ? "شناسایی شماره‌های تکراری، ادغام امن و انتقال فعالیت‌های CRM"
+                        : view === "quality"
+                          ? "اسکن رسانه، ناهنجاری قیمت و صف بازبینی دوره‌ای فایل‌ها"
                     : view === "messages"
                       ? "پاسخ‌گویی مستقیم به مشتریانی که از طریق کد رهگیری پیام داده‌اند"
                     : view === "attendance"
@@ -2234,6 +2246,9 @@ export function AdminPropertiesPage() {
           {view === "productivity" ? <AdminProductivityCenter /> : null}
           {view === "music" ? <AdminMusicManager /> : null}
           {view === "leads" ? <AdminLeadManager /> : null}
+          {view === "assignment" ? <AdminLeadAssignmentBalancer /> : null}
+          {view === "leadDedupe" ? <AdminLeadDedupe /> : null}
+          {view === "quality" ? <AdminPropertyQualityCenter /> : null}
           {view === "messages" ? <AdminCustomerInbox /> : null}
           {view === "partners" ? <AdminPartnerManager /> : null}
           {view === "consultants" ? <AdminConsultantManager /> : null}
