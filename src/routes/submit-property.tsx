@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CheckCircle2, FilePlus2, Film, Home, ImagePlus, Loader2, Phone, Send, X } from "lucide-react";
+import { CheckCircle2, FilePlus2, Film, Home, ImagePlus, Loader2, MapPin, Phone, Send, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { PROPERTY_TYPES, SERVICES, NEIGHBORHOODS, SITE } from "@/lib/site";
@@ -103,6 +103,9 @@ function SubmitPropertyPage() {
   const [done, setDone] = useState("");
   const [editToken, setEditToken] = useState("");
   const [loadingExisting, setLoadingExisting] = useState(false);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [locationStatus, setLocationStatus] = useState<"idle"|"loading"|"done"|"error">("idle");
   const [draftReady, setDraftReady] = useState(false);
   const [draftSavedAt, setDraftSavedAt] = useState("");
   const CUSTOMER_DRAFT_KEY = "hirmand:customer-property-draft:v1";
@@ -128,6 +131,9 @@ function SubmitPropertyPage() {
           setFeatures(Array.isArray(data.features) ? data.features.filter((v): v is string => typeof v === "string") : []);
           setPrice(text("price")); setDeposit(text("deposit")); setRent(text("rent")); setDescription(text("description"));
           setMedia(Array.isArray(data.media) ? data.media.filter((v): v is string => typeof v === "string") : []);
+          setLatitude(data.latitude == null ? null : Number(data.latitude));
+          setLongitude(data.longitude == null ? null : Number(data.longitude));
+          if (data.latitude != null && data.longitude != null) setLocationStatus("done");
           if (parsed?.savedAt) setDraftSavedAt(new Intl.DateTimeFormat("fa-IR", { hour: "2-digit", minute: "2-digit" }).format(new Date(parsed.savedAt)));
           toast.info("پیش‌نویس قبلی فرم ثبت ملک بازیابی شد.");
         }
@@ -161,6 +167,9 @@ function SubmitPropertyPage() {
       setFeatures(Array.isArray(data.features) ? data.features.filter((v): v is string => typeof v === "string") : []);
       setPrice(text("price")); setDeposit(text("deposit")); setRent(text("rent")); setDescription(text("description"));
       setMedia(Array.isArray(data.images) ? data.images.filter((v): v is string => typeof v === "string") : []);
+      setLatitude(data.latitude == null ? null : Number(data.latitude));
+      setLongitude(data.longitude == null ? null : Number(data.longitude));
+      if (data.latitude != null && data.longitude != null) setLocationStatus("done");
       if (payload.reviewNote) toast.info("علت نیاز به اصلاح: " + payload.reviewNote);
     }).catch((error) => {
       setError(error instanceof Error ? error.message : "اطلاعات درخواست قابل دریافت نیست.");
@@ -176,7 +185,7 @@ function SubmitPropertyPage() {
       ownerName, ownerPhone, title, transactionType, propertyType, neighborhood, address, area,
       bedrooms, bathrooms, floor, totalFloors, builtYear, orientation, cabinetType, flooringType,
       coolingSystem, heatingSystem, wallClosetType, parking, elevator, storage, painted, wallpaper,
-      convertible, otherAmenities, features, price, deposit, rent, description, media,
+      convertible, otherAmenities, features, price, deposit, rent, description, media, latitude, longitude,
     };
     try {
       window.localStorage.setItem(CUSTOMER_DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), data: draft }));
@@ -195,6 +204,28 @@ function SubmitPropertyPage() {
 
   function toggleAmenity(value: string) {
     setOtherAmenities((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
+  }
+
+  function captureLocation() {
+    if (!navigator.geolocation) {
+      setLocationStatus("error");
+      toast.error("مرورگر شما موقعیت مکانی را پشتیبانی نمی‌کند.");
+      return;
+    }
+    setLocationStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(Number(position.coords.latitude.toFixed(6)));
+        setLongitude(Number(position.coords.longitude.toFixed(6)));
+        setLocationStatus("done");
+        toast.success("موقعیت ملک ثبت شد.");
+      },
+      () => {
+        setLocationStatus("error");
+        toast.error("دسترسی به موقعیت مکانی انجام نشد؛ بدون موقعیت هم می‌توانید ادامه دهید.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+    );
   }
 
   async function uploadFiles(files: FileList | File[]) {
@@ -297,8 +328,8 @@ function SubmitPropertyPage() {
           rent: moneyValue(rent),
           description: description.trim(),
           images: media,
-          latitude: null,
-          longitude: null,
+          latitude,
+          longitude,
         }),
       });
       const payload = await response.json().catch(() => null);
@@ -370,7 +401,9 @@ function SubmitPropertyPage() {
             <label className="field"><span>نوع معامله</span><select value={transactionType} onChange={(e)=>setTransactionType(e.target.value as typeof transactionType)}>{SERVICES.map((item)=><option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
             <label className="field"><span>نوع ملک</span><select value={propertyType} onChange={(e)=>setPropertyType(e.target.value as typeof propertyType)}>{CUSTOMER_PROPERTY_TYPES.map((item)=><option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
             <label className="field"><span>محله</span><select value={neighborhood} onChange={(e)=>setNeighborhood(e.target.value)}><option value="">انتخاب محله</option>{NEIGHBORHOODS.map((item)=><option key={item.name}>{item.name}</option>)}</select></label>
-            <label className="field"><span>آدرس / توضیح موقعیت</span><input value={address} onChange={(e)=>setAddress(e.target.value)} placeholder="اختیاری؛ شماره واحد حساس ننویسید"/></label>
+            <label className="field customer-property-location-field"><span>آدرس / توضیح موقعیت</span><input value={address} onChange={(e)=>setAddress(e.target.value)} placeholder="اختیاری؛ شماره واحد حساس ننویسید"/>
+              <div className="customer-property-location-row"><button type="button" className="btn-ghost" onClick={captureLocation} disabled={locationStatus==="loading"}><MapPin size={15}/>{locationStatus==="loading"?"در حال دریافت موقعیت…":locationStatus==="done"?"موقعیت ثبت شد":"ثبت موقعیت روی نقشه"}</button>{latitude!=null&&longitude!=null?<small dir="ltr">{latitude.toFixed(6)}, {longitude.toFixed(6)}</small>:<small>اختیاری؛ با اجازه مرورگر ثبت می‌شود.</small>}</div>
+            </label>
             <label className="field"><span>متراژ</span><input value={area} onChange={(e)=>setArea(e.target.value)} inputMode="decimal" dir="ltr" placeholder="120"/></label>
             <label className="field"><span>خواب</span><select value={bedrooms} onChange={(e)=>setBedrooms(e.target.value)}><option value="">ثبت نشده</option>{[0,1,2,3,4,5,6].map((n)=><option key={n} value={String(n)}>{n===0?"بدون خواب":n===6?"۶ خواب و بیشتر":n.toLocaleString("fa-IR")+" خواب"}</option>)}</select></label>
             <label className="field"><span>حمام</span><input value={bathrooms} onChange={(e)=>setBathrooms(e.target.value)} inputMode="numeric" dir="ltr"/></label>
