@@ -231,7 +231,8 @@ export function propertyJsonLd(property: Property) {
       addressLocality: property.city || SITE.locality,
       addressRegion: "اصفهان",
       addressCountry: "IR",
-      streetAddress: property.address || property.neighborhood,
+      // Keep exact property addresses out of public structured data; the detail UI exposes only the neighborhood/approximate area.
+      streetAddress: property.neighborhood,
     },
     ...(property.areaM2
       ? {
