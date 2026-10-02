@@ -27,11 +27,32 @@ export default defineEventHandler(async (event) => {
     if (!id || !STATUSES.has(status)) {
       throw createError({ statusCode: 400, statusMessage: "شناسه یا وضعیت فایل نامعتبر است." });
     }
-    const rows = await sql.query<{ id: string }>(
-      "update properties set availability_status=$1, updated_at=current_timestamp where id=$2 and status<>'archived' returning id",
+    const rows = await sql.query<{ id: string; title: string }>(
+      "update properties set availability_status=$1, updated_at=current_timestamp where id=$2 and status<>'archived' returning id,title",
       [status, id],
     );
     if (!rows[0]) throw createError({ statusCode: 404, statusMessage: "فایل پیدا نشد." });
+
+    if (status === "reserved") {
+      await sql.query(
+        "insert into admin_tasks(id,title,description,status,priority,due_at,assignee,entity_type,entity_id) " +
+        "select $1,$2,$3,'open','high',current_timestamp + interval '24 hours',$4,'property',$5 " +
+        "where not exists (select 1 from admin_tasks where entity_type='property' and entity_id=$5 and status='open' and title like 'پیگیری رزرو:%')",
+        [
+          crypto.randomUUID(),
+          "پیگیری رزرو: " + String(rows[0].title),
+          "رزرو این فایل ۲۴ ساعت بعد دوباره بررسی شود و در صورت توافق/لغو، وضعیت فایل تعیین تکلیف شود.",
+          "",
+          id,
+        ],
+      );
+    } else {
+      await sql.query(
+        "update admin_tasks set status='done', updated_at=current_timestamp where entity_type='property' and entity_id=$1 and status='open' and title like 'پیگیری رزرو:%'",
+        [id],
+      );
+    }
+
     return { success: true, id, availabilityStatus: status };
   }
 
