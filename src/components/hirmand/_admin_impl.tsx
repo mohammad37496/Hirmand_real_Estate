@@ -37,6 +37,8 @@ import {
   CalendarClock,
   ArchiveRestore,
   ClipboardList,
+  Settings,
+  HardDrive,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import { isInvalidIntegerInput, normalizeMoneyText } from "@/lib/property-input-normalization";
@@ -95,6 +97,9 @@ import { AdminScheduleManager } from "@/components/hirmand/admin-schedule-manage
 import { AdminTrashManager } from "@/components/hirmand/admin-trash-manager";
 import { AdminAuditLog } from "@/components/hirmand/admin-audit-log";
 import "@/admin-automation.css";
+import { AdminSiteSettings } from "@/components/hirmand/admin-site-settings";
+import { AdminMediaHealth } from "@/components/hirmand/admin-media-health";
+import "@/admin-site-settings.css";
 import "@/admin-property-performance.css";
 import "@/property-feature-enhancements.css";
 import "@/admin-customer-inbox.css";
@@ -116,7 +121,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit";
+type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -535,6 +540,8 @@ export function AdminPropertiesPage() {
       { view: "schedule" as ViewMode, label: "زمان‌بندی", icon: CalendarClock },
       { view: "trash" as ViewMode, label: "سطل بازیابی", icon: ArchiveRestore },
       { view: "audit" as ViewMode, label: "گزارش فعالیت", icon: ClipboardList },
+      { view: "settings" as ViewMode, label: "تنظیمات سایت", icon: Settings },
+      { view: "mediaHealth" as ViewMode, label: "سلامت رسانه", icon: HardDrive },
       { view: "divar" as ViewMode, label: "فایل‌های دیوار", icon: Globe2 },
     ],
     [],
@@ -1735,6 +1742,10 @@ export function AdminPropertiesPage() {
                                           ? "سطل بازیابی فایل‌ها"
                                           : view === "audit"
                                             ? "گزارش فعالیت مدیر"
+                                            : view === "settings"
+                                              ? "تنظیمات سایت و SEO"
+                                              : view === "mediaHealth"
+                                                ? "سلامت و پاک‌سازی رسانه‌ها"
                                     : view === "divar"
                           ? "فایل‌های دیوار"
                           : form.id
@@ -1769,6 +1780,10 @@ export function AdminPropertiesPage() {
                                     ? "فایل‌های حذف‌شده را بازیابی یا برای همیشه پاک کنید"
                                     : view === "audit"
                                       ? "ردیابی عملیات مهم مدیریتی و تغییرات اخیر"
+                                      : view === "settings"
+                                        ? "کنترل اطلاعات تماس، شبکه‌های اجتماعی، SEO و اعلان سایت"
+                                        : view === "mediaHealth"
+                                          ? "بررسی مصرف دیتابیس رسانه، رسانه‌های یتیم و آپلودهای نیمه‌کاره"
                               : view === "divar"
                         ? "دریافت، فیلتر و ورود فایل‌های شخصی از دیوار"
                         : form.contactName
@@ -2207,6 +2222,8 @@ export function AdminPropertiesPage() {
           {view === "schedule" ? <AdminScheduleManager /> : null}
           {view === "trash" ? <AdminTrashManager /> : null}
           {view === "audit" ? <AdminAuditLog /> : null}
+          {view === "settings" ? <AdminSiteSettings /> : null}
+          {view === "mediaHealth" ? <AdminMediaHealth /> : null}
           {view === "divar" ? <AdminDivarFiles /> : null}
 
           {view === "form" ? (
