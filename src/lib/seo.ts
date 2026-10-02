@@ -2,6 +2,7 @@ import { SITE, TEAM } from "@/lib/site";
 import type { Property } from "@/lib/properties";
 import { propertyPath } from "@/lib/property-path";
 import { DB_MEDIA_PATH, isDivarRemoteHost } from "@/lib/media";
+import { getPropertyFallbackImage } from "@/lib/property-fallback-images";
 import { formatToman } from "@/lib/money";
 
 const TX_LABEL: Record<string, string> = {
@@ -53,7 +54,11 @@ export function propertySocialImage(property: Property): string {
     .map(shareableImageUrl)
     .find((candidate) => candidate && !candidate.endsWith(".svg"));
   if (own) return own;
-  return ogImageUrl();
+
+  const fallback = shareableImageUrl(
+    getPropertyFallbackImage(property.propertyType, property.id),
+  );
+  return fallback || ogImageUrl();
 }
 
 export function ogImageUrl(path = "/images/isfahan-hero.jpg"): string {
@@ -231,7 +236,7 @@ export function propertyJsonLd(property: Property) {
     url,
     datePosted: property.publishedAt ?? property.createdAt,
     dateModified: property.updatedAt ?? property.publishedAt ?? property.createdAt,
-    image: image.length ? image : [ogImageUrl()],
+    image: image.length ? image : [propertySocialImage(property)],
     inLanguage: "fa-IR",
     address: {
       "@type": "PostalAddress",
