@@ -1127,6 +1127,7 @@ export function PropertyDetailView({
   const [reportOpen, setReportOpen] = useState(false);
   const [reportType, setReportType] = useState("قیمت یا مشخصات نادرست");
   const [reportNote, setReportNote] = useState("");
+  const [reportBusy, setReportBusy] = useState(false);
 
   // The gallery list is derived before the early return below: a hook that only
   // runs for a present property would break React's hook order the moment the
@@ -1584,19 +1585,51 @@ export function PropertyDetailView({
                         />
                       </label>
                       <div className="property-report-actions">
-                        <button type="button" className="btn-ghost" onClick={() => setReportOpen(false)}>انصراف</button>
-                        <a
+                        <button type="button" className="btn-ghost" onClick={() => setReportOpen(false)} disabled={reportBusy}>انصراف</button>
+                        <button
+                          type="button"
                           className="btn-gold"
+                          disabled={reportBusy}
+                          onClick={async () => {
+                            if (reportBusy) return;
+                            setReportBusy(true);
+                            try {
+                              const response = await fetch("/api/property-reports", {
+                                method: "POST",
+                                headers: { "content-type": "application/json" },
+                                body: JSON.stringify({
+                                  propertyId: property.id,
+                                  propertySlug: property.slug,
+                                  propertyTitle: property.title,
+                                  reportType,
+                                  note: reportNote,
+                                }),
+                              });
+                              const payload = await response.json().catch(() => null);
+                              if (!response.ok || !payload?.ok) {
+                                throw new Error(payload?.statusMessage || payload?.message || "ثبت گزارش انجام نشد.");
+                              }
+                              trackAnalyticsEvent("property_report", property.slug);
+                              setReportOpen(false);
+                              setReportNote("");
+                              toast.success("گزارش شما ثبت شد و برای بررسی تیم هیرمند ارسال شد.");
+                            } catch (error) {
+                              toast.error(error instanceof Error ? error.message : "ثبت گزارش انجام نشد؛ دوباره تلاش کنید.");
+                            } finally {
+                              setReportBusy(false);
+                            }
+                          }}
+                        >
+                          {reportBusy ? "در حال ثبت…" : "ثبت گزارش برای هیرمند"}
+                        </button>
+                        <a
+                          className="btn-ghost"
                           href={propertyReportWhatsappHref(property, reportType, reportNote)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          onClick={() => {
-                            trackAnalyticsEvent("property_report", property.slug);
-                            setReportOpen(false);
-                          }}
                         >
                           <WhatsAppIcon size={17} aria-hidden="true" />
-                          ارسال گزارش در واتساپ
+                          واتساپ هم ارسال کن
                         </a>
                       </div>
                     </section>
