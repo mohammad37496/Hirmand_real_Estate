@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { PROPERTY_TYPES, NEIGHBORHOOD_NAMES, SITE, TEAM } from "@/lib/site";
+import { PROPERTY_TYPES, NEIGHBORHOOD_NAMES, SITE } from "@/lib/site";
 import { DEFAULT_RAHN_RATE, RAHN_RATE_PRESETS } from "@/lib/finance";
 import { formatToman, parseAmount } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
@@ -28,6 +28,7 @@ import {
   type PropertyType,
 } from "@/lib/properties";
 import { PropertyCard } from "./property-showcase";
+import { useConsultants } from "./consultants-context";
 
 const TIER_META = {
   within: {
@@ -146,7 +147,8 @@ export function BudgetMatcher() {
   const [rent, setRent] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [consultant, setConsultant] = useState<(typeof TEAM)[number]["id"]>(TEAM[0].id);
+  const consultants = useConsultants();
+  const [consultant, setConsultant] = useState<string>("");
   const [propertyType, setPropertyType] = useState<PropertyType | "">("");
   const [neighborhood, setNeighborhood] = useState("");
   const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>(NEIGHBORHOOD_NAMES);
@@ -157,6 +159,13 @@ export function BudgetMatcher() {
   const [searched, setSearched] = useState(false);
   const [leadSaving, setLeadSaving] = useState(false);
   const [leadSaved, setLeadSaved] = useState(false);
+
+  useEffect(() => {
+    if (!consultants.length) return;
+    setConsultant((current) =>
+      consultants.some((person) => person.id === current) ? current : consultants[0].id,
+    );
+  }, [consultants]);
 
   useEffect(() => {
     let cancelled = false;
@@ -234,7 +243,7 @@ export function BudgetMatcher() {
 
     setLeadSaving(true);
     try {
-      const selected = TEAM.find((person) => person.id === consultant) ?? TEAM[0];
+      const selected = consultants.find((person) => person.id === consultant) ?? consultants[0];
       const response = await fetch("/api/leads", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -620,8 +629,8 @@ export function BudgetMatcher() {
                 </label>
                 <label className="field">
                   <span>مشاور پیگیر</span>
-                  <select value={consultant} onChange={(event) => setConsultant(event.target.value as (typeof TEAM)[number]["id"])}>
-                    {TEAM.map((person) => <option key={person.id} value={person.id}>{person.name} — {person.role}</option>)}
+                  <select value={consultant} onChange={(event) => setConsultant(event.target.value as string)}>
+                    {consultants.map((person) => <option key={person.id} value={person.id}>{person.name} — {person.role}</option>)}
                   </select>
                 </label>
                 <button type="submit" className="btn-gold budget-lead-submit" disabled={leadSaving}>
@@ -638,7 +647,7 @@ export function BudgetMatcher() {
               </div>
               <a
                 className="btn-ghost"
-                href={TEAM.find((person) => person.id === consultant)?.wa ?? SITE.whatsappDirect}
+                href={consultants.find((person) => person.id === consultant)?.whatsapp ?? SITE.whatsappDirect}
                 target="_blank"
                 rel="noopener noreferrer"
               >
