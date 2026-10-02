@@ -113,7 +113,7 @@ const schema = z.object({
   if (value.visitPreferredAt && !value.propertyId) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["propertyId"], message: "برای درخواست بازدید، فایل مشخص نشده است." });
   }
-  if (value.propertyId && !value.visitPreferredAt) {
+  if (value.propertyId && !value.visitPreferredAt && value.offerAmount == null) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["visitPreferredAt"], message: "زمان پیشنهادی بازدید مشخص نشده است." });
   }
   if (value.leaseDeadline) {
@@ -222,7 +222,7 @@ export default defineEventHandler(async (event) => {
     ? buildBudgetLeadNote(budgetPayload)
     : parsed.data.note;
 
-  if (existing[0] && !(parsed.data.propertyId && parsed.data.visitPreferredAt)) {
+  if (existing[0] && !(parsed.data.propertyId && parsed.data.visitPreferredAt) && !parsed.data.callbackPreferredAt && parsed.data.offerAmount == null) {
     if (parsed.data.source === "budget_match") {
       await sql.query(
         `update leads
