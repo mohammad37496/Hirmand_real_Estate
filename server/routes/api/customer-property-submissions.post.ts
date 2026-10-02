@@ -135,6 +135,10 @@ export default defineEventHandler(async (event) => {
       "update customer_property_submissions set status='pending', review_note='', reviewed_at=null, updated_at=current_timestamp, owner_name=$2, owner_phone=$3, property_data=$4::jsonb where id=$1",
       [submission.id, parsed.data.ownerName, parsed.data.ownerPhone, JSON.stringify(parsed.data)],
     );
+    await sql.query(
+      "insert into customer_property_submission_events (id,submission_id,action,note,metadata) values ($1,$2,'resubmit',$3,$4::jsonb)",
+      [crypto.randomUUID(), submission.id, "مشتری اطلاعات ملک را اصلاح و دوباره برای بررسی ارسال کرد.", JSON.stringify({ trackingToken })],
+    ).catch(() => {});
     if (submission.lead_id) {
       await sql.query(
         "update leads set status='new', updated_at=current_timestamp, follow_up_at=current_timestamp + interval '2 hours', name=$2, phone=$3, job='مالک', deal=$4, property_type=$5, neighborhood=$6, note=$7 where id=$1",
@@ -233,6 +237,10 @@ export default defineEventHandler(async (event) => {
     [parsed.data.ownerPhone, parsed.data.neighborhood, String(parsed.data.areaM2), normalizedTitle],
   );
 
+  await sql.query(
+    "insert into customer_property_submission_events (id,submission_id,action,note,metadata) values ($1,$2,'created',$3,$4::jsonb)",
+    [crypto.randomUUID(), submissionId, "ثبت ملک جدید توسط مشتری و ورود به صف بررسی.", JSON.stringify({ trackingToken, possibleDuplicate: duplicateRows.length > 0 })],
+  ).catch(() => {});
   return {
     success:true,
     duplicate:false,
