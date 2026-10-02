@@ -42,6 +42,9 @@ import {
   Settings,
   HardDrive,
   Route as RouteIcon,
+  History,
+  Target,
+  CircleCheck,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import { isInvalidIntegerInput, normalizeMoneyText } from "@/lib/property-input-normalization";
@@ -105,6 +108,9 @@ import { AdminMediaHealth } from "@/components/hirmand/admin-media-health";
 import { AdminSecurityCenter } from "@/components/hirmand/admin-security-center";
 import { AdminSeoRedirects } from "@/components/hirmand/admin-seo-redirects";
 import { AdminContentStudio } from "@/components/hirmand/admin-content-studio";
+import { AdminCampaignPerformance } from "@/components/hirmand/admin-campaign-performance";
+import { AdminPropertyVersionCenter } from "@/components/hirmand/admin-property-version-center";
+import { AdminFinanceReconciliation } from "@/components/hirmand/admin-finance-reconciliation";
 import "@/admin-site-settings.css";
 import "@/admin-security.css";
 import "@/admin-seo-redirects.css";
@@ -130,7 +136,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
+type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "financeReconciliation" | "campaignPerformance" | "propertyVersions" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -544,6 +550,9 @@ export function AdminPropertiesPage() {
       { view: "matching" as ViewMode, label: "مچ کردن", icon: GitCompareArrows },
       { view: "owners" as ViewMode, label: "مالکین", icon: UserCog },
       { view: "finance" as ViewMode, label: "دفتر مالی", icon: WalletCards },
+      { view: "financeReconciliation" as ViewMode, label: "تطبیق دفتر مالی", icon: CircleCheck },
+      { view: "campaignPerformance" as ViewMode, label: "عملکرد کمپین", icon: Target },
+      { view: "propertyVersions" as ViewMode, label: "نسخه‌های فایل", icon: History },
       { view: "backup" as ViewMode, label: "پشتیبان", icon: DatabaseBackup },
       { view: "watermark" as ViewMode, label: "واترمارک", icon: ShieldCheck },
       { view: "schedule" as ViewMode, label: "زمان‌بندی", icon: CalendarClock },
@@ -1764,7 +1773,13 @@ export function AdminPropertiesPage() {
                                                     ? "ریدایرکت و ۴۰۴"
                                                     : view === "contentStudio"
                                                       ? "استودیو محتوا"
-                                                      : view === "divar"
+                                                      : view === "financeReconciliation"
+                                                        ? "تطبیق دفتر مالی"
+                                                        : view === "campaignPerformance"
+                                                          ? "عملکرد کمپین‌ها و منابع جذب"
+                                                          : view === "propertyVersions"
+                                                            ? "نسخه‌های فایل و بازگردانی تغییرات"
+                                                            : view === "divar"
                                                         ? "فایل‌های دیوار"
                           : form.id
                         ? "ویرایش فایل"
@@ -1808,6 +1823,12 @@ export function AdminPropertiesPage() {
                                                 ? "مدیریت ریدایرکت‌های دائمی/موقت و گزارش خطاهای ۴۰۴"
                                                 : view === "contentStudio"
                                                   ? "ویرایش راهنماها و پرسش‌های متداول بدون تغییر کد"
+                                                  : view === "financeReconciliation"
+                                                    ? "کشف تراکنش‌های بدون اتصال و موارد تکراری مشکوک"
+                                                    : view === "campaignPerformance"
+                                                      ? "تحلیل منبع جذب، کمپین، تماس، بازدید و قرارداد در CRM"
+                                                      : view === "propertyVersions"
+                                                        ? "مشاهده نسخه‌های ثبت‌شده و بازگردانی امن اطلاعات اصلی فایل"
                               : view === "divar"
                         ? "دریافت، فیلتر و ورود فایل‌های شخصی از دیوار"
                         : form.contactName
@@ -1857,6 +1878,10 @@ export function AdminPropertiesPage() {
               />
             </>
           ) : null}
+
+          {view === "campaignPerformance" ? <AdminCampaignPerformance /> : null}
+          {view === "propertyVersions" ? <AdminPropertyVersionCenter /> : null}
+          {view === "financeReconciliation" ? <AdminFinanceReconciliation /> : null}
 
           {view === "list" ? (
             <>
