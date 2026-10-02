@@ -71,6 +71,8 @@ import { WhatsAppIcon } from "@/components/hirmand/social-icons";
 import "@/property-price-history.css";
 import "@/property-decision-dossier.css";
 import "@/property-question-log.css";
+import "@/property-negotiation-log.css";
+import "@/property-ownership-cost.css";
 import "@/property-renovation-tracker.css";
 
 const PROPERTY_AVAILABILITY_LABELS: Record<Property["availabilityStatus"], string> = {
@@ -114,6 +116,8 @@ import { PropertyInquiryTools } from "@/components/hirmand/property-inquiry-tool
 import { PropertyQuestionLog } from "@/components/hirmand/property-question-log";
 import { PropertyRenovationTracker } from "@/components/hirmand/property-renovation-tracker";
 import { PropertyVisitReport } from "@/components/hirmand/property-visit-report";
+import { PropertyNegotiationLog } from "@/components/hirmand/property-negotiation-log";
+import { PropertyOwnershipCost } from "@/components/hirmand/property-ownership-cost";
 import { formatToman } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
@@ -1691,6 +1695,8 @@ export function PropertyDetailView({
         <PropertyReviewAlerts property={property} />
         <PropertyFollowUpReminder property={property} />
         <PropertyDecisionDossier property={property} />
+        <PropertyNegotiationLog property={property} />
+        <PropertyOwnershipCost property={property} />
         <PropertyQuestionLog property={property} />
         <PropertyRenovationTracker property={property} />
         <PropertyInquiryTools property={property} />
