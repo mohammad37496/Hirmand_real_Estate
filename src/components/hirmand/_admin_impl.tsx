@@ -25,6 +25,7 @@ import {
   Globe2,
   GitCompareArrows,
   Download,
+  MessageCircle,
   CheckSquare,
   ChevronDown,
   Clock3,
@@ -66,6 +67,7 @@ import { AdminPricingPanel } from "@/components/hirmand/admin-pricing-panel";
 import { AdminConsultantPicker } from "@/components/hirmand/admin-consultant-picker";
 import { AdminMusicManager } from "@/components/hirmand/admin-music-manager";
 import { AdminLeadManager } from "@/components/hirmand/admin-lead-manager";
+import { AdminCustomerInbox } from "@/components/hirmand/admin-customer-inbox";
 import { AdminDashboard } from "@/components/hirmand/admin-dashboard";
 import { ADMIN_CSS } from "@/components/hirmand/admin-shell-css";
 import { AdminListingAssistant } from "@/components/hirmand/admin-listing-assistant";
@@ -84,6 +86,7 @@ import { AdminPropertyPerformance } from "@/components/hirmand/admin-property-pe
 import { AdminCommandPalette } from "@/components/hirmand/admin-command-palette";
 import { AdminPropertyFilterPresets } from "@/components/hirmand/admin-property-filter-presets";
 import "@/admin-property-performance.css";
+import "@/admin-customer-inbox.css";
 import {
   PROPERTY_CABINET_OPTIONS,
   PROPERTY_COOLING_OPTIONS,
@@ -102,7 +105,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup";
+type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -505,6 +508,7 @@ export function AdminPropertiesPage() {
       { view: "productivity" as ViewMode, label: "مرکز مدیریت", icon: ListTodo },
       { view: "list" as ViewMode, label: "فایل‌های ملک", icon: LayoutDashboard },
       { view: "leads" as ViewMode, label: "درخواست‌ها", icon: UsersRound },
+      { view: "messages" as ViewMode, label: "گفت‌وگوی مشتری", icon: MessageCircle },
       { view: "consultants" as ViewMode, label: "مشاوران", icon: UsersRound },
       { view: "partners" as ViewMode, label: "همکاران", icon: UsersRound },
       { view: "music" as ViewMode, label: "موسیقی", icon: Music2 },
@@ -1687,6 +1691,8 @@ export function AdminPropertiesPage() {
                     ? "موسیقی سایت"
                     : view === "leads"
                       ? "درخواست‌های مشتری"
+                      : view === "messages"
+                        ? "گفت‌وگوی مشتری"
                       : view === "partners"
                         ? "باشگاه همکاران و کد رهگیری"
                         : view === "consultants"
@@ -1715,6 +1721,8 @@ export function AdminPropertiesPage() {
                   ? `${stats.total.toLocaleString("fa-IR")} فایل در سیستم`
                   : view === "leads"
                     ? "مدیریت Leadها و پیگیری مشتریان"
+                    : view === "messages"
+                      ? "پاسخ‌گویی مستقیم به مشتریانی که از طریق کد رهگیری پیام داده‌اند"
                     : view === "attendance"
                       ? "ثبت حضور اعضای بنگاه و گزارش ساعت‌های ورود و خروج"
                       : view === "matching"
@@ -2151,6 +2159,7 @@ export function AdminPropertiesPage() {
           {view === "productivity" ? <AdminProductivityCenter /> : null}
           {view === "music" ? <AdminMusicManager /> : null}
           {view === "leads" ? <AdminLeadManager /> : null}
+          {view === "messages" ? <AdminCustomerInbox /> : null}
           {view === "partners" ? <AdminPartnerManager /> : null}
           {view === "consultants" ? <AdminConsultantManager /> : null}
           {view === "attendance" ? <AdminAttendanceManager /> : null}
