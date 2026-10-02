@@ -18,7 +18,7 @@ function formatMoney(value: string) {
 }
 
 function normalizePhone(value: string) {
-  return digits(value).replace(/D/g, "").replace(/^(+98|0098|98)/, "0");
+  return digits(value).replace(/\\D/g, "").replace(/^(\\+98|0098|98)/, "0");
 }
 
 export const Route = createFileRoute("/submit-property")({
