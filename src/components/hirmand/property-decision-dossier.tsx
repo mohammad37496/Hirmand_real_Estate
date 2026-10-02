@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Copy, FileText, Printer, Star } from "lucide-react";
+import { CheckCircle2, Copy, FileText, Printer, RefreshCw, Star } from "lucide-react";
 import type { Property } from "@/lib/properties";
 import { formatToman } from "@/lib/money";
 import { propertyPath } from "@/lib/property-path";
@@ -47,12 +47,17 @@ function readJson(key: string, id: string) {
 }
 
 function readChecks(key: string, id: string) {
-  const parsed = readJson(key, id);
-  const checks = Array.isArray(parsed?.checks) ? parsed.checks : [];
-  return {
-    done: checks.filter(Boolean).length,
-    total: checks.length,
-  };
+  try {
+    const raw = localStorage.getItem(key + id);
+    const parsed = raw ? JSON.parse(raw) : null;
+    const checks = Array.isArray(parsed) ? parsed : [];
+    return {
+      done: checks.filter(Boolean).length,
+      total: checks.length,
+    };
+  } catch {
+    return { done: 0, total: 0 };
+  }
 }
 
 function money(value: unknown) {
@@ -172,6 +177,7 @@ export function PropertyDecisionDossier({ property }: { property: Property }) {
           <p>یک نمای یک‌جا از اطلاعات فعلی فایل و داده‌های شخصی‌ای که در مرورگر برای تصمیم‌گیری ثبت کرده‌اید؛ این برگه توصیه خرید یا ارزیابی حقوقی/کارشناسی نیست.</p>
         </div>
         <div className="property-dossier-actions">
+          <button type="button" className="btn-ghost" onClick={() => setVersion((value) => value + 1)}><RefreshCw size={15} /> به‌روزرسانی</button>
           <button type="button" className="btn-ghost" onClick={() => window.print()}><Printer size={15} /> چاپ</button>
           <button type="button" className="btn-gold" onClick={() => void copySummary()}>{copied ? <CheckCircle2 size={15} /> : <Copy size={15} />} {copied ? "کپی شد" : "کپی خلاصه"}</button>
         </div>
