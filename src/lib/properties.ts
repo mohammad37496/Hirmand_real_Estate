@@ -131,6 +131,7 @@ export type PropertyCardData = Pick<
   | "priceDropPercent"
   | "latitude"
   | "longitude"
+  | "publishedAt"
 > & {
   featuredUntil?: string | null;
   image: string | null;
@@ -434,7 +435,7 @@ const CARD_COLUMNS = `
   neighborhood, area_m2, bedrooms, parking, elevator, price, deposit, rent,
   nullif(images->>0, '') as image,
   price_drop_percent,
-  latitude, longitude
+  latitude, longitude, published_at
 `;
 
 function mapPropertyCard(row: Record<string, unknown>): PropertyCardData {
@@ -463,6 +464,7 @@ function mapPropertyCard(row: Record<string, unknown>): PropertyCardData {
     priceDropPercent: numberOrNull(row.price_drop_percent),
     latitude: roundPublicCoordinate(numberOrNull(row.latitude)),
     longitude: roundPublicCoordinate(numberOrNull(row.longitude)),
+    publishedAt: row.published_at ? new Date(String(row.published_at)).toISOString() : null,
   };
 }
 
@@ -473,7 +475,7 @@ const DETAIL_COLUMNS = `
   heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
   latitude, longitude, price_drop_percent, floor_label, orientation,
-  owner_name, owner_phone, owner_info
+  owner_name, owner_phone, owner_info, internal_priority, internal_note
 `;
 
 function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
@@ -1572,6 +1574,8 @@ export const saveProperty = createServerFn({ method: "POST" })
         owner_phone = excluded.owner_phone,
         owner_info = excluded.owner_info,
         availability_status = excluded.availability_status,
+        internal_priority = excluded.internal_priority,
+        internal_note = excluded.internal_note,
         previous_price = properties.price,
         previous_deposit = properties.deposit,
         previous_rent = properties.rent,
@@ -1719,6 +1723,8 @@ export const saveProperty = createServerFn({ method: "POST" })
         data.ownerPhone.trim(),
         data.ownerInfo.trim(),
         data.availabilityStatus,
+        data.internalPriority,
+        data.internalNote,
       ],
     );
 
