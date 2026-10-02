@@ -19,6 +19,7 @@ import { Route as FileCodeRouteImport } from './routes/file-code'
 import { Route as SubmitPropertyRouteImport } from './routes/submit-property'
 import { Route as PropertiesRouteImport } from './routes/properties'
 import { Route as TrackingRouteImport } from './routes/tracking'
+import { Route as MyHirmandRouteImport } from './routes/my-hirmand'
 import { Route as AreasSlugRouteImport } from './routes/areas.$slug'
 import { Route as ConsultantsIndexRouteImport } from './routes/consultants.index'
 import { Route as ConsultantsIdRouteImport } from './routes/consultants.$id'
@@ -80,6 +81,11 @@ const PropertiesRoute = PropertiesRouteImport.update({
 const TrackingRoute = TrackingRouteImport.update({
   id: '/tracking',
   path: '/tracking',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyHirmandRoute = MyHirmandRouteImport.update({
+  id: '/my-hirmand',
+  path: '/my-hirmand',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AreasSlugRoute = AreasSlugRouteImport.update({
@@ -154,6 +160,7 @@ export interface FileRoutesByFullPath {
   '/submit-property': typeof SubmitPropertyRoute
   '/properties': typeof PropertiesRouteWithChildren
   '/tracking': typeof TrackingRoute
+  '/my-hirmand': typeof MyHirmandRoute
   '/areas/$slug': typeof AreasSlugRoute
   '/consultants/$id': typeof ConsultantsIdRoute
   '/file/$id': typeof FileIdRoute
@@ -290,6 +297,7 @@ export interface RootRouteChildren {
   SubmitPropertyRoute: typeof SubmitPropertyRoute
   PropertiesRoute: typeof PropertiesRouteWithChildren
   TrackingRoute: typeof TrackingRoute
+  MyHirmandRoute: typeof MyHirmandRoute
   AreasSlugRoute: typeof AreasSlugRoute
   FileIdRoute: typeof FileIdRoute
   ToolsCommissionRoute: typeof ToolsCommissionRoute
@@ -356,6 +364,13 @@ declare module '@tanstack/react-router' {
       path: '/tracking'
       fullPath: '/tracking'
       preLoaderRoute: typeof TrackingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-hirmand': {
+      id: '/my-hirmand'
+      path: '/my-hirmand'
+      fullPath: '/my-hirmand'
+      preLoaderRoute: typeof MyHirmandRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/areas/$slug': {
@@ -484,6 +499,7 @@ const rootRouteChildren: RootRouteChildren = {
   SubmitPropertyRoute: SubmitPropertyRoute,
   PropertiesRoute: PropertiesRouteWithChildren,
   TrackingRoute: TrackingRoute,
+  MyHirmandRoute: MyHirmandRoute,
   AreasSlugRoute: AreasSlugRoute,
   FileIdRoute: FileIdRoute,
   ToolsCommissionRoute: ToolsCommissionRoute,
