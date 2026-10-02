@@ -82,13 +82,98 @@ export default defineEventHandler(async (event) => {
   const attempt = await consumeAdminAttempt("customer-property:" + clientFingerprint(event));
   if (!attempt.allowed) throw tooManyAttemptsError(attempt.retryAfterSeconds);
 
-  const parsed = submissionSchema.safeParse(await readBody(event));
+  const rawBody = await readBody(event);
+  const rawAction = rawBody && typeof rawBody === "object" ? (rawBody as Record<string, unknown>).action : undefined;
+  const rawTrackingToken = rawBody && typeof rawBody === "object" ? (rawBody as Record<string, unknown>).trackingToken : undefined;
+  const sql = await getSql();
+
+  if (rawAction === "load" || rawAction === "resubmit") {
+    const trackingToken = typeof rawTrackingToken === "string"
+      ? rawTrackingToken.trim().toUpperCase().replace(/\\s+/g, "")
+      : "";
+    if (!/^HIR-[A-Z0-9]{2}-[A-F0-9]{12}$/.test(trackingToken)) {
+      throw createError({ statusCode: 400, statusMessage: "کد رهگیری نامعتبر است." });
+    }
+
+    const rows = await sql.query<Record<string, unknown>>(
+      "select id,lead_id,public_tracking_token,status,owner_name,owner_phone,property_data,review_note from customer_property_submissions where public_tracking_token=$1 limit 1",
+      [trackingToken],
+    );
+    const submission = rows[0];
+    if (!submission) throw createError({ statusCode: 404, statusMessage: "درخواست ثبت ملک پیدا نشد." });
+
+    if (rawAction === "load") {
+      if (String(submission.status) !== "rejected") {
+        throw createError({ statusCode: 409, statusMessage: "فقط درخواست‌های ردشده که نیاز به اصلاح دارند قابل ویرایش هستند." });
+      }
+      const propertyData = submission.property_data && typeof submission.property_data === "object"
+        ? { ...(submission.property_data as Record<string, unknown>) }
+        : {};
+      propertyData.ownerName = String(submission.owner_name ?? propertyData.ownerName ?? "");
+      propertyData.ownerPhone = String(submission.owner_phone ?? propertyData.ownerPhone ?? "");
+      return {
+        success: true,
+        status: "rejected",
+        trackingToken,
+        reviewNote: String(submission.review_note ?? ""),
+        propertyData,
+      };
+    }
+
+    if (String(submission.status) !== "rejected") {
+      throw createError({ statusCode: 409, statusMessage: "این درخواست در وضعیت اصلاح نیست؛ ابتدا نتیجه بررسی آن را در پیگیری مشاهده کنید." });
+    }
+
+    const parsed = submissionSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      throw createError({ statusCode: 422, statusMessage: parsed.error.issues[0]?.message || "اطلاعات ملک ناقص یا نامعتبر است." });
+    }
+    if (parsed.data.website) throw createError({ statusCode: 400, statusMessage: "درخواست نامعتبر است." });
+
+    const previousReviewNote = String(submission.review_note ?? "").trim();
+    await sql.query(
+      "update customer_property_submissions set status='pending', review_note='', reviewed_at=null, owner_name=$2, owner_phone=$3, property_data=$4::jsonb where id=$1",
+      [submission.id, parsed.data.ownerName, parsed.data.ownerPhone, JSON.stringify(parsed.data)],
+    );
+    if (submission.lead_id) {
+      await sql.query(
+        "update leads set status='new', updated_at=current_timestamp, follow_up_at=current_timestamp + interval '2 hours', name=$2, phone=$3, job='مالک', deal=$4, property_type=$5, neighborhood=$6, note=$7 where id=$1",
+        [
+          submission.lead_id,
+          parsed.data.ownerName,
+          parsed.data.ownerPhone,
+          "اصلاح ثبت ملک - " + parsed.data.transactionType,
+          parsed.data.propertyType,
+          parsed.data.neighborhood,
+          buildLeadNote(parsed.data),
+        ],
+      ).catch(() => {});
+      await sql.query(
+        "insert into lead_activities (lead_id,activity_type,title,note,metadata) values ($1,'status',$2,$3,$4::jsonb)",
+        [
+          submission.lead_id,
+          "اصلاح و ارسال مجدد ملک توسط مشتری",
+          previousReviewNote || "مشتری اطلاعات ملک را اصلاح و دوباره برای بررسی ارسال کرد.",
+          JSON.stringify({ submissionId: submission.id, trackingToken }),
+        ],
+      ).catch(() => {});
+    }
+
+    return {
+      success: true,
+      duplicate: false,
+      submissionId: String(submission.id),
+      trackingToken,
+      message: "اصلاحات ملک با موفقیت ارسال شد و دوباره در صف بررسی هیرمند قرار گرفت.",
+    };
+  }
+
+  const parsed = submissionSchema.safeParse(rawBody);
   if (!parsed.success) {
     throw createError({ statusCode: 422, statusMessage: parsed.error.issues[0]?.message || "اطلاعات ملک ناقص یا نامعتبر است." });
   }
   if (parsed.data.website) throw createError({ statusCode: 400, statusMessage: "درخواست نامعتبر است." });
 
-  const sql = await getSql();
   const trackingToken = createTrackingToken();
   const submissionId = crypto.randomUUID();
   const leadId = crypto.randomUUID();
