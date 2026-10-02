@@ -45,7 +45,7 @@ export const getAdminMediaHealth = createServerFn({ method: "POST" })
         "select count(*)::int as count, coalesce(sum(size_bytes),0)::bigint as bytes from media_objects",
       ),
       sql.query<{ count: number }>(
-        "select count(distinct m.id)::int as count from media_objects m join (select distinct regexp_replace(value, '^.*/api/media/', '') as id from properties p cross join lateral jsonb_array_elements_text(coalesce(p.images, '[]'::jsonb)) where p.deleted_at is null) refs on refs.id = m.id where m.pathname like 'properties/%'",
+        "select count(distinct m.id)::int as count from media_objects m join (select distinct regexp_replace(value, '^.*/api/media/', '') as id from properties p cross join lateral jsonb_array_elements_text(coalesce(p.images, '[]'::jsonb))) refs on refs.id = m.id where m.pathname like 'properties/uploads/%'",
       ),
       sql.query<{ count: number }>(
         "select count(*)::int as count from media_upload_sessions where created_at < current_timestamp - ($1::text || ' minutes')::interval",
