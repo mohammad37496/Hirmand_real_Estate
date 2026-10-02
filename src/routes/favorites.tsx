@@ -159,6 +159,9 @@ function FavoritesPage() {
   const [loading, setLoading] = useState(true);
   const [recentLoading, setRecentLoading] = useState(true);
   const [sharedFavorites, setSharedFavorites] = useState<string[]>([]);
+  const [sharedTitle, setSharedTitle] = useState("");
+  const [sharedExpiresAt, setSharedExpiresAt] = useState("");
+  const [sharedTokenLoading, setSharedTokenLoading] = useState(false);
   const [planOpen, setPlanOpen] = useState(false);
   const [planSlugs, setPlanSlugs] = useState<string[]>([]);
   const [planName, setPlanName] = useState("");
@@ -345,53 +348,74 @@ function FavoritesPage() {
 
   useEffect(() => {
     let cancelled = false;
-    const localFavoriteSlugs = readFavorites();
-    const shared = readSharedFavorites();
-    const favoriteSlugs = cleanSlugs([...localFavoriteSlugs, ...shared], 100);
-    if (shared.length) {
-      setSharedFavorites(shared);
-      persistSlugs(FAVORITES_KEY, favoriteSlugs);
-    }
-    const recentSlugs = readRecent();
 
-    if (favoriteSlugs.length) {
-      void listPublishedPropertiesBySlugs({ data: { slugs: favoriteSlugs } })
-        .then((rows) => {
+    async function loadFavorites() {
+      const localFavoriteSlugs = readFavorites();
+      const sharedQuery = new URLSearchParams(window.location.search).get("shared");
+      const legacyShared = readSharedFavorites();
+      let shared = legacyShared;
+
+      if (sharedQuery) {
+        setSharedTokenLoading(true);
+        try {
+          const response = await fetch("/api/shared-shortlist?token=" + encodeURIComponent(sharedQuery), { headers: { accept: "application/json" } });
+          const payload = await response.json().catch(() => null) as { slugs?: string[]; title?: string; expiresAt?: string; statusMessage?: string };
+          if (!response.ok) throw new Error(payload?.statusMessage || "لینک اشتراکی منقضی شده است.");
+          shared = cleanSlugs(payload?.slugs ?? [], 12);
+          setSharedTitle(payload?.title ?? "سبد منتخب هیرمند");
+          setSharedExpiresAt(payload?.expiresAt ?? "");
+        } catch (error) {
+          if (!cancelled) toast.error(error instanceof Error ? error.message : "لینک اشتراکی در دسترس نیست.");
+          shared = [];
+        } finally {
+          if (!cancelled) setSharedTokenLoading(false);
+        }
+      }
+
+      if (cancelled) return;
+      const favoriteSlugs = cleanSlugs([...localFavoriteSlugs, ...shared], 100);
+      if (shared.length) {
+        setSharedFavorites(shared);
+        persistSlugs(FAVORITES_KEY, favoriteSlugs);
+      }
+      const recentSlugs = readRecent();
+
+      if (favoriteSlugs.length) {
+        try {
+          const rows = await listPublishedPropertiesBySlugs({ data: { slugs: favoriteSlugs } });
           if (cancelled) return;
           setProperties(rows);
           const valid = new Set(rows.map((property) => property.slug));
           const retained = favoriteSlugs.filter((slug) => valid.has(slug));
           if (retained.length !== favoriteSlugs.length) persistSlugs(FAVORITES_KEY, retained);
-        })
-        .catch(() => {
+        } catch {
           if (!cancelled) setProperties([]);
-        })
-        .finally(() => {
+        } finally {
           if (!cancelled) setLoading(false);
-        });
-    } else {
-      setLoading(false);
-    }
+        }
+      } else {
+        setLoading(false);
+      }
 
-    if (recentSlugs.length) {
-      void listPublishedPropertiesBySlugs({ data: { slugs: recentSlugs } })
-        .then((rows) => {
+      if (recentSlugs.length) {
+        try {
+          const rows = await listPublishedPropertiesBySlugs({ data: { slugs: recentSlugs } });
           if (cancelled) return;
           setRecentProperties(rows);
           const valid = new Set(rows.map((property) => property.slug));
           const retained = recentSlugs.filter((slug) => valid.has(slug));
           if (retained.length !== recentSlugs.length) persistSlugs(RECENT_PROPERTIES_KEY, retained);
-        })
-        .catch(() => {
+        } catch {
           if (!cancelled) setRecentProperties([]);
-        })
-        .finally(() => {
+        } finally {
           if (!cancelled) setRecentLoading(false);
-        });
-    } else {
-      setRecentLoading(false);
+        }
+      } else {
+        setRecentLoading(false);
+      }
     }
 
+    void loadFavorites();
     return () => {
       cancelled = true;
     };
@@ -502,12 +526,12 @@ function FavoritesPage() {
           </div>
         ) : null}
 
-        {sharedFavorites.length ? (
+        {sharedFavorites.length || sharedTokenLoading ? (
           <section className="favorites-share-banner" aria-label="سبد اشتراکی">
             <div>
-              <span className="kicker">سبد اشتراکی</span>
-              <strong>{sharedFavorites.length.toLocaleString("fa-IR")} فایل از یک لینک دریافت شد.</strong>
-              <p>این فایل‌ها به ذخیره‌های این مرورگر اضافه شدند تا بعداً هم در دسترس باشند.</p>
+              <span className="kicker">سبد اشتراکی امن</span>
+              <strong>{sharedTokenLoading ? "در حال دریافت سبد اشتراکی…" : (sharedTitle || "سبد منتخب هیرمند")}</strong>
+              <p>{sharedTokenLoading ? "لینک در حال بررسی است." : `${sharedFavorites.length.toLocaleString("fa-IR")} فایل از لینک اشتراکی دریافت شد${sharedExpiresAt ? " · اعتبار تا " + new Date(sharedExpiresAt).toLocaleDateString("fa-IR") : ""}.`}</p>
             </div>
             <Link to="/properties" className="btn-ghost">
               <Link2 size={15} /> مشاهده همه فایل‌ها

@@ -11,6 +11,7 @@ const PROPERTY_SERVICE_REQUEST_DEALS = new Set([
   "درخواست کارشناسی فنی",
   "درخواست محتوای جدید",
   "بررسی حقوقی معامله",
+  "درخواست تأیید اطلاعات فایل",
 ]);
 
 function createPublicTrackingToken() {
@@ -336,6 +337,61 @@ export default defineEventHandler(async (event) => {
       dueMinutes: Math.max(30, Math.round((callbackDate.getTime() - Date.now()) / 60_000)),
     });
     return { success: true, id: rows[0].id, callbackRequested: true, trackingToken };
+  }
+
+  if (parsed.data.deal === "درخواست تأیید اطلاعات فایل" && parsed.data.propertyId) {
+    const propertyRows = await sql.query<{
+      id: string;
+      title: string;
+      property_type: string;
+      neighborhood: string;
+      contact_name: string;
+    }>(
+      "select id,title,property_type,neighborhood,contact_name from properties where id::text=$1 and status='published' and availability_status not in ('sold','rented','unavailable') limit 1",
+      [parsed.data.propertyId],
+    );
+    const property = propertyRows[0];
+    if (!property) {
+      throw createError({ statusCode: 404, statusMessage: "این فایل دیگر برای درخواست تأیید اطلاعات در دسترس نیست." });
+    }
+    const trackingToken = createPublicTrackingToken();
+    const requestNote = parsed.data.note.trim() || "درخواست بررسی و تأیید اطلاعات اصلی فایل";
+    const rows = await sql.query<{ id: string }>(
+      "insert into leads (id,name,phone,people_count,job,deal,property_type,neighborhood,consultant,note,source,property_id,follow_up_at,public_tracking_token) values ($1,$2,$3,$4,$5,'درخواست تأیید اطلاعات فایل',$6,$7,$8,$9,'website',$10,current_timestamp + interval '2 hours',$11) returning id",
+      [
+        crypto.randomUUID(),
+        parsed.data.name,
+        parsed.data.phone,
+        parsed.data.peopleCount ?? null,
+        parsed.data.job,
+        property.property_type,
+        property.neighborhood,
+        property.contact_name || parsed.data.consultant,
+        "فایل: " + property.title + "\n" + requestNote,
+        property.id,
+        trackingToken,
+      ],
+    );
+    if (!rows[0]) throw createError({ statusCode: 500, statusMessage: "درخواست تأیید اطلاعات ثبت نشد." });
+    await sql.query(
+      "insert into lead_activities (lead_id,activity_type,title,note,metadata) values ($1,'note',$2,$3,$4::jsonb)",
+      [
+        rows[0].id,
+        "درخواست تأیید اطلاعات فایل آنلاین ثبت شد",
+        "فایل: " + property.title,
+        requestNote,
+        JSON.stringify({ propertyId: property.id, requestType: "verification_information", checks: parsed.data.requestedAmenities }),
+      ],
+    ).catch(() => {});
+    await createAutomaticFollowUp(sql, {
+      leadId: rows[0].id,
+      title: "بررسی اطلاعات فایل: " + property.title,
+      description: "مشتری درخواست بررسی و تأیید اطلاعات اصلی این فایل را ثبت کرده است.",
+      assignee: property.contact_name || parsed.data.consultant,
+      priority: "high",
+      dueMinutes: 120,
+    });
+    return { success: true, id: rows[0].id, verificationRequest: true, trackingToken };
   }
 
   if (parsed.data.propertyId && PROPERTY_SERVICE_REQUEST_DEALS.has(parsed.data.deal)) {
