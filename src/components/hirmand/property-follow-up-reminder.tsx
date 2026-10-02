@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { BellRing, CalendarClock, Check, Download, RotateCcw } from "lucide-react";
 import type { Property } from "@/lib/properties";
 import { propertyPath } from "@/lib/property-path";
+import { formatPersianDate } from "@/lib/persian-date";
+import { PersianDatePicker } from "./persian-date-picker";
 import "@/property-review-tools.css";
 
 type ReminderData = { date: string; time: string; action: string; note: string; done: boolean };
@@ -29,7 +31,7 @@ export function PropertyFollowUpReminder({ property }: { property: Property }) {
   return (
     <section className="property-reminder-tool" aria-labelledby="property-reminder-title">
       <header className="property-reminder-head"><div><span className="kicker">پیگیری زمان‌دار</span><h2 id="property-reminder-title"><BellRing size={20} /> یادآور پیگیری این فایل</h2><p>یادآور روی همین مرورگر ذخیره می‌شود. برای اعلان واقعی، فایل تقویم را به تقویم گوشی/رایانه اضافه کنید.</p></div>{data.done ? <span className="property-reminder-done"><Check size={14} /> انجام شد</span> : null}</header>
-      <div className="property-reminder-grid"><label><span>تاریخ</span><input type="date" value={data.date} onChange={(e) => patch({ date: e.target.value })} /></label><label><span>ساعت</span><input type="time" value={data.time} onChange={(e) => patch({ time: e.target.value })} /></label><label><span>نوع پیگیری</span><select value={data.action} onChange={(e) => patch({ action: e.target.value })}><option>تماس با مشاور</option><option>درخواست مدارک</option><option>مذاکره قیمت</option><option>بازدید دوم</option><option>بررسی دوباره فایل</option></select></label></div>
+      <div className="property-reminder-grid"><label><span>تاریخ</span><PersianDatePicker value={data.date} onChange={(date) => patch({ date })} title="تاریخ پیگیری" hint="" /></label><label><span>ساعت</span><input type="time" value={data.time} onChange={(e) => patch({ time: e.target.value })} /></label><label><span>نوع پیگیری</span><select value={data.action} onChange={(e) => patch({ action: e.target.value })}><option>تماس با مشاور</option><option>درخواست مدارک</option><option>مذاکره قیمت</option><option>بازدید دوم</option><option>بررسی دوباره فایل</option></select></label></div>
       <label className="property-reminder-note"><span>یادداشت</span><textarea maxLength={600} rows={3} value={data.note} onChange={(e) => patch({ note: e.target.value })} placeholder="مثلاً بعد از دریافت سند، درباره قیمت نهایی تماس بگیرم." /></label>
       <div className="property-reminder-actions"><button type="button" className="property-reminder-save" onClick={save}><CalendarClock size={15} /> {saved ? "ذخیره شد" : "ذخیره یادآور"}</button>{!data.done ? <button type="button" className="property-reminder-done-btn" onClick={markDone}><Check size={15} /> انجام شد</button> : null}<button type="button" className="property-reminder-calendar" onClick={downloadCalendar}><Download size={15} /> افزودن به تقویم</button><button type="button" className="property-reminder-reset" onClick={reset}><RotateCcw size={14} /> بازنشانی</button></div>
       <p className="property-reminder-hidden-title" aria-hidden="true">{title}</p>
