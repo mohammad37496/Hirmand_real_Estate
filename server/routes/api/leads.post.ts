@@ -117,7 +117,8 @@ const schema = z.object({
     value.propertyId &&
     !value.visitPreferredAt &&
     value.offerAmount == null &&
-    value.deal !== "درخواست مدارک"
+    value.deal !== "درخواست مدارک" &&
+    value.deal !== "درخواست تأمین مالی"
   ) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["visitPreferredAt"], message: "زمان پیشنهادی بازدید مشخص نشده است." });
   }
@@ -422,6 +423,63 @@ export default defineEventHandler(async (event) => {
     });
     return { success: true, duplicate: false, id: rows[0].id, visitRequested: true, trackingToken };
   }
+  if (parsed.data.deal === "درخواست تأمین مالی" && parsed.data.propertyId) {
+    const propertyRows = await sql.query<{
+      id: string;
+      title: string;
+      property_type: string;
+      neighborhood: string;
+      contact_name: string;
+      price: number | null;
+    }>(
+      "select id,title,property_type,neighborhood,contact_name,price from properties where id::text=$1 and status='published' and availability_status not in ('sold','rented','unavailable') limit 1",
+      [parsed.data.propertyId],
+    );
+    const property = propertyRows[0];
+    if (!property) throw createError({ statusCode: 404, statusMessage: "این فایل دیگر برای بررسی تأمین مالی در دسترس نیست." });
+
+    const trackingToken = createPublicTrackingToken();
+    const rows = await sql.query<{ id: string }>(
+      "insert into leads (id,name,phone,people_count,job,deal,property_type,neighborhood,consultant,note,source,property_id,follow_up_at,public_tracking_token) values ($1,$2,$3,$4,$5,'درخواست تأمین مالی',$6,$7,$8,$9,'website',$10,current_timestamp + interval '2 hours',$11) returning id",
+      [
+        crypto.randomUUID(),
+        parsed.data.name,
+        parsed.data.phone,
+        parsed.data.peopleCount ?? null,
+        parsed.data.job,
+        property.property_type,
+        property.neighborhood,
+        property.contact_name || parsed.data.consultant,
+        parsed.data.note.trim() || "درخواست بررسی تأمین مالی برای فایل",
+        property.id,
+        trackingToken,
+      ],
+    );
+    if (!rows[0]) throw createError({ statusCode: 500, statusMessage: "درخواست تأمین مالی ثبت نشد." });
+
+    await sql.query(
+      "insert into lead_activities (lead_id,activity_type,title,note,metadata) values ($1,'note',$2,$3,$4::jsonb)",
+      [
+        rows[0].id,
+        "درخواست بررسی تأمین مالی آنلاین",
+        "فایل: " + property.title,
+        parsed.data.note.trim() || "درخواست بررسی سناریوی تأمین مالی",
+        JSON.stringify({ propertyId: property.id, requestType: "financing_review" }),
+      ],
+    ).catch(() => {});
+
+    await createAutomaticFollowUp(sql, {
+      leadId: rows[0].id,
+      title: "بررسی تأمین مالی: " + property.title,
+      description: "مشتری برای این فایل درخواست بررسی سناریوی تأمین مالی ثبت کرده است.",
+      assignee: property.contact_name || parsed.data.consultant,
+      priority: "high",
+      dueMinutes: 120,
+    });
+
+    return { success: true, id: rows[0].id, financingRequest: true, trackingToken };
+  }
+
   if (parsed.data.deal === "درخواست مدارک" && parsed.data.propertyId) {
     const propertyRows = await sql.query<{
       id: string;
