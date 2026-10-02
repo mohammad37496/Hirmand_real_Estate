@@ -40,6 +40,8 @@ export function Footer() {
 
       <div className="footer-links">
         <Link to="/properties">همه فایل‌ها</Link>
+        <Link to="/valuation">ارزیابی قیمت ملک</Link>
+        <Link to="/guides">راهنمای ملکی</Link>
         <Link to="/" hash="about" onClick={(event) => { if (onHome) scrollToId(event, "about"); }}>درباره ما</Link>
         <Link to="/" hash="services" onClick={(event) => { if (onHome) scrollToId(event, "services"); }}>خدمات</Link>
         <Link to="/" hash="tools" onClick={(event) => { if (onHome) scrollToId(event, "tools"); }}>ابزار مالی</Link>
