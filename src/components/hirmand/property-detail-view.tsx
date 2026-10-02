@@ -1435,6 +1435,10 @@ export function PropertyDetailView({
     { id: "extra", title: "امکانات تکمیلی", facts: extraSpecs },
   ];
 
+  const descriptionSummary =
+    descriptionParagraphs.find((paragraph) => paragraph.trim())?.trim() ??
+    "برای دریافت جزئیات کامل، شرایط معامله و هماهنگی بازدید با مشاور فایل در تماس باشید.";
+
   return (
     <SiteChrome>
       <script
@@ -1525,6 +1529,11 @@ export function PropertyDetailView({
                   {perMeter ? (
                     <small className="property-price-per-m2">
                       قیمت تقریبی هر متر: <strong>{perMeter}</strong>
+                    </small>
+                  ) : null}
+                  {property.updatedAt ? (
+                    <small className="property-price-updated">
+                      بروزرسانی قیمت و فایل: <time dateTime={property.updatedAt}>{formatAdDate(property.updatedAt)}</time>
                     </small>
                   ) : null}
                 </div>
@@ -1687,7 +1696,13 @@ export function PropertyDetailView({
                   </div>
                 </details>
 
-                <div className="property-summary-facts" aria-label="اطلاعات کلیدی فایل">
+                <div className="property-trust-strip" aria-label="اطمینان از اطلاعات فایل">
+                  <span><Check size={14} aria-hidden="true" /> اطلاعات ثبت‌شده هیرمند</span>
+                  <span><MapPinned size={14} aria-hidden="true" /> موقعیت تقریبی</span>
+                  <span><Briefcase size={14} aria-hidden="true" /> مشاور مشخص</span>
+                </div>
+
+                                <div className="property-summary-facts" aria-label="اطلاعات کلیدی فایل">
                   {property.areaM2 != null ? (
                     <div><Ruler size={16} aria-hidden="true" /><span><small>متراژ</small><strong>{property.areaM2.toLocaleString("fa-IR")} متر</strong></span></div>
                   ) : null}
@@ -1829,16 +1844,26 @@ export function PropertyDetailView({
               </div>
 
               <div className="property-description-copy">
-                {descriptionParagraphs.length ? (
-                  descriptionParagraphs.map((paragraph, index) => (
-                    <p key={index}>{paragraph}</p>
-                  ))
-                ) : (
-                  <p>
-                    برای این فایل توضیح متنی ثبت نشده است. برای دریافت جزئیات کامل، شرایط معامله و هماهنگی
-                    بازدید با مشاور فایل در تماس باشید.
-                  </p>
-                )}
+                <p className="property-description-lead">{descriptionSummary}</p>
+
+                <details className="property-description-full">
+                  <summary>
+                    <span>مشاهده توضیحات کامل فایل</span>
+                    <ChevronDown size={17} aria-hidden="true" />
+                  </summary>
+                  <div className="property-description-full-body">
+                    {descriptionParagraphs.length ? (
+                      descriptionParagraphs.map((paragraph, index) => (
+                        <p key={index}>{paragraph}</p>
+                      ))
+                    ) : (
+                      <p>
+                        برای این فایل توضیح متنی ثبت نشده است. برای دریافت جزئیات کامل، شرایط معامله و هماهنگی
+                        بازدید با مشاور فایل در تماس باشید.
+                      </p>
+                    )}
+                  </div>
+                </details>
               </div>
 
               {property.features.length ? (
