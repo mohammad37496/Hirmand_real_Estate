@@ -4,13 +4,12 @@ import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { PROPERTY_TYPES, SERVICES, NEIGHBORHOODS, SITE } from "@/lib/site";
 import { formatToman, parseAmount } from "@/lib/money";
-import { faDigits } from "@/lib/number-utils";
 import "@/owner-property.css";
 
 function digits(value: string) {
   return value
     .replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
-    .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٥٦٧٨٩".indexOf(d)));
+    .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
 }
 
 function formatMoney(value: string) {
@@ -163,9 +162,9 @@ function SubmitPropertyPage() {
               <div className="owner-tracking">
                 <small>کد رهگیری</small>
                 <strong dir="ltr">{done}</strong>
-                <Link className="btn-gold" to="/request-tracking" search={{ code: done } as never}>
+                <a className="btn-gold" href={`/request-tracking?code=${encodeURIComponent(done)}`}>
                   <Send size={16} /> پیگیری درخواست
-                </Link>
+                </a>
               </div>
             ) : null}
             <button type="button" className="btn-ghost" onClick={() => { setDone(""); setError(""); }}>
