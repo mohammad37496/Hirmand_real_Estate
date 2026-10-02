@@ -484,9 +484,13 @@ export function PropertyActions({
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                void navigator.clipboard?.writeText(qrTarget).then(() => {
-                  toast.success("لینک فایل کپی شد.");
-                });
+                if (!navigator.clipboard?.writeText) {
+                  toast.error("کپی لینک در این مرورگر در دسترس نیست.");
+                  return;
+                }
+                void navigator.clipboard.writeText(qrTarget)
+                  .then(() => toast.success("لینک فایل کپی شد."))
+                  .catch(() => toast.error("کپی لینک انجام نشد."));
               }}
             >
               کپی لینک فایل
