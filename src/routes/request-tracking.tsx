@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight, CalendarDays, CheckCircle2, Clock3, Copy, Home, RefreshCw, Search, UserRound } from "lucide-react";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { SITE } from "@/lib/site";
+import { rememberCustomerTrackingCode } from "@/lib/customer-tracking";
 import "@/request-tracking.css";
 
 type TrackingResult = {
@@ -17,7 +18,9 @@ type TrackingResult = {
   deal: string;
   propertyType: string;
   neighborhood: string;
+  visitRequestedAt?: string | null;
   visitPreferredAt: string | null;
+  timeline?: Array<{ type: "created" | "status" | "visit"; label: string; note: string; at: string | null }>;
   property: { title: string; slug: string } | null;
 };
 
@@ -80,6 +83,7 @@ function RequestTrackingPage() {
       }
       setResult(data);
       setCode(data.trackingCode);
+      rememberCustomerTrackingCode(data.trackingCode);
     } catch (error) {
       setResult(null);
       setMessage(error instanceof Error ? error.message : "پیگیری درخواست انجام نشد.");
@@ -279,6 +283,29 @@ function RequestTrackingPage() {
                 </div>
               ) : null}
 
+              {result.timeline?.length ? (
+                <div className="request-tracking-timeline">
+                  <div className="request-tracking-timeline-head">
+                    <div><span className="kicker">تاریخچه درخواست</span><h3>آخرین رویدادها</h3></div>
+                    <span>تا ۶ رویداد اخیر</span>
+                  </div>
+                  <div className="request-tracking-timeline-list">
+                    {result.timeline.slice(-6).reverse().map((event, index) => (
+                      <div className="request-tracking-timeline-item" key={event.type + "-" + (event.at || "na") + "-" + index}>
+                        <span className="request-tracking-timeline-dot" aria-hidden="true">
+                          {event.type === "visit" ? <CalendarDays size={13} /> : <CheckCircle2 size={13} />}
+                        </span>
+                        <div>
+                          <strong>{event.label}</strong>
+                          <p>{event.note}</p>
+                          <time>{faDate(event.at)}</time>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               {result.visitStatus !== "none" ? (
                 <div className="request-tracking-visit">
                   <div>
@@ -369,6 +396,7 @@ function RequestTrackingPage() {
               <div className="request-tracking-code">
                 <span>کد رهگیری شما</span>
                 <strong dir="ltr">{result.trackingCode}</strong>
+                <Link className="request-tracking-code-link" to="/my-hirmand">مشاهده همه پرونده‌های من</Link>
               </div>
             </div>
           ) : (
