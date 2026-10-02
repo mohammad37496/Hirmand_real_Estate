@@ -7,9 +7,9 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-sessi
 import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
 
 export type GuideContent = {
-  id:string; category:string; title:string; summary:string; points:string[];
+  id:string; category:string; title:string; summary:string; points:string[]; sortOrder:number; active:boolean;
 };
-export type FaqContent = { id:string; question:string; answer:string; category:string };
+export type FaqContent = { id:string; question:string; answer:string; category:string; sortOrder:number; active:boolean };
 
 export const DEFAULT_GUIDES:GuideContent[]=[
   {id:"before-buy",category:"خرید",title:"قبل از خرید ملک چه چیزهایی را بررسی کنیم؟",summary:"یک چک‌لیست عملی برای اینکه تصمیم خرید فقط بر اساس ظاهر و قیمت آگهی نباشد.",points:["نیاز خودتان را قبل از بازدید مشخص کنید: متراژ، تعداد خواب، پارکینگ، آسانسور و محدوده.","شرایط ملک را از نزدیک بررسی کنید؛ نور، صدا، دسترسی، کیفیت مشاعات و وضعیت نگهداری را جداگانه ببینید.","مدارک و وضعیت حقوقی ملک را قبل از هر تعهد مالی با دقت بررسی و درباره موارد مبهم از متخصص مربوطه سؤال کنید.","قیمت را با چند فایل مشابه در همان محدوده مقایسه کنید، نه فقط یک آگهی."]},
@@ -21,7 +21,7 @@ export const DEFAULT_GUIDES:GuideContent[]=[
 ];
 
 export const DEFAULT_FAQS:FaqContent[]=FAQS.map((item,index)=>({
-  id:`faq-${index+1}`,question:item.q,answer:item.a,category:"عمومی"
+  id:`faq-${index+1}`,question:item.q,answer:item.a,category:"عمومی",sortOrder:index*10,active:true
 }));
 
 async function requireAdmin(){
@@ -33,11 +33,11 @@ function text(value:unknown){return String(value??"").trim();}
 function bodyRecord(value:unknown):Record<string,unknown>{return value&&typeof value==="object"&&!Array.isArray(value)?value as Record<string,unknown>:{};}
 function mapGuide(row:Record<string,unknown>):GuideContent{
   const body=bodyRecord(row.body); const raw=Array.isArray(body.points)?body.points:[];
-  return {id:text(row.id),category:text(row.category),title:text(row.title),summary:text(row.summary),points:raw.map(text).filter(Boolean)};
+  return {id:text(row.id),category:text(row.category),title:text(row.title),summary:text(row.summary),points:raw.map(text).filter(Boolean),sortOrder:Number(row.sort_order)||0,active:row.active==null?true:Boolean(row.active)};
 }
 function mapFaq(row:Record<string,unknown>):FaqContent{
   const body=bodyRecord(row.body);
-  return {id:text(row.id),category:text(row.category)||"عمومی",question:text(row.title),answer:text(body.answer)};
+  return {id:text(row.id),category:text(row.category)||"عمومی",question:text(row.title),answer:text(body.answer),sortOrder:Number(row.sort_order)||0,active:row.active==null?true:Boolean(row.active)};
 }
 
 async function ensureSeeded(){
@@ -63,7 +63,7 @@ export const getPublicGuides=createServerFn({method:"GET"}).handler(async()=>{
   try{
     await ensureSeeded(); const sql=await getSql();
     const rows=await sql.query<Record<string,unknown>>(
-      "select id,category,title,summary,body from site_content_items where kind='guide' and active=true order by sort_order asc,updated_at desc");
+      "select id,category,title,summary,body,sort_order,active from site_content_items where kind='guide' and active=true order by sort_order asc,updated_at desc");
     const items=rows.map(mapGuide).filter(item=>item.id&&item.title&&item.points.length);
     return items.length?items:DEFAULT_GUIDES;
   }catch{return DEFAULT_GUIDES;}
@@ -74,7 +74,7 @@ export const getPublicFaqs=createServerFn({method:"GET"}).handler(async()=>{
   try{
     await ensureSeeded(); const sql=await getSql();
     const rows=await sql.query<Record<string,unknown>>(
-      "select id,category,title,body from site_content_items where kind='faq' and active=true order by sort_order asc,updated_at desc");
+      "select id,category,title,body,sort_order,active from site_content_items where kind='faq' and active=true order by sort_order asc,updated_at desc");
     const items=rows.map(mapFaq).filter(item=>item.id&&item.question&&item.answer);
     return items.length?items:DEFAULT_FAQS;
   }catch{return DEFAULT_FAQS;}
