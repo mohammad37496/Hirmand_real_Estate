@@ -105,7 +105,7 @@ function SubmitPropertyPage() {
   const [loadingExisting, setLoadingExisting] = useState(false);
 
   useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get("code")?.trim().toUpperCase().replace(/\\s+/g, "") || "";
+    const token = new URLSearchParams(window.location.search).get("code")?.trim().toUpperCase().replace(/\s+/g, "") || "";
     if (!/^HIR-[A-Z0-9]{2}-[A-F0-9]{12}$/.test(token)) return;
     setEditToken(token);
     setLoadingExisting(true);
