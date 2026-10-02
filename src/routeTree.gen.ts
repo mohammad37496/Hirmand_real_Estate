@@ -15,6 +15,7 @@ import { Route as BudgetMatchRouteImport } from './routes/budget-match'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ConsultantsRouteImport } from './routes/consultants'
 import { Route as FavoritesRouteImport } from './routes/favorites'
+import { Route as FileCodeRouteImport } from './routes/file-code'
 import { Route as SubmitPropertyRouteImport } from './routes/submit-property'
 import { Route as PropertiesRouteImport } from './routes/properties'
 import { Route as TrackingRouteImport } from './routes/tracking'
@@ -59,6 +60,11 @@ const ConsultantsRoute = ConsultantsRouteImport.update({
 const FavoritesRoute = FavoritesRouteImport.update({
   id: '/favorites',
   path: '/favorites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FileCodeRoute = FileCodeRouteImport.update({
+  id: '/file-code',
+  path: '/file-code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SubmitPropertyRoute = SubmitPropertyRouteImport.update({
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/compare': typeof CompareRoute
   '/consultants': typeof ConsultantsRouteWithChildren
   '/favorites': typeof FavoritesRoute
+  '/file-code': typeof FileCodeRoute
   '/submit-property': typeof SubmitPropertyRoute
   '/properties': typeof PropertiesRouteWithChildren
   '/tracking': typeof TrackingRoute
@@ -212,6 +219,7 @@ export interface FileRouteTypes {
     | '/compare'
     | '/consultants'
     | '/favorites'
+    | '/file-code'
     | '/submit-property'
     | '/properties'
     | '/tracking'
@@ -278,6 +286,7 @@ export interface RootRouteChildren {
   CompareRoute: typeof CompareRoute
   ConsultantsRoute: typeof ConsultantsRouteWithChildren
   FavoritesRoute: typeof FavoritesRoute
+  FileCodeRoute: typeof FileCodeRoute
   SubmitPropertyRoute: typeof SubmitPropertyRoute
   PropertiesRoute: typeof PropertiesRouteWithChildren
   TrackingRoute: typeof TrackingRoute
@@ -471,6 +480,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompareRoute: CompareRoute,
   ConsultantsRoute: ConsultantsRouteWithChildren,
   FavoritesRoute: FavoritesRoute,
+  FileCodeRoute: FileCodeRoute,
   SubmitPropertyRoute: SubmitPropertyRoute,
   PropertiesRoute: PropertiesRouteWithChildren,
   TrackingRoute: TrackingRoute,
