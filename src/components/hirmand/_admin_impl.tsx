@@ -60,6 +60,7 @@ import {
 } from "@/components/hirmand/admin-ui";
 import { adminErrorMessage, fa, useConfirmDialog } from "@/components/hirmand/admin-ui-utils";
 import { AdminMediaField } from "@/components/hirmand/admin-media-field";
+import { AdminPropertyDuplicateCheck } from "@/components/hirmand/admin-property-duplicate-check";
 import { AdminLocationPicker } from "@/components/hirmand/admin-location-picker";
 import { AdminPricingPanel } from "@/components/hirmand/admin-pricing-panel";
 import { AdminConsultantPicker } from "@/components/hirmand/admin-consultant-picker";
@@ -2548,6 +2549,18 @@ export function AdminPropertiesPage() {
                     propertyId={form.id}
                   />
                 </fieldset>
+
+                <AdminPropertyDuplicateCheck
+                  id={form.id}
+                  title={form.title}
+                  transactionType={form.transactionType}
+                  propertyType={form.propertyType}
+                  neighborhood={form.neighborhood}
+                  areaM2={numberOrNull(form.areaM2)}
+                  price={moneyOrNull(form.price)}
+                  deposit={moneyOrNull(form.deposit)}
+                  rent={moneyOrNull(form.rent)}
+                />
 
                 <fieldset className="admin-section" id="section-publish">
                   <legend>مشاور و وضعیت انتشار</legend>
