@@ -19,7 +19,7 @@ import { getPropertyFallbackImage } from "@/lib/property-fallback-images";
 import {
   getPropertyWatermarkSettings,
   DEFAULT_PROPERTY_WATERMARK,
-  isPermanentlyWatermarkedVideoUrl,
+  isPermanentlyWatermarkedMediaUrl,
   type PropertyWatermarkSettings,
 } from "@/lib/property-watermark";
 import { applyPropertyImageWatermark } from "@/lib/property-image-watermark";
@@ -495,7 +495,7 @@ export function AdminMediaField({ value, onChange, propertyType, propertyId }: P
                   onDragEnd={() => setDragIndex(null)}
                 >
                   <MediaThumb src={src} fallback={fallback} />
-                  {!video || !isPermanentlyWatermarkedVideoUrl(src) ? <PropertyMediaWatermark /> : null}
+                  {!video || !isPermanentlyWatermarkedMediaUrl(src) ? <PropertyMediaWatermark /> : null}
                   <label className="admin-media-pick">
                     <input
                       type="checkbox"
