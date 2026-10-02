@@ -83,7 +83,7 @@ export type ChunkedUploadConfig = {
     data: Buffer;
     contentType: string;
     pathname: string;
-  }>;
+  } | null>;
 };
 
 const SIGNATURE_REJECTION = Symbol("signature-rejection");
