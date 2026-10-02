@@ -2,6 +2,8 @@ import { useEffect,useMemo,useState } from "react";
 import { ArrowDownCircle,ArrowUpCircle,Plus,RefreshCw,Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatToman } from "@/lib/money";
+import { todayDateOnly } from "@/lib/persian-date";
+import { PersianDatePicker } from "./persian-date-picker";
 
 type Kind="income"|"expense";
 type Tx={id:number;kind:Kind;title:string;amount:number;transactionDate:string;propertyId:string|null;leadId:string|null;consultant:string;category:string;note:string;createdAt:string};
@@ -14,7 +16,7 @@ export function AdminFinanceManager(){
   const [kind,setKind]=useState<Kind>("income");
   const [title,setTitle]=useState("");
   const [amount,setAmount]=useState("");
-  const [date,setDate]=useState(new Date().toISOString().slice(0,10));
+  const [date,setDate]=useState(todayDateOnly());
   const [consultant,setConsultant]=useState("");
   const [category,setCategory]=useState("");
   const [note,setNote]=useState("");
@@ -66,7 +68,7 @@ export function AdminFinanceManager(){
         <label className="field"><span>نوع</span><select value={kind} onChange={e=>setKind(e.target.value as Kind)}><option value="income">درآمد</option><option value="expense">هزینه</option></select></label>
         <label className="field"><span>عنوان</span><input value={title} onChange={e=>setTitle(e.target.value)} placeholder="مثلاً کمیسیون قرارداد..." /></label>
         <label className="field"><span>مبلغ (تومان)</span><input inputMode="numeric" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="0" /></label>
-        <label className="field"><span>تاریخ</span><input type="date" value={date} onChange={e=>setDate(e.target.value)} /></label>
+        <label className="field"><span>تاریخ</span><PersianDatePicker value={date} onChange={setDate} title="تاریخ تراکنش" hint="" /></label>
         <label className="field"><span>مشاور</span><input value={consultant} onChange={e=>setConsultant(e.target.value)} placeholder="اختیاری" /></label>
         <label className="field"><span>دسته‌بندی</span><input value={category} onChange={e=>setCategory(e.target.value)} placeholder="کمیسیون، تبلیغات، اجاره دفتر..." /></label>
         <label className="field admin-span-2"><span>یادداشت</span><textarea rows={2} value={note} onChange={e=>setNote(e.target.value)} /></label>
@@ -80,7 +82,7 @@ export function AdminFinanceManager(){
         <span className={"admin-finance-icon "+item.kind}>{item.kind==="income"?<ArrowUpCircle size={19}/>:<ArrowDownCircle size={19}/>}</span>
         <div><strong>{item.title}</strong><small>{item.category||"بدون دسته"}{item.consultant?" · "+item.consultant:""}{item.note?" · "+item.note:""}</small></div>
         <span className={"admin-finance-amount "+item.kind}>{item.kind==="income"?"+":"−"} {formatToman(item.amount)}</span>
-        <time>{new Date(item.transactionDate+"T12:00:00").toLocaleDateString("fa-IR")}</time>
+        <time>{new Date(item.transactionDate+"T12:00:00").toLocaleDateString("fa-IR-u-ca-persian")}</time>
         <button className="admin-icon-btn" type="button" title="حذف" onClick={()=>void remove(item.id)}><Trash2 size={15}/></button>
       </article>)}</div>}
     </section>

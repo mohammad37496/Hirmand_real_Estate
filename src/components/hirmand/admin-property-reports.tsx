@@ -16,7 +16,7 @@ type Report = {
 
 function formatDate(value: string) {
   try {
-    return new Intl.DateTimeFormat("fa-IR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
+    return new Intl.DateTimeFormat("fa-IR-u-ca-persian", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
   } catch {
     return value;
   }

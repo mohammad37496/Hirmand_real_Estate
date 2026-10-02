@@ -79,6 +79,7 @@ import { AdminLeadManager } from "@/components/hirmand/admin-lead-manager";
 import { AdminCustomerInbox } from "@/components/hirmand/admin-customer-inbox";
 import { AdminDashboard } from "@/components/hirmand/admin-dashboard";
 import { ADMIN_CSS } from "@/components/hirmand/admin-shell-css";
+import { PersianDateTimePicker } from "@/components/hirmand/persian-date-time-picker";
 import { AdminListingAssistant } from "@/components/hirmand/admin-listing-assistant";
 import { AdminPublishReadiness } from "@/components/hirmand/admin-publish-readiness";
 import { AdminPartnerManager } from "@/components/hirmand/admin-partner-manager";
@@ -2760,11 +2761,11 @@ export function AdminPropertiesPage() {
                     </label>
                     <label className="field">
                       <span>پایان ویژه (اختیاری)</span>
-                      <input
-                        type="datetime-local"
+                      <PersianDateTimePicker
                         value={form.featuredUntil}
-                        onChange={(e) => update("featuredUntil", e.target.value)}
+                        onChange={(value) => update("featuredUntil", value)}
                         disabled={!form.featured}
+                        title="پایان ویژه"
                       />
                       <small className="admin-field-help">
                         خالی = بدون انقضا. بعد از این زمان، فایل خودکار از اولویت «ویژه» خارج می‌شود.
@@ -2902,7 +2903,7 @@ export function AdminPropertiesPage() {
                             <div>
                               <span>{changes.join(" · ")}</span>
                               <strong>
-                                {new Date(item.changedAt).toLocaleDateString("fa-IR")} ·{" "}
+                                {new Date(item.changedAt).toLocaleDateString("fa-IR-u-ca-persian")} ·{" "}
                                 {new Date(item.changedAt).toLocaleTimeString("fa-IR", {
                                   hour: "2-digit",
                                   minute: "2-digit",

@@ -41,7 +41,7 @@ const CONTRACT_STATUS_LABEL: Record<string, string> = {
 function faDate(value: string | null | undefined) {
   if (!value) return "—";
   try {
-    return new Intl.DateTimeFormat("fa-IR", {
+    return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",

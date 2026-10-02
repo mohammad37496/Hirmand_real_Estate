@@ -110,7 +110,7 @@ function formatCompactMoney(value: number | null) {
 function formatDate(value: string | null) {
   if (!value) return "—";
   try {
-    return new Intl.DateTimeFormat("fa-IR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
+    return new Intl.DateTimeFormat("fa-IR-u-ca-persian", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
   } catch {
     return value;
   }

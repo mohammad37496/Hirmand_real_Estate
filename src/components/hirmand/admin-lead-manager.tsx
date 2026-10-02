@@ -26,6 +26,7 @@ import { PROPERTY_OTHER_AMENITY_OPTIONS } from "@/lib/property-options";
 import { daysUntilDateOnly, formatPersianDate } from "@/lib/persian-date";
 import { AdminLeadDedupe } from "@/components/hirmand/admin-lead-dedupe";
 import { AdminLeadAssignmentBalancer } from "@/components/hirmand/admin-lead-assignment-balancer";
+import { PersianDateTimePicker } from "./persian-date-time-picker";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 type VisitStatus = "none" | "requested" | "confirmed" | "completed" | "cancelled";
@@ -103,7 +104,7 @@ const VISIT_STATUS_LABEL: Record<VisitStatus, string> = {
 
 function formatDate(value: string) {
   try {
-    return new Intl.DateTimeFormat("fa-IR", {
+    return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
       dateStyle: "short",
       timeStyle: "short",
     }).format(new Date(value));
@@ -702,10 +703,11 @@ export function AdminLeadManager() {
                     <div className="admin-lead-note-editor admin-lead-follow-up-editor">
                       <label className="field">
                         <span>پیگیری بعدی</span>
-                        <input
-                          type="datetime-local"
+                        <PersianDateTimePicker
                           value={followUpDraft}
-                          onChange={(event) => setFollowUpDraft(event.target.value)}
+                          onChange={setFollowUpDraft}
+                          title="زمان پیگیری بعدی"
+                          hint=""
                         />
                       </label>
                       <div className="admin-lead-note-actions">

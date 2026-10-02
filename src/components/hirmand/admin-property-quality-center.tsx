@@ -33,7 +33,7 @@ function money(value: number | null) {
 }
 function faDate(value: string | null) {
   if (!value) return "هنوز بازبینی نشده";
-  return new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeZone: "Asia/Tehran" }).format(new Date(value));
+  return new Intl.DateTimeFormat("fa-IR-u-ca-persian", { dateStyle: "medium", timeZone: "Asia/Tehran" }).format(new Date(value));
 }
 
 export function AdminPropertyQualityCenter() {
