@@ -33,7 +33,14 @@ const STATUS = {
 } as const;
 
 function normalizePhone(value: string) {
-  return value.replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
+  const digits = value
+    .replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
+    .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
+    .replace(/\D/g, "");
+  if (digits.startsWith("98")) return digits;
+  if (digits.startsWith("0")) return "98" + digits.slice(1);
+  if (digits.startsWith("9")) return "98" + digits;
+  return digits;
 }
 
 export function AdminPropertyServiceRequests() {
