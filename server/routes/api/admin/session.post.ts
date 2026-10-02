@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   createError,
   defineEventHandler,
@@ -36,8 +37,14 @@ export default defineEventHandler(async (event) => {
   assertSameOrigin(event);
 
   if (action === "logout") {
-    // Clearing the cookie is what actually ends access; the panel is a single
-    // shared key, so there is no server-side session row to revoke.
+    const claims = await getAdminSessionClaims(getCookie(event, ADMIN_SESSION_COOKIE));
+    if (claims?.sessionId && dbSource !== "unconfigured") {
+      const sql = await getSql();
+      await sql.query(
+        "update admin_sessions set revoked_at = current_timestamp where id = $1 and revoked_at is null",
+        [claims.sessionId],
+      ).catch(() => {});
+    }
     setCookie(event, ADMIN_SESSION_COOKIE, "", {
       httpOnly: true,
       sameSite: "lax",
@@ -74,7 +81,27 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const token = await createAdminSessionToken();
+  const sessionId = randomUUID();
+  const token = await createAdminSessionToken(sessionId);
+  if (dbSource !== "unconfigured") {
+    try {
+      const sql = await getSql();
+      await sql.query(
+        `insert into admin_sessions (id, expires_at, client_hash, user_agent)
+         values ($1, current_timestamp + interval '8 hours', $2, $3)`,
+        [
+          sessionId,
+          fingerprint.slice(0, 180),
+          String(event.req.headers.get("user-agent") ?? "").slice(0, 500),
+        ],
+      );
+    } catch {
+      throw createError({
+        statusCode: 503,
+        statusMessage: "ثبت نشست مدیریت در پایگاه داده انجام نشد.",
+      });
+    }
+  }
   await clearAdminAttempts(`admin-login:${fingerprint}`);
   setCookie(event, ADMIN_SESSION_COOKIE, token, {
     httpOnly: true,
