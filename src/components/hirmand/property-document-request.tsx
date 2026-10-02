@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CheckCircle2, FileSearch, Send, ShieldCheck } from "lucide-react";
+import { CheckCircle2, FileText, Send, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import type { Property } from "@/lib/properties";
 
@@ -124,7 +124,7 @@ export function PropertyDocumentRequest({ property }: { property: Property }) {
     <section id="property-document-request" className="property-new-feature property-document-request" aria-labelledby="property-document-request-title">
       <header className="property-new-feature-head">
         <div>
-          <span className="kicker"><FileSearch size={14} /> بررسی معامله</span>
+          <span className="kicker"><FileText size={14} /> بررسی معامله</span>
           <h2 id="property-document-request-title">درخواست بررسی مدارک این فایل</h2>
           <p>موارد موردنیازتان را انتخاب کنید تا درخواست واقعی در مرکز پیگیری هیرمند ثبت شود؛ این بخش جایگزین مشاوره حقوقی نیست.</p>
         </div>
