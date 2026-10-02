@@ -14,7 +14,7 @@ async function requireAdmin(event: H3Event) {
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
-  await requireAdmin();
+  await requireAdmin(event);
   const body = (await readBody(event).catch(() => ({}))) as { action?: "list" };
   if (dbSource === "unconfigured") return { items: [] };
   if (body.action && body.action !== "list") throw createError({ statusCode: 400, statusMessage: "عملیات نامعتبر است." });
