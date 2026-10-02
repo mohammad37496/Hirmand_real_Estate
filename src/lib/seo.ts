@@ -1,5 +1,6 @@
 import { SITE, TEAM } from "@/lib/site";
 import type { Property } from "@/lib/properties";
+import type { SiteSettings } from "@/lib/site-settings";
 import { propertyPath } from "@/lib/property-path";
 import { DB_MEDIA_PATH, isDivarRemoteHost } from "@/lib/media";
 import {
@@ -106,9 +107,10 @@ export function socialMeta(input: {
   ] as const;
 }
 
-export function homeHead() {
-  const title = SITE.title;
-  const description = SITE.description;
+export function homeHead(settings?: SiteSettings) {
+  const title = settings?.siteTitle?.trim() || SITE.title;
+  const description = settings?.siteDescription?.trim() || SITE.description;
+  const keywords = settings?.seoKeywords?.trim() || "املاک اصفهان, مشاور املاک اصفهان, خرید خانه اصفهان, فروش آپارتمان اصفهان, رهن و اجاره اصفهان, املاک هیرمند";
   const url = absoluteUrl("/");
   return {
     meta: [
@@ -116,10 +118,9 @@ export function homeHead() {
       { name: "description", content: description },
       {
         name: "keywords",
-        content:
-          "املاک اصفهان, مشاور املاک اصفهان, خرید خانه اصفهان, فروش آپارتمان اصفهان, رهن و اجاره اصفهان, املاک هیرمند, گروه مشاورین املاک هیرمند, املاک سیمین, مرداویج, جلفا, سپاهان شهر",
+        content: keywords,
       },
-      { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
+      { name: "robots", content: settings?.noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
       { name: "googlebot", content: "index, follow" },
       { name: "author", content: SITE.nameFa },
       { name: "geo.region", content: "IR-04" },
@@ -127,9 +128,11 @@ export function homeHead() {
       { name: "geo.position", content: `${SITE.lat};${SITE.lng}` },
       { name: "ICBM", content: `${SITE.lat}, ${SITE.lng}` },
       { name: "language", content: "fa" },
-      ...(typeof import.meta !== "undefined" && import.meta.env?.VITE_GOOGLE_SITE_VERIFICATION
-        ? [{ name: "google-site-verification", content: import.meta.env.VITE_GOOGLE_SITE_VERIFICATION }]
-        : []),
+      ...(settings?.googleSiteVerification?.trim()
+        ? [{ name: "google-site-verification", content: settings.googleSiteVerification.trim() }]
+        : typeof import.meta !== "undefined" && import.meta.env?.VITE_GOOGLE_SITE_VERIFICATION
+          ? [{ name: "google-site-verification", content: import.meta.env.VITE_GOOGLE_SITE_VERIFICATION }]
+          : []),
       ...socialMeta({ title, description, url }),
     ],
     links: [
