@@ -159,6 +159,7 @@ export function BudgetMatcher() {
   const [searched, setSearched] = useState(false);
   const [leadSaving, setLeadSaving] = useState(false);
   const [leadSaved, setLeadSaved] = useState(false);
+  const [leadTrackingToken, setLeadTrackingToken] = useState("");
 
   useEffect(() => {
     if (!consultants.length) return;
@@ -275,10 +276,12 @@ export function BudgetMatcher() {
         success?: boolean;
         statusMessage?: string;
         message?: string;
+        trackingToken?: string;
       } | null;
       if (!response.ok || !result?.success) {
         throw new Error(result?.statusMessage || result?.message || "ثبت درخواست انجام نشد.");
       }
+      if (result?.trackingToken) setLeadTrackingToken(result.trackingToken);
       setLeadSaved(true);
       trackAnalyticsEvent("budget_match_contact");
       toast.success("درخواست پیگیری برای تیم هیرمند ثبت شد.");
@@ -298,6 +301,7 @@ export function BudgetMatcher() {
     setMatches([]);
     setSearched(false);
     setLeadSaved(false);
+    setLeadTrackingToken("");
   }
 
   const budgetReady = depositNumber > 0 || rentNumber > 0;
@@ -645,14 +649,24 @@ export function BudgetMatcher() {
                 <strong>درخواست شما با موفقیت ثبت شد.</strong>
                 <p>بودجه و نتیجه تطبیق در CRM هیرمند ذخیره شده است و مشاور منتخب می‌تواند آن را پیگیری کند.</p>
               </div>
-              <a
-                className="btn-ghost"
-                href={consultants.find((person) => person.id === consultant)?.whatsapp ?? SITE.whatsappDirect}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <MessageCircle size={16} /> ادامه در واتساپ
-              </a>
+              <div className="budget-lead-success-actions">
+                <a
+                  className="btn-ghost"
+                  href={consultants.find((person) => person.id === consultant)?.whatsapp ?? SITE.whatsappDirect}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle size={16} /> ادامه در واتساپ
+                </a>
+                {leadTrackingToken ? (
+                  <a
+                    className="btn-gold"
+                    href={"/request-tracking?code=" + encodeURIComponent(leadTrackingToken)}
+                  >
+                    پیگیری آنلاین
+                  </a>
+                ) : null}
+              </div>
             </div>
           )}
         </div>
