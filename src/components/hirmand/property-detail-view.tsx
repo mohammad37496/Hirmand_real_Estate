@@ -103,6 +103,8 @@ import { PropertyActions } from "@/components/hirmand/property-actions";
 import { PropertyMarketComparison } from "@/components/hirmand/property-market-comparison";
 import { PropertyViewingRequest } from "@/components/hirmand/property-viewing-request";
 import { PropertyVirtualTour } from "@/components/hirmand/property-virtual-tour";
+import { PropertyNeighborhoodInsight } from "@/components/hirmand/property-neighborhood-insight";
+import { PropertyReport } from "@/components/hirmand/property-report";
 import { PropertyCallbackRequest } from "@/components/hirmand/property-callback-request";
 import { PropertyDecisionTools } from "@/components/hirmand/property-decision-tools";
 import { PropertyVisitChecklist } from "@/components/hirmand/property-visit-checklist";
@@ -2087,6 +2089,8 @@ export function PropertyDetailView({
             ) : null}
 
             <PropertyVirtualTour property={property} />
+            <PropertyNeighborhoodInsight property={property} />
+            <PropertyReport property={property} />
 
             <section id="property-tools-section" className="property-tool-center" aria-labelledby="property-tool-center-title">
               <header className="property-tool-center-head">
