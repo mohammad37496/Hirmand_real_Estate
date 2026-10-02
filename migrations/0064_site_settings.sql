@@ -10,13 +10,13 @@ create table if not exists site_settings (
   announcement_text text not null default '',
   phone_mobile text not null default '09131056029',
   phone_office text not null default '03137850615',
-  whatsapp_url text not null default '',
-  instagram_url text not null default '',
-  telegram_url text not null default '',
-  eitaa_url text not null default '',
-  address text not null default '',
-  office_hours text not null default '',
-  footer_tagline text not null default '',
+  whatsapp_url text not null default 'https://wa.me/989131056029',
+  instagram_url text not null default 'https://www.instagram.com/hirmand.realestate/',
+  telegram_url text not null default 'https://t.me/Hirmand_realestate',
+  eitaa_url text not null default 'https://eitaa.com/Hirmand_realestate',
+  address text not null default 'اصفهان، سه راه سیمین، خیابان جانبازان، بلوار شهید بخشی',
+  office_hours text not null default 'پاسخگویی با هماهنگی قبلی',
+  footer_tagline text not null default 'همراه شما برای انتخاب خانه‌ای بهتر',
   updated_at timestamptz not null default current_timestamp
 );
 
