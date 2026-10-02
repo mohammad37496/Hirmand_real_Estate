@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
     : [];
 
   const availableRows = slugs.length
-    ? await sql.query<{ slug: string }>("select slug from properties where status='published' and slug=any($1::text[])",[slugs])
+    ? await sql.query<{ slug: string }>("select slug from properties where deleted_at is null and status='published' and (unpublish_at is null or unpublish_at > current_timestamp) and slug=any($1::text[])",[slugs])
     : [];
   const available = availableRows.map((item) => String(item.slug));
 

@@ -75,7 +75,7 @@ export default defineEventHandler(async (event) => {
     if (!parsed.data.slug) throw createError({ statusCode: 400, statusMessage: "فایل مشخص نشده است." });
 
     const propertyRows = await sql.query<Record<string, unknown>>(
-      "select id, slug, price, deposit, rent, availability_status from properties where status='published' and slug=$1 limit 1",
+      "select id, slug, price, deposit, rent, availability_status from properties where deleted_at is null and status='published' and (unpublish_at is null or unpublish_at > current_timestamp) and slug=$1 limit 1",
       [parsed.data.slug],
     );
     const property = propertyRows[0];

@@ -10,6 +10,7 @@ import { decodeSlugCandidates, legacyIdFragments } from "@/lib/property-slug";
 import { calculateBudgetMatch, DEFAULT_MATCH_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
 import { MAX_PROPERTY_MEDIA, isAllowedMediaRef } from "@/lib/media";
 import { deleteStoredMedia } from "@/lib/media-store.server";
+import { writeAdminAuditLog } from "@/lib/admin-audit";
 import { getPublishReadiness } from "@/lib/property-publish-readiness";
 import {
   PROPERTY_CABINET_OPTIONS,
@@ -86,6 +87,10 @@ export type Property = {
   ownerPhone?: string;
   ownerInfo?: string;
   publishedAt: string | null;
+  scheduledPublishAt?: string | null;
+  scheduledUnpublishAt?: string | null;
+  deletedAt?: string | null;
+  deletedFromStatus?: PropertyStatus | null;
   createdAt: string;
   updatedAt: string;
   virtualTourUrl?: string;
@@ -418,6 +423,13 @@ function mapProperty(row: Record<string, unknown>, options: { admin?: boolean } 
       internalNote: row.internal_note == null ? "" : String(row.internal_note),
     } : {}),
     publishedAt: row.published_at ? new Date(String(row.published_at)).toISOString() : null,
+    scheduledPublishAt: row.publish_at ? new Date(String(row.publish_at)).toISOString() : null,
+    scheduledUnpublishAt: row.unpublish_at ? new Date(String(row.unpublish_at)).toISOString() : null,
+    deletedAt: row.deleted_at ? new Date(String(row.deleted_at)).toISOString() : null,
+    deletedFromStatus:
+      row.deleted_from_status === "draft" || row.deleted_from_status === "published" || row.deleted_from_status === "archived"
+        ? row.deleted_from_status
+        : null,
     createdAt: new Date(String(row.created_at)).toISOString(),
     updatedAt: new Date(String(row.updated_at)).toISOString(),
     virtualTourUrl:
@@ -440,6 +452,7 @@ const LIST_COLUMNS = `
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
   latitude, longitude, price_drop_percent, virtual_tour_url, floor_label, orientation,
   owner_name, owner_phone, owner_info, internal_priority, internal_note,
+  publish_at, unpublish_at, deleted_at, deleted_from_status,
   last_verified_at, last_verified_by,
   left(description, 280) as description
 `;
@@ -490,6 +503,7 @@ const DETAIL_COLUMNS = `
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
   latitude, longitude, price_drop_percent, virtual_tour_url, floor_label, orientation,
   owner_name, owner_phone, owner_info, internal_priority, internal_note,
+  publish_at, unpublish_at, deleted_at, deleted_from_status,
   last_verified_at, last_verified_by
 `;
 
@@ -531,13 +545,18 @@ function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
   ];
 }
 
+const PUBLIC_PUBLICATION_WHERE =
+  "(deleted_at is null) and (" +
+  "status = 'published' or (status = 'draft' and publish_at is not null and publish_at <= current_timestamp)" +
+  ") and (unpublish_at is null or unpublish_at > current_timestamp)";
+
 const PRICE_EXPR =
   "case when transaction_type = 'rent' then coalesce(rent, deposit) " +
   "when transaction_type = 'mortgage' then deposit else price end";
 
 function publicPropertyWhereSql() {
   return [
-    "status = 'published'",
+    PUBLIC_PUBLICATION_WHERE,
     "and ($1::text is null or transaction_type = $1)",
     "and ($2::text is null or property_type = $2)",
     "and ($3::text is null or ($5::boolean is true and neighborhood = $3) or ($5::boolean is false and neighborhood ilike '%' || $3 || '%'))",
@@ -655,7 +674,7 @@ export const listPublishedPropertiesByContact = createServerFn({ method: "GET" }
     const rows = await sql.query<Record<string, unknown>>(
       `select ${DETAIL_COLUMNS}
        from properties
-       where status = 'published' and contact_phone = $1
+       where ${PUBLIC_PUBLICATION_WHERE} and contact_phone = $1
        order by featured desc, published_at desc nulls last, created_at desc
        limit 48`,
       [data.phone],
@@ -677,7 +696,7 @@ export const getPublishedPropertyByFileCode = createServerFn({ method: "GET" })
         const rows = await sql.query<Record<string, unknown>>(
           `select ${DETAIL_COLUMNS}
            from properties
-           where status = 'published'
+           where ${PUBLIC_PUBLICATION_WHERE}
              and lower(right(replace(id::text, '-', ''), 6)) = $1
            order by published_at desc nulls last, created_at desc
            limit 1`,
@@ -703,7 +722,7 @@ export const getPublishedPropertyById = createServerFn({ method: "GET" })
         const exactRows = await sql.query<Record<string, unknown>>(
           `select ${DETAIL_COLUMNS}
            from properties
-           where status = 'published' and id::text = $1
+           where ${PUBLIC_PUBLICATION_WHERE} and id::text = $1
            limit 1`,
           [id],
         );
@@ -718,7 +737,7 @@ export const getPublishedPropertyById = createServerFn({ method: "GET" })
         const fragmentRows = await sql.query<Record<string, unknown>>(
           `select ${DETAIL_COLUMNS}
            from properties
-           where status = 'published'
+           where ${PUBLIC_PUBLICATION_WHERE}
              and (
                lower(left(id::text, 8)) = $1
                or lower(right(id::text, 8)) = $1
@@ -748,7 +767,7 @@ export const getPublishedProperty = createServerFn({ method: "GET" })
         const slugRows = await sql.query<Record<string, unknown>>(
           `select ${DETAIL_COLUMNS}
            from properties
-           where status = 'published' and slug = any($1::text[])
+           where ${PUBLIC_PUBLICATION_WHERE} and slug = any($1::text[])
            order by case when slug = $2 then 0 else 1 end
            limit 1`,
           [decodedCandidates, decodedCandidates[0]],
@@ -759,7 +778,7 @@ export const getPublishedProperty = createServerFn({ method: "GET" })
         const idRows = await sql.query<Record<string, unknown>>(
           `select ${DETAIL_COLUMNS}
            from properties
-           where status = 'published' and id::text = any($1::text[])
+           where ${PUBLIC_PUBLICATION_WHERE} and id::text = any($1::text[])
            limit 1`,
           [decodedCandidates],
         );
@@ -773,7 +792,7 @@ export const getPublishedProperty = createServerFn({ method: "GET" })
         const fragmentRows = await sql.query<Record<string, unknown>>(
           `select ${DETAIL_COLUMNS}
            from properties
-           where status = 'published'
+           where ${PUBLIC_PUBLICATION_WHERE}
              and (
                lower(left(id::text, 8)) = any($1::text[])
                or lower(right(id::text, 8)) = any($1::text[])
@@ -803,7 +822,7 @@ export const getPublishedPropertyPriceHistory = createServerFn({ method: "GET" }
     if (dbSource === "unconfigured") return [];
     setResponseHeader("cache-control", "public, max-age=30, s-maxage=120, stale-while-revalidate=600");
     const sql = await getSql();
-    const propertyRows = await sql.query<{ id: string }>("select id::text as id from properties where status='published' and slug=$1 limit 1", [data.slug]);
+    const propertyRows = await sql.query<{ id: string }>(`select id::text as id from properties where ${PUBLIC_PUBLICATION_WHERE} and slug=$1 limit 1`, [data.slug]);
     const propertyId = propertyRows[0]?.id;
     if (!propertyId) return [];
 
@@ -840,7 +859,7 @@ export const listPublishedPropertyCardsBySlugs = createServerFn({ method: "GET" 
     const rows = await sql.query<Record<string, unknown>>(
       `select ${CARD_COLUMNS}
        from properties
-       where status = 'published'
+       where ${PUBLIC_PUBLICATION_WHERE}
          and slug = any($1::text[])
        order by featured desc, published_at desc nulls last, created_at desc`,
       [data.slugs],
@@ -862,7 +881,7 @@ export const listPublishedPropertiesBySlugs = createServerFn({ method: "GET" })
     const rows = await sql.query<Record<string, unknown>>(
       `select ${DETAIL_COLUMNS}
        from properties
-       where status = 'published'
+       where ${PUBLIC_PUBLICATION_WHERE}
          and slug = any($1::text[])
        order by featured desc, published_at desc nulls last, created_at desc`,
       [data.slugs],
@@ -901,7 +920,7 @@ export const listRelatedProperties = createServerFn({ method: "GET" })
       const rows = await sql.query<Record<string, unknown>>(
         `select ${LIST_COLUMNS}
          from properties
-         where status = 'published'
+         where ${PUBLIC_PUBLICATION_WHERE}
            and slug <> $1
            and (
              neighborhood = $2
@@ -944,7 +963,7 @@ export const matchPublishedPropertiesByBudget = createServerFn({ method: "GET" }
         [
           "select " + DETAIL_COLUMNS,
           "from properties",
-          "where status = 'published'",
+          `where ${PUBLIC_PUBLICATION_WHERE}`,
           "and transaction_type in ('rent', 'mortgage')",
           "and (coalesce(deposit, 0) > 0 or coalesce(rent, 0) > 0)",
           "and ($5::text is null or property_type = $5)",
@@ -1067,7 +1086,8 @@ const ADMIN_PRICE_EXPR =
 
 function adminPropertyWhereSql() {
   return [
-    "($1::text is null or status = $1)",
+    "deleted_at is null",
+    "and ($1::text is null or status = $1)",
     "and ($2::text is null or transaction_type = $2)",
     "and ($3::text is null or property_type = $3)",
     "and ($4::text is null or neighborhood = $4)",
@@ -1130,11 +1150,11 @@ export const countAdminProperties = createServerFn({ method: "POST" })
       featured: number;
     }>(
       `select
-         count(*)::int as total,
-         count(*) filter (where status = 'published')::int as published,
-         count(*) filter (where status = 'draft')::int as draft,
-         count(*) filter (where status = 'archived')::int as archived,
-         count(*) filter (where featured = true and (featured_until is null or featured_until >= current_timestamp))::int as featured
+         count(*) filter (where deleted_at is null)::int as total,
+         count(*) filter (where status = 'published' and deleted_at is null)::int as published,
+         count(*) filter (where status = 'draft' and deleted_at is null)::int as draft,
+         count(*) filter (where status = 'archived' and deleted_at is null)::int as archived,
+         count(*) filter (where featured = true and deleted_at is null and (featured_until is null or featured_until >= current_timestamp))::int as featured
        from properties`,
     );
     const row = rows[0];
@@ -1173,7 +1193,8 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
               owner_name, owner_phone, owner_info, neighborhood, transaction_type, description,
               area_m2, features, images, latitude, longitude
        from properties
-       where id = any($1::text[])`,
+       where id = any($1::text[])
+         and deleted_at is null`,
       [data.ids],
     );
 
@@ -1209,12 +1230,15 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
     const rows = await sql.query<Record<string, unknown>>(
       `update properties
        set status = $1,
+           publish_at = case when $1 = 'draft' then publish_at else null end,
+           unpublish_at = case when $1 = 'published' then unpublish_at else null end,
            published_at = case
              when $1 = 'published' then coalesce(published_at, current_timestamp)
              else null
            end,
            updated_at = current_timestamp
        where id = any($2::text[])
+         and deleted_at is null
        returning id, title, status, featured, price, deposit, rent, contact_name, contact_phone, owner_name, owner_phone, owner_info`,
       [data.status, data.ids],
     );
@@ -1268,6 +1292,11 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
         [beforePayload],
       );
     }
+    await writeAdminAuditLog({
+      action: "property.bulk_status",
+      entityType: "property",
+      metadata: { ids: data.ids, count: rows.length, status: data.status },
+    });
     clearPropertyReadCache();
     return { success: true, updated: rows.length };
   });
@@ -1364,6 +1393,7 @@ export const bulkAssignPropertyConsultant = createServerFn({ method: "POST" })
            contact_phone = $2,
            updated_at = current_timestamp
        where id = any($3::text[])
+         and deleted_at is null
        returning id, contact_name, contact_phone`,
       [data.contactName, data.contactPhone, data.ids],
     );
@@ -1436,7 +1466,15 @@ export const bulkDeleteProperties = createServerFn({ method: "POST" })
     );
 
     const rows = await sql.query<{ id: string }>(
-      "delete from properties where id = any($1::text[]) returning id",
+      `update properties
+       set deleted_at = current_timestamp,
+           deleted_from_status = status,
+           status = 'archived',
+           featured = false,
+           featured_until = null,
+           updated_at = current_timestamp
+       where id = any($1::text[]) and deleted_at is null
+       returning id`,
       [data.ids],
     );
 
@@ -1469,15 +1507,201 @@ export const bulkDeleteProperties = createServerFn({ method: "POST" })
       );
     }
 
-    const mediaUrls = existingRows.flatMap((row) =>
-      Array.isArray(row.images)
-        ? row.images.filter((item): item is string => typeof item === "string")
-        : [],
-    );
-    await Promise.all(mediaUrls.map((url) => deleteStoredMedia(url)));
-
+    await writeAdminAuditLog({
+      action: "property.bulk_trashed",
+      entityType: "property",
+      metadata: { ids: data.ids, count: rows.length },
+    });
     clearPropertyReadCache();
     return { success: true, deleted: rows.length };
+  });
+
+export const listAdminTrashProperties = createServerFn({ method: "POST" })
+  .validator(z.object({ limit: z.number().int().min(1).max(200).optional().default(100) }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    if (dbSource === "unconfigured") return [];
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select ${DETAIL_COLUMNS}
+       from properties
+       where deleted_at is not null
+       order by deleted_at desc
+       limit $1`,
+      [data.limit],
+    );
+    return rows.map((row) => mapProperty(row, { admin: true }));
+  });
+
+export const restoreDeletedProperty = createServerFn({ method: "POST" })
+  .validator(idSchema)
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `update properties
+       set status = case
+         when deleted_from_status in ('draft','published','archived') then deleted_from_status
+         else 'draft'
+       end,
+       deleted_at = null,
+       deleted_from_status = null,
+       updated_at = current_timestamp
+       where id = $1 and deleted_at is not null
+       returning id, title, status`,
+      [data.id],
+    );
+    if (!rows[0]) return { success: false, restored: 0 };
+    await sql.query(
+      `insert into property_change_history (property_id, action, before_state, after_state)
+       values ($1, 'updated', $2::jsonb, $3::jsonb)`,
+      [
+        data.id,
+        JSON.stringify({ status: "trash" }),
+        JSON.stringify({ status: String(rows[0].status ?? "draft") }),
+      ],
+    ).catch(() => {});
+    await writeAdminAuditLog({
+      action: "property.restored",
+      entityType: "property",
+      entityId: data.id,
+      entityTitle: String(rows[0].title ?? ""),
+      metadata: { restoredStatus: String(rows[0].status ?? "draft") },
+    });
+    clearPropertyReadCache();
+    return { success: true, restored: 1, title: String(rows[0].title ?? "") };
+  });
+
+export const permanentlyDeleteProperty = createServerFn({ method: "POST" })
+  .validator(idSchema)
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select images, title from properties where id = $1 and deleted_at is not null limit 1`,
+      [data.id],
+    );
+    const existing = rows[0];
+    if (!existing) return { success: false, deleted: 0 };
+    await sql.query("delete from properties where id = $1 and deleted_at is not null", [data.id]);
+    const mediaUrls = Array.isArray(existing.images)
+      ? existing.images.filter((item): item is string => typeof item === "string")
+      : [];
+    await Promise.all(mediaUrls.map((url) => deleteStoredMedia(url)));
+    await writeAdminAuditLog({
+      action: "property.permanently_deleted",
+      entityType: "property",
+      entityId: data.id,
+      entityTitle: String(existing.title ?? ""),
+    });
+    clearPropertyReadCache();
+    return { success: true, deleted: 1, title: String(existing.title ?? "") };
+  });
+
+export const listAdminPropertySchedules = createServerFn({ method: "POST" })
+  .validator(z.object({ limit: z.number().int().min(1).max(200).optional().default(100) }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    if (dbSource === "unconfigured") return [];
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select id, title, status, publish_at, unpublish_at, published_at, updated_at
+       from properties
+       where deleted_at is null
+       order by
+         case when publish_at is not null then 0 else 1 end,
+         publish_at asc nulls last,
+         unpublish_at asc nulls last,
+         updated_at desc
+       limit $1`,
+      [data.limit],
+    );
+    return rows.map((row) => ({
+      id: String(row.id),
+      title: String(row.title ?? ""),
+      status: row.status as PropertyStatus,
+      scheduledPublishAt: row.publish_at ? new Date(String(row.publish_at)).toISOString() : null,
+      scheduledUnpublishAt: row.unpublish_at ? new Date(String(row.unpublish_at)).toISOString() : null,
+      publishedAt: row.published_at ? new Date(String(row.published_at)).toISOString() : null,
+      updatedAt: new Date(String(row.updated_at)).toISOString(),
+    }));
+  });
+
+export const updatePropertySchedule = createServerFn({ method: "POST" })
+  .validator(z.object({
+    id: z.string().min(1).max(120),
+    publishAt: z.string().datetime({ offset: true }).nullable().optional(),
+    unpublishAt: z.string().datetime({ offset: true }).nullable().optional(),
+  }))
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const sql = await getSql();
+    if (data.publishAt && data.unpublishAt && new Date(data.unpublishAt) <= new Date(data.publishAt)) {
+      throw new Error("زمان پایان انتشار باید بعد از زمان شروع باشد.");
+    }
+
+    const currentRows = await sql.query<Record<string, unknown>>(
+      `select transaction_type, title, neighborhood, description, contact_name, contact_phone,
+              price, deposit, rent, images, area_m2, features, latitude, longitude, status
+       from properties
+       where id = $1 and deleted_at is null
+       limit 1`,
+      [data.id],
+    );
+    const current = currentRows[0];
+    if (!current) throw new Error("فایل برای زمان‌بندی پیدا نشد.");
+
+    if (data.publishAt && String(current.status) === "draft") {
+      const readiness = getPublishReadiness({
+        transactionType: String(current.transaction_type ?? "sell") as "sell" | "buy" | "rent" | "mortgage",
+        title: String(current.title ?? ""),
+        neighborhood: String(current.neighborhood ?? ""),
+        description: String(current.description ?? ""),
+        contactName: String(current.contact_name ?? ""),
+        contactPhone: String(current.contact_phone ?? ""),
+        price: current.price == null ? "" : String(current.price),
+        deposit: current.deposit == null ? "" : String(current.deposit),
+        rent: current.rent == null ? "" : String(current.rent),
+        imageCount: parseJsonArray(current.images).length,
+        areaM2: current.area_m2 == null ? "" : String(current.area_m2),
+        features: parseJsonArray(current.features).join("\n"),
+        latitude: numberOrNull(current.latitude),
+        longitude: numberOrNull(current.longitude),
+      });
+      if (!readiness.ready) {
+        throw new Error("زمان‌بندی انتشار متوقف شد: " + readiness.blockers.join(" "));
+      }
+    }
+
+    const rows = await sql.query<Record<string, unknown>>(
+      `update properties
+       set publish_at = $2::timestamptz,
+           unpublish_at = $3::timestamptz,
+           updated_at = current_timestamp
+       where id = $1 and deleted_at is null
+       returning id, title, status, publish_at, unpublish_at`,
+      [data.id, data.publishAt ?? null, data.unpublishAt ?? null],
+    );
+    if (!rows[0]) throw new Error("فایل برای زمان‌بندی پیدا نشد.");
+    await writeAdminAuditLog({
+      action: "property.schedule_updated",
+      entityType: "property",
+      entityId: data.id,
+      entityTitle: String(rows[0].title ?? ""),
+      metadata: {
+        publishAt: rows[0].publish_at ?? null,
+        unpublishAt: rows[0].unpublish_at ?? null,
+      },
+    });
+    clearPropertyReadCache();
+    return {
+      success: true,
+      id: String(rows[0].id),
+      title: String(rows[0].title ?? ""),
+      status: String(rows[0].status ?? "draft") as PropertyStatus,
+      scheduledPublishAt: rows[0].publish_at ? new Date(String(rows[0].publish_at)).toISOString() : null,
+      scheduledUnpublishAt: rows[0].unpublish_at ? new Date(String(rows[0].unpublish_at)).toISOString() : null,
+    };
   });
 
 export const saveProperty = createServerFn({ method: "POST" })
@@ -1488,7 +1712,7 @@ export const saveProperty = createServerFn({ method: "POST" })
 
     const id = data.id ?? crypto.randomUUID();
     const existingRows = await sql.query<Record<string, unknown>>(
-      `select ${DETAIL_COLUMNS} from properties where id = $1 limit 1`,
+      `select ${DETAIL_COLUMNS} from properties where id = $1 and deleted_at is null limit 1`,
       [id],
     );
     const existing = existingRows[0] ?? null;
@@ -1746,7 +1970,7 @@ export const saveProperty = createServerFn({ method: "POST" })
     );
 
     const rows = await sql.query<Record<string, unknown>>(
-      `select ${DETAIL_COLUMNS} from properties where id = $1 limit 1`,
+      `select ${DETAIL_COLUMNS} from properties where id = $1 and deleted_at is null limit 1`,
       [id],
     );
     if (!rows[0]) throw new Error("فایل ثبت نشد.");
@@ -1762,6 +1986,13 @@ export const saveProperty = createServerFn({ method: "POST" })
         JSON.stringify(mapProperty(rows[0], { admin: true })),
       ],
     );
+    await writeAdminAuditLog({
+      action: action === "created" ? "property.created" : "property.updated",
+      entityType: "property",
+      entityId: id,
+      entityTitle: String(rows[0]?.title ?? ""),
+      metadata: { status: rows[0]?.status ?? null },
+    });
 
     clearPropertyReadCache();
     return mapProperty(rows[0], { admin: true });
@@ -1876,7 +2107,23 @@ export const deleteProperty = createServerFn({ method: "POST" })
       [data.id],
     );
     const existing = existingRows[0] ?? null;
-    await sql.query("delete from properties where id = $1", [data.id]);
+    const rows = await sql.query<Record<string, unknown>>(
+      `update properties
+       set deleted_at = current_timestamp,
+           deleted_from_status = status,
+           status = 'archived',
+           featured = false,
+           featured_until = null,
+           updated_at = current_timestamp
+       where id = $1 and deleted_at is null
+       returning id`,
+      [data.id],
+    );
+
+    if (!rows.length) {
+      clearPropertyReadCache();
+      return { success: false, deleted: 0 };
+    }
 
     if (existing) {
       await sql.query(
@@ -1884,13 +2131,15 @@ export const deleteProperty = createServerFn({ method: "POST" })
          values ($1, 'deleted', $2::jsonb, null)`,
         [data.id, JSON.stringify(mapProperty(existing, { admin: true }))],
       );
+      await writeAdminAuditLog({
+        action: "property.trashed",
+        entityType: "property",
+        entityId: data.id,
+        entityTitle: String(existing.title ?? ""),
+        metadata: { fromStatus: existing.status ?? null },
+      });
     }
 
-    const mediaUrls = Array.isArray(existing?.images)
-      ? existing.images.filter((item): item is string => typeof item === "string")
-      : [];
-    await Promise.all(mediaUrls.map((url) => deleteStoredMedia(url)));
-
     clearPropertyReadCache();
-    return { success: true };
+    return { success: true, deleted: 1 };
   });

@@ -34,6 +34,9 @@ import {
   DatabaseBackup,
   ListTodo,
   ShieldCheck,
+  CalendarClock,
+  ArchiveRestore,
+  ClipboardList,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import { isInvalidIntegerInput, normalizeMoneyText } from "@/lib/property-input-normalization";
@@ -88,6 +91,10 @@ import { AdminPropertyPerformance } from "@/components/hirmand/admin-property-pe
 import { AdminCommandPalette } from "@/components/hirmand/admin-command-palette";
 import { AdminPropertyQuestions, AdminPropertyOpenHouse } from "@/components/hirmand/admin-property-features";
 import { AdminPropertyFilterPresets } from "@/components/hirmand/admin-property-filter-presets";
+import { AdminScheduleManager } from "@/components/hirmand/admin-schedule-manager";
+import { AdminTrashManager } from "@/components/hirmand/admin-trash-manager";
+import { AdminAuditLog } from "@/components/hirmand/admin-audit-log";
+import "@/admin-automation.css";
 import "@/admin-property-performance.css";
 import "@/property-feature-enhancements.css";
 import "@/admin-customer-inbox.css";
@@ -109,7 +116,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark";
+type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -525,6 +532,9 @@ export function AdminPropertiesPage() {
       { view: "finance" as ViewMode, label: "دفتر مالی", icon: WalletCards },
       { view: "backup" as ViewMode, label: "پشتیبان", icon: DatabaseBackup },
       { view: "watermark" as ViewMode, label: "واترمارک", icon: ShieldCheck },
+      { view: "schedule" as ViewMode, label: "زمان‌بندی", icon: CalendarClock },
+      { view: "trash" as ViewMode, label: "سطل بازیابی", icon: ArchiveRestore },
+      { view: "audit" as ViewMode, label: "گزارش فعالیت", icon: ClipboardList },
       { view: "divar" as ViewMode, label: "فایل‌های دیوار", icon: Globe2 },
     ],
     [],
@@ -1099,10 +1109,10 @@ export function AdminPropertiesPage() {
 
     const selected = properties.filter((item) => ids.includes(item.id));
     const ok = await confirm({
-      title: "پیش‌نمایش حذف گروهی فایل‌ها",
-      description: `${ids.length.toLocaleString("fa-IR")} فایل انتخاب‌شده برای همیشه حذف می‌شود. این عمل قابل بازگشت نیست و صفحه عمومی آن‌ها هم از دست می‌رود.`,
+      title: "انتقال گروهی به سطل بازیابی",
+      description: `${ids.length.toLocaleString("fa-IR")} فایل انتخاب‌شده به سطل بازیابی منتقل می‌شود. رسانه‌های آن‌ها حفظ می‌شود و بعداً امکان بازیابی یا حذف دائمی دارید.`,
       items: selected.map((item) => item.title),
-      confirmLabel: "حذف دائمی",
+      confirmLabel: "انتقال به سطل",
       tone: "danger",
     });
     if (!ok) return;
@@ -1112,7 +1122,7 @@ export function AdminPropertiesPage() {
       const result = await bulkDeleteProperties({ data: { ids } });
       setSelectedIds([]);
       await refresh();
-      toast.success((result.deleted || ids.length).toLocaleString("fa-IR") + " فایل حذف شد.");
+      toast.success((result.deleted || ids.length).toLocaleString("fa-IR") + " فایل به سطل بازیابی منتقل شد.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حذف گروهی کامل نشد.");
     } finally {
@@ -1489,8 +1499,8 @@ export function AdminPropertiesPage() {
   async function removeProperty(property: Property) {
     const ok = await confirm({
       title: "حذف فایل",
-      description: `فایل «${property.title}» برای همیشه حذف می‌شود. این عمل قابل بازگشت نیست.`,
-      confirmLabel: "حذف دائمی",
+      description: `فایل «${property.title}» به سطل بازیابی منتقل می‌شود و رسانه‌هایش حفظ می‌شوند. در صورت نیاز بعداً می‌توانید آن را بازیابی یا برای همیشه حذف کنید.`,
+      confirmLabel: "انتقال به سطل",
       tone: "danger",
     });
     if (!ok) return;
@@ -1498,7 +1508,7 @@ export function AdminPropertiesPage() {
     setBusyRowId(property.id);
     try {
       await deleteProperty({ data: { id: property.id } });
-      toast.success("فایل حذف شد.");
+      toast.success("فایل به سطل بازیابی منتقل شد.");
       if (form.id === property.id) {
         clearDraft(property.id);
         setForm(emptyForm());
@@ -1719,6 +1729,12 @@ export function AdminPropertiesPage() {
                                     ? "پشتیبان‌گیری"
                                     : view === "watermark"
                                       ? "واترمارک تصاویر و فیلم‌ها"
+                                      : view === "schedule"
+                                        ? "زمان‌بندی انتشار و انقضای فایل‌ها"
+                                        : view === "trash"
+                                          ? "سطل بازیابی فایل‌ها"
+                                          : view === "audit"
+                                            ? "گزارش فعالیت مدیر"
                                     : view === "divar"
                           ? "فایل‌های دیوار"
                           : form.id
@@ -1747,6 +1763,12 @@ export function AdminPropertiesPage() {
                               ? "دانلود نسخه امن از اطلاعات مدیریتی"
                               : view === "watermark"
                                 ? "لوگو، نام سایت، شفافیت و اندازه واترمارک رسانه"
+                                : view === "schedule"
+                                  ? "شروع و پایان نمایش عمومی فایل‌ها را از قبل تعیین کنید"
+                                  : view === "trash"
+                                    ? "فایل‌های حذف‌شده را بازیابی یا برای همیشه پاک کنید"
+                                    : view === "audit"
+                                      ? "ردیابی عملیات مهم مدیریتی و تغییرات اخیر"
                               : view === "divar"
                         ? "دریافت، فیلتر و ورود فایل‌های شخصی از دیوار"
                         : form.contactName
@@ -2182,6 +2204,9 @@ export function AdminPropertiesPage() {
           {view === "finance" ? <AdminFinanceManager /> : null}
           {view === "backup" ? <AdminBackupManager /> : null}
           {view === "watermark" ? <AdminWatermarkSettings /> : null}
+          {view === "schedule" ? <AdminScheduleManager /> : null}
+          {view === "trash" ? <AdminTrashManager /> : null}
+          {view === "audit" ? <AdminAuditLog /> : null}
           {view === "divar" ? <AdminDivarFiles /> : null}
 
           {view === "form" ? (
