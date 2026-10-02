@@ -8,6 +8,7 @@ import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties"
 import { SITE } from "@/lib/site";
 import { formatToman } from "@/lib/money";
 import { propertyPath } from "@/lib/property-path";
+import "@/compare-export.css";
 
 const PROPERTY_ORIENTATION_LABELS: Record<NonNullable<Property["orientation"]>, string> = {
   north: "شمالی",
