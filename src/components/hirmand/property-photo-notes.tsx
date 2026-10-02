@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Image as ImageIcon, MessageSquareText, RotateCcw } from "lucide-react";
 import type { Property } from "@/lib/properties";
+import { isVideoUrl } from "@/lib/media";
 import "@/property-photo-notes.css";
 
 type Notes = Record<string, { note: string; flag: boolean }>;
 const KEY = "hirmand-property-photo-notes-v1:";
 function safeRead(id: string): Notes { try { const p = JSON.parse(localStorage.getItem(KEY + id) || "{}"); return p && typeof p === "object" ? p : {}; } catch { return {}; } }
 export function PropertyPhotoNotes({ property }: { property: Property }) {
-  const images = property.images || [];
+  const images = (property.images || []).filter((src) => !isVideoUrl(src));
   const [notes, setNotes] = useState<Notes>(() => safeRead(property.id));
   const [active, setActive] = useState(0);
   const currentData = notes[String(active)] || { note: "", flag: false };
