@@ -46,7 +46,11 @@ function routeUrl(stops: Property[]) {
 }
 
 export function FavoritesViewingRoute({ properties }: { properties: Property[] }) {
-  const mappable = properties.filter((property) => property.latitude != null && property.longitude != null);
+  const mappable = useMemo(
+    () => properties.filter((property) => property.latitude != null && property.longitude != null),
+    [properties],
+  );
+  const mappableIds = mappable.map((property) => property.id).join("|");
   const [selected, setSelected] = useState<string[]>(() => readSavedSelection());
   const [startId, setStartId] = useState("");
 
@@ -57,9 +61,7 @@ export function FavoritesViewingRoute({ properties }: { properties: Property[] }
     } else {
       setSelected(mappable.slice(0, Math.min(4, MAX_STOPS)).map((property) => property.id));
     }
-    // The coordinate-capable favorite set changes only when favorites change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mappable.map((property) => property.id).join("|")]);
+  }, [mappableIds]);
 
   useEffect(() => {
     try {
@@ -95,7 +97,8 @@ export function FavoritesViewingRoute({ properties }: { properties: Property[] }
           nextIndex = index;
         }
       });
-      ordered.push(remaining.splice(nextIndex, 1)[0]);
+      const [next] = remaining.splice(nextIndex, 1);
+      if (next) ordered.push(next);
     }
     return ordered;
   }, [selectedProperties, startId]);
@@ -106,9 +109,12 @@ export function FavoritesViewingRoute({ properties }: { properties: Property[] }
   );
 
   function toggle(id: string) {
-    setSelected((current) => current.includes(id)
-      ? current.filter((item) => item !== id)
-      : current.length >= MAX_STOPS ? current : [...current, id]);
+    setSelected((current) => {
+      if (current.includes(id)) {
+        return current.length <= 2 ? current : current.filter((item) => item !== id);
+      }
+      return current.length >= MAX_STOPS ? current : [...current, id];
+    });
   }
 
   if (mappable.length < 2) {
