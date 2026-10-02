@@ -60,6 +60,9 @@ const schema = z.object({
   source: z.enum(["website", "budget_match"]).optional().default("website"),
   propertyId: z.string().trim().min(1).max(120).optional(),
   visitPreferredAt: z.string().trim().max(80).optional(),
+  callbackPreferredAt: z.string().trim().max(80).optional(),
+  offerAmount: z.number().int().min(0).max(999999999999999).optional(),
+  offerConditions: z.string().trim().max(1200).default(""),
   budgetDeposit: z.number().int().min(0).max(999999999999999).optional(),
   budgetRent: z.number().int().min(0).max(999999999999999).optional(),
   budgetPurchase: z.number().int().min(0).max(999999999999999).optional(),
@@ -86,6 +89,26 @@ const schema = z.object({
     } else if (visitDate.getTime() < Date.now() + 30 * 60 * 1000) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["visitPreferredAt"], message: "زمان بازدید باید حداقل ۳۰ دقیقه از اکنون فاصله داشته باشد." });
     }
+  }
+  if (value.callbackPreferredAt) {
+    const callbackDate = new Date(value.callbackPreferredAt);
+    if (!Number.isFinite(callbackDate.getTime())) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["callbackPreferredAt"], message: "زمان تماس نامعتبر است." });
+    } else if (callbackDate.getTime() < Date.now() + 30 * 60 * 1000) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["callbackPreferredAt"], message: "زمان تماس باید حداقل ۳۰ دقیقه از اکنون فاصله داشته باشد." });
+    }
+  }
+  if (value.callbackPreferredAt && (value.propertyId || value.visitPreferredAt)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["callbackPreferredAt"], message: "درخواست تماس زمان‌بندی‌شده باید جدا از بازدید ثبت شود." });
+  }
+  if (value.offerAmount != null && value.offerAmount <= 0) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["offerAmount"], message: "مبلغ پیشنهاد نامعتبر است." });
+  }
+  if (value.offerAmount != null && !value.propertyId) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["propertyId"], message: "برای پیشنهاد قیمت، فایل مشخص نشده است." });
+  }
+  if (value.deal === "پیشنهاد قیمت" && (value.offerAmount == null || !value.propertyId)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["offerAmount"], message: "مبلغ پیشنهاد قیمت را وارد کنید." });
   }
   if (value.visitPreferredAt && !value.propertyId) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["propertyId"], message: "برای درخواست بازدید، فایل مشخص نشده است." });
@@ -272,6 +295,67 @@ export default defineEventHandler(async (event) => {
       );
     }
     return { success: true, duplicate: true, id: existing[0].id, trackingToken };
+  }
+
+  if (parsed.data.callbackPreferredAt) {
+    const callbackDate = new Date(parsed.data.callbackPreferredAt);
+    const trackingToken = createPublicTrackingToken();
+    const rows = await sql.query<{ id: string }>(
+      "insert into leads (id,name,phone,people_count,job,deal,property_type,neighborhood,consultant,note,source,follow_up_at,callback_preferred_at,public_tracking_token) values ($1,$2,$3,$4,$5,'درخواست تماس',$6,$7,$8,$9,'website',$10,$11,$12) returning id",
+      [
+        crypto.randomUUID(), parsed.data.name, parsed.data.phone, parsed.data.peopleCount ?? null,
+        parsed.data.job, parsed.data.propertyType, parsed.data.neighborhood, parsed.data.consultant,
+        parsed.data.note.trim() || "درخواست تماس زمان‌بندی‌شده با مشاور هیرمند",
+        callbackDate.toISOString(), callbackDate.toISOString(), trackingToken,
+      ],
+    );
+    if (!rows[0]) throw createError({ statusCode: 500, statusMessage: "درخواست تماس ثبت نشد." });
+    await sql.query(
+      "insert into lead_activities (lead_id,activity_type,title,note,metadata) values ($1,'follow_up',$2,$3,$4::jsonb)",
+      [rows[0].id, "درخواست تماس زمان‌بندی‌شده", "زمان پیشنهادی تماس: " + callbackDate.toLocaleString("fa-IR"), parsed.data.note.trim(), JSON.stringify({ callbackPreferredAt: callbackDate.toISOString() })],
+    ).catch(() => {});
+    await createAutomaticFollowUp(sql, {
+      leadId: rows[0].id,
+      title: "تماس زمان‌بندی‌شده با " + parsed.data.name,
+      description: "مشتری درخواست کرده در زمان پیشنهادی با او تماس گرفته شود: " + callbackDate.toLocaleString("fa-IR"),
+      assignee: parsed.data.consultant,
+      priority: "high",
+      dueMinutes: Math.max(30, Math.round((callbackDate.getTime() - Date.now()) / 60_000)),
+    });
+    return { success: true, id: rows[0].id, callbackRequested: true, trackingToken };
+  }
+
+  if (parsed.data.deal === "پیشنهاد قیمت" && parsed.data.offerAmount != null && parsed.data.propertyId) {
+    const propertyRows = await sql.query<{ id: string; title: string; property_type: string; neighborhood: string; contact_name: string; price: number | null }>(
+      "select id,title,property_type,neighborhood,contact_name,price from properties where id::text=$1 and status='published' and availability_status not in ('sold','rented','unavailable') limit 1",
+      [parsed.data.propertyId],
+    );
+    const property = propertyRows[0];
+    if (!property) throw createError({ statusCode: 404, statusMessage: "این فایل دیگر برای دریافت پیشنهاد در دسترس نیست." });
+    const trackingToken = createPublicTrackingToken();
+    const rows = await sql.query<{ id: string }>(
+      "insert into leads (id,name,phone,people_count,job,deal,property_type,neighborhood,consultant,note,source,property_id,offer_amount,offer_conditions,follow_up_at,public_tracking_token) values ($1,$2,$3,$4,$5,'پیشنهاد قیمت',$6,$7,$8,$9,'website',$10,$11,$12,current_timestamp + interval '2 hours',$13) returning id",
+      [
+        crypto.randomUUID(), parsed.data.name, parsed.data.phone, parsed.data.peopleCount ?? null, parsed.data.job,
+        property.property_type, property.neighborhood, property.contact_name || parsed.data.consultant,
+        "فایل: " + property.title + "\n" + (parsed.data.note.trim() || "پیشنهاد قیمت ثبت شد."),
+        property.id, parsed.data.offerAmount, parsed.data.offerConditions, trackingToken,
+      ],
+    );
+    if (!rows[0]) throw createError({ statusCode: 500, statusMessage: "پیشنهاد قیمت ثبت نشد." });
+    await sql.query(
+      "insert into lead_activities (lead_id,activity_type,title,note,metadata) values ($1,'note',$2,$3,$4::jsonb)",
+      [rows[0].id, "پیشنهاد قیمت آنلاین ثبت شد", "مبلغ پیشنهاد: " + parsed.data.offerAmount.toLocaleString("fa-IR") + " تومان", parsed.data.offerConditions, JSON.stringify({ propertyId: property.id, offerAmount: parsed.data.offerAmount, propertyPrice: property.price })],
+    ).catch(() => {});
+    await createAutomaticFollowUp(sql, {
+      leadId: rows[0].id,
+      title: "بررسی پیشنهاد قیمت: " + property.title,
+      description: "پیشنهاد قیمت آنلاین مشتری را بررسی و نتیجه مذاکره را ثبت کنید.",
+      assignee: property.contact_name || parsed.data.consultant,
+      priority: "urgent",
+      dueMinutes: 120,
+    });
+    return { success: true, id: rows[0].id, offerSubmitted: true, trackingToken };
   }
 
   if (parsed.data.propertyId && parsed.data.visitPreferredAt) {
