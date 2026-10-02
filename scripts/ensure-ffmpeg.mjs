@@ -2,7 +2,8 @@
 
 import { createHash } from "node:crypto";
 import { chmodSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { realpathSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 
 const RELEASE_TAG = "b6.1.1";
@@ -95,7 +96,16 @@ export async function ensureFfmpegBinary() {
   return TARGET_PATH;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+const invokedPath = process.argv[1] ? resolve(process.argv[1]) : "";
+const isMain = Boolean(invokedPath) && (() => {
+  try {
+    return realpathSync(invokedPath) === realpathSync(new URL(import.meta.url));
+  } catch {
+    return false;
+  }
+})();
+
+if (isMain) {
   try {
     await ensureFfmpegBinary();
   } catch (error) {
