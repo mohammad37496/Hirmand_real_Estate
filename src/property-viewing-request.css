@@ -19,3 +19,15 @@
 
 .property-availability-badge{display:inline-flex;align-items:center;justify-content:center;min-height:30px;padding:4px 10px;border:1px solid rgba(142,41,31,.18);border-radius:999px;background:rgba(142,41,31,.06);color:#7d332b;font-size:.78rem;font-weight:700;line-height:1.2}
 .property-availability-badge-available{border-color:rgba(55,113,70,.18);background:rgba(55,113,70,.07);color:#356b46}
+
+.property-viewing-tracking{display:grid;gap:8px;margin:0 auto 18px;padding:13px 15px;border:1px solid rgba(152,113,55,.16);border-radius:16px;background:rgba(152,113,55,.045);text-align:right}
+.property-viewing-tracking strong{font-size:1.05rem;letter-spacing:.04em}
+.property-viewing-tracking .btn-ghost{justify-self:start;min-height:40px;padding-inline:14px}
+.property-viewing-calendar-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 auto 10px}
+.property-viewing-calendar-btn{min-height:46px;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.property-viewing-done{min-height:42px;min-width:150px}
+@media (max-width:700px){
+  .property-viewing-calendar-actions{grid-template-columns:1fr}
+  .property-viewing-calendar-btn{width:100%}
+  .property-viewing-done{width:100%}
+}
