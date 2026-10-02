@@ -6,6 +6,7 @@ import { FavoriteScoreCompare } from "@/components/hirmand/favorite-score-compar
 import { FavoriteListingChanges } from "@/components/hirmand/favorite-listing-changes";
 import { FavoritesBudgetDashboard } from "@/components/hirmand/favorites-budget-dashboard";
 import { FavoritesViewingRoute } from "@/components/hirmand/favorites-viewing-route";
+import { FavoriteWeightedMatrix } from "@/components/hirmand/favorite-weighted-matrix";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
 import { SITE } from "@/lib/site";
@@ -14,6 +15,7 @@ import "@/favorites-personal.css";
 import "@/favorites-change-tracker.css";
 import "@/favorite-budget-dashboard.css";
 import "@/favorites-route-planner.css";
+import "@/favorite-weighted-matrix.css";
 
 const FAVORITES_KEY = "hirmand-favorite-properties";
 const RECENT_PROPERTIES_KEY = "hirmand-recent-properties";
@@ -494,6 +496,7 @@ function FavoritesPage() {
         ) : null}
 
         {!loading && properties.length ? <FavoriteScoreCompare properties={properties} /> : null}
+        {!loading && properties.length ? <FavoriteWeightedMatrix properties={properties} /> : null}
 
         {loading ? (
           <section className="property-empty">
