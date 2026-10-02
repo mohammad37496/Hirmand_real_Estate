@@ -119,6 +119,8 @@ import { PropertyVisitReport } from "@/components/hirmand/property-visit-report"
 import { PropertyNegotiationLog } from "@/components/hirmand/property-negotiation-log";
 import { PropertyOwnershipCost } from "@/components/hirmand/property-ownership-cost";
 import { PropertyDealRoom } from "@/components/hirmand/property-deal-room";
+import { PropertyRiskRadar } from "@/components/hirmand/property-risk-radar";
+import "@/property-risk-radar.css";
 import "@/property-deal-room.css";
 import { formatToman } from "@/lib/money";
 import { trackAnalyticsEvent } from "@/lib/analytics";
@@ -1692,6 +1694,7 @@ export function PropertyDetailView({
         <PropertyPaymentPlanner property={property} />
         <PropertyDealChecklist property={property} />
         <PropertyDealRoom property={property} />
+        <PropertyRiskRadar property={property} />
         <PropertyScenarioAnalysis property={property} />
         <PropertyPersonalScore property={property} />
         <PropertyVisitOutcome property={property} />
