@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { createWriteStream, existsSync, mkdirSync } from "node:fs";
+import { createWriteStream, existsSync, mkdirSync, renameSync, statSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
@@ -12,20 +12,59 @@ const manifestPath = join(root, "scripts", "fallback-source-images.json");
 const sources = JSON.parse(await readFile(manifestPath, "utf8"));
 const forceRefresh = process.env.FORCE_FALLBACK_IMAGE_REFRESH === "1";
 
-async function download(url, output) {
-  const response = await fetch(url, {
-    headers: {
-      "user-agent": "Hirmand-Real-Estate-fallback-assets/2.0",
-      accept: "image/jpeg,image/*;q=0.8",
-    },
-    signal: AbortSignal.timeout(30_000),
-  });
+function hasRasterMagic(bytes) {
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return true;
+  if (
+    bytes.length >= 12 &&
+    bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+    bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
+  ) return true;
+  if (
+    bytes.length >= 8 &&
+    bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47 &&
+    bytes[4] === 0x0d && bytes[5] === 0x0a && bytes[6] === 0x1a && bytes[7] === 0x0a
+  ) return true;
+  return false;
+}
 
-  if (!response.ok || !response.body) {
-    throw new Error(`HTTP ${response.status} while downloading ${url}`);
+function isUsableFile(output) {
+  try {
+    return statSync(output).size > 1024;
+  } catch {
+    return false;
   }
+}
 
-  await pipeline(response.body, createWriteStream(output));
+async function download(url, output) {
+  const temp = output + ".part";
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "user-agent": "Hirmand-Real-Estate-fallback-assets/3.0",
+        accept: "image/jpeg,image/webp,image/avif,image/*;q=0.8",
+      },
+      signal: AbortSignal.timeout(30_000),
+    });
+
+    if (!response.ok || !response.body) {
+      throw new Error("HTTP " + response.status + " while downloading " + url);
+    }
+
+    await pipeline(response.body, createWriteStream(temp));
+    const bytes = await readFile(temp);
+    if (!isUsableFile(temp) || !hasRasterMagic(bytes.subarray(0, 32))) {
+      throw new Error("downloaded response is not a valid raster image");
+    }
+
+    renameSync(temp, output);
+  } finally {
+    try {
+      const { unlink } = await import("node:fs/promises");
+      await unlink(temp);
+    } catch {
+      // No temporary file to clean.
+    }
+  }
 }
 
 async function main() {
@@ -38,28 +77,30 @@ async function main() {
   for (const [type, urls] of Object.entries(sources)) {
     for (let index = 0; index < urls.length; index += 1) {
       const number = String(index + 1).padStart(2, "0");
-      const output = join(outputDir, `${type}-${number}.jpg`);
+      const output = join(outputDir, type + "-" + number + ".jpg");
 
-      if (!forceRefresh && existsSync(output)) {
+      if (!forceRefresh && isUsableFile(output)) {
         skipped += 1;
         continue;
       }
 
       try {
-        console.log(`[fallback-assets] downloading ${type}-${number}`);
+        console.log("[fallback-assets] downloading " + type + "-" + number);
         await download(urls[index], output);
         success += 1;
       } catch (error) {
         failed += 1;
         console.warn(
-          `[fallback-assets] skipped ${type}-${number}: ${error instanceof Error ? error.message : String(error)}`,
+          "[fallback-assets] skipped " + type + "-" + number + ": " +
+          (error instanceof Error ? error.message : String(error)),
         );
       }
     }
   }
 
   console.log(
-    `[fallback-assets] ready: ${success} downloaded, ${skipped} cached, ${failed} unavailable.`,
+    "[fallback-assets] ready: " + success + " downloaded, " +
+    skipped + " cached, " + failed + " unavailable.",
   );
 }
 
