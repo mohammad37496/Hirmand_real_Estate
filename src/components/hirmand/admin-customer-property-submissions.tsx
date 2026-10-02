@@ -6,6 +6,7 @@ import { formatToman } from "@/lib/money";
 import { isVideoUrl } from "@/lib/media";
 import { getPublishReadiness } from "@/lib/property-publish-readiness";
 import "./admin-customer-property-submissions.css";
+import { PersianDatePicker } from "./persian-date-picker";
 
 type Submission = {
   id: string;
@@ -443,11 +444,11 @@ export function AdminCustomerPropertySubmissions() {
         <button type="button" className="btn-ghost" onClick={()=>{setAppliedQuery(searchQuery.trim());setPage(1);setSelectedIds(new Set());}}><Search size={15}/> جست‌وجو</button>
         <label className="field">
           <span>از تاریخ</span>
-          <input type="date" value={fromDate} max={toDate || undefined} onChange={(e)=>{setFromDate(e.target.value);setPage(1);setSelectedIds(new Set());}} />
+          <PersianDatePicker value={fromDate} maxValue={toDate || undefined} onChange={(value)=>{setFromDate(value);setPage(1);setSelectedIds(new Set());}} title="از تاریخ" hint="" />
         </label>
         <label className="field">
           <span>تا تاریخ</span>
-          <input type="date" value={toDate} min={fromDate || undefined} onChange={(e)=>{setToDate(e.target.value);setPage(1);setSelectedIds(new Set());}} />
+          <PersianDatePicker value={toDate} minValue={fromDate || undefined} onChange={(value)=>{setToDate(value);setPage(1);setSelectedIds(new Set());}} title="تا تاریخ" hint="" />
         </label>
         <label className="field">
           <span>تعداد در صفحه</span>
