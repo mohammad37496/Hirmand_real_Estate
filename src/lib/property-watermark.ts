@@ -54,3 +54,9 @@ export function invalidatePropertyWatermarkSettings() {
 export function watermarkIsVisible(settings: PropertyWatermarkSettings) {
   return settings.enabled && (settings.showLogo || (settings.showText && settings.text.trim()));
 }
+
+
+export function isPermanentlyWatermarkedVideoUrl(value: string | null | undefined): boolean {
+  if (typeof value !== "string" || !value.trim()) return false;
+  return /-watermarked\.mp4(?:[?#]|$)/i.test(value);
+}
