@@ -45,13 +45,6 @@ const DEFAULT_SETTINGS: SiteSettings = {
   updatedAt: null,
 };
 
-function requireAdmin() {
-  if (verifyAdminSessionToken(getCookie(ADMIN_SESSION_COOKIE))) {
-    return;
-  }
-  throw new Error("نشست مدیریت معتبر نیست.");
-}
-
 async function requireAdminAsync() {
   if (await verifyAdminSessionToken(getCookie(ADMIN_SESSION_COOKIE))) {
     assertAdminServerFnOrigin();
