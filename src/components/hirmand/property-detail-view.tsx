@@ -2152,7 +2152,7 @@ export function PropertyDetailView({
               </details>
             </section>
 
-            <section className="property-final-cta" aria-label="درخواست بازدید و اطلاعات بیشتر">
+            <section id="property-final-cta" className="property-final-cta" aria-label="درخواست بازدید و اطلاعات بیشتر">
               <div>
                 <span className="kicker">قدم بعدی</span>
                 <h2>برای بازدید یا اطلاعات بیشتر با مشاور فایل در ارتباط باشید.</h2>
@@ -2226,6 +2226,14 @@ export function PropertyDetailView({
           >
             <WhatsAppIcon size={18} aria-hidden="true" />
             <span>واتساپ</span>
+          </a>
+          <a
+            href="#property-final-cta"
+            className="property-mobile-action"
+            onClick={() => trackAnalyticsEvent("viewing_cta_jump", property.slug)}
+          >
+            <CalendarDays size={18} aria-hidden="true" />
+            <span>درخواست بازدید</span>
           </a>
           <button
             type="button"
