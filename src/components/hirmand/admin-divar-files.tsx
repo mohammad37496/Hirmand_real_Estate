@@ -1080,7 +1080,7 @@ export function AdminDivarFiles() {
                     <div className="divar-meta">
                       <span className="divar-mini">
                         <Clock3 size={13} /> آخرین مشاهده:{" "}
-                        {new Date(file.lastSeenAt).toLocaleDateString("fa-IR")}
+                        {new Date(file.lastSeenAt).toLocaleDateString("fa-IR-u-ca-persian")}
                       </span>
                       {file.filterStatus === "imported" && file.publishedImageCount > 0 ? (
                         <span className="divar-hosted-badge">
