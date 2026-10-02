@@ -53,6 +53,11 @@ const CompareRoute = CompareRouteImport.update({
   path: '/compare',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GuidesRoute = GuidesRouteImport.update({
+  id: '/guides',
+  path: '/guides',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConsultantsRoute = ConsultantsRouteImport.update({
   id: '/consultants',
   path: '/consultants',
@@ -143,6 +148,11 @@ const ToolsRahnRentRoute = ToolsRahnRentRouteImport.update({
   path: '/tools/rahn-rent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ValuationRoute = ValuationRouteImport.update({
+  id: '/valuation',
+  path: '/valuation',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VSlugIdRoute = VSlugIdRouteImport.update({
   id: '/v/$slug/$id',
   path: '/v/$slug/$id',
@@ -156,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/compare': typeof CompareRoute
   '/consultants': typeof ConsultantsRouteWithChildren
   '/favorites': typeof FavoritesRoute
+  '/guides': typeof GuidesRoute
   '/file-code': typeof FileCodeRoute
   '/submit-property': typeof SubmitPropertyRoute
   '/properties': typeof PropertiesRouteWithChildren
@@ -172,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/consultants/': typeof ConsultantsIndexRoute
   '/properties/': typeof PropertiesIndexRoute
   '/tools/': typeof ToolsIndexRoute
+  '/valuation': typeof ValuationRoute
   '/v/$slug/$id': typeof VSlugIdRoute
 }
 export interface FileRoutesByTo {
@@ -180,6 +192,7 @@ export interface FileRoutesByTo {
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
   '/favorites': typeof FavoritesRoute
+  '/guides': typeof GuidesRoute
   '/tracking': typeof TrackingRoute
   '/my-hirmand': typeof MyHirmandRoute
   '/areas/$slug': typeof AreasSlugRoute
@@ -193,6 +206,7 @@ export interface FileRoutesByTo {
   '/consultants': typeof ConsultantsIndexRoute
   '/properties': typeof PropertiesIndexRoute
   '/tools': typeof ToolsIndexRoute
+  '/valuation': typeof ValuationRoute
   '/v/$slug/$id': typeof VSlugIdRoute
 }
 export interface FileRoutesById {
@@ -203,6 +217,7 @@ export interface FileRoutesById {
   '/compare': typeof CompareRoute
   '/consultants': typeof ConsultantsRouteWithChildren
   '/favorites': typeof FavoritesRoute
+  '/guides': typeof GuidesRoute
   '/properties': typeof PropertiesRouteWithChildren
   '/tracking': typeof TrackingRoute
   '/my-hirmand': typeof MyHirmandRoute
@@ -217,6 +232,7 @@ export interface FileRoutesById {
   '/consultants/': typeof ConsultantsIndexRoute
   '/properties/': typeof PropertiesIndexRoute
   '/tools/': typeof ToolsIndexRoute
+  '/valuation': typeof ValuationRoute
   '/v/$slug/$id': typeof VSlugIdRoute
 }
 export interface FileRouteTypes {
@@ -298,6 +314,7 @@ export interface RootRouteChildren {
   CompareRoute: typeof CompareRoute
   ConsultantsRoute: typeof ConsultantsRouteWithChildren
   FavoritesRoute: typeof FavoritesRoute
+  GuidesRoute: typeof GuidesRoute
   FileCodeRoute: typeof FileCodeRoute
   SubmitPropertyRoute: typeof SubmitPropertyRoute
   PropertiesRoute: typeof PropertiesRouteWithChildren
@@ -355,6 +372,13 @@ declare module '@tanstack/react-router' {
       path: '/favorites'
       fullPath: '/favorites'
       preLoaderRoute: typeof FavoritesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides': {
+      id: '/guides'
+      path: '/guides'
+      fullPath: '/guides'
+      preLoaderRoute: typeof GuidesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/properties': {
@@ -455,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ToolsRahnRentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/valuation': {
+      id: '/valuation'
+      path: '/valuation'
+      fullPath: '/valuation'
+      preLoaderRoute: typeof ValuationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/v/$slug/$id': {
       id: '/v/$slug/$id'
       path: '/v/$slug/$id'
@@ -498,6 +529,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   BudgetMatchRoute: BudgetMatchRoute,
   CompareRoute: CompareRoute,
+  GuidesRoute: GuidesRoute,
   ConsultantsRoute: ConsultantsRouteWithChildren,
   FavoritesRoute: FavoritesRoute,
   FileCodeRoute: FileCodeRoute,
@@ -512,6 +544,7 @@ const rootRouteChildren: RootRouteChildren = {
   ToolsLoanRoute: ToolsLoanRoute,
   ToolsRahnRentRoute: ToolsRahnRentRoute,
   ToolsIndexRoute: ToolsIndexRoute,
+  ValuationRoute: ValuationRoute,
   VSlugIdRoute: VSlugIdRoute,
 }
 export const routeTree = rootRouteImport
