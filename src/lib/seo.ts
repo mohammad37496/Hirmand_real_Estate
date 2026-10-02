@@ -317,7 +317,17 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
   };
 }
 
-export function enhancedOrganizationJsonLd() {
+export function enhancedOrganizationJsonLd(settings?: SiteSettings) {
+  const description = settings?.siteDescription?.trim() || SITE.description;
+  const address = settings?.address?.trim() || SITE.address;
+  const mobile = settings?.phoneMobile?.trim() || SITE.phone.mobile;
+  const office = settings?.phoneOffice?.trim() || SITE.phone.office;
+  const sameAs = [
+    settings?.instagramUrl?.trim() || SITE.instagram,
+    settings?.telegramUrl?.trim() || SITE.telegram,
+    settings?.eitaaUrl?.trim() || SITE.eitaa,
+    settings?.whatsappUrl?.trim() || SITE.whatsappDirect,
+  ].filter(Boolean);
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -330,12 +340,16 @@ export function enhancedOrganizationJsonLd() {
         logo: absoluteUrl("/images/hirmand-logo.png"),
         image: [absoluteUrl("/images/hirmand-logo.png"), ogImageUrl()],
         founder: { "@type": "Person", name: "آقای شیخ" },
-        telephone: ["+989131056029", "+989183576883", "+983137850615"],
-        description: SITE.description,
+        telephone: [
+          `+98${mobile.replace(/^0/, "")}`,
+          `+98${office.replace(/^0/, "")}`,
+          "+989183576883",
+        ],
+        description,
         slogan: `${SITE.sloganStrong} ${SITE.sloganRest}`,
         address: {
           "@type": "PostalAddress",
-          streetAddress: "سه راه سیمین، خیابان جانبازان، بلوار شهید بخشی",
+          streetAddress: address.replace(/^اصفهان،s*/,""),
           addressLocality: SITE.locality,
           addressRegion: "اصفهان",
           addressCountry: "IR",
@@ -371,14 +385,14 @@ export function enhancedOrganizationJsonLd() {
           jobTitle: person.role,
           telephone: `+98${person.phone.slice(1)}`,
         })),
-        sameAs: [SITE.instagram, SITE.telegram, SITE.eitaa, SITE.whatsappDirect].filter(Boolean),
+        sameAs,
       },
       {
         "@type": "WebSite",
         "@id": `${SITE.url}#website`,
         url: SITE.url,
         name: SITE.nameFa,
-        description: SITE.description,
+        description,
         inLanguage: "fa-IR",
         publisher: { "@id": `${SITE.url}#organization` },
         potentialAction: {
