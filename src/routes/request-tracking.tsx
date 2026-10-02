@@ -20,6 +20,9 @@ type TrackingResult = {
   neighborhood: string;
   visitRequestedAt?: string | null;
   visitPreferredAt: string | null;
+  callbackPreferredAt?: string | null;
+  offerAmount?: number | null;
+  offerConditions?: string;
   customerPropertySubmissionStatus?: "pending" | "approved" | "rejected" | null;
   customerPropertySubmissionReviewNote?: string;
   timeline?: Array<{ type: "created" | "status" | "visit"; label: string; note: string; at: string | null }>;
