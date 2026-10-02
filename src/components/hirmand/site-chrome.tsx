@@ -10,6 +10,7 @@ import { scrollToId } from "./scroll";
 import { VisitorTracker } from "./visitor-tracker";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { SiteUtilities } from "./site-utilities";
+import { ConsultantsProvider } from "./consultants-context";
 
 export function SiteChrome({
   children,
@@ -19,7 +20,8 @@ export function SiteChrome({
   className?: string;
 }) {
   return (
-    <>
+    <ConsultantsProvider>
+      <>
       <a className="skip-link" href="#top" onClick={(event) => scrollToId(event, "top")}>
         رفتن به محتوا
       </a>
@@ -59,6 +61,7 @@ export function SiteChrome({
         visibleToasts={2}
         toastOptions={{ className: "hirmand-toast", duration: 2400 }}
       />
-    </>
+      </>
+    </ConsultantsProvider>
   );
 }
