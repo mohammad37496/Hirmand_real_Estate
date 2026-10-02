@@ -17,7 +17,7 @@ export function AdminPropertyQuestions({propertyId}:{propertyId:string}){
 }
 
 function toIso(value:string){const d=new Date(value);return Number.isFinite(d.getTime())?d.toISOString():"";}
-function faDate(value:string){try{return new Intl.DateTimeFormat("fa-IR",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Tehran"}).format(new Date(value));}catch{return value;}}
+function faDate(value:string){try{return new Intl.DateTimeFormat("fa-IR-u-ca-persian",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Tehran"}).format(new Date(value));}catch{return value;}}
 export function AdminPropertyOpenHouse({propertyId}:{propertyId:string}){
  const[items,setItems]=useState<EventItem[]>([]);const[rsvps,setRsvps]=useState<Rsvp[]>([]);const[startsAt,setStartsAt]=useState("");const[endsAt,setEndsAt]=useState("");const[capacity,setCapacity]=useState("8");const[note,setNote]=useState("");const[loading,setLoading]=useState(true);const[busy,setBusy]=useState(false);
  const load=useCallback(async()=>{setLoading(true);try{const response=await fetch("/api/property-open-house",{method:"POST",headers:{"content-type":"application/json"},credentials:"same-origin",body:JSON.stringify({action:"admin_list",propertyId})});const data=await response.json().catch(()=>null) as {events?:EventItem[];rsvps?:Rsvp[];statusMessage?:string};if(!response.ok)throw new Error(data?.statusMessage||"برنامه اوپن‌هاوس بارگذاری نشد.");setItems(Array.isArray(data?.events)?data.events:[]);setRsvps(Array.isArray(data?.rsvps)?data.rsvps:[]);}catch(error){toast.error(error instanceof Error?error.message:"برنامه اوپن‌هاوس بارگذاری نشد.");}finally{setLoading(false);}},[propertyId]);
