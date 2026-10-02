@@ -1742,7 +1742,11 @@ export function PropertyDetailView({
               {specGroups
                 .filter((group) => group.facts.length > 0)
                 .map((group) => (
-                  <section className="property-spec-group" key={group.id} aria-labelledby={`spec-group-${group.id}`}>
+                  <section
+                    className={`property-spec-group property-spec-group-${group.id}`}
+                    key={group.id}
+                    aria-labelledby={`spec-group-${group.id}`}
+                  >
                     <h3 className="property-spec-group-title" id={`spec-group-${group.id}`}>
                       {group.title}
                       <span className="property-spec-group-count">
