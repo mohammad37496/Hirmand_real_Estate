@@ -9589,3 +9589,99 @@ a.btn-ghost[href^="https://wa.me/"] svg {
   .property-qr-code-wrap{margin-top:16px;padding:10px;border-radius:18px;}
   .property-qr-actions > *{flex-basis:100%;}
 }
+
+
+/* Customer lead tracking confirmation / visit request token */
+.inquiry-tracking-success{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin-top:12px;
+  padding:14px 16px;
+  border:1px solid var(--gold-line);
+  border-radius:16px;
+  background:rgba(214,174,85,.08);
+}
+.inquiry-tracking-success>div:first-child{
+  min-width:0;
+  display:grid;
+  gap:3px;
+}
+.inquiry-tracking-success strong{
+  font-size:1rem;
+  letter-spacing:.04em;
+}
+.inquiry-tracking-success p{
+  margin:0;
+  color:var(--muted);
+  font-size:.72rem;
+  line-height:1.7;
+}
+.inquiry-tracking-actions{
+  flex:0 0 auto;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.inquiry-tracking-actions>*{
+  white-space:nowrap;
+}
+.property-viewing-tracking{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  gap:8px 12px;
+  align-items:center;
+  margin:14px 0 16px;
+  padding:12px;
+  border:1px solid var(--gold-line);
+  border-radius:14px;
+  background:rgba(214,174,85,.08);
+}
+.property-viewing-tracking>strong{
+  font-size:.92rem;
+  letter-spacing:.04em;
+}
+.property-viewing-tracking>.kicker{
+  grid-column:1 / 2;
+}
+.property-viewing-tracking .btn-ghost{
+  min-height:40px;
+}
+@media (max-width:680px){
+  .inquiry-tracking-success{
+    align-items:stretch;
+    flex-direction:column;
+  }
+  .inquiry-tracking-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .inquiry-tracking-actions>*{
+    width:100%;
+  }
+  .property-viewing-tracking{
+    grid-template-columns:1fr 1fr;
+  }
+  .property-viewing-tracking>.kicker{
+    grid-column:1 / -1;
+  }
+  .property-viewing-tracking>strong{
+    grid-column:1 / 2;
+  }
+  .property-viewing-tracking .btn-ghost{
+    grid-column:2 / 3;
+  }
+}
+@media (max-width:420px){
+  .inquiry-tracking-actions{
+    grid-template-columns:1fr;
+  }
+  .property-viewing-tracking{
+    grid-template-columns:1fr;
+  }
+  .property-viewing-tracking>strong,
+  .property-viewing-tracking .btn-ghost{
+    grid-column:1;
+  }
+}
