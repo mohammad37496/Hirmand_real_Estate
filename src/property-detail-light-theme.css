@@ -3250,3 +3250,11 @@ body:has(.property-detail-page) .footer a:hover {
     inset: 6px 6px auto !important;
   }
 }
+
+
+/* Similar-property request CTA */
+.property-detail-tools-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.property-detail-tools-row .property-actions{flex:1 1 520px}
+.property-similar-request-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 15px;border:1px solid var(--gold-line);border-radius:var(--r-pill);background:rgba(192,138,42,.08);color:var(--brass-800,var(--gold));font-weight:700;text-decoration:none;white-space:nowrap;transition:transform .18s ease,border-color .18s ease,background .18s ease}
+.property-similar-request-btn:hover{transform:translateY(-1px);border-color:var(--gold);background:rgba(192,138,42,.13)}
+@media(max-width:720px){.property-detail-tools-row{display:grid}.property-detail-tools-row .property-actions{width:100%}.property-similar-request-btn{width:100%}}
