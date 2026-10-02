@@ -65,7 +65,7 @@ export const getPublicGuides=createServerFn({method:"GET"}).handler(async()=>{
     const rows=await sql.query<Record<string,unknown>>(
       "select id,category,title,summary,body,sort_order,active from site_content_items where kind='guide' and active=true order by sort_order asc,updated_at desc");
     const items=rows.map(mapGuide).filter(item=>item.id&&item.title&&item.points.length);
-    return items.length?items:DEFAULT_GUIDES;
+    return items;
   }catch{return DEFAULT_GUIDES;}
 });
 
@@ -76,7 +76,7 @@ export const getPublicFaqs=createServerFn({method:"GET"}).handler(async()=>{
     const rows=await sql.query<Record<string,unknown>>(
       "select id,category,title,body,sort_order,active from site_content_items where kind='faq' and active=true order by sort_order asc,updated_at desc");
     const items=rows.map(mapFaq).filter(item=>item.id&&item.question&&item.answer);
-    return items.length?items:DEFAULT_FAQS;
+    return items;
   }catch{return DEFAULT_FAQS;}
 });
 
