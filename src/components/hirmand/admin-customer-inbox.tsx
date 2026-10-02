@@ -25,7 +25,7 @@ type Message = {
 
 function faDate(value: string) {
   try {
-    return new Intl.DateTimeFormat("fa-IR", {
+    return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
       month: "short",
       day: "numeric",
       hour: "2-digit",
