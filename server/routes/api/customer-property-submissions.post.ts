@@ -89,7 +89,7 @@ export default defineEventHandler(async (event) => {
 
   if (rawAction === "load" || rawAction === "resubmit") {
     const trackingToken = typeof rawTrackingToken === "string"
-      ? rawTrackingToken.trim().toUpperCase().replace(/\\s+/g, "")
+      ? rawTrackingToken.trim().toUpperCase().replace(/\s+/g, "")
       : "";
     if (!/^HIR-[A-Z0-9]{2}-[A-F0-9]{12}$/.test(trackingToken)) {
       throw createError({ statusCode: 400, statusMessage: "کد رهگیری نامعتبر است." });
