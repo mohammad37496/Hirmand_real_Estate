@@ -16,7 +16,12 @@ import { toast } from "sonner";
 import { MAX_PROPERTY_MEDIA, isVideoUrl } from "@/lib/media";
 import type { PropertyType } from "@/lib/properties";
 import { getPropertyFallbackImage } from "@/lib/property-fallback-images";
-import { getPropertyWatermarkSettings, DEFAULT_PROPERTY_WATERMARK, type PropertyWatermarkSettings } from "@/lib/property-watermark";
+import {
+  getPropertyWatermarkSettings,
+  DEFAULT_PROPERTY_WATERMARK,
+  isPermanentlyWatermarkedVideoUrl,
+  type PropertyWatermarkSettings,
+} from "@/lib/property-watermark";
 import { applyPropertyImageWatermark } from "@/lib/property-image-watermark";
 import { PropertyMediaWatermark } from "@/components/hirmand/property-media-watermark";
 import { faBytes } from "@/components/hirmand/admin-ui-utils";
@@ -405,7 +410,7 @@ export function AdminMediaField({ value, onChange, propertyType, propertyId }: P
             <Upload size={22} aria-hidden="true" />
             <strong>آپلود از گالری یا کامپیوتر</strong>
             <span>تصویر یا ویدیو را بکشید و رها کنید · یا کلیک کنید</span>
-            <small>jpg / png / webp / gif / avif / mp4 / webm · تصاویر به WebP و حداکثر ۲۵۶۰px بهینه می‌شوند · حداکثر ۲۵ مگابایت · تا {MAX_PROPERTY_MEDIA.toLocaleString("fa-IR")} فایل</small>
+            <small>jpg / png / webp / gif / avif / mp4 / webm · تصاویر به WebP و حداکثر ۲۵۶۰px بهینه می‌شوند · ویدئوها بعد از آپلود با واترمارک دائمی به MP4 تبدیل می‌شوند · حداکثر ۲۵ مگابایت · تا {MAX_PROPERTY_MEDIA.toLocaleString("fa-IR")} فایل</small>
           </>
         )}
       </div>
@@ -490,7 +495,7 @@ export function AdminMediaField({ value, onChange, propertyType, propertyId }: P
                   onDragEnd={() => setDragIndex(null)}
                 >
                   <MediaThumb src={src} fallback={fallback} />
-                  <PropertyMediaWatermark />
+                  {!video || !isPermanentlyWatermarkedVideoUrl(src) ? <PropertyMediaWatermark /> : null}
                   <label className="admin-media-pick">
                     <input
                       type="checkbox"
