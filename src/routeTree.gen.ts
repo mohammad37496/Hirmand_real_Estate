@@ -263,8 +263,6 @@ export interface FileRouteTypes {
     | '/submit-property'
     | '/properties'
     | '/tracking'
-    | '/file-code'
-    | '/submit-property'
     | '/request-tracking'
     | '/my-hirmand'
     | '/areas/$slug'
@@ -278,6 +276,8 @@ export interface FileRouteTypes {
     | '/consultants/'
     | '/properties/'
     | '/tools/'
+    | '/guides'
+    | '/valuation'
     | '/v/$slug/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -286,7 +286,11 @@ export interface FileRouteTypes {
     | '/budget-match'
     | '/compare'
     | '/favorites'
+    | '/guides'
+    | '/file-code'
+    | '/submit-property'
     | '/tracking'
+    | '/request-tracking'
     | '/my-hirmand'
     | '/areas/$slug'
     | '/consultants/$id'
@@ -299,6 +303,7 @@ export interface FileRouteTypes {
     | '/consultants'
     | '/properties'
     | '/tools'
+    | '/valuation'
     | '/v/$slug/$id'
   id:
     | '__root__'
@@ -308,8 +313,12 @@ export interface FileRouteTypes {
     | '/compare'
     | '/consultants'
     | '/favorites'
+    | '/guides'
+    | '/file-code'
+    | '/submit-property'
     | '/properties'
     | '/tracking'
+    | '/request-tracking'
     | '/my-hirmand'
     | '/areas/$slug'
     | '/consultants/$id'
@@ -322,6 +331,7 @@ export interface FileRouteTypes {
     | '/consultants/'
     | '/properties/'
     | '/tools/'
+    | '/valuation'
     | '/v/$slug/$id'
   fileRoutesById: FileRoutesById
 }
