@@ -1,14 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeftRight, CalendarDays, CheckCircle2, Clock3, Heart, Link2, Loader2, Search, Share2, X } from "lucide-react";
+import { ArrowLeftRight, CalendarDays, CheckCircle2, Clock3, Heart, Link2, Loader2, Search, Share2, StickyNote, Tag, X } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
 import { SITE } from "@/lib/site";
 import { toast } from "sonner";
+import "@/favorites-personal.css";
 
 const FAVORITES_KEY = "hirmand-favorite-properties";
 const RECENT_PROPERTIES_KEY = "hirmand-recent-properties";
+const FAVORITE_META_KEY = "hirmand-favorite-meta-v1";
+type FavoriteTag = "بازدید" | "پیگیری" | "مناسب بودجه" | "مقایسه";
+type FavoriteMeta = { tag?: FavoriteTag; note?: string };
+type FavoriteMetaMap = Record<string, FavoriteMeta>;
 
 function cleanSlugs(value: unknown, limit: number): string[] {
   if (!Array.isArray(value)) return [];
@@ -26,6 +31,37 @@ function readFavorites() {
     return cleanSlugs(raw ? JSON.parse(raw) : [], 100);
   } catch {
     return [];
+  }
+}
+
+function readFavoriteMeta(): FavoriteMetaMap {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(FAVORITE_META_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    const safe: FavoriteMetaMap = {};
+    for (const [slug, value] of Object.entries(parsed)) {
+      if (typeof slug !== "string" || !value || typeof value !== "object") continue;
+      const item = value as Record<string, unknown>;
+      const tag = ["بازدید", "پیگیری", "مناسب بودجه", "مقایسه"].includes(String(item.tag))
+        ? String(item.tag) as FavoriteTag
+        : undefined;
+      const note = typeof item.note === "string" ? item.note.slice(0, 240) : "";
+      if (tag || note) safe[slug] = { tag, note };
+    }
+    return safe;
+  } catch {
+    return {};
+  }
+}
+
+function persistFavoriteMeta(value: FavoriteMetaMap) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(FAVORITE_META_KEY, JSON.stringify(value));
+  } catch {
+    // Ignore storage failures; favorites remain usable without annotations.
   }
 }
 
@@ -111,6 +147,27 @@ function FavoritesPage() {
   const [planBusy, setPlanBusy] = useState(false);
   const [planCodes, setPlanCodes] = useState<string[]>([]);
   const [planError, setPlanError] = useState("");
+  const [favoriteMeta, setFavoriteMeta] = useState<FavoriteMetaMap>(() => readFavoriteMeta());
+
+  function updateFavoriteMeta(slug: string, patch: Partial<FavoriteMeta>) {
+    setFavoriteMeta((current) => {
+      const next = { ...current, [slug]: { ...current[slug], ...patch } };
+      const cleaned = Object.fromEntries(
+        Object.entries(next).filter(([, value]) => Boolean(value.tag || value.note?.trim())),
+      ) as FavoriteMetaMap;
+      persistFavoriteMeta(cleaned);
+      return cleaned;
+    });
+  }
+
+  function clearFavoriteMeta(slug: string) {
+    setFavoriteMeta((current) => {
+      const next = { ...current };
+      delete next[slug];
+      persistFavoriteMeta(next);
+      return next;
+    });
+  }
 
   function openViewingPlan() {
     const first = properties.slice(0, 4).map((property) => property.slug);
@@ -403,9 +460,59 @@ function FavoritesPage() {
           </section>
         ) : properties.length ? (
           <div className="property-grid">
-            {properties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
-            ))}
+            {properties.map((property) => {
+              const meta = favoriteMeta[property.slug] ?? {};
+              return (
+                <div key={property.id} className="favorites-property-frame">
+                  <PropertyCard property={property} />
+                  <section className="favorites-personal-panel" aria-label={"یادداشت شخصی برای " + property.title}>
+                    <div className="favorites-personal-head">
+                      <div>
+                        <strong><StickyNote size={15} /> یادداشت شخصی</strong>
+                        <small>فقط روی همین مرورگر ذخیره می‌شود.</small>
+                      </div>
+                      {meta.tag ? <span className="favorites-personal-tag"><Tag size={13} />{meta.tag}</span> : null}
+                    </div>
+                    <div className="favorites-personal-controls">
+                      <label>
+                        <span>برچسب</span>
+                        <select
+                          value={meta.tag ?? ""}
+                          onChange={(event) => {
+                            const value = event.target.value as FavoriteTag | "";
+                            if (value) {
+                              updateFavoriteMeta(property.slug, { tag: value });
+                            } else {
+                              updateFavoriteMeta(property.slug, { tag: undefined });
+                            }
+                          }}
+                        >
+                          <option value="">بدون برچسب</option>
+                          <option value="بازدید">برای بازدید</option>
+                          <option value="پیگیری">پیگیری</option>
+                          <option value="مناسب بودجه">مناسب بودجه</option>
+                          <option value="مقایسه">مقایسه</option>
+                        </select>
+                      </label>
+                      <label className="favorites-personal-note">
+                        <span>یادداشت</span>
+                        <input
+                          value={meta.note ?? ""}
+                          maxLength={240}
+                          placeholder="مثلاً تخفیف احتمالی یا نکته بازدید"
+                          onChange={(event) => updateFavoriteMeta(property.slug, { note: event.target.value.slice(0, 240) })}
+                        />
+                      </label>
+                      {(meta.tag || meta.note) ? (
+                        <button type="button" className="favorites-personal-clear" onClick={() => clearFavoriteMeta(property.slug)}>
+                          پاک‌کردن
+                        </button>
+                      ) : null}
+                    </div>
+                  </section>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <section className="property-empty">

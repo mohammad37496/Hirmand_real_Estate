@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeftRight, Heart, Share2, Trash2 } from "lucide-react";
+import { ArrowLeftRight, Download, Heart, Share2, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
@@ -8,6 +8,7 @@ import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties"
 import { SITE } from "@/lib/site";
 import { formatToman } from "@/lib/money";
 import { propertyPath } from "@/lib/property-path";
+import "@/compare-export.css";
 
 const PROPERTY_ORIENTATION_LABELS: Record<NonNullable<Property["orientation"]>, string> = {
   north: "شمالی",
@@ -106,6 +107,44 @@ function valueMoney(value: string | null) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? formatToman(parsed) + " تومان" : value;
 }
+function csvCell(value: string | number | null | undefined) {
+  const text = String(value ?? "").replace(/\r?\n|\r/g, " ").trim();
+  return /[",]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+
+function exportCompareCsv(properties: Property[]) {
+  const headers = ["عنوان", "کد/شناسه", "نوع معامله", "نوع ملک", "محله", "متراژ", "خواب", "طبقه", "پارکینگ", "آسانسور", "انباری", "قیمت هر متر", "قیمت فروش", "رهن", "اجاره", "لینک"];
+  const rows = properties.map((p) => [
+    p.title,
+    p.slug || p.id,
+    p.transactionType === "sell" ? "فروش" : p.transactionType === "buy" ? "خرید" : p.transactionType === "rent" ? "اجاره" : "رهن",
+    PROPERTY_TYPE_LABEL[p.propertyType] ?? p.propertyType,
+    p.neighborhood,
+    p.areaM2 ?? "",
+    p.bedrooms ?? "",
+    p.floorLabel === "suite" ? "سوئیت" : p.floor ?? "",
+    p.parking ? "دارد" : "ندارد",
+    p.elevator ? "دارد" : "ندارد",
+    p.storage ? "دارد" : "ندارد",
+    valuePerM2(p),
+    valueMoney(p.price),
+    valueMoney(p.deposit),
+    valueMoney(p.rent),
+    typeof window !== "undefined" ? new URL(propertyPath(p), window.location.origin).toString() : propertyPath(p),
+  ]);
+  const csv = "\uFEFF" + [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `hirmand-compare-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  toast.success("خروجی مقایسه آماده شد.");
+}
+
 function valuePerM2(property: Property) {
   if ((property.transactionType !== "buy" && property.transactionType !== "sell") || !property.price || !property.areaM2 || property.areaM2 <= 0) return "—";
   const parsed = Number(property.price);
@@ -210,6 +249,9 @@ function ComparePage() {
             <div className="compare-toolbar">
               <span>{properties.length.toLocaleString("fa-IR")} فایل انتخاب شده</span>
               <div className="compare-toolbar-actions">
+                <button type="button" className="properties-reset-btn" onClick={() => exportCompareCsv(properties)}>
+                  <Download size={14} /> خروجی CSV
+                </button>
                 <button type="button" className="properties-reset-btn" onClick={() => void shareCompare(properties.map((property) => property.slug))}>
                   <Share2 size={14} /> اشتراک مقایسه
                 </button>
