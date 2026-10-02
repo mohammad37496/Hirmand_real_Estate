@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeftRight, CalendarDays, CheckCircle2, Clock3, Heart, Link2, Loader2, ListFilter, Search, Share2, SlidersHorizontal, StickyNote, Tag, X } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
+import { FavoriteScoreCompare } from "@/components/hirmand/favorite-score-compare";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
 import { SITE } from "@/lib/site";
@@ -481,6 +482,8 @@ function FavoritesPage() {
             </Link>
           </section>
         ) : null}
+
+        {!loading && properties.length ? <FavoriteScoreCompare properties={properties} /> : null}
 
         {loading ? (
           <section className="property-empty">
