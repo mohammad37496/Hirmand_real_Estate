@@ -510,7 +510,7 @@ export function AdminCustomerPropertySubmissions() {
                   <div className="admin-customer-submission-actions">
                     <button type="button" className="btn-ghost" onClick={()=>openSubmission(submission)}>{selectedOpen ? "بستن جزئیات" : "جزئیات و رسانه‌ها"}</button>
                     {selectedOpen && editDraft ? <button type="button" className="btn-ghost" onClick={()=>setPreviewOpen((value)=>!value)}><Eye size={15}/> {previewOpen ? "بستن پیش‌نمایش" : "پیش‌نمایش نهایی"}</button> : null}
-                    {selectedOpen ? <button type="button" className="btn-ghost" onClick={()=>void openHistory(submission)}><History size={15}/> تاریخچه</button> : null>
+                    {selectedOpen ? <button type="button" className="btn-ghost" onClick={()=>void openHistory(submission)}><History size={15}/> تاریخچه</button> : null}
                     {submission.status === "pending" ? <>
                       <button type="button" className="btn-gold" disabled={busyId===submission.id} onClick={()=>void act("approve",submission)}><CheckCircle2 size={15}/> تأیید و انتشار</button>
                       <button type="button" className="btn-ghost danger" disabled={busyId===submission.id} onClick={()=>void act("reject",submission)}><XCircle size={15}/> رد</button>
@@ -645,7 +645,7 @@ export function AdminCustomerPropertySubmissions() {
            </div>
            <div className="admin-customer-pagination-actions">
              <button type="button" className="btn-ghost" onClick={()=>{setPage((value)=>Math.max(1,value-1));setSelectedIds(new Set());}} disabled={page<=1}><ArrowRight size={15}/> قبلی</button>
-             <button type="button" className="btn-ghost" onClick={()=>{setPage((value)=>Math.min(totalPages,value+1));setSelectedIds(new Set());}} disabled={page>=totalPages}><بعدی <ArrowLeft size={15}/></button>
+             <button type="button" className="btn-ghost" onClick={()=>{setPage((value)=>Math.min(totalPages,value+1));setSelectedIds(new Set());}} disabled={page>=totalPages}>بعدی <ArrowLeft size={15}/></button>
            </div>
          </div>
        ) : null}
