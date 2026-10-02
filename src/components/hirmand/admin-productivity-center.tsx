@@ -4,6 +4,7 @@ import {
   ListTodo, Plus, RefreshCw, SearchX, ServerCog, ShieldCheck, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { PersianDateTimePicker } from "./persian-date-time-picker";
 
 type TaskStatus = "open" | "done" | "cancelled";
 type Priority = "low" | "normal" | "high" | "urgent";
@@ -188,7 +189,7 @@ export function AdminProductivityCenter() {
           <label className="field"><span>وظیفه جدید</span><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="مثلاً تصاویر یک فایل را بررسی کن" /></label>
           <label className="field"><span>مسئول</span><input value={assignee} onChange={(e) => setAssignee(e.target.value)} placeholder="نام مشاور/اپراتور" /></label>
           <label className="field"><span>اولویت</span><select value={priority} onChange={(e) => setPriority(e.target.value as Priority)}>{Object.entries(PRIORITY_LABEL).map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-          <label className="field"><span>موعد</span><input type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} /></label>
+          <label className="field"><span>موعد</span><PersianDateTimePicker value={dueAt} onChange={setDueAt} title="موعد وظیفه" /></label>
           <button className="btn-gold" type="button" onClick={() => void createTask()} disabled={saving || !title.trim()}><Plus size={15}/>{saving ? "در حال ثبت…" : "ثبت وظیفه"}</button>
           <label className="field" style={{ gridColumn: "1 / -1" }}><span>توضیح</span><textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} /></label>
         </div>
