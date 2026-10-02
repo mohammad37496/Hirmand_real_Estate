@@ -1,0 +1,18 @@
+.property-visit-checklist{margin-top:24px;padding:22px;border:1px solid var(--line);border-radius:24px;background:var(--surface);box-shadow:0 10px 30px rgba(0,0,0,.06);}
+.property-visit-checklist-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap;}
+.property-visit-checklist-head h2{display:flex;align-items:center;gap:8px;margin:5px 0 6px;font-size:1.22rem;}
+.property-visit-checklist-head p{color:var(--muted);font-size:.8rem;line-height:1.8;}
+.property-visit-progress{display:grid;gap:2px;min-width:96px;text-align:left;}
+.property-visit-progress strong{font-size:1.45rem;color:var(--gold-soft);}
+.property-visit-progress span{color:var(--subtle);font-size:.7rem;}
+.property-visit-progress-bar{height:8px;margin-top:16px;border-radius:999px;overflow:hidden;background:rgba(0,0,0,.08);}
+.property-visit-progress-bar span{display:block;height:100%;border-radius:inherit;background:var(--gold);}
+.property-visit-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:16px;}
+.property-visit-check{display:grid;grid-template-columns:auto 22px 1fr;align-items:center;gap:8px;padding:11px 12px;border:1px solid var(--line);border-radius:13px;background:var(--card);color:var(--fg);font-size:.76rem;line-height:1.75;cursor:pointer;}
+.property-visit-check input{position:absolute;opacity:0;pointer-events:none;}
+.property-visit-check-icon{width:22px;height:22px;display:grid;place-items:center;border:1px solid var(--line-2);border-radius:7px;color:transparent;background:var(--card-2);}
+.property-visit-check.is-done{border-color:var(--gold-line);background:rgba(192,138,42,.05);}
+.property-visit-check.is-done .property-visit-check-icon{border-color:var(--gold);color:var(--gold);background:rgba(192,138,42,.08);}
+.property-visit-reset{display:inline-flex;align-items:center;gap:6px;margin-top:12px;min-height:38px;padding:0 12px;border:1px solid var(--line-2);border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:.7rem;font-weight:700;cursor:pointer;}
+.property-visit-reset:hover{border-color:var(--gold);color:var(--navy-900);}
+@media (max-width:720px){.property-visit-checklist{padding:18px;}.property-visit-list{grid-template-columns:1fr;}.property-visit-progress{text-align:right;}}
