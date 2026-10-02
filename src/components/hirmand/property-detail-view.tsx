@@ -1284,6 +1284,12 @@ export function PropertyDetailView({
 
   const area = areaSlug(property.neighborhood);
   const featuredActive = isFeaturedActive(property);
+  const canRequestViewing =
+    property.availabilityStatus === "available" || property.availabilityStatus === "reserved";
+  const isClosedFile =
+    property.availabilityStatus === "sold" ||
+    property.availabilityStatus === "rented" ||
+    property.availabilityStatus === "unavailable";
   const perMeter = perMeterLabel(property);
   const code = fileCode(property.id);
   const descriptionParagraphs = property.description
@@ -2217,11 +2223,23 @@ export function PropertyDetailView({
               </details>
             </section>
 
-            <section id="property-final-cta" className="property-final-cta" aria-label="درخواست بازدید و اطلاعات بیشتر">
+            <section
+              id="property-final-cta"
+              className={"property-final-cta" + (isClosedFile ? " property-final-cta-closed" : "")}
+              aria-label={canRequestViewing ? "درخواست بازدید و اطلاعات بیشتر" : "پیگیری وضعیت فایل و اطلاعات بیشتر"}
+            >
               <div>
-                <span className="kicker">قدم بعدی</span>
-                <h2>برای بازدید یا اطلاعات بیشتر با مشاور فایل در ارتباط باشید.</h2>
-                <p>برای هماهنگی بازدید، دریافت توضیحات تکمیلی یا بررسی شرایط معامله تماس بگیرید.</p>
+                <span className="kicker">{canRequestViewing ? "قدم بعدی" : "وضعیت فایل"}</span>
+                <h2>
+                  {canRequestViewing
+                    ? "برای بازدید یا اطلاعات بیشتر با مشاور فایل در ارتباط باشید."
+                    : "این فایل در حال حاضر برای بازدید جدید در دسترس نیست."}
+                </h2>
+                <p>
+                  {canRequestViewing
+                    ? "برای هماهنگی بازدید، دریافت توضیحات تکمیلی یا بررسی شرایط معامله تماس بگیرید."
+                    : "برای پیگیری وضعیت این فایل یا پیدا کردن گزینه‌های مشابه با مشاور هیرمند در ارتباط باشید."}
+                </p>
               </div>
               <div className="property-final-cta-actions">
                 <a
@@ -2242,15 +2260,26 @@ export function PropertyDetailView({
                   <WhatsAppIcon size={17} aria-hidden="true" />
                   واتساپ
                 </a>
-                <PropertyViewingRequest
-                  property={{
-                    id: property.id,
-                    slug: property.slug,
-                    title: property.title,
-                    neighborhood: property.neighborhood,
-                    availabilityStatus: property.availabilityStatus,
-                  }}
-                />
+                {canRequestViewing ? (
+                  <PropertyViewingRequest
+                    property={{
+                      id: property.id,
+                      slug: property.slug,
+                      title: property.title,
+                      neighborhood: property.neighborhood,
+                      availabilityStatus: property.availabilityStatus,
+                    }}
+                  />
+                ) : (
+                  <a
+                    href={similarRequestHref(property)}
+                    className="btn-ghost property-final-cta-similar"
+                    onClick={() => trackAnalyticsEvent("inquiry_click", property.slug)}
+                  >
+                    <Sparkles size={17} aria-hidden="true" />
+                    پیدا کردن فایل مشابه
+                  </a>
+                )}
               </div>
             </section>
 
@@ -2295,10 +2324,14 @@ export function PropertyDetailView({
           <a
             href="#property-final-cta"
             className="property-mobile-action"
-            onClick={() => trackAnalyticsEvent("viewing_cta_jump", property.slug)}
+            onClick={() => trackAnalyticsEvent(canRequestViewing ? "viewing_cta_jump" : "inquiry_click", property.slug)}
           >
-            <CalendarDays size={18} aria-hidden="true" />
-            <span>درخواست بازدید</span>
+            {canRequestViewing ? (
+              <CalendarDays size={18} aria-hidden="true" />
+            ) : (
+              <Sparkles size={18} aria-hidden="true" />
+            )}
+            <span>{canRequestViewing ? "درخواست بازدید" : "فایل مشابه"}</span>
           </a>
           <button
             type="button"
