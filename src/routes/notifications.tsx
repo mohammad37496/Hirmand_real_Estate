@@ -76,7 +76,7 @@ function NotificationsPage() {
         items.push({ id: "new:" + property.id, kind: "new", title: "فایل جدید", text: property.title + " · " + property.neighborhood, href: "/properties/" + encodeURIComponent(property.slug), createdAt: property.publishedAt ?? undefined });
       }
       if ((property.priceDropPercent ?? 0) > 0) {
-        items.push({ id: "drop:" + property.id, kind: "drop", title: "کاهش قیمت " + property.priceDropPercent + "%", text: property.title + " · " + property.neighborhood, href: "/properties/" + encodeURIComponent(property.slug), createdAt: property.updatedAt ?? property.publishedAt ?? undefined });
+        items.push({ id: "drop:" + property.id, kind: "drop", title: "کاهش قیمت " + property.priceDropPercent + "%", text: property.title + " · " + property.neighborhood, href: "/properties/" + encodeURIComponent(property.slug), createdAt: property.publishedAt ?? undefined });
       }
     }
     return items.sort((a, b) => Date.parse(b.createdAt ?? "") - Date.parse(a.createdAt ?? "")).slice(0, 30);
