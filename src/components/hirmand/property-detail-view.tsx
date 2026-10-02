@@ -1960,62 +1960,137 @@ export function PropertyDetailView({
               </section>
             ) : null}
 
-            <section className="property-decision-suite" aria-labelledby="property-decision-suite-title">
-              <header className="property-decision-suite-head">
+            <section className="property-tool-center" aria-labelledby="property-tool-center-title">
+              <header className="property-tool-center-head">
                 <div>
-                  <span className="kicker">بررسی و تصمیم</span>
-                  <h2 id="property-decision-suite-title">ابزارهای بررسی، تصمیم و معامله</h2>
-                  <p>بعد از آشنایی با مشخصات، توضیحات و موقعیت ملک، این ابزارها برای بررسی دقیق‌تر، مذاکره و هماهنگی معامله در اختیار شما هستند.</p>
+                  <span className="kicker">ابزارهای تکمیلی فایل</span>
+                  <h2 id="property-tool-center-title">ابزارهای هوشمند این فایل</h2>
+                  <p>
+                    اطلاعات اصلی ملک در بالا متمرکز است؛ این ابزارها را فقط زمانی باز کنید که برای بررسی، محاسبه،
+                    مذاکره یا مدیریت بازدید به آن‌ها نیاز دارید.
+                  </p>
                 </div>
-                <span className="property-decision-suite-badge">مرحله‌به‌مرحله · اختیاری</span>
+                <span className="property-tool-center-badge">همه قابلیت‌ها · اختیاری</span>
               </header>
 
-              <div className="property-decision-suite-section">
-                <header className="property-decision-suite-section-head">
-                  <span className="property-decision-suite-index">۰۱</span>
-                  <div>
-                    <strong>ارزیابی و تصمیم‌گیری</strong>
-                    <span>اول ریسک‌ها و تناسب فایل را بررسی کنید؛ بعد سراغ معامله بروید.</span>
+              <details className="property-tool-category">
+                <summary className="property-tool-category-summary">
+                  <span className="property-tool-category-main">
+                    <span className="property-tool-category-index">۰۱</span>
+                    <span className="property-tool-category-copy">
+                      <strong>بررسی و تصمیم‌گیری</strong>
+                      <span>تناسب فایل، بازدید، آمادگی تصمیم، سناریو و بررسی ریسک</span>
+                    </span>
+                  </span>
+                  <span className="property-tool-category-meta">
+                    <span className="property-tool-category-count">۸ ابزار</span>
+                    <span className="property-tool-category-chevron" aria-hidden="true">
+                      <ChevronDown size={17} />
+                    </span>
+                  </span>
+                </summary>
+                <div className="property-tool-category-content">
+                  <div className="property-tool-category-content-inner">
+                    <div className="property-tool-category-stack">
+                      <PropertyDecisionTools property={property} />
+                      <PropertyVisitChecklist property={property} />
+                      <PropertyDecisionReadiness property={property} />
+                      <PropertyScenarioAnalysis property={property} />
+                      <PropertyPersonalScore property={property} />
+                      <PropertyRiskRadar property={property} />
+                      <PropertyReviewAlerts property={property} />
+                      <PropertyVisitOutcome property={property} />
+                    </div>
                   </div>
-                </header>
-                <div className="property-decision-suite-stack">
-                  <PropertyDecisionTools property={property} />
-                  <PropertyVisitChecklist property={property} />
-                  <PropertyDecisionReadiness property={property} />
-                  <PropertyScenarioAnalysis property={property} />
-                  <PropertyPersonalScore property={property} />
-                  <PropertyRiskRadar property={property} />
-                  <PropertyReviewAlerts property={property} />
-                  <PropertyVisitOutcome property={property} />
                 </div>
-              </div>
+              </details>
 
-              <div className="property-decision-suite-section">
-                <header className="property-decision-suite-section-head">
-                  <span className="property-decision-suite-index">۰۲</span>
-                  <div>
-                    <strong>مذاکره و آماده‌سازی معامله</strong>
-                    <span>از برآورد هزینه تا پیشنهاد، پرداخت، مدارک و صورت‌جلسه تحویل.</span>
+              <details className="property-tool-category">
+                <summary className="property-tool-category-summary">
+                  <span className="property-tool-category-main">
+                    <span className="property-tool-category-index">۰۲</span>
+                    <span className="property-tool-category-copy">
+                      <strong>مالی و محاسبات معامله</strong>
+                      <span>هزینه مالکیت، برنامه پرداخت و تبدیل رهن و اجاره</span>
+                    </span>
+                  </span>
+                  <span className="property-tool-category-meta">
+                    <span className="property-tool-category-count">۳ ابزار</span>
+                    <span className="property-tool-category-chevron" aria-hidden="true">
+                      <ChevronDown size={17} />
+                    </span>
+                  </span>
+                </summary>
+                <div className="property-tool-category-content">
+                  <div className="property-tool-category-content-inner">
+                    <div className="property-tool-category-stack">
+                      <PropertyOwnershipCost property={property} />
+                      <PropertyPaymentPlanner property={property} />
+                      <PropertyConvertSlider property={property} />
+                    </div>
                   </div>
-                </header>
-                <div className="property-decision-suite-stack">
-                  <PropertyOwnershipCost property={property} />
-                  <PropertyOfferMessage property={property} />
-                  <PropertyNegotiationLog property={property} />
-                  <PropertyPaymentPlanner property={property} />
-                  <PropertyConvertSlider property={property} />
-                  <PropertyDealChecklist property={property} />
-                  <PropertyDealRoom property={property} />
-                  <PropertyDocumentPack property={property} />
-                  <PropertyQuestionLog property={property} />
-                  <PropertyInquiryTools property={property} />
-                  <PropertyVisitReport property={property} />
-                  <PropertyFollowUpReminder property={property} />
-                  <PropertyRenovationTracker property={property} />
-                  <PropertyPhotoNotes property={property} />
-                  <PropertyDecisionDossier property={property} />
                 </div>
-              </div>
+              </details>
+
+              <details className="property-tool-category">
+                <summary className="property-tool-category-summary">
+                  <span className="property-tool-category-main">
+                    <span className="property-tool-category-index">۰۳</span>
+                    <span className="property-tool-category-copy">
+                      <strong>مذاکره و آماده‌سازی معامله</strong>
+                      <span>پیشنهاد، سابقه مذاکره، چک‌لیست، اتاق معامله، پیگیری و پرونده تصمیم</span>
+                    </span>
+                  </span>
+                  <span className="property-tool-category-meta">
+                    <span className="property-tool-category-count">۶ ابزار</span>
+                    <span className="property-tool-category-chevron" aria-hidden="true">
+                      <ChevronDown size={17} />
+                    </span>
+                  </span>
+                </summary>
+                <div className="property-tool-category-content">
+                  <div className="property-tool-category-content-inner">
+                    <div className="property-tool-category-stack">
+                      <PropertyOfferMessage property={property} />
+                      <PropertyNegotiationLog property={property} />
+                      <PropertyDealChecklist property={property} />
+                      <PropertyDealRoom property={property} />
+                      <PropertyFollowUpReminder property={property} />
+                      <PropertyDecisionDossier property={property} />
+                    </div>
+                  </div>
+                </div>
+              </details>
+
+              <details className="property-tool-category">
+                <summary className="property-tool-category-summary">
+                  <span className="property-tool-category-main">
+                    <span className="property-tool-category-index">۰۴</span>
+                    <span className="property-tool-category-copy">
+                      <strong>بازدید، مدارک و یادداشت‌ها</strong>
+                      <span>مدارک، پرسش‌ها، گزارش بازدید، نوسازی و یادداشت تصاویر</span>
+                    </span>
+                  </span>
+                  <span className="property-tool-category-meta">
+                    <span className="property-tool-category-count">۶ ابزار</span>
+                    <span className="property-tool-category-chevron" aria-hidden="true">
+                      <ChevronDown size={17} />
+                    </span>
+                  </span>
+                </summary>
+                <div className="property-tool-category-content">
+                  <div className="property-tool-category-content-inner">
+                    <div className="property-tool-category-stack">
+                      <PropertyDocumentPack property={property} />
+                      <PropertyQuestionLog property={property} />
+                      <PropertyInquiryTools property={property} />
+                      <PropertyVisitReport property={property} />
+                      <PropertyRenovationTracker property={property} />
+                      <PropertyPhotoNotes property={property} />
+                    </div>
+                  </div>
+                </div>
+              </details>
             </section>
 
             <section className="property-final-cta" aria-label="درخواست بازدید و اطلاعات بیشتر">
