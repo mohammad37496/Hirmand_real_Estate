@@ -64,12 +64,15 @@ async function inspectMedia(event: H3Event, item: { propertyId: string; slug: st
     response = await fetchWithTimeout(absolute);
     const contentType = response.headers.get("content-type")?.toLowerCase() || "";
     const looksImage = /\.(avif|gif|jpe?g|png|webp|svg)(?:$|[?#])/i.test(absolute);
-    const goodType = contentType.startsWith("image/") || (contentType === "" && looksImage);
+    const looksVideo = /\.(mp4|webm|mov|m4v|ogg)(?:$|[?#])/i.test(absolute);
+    const isMediaType = contentType.startsWith("image/") || contentType.startsWith("video/");
+    const genericType = contentType === "" || contentType === "application/octet-stream" || contentType === "binary/octet-stream";
+    const goodType = isMediaType || (genericType && (looksImage || looksVideo));
     if (!response.ok) {
       return { ...item, status: response.status, reason: "پاسخ HTTP " + response.status };
     }
     if (!goodType) {
-      return { ...item, status: response.status, reason: contentType ? "نوع پاسخ تصویری نیست (" + contentType + ")" : "نوع محتوای پاسخ مشخص نیست" };
+      return { ...item, status: response.status, reason: contentType ? "نوع پاسخ رسانه‌ای نیست (" + contentType + ")" : "نوع محتوای پاسخ مشخص نیست" };
     }
     return null;
   } catch (error) {
@@ -133,7 +136,7 @@ export default defineEventHandler(async (event) => {
   if (body.action === "verify") {
     if (!body.propertyId) throw createError({ statusCode: 400, statusMessage: "شناسه فایل مشخص نیست." });
     const rows = await sql.query<{ id: string; last_verified_at: string; last_verified_by: string }>(
-      "update properties set last_verified_at=current_timestamp, last_verified_by='هیرمند', updated_at=current_timestamp where id=$1 and status='published' returning id,last_verified_at,last_verified_by",
+      "update properties set last_verified_at=current_timestamp, last_verified_by='هیرمند' where id=$1 and status='published' returning id,last_verified_at,last_verified_by",
       [body.propertyId],
     );
     if (!rows[0]) throw createError({ statusCode: 404, statusMessage: "فایل منتشرشده پیدا نشد." });
