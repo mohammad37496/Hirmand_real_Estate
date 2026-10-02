@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, CheckCircle2, ExternalLink, Film, ImageIcon, MapPin, Phone, Pencil, RefreshCw, Save, Search, Star, Trash2, XCircle } from "lucide-react";
+import { ArrowDown, ArrowUp, CheckCircle2, ExternalLink, Eye, Film, History, ImageIcon, MapPin, Phone, Pencil, RefreshCw, Save, Search, Star, Timer, Trash2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { TEAM } from "@/lib/site";
 import { formatToman } from "@/lib/money";
@@ -20,6 +20,9 @@ type Submission = {
   createdAt: string;
   reviewedAt: string | null;
   possibleDuplicate?: boolean;
+  priority?: "low" | "normal" | "high";
+  updatedAt?: string | null;
+  ageHours?: number;
 };
 
 function faDate(value: string) {
@@ -64,6 +67,10 @@ export function AdminCustomerPropertySubmissions() {
   const [counts, setCounts] = useState({ pending: 0, approved: 0, rejected: 0 });
   const [editDraft, setEditDraft] = useState<Record<string, unknown> | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyEvents, setHistoryEvents] = useState<Array<{ id:string; action:string; note:string; createdAt:string }>>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -123,6 +130,52 @@ export function AdminCustomerPropertySubmissions() {
     const items = mediaDraftItems();
     const next = items.filter((_, itemIndex) => itemIndex !== index);
     setEditDraft((current) => ({ ...(current || {}), images: next }));
+  }
+
+  async function setPriority(submission: Submission, priority: "low" | "normal" | "high") {
+    try {
+      const response = await fetch("/api/admin-customer-property-submissions", {
+        method:"POST",
+        headers:{"content-type":"application/json"},
+        body:JSON.stringify({ action:"set_priority", id:submission.id, priority }),
+      });
+      const data = await response.json().catch(() => null) as { success?:boolean; statusMessage?:string } | null;
+      if (!response.ok || !data?.success) throw new Error(data?.statusMessage || "تغییر اولویت انجام نشد.");
+      setSubmissions((items) => items.map((item) => item.id === submission.id ? { ...item, priority } : item));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تغییر اولویت انجام نشد.");
+    }
+  }
+
+  async function openHistory(submission: Submission) {
+    setHistoryOpen(true);
+    setHistoryLoading(true);
+    try {
+      const response = await fetch("/api/admin-customer-property-submissions", {
+        method:"POST",
+        headers:{"content-type":"application/json"},
+        body:JSON.stringify({ action:"history", id:submission.id }),
+      });
+      const data = await response.json().catch(() => null) as { success?:boolean; events?:Array<{id:string;action:string;note:string;createdAt:string}>; statusMessage?:string } | null;
+      if (!response.ok || !data?.success) throw new Error(data?.statusMessage || "تاریخچه پرونده بارگذاری نشد.");
+      setHistoryEvents(Array.isArray(data.events) ? data.events : []);
+    } catch (error) {
+      setHistoryEvents([]);
+      toast.error(error instanceof Error ? error.message : "تاریخچه پرونده بارگذاری نشد.");
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
+  function priorityLabel(priority: Submission["priority"]) {
+    return priority === "high" ? "فوری" : priority === "low" ? "کم" : "عادی";
+  }
+
+  function ageLabel(ageHours: number | undefined) {
+    if (ageHours == null) return "";
+    if (ageHours < 1) return "کمتر از ۱ ساعت";
+    if (ageHours < 24) return Math.floor(ageHours).toLocaleString("fa-IR") + " ساعت در صف";
+    return Math.floor(ageHours / 24).toLocaleString("fa-IR") + " روز در صف";
   }
 
   async function saveDraft() {
@@ -291,9 +344,15 @@ export function AdminCustomerPropertySubmissions() {
                     <small>{faDate(submission.createdAt)}</small>
                   </div>
                   <p>{String(data.neighborhood ?? "—")} · {String(data.areaM2 ?? "—")} متر · {priceText(data)}</p>
-                  <div className="admin-customer-submission-owner"><strong>{submission.ownerName}</strong><a href={"tel:"+submission.ownerPhone}><Phone size={14}/>{submission.ownerPhone}</a><span dir="ltr">{submission.trackingToken}</span>{submission.possibleDuplicate?<span className="admin-customer-duplicate-badge">احتمال تکراری</span>:null}</div>
+                  <div className="admin-customer-submission-owner"><strong>{submission.ownerName}</strong><a href={"tel:"+submission.ownerPhone}><Phone size={14}/>{submission.ownerPhone}</a><span dir="ltr">{submission.trackingToken}</span>{submission.possibleDuplicate?<span className="admin-customer-duplicate-badge">احتمال تکراری</span>:null}{submission.status==="pending"&&submission.ageHours!=null?<span className={"admin-customer-age-badge"+(submission.ageHours>=24?" is-overdue":"")}><Timer size={12}/>{ageLabel(submission.ageHours)}</span>:null}</div>
+                  {submission.status === "pending" ? <div className="admin-customer-queue-controls">
+                    <label><span>اولویت</span><select value={submission.priority || "normal"} onChange={(e)=>void setPriority(submission,e.target.value as "low"|"normal"|"high")}><option value="high">فوری</option><option value="normal">عادی</option><option value="low">کم</option></select></label>
+                    <span className={"admin-customer-priority-badge priority-"+(submission.priority || "normal")}>{priorityLabel(submission.priority)}</span>
+                  </div> : null}
                   <div className="admin-customer-submission-actions">
                     <button type="button" className="btn-ghost" onClick={()=>openSubmission(submission)}>{selectedOpen ? "بستن جزئیات" : "جزئیات و رسانه‌ها"}</button>
+                    {selectedOpen && editDraft ? <button type="button" className="btn-ghost" onClick={()=>setPreviewOpen((value)=>!value)}><Eye size={15}/> {previewOpen ? "بستن پیش‌نمایش" : "پیش‌نمایش نهایی"}</button> : null}
+                    {selectedOpen ? <button type="button" className="btn-ghost" onClick={()=>void openHistory(submission)}><History size={15}/> تاریخچه</button> : null>
                     {submission.status === "pending" ? <>
                       <button type="button" className="btn-gold" disabled={busyId===submission.id} onClick={()=>void act("approve",submission)}><CheckCircle2 size={15}/> تأیید و انتشار</button>
                       <button type="button" className="btn-ghost danger" disabled={busyId===submission.id} onClick={()=>void act("reject",submission)}><XCircle size={15}/> رد</button>
@@ -303,6 +362,23 @@ export function AdminCustomerPropertySubmissions() {
               </div>
               {selectedOpen ? (
                 <div className="admin-customer-submission-detail">
+                  {previewOpen && editDraft ? (
+                    <div className="admin-customer-final-preview">
+                      <div className="admin-customer-final-preview-head"><div><span className="kicker">پیش‌نمایش نهایی</span><strong>نمایی که قبل از انتشار بررسی می‌کنی</strong></div><button type="button" className="btn-ghost" onClick={()=>setPreviewOpen(false)}>بستن</button></div>
+                      <div className="admin-customer-final-preview-card">
+                        <div className="admin-customer-final-preview-media">
+                          {mediaDraftItems().length ? mediaDraftItems().map((src,index)=> index===0 ? (isVideoUrl(src) ? <video key={src} src={src} controls muted preload="metadata"/> : <img key={src} src={src} alt="" />) : null) : <ImageIcon size={32}/>}
+                        </div>
+                        <div className="admin-customer-final-preview-copy">
+                          <div className="admin-customer-preview-tags"><span>{labelTransaction(editDraft.transactionType)}</span><span>{labelType(editDraft.propertyType)}</span><span>{String(editDraft.neighborhood || "محله نامشخص")}</span></div>
+                          <h3>{String(editDraft.title || "بدون عنوان")}</h3>
+                          <p>{String(editDraft.areaM2 || "—")} متر · {String(editDraft.bedrooms ?? "—")} خواب · {priceText(editDraft)}</p>
+                          <p className="preview-description">{String(editDraft.description || "توضیحات ثبت نشده است.")}</p>
+                          <div className="admin-customer-preview-feature-list">{(Array.isArray(editDraft.features)?editDraft.features:[]).slice(0,8).map((item)=><span key={String(item)}>{String(item)}</span>)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
                   {statusFilter === "pending" && editDraft ? (
                     <div className="admin-customer-submission-edit">
                       <div className="admin-customer-submission-edit-head">
@@ -388,6 +464,12 @@ export function AdminCustomerPropertySubmissions() {
                     <label className="field"><span>یادداشت بررسی (اختیاری)</span><textarea rows={3} value={reviewNote} onChange={(e)=>setReviewNote(e.target.value)} placeholder="مثلاً سند بررسی شد، قیمت نیاز به تأیید دارد…"/></label>
                   ) : submission.reviewNote ? (
                     <div className="admin-customer-review-note"><span>یادداشت بررسی</span><p>{submission.reviewNote}</p></div>
+                  ) : null}
+                  {historyOpen && selectedOpen ? (
+                    <div className="admin-customer-history-panel">
+                      <div className="admin-customer-history-head"><div><span className="kicker">تاریخچه بررسی</span><strong>رویدادهای این پرونده</strong></div><button type="button" className="btn-ghost" onClick={()=>setHistoryOpen(false)}>بستن</button></div>
+                      {historyLoading ? <div className="admin-customer-history-empty">در حال دریافت تاریخچه…</div> : historyEvents.length ? <div className="admin-customer-history-list">{historyEvents.map((event)=><div key={event.id}><span>{faDate(event.createdAt)}</span><strong>{event.action==="approve"?"تأیید و انتشار":event.action==="reject"?"رد درخواست":event.action==="edit"?"ویرایش قبل از انتشار":event.action==="priority"?"تغییر اولویت":"رویداد پرونده"}</strong><p>{event.note || "بدون توضیح"}</p></div>)}</div> : <div className="admin-customer-history-empty">برای این پرونده هنوز رویداد ثبت‌شده‌ای وجود ندارد.</div>}
+                    </div>
                   ) : null}
                   {submission.propertyId ? <a className="btn-ghost" href={"/properties/" + String(data.slug ?? "")} target="_blank" rel="noreferrer"><ExternalLink size={15}/> مشاهده فایل منتشرشده</a> : null}
                 </div>
