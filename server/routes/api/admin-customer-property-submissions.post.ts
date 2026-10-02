@@ -7,7 +7,7 @@ import { isAllowedMediaRef, isVideoUrl } from "@/lib/media";
 import { clearPropertyReadCache, propertyInputSchema } from "@/lib/properties";
 import { getPublishReadiness } from "@/lib/property-publish-readiness";
 
-type Action = "list" | "approve" | "reject" | "update" | "set_priority" | "history" | "bulk_set_priority" | "bulk_reject" | "export";
+type Action = "list" | "approve" | "reject" | "update" | "set_priority" | "history" | "bulk_set_priority" | "bulk_reject" | "export" | "assign_consultant";
 
 function slugify(value: string) {
   const normalized = value.trim().toLowerCase()
@@ -54,6 +54,8 @@ export default defineEventHandler(async (event) => {
     pageSize?: number;
     fromDate?: string;
     toDate?: string;
+    assignedConsultantName?: string;
+    assignedConsultantPhone?: string;
   };
   const action = body.action ?? "list";
   const sql = await getSql();
@@ -70,7 +72,7 @@ export default defineEventHandler(async (event) => {
     const pageSize = [10, 20, 40].includes(requestedPageSize) ? requestedPageSize : 20;
     const offset = (page - 1) * pageSize;
     const rows = await sql.query<Record<string, unknown>>(
-      `select s.id,s.lead_id,s.public_tracking_token,s.status,s.owner_name,s.owner_phone,s.property_data,s.review_note,s.property_id,s.created_at,s.reviewed_at,s.priority,s.updated_at,s.queue_started_at,
+      `select s.id,s.lead_id,s.public_tracking_token,s.status,s.owner_name,s.owner_phone,s.property_data,s.review_note,s.property_id,s.created_at,s.reviewed_at,s.priority,s.updated_at,s.queue_started_at,s.assigned_consultant_name,s.assigned_consultant_phone,
         (
           exists(select 1 from customer_property_submissions d where d.id<>s.id and d.status in ('pending','approved') and (
             d.owner_phone=s.owner_phone
@@ -107,11 +109,30 @@ export default defineEventHandler(async (event) => {
       if (row.status === "pending" || row.status === "approved" || row.status === "rejected") counts[row.status] = Number(row.count) || 0;
     }
     const total = Number(totalRows[0]?.count) || 0;
+    const workloadRows = await sql.query<{ assigned_consultant_phone: string | null; count: number }>(
+      "select assigned_consultant_phone,count(*)::int as count from customer_property_submissions where status='pending' group by assigned_consultant_phone",
+    ).catch(() => [] as { assigned_consultant_phone: string | null; count: number }[]);
+    const workloadByPhone = new Map(workloadRows.map((row) => [String(row.assigned_consultant_phone ?? ""), Number(row.count) || 0]));
+    const slaRows = await sql.query<{ overdue: number; high_priority: number; unassigned: number; average_age_hours: number | null }>(
+      "select count(*) filter (where coalesce(queue_started_at,created_at) < current_timestamp - interval '24 hours')::int as overdue, count(*) filter (where priority='high')::int as high_priority, count(*) filter (where assigned_consultant_phone is null or assigned_consultant_phone='')::int as unassigned, avg(extract(epoch from (current_timestamp-coalesce(queue_started_at,created_at)))/3600)::float8 as average_age_hours from customer_property_submissions where status='pending'",
+    ).catch(() => [{ overdue: 0, high_priority: 0, unassigned: 0, average_age_hours: 0 }]);
+    const sla = slaRows[0] ?? { overdue: 0, high_priority: 0, unassigned: 0, average_age_hours: 0 };
     return {
       total,
       page,
       pageSize,
       counts,
+      queueStats: {
+        overdue: Number(sla.overdue) || 0,
+        highPriority: Number(sla.high_priority) || 0,
+        unassigned: Number(sla.unassigned) || 0,
+        averageAgeHours: Number(sla.average_age_hours) || 0,
+        consultants: TEAM.map((person) => ({
+          name: person.name,
+          phone: person.phone,
+          count: workloadByPhone.get(person.phone) ?? 0,
+        })),
+      },
       submissions: rows.map((row) => ({
         id: String(row.id),
         leadId: row.lead_id == null ? null : String(row.lead_id),
@@ -128,8 +149,32 @@ export default defineEventHandler(async (event) => {
         updatedAt: row.updated_at == null ? null : new Date(String(row.updated_at)).toISOString(),
         ageHours: Math.max(0, (Date.now() - new Date(String(row.queue_started_at ?? row.created_at)).getTime()) / 3600000),
         possibleDuplicate: Boolean(row.possible_duplicate),
+        assignedConsultantName: row.assigned_consultant_name == null ? null : String(row.assigned_consultant_name),
+        assignedConsultantPhone: row.assigned_consultant_phone == null ? null : String(row.assigned_consultant_phone),
       })),
     };
+  }
+
+  if (action === "assign_consultant") {
+    if (!body.id) throw createError({ statusCode: 400, statusMessage: "شناسه درخواست مشخص نیست." });
+    const name = typeof body.assignedConsultantName === "string" ? body.assignedConsultantName.trim() : "";
+    const phone = typeof body.assignedConsultantPhone === "string" ? body.assignedConsultantPhone.trim() : "";
+    const consultant = name && phone ? TEAM.find((person) => person.name === name && person.phone === phone) : null;
+    if (name || phone) {
+      if (!consultant) throw createError({ statusCode: 422, statusMessage: "مشاور انتخاب‌شده معتبر نیست." });
+    }
+    const rows = await sql.query<{ id: string; status: string }>("select id,status from customer_property_submissions where id=$1 limit 1",[body.id]);
+    if (!rows[0]) throw createError({ statusCode: 404, statusMessage: "درخواست ثبت ملک پیدا نشد." });
+    if (rows[0].status !== "pending") throw createError({ statusCode: 409, statusMessage: "تخصیص مشاور فقط برای پرونده‌های در انتظار بررسی انجام می‌شود." });
+    await sql.query(
+      "update customer_property_submissions set assigned_consultant_name=$2,assigned_consultant_phone=$3,assigned_at=current_timestamp,updated_at=current_timestamp where id=$1",
+      [body.id, consultant?.name ?? null, consultant?.phone ?? null],
+    );
+    await logReviewEvent(sql, body.id, "assign", consultant ? "پرونده به " + consultant.name + " تخصیص یافت." : "مسئول پرونده برداشته شد.", {
+      consultantName: consultant?.name ?? null,
+      consultantPhone: consultant?.phone ?? null,
+    });
+    return { success: true, assignedConsultantName: consultant?.name ?? null, assignedConsultantPhone: consultant?.phone ?? null };
   }
 
   if (action === "bulk_set_priority" || action === "bulk_reject") {
@@ -417,8 +462,10 @@ export default defineEventHandler(async (event) => {
   if (action === "approve") {
     const consultantName = typeof body.consultantName === "string" ? body.consultantName.trim() : "";
     const consultantPhone = typeof body.consultantPhone === "string" ? body.consultantPhone.trim() : "";
-    const consultant = TEAM.find((person) => person.name === consultantName && person.phone === consultantPhone);
-    if (!consultant) throw createError({ statusCode: 400, statusMessage: "مشاور انتخاب‌شده معتبر نیست." });
+    const assignedName = String(submission.assigned_consultant_name ?? "").trim();
+    const assignedPhone = String(submission.assigned_consultant_phone ?? "").trim();
+    const consultant = TEAM.find((person) => person.name === (assignedName || consultantName) && person.phone === (assignedPhone || consultantPhone));
+    if (!consultant) throw createError({ statusCode: 400, statusMessage: "برای انتشار این پرونده یک مشاور معتبر انتخاب یا تخصیص دهید." });
 
     const data = (submission.property_data && typeof submission.property_data === "object"
       ? submission.property_data
