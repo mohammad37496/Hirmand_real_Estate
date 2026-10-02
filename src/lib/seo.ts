@@ -52,6 +52,10 @@ function shareableImageUrl(src: string | null | undefined): string {
 }
 
 /** Best available social image for a listing, never an invented one. */
+function fileCodeForSeo(id: string): string {
+  return id.replace(/[^a-z0-9]/gi, "").slice(-6).toUpperCase();
+}
+
 export function propertySocialImage(property: Property): string {
   const own = property.images
     .map(shareableImageUrl)
@@ -245,6 +249,15 @@ export function propertyJsonLd(property: Property) {
     name: property.title,
     description: property.description,
     url,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": url,
+    },
+    identifier: {
+      "@type": "PropertyValue",
+      propertyID: fileCodeForSeo(property.id),
+      name: "کد فایل هیرمند",
+    },
     datePosted: property.publishedAt ?? property.createdAt,
     dateModified: property.updatedAt ?? property.publishedAt ?? property.createdAt,
     image: image.length ? image : [propertySocialImage(property)],
