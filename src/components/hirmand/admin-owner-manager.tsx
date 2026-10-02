@@ -63,7 +63,7 @@ export function AdminOwnerManager(){
             <div className="admin-owner-stats">
               <div><small>کل فایل</small><strong>{owner.fileCount.toLocaleString("fa-IR")}</strong></div>
               <div><small>منتشرشده</small><strong>{owner.publishedCount.toLocaleString("fa-IR")}</strong></div>
-              <div><small>آخرین ویرایش</small><strong>{owner.lastUpdated?new Date(owner.lastUpdated).toLocaleDateString("fa-IR"):"—"}</strong></div>
+              <div><small>آخرین ویرایش</small><strong>{owner.lastUpdated?new Date(owner.lastUpdated).toLocaleDateString("fa-IR-u-ca-persian"):"—"}</strong></div>
             </div>
             <button type="button" className="btn-ghost" onClick={()=>setExpanded(open?null:key)}>{open?"بستن فایل‌ها":"مشاهده همه فایل‌ها"}</button>
             {open?<div className="admin-owner-files">
