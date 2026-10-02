@@ -1,6 +1,6 @@
 import { useEffect, useState, type MouseEvent } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ArrowLeftRight, ChevronDown, Hash, Landmark, PiggyBank, WalletCards, Menu, X } from "lucide-react";
+import { ArrowLeftRight, BadgeDollarSign, ChevronDown, Hash, Landmark, PiggyBank, WalletCards, Menu, X } from "lucide-react";
 import { NAV, SITE } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { CallMenu } from "./call-menu";
@@ -13,6 +13,7 @@ const FINANCE_NAV = [
   { id: "commission", label: "کمیسیون ملک", href: "/tools/commission", icon: WalletCards, text: "برآورد کمیسیون و مالیات" },
   { id: "deposit", label: "سود سپرده", href: "/tools/deposit", icon: PiggyBank, text: "محاسبه سود و مبلغ نهایی" },
   { id: "loan", label: "اقساط وام", href: "/tools/loan", icon: Landmark, text: "قسط، سود و جمع پرداختی" },
+  { id: "valuation", label: "ارزیابی قیمت ملک", href: "/valuation", icon: BadgeDollarSign, text: "برآورد اولیه با فایل‌های مشابه" },
 ] as const;
 
 export function Header() {
