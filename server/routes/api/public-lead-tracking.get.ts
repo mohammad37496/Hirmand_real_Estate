@@ -59,6 +59,8 @@ export default defineEventHandler(async (event) => {
   const updatedAt = row.updated_at ? new Date(String(row.updated_at)).toISOString() : null;
   const visitRequestedAt = row.visit_requested_at ? new Date(String(row.visit_requested_at)).toISOString() : null;
   const visitPreferredAt = row.visit_preferred_at ? new Date(String(row.visit_preferred_at)).toISOString() : null;
+  const customerPropertySubmissionStatus = row.customer_property_submission_status == null ? null : String(row.customer_property_submission_status);
+  const customerPropertySubmissionReviewNote = row.customer_property_submission_review_note == null ? "" : String(row.customer_property_submission_review_note);
 
   const timeline: Array<{
     type: "created" | "status" | "visit";
@@ -72,6 +74,28 @@ export default defineEventHandler(async (event) => {
   }
   if (updatedAt && createdAt && new Date(updatedAt).getTime() > new Date(createdAt).getTime() + 1000) {
     timeline.push({ type: "status", label: "وضعیت درخواست به‌روزرسانی شد", note: STATUS_LABEL[status] ?? "در حال پیگیری", at: updatedAt });
+  }
+  if (customerPropertySubmissionStatus === "pending") {
+    timeline.push({
+      type: "status",
+      label: "ثبت ملک در حال بررسی است",
+      note: "اطلاعات و رسانه‌های ملک در صف بررسی کارشناسان هیرمند قرار دارد.",
+      at: updatedAt || createdAt,
+    });
+  } else if (customerPropertySubmissionStatus === "approved") {
+    timeline.push({
+      type: "status",
+      label: "ملک تأیید و منتشر شد",
+      note: "درخواست ثبت ملک شما تأیید شده و فایل وارد بخش فایل‌های منتشرشده شده است.",
+      at: updatedAt || createdAt,
+    });
+  } else if (customerPropertySubmissionStatus === "rejected") {
+    timeline.push({
+      type: "status",
+      label: "ملک نیازمند اصلاح است",
+      note: customerPropertySubmissionReviewNote || "برای ادامه، اطلاعات ملک را اصلاح و دوباره ارسال کنید.",
+      at: updatedAt || createdAt,
+    });
   }
   if (visitRequestedAt) {
     timeline.push({ type: "visit", label: "درخواست بازدید ثبت شد", note: VISIT_LABEL[visitStatus] ?? "بازدید در حال هماهنگی است.", at: visitRequestedAt });
@@ -105,6 +129,8 @@ export default defineEventHandler(async (event) => {
     neighborhood: row.neighborhood ? String(row.neighborhood) : "",
     visitRequestedAt,
     visitPreferredAt,
+    customerPropertySubmissionStatus,
+    customerPropertySubmissionReviewNote,
     timeline,
     property: row.property_title
       ? {
