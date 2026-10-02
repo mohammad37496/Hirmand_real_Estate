@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست. دوباره وارد پنل شوید." });
   }
   assertSameOrigin(event);
-  if (dbSource === "unconfigured") return { submissions: [], total: 0 };
+  if (dbSource === "unconfigured") return { submissions: [], total: 0, counts: { pending: 0, approved: 0, rejected: 0 } };
 
   const body = (await readBody(event)) as {
     action?: Action;
@@ -47,21 +47,9 @@ export default defineEventHandler(async (event) => {
   if (action === "list") {
     const status = body.status && ["pending","approved","rejected"].includes(body.status) ? body.status : "pending";
     const query = typeof body.query === "string" ? body.query.trim().slice(0, 80) : "";
-    const pattern = "%" + query.replace(/[\\%_]/g, "\\  if (action === "list") {
-    const status = body.status && ["pending","approved","rejected"].includes(body.status) ? body.status : "pending";
+    const pattern = "%" + query + "%";
     const rows = await sql.query<Record<string, unknown>>(
-      "select id,lead_id,public_tracking_token,status,owner_name,owner_phone,property_data,review_note,property_id,created_at,reviewed_at from customer_property_submissions where status=$1 order by created_at desc limit 40",
-      [status],
-    );
-    const countRows = await sql.query<{ count: number }>(
-      "select count(*)::int as count from customer_property_submissions where status='pending'",
-    );
-    return {
-      total: Number(countRows[0]?.count) || 0,
-      submissions: rows.map((row) => ({
-") + "%";
-    const rows = await sql.query<Record<string, unknown>>(
-      "select id,lead_id,public_tracking_token,status,owner_name,owner_phone,property_data,review_note,property_id,created_at,reviewed_at from customer_property_submissions where status=$1 and ($2='' or owner_name ilike $3 escape '\\' or owner_phone ilike $3 escape '\\' or public_tracking_token ilike $3 or coalesce(property_data->>'title','') ilike $3 or coalesce(property_data->>'neighborhood','') ilike $3) order by created_at desc limit 40",
+      "select id,lead_id,public_tracking_token,status,owner_name,owner_phone,property_data,review_note,property_id,created_at,reviewed_at from customer_property_submissions where status=$1 and ($2='' or owner_name ilike $3 or owner_phone ilike $3 or public_tracking_token ilike $3 or coalesce(property_data->>'title','') ilike $3 or coalesce(property_data->>'neighborhood','') ilike $3) order by created_at desc limit 40",
       [status, query, pattern],
     );
     const countRows = await sql.query<{ status: string; count: number }>(
