@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowLeftRight, Calculator, Landmark, PiggyBank, WalletCards } from "lucide-react";
+import { ArrowLeft, ArrowLeftRight, BadgeDollarSign, Calculator, Landmark, PiggyBank, WalletCards } from "lucide-react";
 import { useMemo } from "react";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { absoluteUrl, socialMeta } from "@/lib/seo";
@@ -38,13 +38,21 @@ const TOOLS = [
     icon: Landmark,
     tag: "وام",
   },
+  {
+    id: "valuation",
+    href: "/valuation",
+    title: "ارزیابی قیمت ملک",
+    text: "با مشخصات ملک و فایل‌های مشابه منتشرشده، یک برآورد اولیه از قیمت فروش دریافت کنید.",
+    icon: BadgeDollarSign,
+    tag: "قیمت‌گذاری",
+  },
 ] as const;
 
 export const Route = createFileRoute("/tools/")({
   head: () => {
     const title = `ابزارهای مالی املاک هیرمند | محاسبه‌گرهای رهن، کمیسیون، سود و وام`;
     const description =
-      "مرکز ابزارهای مالی املاک هیرمند؛ چهار محاسبه‌گر کاربردی برای رهن و اجاره، کمیسیون ملک، سود سپرده و اقساط وام.";
+      "مرکز ابزارهای مالی و ملکی هیرمند؛ محاسبه‌گرهای رهن و اجاره، کمیسیون، سود، وام و ارزیابی اولیه قیمت ملک.";
     return {
       meta: [
         { title },
@@ -112,8 +120,8 @@ function FinanceToolsHubPage() {
             <span className="kicker">یکپارچه با سایت</span>
             <h2>هر محاسبه‌گر صفحهٔ اختصاصی خودش را دارد</h2>
             <p>
-              نتیجه‌ها در همان صفحه نگه داشته می‌شوند و از داخل هر ابزار می‌توانید مستقیماً به سه
-              ابزار دیگر بروید.
+              نتیجه‌ها در همان صفحه نگه داشته می‌شوند و از داخل مرکز ابزار می‌توانید بین محاسبه‌گرهای
+              مالی و ارزیابی اولیه قیمت ملک جابه‌جا شوید.
             </p>
           </div>
           <div className="finance-tools-hub-bottom-actions">
