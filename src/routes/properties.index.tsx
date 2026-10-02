@@ -102,7 +102,11 @@ function readSavedSearches(): SavedSearch[] {
             : new Date().toISOString(),
       }))
       .slice(0, MAX_SAVED_SEARCHES);
-    localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(normalized));
+    try {
+      localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(normalized));
+    } catch {
+      // Keep the normalized searches in memory when storage is blocked.
+    }
     return normalized;
   } catch {
     return [];
