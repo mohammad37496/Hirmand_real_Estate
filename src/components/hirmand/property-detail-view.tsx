@@ -129,6 +129,7 @@ import "@/property-document-pack.css";
 import "@/property-risk-radar.css";
 import "@/property-deal-room.css";
 import { formatToman } from "@/lib/money";
+import { formatPersianDate } from "@/lib/persian-date";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
 import { getPropertyFallbackImage, getPropertyFallbackImages, getPropertyFallbackLegacyImage, isPropertyFallbackImage } from "@/lib/property-fallback-images";
@@ -471,13 +472,7 @@ async function shareCurrentProperty(property: Pick<Property, "id" | "slug" | "ti
 
 function formatAdDate(value: string | null | undefined) {
   if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("fa-IR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(date);
+  return formatPersianDate(value);
 }
 
 function formatVideoTime(value: number) {
@@ -2255,7 +2250,7 @@ export function PropertyDetailView({
               <p>چند گزینه نزدیک به این فایل، بر اساس محله و نوع ملک.</p>
             </div>
             <div className="property-grid">
-              {related.map((item) => (
+              {related.slice(0, 3).map((item) => (
                 <PropertyCard key={item.id} property={item} />
               ))}
             </div>
