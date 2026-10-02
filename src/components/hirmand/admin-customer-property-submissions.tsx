@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, ExternalLink, Film, ImageIcon, Phone, RefreshCw, XCircle } from "lucide-react";
+import { CheckCircle2, ExternalLink, Film, ImageIcon, Phone, Pencil, RefreshCw, Save, Search, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { TEAM } from "@/lib/site";
 import { formatToman } from "@/lib/money";
@@ -57,6 +57,12 @@ export function AdminCustomerPropertySubmissions() {
   const [consultant, setConsultant] = useState(TEAM[0]);
   const [selected, setSelected] = useState<Submission | null>(null);
   const [reviewNote, setReviewNote] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"pending" | "approved" | "rejected">("pending");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [appliedQuery, setAppliedQuery] = useState("");
+  const [counts, setCounts] = useState({ pending: 0, approved: 0, rejected: 0 });
+  const [editDraft, setEditDraft] = useState<Record<string, unknown> | null>(null);
+  const [savingDraft, setSavingDraft] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -64,24 +70,91 @@ export function AdminCustomerPropertySubmissions() {
       const response = await fetch("/api/admin-customer-property-submissions", {
         method:"POST",
         headers:{"content-type":"application/json"},
-        body:JSON.stringify({ action:"list", status:"pending" }),
+        body:JSON.stringify({ action:"list", status:statusFilter, query:appliedQuery }),
       });
-      const data = await response.json().catch(() => null) as { submissions?:Submission[]; total?:number; statusMessage?:string } | null;
+      const data = await response.json().catch(() => null) as { submissions?:Submission[]; total?:number; counts?:{pending:number;approved:number;rejected:number}; statusMessage?:string } | null;
       if (!response.ok) throw new Error(data?.statusMessage || "صف ثبت ملک مشتری بارگذاری نشد.");
       setSubmissions(Array.isArray(data?.submissions) ? data.submissions : []);
       setTotal(Number(data?.total) || 0);
+      setCounts({
+        pending: Number(data?.counts?.pending) || 0,
+        approved: Number(data?.counts?.approved) || 0,
+        rejected: Number(data?.counts?.rejected) || 0,
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "بارگذاری درخواست‌ها انجام نشد.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [appliedQuery, statusFilter]);
 
   useEffect(() => {
     void load();
     const timer = window.setInterval(() => void load(), 60_000);
     return () => window.clearInterval(timer);
   }, [load]);
+
+  function openSubmission(submission: Submission) {
+    setSelected(selected?.id === submission.id ? null : submission);
+    setReviewNote(submission.reviewNote || "");
+    setEditDraft({ ...submission.propertyData });
+  }
+
+  function patchDraft(key: string, value: unknown) {
+    setEditDraft((current) => ({ ...(current || {}), [key]: value }));
+  }
+
+  async function saveDraft() {
+    if (!selected || !editDraft || savingDraft) return;
+    setSavingDraft(true);
+    try {
+      const numeric = (key: string) => {
+        const value = String(editDraft[key] ?? "").trim();
+        if (!value) return null;
+        const parsed = Number(value);
+        return Number.isFinite(parsed) && Number.isInteger(parsed) ? parsed : value;
+      };
+      const moneyValue = (key: string) => {
+        const value = String(editDraft[key] ?? "").replace(/[^0-9]/g, "");
+        return value || null;
+      };
+      const featuresValue = String(editDraft.featuresText ?? String(editDraft.features ?? "")).split(/[،,\\n]/).map((v) => v.trim()).filter(Boolean).slice(0,20);
+      const patch = {
+        title: String(editDraft.title ?? "").trim(),
+        transactionType: String(editDraft.transactionType ?? ""),
+        propertyType: String(editDraft.propertyType ?? ""),
+        neighborhood: String(editDraft.neighborhood ?? "").trim(),
+        address: String(editDraft.address ?? "").trim(),
+        areaM2: numeric("areaM2"),
+        bedrooms: numeric("bedrooms"),
+        bathrooms: numeric("bathrooms"),
+        floor: numeric("floor"),
+        totalFloors: numeric("totalFloors"),
+        builtYear: numeric("builtYear"),
+        orientation: String(editDraft.orientation ?? "") || null,
+        price: moneyValue("price"),
+        deposit: moneyValue("deposit"),
+        rent: moneyValue("rent"),
+        description: String(editDraft.description ?? "").trim(),
+        features: featuresValue,
+      };
+      const response = await fetch("/api/admin-customer-property-submissions", {
+        method:"POST",
+        headers:{"content-type":"application/json"},
+        body:JSON.stringify({ action:"update", id:selected.id, patch }),
+      });
+      const data = await response.json().catch(() => null) as { success?:boolean; submission?:Submission; statusMessage?:string } | null;
+      if (!response.ok || !data?.success || !data.submission) throw new Error(data?.statusMessage || "ذخیره ویرایش انجام نشد.");
+      setSubmissions((items) => items.map((item) => item.id === selected.id ? data.submission! : item));
+      setSelected(data.submission);
+      setEditDraft({ ...data.submission.propertyData });
+      toast.success("ویرایش قبل از انتشار ذخیره شد.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "ذخیره ویرایش انجام نشد.");
+    } finally {
+      setSavingDraft(false);
+    }
+  }
 
   async function act(action: "approve" | "reject", submission: Submission) {
     if (busyId) return;
@@ -118,7 +191,7 @@ export function AdminCustomerPropertySubmissions() {
     }
   }
 
-  const pendingLabel = useMemo(() => total.toLocaleString("fa-IR") + " درخواست در انتظار بررسی", [total]);
+  const pendingLabel = useMemo(() => counts.pending.toLocaleString("fa-IR") + " در انتظار بررسی", [counts.pending]);
 
   return (
     <section className="admin-customer-submissions admin-panel">
@@ -133,7 +206,27 @@ export function AdminCustomerPropertySubmissions() {
         </button>
       </div>
 
+      <div className="admin-customer-submissions-status-tabs">
+        {([
+          ["pending","در انتظار",counts.pending],
+          ["approved","تأییدشده",counts.approved],
+          ["rejected","ردشده",counts.rejected],
+        ] as const).map(([value,label,count]) => (
+          <button type="button" key={value} className={statusFilter===value ? "is-active" : ""} onClick={()=>{setStatusFilter(value);setSelected(null);setEditDraft(null);}}>
+            <span>{label}</span><strong>{count.toLocaleString("fa-IR")}</strong>
+          </button>
+        ))}
+      </div>
+
       <div className="admin-customer-submissions-toolbar">
+        <label className="field admin-customer-search">
+          <span>جست‌وجو</span>
+          <div className="admin-customer-search-input">
+            <Search size={15}/>
+            <input value={searchQuery} onChange={(e)=>setSearchQuery(e.target.value)} onKeyDown={(e)=>{if(e.key==="Enter"){e.preventDefault();setAppliedQuery(searchQuery.trim());}}} placeholder="عنوان، محله، نام، موبایل یا کد رهگیری"/>
+          </div>
+        </label>
+        <button type="button" className="btn-ghost" onClick={()=>setAppliedQuery(searchQuery.trim())}><Search size={15}/> جست‌وجو</button>
         <label className="field">
           <span>مشاور انتشار</span>
           <select value={consultant.phone} onChange={(e) => {
@@ -169,7 +262,7 @@ export function AdminCustomerPropertySubmissions() {
                   <p>{String(data.neighborhood ?? "—")} · {String(data.areaM2 ?? "—")} متر · {priceText(data)}</p>
                   <div className="admin-customer-submission-owner"><strong>{submission.ownerName}</strong><a href={"tel:"+submission.ownerPhone}><Phone size={14}/>{submission.ownerPhone}</a><span dir="ltr">{submission.trackingToken}</span></div>
                   <div className="admin-customer-submission-actions">
-                    <button type="button" className="btn-ghost" onClick={()=>setSelected(selectedOpen?null:submission)}>جزئیات و رسانه‌ها</button>
+                    <button type="button" className="btn-ghost" onClick={()=>openSubmission(submission)}>{selectedOpen ? "بستن جزئیات" : "جزئیات و رسانه‌ها"}</button>
                     <button type="button" className="btn-gold" disabled={busyId===submission.id} onClick={()=>void act("approve",submission)}><CheckCircle2 size={15}/> تأیید و انتشار</button>
                     <button type="button" className="btn-ghost danger" disabled={busyId===submission.id} onClick={()=>void act("reject",submission)}><XCircle size={15}/> رد</button>
                   </div>
@@ -177,6 +270,29 @@ export function AdminCustomerPropertySubmissions() {
               </div>
               {selectedOpen ? (
                 <div className="admin-customer-submission-detail">
+                  {statusFilter === "pending" && editDraft ? (
+                    <div className="admin-customer-submission-edit">
+                      <div className="admin-customer-submission-edit-head">
+                        <div><span className="kicker">ویرایش پیش از انتشار</span><strong>اصلاح اطلاعات فایل قبل از تأیید</strong></div>
+                        <button type="button" className="btn-gold" onClick={()=>void saveDraft()} disabled={savingDraft}><Save size={15}/>{savingDraft ? "در حال ذخیره…" : "ذخیره ویرایش"}</button>
+                      </div>
+                      <div className="admin-customer-submission-edit-grid">
+                        <label className="field wide"><span>عنوان</span><input value={String(editDraft.title ?? "")} onChange={(e)=>patchDraft("title",e.target.value)}/></label>
+                        <label className="field"><span>نوع معامله</span><select value={String(editDraft.transactionType ?? "")} onChange={(e)=>patchDraft("transactionType",e.target.value)}><option value="sell">فروش</option><option value="buy">خرید</option><option value="rent">اجاره</option><option value="mortgage">رهن</option></select></label>
+                        <label className="field"><span>نوع ملک</span><select value={String(editDraft.propertyType ?? "")} onChange={(e)=>patchDraft("propertyType",e.target.value)}><option value="apartment">آپارتمان</option><option value="villa">ویلا و باغ</option><option value="office">اداری</option><option value="heritage">خانه اصیل</option><option value="land">زمین</option><option value="commercial">تجاری</option></select></label>
+                        <label className="field"><span>محله</span><input value={String(editDraft.neighborhood ?? "")} onChange={(e)=>patchDraft("neighborhood",e.target.value)}/></label>
+                        <label className="field"><span>متراژ</span><input inputMode="numeric" value={String(editDraft.areaM2 ?? "")} onChange={(e)=>patchDraft("areaM2",e.target.value)}/></label>
+                        <label className="field"><span>قیمت</span><input inputMode="numeric" value={String(editDraft.price ?? "")} onChange={(e)=>patchDraft("price",e.target.value)}/></label>
+                        <label className="field"><span>رهن</span><input inputMode="numeric" value={String(editDraft.deposit ?? "")} onChange={(e)=>patchDraft("deposit",e.target.value)}/></label>
+                        <label className="field"><span>اجاره</span><input inputMode="numeric" value={String(editDraft.rent ?? "")} onChange={(e)=>patchDraft("rent",e.target.value)}/></label>
+                        <label className="field wide"><span>آدرس / توضیح موقعیت</span><input value={String(editDraft.address ?? "")} onChange={(e)=>patchDraft("address",e.target.value)}/></label>
+                        <label className="field"><span>خواب</span><input inputMode="numeric" value={String(editDraft.bedrooms ?? "")} onChange={(e)=>patchDraft("bedrooms",e.target.value)}/></label>
+                        <label className="field"><span>حمام</span><input inputMode="numeric" value={String(editDraft.bathrooms ?? "")} onChange={(e)=>patchDraft("bathrooms",e.target.value)}/></label>
+                        <label className="field wide"><span>ویژگی‌ها</span><input value={String(editDraft.featuresText ?? (Array.isArray(editDraft.features) ? editDraft.features.join("، ") : ""))} onChange={(e)=>patchDraft("featuresText",e.target.value)}/></label>
+                        <label className="field wide"><span>توضیحات</span><textarea rows={7} value={String(editDraft.description ?? "")} onChange={(e)=>patchDraft("description",e.target.value)}/></label>
+                      </div>
+                    </div>
+                  ) : null}
                   <div className="admin-customer-submission-detail-grid">
                     <div><span>آدرس</span><strong>{String(data.address || "ثبت نشده")}</strong></div>
                     <div><span>خواب / حمام</span><strong>{String(data.bedrooms ?? "—")} / {String(data.bathrooms ?? "—")}</strong></div>
