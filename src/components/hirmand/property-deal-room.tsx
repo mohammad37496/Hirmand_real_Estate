@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Check, ChevronLeft, ClipboardCheck, FileCheck2, FlagTriangleRight, ListChecks, Plus, Printer, Trash2, UserRound } from "lucide-react";
 import type { Property } from "@/lib/properties";
 import "@/property-deal-room.css";
+import { PersianDatePicker } from "./persian-date-picker";
+import { formatPersianDate } from "@/lib/persian-date";
 
 type DealStage = "مذاکره" | "توافق اولیه" | "بیعانه" | "قرارداد" | "تسویه" | "تحویل";
 type DealCategory = "مدرک" | "مالی" | "حقوقی" | "تحویل" | "پیگیری";
@@ -52,12 +54,12 @@ export function PropertyDealRoom({property}:{property:Property}){
   <div className="property-deal-room-overview">
    <div><span>پیشرفت کل</span><strong>{fa(pct)}٪</strong><small>{fa(allDone)} از {fa(allReq.length)} مورد ضروری</small></div>
    <div><span>موارد باز</span><strong>{fa(open.length)}</strong><small>{overdue?fa(overdue)+" مورد سررسید گذشته":"عقب‌افتادگی ثبت نشده"}</small></div>
-   <div><span>موعد بعدی</span><strong>{next?new Date(next+"T12:00:00").toLocaleDateString("fa-IR"):"ثبت نشده"}</strong><small>{linkedDate?"پرداخت/تحویل: "+new Date(linkedDate+"T12:00:00").toLocaleDateString("fa-IR"):"تاریخ پرداخت/تحویل ثبت نشده"}</small></div>
+   <div><span>موعد بعدی</span><strong>{next?new Date(next+"T12:00:00").toLocaleDateString("fa-IR-u-ca-persian"):"ثبت نشده"}</strong><small>{linkedDate?"پرداخت/تحویل: "+new Date(linkedDate+"T12:00:00").toLocaleDateString("fa-IR-u-ca-persian"):"تاریخ پرداخت/تحویل ثبت نشده"}</small></div>
    <div><span>مسئول فعلی</span><strong><UserRound size={15}/>{s.responsible}</strong><small>{negCount?fa(negCount)+" سابقه مذاکره":"سابقه مذاکره ثبت نشده"}</small></div>
   </div>
   <div className="property-deal-room-controls">
    <label><span>مسئول فعلی</span><select value={s.responsible} onChange={e=>setS(c=>({...c,responsible:e.target.value as State["responsible"]}))}><option>خریدار</option><option>فروشنده</option><option>مشاور</option></select></label>
-   <label><span>تاریخ هدف معامله</span><input type="date" value={s.targetDate} onChange={e=>setS(c=>({...c,targetDate:e.target.value}))}/></label>
+   <label><span>تاریخ هدف معامله</span><PersianDatePicker value={s.targetDate} onChange={value=>setS(c=>({...c,targetDate:value}))} title="تاریخ هدف معامله" hint="" /></label>
    <div className="property-deal-room-legacy"><FileCheck2 size={16}/><span>چک‌لیست قبلی:</span><strong>{old.total?fa(old.done)+" از "+fa(old.total):"ثبت نشده"}</strong></div>
   </div>
   <div className="property-deal-room-current-head"><div><span className="kicker">مرحله جاری</span><h3>{LABEL[s.stage]}</h3></div><div className="property-deal-room-current-meta">{fa(done)} از {fa(req.length)} مورد ضروری</div></div>
@@ -66,7 +68,7 @@ export function PropertyDealRoom({property}:{property:Property}){
    <div className="property-deal-room-item-main">
     <div className="property-deal-room-item-top"><input value={x.title} onChange={e=>patch(x.id,{title:e.target.value.slice(0,220)})}/><div className="property-deal-room-item-badges">{x.required?<span className="is-required"><FlagTriangleRight size={12}/> ضروری</span>:null}<span>{x.category}</span></div></div>
     <div className="property-deal-room-item-fields">
-     <label><span>موعد</span><input type="date" value={x.dueDate} onChange={e=>patch(x.id,{dueDate:e.target.value})}/></label>
+     <label><span>موعد</span><PersianDatePicker value={x.dueDate} onChange={value=>patch(x.id,{dueDate:value})} title="موعد پیگیری" hint="" /></label>
      <label><span>وضعیت</span><select value={x.status} onChange={e=>patch(x.id,{status:e.target.value as DealStatus})}><option>باز</option><option>درحال‌پیگیری</option><option>تکمیل</option></select></label>
      <label className="deal-room-note-field"><span>یادداشت</span><input value={x.note} onChange={e=>patch(x.id,{note:e.target.value.slice(0,500)})} placeholder="مرجع مدرک، مسئول بعدی یا نکته مهم"/></label>
     </div>
