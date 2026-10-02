@@ -183,10 +183,20 @@ export default defineEventHandler(async (event) => {
     const status = body.status && ["pending","approved","rejected"].includes(body.status) ? body.status : "pending";
     const query = typeof body.query === "string" ? body.query.trim().slice(0, 80) : "";
     const pattern = "%" + query + "%";
-    const fromDate = typeof body.fromDate === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(body.fromDate) ? body.fromDate : "";
-    const toDate = typeof body.toDate === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(body.toDate) ? body.toDate : "";
+    const fromDate = typeof body.fromDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.fromDate) ? body.fromDate : "";
+    const toDate = typeof body.toDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.toDate) ? body.toDate : "";
     const rows = await sql.query<Record<string, unknown>>(
-      `select s.id,s.public_tracking_token,s.status,s.owner_name,s.owner_phone,s.property_data,s.created_at,s.reviewed_at,s.priority
+      `select s.id,s.public_tracking_token,s.status,s.owner_name,s.owner_phone,s.property_data,s.created_at,s.reviewed_at,s.priority,
+        (
+          exists(select 1 from customer_property_submissions d where d.id<>s.id and d.status in ('pending','approved') and (
+            d.owner_phone=s.owner_phone
+            or ((d.property_data->>'neighborhood')=(s.property_data->>'neighborhood') and (d.property_data->>'areaM2')=(s.property_data->>'areaM2') and lower(coalesce(d.property_data->>'title',''))=lower(coalesce(s.property_data->>'title','')))
+          ))
+          or exists(select 1 from properties p where p.status <> 'archived' and (
+            p.owner_phone=s.owner_phone
+            or ((p.neighborhood=(s.property_data->>'neighborhood')) and coalesce(p.area_m2,0)::text=(s.property_data->>'areaM2') and lower(coalesce(p.title,''))=lower(coalesce(s.property_data->>'title','')))
+          ))
+        ) as possible_duplicate
        from customer_property_submissions s
        where s.status=$1
          and ($2='' or s.owner_name ilike $3 or s.owner_phone ilike $3 or s.public_tracking_token ilike $3 or coalesce(s.property_data->>'title','') ilike $3 or coalesce(s.property_data->>'neighborhood','') ilike $3)
@@ -200,25 +210,13 @@ export default defineEventHandler(async (event) => {
     const statusLabels: Record<string,string> = { pending:"در انتظار", approved:"تأیید شده", rejected:"رد شده" };
     const priorityLabels: Record<string,string> = { low:"کم", normal:"عادی", high:"فوری" };
     const csvEscape = (value: unknown) => {
-      const text = String(value ?? "");
-      return /[",\\n\\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+      const valueText = String(value ?? "");
+      return /[",\n\r]/.test(valueText) ? '"' + valueText.replace(/"/g, '""') + '"' : valueText;
     };
     const headers = ["کد رهگیری","وضعیت","عنوان ملک","نوع معامله","نوع ملک","محله","متراژ","نام مالک","موبایل مالک","قیمت","رهن","اجاره","اولویت","تاریخ ثبت","تاریخ بررسی","تکراری"];
     const lines = [headers.map(csvEscape).join(",")];
     for (const row of rows) {
       const data = row.property_data && typeof row.property_data === "object" ? row.property_data as Record<string, unknown> : {};
-      const possibleDuplicate = await sql.query<{ exists: boolean }>(
-        `select exists(
-          select 1 from customer_property_submissions d where d.id<>$1 and d.status in ('pending','approved') and (
-            d.owner_phone=$2 or ((d.property_data->>'neighborhood')=(d.property_data->>'neighborhood') and (d.property_data->>'areaM2')=(data->>'areaM2') and lower(coalesce(d.property_data->>'title',''))=lower(coalesce($3,'')))
-          )
-        ) or exists(
-          select 1 from properties p where p.status <> 'archived' and (
-            p.owner_phone=$2 or ((p.neighborhood=($4)) and coalesce(p.area_m2,0)::text=(data->>'areaM2') and lower(coalesce(p.title,''))=lower(coalesce($3,'')))
-          )
-        ) as exists`,
-        [String(row.id), String(row.owner_phone ?? ""), String(data.title ?? ""), String(data.neighborhood ?? "")],
-      ).catch(() => [{ exists: false }]);
       lines.push([
         row.public_tracking_token,
         statusLabels[String(row.status)] ?? String(row.status),
@@ -235,7 +233,7 @@ export default defineEventHandler(async (event) => {
         priorityLabels[String(row.priority ?? "normal")] ?? String(row.priority ?? "normal"),
         row.created_at ? new Date(String(row.created_at)).toLocaleString("fa-IR", { timeZone: "Asia/Tehran" }) : "",
         row.reviewed_at ? new Date(String(row.reviewed_at)).toLocaleString("fa-IR", { timeZone: "Asia/Tehran" }) : "",
-        Boolean(possibleDuplicate[0]?.exists) ? "بله" : "خیر",
+        Boolean(row.possible_duplicate) ? "بله" : "خیر",
       ].map(csvEscape).join(","));
     }
     setResponseHeader(event, "content-type", "text/csv; charset=utf-8");
