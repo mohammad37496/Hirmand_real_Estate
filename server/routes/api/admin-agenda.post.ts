@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
   assertSameOrigin(event);
   if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست. دوباره وارد پنل شوید." });
-  if (dbSource === "unconfigured") return { overdueFollowUps: [], upcomingVisits: [] };
+  if (dbSource === "unconfigured") return { overdueFollowUps: [], upcomingVisits: [], upcomingCallbacks: [] };
   const sql = await getSql();
   const [followUps, visits, callbacks] = await Promise.all([
     sql.query<Record<string, unknown>>("select id,name,phone,deal,neighborhood,consultant,status,follow_up_at from leads where status in ('new','contacted','follow_up','visited','contract') and follow_up_at is not null order by case when follow_up_at < current_timestamp then 0 else 1 end, follow_up_at asc limit 8"),
@@ -17,5 +17,6 @@ export default defineEventHandler(async (event) => {
   return {
     overdueFollowUps: followUps.map((row) => ({ id:String(row.id), name:String(row.name ?? ""), phone:String(row.phone ?? ""), deal:String(row.deal ?? ""), neighborhood:String(row.neighborhood ?? ""), consultant:String(row.consultant ?? ""), status:String(row.status ?? "new"), followUpAt:new Date(String(row.follow_up_at)).toISOString(), overdue:new Date(String(row.follow_up_at)).getTime() < Date.now() })),
     upcomingVisits: visits.map((row) => ({ id:String(row.id), name:String(row.name ?? ""), phone:String(row.phone ?? ""), deal:String(row.deal ?? ""), neighborhood:String(row.neighborhood ?? ""), consultant:String(row.consultant ?? ""), visitStatus:String(row.visit_status ?? "requested"), visitPreferredAt:new Date(String(row.visit_preferred_at)).toISOString() })),
+    upcomingCallbacks: callbacks.map((row) => ({ id:String(row.id), name:String(row.name ?? ""), phone:String(row.phone ?? ""), deal:String(row.deal ?? ""), neighborhood:String(row.neighborhood ?? ""), consultant:String(row.consultant ?? ""), callbackPreferredAt:new Date(String(row.callback_preferred_at)).toISOString() })),
   };
 });
