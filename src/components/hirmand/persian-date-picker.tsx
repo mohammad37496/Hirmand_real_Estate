@@ -14,6 +14,8 @@ type PersianDatePickerProps = {
   onChange: (value: string) => void;
   placeholder?: string;
   hint?: string;
+  title?: string;
+  minValue?: string;
   disabled?: boolean;
 };
 
@@ -23,6 +25,8 @@ export function PersianDatePicker({
   onChange,
   placeholder = "انتخاب تاریخ شمسی",
   hint = "تاریخ با تقویم شمسی انتخاب می‌شود.",
+  title = "انتخاب تاریخ",
+  minValue,
   disabled = false,
 }: PersianDatePickerProps) {
   const [open, setOpen] = useState(false);
@@ -80,7 +84,7 @@ export function PersianDatePicker({
         <div className="persian-date-picker-popover" role="dialog" aria-label="انتخاب تاریخ شمسی">
           <div className="persian-date-picker-head">
             <div>
-              <span>مهلت رهن و اجاره</span>
+              <span>{title}</span>
               <strong>{value ? formatPersianDateWithWeekday(value) : "یک تاریخ انتخاب کنید"}</strong>
             </div>
             <button
@@ -106,6 +110,7 @@ export function PersianDatePicker({
             navLayout="after"
             reverseYears
             showOutsideDays
+            disabled={minValue ? { before: dateOnlyToLocalDate(minValue) } : undefined}
           />
 
           {value ? (
