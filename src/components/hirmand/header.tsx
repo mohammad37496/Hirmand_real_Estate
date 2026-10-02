@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
@@ -80,7 +80,7 @@ export function Header() {
 
   useEffect(() => {
     if (!quickOpen) return;
-    const onPointer = (event: MouseEvent) => {
+    const onPointer = (event: globalThis.MouseEvent) => {
       if (!quickMenuRef.current?.contains(event.target as Node)) setQuickOpen(false);
     };
     const onKey = (event: KeyboardEvent) => {
@@ -104,7 +104,7 @@ export function Header() {
     }
   }, [pathname]);
 
-  function goHash(event: MouseEvent<HTMLAnchorElement>, id: string) {
+  function goHash(event: ReactMouseEvent<HTMLAnchorElement>, id: string) {
     if (onHome) {
       scrollToId(event, id, closeMenu);
       return;
@@ -166,7 +166,7 @@ export function Header() {
               );
             }
 
-            const Icon = NAV_ICONS[item.id];
+            const Icon = NAV_ICONS[item.id as keyof typeof NAV_ICONS];
             const isCurrent = item.to !== "/" && pathname === item.to;
             return (
               <Link
