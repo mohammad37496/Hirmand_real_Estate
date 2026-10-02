@@ -368,6 +368,8 @@ export function AdminDashboard({
         })}
       </div>
 
+      <AdminAgenda onOpenLeads={onOpenLeads} />
+
       <section className="admin-dashboard-health" aria-label="سلامت کتابخانه فایل‌ها و تیم">
         <button type="button" className="admin-dashboard-stat" data-tone="red" onClick={onOpenProperties}>
           <span className="admin-dashboard-stat-icon"><ImageOff size={19} /></span>
