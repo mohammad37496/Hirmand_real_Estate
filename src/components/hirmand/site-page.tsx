@@ -44,7 +44,6 @@ import { SiteChrome } from "./site-chrome";
 import { SmartRecommendations } from "./smart-recommendations";
 import { useConsultants } from "./consultants-context";
 import type { Consultant } from "@/lib/consultants";
-import type { SiteSettings } from "@/lib/site-settings";
 import { EitaaIcon, InstagramIcon, TelegramIcon, WhatsAppIcon } from "./social-icons";
 
 const PRINCIPLE_ICONS = {
