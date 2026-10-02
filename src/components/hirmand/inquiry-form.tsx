@@ -113,6 +113,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
   const [consultant, setConsultant] = useState<string>("");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
+  const [trackingToken, setTrackingToken] = useState("");
 
   useEffect(() => {
     if (!consultants.length) return;
@@ -368,11 +369,12 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
         }),
       });
       const result = (await response.json().catch(() => null)) as
-        | { success?: boolean; statusMessage?: string; message?: string }
+        | { success?: boolean; statusMessage?: string; message?: string; trackingToken?: string }
         | null;
       if (!response.ok || !result?.success) {
         throw new Error(result?.statusMessage || result?.message || "ثبت درخواست انجام نشد.");
       }
+      if (result?.trackingToken) setTrackingToken(result.trackingToken);
       trackAnalyticsEvent("inquiry_submit");
       toast.success("درخواست شما با موفقیت برای تیم هیرمند ثبت شد.");
     } catch (error) {
@@ -381,7 +383,7 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
     }
   }
 
-  const waHref = `${selected.wa}?text=${encodeURIComponent(buildMessage())}`;
+  const waHref = `${selected?.whatsapp ?? SITE.whatsappDirect}?text=${encodeURIComponent(buildMessage())}`;
 
   return (
     <form className="inquiry-form" onSubmit={onSubmit} noValidate>
@@ -739,6 +741,35 @@ export function InquiryForm({ draft }: { draft: InquiryDraft }) {
         <p className="form-error" role="alert">
           {error}
         </p>
+      ) : null}
+      {trackingToken ? (
+        <div className="inquiry-tracking-success" role="status">
+          <div>
+            <span className="kicker">کد رهگیری درخواست شما</span>
+            <strong dir="ltr">{trackingToken}</strong>
+            <p>این کد را نگه دارید تا هر زمان خواستید وضعیت پیگیری درخواست را ببینید.</p>
+          </div>
+          <div className="inquiry-tracking-actions">
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => {
+                if (!navigator.clipboard?.writeText) {
+                  toast.error("کپی کد در این مرورگر در دسترس نیست.");
+                  return;
+                }
+                void navigator.clipboard.writeText(trackingToken)
+                  .then(() => toast.success("کد رهگیری کپی شد."))
+                  .catch(() => toast.error("کپی کد انجام نشد."));
+              }}
+            >
+              کپی کد
+            </button>
+            <a className="btn-gold" href={"/request-tracking?code=" + encodeURIComponent(trackingToken)}>
+              پیگیری آنلاین
+            </a>
+          </div>
+        </div>
       ) : null}
       <div className="form-actions">
         <button type="submit" className="btn-gold">
