@@ -92,6 +92,8 @@ export type Property = {
   latitude: number | null;
   longitude: number | null;
   priceDropPercent?: number | null;
+  lastVerifiedAt?: string | null;
+  lastVerifiedBy?: string | null;
   internalPriority?: "low" | "normal" | "high" | "urgent";
   internalNote?: string;
 };
