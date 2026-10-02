@@ -9475,3 +9475,117 @@ a.btn-ghost[href^="https://wa.me/"] svg {
   position: absolute;
   inset: -12px;
 }
+
+
+/* --------------------------------------------------------------------------
+   Property QR share dialog
+   -------------------------------------------------------------------------- */
+.property-qr-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:1400;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  background:rgba(5,12,18,.66);
+  backdrop-filter:blur(10px);
+}
+.property-qr-dialog{
+  position:relative;
+  width:min(100%,520px);
+  max-height:min(92vh,760px);
+  overflow:auto;
+  padding:24px;
+  border:1px solid var(--gold-line,rgba(194,147,53,.34));
+  border-radius:24px;
+  background:var(--card,#fff);
+  color:var(--ink,#18222c);
+  box-shadow:0 30px 90px rgba(0,0,0,.28);
+}
+.property-qr-close{
+  position:absolute;
+  top:14px;
+  inset-inline-end:14px;
+  width:40px;
+  height:40px;
+  display:grid;
+  place-items:center;
+  border:1px solid var(--line,rgba(17,30,43,.12));
+  border-radius:12px;
+  background:rgba(255,255,255,.82);
+  color:inherit;
+  cursor:pointer;
+}
+.property-qr-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding-inline-end:48px;
+}
+.property-qr-icon{
+  width:44px;
+  height:44px;
+  flex:0 0 auto;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  background:var(--brass-100,#f8efdb);
+  color:var(--brass-700,#8e641e);
+}
+.property-qr-head h2{
+  margin:2px 0 4px;
+  font-size:1.18rem;
+}
+.property-qr-head p{
+  margin:0;
+  color:var(--muted,#697887);
+  font-size:.82rem;
+  line-height:1.8;
+}
+.property-qr-code-wrap{
+  width:min(100%,390px);
+  margin:20px auto 14px;
+  padding:14px;
+  border:1px solid var(--line,rgba(17,30,43,.1));
+  border-radius:22px;
+  background:#fff;
+}
+.property-qr-code{
+  display:block;
+  width:100%;
+  height:auto;
+  aspect-ratio:1;
+  object-fit:contain;
+}
+.property-qr-target{
+  padding:10px 12px;
+  border:1px solid var(--line,rgba(17,30,43,.1));
+  border-radius:12px;
+  background:rgba(17,30,43,.035);
+  color:var(--muted,#697887);
+  font-size:.72rem;
+  line-height:1.7;
+  overflow-wrap:anywhere;
+}
+.property-qr-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:12px;
+}
+.property-qr-actions > *{
+  flex:1 1 180px;
+}
+.property-qr-note{
+  display:block;
+  margin-top:12px;
+  color:var(--muted,#697887);
+  font-size:.72rem;
+  line-height:1.8;
+}
+@media (max-width:560px){
+  .property-qr-backdrop{padding:10px;}
+  .property-qr-dialog{padding:18px;border-radius:20px;}
+  .property-qr-code-wrap{margin-top:16px;padding:10px;border-radius:18px;}
+  .property-qr-actions > *{flex-basis:100%;}
+}
