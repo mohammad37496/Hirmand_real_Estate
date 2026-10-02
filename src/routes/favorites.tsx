@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeftRight, CalendarDays, CheckCircle2, Clock3, Heart, Link2, Loader2, Search, Share2, StickyNote, Tag, X } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
+import { ArrowLeftRight, CalendarDays, CheckCircle2, Clock3, Heart, Link2, Loader2, ListFilter, Search, Share2, SlidersHorizontal, StickyNote, Tag, X } from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
@@ -148,6 +148,35 @@ function FavoritesPage() {
   const [planCodes, setPlanCodes] = useState<string[]>([]);
   const [planError, setPlanError] = useState("");
   const [favoriteMeta, setFavoriteMeta] = useState<FavoriteMetaMap>(() => readFavoriteMeta());
+  const [favoriteTagFilter, setFavoriteTagFilter] = useState<FavoriteTag | "all">("all");
+  const [favoriteSort, setFavoriteSort] = useState<"saved" | "price-asc" | "price-desc" | "area-desc">("saved");
+
+  const visibleProperties = useMemo(() => {
+    const filtered = favoriteTagFilter === "all"
+      ? [...properties]
+      : properties.filter((property) => favoriteMeta[property.slug]?.tag === favoriteTagFilter);
+    return filtered.sort((a, b) => {
+      if (favoriteSort === "saved") return properties.indexOf(a) - properties.indexOf(b);
+      if (favoriteSort === "area-desc") return (b.areaM2 ?? 0) - (a.areaM2 ?? 0);
+      const av = Number(String(a.price ?? "").replace(/,/g, "")) || 0;
+      const bv = Number(String(b.price ?? "").replace(/,/g, "")) || 0;
+      return favoriteSort === "price-asc" ? av - bv : bv - av;
+    });
+  }, [favoriteMeta, favoriteSort, favoriteTagFilter, properties]);
+
+  const favoriteTagCounts = useMemo(() => {
+    const counts: Record<FavoriteTag, number> = {
+      "بازدید": 0,
+      "پیگیری": 0,
+      "مناسب بودجه": 0,
+      "مقایسه": 0,
+    };
+    properties.forEach((property) => {
+      const tag = favoriteMeta[property.slug]?.tag;
+      if (tag) counts[tag] += 1;
+    });
+    return counts;
+  }, [favoriteMeta, properties]);
 
   function updateFavoriteMeta(slug: string, patch: Partial<FavoriteMeta>) {
     setFavoriteMeta((current) => {
@@ -459,8 +488,34 @@ function FavoritesPage() {
             <strong>در حال بارگذاری فایل‌های ذخیره‌شده…</strong>
           </section>
         ) : properties.length ? (
+          <section className="favorites-filter-bar" aria-label="فیلتر و مرتب‌سازی فایل‌های ذخیره‌شده">
+            <div className="favorites-filter-tabs">
+              <button type="button" className={favoriteTagFilter === "all" ? "is-active" : ""} onClick={() => setFavoriteTagFilter("all")}>
+                <ListFilter size={15} /> همه ({properties.length.toLocaleString("fa-IR")})
+              </button>
+              {(Object.keys(favoriteTagCounts) as FavoriteTag[]).map((tag) => (
+                <button key={tag} type="button" className={favoriteTagFilter === tag ? "is-active" : ""} onClick={() => setFavoriteTagFilter(tag)}>
+                  {tag} ({favoriteTagCounts[tag].toLocaleString("fa-IR")})
+                </button>
+              ))}
+            </div>
+            <label className="favorites-sort-control">
+              <SlidersHorizontal size={15} />
+              <span>مرتب‌سازی</span>
+              <select value={favoriteSort} onChange={(event) => setFavoriteSort(event.target.value as typeof favoriteSort)}>
+                <option value="saved">ترتیب ذخیره</option>
+                <option value="price-asc">قیمت: کم به زیاد</option>
+                <option value="price-desc">قیمت: زیاد به کم</option>
+                <option value="area-desc">متراژ: بزرگ به کوچک</option>
+              </select>
+            </label>
+          </section>
+          <div className="favorites-filter-summary">
+            {visibleProperties.length.toLocaleString("fa-IR")} فایل نمایش داده می‌شود.
+          </div>
+          {visibleProperties.length ? (
           <div className="property-grid">
-            {properties.map((property) => {
+            {visibleProperties.map((property) => {
               const meta = favoriteMeta[property.slug] ?? {};
               return (
                 <div key={property.id} className="favorites-property-frame">
@@ -514,6 +569,13 @@ function FavoritesPage() {
               );
             })}
           </div>
+          ) : (
+            <section className="property-empty">
+              <Search size={26} />
+              <strong>فایلی با این فیلتر پیدا نشد</strong>
+              <button type="button" className="btn-ghost" onClick={() => setFavoriteTagFilter("all")}>نمایش همه فایل‌ها</button>
+            </section>
+          )}
         ) : (
           <section className="property-empty">
             <Heart size={26} />
