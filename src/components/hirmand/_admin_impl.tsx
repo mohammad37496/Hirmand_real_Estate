@@ -1717,6 +1717,8 @@ export function AdminPropertiesPage() {
                                   ? "دفتر مالی و تسویه"
                                   : view === "backup"
                                     ? "پشتیبان‌گیری"
+                                    : view === "watermark"
+                                      ? "واترمارک تصاویر و فیلم‌ها"
                                     : view === "divar"
                           ? "فایل‌های دیوار"
                           : form.id
@@ -1743,6 +1745,8 @@ export function AdminPropertiesPage() {
                             ? "ثبت درآمد و هزینه‌های دفتر"
                             : view === "backup"
                               ? "دانلود نسخه امن از اطلاعات مدیریتی"
+                              : view === "watermark"
+                                ? "لوگو، نام سایت، شفافیت و اندازه واترمارک رسانه"
                               : view === "divar"
                         ? "دریافت، فیلتر و ورود فایل‌های شخصی از دیوار"
                         : form.contactName
