@@ -9731,3 +9731,22 @@ a.btn-ghost[href^="https://wa.me/"] svg {
 .favorites-plan-codes{display:grid;gap:7px;margin:18px auto;padding:15px;border:1px solid var(--gold-line);border-radius:16px;background:rgba(192,138,42,.05)}
 .favorites-plan-codes span{font-weight:800;letter-spacing:.04em}.favorites-plan-success-actions{display:flex;justify-content:center;gap:9px;margin-top:14px}
 @media(max-width:720px){.favorites-plan-modal{padding:20px 15px;border-radius:20px}.favorites-plan-grid{grid-template-columns:1fr}.favorites-plan-note{grid-column:auto}.favorites-plan-actions,.favorites-plan-success-actions{display:grid}.favorites-plan-actions>* ,.favorites-plan-success-actions>*{width:100%;justify-content:center}.favorites-plan-close{top:10px;left:10px}}
+
+
+/* Next operational features */
+.admin-duplicate-check{margin:14px 0}
+.admin-duplicate-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.admin-duplicate-head strong{display:block}.admin-duplicate-head small{display:block;margin-top:4px;color:var(--muted,#777)}
+.admin-duplicate-list{margin-top:14px;display:grid;gap:8px}
+.admin-duplicate-warning,.admin-duplicate-ok,.admin-duplicate-empty{padding:12px 14px;border-radius:12px;line-height:1.8}
+.admin-duplicate-warning{display:flex;align-items:center;gap:8px;border:1px solid var(--gold-line);background:rgba(192,138,42,.08)}
+.admin-duplicate-ok{border:1px solid rgba(67,132,88,.2);background:rgba(67,132,88,.06)}
+.admin-duplicate-empty{border:1px dashed var(--gold-line);color:var(--muted,#777)}
+.admin-duplicate-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--line,#e6e6e9);border-radius:12px;background:rgba(255,255,255,.5)}
+.admin-duplicate-row strong{display:block}.admin-duplicate-row small{display:block;color:var(--muted,#777);margin-top:4px}
+.admin-visit-feedback{margin-top:18px}
+.admin-visit-feedback-score{white-space:nowrap;display:inline-flex;align-items:center;gap:5px;font-weight:800;color:var(--brass-600)}
+@media(max-width:680px){
+  .admin-duplicate-head,.admin-duplicate-row{align-items:stretch;flex-direction:column}
+  .admin-duplicate-head .btn-ghost,.admin-duplicate-row .text-link{width:100%;justify-content:center}
+}
