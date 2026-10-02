@@ -459,3 +459,107 @@
     padding:13px!important;
   }
 }
+
+
+/* Phase 2 — keep the property summary focused on price, contact and key facts. */
+.property-summary-utilities{
+  margin-top:12px;
+  border:1px solid var(--line);
+  border-radius:15px;
+  background:rgba(255,255,255,.42);
+  overflow:hidden;
+}
+
+.property-summary-utilities[open]{
+  background:rgba(255,255,255,.68);
+}
+
+.property-summary-utilities-summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  min-width:0;
+  padding:11px 12px;
+  cursor:pointer;
+  list-style:none;
+  color:var(--navy-900);
+}
+
+.property-summary-utilities-summary::-webkit-details-marker{display:none}
+.property-summary-utilities-summary::marker{content:""}
+
+.property-summary-utilities-summary > span{
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+
+.property-summary-utilities-summary strong{
+  font-size:.75rem;
+  line-height:1.55;
+}
+
+.property-summary-utilities-summary small{
+  color:var(--muted);
+  font-size:.61rem;
+  line-height:1.7;
+  white-space:normal;
+}
+
+.property-summary-utilities-summary > svg{
+  flex:0 0 auto;
+  color:var(--brass-700);
+  transition:transform .18s ease;
+}
+
+.property-summary-utilities[open] .property-summary-utilities-summary > svg{
+  transform:rotate(180deg);
+}
+
+.property-summary-utilities-summary:hover{
+  background:rgba(192,138,42,.045);
+}
+
+.property-summary-utilities-summary:focus-visible{
+  outline:2px solid var(--brass-500);
+  outline-offset:-2px;
+}
+
+.property-summary-utilities-content{
+  min-width:0;
+  padding:0 11px 11px;
+}
+
+.property-summary-utilities-content > .property-detail-tools-row{
+  margin-top:0;
+  padding-top:10px;
+  border-top:1px solid var(--line-2);
+}
+
+.property-summary-utilities-content .property-price-watch-button{
+  margin-top:8px;
+}
+
+.property-summary-utilities-content .property-report-btn{
+  min-height:42px;
+}
+
+@media (max-width:760px){
+  .property-summary-utilities{
+    margin-top:10px;
+    border-radius:13px;
+  }
+
+  .property-summary-utilities-summary{
+    padding:10px;
+  }
+
+  .property-summary-utilities-summary small{
+    font-size:.58rem;
+  }
+
+  .property-summary-utilities-content{
+    padding:0 9px 9px;
+  }
+}
