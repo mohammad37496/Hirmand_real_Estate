@@ -56,6 +56,7 @@ export default defineEventHandler(async (event) => {
     toDate?: string;
     assignedConsultantName?: string;
     assignedConsultantPhone?: string;
+    queueFilter?: "all" | "overdue" | "unassigned" | "high";
   };
   const action = body.action ?? "list";
   const sql = await getSql();
@@ -66,6 +67,7 @@ export default defineEventHandler(async (event) => {
     const pattern = "%" + query + "%";
     const fromDate = typeof body.fromDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.fromDate) ? body.fromDate : "";
     const toDate = typeof body.toDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.toDate) ? body.toDate : "";
+    const queueFilter = body.queueFilter && ["all","overdue","unassigned","high"].includes(body.queueFilter) ? body.queueFilter : "all";
     const requestedPage = Number.isInteger(body.page) ? Number(body.page) : 1;
     const page = Math.min(Math.max(requestedPage, 1), 10000);
     const requestedPageSize = Number.isInteger(body.pageSize) ? Number(body.pageSize) : 20;
@@ -88,9 +90,10 @@ export default defineEventHandler(async (event) => {
         and ($2='' or s.owner_name ilike $3 or s.owner_phone ilike $3 or s.public_tracking_token ilike $3 or coalesce(s.property_data->>'title','') ilike $3 or coalesce(s.property_data->>'neighborhood','') ilike $3)
         and ($4='' or s.created_at >= $4::date)
         and ($5='' or s.created_at < ($5::date + interval '1 day'))
+        and ($6='all' or ($6='overdue' and coalesce(s.queue_started_at,s.created_at) < current_timestamp - interval '24 hours') or ($6='unassigned' and coalesce(s.assigned_consultant_phone,'')='') or ($6='high' and s.priority='high'))
       order by case s.priority when 'high' then 0 when 'normal' then 1 else 2 end, coalesce(s.queue_started_at,s.created_at) asc
-      limit $6 offset $7`,
-      [status, query, pattern, fromDate, toDate, pageSize, offset],
+      limit $7 offset $8`,
+      [status, query, pattern, fromDate, toDate, queueFilter, pageSize, offset],
     );
     const totalRows = await sql.query<{ count: number }>(
       `select count(*)::int as count
@@ -98,8 +101,9 @@ export default defineEventHandler(async (event) => {
        where s.status=$1
          and ($2='' or s.owner_name ilike $3 or s.owner_phone ilike $3 or s.public_tracking_token ilike $3 or coalesce(s.property_data->>'title','') ilike $3 or coalesce(s.property_data->>'neighborhood','') ilike $3)
          and ($4='' or s.created_at >= $4::date)
-         and ($5='' or s.created_at < ($5::date + interval '1 day'))`,
-      [status, query, pattern, fromDate, toDate],
+         and ($5='' or s.created_at < ($5::date + interval '1 day'))
+         and ($6='all' or ($6='overdue' and coalesce(s.queue_started_at,s.created_at) < current_timestamp - interval '24 hours') or ($6='unassigned' and coalesce(s.assigned_consultant_phone,'')='') or ($6='high' and s.priority='high'))`,
+      [status, query, pattern, fromDate, toDate, queueFilter],
     );
     const countRows = await sql.query<{ status: string; count: number }>(
       "select status,count(*)::int as count from customer_property_submissions group by status",
@@ -230,6 +234,7 @@ export default defineEventHandler(async (event) => {
     const pattern = "%" + query + "%";
     const fromDate = typeof body.fromDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.fromDate) ? body.fromDate : "";
     const toDate = typeof body.toDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.toDate) ? body.toDate : "";
+    const queueFilter = body.queueFilter && ["all","overdue","unassigned","high"].includes(body.queueFilter) ? body.queueFilter : "all";
     const rows = await sql.query<Record<string, unknown>>(
       `select s.id,s.public_tracking_token,s.status,s.owner_name,s.owner_phone,s.property_data,s.created_at,s.reviewed_at,s.priority,
         (
@@ -247,8 +252,9 @@ export default defineEventHandler(async (event) => {
          and ($2='' or s.owner_name ilike $3 or s.owner_phone ilike $3 or s.public_tracking_token ilike $3 or coalesce(s.property_data->>'title','') ilike $3 or coalesce(s.property_data->>'neighborhood','') ilike $3)
          and ($4='' or s.created_at >= $4::date)
          and ($5='' or s.created_at < ($5::date + interval '1 day'))
+         and ($6='all' or ($6='overdue' and coalesce(s.queue_started_at,s.created_at) < current_timestamp - interval '24 hours') or ($6='unassigned' and coalesce(s.assigned_consultant_phone,'')='') or ($6='high' and s.priority='high'))
        order by s.created_at desc`,
-      [status, query, pattern, fromDate, toDate],
+      [status, query, pattern, fromDate, toDate, queueFilter],
     );
     const txLabels: Record<string,string> = { buy:"خرید", sell:"فروش", rent:"اجاره", mortgage:"رهن" };
     const typeLabels: Record<string,string> = { apartment:"آپارتمان", villa:"ویلا و باغ", office:"اداری", heritage:"خانه اصیل", land:"زمین", commercial:"تجاری" };
