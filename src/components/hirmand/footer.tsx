@@ -45,6 +45,7 @@ export function Footer() {
         <Link to="/" hash="tools" onClick={(event) => { if (onHome) scrollToId(event, "tools"); }}>ابزار مالی</Link>
         <Link to="/tracking">باشگاه همکاران</Link>
         <Link to="/request-tracking">پیگیری درخواست</Link>
+        <Link to="/my-hirmand">پرونده‌های من</Link>
         <Link to="/submit-property">ثبت ملک توسط مالک</Link>
         <Link to="/file-code">یافتن فایل با کد</Link>
         <Link to="/" hash="inquiry" onClick={(event) => { if (onHome) scrollToId(event, "inquiry"); }}>درخواست ملک</Link>
