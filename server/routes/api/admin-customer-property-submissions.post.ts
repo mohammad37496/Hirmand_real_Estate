@@ -62,8 +62,8 @@ export default defineEventHandler(async (event) => {
     const status = body.status && ["pending","approved","rejected"].includes(body.status) ? body.status : "pending";
     const query = typeof body.query === "string" ? body.query.trim().slice(0, 80) : "";
     const pattern = "%" + query + "%";
-    const fromDate = typeof body.fromDate === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(body.fromDate) ? body.fromDate : "";
-    const toDate = typeof body.toDate === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(body.toDate) ? body.toDate : "";
+    const fromDate = typeof body.fromDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.fromDate) ? body.fromDate : "";
+    const toDate = typeof body.toDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.toDate) ? body.toDate : "";
     const requestedPage = Number.isInteger(body.page) ? Number(body.page) : 1;
     const page = Math.min(Math.max(requestedPage, 1), 10000);
     const requestedPageSize = Number.isInteger(body.pageSize) ? Number(body.pageSize) : 20;
