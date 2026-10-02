@@ -55,6 +55,7 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
+  const [trackingToken, setTrackingToken] = useState("");
 
   const visitAllowed = property.availabilityStatus === "available" || property.availabilityStatus === "reserved";
   const minimumDate = useMemo(() => todayIsoDate(), []);
@@ -64,6 +65,7 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
     setOpen(false);
     setDone(false);
     setError("");
+    setTrackingToken("");
   }
 
   async function submit() {
@@ -117,6 +119,7 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
       if (!response.ok || !payload?.success) {
         throw new Error(payload?.statusMessage || payload?.message || "ثبت درخواست بازدید انجام نشد.");
       }
+      if (payload?.trackingToken) setTrackingToken(payload.trackingToken);
       setDone(true);
       trackAnalyticsEvent("visit_request", property.slug);
     } catch (cause) {
@@ -169,6 +172,13 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
                   <strong>{property.title}</strong>
                   <span><CalendarDays size={15} /> {date}</span>
                   <span><Clock3 size={15} /> {time}</span>
+                </div>
+                <div className="property-viewing-tracking">
+                  <span className="kicker">کد رهگیری</span>
+                  <strong dir="ltr">{trackingToken || "—"}</strong>
+                  <a className="btn-ghost" href={trackingToken ? "/request-tracking?code=" + encodeURIComponent(trackingToken) : "/request-tracking"}>
+                    پیگیری آنلاین
+                  </a>
                 </div>
                 <button type="button" className="btn-gold" onClick={close}>متوجه شدم</button>
               </div>
