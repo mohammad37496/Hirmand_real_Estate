@@ -352,3 +352,8 @@
 .request-tracking-timeline-item time{display:block;margin-top:2px;color:var(--subtle);font-size:.62rem}
 .request-tracking-code-link{display:inline-flex;margin-top:6px;color:var(--brass-700,#8c6426);font-size:.68rem;font-weight:800}
 @media(max-width:560px){.request-tracking-timeline-head{flex-direction:column}}
+
+.request-tracking-revision{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:14px;padding:16px;border:1px solid var(--brass-300,#d7b66d);border-radius:16px;background:var(--surface-2,#faf8f0)}
+.request-tracking-revision h3{margin:4px 0;color:var(--navy-900,#102225);font-size:.95rem}
+.request-tracking-revision p{margin:5px 0 0;color:var(--muted);font-size:.72rem;line-height:1.9;max-width:760px}
+@media(max-width:650px){.request-tracking-revision{align-items:stretch;flex-direction:column}.request-tracking-revision .btn-gold{width:100%;justify-content:center}}
