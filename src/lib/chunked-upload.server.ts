@@ -54,6 +54,8 @@ export type TextField = {
 export type ChunkedUploadConfig = {
   /** Row flavour in `media_upload_sessions`. */
   kind: string;
+  /** Public submissions deliberately skip admin-session auth but keep same-origin and rate limiting. */
+  access?: "admin" | "public";
   /** Path prefix for stored objects, e.g. `music` or `properties/uploads`. */
   pathPrefix: string;
   maxBytes: number;
@@ -136,7 +138,8 @@ export async function handleChunkedUpload(
 ): Promise<unknown> {
   setResponseHeader(event, "cache-control", "no-store");
 
-  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
+  const adminAccess = config.access !== "public";
+  if (adminAccess && !await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
     throw httpError("نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.", 401);
   }
 
