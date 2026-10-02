@@ -1048,6 +1048,13 @@
   font-size: 0.875rem;
 }
 
+.compare-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .compare-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
