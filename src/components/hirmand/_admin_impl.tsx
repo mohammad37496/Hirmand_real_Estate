@@ -217,6 +217,7 @@ type FormState = {
   featuredUntil: string;
   latitude: number | null;
   longitude: number | null;
+  virtualTourUrl: string;
   internalPriority: "low" | "normal" | "high" | "urgent";
   internalNote: string;
 };
@@ -278,6 +279,7 @@ function emptyForm(): FormState {
     featuredUntil: "",
     latitude: null,
     longitude: null,
+    virtualTourUrl: "",
     internalPriority: "normal",
     internalNote: "",
   };
@@ -455,6 +457,7 @@ function propertyToForm(property: Property): FormState {
     featuredUntil: toDateTimeLocal(property.featuredUntil),
     latitude: property.latitude,
     longitude: property.longitude,
+    virtualTourUrl: property.virtualTourUrl ?? "",
     internalPriority: property.internalPriority ?? "normal",
     internalNote: property.internalNote ?? "",
   };
@@ -1310,6 +1313,7 @@ export function AdminPropertiesPage() {
           ownerInfo: form.ownerInfo.trim(),
           latitude: form.latitude,
           longitude: form.longitude,
+          virtualTourUrl: form.virtualTourUrl.trim(),
           status: form.status,
           availabilityStatus: form.availabilityStatus,
           internalPriority: form.internalPriority,
@@ -1454,6 +1458,7 @@ export function AdminPropertiesPage() {
           ownerInfo: base.ownerInfo.trim(),
           latitude: base.latitude,
           longitude: base.longitude,
+          virtualTourUrl: base.virtualTourUrl.trim(),
           status,
           availabilityStatus: base.availabilityStatus,
           featured: base.featured,
@@ -2557,6 +2562,21 @@ export function AdminPropertiesPage() {
                     propertyType={form.propertyType}
                     propertyId={form.id}
                   />
+                  <div className="admin-form-grid" style={{ marginTop: 14 }}>
+                    <label className="field admin-span-2">
+                      <span>لینک تور مجازی ۳۶۰ (اختیاری)</span>
+                      <input
+                        dir="ltr"
+                        value={form.virtualTourUrl}
+                        onChange={(e) => update("virtualTourUrl", e.target.value)}
+                        placeholder="https://…"
+                        inputMode="url"
+                      />
+                      <small style={{ display: "block", marginTop: 5, color: "var(--muted)", fontSize: ".72rem", lineHeight: 1.8 }}>
+                        لینک باید HTTPS باشد. در صفحه فایل به‌صورت امن در یک پنل جداگانه نمایش داده می‌شود.
+                      </small>
+                    </label>
+                  </div>
                 </fieldset>
 
                 <AdminPropertyDuplicateCheck
