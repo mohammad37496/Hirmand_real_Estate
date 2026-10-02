@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeftRight, Heart, Trash2 } from "lucide-react";
+import { ArrowLeftRight, Heart, Share2, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
@@ -39,6 +39,44 @@ function readCompare(): string[] {
     )).slice(0, MAX_COMPARE);
   } catch {
     return [];
+  }
+}
+
+function readSharedCompare(): string[] {
+  try {
+    const value = new URLSearchParams(window.location.search).get("share");
+    if (!value) return [];
+    return Array.from(new Set(
+      value.split(",").filter((item) => item.trim().length > 0).map((item) => item.trim()),
+    )).slice(0, MAX_COMPARE);
+  } catch {
+    return [];
+  }
+}
+
+async function shareCompare(slugs: string[]) {
+  const safe = Array.from(new Set(slugs.filter(Boolean))).slice(0, MAX_COMPARE);
+  if (safe.length < 2) return;
+  const url = new URL("/compare", window.location.origin);
+  url.searchParams.set("share", safe.join(","));
+  const shareUrl = url.toString();
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: "مقایسه فایل‌های هیرمند",
+        text: "مقایسه چند فایل منتخب در املاک هیرمند",
+        url: shareUrl,
+      });
+      return;
+    }
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("لینک مقایسه کپی شد.");
+      return;
+    }
+    window.prompt("لینک مقایسه:", shareUrl);
+  } catch {
+    // Sharing can be cancelled by the visitor.
   }
 }
 
@@ -89,7 +127,15 @@ function ComparePage() {
 
   useEffect(() => {
     let cancelled = false;
-    const slugs = readCompare();
+    const shared = readSharedCompare();
+    const slugs = Array.from(new Set([...shared, ...readCompare()])).slice(0, MAX_COMPARE);
+    if (shared.length) {
+      try {
+        localStorage.setItem(COMPARE_KEY, JSON.stringify(slugs));
+      } catch {
+        // Ignore storage failures.
+      }
+    }
     if (!slugs.length) {
       setLoading(false);
       return () => {
@@ -162,9 +208,14 @@ function ComparePage() {
           <>
             <div className="compare-toolbar">
               <span>{properties.length.toLocaleString("fa-IR")} فایل انتخاب شده</span>
-              <button type="button" className="properties-reset-btn" onClick={clearCompare}>
-                <Trash2 size={14} /> پاک‌کردن مقایسه
-              </button>
+              <div className="compare-toolbar-actions">
+                <button type="button" className="properties-reset-btn" onClick={() => void shareCompare(properties.map((property) => property.slug))}>
+                  <Share2 size={14} /> اشتراک مقایسه
+                </button>
+                <button type="button" className="properties-reset-btn" onClick={clearCompare}>
+                  <Trash2 size={14} /> پاک‌کردن مقایسه
+                </button>
+              </div>
             </div>
 
             <div className="compare-grid">
