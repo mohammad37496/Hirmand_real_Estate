@@ -101,7 +101,7 @@ import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
 import { getPropertyFallbackImage, getPropertyFallbackImages, getPropertyFallbackLegacyImage, isPropertyFallbackImage } from "@/lib/property-fallback-images";
 import { areaSlug } from "@/lib/areas";
 import { propertyPath } from "@/lib/property-path";
-import { TEAM } from "@/lib/site";
+import { useConsultants } from "@/components/hirmand/consultants-context";
 import { getPublishedPropertyPriceHistory, isFeaturedActive, type PropertyPriceHistoryItem } from "@/lib/properties";
 import {
   PROPERTY_CABINET_OPTIONS,
@@ -1004,7 +1004,8 @@ function Gallery({
 }
 
 function ConsultantCard({ property }: { property: Property }) {
-  const person = TEAM.find((item) => item.phone === property.contactPhone || item.name === property.contactName);
+  const consultants = useConsultants();
+  const person = consultants.find((item) => item.phone === property.contactPhone || item.name === property.contactName);
   const displayName = property.contactName || person?.name || "مشاور هیرمند";
   const role = person?.role ?? "مشاور املاک";
   const ConsultantIcon = person?.icon === "handshake" ? Handshake : Briefcase;
