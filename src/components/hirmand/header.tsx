@@ -128,6 +128,7 @@ export function Header() {
         </nav>
 
         <div className="nav-actions">
+          <Link to="/submit-property" className="header-inquiry">ثبت ملک</Link>
           <Link to="/file-code" className="header-inquiry">
             <Hash size={15} /> کد فایل
           </Link>
