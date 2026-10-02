@@ -357,3 +357,5 @@
 .request-tracking-revision h3{margin:4px 0;color:var(--navy-900,#102225);font-size:.95rem}
 .request-tracking-revision p{margin:5px 0 0;color:var(--muted);font-size:.72rem;line-height:1.9;max-width:760px}
 @media(max-width:650px){.request-tracking-revision{align-items:stretch;flex-direction:column}.request-tracking-revision .btn-gold{width:100%;justify-content:center}}
+
+.request-tracking-notice{margin-top:12px;padding:11px 13px;border:1px solid rgba(138,94,20,.16);border-radius:12px;background:rgba(138,94,20,.045);color:var(--navy-900,#0b1a2b);font-size:.8rem;line-height:1.8}.request-tracking-notice span{color:var(--muted,#6d675f)}
