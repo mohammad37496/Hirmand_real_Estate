@@ -915,8 +915,8 @@ function Gallery({
   return (
     <div className="property-gallery-wrap" role="region" aria-label={"گالری تصاویر " + title}>
       <div className="property-gallery">
-        <PropertyMediaWatermark />
         <div className="property-gallery-main">
+          <PropertyMediaWatermark />
           {isVideoUrl(current) ? (
             <VideoPlayer src={current} title={title} className="is-gallery" />
           ) : (
