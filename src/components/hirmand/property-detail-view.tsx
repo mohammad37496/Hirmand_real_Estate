@@ -102,6 +102,7 @@ import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { PropertyActions } from "@/components/hirmand/property-actions";
 import { PropertyMarketComparison } from "@/components/hirmand/property-market-comparison";
 import { PropertyViewingRequest } from "@/components/hirmand/property-viewing-request";
+import { PropertyCallbackRequest } from "@/components/hirmand/property-callback-request";
 import { PropertyDecisionTools } from "@/components/hirmand/property-decision-tools";
 import { PropertyVisitChecklist } from "@/components/hirmand/property-visit-checklist";
 import { PropertyOfferMessage } from "@/components/hirmand/property-offer-message";
@@ -1552,6 +1553,7 @@ export function PropertyDetailView({
                 <PropertyMarketComparison property={property} />
 
                 <div className="property-primary-contact" aria-label="تماس سریع با مشاور">
+                  <PropertyCallbackRequest propertyType={TYPE_LABEL[property.propertyType]} neighborhood={property.neighborhood} context={"فایل «" + property.title + "»"} />
                   <a
                     className="property-primary-contact-call"
                     href={`tel:${property.contactPhone}`}
