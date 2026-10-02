@@ -3,6 +3,7 @@ import { CheckCircle2, ExternalLink, Film, ImageIcon, Phone, RefreshCw, XCircle 
 import { toast } from "sonner";
 import { TEAM } from "@/lib/site";
 import { formatToman } from "@/lib/money";
+import { isVideoUrl } from "@/lib/media";
 import "./admin-customer-property-submissions.css";
 
 type Submission = {
@@ -151,7 +152,7 @@ export function AdminCustomerPropertySubmissions() {
         {submissions.map((submission) => {
           const data = submission.propertyData;
           const media = mediaItems(data);
-          const firstImage = media.find((src) => !src.toLowerCase().includes("/video/") && !/\.(mp4|webm|mov|m4v)(\?|$)/i.test(src)) || media[0] || "";
+          const firstImage = media.find((src) => !isVideoUrl(src)) || "";
           const selectedOpen = selected?.id === submission.id;
           return (
             <article key={submission.id} className={"admin-customer-submission-card" + (selectedOpen ? " is-open" : "")}>
@@ -183,7 +184,7 @@ export function AdminCustomerPropertySubmissions() {
                     <div><span>سال ساخت</span><strong>{String(data.builtYear ?? "—")}</strong></div>
                     <div className="wide"><span>توضیحات</span><p>{String(data.description ?? "—")}</p></div>
                   </div>
-                  {media.length ? <div className="admin-customer-submission-media">{media.map((src)=><div key={src}>{/\.(mp4|webm|mov|m4v)(\?|$)/i.test(src)||src.toLowerCase().includes("/video/")?<video src={src} controls preload="metadata"/>:<img src={src} alt="" loading="lazy"/>}{isVideo(src)?<small><Film size={12}/> ویدئو</small>:null}</div>)}</div> : null}
+                  {media.length ? <div className="admin-customer-submission-media">{media.map((src)=><div key={src}>{isVideoUrl(src)?<video src={src} controls preload="metadata"/>:<img src={src} alt="" loading="lazy"/>}{isVideo(src)?<small><Film size={12}/> ویدئو</small>:null}</div>)}</div> : null}
                   <label className="field"><span>یادداشت بررسی (اختیاری)</span><textarea rows={3} value={reviewNote} onChange={(e)=>setReviewNote(e.target.value)} placeholder="مثلاً سند بررسی شد، قیمت نیاز به تأیید دارد…"/></label>
                   {submission.propertyId ? <a className="btn-ghost" href={"/properties/" + String(data.slug ?? "")} target="_blank" rel="noreferrer"><ExternalLink size={15}/> مشاهده فایل منتشرشده</a> : null}
                 </div>
