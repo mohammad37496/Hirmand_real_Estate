@@ -3,6 +3,7 @@ import { CheckCircle2, ExternalLink, Film, ImageIcon, Phone, RefreshCw, XCircle 
 import { toast } from "sonner";
 import { TEAM } from "@/lib/site";
 import { formatToman } from "@/lib/money";
+import "./admin-customer-property-submissions.css";
 
 type Submission = {
   id: string;
