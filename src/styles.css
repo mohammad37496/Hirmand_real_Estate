@@ -9685,3 +9685,25 @@ a.btn-ghost[href^="https://wa.me/"] svg {
     grid-column:1;
   }
 }
+
+
+.budget-lead-success-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-inline-start:auto;
+}
+.budget-lead-success-actions>*{
+  white-space:nowrap;
+}
+@media (max-width:680px){
+  .budget-lead-success-actions{
+    width:100%;
+    margin-inline-start:0;
+    display:grid;
+    grid-template-columns:1fr;
+  }
+  .budget-lead-success-actions>*{
+    width:100%;
+  }
+}
