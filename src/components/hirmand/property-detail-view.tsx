@@ -2003,6 +2003,7 @@ export function PropertyDetailView({
                   <PropertyOfferMessage property={property} />
                   <PropertyNegotiationLog property={property} />
                   <PropertyPaymentPlanner property={property} />
+                  <PropertyConvertSlider property={property} />
                   <PropertyDealChecklist property={property} />
                   <PropertyDealRoom property={property} />
                   <PropertyDocumentPack property={property} />
