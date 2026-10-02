@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { listPublishedPropertyCards, type PropertyCardData, type PropertyType, type PropertyTransaction } from "@/lib/properties";
+import { listPublishedPropertyCards, type PropertyCardData } from "@/lib/properties";
 
 function positive(value: unknown) {
   const parsed = Number(value);
@@ -19,8 +19,8 @@ export type PropertyMarketComparison = {
 export const getPropertyMarketComparison = createServerFn({ method: "GET" })
   .validator(z.object({
     id: z.string().min(1).max(120),
-    propertyType: z.enum(["apartment","villa","office","land","commercial","heritage"]) as z.ZodType<PropertyType>,
-    transactionType: z.enum(["sell","buy","rent","mortgage"]) as z.ZodType<PropertyTransaction>,
+    propertyType: z.enum(["apartment","villa","office","land","commercial","heritage"]),
+    transactionType: z.enum(["sell","buy","rent","mortgage"]),
     neighborhood: z.string().trim().max(80).default(""),
     areaM2: z.number().positive().max(10000).nullable(),
     price: z.number().positive().nullable(),
