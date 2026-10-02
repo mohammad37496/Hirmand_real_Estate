@@ -112,6 +112,7 @@ export function AdminCustomerPropertySubmissions() {
     const items = mediaDraftItems();
     const target = index + delta;
     if (target < 0 || target >= items.length) return;
+    if (target === 0 && isVideoUrl(items[index]!)) return;
     const next = [...items];
     [next[index], next[target]] = [next[target]!, next[index]!];
     setEditDraft((current) => ({ ...(current || {}), images: next }));
