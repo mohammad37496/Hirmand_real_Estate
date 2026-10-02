@@ -119,6 +119,7 @@ import { PropertyPrepBudget } from "@/components/hirmand/property-prep-budget";
 import { PropertyTargetAlert } from "@/components/hirmand/property-target-alert";
 import { PropertyVerificationRequest } from "@/components/hirmand/property-verification-request";
 import { PropertyVerificationStamp } from "@/components/hirmand/property-verification-stamp";
+import { PropertyMediaWatermark } from "@/components/hirmand/property-media-watermark";
 import { PropertyExpertRequests } from "@/components/hirmand/property-expert-requests";
 import { PropertyNeighborhoodInsight } from "@/components/hirmand/property-neighborhood-insight";
 import { PropertyReport } from "@/components/hirmand/property-report";
@@ -915,6 +916,7 @@ function Gallery({
     <div className="property-gallery-wrap" role="region" aria-label={"گالری تصاویر " + title}>
       <div className="property-gallery">
         <div className="property-gallery-main">
+          <PropertyMediaWatermark />
           {isVideoUrl(current) ? (
             <VideoPlayer src={current} title={title} className="is-gallery" />
           ) : (
@@ -1042,6 +1044,7 @@ function Gallery({
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
               >
+                <PropertyMediaWatermark />
                 {isVideoUrl(current) ? (
                   <VideoPlayer src={current} title={title} autoPlay className="is-lightbox" />
                 ) : (

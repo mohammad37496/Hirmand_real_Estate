@@ -33,6 +33,7 @@ import {
   WalletCards,
   DatabaseBackup,
   ListTodo,
+  ShieldCheck,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import { isInvalidIntegerInput, normalizeMoneyText } from "@/lib/property-input-normalization";
@@ -79,6 +80,7 @@ import { AdminAttendanceManager } from "@/components/hirmand/admin-attendance-ma
 import { AdminMatchingManager } from "@/components/hirmand/admin-matching-manager";
 import { AdminOwnerManager } from "@/components/hirmand/admin-owner-manager";
 import { AdminFinanceManager } from "@/components/hirmand/admin-finance-manager";
+import { AdminWatermarkSettings } from "@/components/hirmand/admin-watermark-settings";
 import { AdminBackupManager } from "@/components/hirmand/admin-backup-manager";
 import { AdminOperationsCenter } from "@/components/hirmand/admin-operations-center";
 import { AdminProductivityCenter } from "@/components/hirmand/admin-productivity-center";
@@ -107,7 +109,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup";
+type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -522,6 +524,7 @@ export function AdminPropertiesPage() {
       { view: "owners" as ViewMode, label: "مالکین", icon: UserCog },
       { view: "finance" as ViewMode, label: "دفتر مالی", icon: WalletCards },
       { view: "backup" as ViewMode, label: "پشتیبان", icon: DatabaseBackup },
+      { view: "watermark" as ViewMode, label: "واترمارک", icon: ShieldCheck },
       { view: "divar" as ViewMode, label: "فایل‌های دیوار", icon: Globe2 },
     ],
     [],
@@ -1714,6 +1717,8 @@ export function AdminPropertiesPage() {
                                   ? "دفتر مالی و تسویه"
                                   : view === "backup"
                                     ? "پشتیبان‌گیری"
+                                    : view === "watermark"
+                                      ? "واترمارک تصاویر و فیلم‌ها"
                                     : view === "divar"
                           ? "فایل‌های دیوار"
                           : form.id
@@ -1740,6 +1745,8 @@ export function AdminPropertiesPage() {
                             ? "ثبت درآمد و هزینه‌های دفتر"
                             : view === "backup"
                               ? "دانلود نسخه امن از اطلاعات مدیریتی"
+                              : view === "watermark"
+                                ? "لوگو، نام سایت، شفافیت و اندازه واترمارک رسانه"
                               : view === "divar"
                         ? "دریافت، فیلتر و ورود فایل‌های شخصی از دیوار"
                         : form.contactName
@@ -2174,6 +2181,7 @@ export function AdminPropertiesPage() {
           {view === "owners" ? <AdminOwnerManager /> : null}
           {view === "finance" ? <AdminFinanceManager /> : null}
           {view === "backup" ? <AdminBackupManager /> : null}
+          {view === "watermark" ? <AdminWatermarkSettings /> : null}
           {view === "divar" ? <AdminDivarFiles /> : null}
 
           {view === "form" ? (
