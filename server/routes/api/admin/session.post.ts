@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import {
   createError,
   defineEventHandler,
@@ -93,7 +93,7 @@ export default defineEventHandler(async (event) => {
          values ($1, current_timestamp + interval '8 hours', $2, $3)`,
         [
           sessionId,
-          fingerprint.slice(0, 180),
+          createHash("sha256").update(fingerprint).digest("hex"),
           String(event.req.headers.get("user-agent") ?? "").slice(0, 500),
         ],
       );
