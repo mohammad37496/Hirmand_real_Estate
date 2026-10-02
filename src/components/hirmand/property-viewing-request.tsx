@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CalendarDays, Check, Clock3, X } from "lucide-react";
+import { CalendarDays, Check, Clock3, Download, ExternalLink, X } from "lucide-react";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import type { PropertyAvailabilityStatus } from "@/lib/properties";
 import "@/property-viewing-request.css";
@@ -43,6 +43,90 @@ function todayIsoDate() {
 
 function toIranIso(date: string, time: string) {
   return new Date(`${date}T${time}:00+03:30`).toISOString();
+}
+
+function calendarUtcStamp(date: string, time: string) {
+  return toIranIso(date, time).replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+}
+
+function escapeIcs(value: string) {
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\r?\n/g, "\\n");
+}
+
+function createViewingIcs(
+  property: PropertyViewingRequestProps["property"],
+  date: string,
+  time: string,
+  trackingToken: string,
+) {
+  const start = toIranIso(date, time);
+  const end = new Date(new Date(start).getTime() + 45 * 60 * 1000).toISOString();
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Hirmand Real Estate//Viewing//FA",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `UID:hirmand-viewing-${property.id}-${date}-${time.replace(":", "")}@hirmandrealestate.ir`,
+    `DTSTAMP:${stamp}`,
+    `DTSTART:${calendarUtcStamp(date, time)}`,
+    `DTEND:${end.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")}`,
+    `SUMMARY:${escapeIcs("بازدید ملک هیرمند | " + property.title)}`,
+    `LOCATION:${escapeIcs(property.neighborhood + "، اصفهان")}`,
+    `DESCRIPTION:${escapeIcs(
+      "قرار پیشنهادی بازدید از فایل " +
+        property.title +
+        " در هیرمند\\nکد رهگیری: " +
+        (trackingToken || "—") +
+        "\\nاین زمان پیشنهادی است و هماهنگی نهایی با مشاور انجام می‌شود.",
+    )}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ];
+  return lines.join("\r\n") + "\r\n";
+}
+
+function downloadViewingCalendar(
+  property: PropertyViewingRequestProps["property"],
+  date: string,
+  time: string,
+  trackingToken: string,
+) {
+  const ics = createViewingIcs(property, date, time, trackingToken);
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `hirmand-viewing-${property.slug || property.id}.ics`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function googleCalendarUrl(
+  property: PropertyViewingRequestProps["property"],
+  date: string,
+  time: string,
+  trackingToken: string,
+) {
+  const start = calendarUtcStamp(date, time);
+  const endIso = new Date(new Date(toIranIso(date, time)).getTime() + 45 * 60 * 1000).toISOString();
+  const end = endIso.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `بازدید ملک هیرمند | ${property.title}`,
+    dates: `${start}/${end}`,
+    location: `${property.neighborhood}، اصفهان`,
+    details: `قرار پیشنهادی بازدید از فایل ${property.title}.\\nکد رهگیری: ${trackingToken || "—"}\\nاین زمان پیشنهادی است و هماهنگی نهایی با مشاور انجام می‌شود.`,
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
 export function PropertyViewingRequest({ property }: PropertyViewingRequestProps) {
@@ -180,7 +264,26 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
                     پیگیری آنلاین
                   </a>
                 </div>
-                <button type="button" className="btn-gold" onClick={close}>متوجه شدم</button>
+                <div className="property-viewing-calendar-actions">
+                  <button
+                    type="button"
+                    className="btn-gold property-viewing-calendar-btn"
+                    onClick={() => downloadViewingCalendar(property, date, time, trackingToken)}
+                  >
+                    <Download size={17} aria-hidden="true" />
+                    افزودن به تقویم
+                  </button>
+                  <a
+                    className="btn-ghost property-viewing-calendar-btn"
+                    href={googleCalendarUrl(property, date, time, trackingToken)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <ExternalLink size={17} aria-hidden="true" />
+                    Google Calendar
+                  </a>
+                </div>
+                <button type="button" className="btn-ghost property-viewing-done" onClick={close}>متوجه شدم</button>
               </div>
             ) : (
               <>
