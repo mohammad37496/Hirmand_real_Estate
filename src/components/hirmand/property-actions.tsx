@@ -1,5 +1,5 @@
 import { useEffect, useState, type MouseEvent } from "react";
-import { ArrowLeftRight, Heart, Image as ImageIcon, Printer, QrCode, Share2, X } from "lucide-react";
+import { ArrowLeftRight, FileText, Heart, Image as ImageIcon, Printer, QrCode, Share2, X } from "lucide-react";
 import { toast } from "sonner";
 import type { PropertyCardData } from "@/lib/properties";
 import { trackAnalyticsEvent } from "@/lib/analytics";
@@ -150,6 +150,45 @@ async function createShareCard(property: PropertyShareCardData) {
   return { url, png };
 }
 
+
+function buildPropertyAdText(property: PropertyShareCardData, url: string) {
+  const money = (value: string | null | undefined) => {
+    const digits = String(value ?? "").replace(/[^0-9]/g, "");
+    return digits ? Number(digits).toLocaleString("fa-IR") + " تومان" : "";
+  };
+  const price =
+    property.transactionType === "rent"
+      ? [
+          property.deposit ? `رهن: ${money(property.deposit)}` : "",
+          property.rent ? `اجاره: ${money(property.rent)}` : "",
+        ].filter(Boolean).join(" | ") || "قیمت توافقی"
+      : property.transactionType === "mortgage"
+        ? (property.deposit ? `رهن: ${money(property.deposit)}` : "قیمت توافقی")
+        : (property.price ? `قیمت: ${money(property.price)}` : "قیمت توافقی");
+  return [
+    "🏠 املاک هیرمند",
+    property.title,
+    `${TRANSACTION_LABEL[property.transactionType]} · ${PROPERTY_TYPE_LABEL[property.propertyType]}`,
+    `محله: ${property.neighborhood}`,
+    price,
+    "برای اطلاعات بیشتر و بازدید:",
+    url,
+  ].filter(Boolean).join("\n");
+}
+
+function copyPropertyAdText(property: PropertyShareCardData) {
+  const url = new URL(propertyPath(property), window.location.origin).toString();
+  const text = buildPropertyAdText(property, url);
+  if (navigator.clipboard?.writeText) {
+    return navigator.clipboard.writeText(text).then(() => {
+      toast.success("متن آماده آگهی کپی شد.");
+      trackAnalyticsEvent("property_share", property.slug);
+    });
+  }
+  window.prompt("متن آماده آگهی:", text);
+  return Promise.resolve();
+}
+
 function readCompare(): string[] {
   try {
     const raw = localStorage.getItem(COMPARE_KEY);
@@ -285,11 +324,24 @@ export function PropertyActions({
   const [favorite, setFavorite] = useState(false);
   const [compared, setCompared] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
+  const [briefOpen, setBriefOpen] = useState(false);
 
   useEffect(() => {
     setFavorite(readFavorites().includes(property.slug));
     setCompared(readCompare().includes(property.slug));
   }, [property.slug]);
+  useEffect(() => {
+    if (!qrOpen && !briefOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setQrOpen(false);
+        setBriefOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [qrOpen, briefOpen]);
+
   useEffect(() => {
     if (!qrOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -412,6 +464,34 @@ export function PropertyActions({
       <button
         type="button"
         className="property-action"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setBriefOpen(true);
+        }}
+        aria-label="برگه معرفی فایل"
+        title="برگه معرفی"
+      >
+        <FileText size={compact ? 17 : 16} />
+        {!compact ? <span>برگه معرفی</span> : null}
+      </button>
+      <button
+        type="button"
+        className="property-action"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          void copyPropertyAdText(property);
+        }}
+        aria-label="کپی متن آگهی"
+        title="کپی متن آگهی"
+      >
+        <FileText size={compact ? 17 : 16} />
+        {!compact ? <span>متن آگهی</span> : null}
+      </button>
+            <button
+        type="button"
+        className="property-action"
         onClick={onPrint}
         aria-label="چاپ فایل"
         title="چاپ فایل"
@@ -431,6 +511,54 @@ export function PropertyActions({
         {!compact ? <span>{compared ? "در مقایسه" : "مقایسه"}</span> : null}
       </button>
     </div>
+    {briefOpen ? (
+      <div
+        className="property-brief-backdrop"
+        role="presentation"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setBriefOpen(false);
+        }}
+      >
+        <section className="property-brief-dialog" role="dialog" aria-modal="true" aria-labelledby={`property-brief-title-${property.id}`}>
+          <div className="property-brief-actions no-print">
+            <button type="button" className="property-brief-close" onClick={() => setBriefOpen(false)} aria-label="بستن">
+              <X size={18} />
+            </button>
+          </div>
+          <div className="property-brief-brand">
+            <div>
+              <span>HIRMAND REAL ESTATE</span>
+              <strong>املاک هیرمند</strong>
+            </div>
+            <b>برگه معرفی فایل</b>
+          </div>
+          <div className="property-brief-main">
+            <span className="kicker">{TRANSACTION_LABEL[property.transactionType]} · {PROPERTY_TYPE_LABEL[property.propertyType]}</span>
+            <h2 id={`property-brief-title-${property.id}`}>{property.title}</h2>
+            <p>{property.neighborhood}</p>
+          </div>
+          <div className="property-brief-price">{shareCardPrice(property)}</div>
+          <div className="property-brief-grid">
+            <div><span>محله</span><strong>{property.neighborhood}</strong></div>
+            <div><span>نوع ملک</span><strong>{PROPERTY_TYPE_LABEL[property.propertyType]}</strong></div>
+            <div><span>نوع معامله</span><strong>{TRANSACTION_LABEL[property.transactionType]}</strong></div>
+            <div><span>کد فایل</span><strong dir="ltr">{property.id.replace(/[^a-z0-9]/gi, "").slice(-6).toUpperCase()}</strong></div>
+          </div>
+          <div className="property-brief-url" dir="ltr">{new URL(propertyPath(property), window.location.origin).toString()}</div>
+          <p className="property-brief-note">این برگه برای اشتراک‌گذاری و چاپ طراحی شده است. برای قیمت و شرایط نهایی با مشاور هیرمند هماهنگ کنید.</p>
+          <div className="property-brief-footer">
+            <span>املاک هیرمند · اصفهان</span>
+            <div className="no-print">
+              <button type="button" className="btn-gold" onClick={() => window.print()}>
+                <Printer size={16} /> چاپ / ذخیره PDF
+              </button>
+              <button type="button" className="btn-ghost" onClick={() => setBriefOpen(false)}>بستن</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    ) : null}
+
     {qrOpen ? (
       <div
         className="property-qr-backdrop"
