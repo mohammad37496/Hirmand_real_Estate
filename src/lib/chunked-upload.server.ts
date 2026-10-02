@@ -72,6 +72,18 @@ export type ChunkedUploadConfig = {
     text: Record<string, string>;
     totalBytes: number;
   }) => Promise<unknown>;
+  /** Optional server-side media transformation before the final object is persisted. */
+  transform?: (input: {
+    data: Buffer;
+    contentType: string;
+    pathname: string;
+    session: SessionRow;
+    totalBytes: number;
+  }) => Promise<{
+    data: Buffer;
+    contentType: string;
+    pathname: string;
+  }>;
 };
 
 const SIGNATURE_REJECTION = Symbol("signature-rejection");
@@ -345,13 +357,26 @@ export async function handleChunkedUpload(
         pathname: String(session.pathname),
         contentType: String(session.content_type),
         sessionId: uploadId,
+        transform: config.transform
+          ? (input) => config.transform!({
+              ...input,
+              session,
+              totalBytes: receivedBytes,
+            })
+          : undefined,
       });
 
       // The declared type and the extension are both attacker-controlled. Read
       // the real header bytes back and refuse anything that is not what we are
       // about to persist, so a disguised HTML/SVG payload can never be served
       // from our own origin.
-      await assertStoredContentType(stored, String(session.content_type));
+      const storedContentType = stored.id
+        ? (await getMediaMeta(stored.id))?.contentType
+        : null;
+      await assertStoredContentType(
+        stored,
+        storedContentType || String(session.content_type),
+      );
 
       const result = await config.finish({
         stored,
