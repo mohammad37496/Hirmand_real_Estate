@@ -3163,7 +3163,7 @@ body:has(.property-detail-page) .footer a:hover {
     inset: auto 8px max(10px, env(safe-area-inset-bottom)) 8px !important;
     z-index: 80 !important;
     display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
     align-items: stretch !important;
     gap: 8px !important;
     padding: 8px !important;
