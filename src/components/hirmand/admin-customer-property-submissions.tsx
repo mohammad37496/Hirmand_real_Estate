@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, ExternalLink, Film, ImageIcon, Phone, Pencil, RefreshCw, Save, Search, XCircle } from "lucide-react";
+import { ArrowDown, ArrowUp, CheckCircle2, ExternalLink, Film, ImageIcon, Phone, Pencil, RefreshCw, Save, Search, Star, Trash2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { TEAM } from "@/lib/site";
 import { formatToman } from "@/lib/money";
 import { isVideoUrl } from "@/lib/media";
+import { getPublishReadiness } from "@/lib/property-publish-readiness";
 import "./admin-customer-property-submissions.css";
 
 type Submission = {
@@ -102,6 +103,26 @@ export function AdminCustomerPropertySubmissions() {
     setEditDraft((current) => ({ ...(current || {}), [key]: value }));
   }
 
+  function mediaDraftItems() {
+    if (!editDraft) return [];
+    return Array.isArray(editDraft.images) ? editDraft.images.filter((v): v is string => typeof v === "string") : [];
+  }
+
+  function moveMedia(index: number, delta: -1 | 1) {
+    const items = mediaDraftItems();
+    const target = index + delta;
+    if (target < 0 || target >= items.length) return;
+    const next = [...items];
+    [next[index], next[target]] = [next[target]!, next[index]!];
+    setEditDraft((current) => ({ ...(current || {}), images: next }));
+  }
+
+  function removeMedia(index: number) {
+    const items = mediaDraftItems();
+    const next = items.filter((_, itemIndex) => itemIndex !== index);
+    setEditDraft((current) => ({ ...(current || {}), images: next }));
+  }
+
   async function saveDraft() {
     if (!selected || !editDraft || savingDraft) return;
     setSavingDraft(true);
@@ -136,6 +157,7 @@ export function AdminCustomerPropertySubmissions() {
         rent: moneyValue("rent"),
         description: String(editDraft.description ?? "").trim(),
         features: featuresValue,
+        images: mediaDraftItems(),
       };
       const response = await fetch("/api/admin-customer-property-submissions", {
         method:"POST",
@@ -294,6 +316,38 @@ export function AdminCustomerPropertySubmissions() {
                       </div>
                     </div>
                   ) : null}
+                  {editDraft ? (() => {
+                    const readiness = getPublishReadiness({
+                      transactionType: String(editDraft.transactionType ?? "sell") as "sell"|"buy"|"rent"|"mortgage",
+                      title: String(editDraft.title ?? ""),
+                      neighborhood: String(editDraft.neighborhood ?? ""),
+                      description: String(editDraft.description ?? ""),
+                      contactName: consultant.name,
+                      contactPhone: consultant.phone,
+                      price: String(editDraft.price ?? ""),
+                      deposit: String(editDraft.deposit ?? ""),
+                      rent: String(editDraft.rent ?? ""),
+                      imageCount: mediaDraftItems().filter((src) => !isVideoUrl(src)).length,
+                      areaM2: String(editDraft.areaM2 ?? ""),
+                      features: Array.isArray(editDraft.features) ? editDraft.features.join("\n") : String(editDraft.features ?? ""),
+                      latitude: editDraft.latitude == null ? null : Number(editDraft.latitude),
+                      longitude: editDraft.longitude == null ? null : Number(editDraft.longitude),
+                    });
+                    const okCount = readiness.checks.filter((item) => item.state === "ok").length;
+                    return (
+                      <div className="admin-customer-quality">
+                        <div className="admin-customer-quality-head">
+                          <div><span className="kicker">کنترل کیفیت</span><strong>آمادگی انتشار: {okCount.toLocaleString("fa-IR")} از {readiness.checks.length.toLocaleString("fa-IR")} مورد</strong></div>
+                          <span className={readiness.ready ? "is-ready" : "is-blocked"}>{readiness.ready ? "آماده انتشار" : "نیازمند اصلاح"}</span>
+                        </div>
+                        <div className="admin-customer-quality-list">
+                          {readiness.checks.map((check) => <span key={check.key} className={"quality-"+check.state}>{check.state==="ok" ? "✓" : check.state==="blocker" ? "!" : "•"} {check.label}</span>)}
+                        </div>
+                        {readiness.blockers.length ? <div className="admin-customer-quality-messages"><strong>موارد الزامی:</strong>{readiness.blockers.map((item)=><span key={item}>{item}</span>)}</div> : null}
+                        {readiness.warnings.length ? <div className="admin-customer-quality-messages warnings"><strong>پیشنهاد:</strong>{readiness.warnings.map((item)=><span key={item}>{item}</span>)}</div> : null}
+                      </div>
+                    );
+                  })() : null}
                   <div className="admin-customer-submission-detail-grid">
                     <div><span>آدرس</span><strong>{String(data.address || "ثبت نشده")}</strong></div>
                     <div><span>خواب / حمام</span><strong>{String(data.bedrooms ?? "—")} / {String(data.bathrooms ?? "—")}</strong></div>
@@ -301,7 +355,25 @@ export function AdminCustomerPropertySubmissions() {
                     <div><span>سال ساخت</span><strong>{String(data.builtYear ?? "—")}</strong></div>
                     <div className="wide"><span>توضیحات</span><p>{String(data.description ?? "—")}</p></div>
                   </div>
-                  {media.length ? <div className="admin-customer-submission-media">{media.map((src)=><div key={src}>{isVideoUrl(src)?<video src={src} controls preload="metadata"/>:<img src={src} alt="" loading="lazy"/>}{isVideo(src)?<small><Film size={12}/> ویدئو</small>:null}</div>)}</div> : null}
+                  {mediaDraftItems().length ? (
+                    <div className="admin-customer-media-manager">
+                      <div className="admin-customer-media-manager-head"><span className="kicker">مدیریت رسانه</span><small>اولین تصویر، کاور فایل خواهد بود.</small></div>
+                      <div className="admin-customer-submission-media">
+                        {mediaDraftItems().map((src,index)=>(
+                          <div key={src} className={index===0 && !isVideoUrl(src) ? "is-cover" : ""}>
+                            {isVideoUrl(src)?<video src={src} controls preload="metadata"/>:<img src={src} alt="" loading="lazy"/>}
+                            <div className="admin-customer-media-controls">
+                              <button type="button" onClick={()=>moveMedia(index,-1)} disabled={index===0}><ArrowUp size={13}/></button>
+                              <button type="button" onClick={()=>moveMedia(index,1)} disabled={index===mediaDraftItems().length-1}><ArrowDown size={13}/></button>
+                              {index===0 && !isVideoUrl(src) ? <span title="کاور"><Star size={12}/></span> : null}
+                              <button type="button" className="danger" onClick={()=>removeMedia(index)} disabled={mediaDraftItems().length<=1}><Trash2 size={13}/></button>
+                            </div>
+                            {index===0 && !isVideoUrl(src) ? <small><Star size={12}/> کاور</small> : isVideoUrl(src)?<small><Film size={12}/> ویدئو</small>:null}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                   {statusFilter === "pending" ? (
                     <label className="field"><span>یادداشت بررسی (اختیاری)</span><textarea rows={3} value={reviewNote} onChange={(e)=>setReviewNote(e.target.value)} placeholder="مثلاً سند بررسی شد، قیمت نیاز به تأیید دارد…"/></label>
                   ) : submission.reviewNote ? (
