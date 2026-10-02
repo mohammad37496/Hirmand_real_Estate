@@ -88,7 +88,7 @@ export type Property = {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  virtualTourUrl: string;
+  virtualTourUrl?: string;
   latitude: number | null;
   longitude: number | null;
   priceDropPercent?: number | null;
