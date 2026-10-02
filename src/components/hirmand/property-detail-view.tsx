@@ -72,6 +72,7 @@ import "@/property-price-history.css";
 import "@/property-feature-enhancements.css";
 import "@/property-new-features.css";
 import "@/property-next-features.css";
+import "@/property-expert-requests.css";
 import "@/property-decision-dossier.css";
 import "@/property-question-log.css";
 import "@/property-negotiation-log.css";
@@ -114,6 +115,7 @@ import { PropertyDocumentRequest } from "@/components/hirmand/property-document-
 import { PropertyBackInMarketAlert } from "@/components/hirmand/property-back-in-market-alert";
 import { PropertyFinancingRequest } from "@/components/hirmand/property-financing-request";
 import { PropertyPrepBudget } from "@/components/hirmand/property-prep-budget";
+import { PropertyExpertRequests } from "@/components/hirmand/property-expert-requests";
 import { PropertyNeighborhoodInsight } from "@/components/hirmand/property-neighborhood-insight";
 import { PropertyReport } from "@/components/hirmand/property-report";
 import { PropertyCallbackRequest } from "@/components/hirmand/property-callback-request";
@@ -1760,6 +1762,7 @@ export function PropertyDetailView({
           {isClosedFile ? <a href="#property-back-in-market">بازگشت فایل</a> : null}
           {(property.transactionType === "buy" || property.transactionType === "sell") && property.price ? <a href="#property-financing-request">تأمین مالی</a> : null}
           <a href="#property-prep-budget">بازسازی</a>
+          <a href="#property-expert-requests">خدمات تخصصی</a>
           <a href="#property-questions">پرسش‌ها</a>
           <a href="#property-open-house">اوپن‌هاوس</a>
           <a href="#property-tools-section">ابزارها</a>
@@ -2119,6 +2122,7 @@ export function PropertyDetailView({
               <PropertyFinancingRequest property={property} />
             ) : null}
             <PropertyPrepBudget property={property} />
+            <PropertyExpertRequests property={property} />
             <PropertyDocumentRequest property={property} />
             <PropertyVirtualTour property={property} />
             <PropertyNeighborhoodInsight property={property} />
