@@ -132,7 +132,7 @@ export default defineEventHandler(async (event) => {
 
     const previousReviewNote = String(submission.review_note ?? "").trim();
     await sql.query(
-      "update customer_property_submissions set status='pending', review_note='', reviewed_at=null, owner_name=$2, owner_phone=$3, property_data=$4::jsonb where id=$1",
+      "update customer_property_submissions set status='pending', review_note='', reviewed_at=null, updated_at=current_timestamp, owner_name=$2, owner_phone=$3, property_data=$4::jsonb where id=$1",
       [submission.id, parsed.data.ownerName, parsed.data.ownerPhone, JSON.stringify(parsed.data)],
     );
     if (submission.lead_id) {
