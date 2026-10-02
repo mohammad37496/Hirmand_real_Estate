@@ -104,6 +104,8 @@ import { PropertyDealChecklist } from "@/components/hirmand/property-deal-checkl
 import { PropertyScenarioAnalysis } from "@/components/hirmand/property-scenario-analysis";
 import { PropertyPersonalScore } from "@/components/hirmand/property-personal-score";
 import { PropertyVisitOutcome } from "@/components/hirmand/property-visit-outcome";
+import { PropertyReviewAlerts } from "@/components/hirmand/property-review-alerts";
+import { PropertyFollowUpReminder } from "@/components/hirmand/property-follow-up-reminder";
 import { PropertyInquiryTools } from "@/components/hirmand/property-inquiry-tools";
 import { PropertyVisitReport } from "@/components/hirmand/property-visit-report";
 import { formatToman } from "@/lib/money";
@@ -1680,6 +1682,8 @@ export function PropertyDetailView({
         <PropertyScenarioAnalysis property={property} />
         <PropertyPersonalScore property={property} />
         <PropertyVisitOutcome property={property} />
+        <PropertyReviewAlerts property={property} />
+        <PropertyFollowUpReminder property={property} />
         <PropertyInquiryTools property={property} />
         <PropertyVisitReport property={property} />
 
