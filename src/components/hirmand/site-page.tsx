@@ -704,8 +704,8 @@ function Contact() {
   );
 }
 
-function FAQ() {
-  const [orderedFaqs, setOrderedFaqs] = useState<Array<(typeof FAQS)[number]>>([...FAQS]);
+function FAQ({ items }: { items: ReadonlyArray<{ q: string; a: string }> }) {
+  const [orderedFaqs, setOrderedFaqs] = useState<Array<{ q: string; a: string }>>([...items]);
 
   useEffect(() => {
     let cancelled = false;
@@ -729,7 +729,7 @@ function FAQ() {
         styles.fontFamily,
       ].join(" ");
 
-      const measured = [...FAQS].sort(
+      const measured = [...items].sort(
         (a, b) => context.measureText(a.q).width - context.measureText(b.q).width,
       );
 
@@ -748,7 +748,7 @@ function FAQ() {
       cancelled = true;
       window.removeEventListener("resize", measureAndSort);
     };
-  }, []);
+  }, [items]);
 
   return (
     <Reveal as="section" className="section">
@@ -797,9 +797,11 @@ function Location() {
 export function SitePage({
   initialProperties = [],
   announcement = "",
+  faqItems = FAQS,
 }: {
   initialProperties?: PropertyCardData[];
   announcement?: string;
+  faqItems?: ReadonlyArray<{ q: string; a: string }>;
 }) {
   const [draft, setDraft] = useState<InquiryDraft>({
     deal: "خرید",
@@ -857,7 +859,7 @@ export function SitePage({
         <Team />
         <TrackingCta />
         <Inquiry draft={draft} />
-        <FAQ />
+        <FAQ items={faqItems} />
         <Contact />
         <Location />
       </main>

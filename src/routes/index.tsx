@@ -1,19 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SitePage } from "@/components/hirmand/site-page";
-import { FAQ_JSON_LD } from "@/lib/site";
+import { buildFaqJsonLd, getPublicFaqs } from "@/lib/site-content";
 import { enhancedOrganizationJsonLd, homeHead } from "@/lib/seo";
 import { getPublicSiteSettings } from "@/lib/site-settings";
 
 // The marketing shell must render even when the optional property database is
 // unavailable. Listings hydrate client-side after the first paint.
 export const Route = createFileRoute("/")({
-  loader: async () => ({ settings: await getPublicSiteSettings() }),
+  loader: async () => {
+    const [settings, faqs] = await Promise.all([getPublicSiteSettings(), getPublicFaqs()]);
+    return { settings, faqs };
+  },
   component: Home,
   head: ({ loaderData }) => homeHead(loaderData?.settings),
 });
 
 function Home() {
-  const { settings } = Route.useLoaderData();
+  const { settings, faqs } = Route.useLoaderData();
   return (
     <>
       <script
@@ -22,9 +25,9 @@ function Home() {
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_JSON_LD) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildFaqJsonLd(faqs)) }}
       />
-      <SitePage initialProperties={[]} announcement={settings.announcementEnabled ? settings.announcementText : ""} />
+      <SitePage initialProperties={[]} announcement={settings.announcementEnabled ? settings.announcementText : ""} faqItems={faqs.map((item) => ({ q: item.question, a: item.answer }))} />
     </>
   );
 }

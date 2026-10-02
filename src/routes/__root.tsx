@@ -4,6 +4,7 @@ import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { MusicPlayer } from "@/components/hirmand/music-player";
 import { SITE } from "@/lib/site";
+import { trackPublic404 } from "@/lib/seo-redirects";
 import appCss from "../styles.css?url";
 import propertiesProCss from "../properties-pro.css?url";
 import themeProCss from "../theme-pro.css?url";
@@ -113,6 +114,18 @@ function RootDocument() {
 }
 
 function NotFoundPage() {
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.startsWith("/api/")) return;
+    void trackPublic404({
+      data: {
+        path,
+        referrer: document.referrer,
+        userAgent: navigator.userAgent,
+      },
+    }).catch(() => {});
+  }, []);
+
   return (
     <main className="property-not-found" aria-labelledby="not-found-title">
       <h1 id="not-found-title">صفحه موردنظر پیدا نشد</h1>

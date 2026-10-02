@@ -6,6 +6,7 @@ import {
   Copy,
   ExternalLink,
   FileEdit,
+  FileText,
   Home,
   KeyRound,
   LayoutDashboard,
@@ -34,11 +35,13 @@ import {
   DatabaseBackup,
   ListTodo,
   ShieldCheck,
+  ShieldAlert,
   CalendarClock,
   ArchiveRestore,
   ClipboardList,
   Settings,
   HardDrive,
+  Route as RouteIcon,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import { isInvalidIntegerInput, normalizeMoneyText } from "@/lib/property-input-normalization";
@@ -99,7 +102,13 @@ import { AdminAuditLog } from "@/components/hirmand/admin-audit-log";
 import "@/admin-automation.css";
 import { AdminSiteSettings } from "@/components/hirmand/admin-site-settings";
 import { AdminMediaHealth } from "@/components/hirmand/admin-media-health";
+import { AdminSecurityCenter } from "@/components/hirmand/admin-security-center";
+import { AdminSeoRedirects } from "@/components/hirmand/admin-seo-redirects";
+import { AdminContentStudio } from "@/components/hirmand/admin-content-studio";
 import "@/admin-site-settings.css";
+import "@/admin-security.css";
+import "@/admin-seo-redirects.css";
+import "@/admin-content-studio.css";
 import "@/admin-property-performance.css";
 import "@/property-feature-enhancements.css";
 import "@/admin-customer-inbox.css";
@@ -121,7 +130,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth";
+type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -542,6 +551,9 @@ export function AdminPropertiesPage() {
       { view: "audit" as ViewMode, label: "گزارش فعالیت", icon: ClipboardList },
       { view: "settings" as ViewMode, label: "تنظیمات سایت", icon: Settings },
       { view: "mediaHealth" as ViewMode, label: "سلامت رسانه", icon: HardDrive },
+      { view: "security" as ViewMode, label: "امنیت مدیران", icon: ShieldAlert },
+      { view: "seoRedirects" as ViewMode, label: "ریدایرکت و ۴۰۴", icon: RouteIcon },
+      { view: "contentStudio" as ViewMode, label: "استودیو محتوا", icon: FileText },
       { view: "divar" as ViewMode, label: "فایل‌های دیوار", icon: Globe2 },
     ],
     [],
@@ -1746,8 +1758,14 @@ export function AdminPropertiesPage() {
                                               ? "تنظیمات سایت و SEO"
                                               : view === "mediaHealth"
                                                 ? "سلامت و پاک‌سازی رسانه‌ها"
-                                    : view === "divar"
-                          ? "فایل‌های دیوار"
+                                                : view === "security"
+                                                  ? "امنیت مدیران"
+                                                  : view === "seoRedirects"
+                                                    ? "ریدایرکت و ۴۰۴"
+                                                    : view === "contentStudio"
+                                                      ? "استودیو محتوا"
+                                                      : view === "divar"
+                                                        ? "فایل‌های دیوار"
                           : form.id
                         ? "ویرایش فایل"
                         : "افزودن فایل جدید"}            </h1>
@@ -1784,6 +1802,12 @@ export function AdminPropertiesPage() {
                                         ? "کنترل اطلاعات تماس، شبکه‌های اجتماعی، SEO و اعلان سایت"
                                         : view === "mediaHealth"
                                           ? "بررسی مصرف دیتابیس رسانه، رسانه‌های یتیم و آپلودهای نیمه‌کاره"
+                                            : view === "security"
+                                              ? "مدیریت نشست‌های فعال و کنترل دسترسی مدیران"
+                                              : view === "seoRedirects"
+                                                ? "مدیریت ریدایرکت‌های دائمی/موقت و گزارش خطاهای ۴۰۴"
+                                                : view === "contentStudio"
+                                                  ? "ویرایش راهنماها و پرسش‌های متداول بدون تغییر کد"
                               : view === "divar"
                         ? "دریافت، فیلتر و ورود فایل‌های شخصی از دیوار"
                         : form.contactName
@@ -2224,6 +2248,9 @@ export function AdminPropertiesPage() {
           {view === "audit" ? <AdminAuditLog /> : null}
           {view === "settings" ? <AdminSiteSettings /> : null}
           {view === "mediaHealth" ? <AdminMediaHealth /> : null}
+          {view === "security" ? <AdminSecurityCenter /> : null}
+          {view === "seoRedirects" ? <AdminSeoRedirects /> : null}
+          {view === "contentStudio" ? <AdminContentStudio /> : null}
           {view === "divar" ? <AdminDivarFiles /> : null}
 
           {view === "form" ? (
