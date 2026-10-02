@@ -227,9 +227,17 @@ export default defineEventHandler(async (event) => {
     throw error;
   }
 
+  const normalizedTitle = parsed.data.title.trim().toLowerCase();
+  const duplicateRows = await sql.query<{ id: string; public_tracking_token: string; owner_name: string; owner_phone: string }>(
+    "select id,public_tracking_token,owner_name,owner_phone from customer_property_submissions where status in ('pending','approved') and (owner_phone=$1 or ((property_data->>'neighborhood')=$2 and (property_data->>'areaM2')=$3 and lower(coalesce(property_data->>'title',''))=$4)) order by created_at desc limit 3",
+    [parsed.data.ownerPhone, parsed.data.neighborhood, String(parsed.data.areaM2), normalizedTitle],
+  );
+
   return {
     success:true,
     duplicate:false,
+    possibleDuplicate: duplicateRows.length > 0,
+    possibleDuplicateCount: duplicateRows.length,
     submissionId,
     trackingToken,
     message:"ملک شما با موفقیت برای بررسی کارشناسان هیرمند ارسال شد.",
