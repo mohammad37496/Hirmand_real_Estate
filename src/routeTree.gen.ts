@@ -263,9 +263,9 @@ export interface FileRouteTypes {
     | '/submit-property'
     | '/properties'
     | '/tracking'
-    | '/file-code
-    | '/submit-property
-    | '/request-tracking
+    | '/file-code'
+    | '/submit-property'
+    | '/request-tracking'
     | '/my-hirmand'
     | '/areas/$slug'
     | '/consultants/$id'
