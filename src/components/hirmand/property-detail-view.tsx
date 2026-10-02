@@ -33,6 +33,7 @@ import {
   Gauge,
   Handshake,
   FastForward,
+  Flag,
   Layers3,
   MapPinned,
   Home,
@@ -100,6 +101,7 @@ import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
 import { getPropertyFallbackImage, getPropertyFallbackImages, getPropertyFallbackLegacyImage, isPropertyFallbackImage } from "@/lib/property-fallback-images";
 import { areaSlug } from "@/lib/areas";
+import { SITE } from "@/lib/site";
 import { propertyPath } from "@/lib/property-path";
 import { useConsultants } from "@/components/hirmand/consultants-context";
 import { getPublishedPropertyPriceHistory, isFeaturedActive, type PropertyPriceHistoryItem } from "@/lib/properties";
@@ -364,6 +366,19 @@ function similarRequestHref(property: Property) {
     neighborhood: property.neighborhood,
   });
   return `/?${params.toString()}#inquiry`;
+}
+
+function propertyReportWhatsappHref(property: Property, type: string, note: string) {
+  const code = fileCode(property.id);
+  const message = [
+    "سلام، می‌خواهم یک مورد درباره فایل هیرمند گزارش کنم.",
+    `کد فایل: ${code}`,
+    `عنوان فایل: ${property.title}`,
+    `نوع گزارش: ${type}`,
+    note.trim() ? `توضیح: ${note.trim()}` : "",
+    "لطفاً اطلاعات فایل بررسی شود.",
+  ].filter(Boolean).join("\n");
+  return `${SITE.whatsappDirect}?text=${encodeURIComponent(message)}`;
 }
 
 
@@ -1079,6 +1094,9 @@ export function PropertyDetailView({
   const viewedPropertySlug = property?.slug;
   const [priceHistory, setPriceHistory] = useState<PropertyPriceHistoryItem[]>([]);
   const [priceWatchEnabled, setPriceWatchEnabled] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportType, setReportType] = useState("قیمت یا مشخصات نادرست");
+  const [reportNote, setReportNote] = useState("");
 
   // The gallery list is derived before the early return below: a hook that only
   // runs for a present property would break React's hook order the moment the
@@ -1483,7 +1501,78 @@ export function PropertyDetailView({
                     <Sparkles size={16} aria-hidden="true" />
                     درخواست فایل مشابه
                   </a>
+                  <button
+                    type="button"
+                    className="property-report-btn"
+                    onClick={() => {
+                      setReportOpen(true);
+                      setReportNote("");
+                      trackAnalyticsEvent("property_report", property.slug);
+                    }}
+                  >
+                    <Flag size={16} aria-hidden="true" />
+                    گزارش ایراد فایل
+                  </button>
                 </div>
+                {reportOpen ? (
+                  <div className="property-report-backdrop" role="presentation" onMouseDown={(event) => {
+                    if (event.target === event.currentTarget) setReportOpen(false);
+                  }}>
+                    <section className="property-report-dialog" role="dialog" aria-modal="true" aria-labelledby="property-report-title">
+                      <button type="button" className="property-report-close" onClick={() => setReportOpen(false)} aria-label="بستن">
+                        <X size={18} />
+                      </button>
+                      <span className="kicker">بازخورد فایل</span>
+                      <h2 id="property-report-title">اشکال این فایل را به هیرمند اطلاع دهید.</h2>
+                      <p>گزارش شما فقط برای بررسی اطلاعات همین فایل آماده می‌شود.</p>
+                      <div className="property-report-types">
+                        {[
+                          "قیمت یا مشخصات نادرست",
+                          "وضعیت فایل تغییر کرده",
+                          "تصویر یا توضیحات نامرتبط",
+                          "مشکل در موقعیت یا محله",
+                          "سایر",
+                        ].map((type) => (
+                          <button
+                            key={type}
+                            type="button"
+                            className={reportType === type ? "is-selected" : ""}
+                            onClick={() => setReportType(type)}
+                          >
+                            {type}
+                          </button>
+                        ))}
+                      </div>
+                      <label className="property-report-note field">
+                        <span>توضیح کوتاه (اختیاری)</span>
+                        <textarea
+                          rows={3}
+                          value={reportNote}
+                          onChange={(event) => setReportNote(event.target.value)}
+                          placeholder="مثلاً قیمت فایل تغییر کرده یا ملک اجاره رفته است..."
+                          maxLength={500}
+                        />
+                      </label>
+                      <div className="property-report-actions">
+                        <button type="button" className="btn-ghost" onClick={() => setReportOpen(false)}>انصراف</button>
+                        <a
+                          className="btn-gold"
+                          href={propertyReportWhatsappHref(property, reportType, reportNote)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => {
+                            trackAnalyticsEvent("property_report", property.slug);
+                            setReportOpen(false);
+                          }}
+                        >
+                          <WhatsAppIcon size={17} aria-hidden="true" />
+                          ارسال گزارش در واتساپ
+                        </a>
+                      </div>
+                    </section>
+                  </div>
+                ) : null}
+
                 <button
                   type="button"
                   className={"property-price-watch-button" + (priceWatchEnabled ? " is-active" : "")}
