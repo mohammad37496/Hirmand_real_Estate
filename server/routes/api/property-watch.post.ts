@@ -128,6 +128,9 @@ export default defineEventHandler(async (event) => {
        s.deposit as watched_deposit,
        s.rent as watched_rent,
        s.availability_status as watched_availability,
+       s.target_price,
+       s.target_deposit,
+       s.target_rent,
        p.title,
        p.price,
        p.deposit,
@@ -155,7 +158,16 @@ export default defineEventHandler(async (event) => {
       rent: row.rent,
       availability: row.availability_status,
     };
-    const kind = alertType(previous, current);
+    const previousAmount = normalizeMoney(row.watched_price ?? row.watched_deposit ?? row.watched_rent);
+    const currentAmount = normalizeMoney(row.price ?? row.deposit ?? row.rent);
+    const targetPrice = normalizeMoney(row.target_price);
+    const targetDeposit = normalizeMoney(row.target_deposit);
+    const targetRent = normalizeMoney(row.target_rent);
+    const targetHit =
+      (targetPrice != null && current.price != null && normalizeMoney(current.price) != null && normalizeMoney(current.price)! <= targetPrice && (previous.price == null || normalizeMoney(previous.price)! > targetPrice)) ||
+      (targetDeposit != null && current.deposit != null && normalizeMoney(current.deposit) != null && normalizeMoney(current.deposit)! <= targetDeposit && (previous.deposit == null || normalizeMoney(previous.deposit)! > targetDeposit)) ||
+      (targetRent != null && current.rent != null && normalizeMoney(current.rent) != null && normalizeMoney(current.rent)! <= targetRent && (previous.rent == null || normalizeMoney(previous.rent)! > targetRent));
+    const kind = targetHit ? "target_reached" as const : alertType(previous, current);
     if (!kind) continue;
 
     const existing = await sql.query<{ id: string }>(
@@ -170,12 +182,17 @@ export default defineEventHandler(async (event) => {
       [visitorId, String(row.property_id), kind],
     );
     if (!existing[0]) {
-      const previousAmount = normalizeMoney(row.watched_price ?? row.watched_deposit ?? row.watched_rent);
-      const currentAmount = normalizeMoney(row.price ?? row.deposit ?? row.rent);
       const direction = currentAmount != null && previousAmount != null && currentAmount < previousAmount ? "کاهش" : "تغییر";
+      const targetMessage = targetPrice != null && normalizeMoney(row.price) != null && normalizeMoney(row.price)! <= targetPrice
+        ? "قیمت"
+        : targetDeposit != null && normalizeMoney(row.deposit) != null && normalizeMoney(row.deposit)! <= targetDeposit
+          ? "رهن"
+          : "اجاره";
       const message = kind === "availability_change"
         ? row.title + " · وضعیت فایل از " + String(row.watched_availability ?? "نامشخص") + " به " + String(row.availability_status ?? "نامشخص") + " تغییر کرد."
-        : row.title + " · " + direction + " قیمت/شرایط فایل";
+        : kind === "target_reached"
+          ? row.title + " · " + targetMessage + " به هدف تعیین‌شده شما رسید یا از آن پایین‌تر شد."
+          : row.title + " · " + direction + " قیمت/شرایط فایل";
       await sql.query(
         `insert into property_watch_alerts
           (visitor_id, property_id, property_slug, alert_type,
@@ -239,6 +256,11 @@ export default defineEventHandler(async (event) => {
       updatedAt: row.updated_at == null ? null : new Date(String(row.updated_at)).toISOString(),
       watchedPrice: normalizeMoney(row.watched_price),
       currentPrice: normalizeMoney(row.price),
+      target: {
+        price: normalizeMoney(row.target_price),
+        deposit: normalizeMoney(row.target_deposit),
+        rent: normalizeMoney(row.target_rent),
+      },
       currentPriceLabel: formatAmount(normalizeMoney(row.price)),
     })),
     alerts: alerts.map((row) => ({
