@@ -24,6 +24,7 @@ import { AdminActionCenter } from "@/components/hirmand/admin-action-center";
 import { AdminSalesControlCenter } from "@/components/hirmand/admin-sales-control-center";
 import { AdminPropertyLifecyclePanel } from "@/components/hirmand/admin-property-lifecycle-panel";
 import { AdminNeighborhoodDemandRadar } from "@/components/hirmand/admin-neighborhood-demand-radar";
+import { AdminVisitFeedback } from "@/components/hirmand/admin-visit-feedback";
 import { AdminPropertyReports } from "@/components/hirmand/admin-property-reports";
 import { fa, faBytes } from "@/components/hirmand/admin-ui-utils";
 
@@ -777,6 +778,8 @@ export function AdminDashboard({
       <AdminNeighborhoodDemandRadar />
 
       <AdminPropertyReports />
+
+      <AdminVisitFeedback />
 
       <div style={{ marginTop: 18 }}><AdminPropertyLifecyclePanel /></div>
 
