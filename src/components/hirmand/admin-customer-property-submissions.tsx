@@ -212,7 +212,7 @@ export function AdminCustomerPropertySubmissions() {
       const response = await fetch("/api/admin-customer-property-submissions", {
         method:"POST",
         headers:{"content-type":"application/json"},
-        body:JSON.stringify({ action:"export", status:statusFilter, query:appliedQuery, fromDate, toDate }),
+        body:JSON.stringify({ action:"export", status:statusFilter, query:appliedQuery, fromDate, toDate, queueFilter }),
       });
       if (!response.ok) {
         const data = await response.json().catch(() => null) as { statusMessage?:string } | null;
@@ -415,13 +415,18 @@ export function AdminCustomerPropertySubmissions() {
       </div>
       <div className="admin-customer-queue-toolbar"><span>نمای فعلی: <strong>{quickFilterLabel}</strong></span>{queueFilter !== "all" ? <button type="button" className="btn-ghost" onClick={()=>{setQueueFilter("all");setPage(1);setSelectedIds(new Set());}}>نمایش همه</button> : null}</div>
 
+      <div className="admin-customer-consultant-workload">
+        <span className="admin-customer-consultant-workload-label">بار کاری در صف:</span>
+        {queueStats.consultants.map((person)=><span key={person.phone} className="admin-customer-consultant-workload-item"><span>{person.name}</span><strong>{person.count.toLocaleString("fa-IR")}</strong></span>)}
+      </div>
+
       <div className="admin-customer-submissions-status-tabs">
         {([
           ["pending","در انتظار",counts.pending],
           ["approved","تأییدشده",counts.approved],
           ["rejected","ردشده",counts.rejected],
         ] as const).map(([value,label,count]) => (
-          <button type="button" key={value} className={statusFilter===value ? "is-active" : ""} onClick={()=>{setStatusFilter(value);setSelected(null);setEditDraft(null);setSelectedIds(new Set());setPage(1);}}>
+          <button type="button" key={value} className={statusFilter===value ? "is-active" : ""} onClick={()=>{setStatusFilter(value);setQueueFilter("all");setSelected(null);setEditDraft(null);setSelectedIds(new Set());setPage(1);}}>
             <span>{label}</span><strong>{count.toLocaleString("fa-IR")}</strong>
           </button>
         ))}
