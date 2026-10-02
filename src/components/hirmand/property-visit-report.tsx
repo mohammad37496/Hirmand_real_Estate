@@ -56,11 +56,17 @@ export function PropertyVisitReport({ property }: { property: Property }) {
     setDealChecks(readChecks(DEAL_KEY + property.id, DEAL_ITEMS.length));
     try {
       setNotes(localStorage.getItem("hirmand-visit-report-note-v1:" + property.id)?.slice(0, 1500) ?? "");
-    } catch {}
+    } catch {
+      // Keep the report usable when browser storage is unavailable.
+    }
   }, [property.id]);
 
   useEffect(() => {
-    try { localStorage.setItem("hirmand-visit-report-note-v1:" + property.id, notes); } catch {}
+    try {
+      localStorage.setItem("hirmand-visit-report-note-v1:" + property.id, notes);
+    } catch {
+      // Keep the note in memory when storage is blocked.
+    }
   }, [notes, property.id]);
 
   const reportText = useMemo(() => {
@@ -98,7 +104,9 @@ export function PropertyVisitReport({ property }: { property: Property }) {
         await navigator.clipboard.writeText(reportText);
         toast.success("متن گزارش کپی شد.");
       }
-    } catch {}
+    } catch {
+      // Sharing can be cancelled by the visitor.
+    }
   }
 
   return (
