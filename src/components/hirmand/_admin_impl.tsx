@@ -76,6 +76,9 @@ import { AdminPricingPanel } from "@/components/hirmand/admin-pricing-panel";
 import { AdminConsultantPicker } from "@/components/hirmand/admin-consultant-picker";
 import { AdminMusicManager } from "@/components/hirmand/admin-music-manager";
 import { AdminLeadManager } from "@/components/hirmand/admin-lead-manager";
+import { AdminLeadKanban } from "@/components/hirmand/admin-lead-kanban";
+import { AdminContractCenter } from "@/components/hirmand/admin-contract-center";
+import { AdminWhatsappCenter } from "@/components/hirmand/admin-whatsapp-center";
 import { AdminCustomerInbox } from "@/components/hirmand/admin-customer-inbox";
 import { AdminDashboard } from "@/components/hirmand/admin-dashboard";
 import { ADMIN_CSS } from "@/components/hirmand/admin-shell-css";
@@ -130,7 +133,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
+type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "kanban" | "contracts" | "whatsapp" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -536,6 +539,9 @@ export function AdminPropertiesPage() {
       { view: "productivity" as ViewMode, label: "مرکز مدیریت", icon: ListTodo },
       { view: "list" as ViewMode, label: "فایل‌های ملک", icon: LayoutDashboard },
       { view: "leads" as ViewMode, label: "درخواست‌ها", icon: UsersRound },
+      { view: "kanban" as ViewMode, label: "برد کانبان CRM", icon: ClipboardList },
+      { view: "contracts" as ViewMode, label: "قرارداد و کمیسیون", icon: WalletCards },
+      { view: "whatsapp" as ViewMode, label: "پیام‌رسانی واتساپ", icon: MessageCircle },
       { view: "messages" as ViewMode, label: "گفت‌وگوی مشتری", icon: MessageCircle },
       { view: "consultants" as ViewMode, label: "مشاوران", icon: UsersRound },
       { view: "partners" as ViewMode, label: "همکاران", icon: UsersRound },
@@ -1730,6 +1736,12 @@ export function AdminPropertiesPage() {
                     ? "موسیقی سایت"
                     : view === "leads"
                       ? "درخواست‌های مشتری"
+                      : view === "kanban"
+                        ? "برد کانبان CRM"
+                        : view === "contracts"
+                          ? "مرکز قرارداد و کمیسیون"
+                          : view === "whatsapp"
+                            ? "مرکز پیام‌رسانی واتساپ"
                       : view === "messages"
                         ? "گفت‌وگوی مشتری"
                       : view === "partners"
@@ -1778,6 +1790,12 @@ export function AdminPropertiesPage() {
                   ? `${stats.total.toLocaleString("fa-IR")} فایل در سیستم`
                   : view === "leads"
                     ? "مدیریت Leadها و پیگیری مشتریان"
+                    : view === "kanban"
+                      ? "مدیریت بصری قیف فروش و جابه‌جایی سریع لیدها"
+                      : view === "contracts"
+                        ? "اتصال قراردادهای CRM به برآورد و ثبت کمیسیون در دفتر مالی"
+                        : view === "whatsapp"
+                          ? "پیام‌های آماده، ارتباط سریع و ثبت خودکار فعالیت در CRM"
                     : view === "messages"
                       ? "پاسخ‌گویی مستقیم به مشتریانی که از طریق کد رهگیری پیام داده‌اند"
                     : view === "attendance"
@@ -2234,6 +2252,9 @@ export function AdminPropertiesPage() {
           {view === "productivity" ? <AdminProductivityCenter /> : null}
           {view === "music" ? <AdminMusicManager /> : null}
           {view === "leads" ? <AdminLeadManager /> : null}
+          {view === "kanban" ? <AdminLeadKanban /> : null}
+          {view === "contracts" ? <AdminContractCenter /> : null}
+          {view === "whatsapp" ? <AdminWhatsappCenter /> : null}
           {view === "messages" ? <AdminCustomerInbox /> : null}
           {view === "partners" ? <AdminPartnerManager /> : null}
           {view === "consultants" ? <AdminConsultantManager /> : null}
