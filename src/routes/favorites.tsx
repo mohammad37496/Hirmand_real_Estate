@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeftRight, Heart, Loader2, Search } from "lucide-react";
+import { ArrowLeftRight, Heart, Link2, Loader2, Search, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
 import { SITE } from "@/lib/site";
+import { toast } from "sonner";
 
 const FAVORITES_KEY = "hirmand-favorite-properties";
 const RECENT_PROPERTIES_KEY = "hirmand-recent-properties";
@@ -37,6 +38,44 @@ function readRecent() {
   }
 }
 
+
+function readSharedFavorites(): string[] {
+  try {
+    const value = new URLSearchParams(window.location.search).get("share");
+    return value
+      ? cleanSlugs(value.split(",").map((item) => decodeURIComponent(item)), 12)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+async function shareFavorites(slugs: string[]) {
+  const safe = cleanSlugs(slugs, 12);
+  if (!safe.length) return;
+  const url = new URL("/favorites", window.location.origin);
+  url.searchParams.set("share", safe.join(","));
+  const shareUrl = url.toString();
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: "فایل‌های منتخب هیرمند",
+        text: "سبد فایل‌های منتخب من در املاک هیرمند",
+        url: shareUrl,
+      });
+      return;
+    }
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("لینک سبد منتخب کپی شد.");
+      return;
+    }
+    window.prompt("لینک سبد منتخب:", shareUrl);
+  } catch {
+    // Sharing can be cancelled by the visitor.
+  }
+}
+
 function persistSlugs(key: string, slugs: string[]) {
   try {
     localStorage.setItem(key, JSON.stringify(slugs));
@@ -61,10 +100,17 @@ function FavoritesPage() {
   const [recentProperties, setRecentProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [recentLoading, setRecentLoading] = useState(true);
+  const [sharedFavorites, setSharedFavorites] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
-    const favoriteSlugs = readFavorites();
+    const localFavoriteSlugs = readFavorites();
+    const shared = readSharedFavorites();
+    const favoriteSlugs = cleanSlugs([...localFavoriteSlugs, ...shared], 100);
+    if (shared.length) {
+      setSharedFavorites(shared);
+      persistSlugs(FAVORITES_KEY, favoriteSlugs);
+    }
     const recentSlugs = readRecent();
 
     if (favoriteSlugs.length) {
@@ -122,12 +168,30 @@ function FavoritesPage() {
             </p>
           </div>
           <div className="favorites-head-actions">
+            {properties.length ? (
+              <button type="button" className="btn-gold" onClick={() => void shareFavorites(properties.map((property) => property.slug))}>
+                <Share2 size={15} /> اشتراک سبد
+              </button>
+            ) : null}
             <Link to="/compare" className="btn-ghost">
               <ArrowLeftRight size={15} /> مقایسه فایل‌ها
             </Link>
             <Heart size={30} />
           </div>
         </header>
+
+        {sharedFavorites.length ? (
+          <section className="favorites-share-banner" aria-label="سبد اشتراکی">
+            <div>
+              <span className="kicker">سبد اشتراکی</span>
+              <strong>{sharedFavorites.length.toLocaleString("fa-IR")} فایل از یک لینک دریافت شد.</strong>
+              <p>این فایل‌ها به ذخیره‌های این مرورگر اضافه شدند تا بعداً هم در دسترس باشند.</p>
+            </div>
+            <Link to="/properties" className="btn-ghost">
+              <Link2 size={15} /> مشاهده همه فایل‌ها
+            </Link>
+          </section>
+        ) : null}
 
         {loading ? (
           <section className="property-empty">
