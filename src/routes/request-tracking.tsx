@@ -52,6 +52,12 @@ function RequestTrackingPage() {
   const [result, setResult] = useState<TrackingResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [actionBusy, setActionBusy] = useState(false);
+  const [rescheduleAt, setRescheduleAt] = useState("");
+  const [feedbackRating, setFeedbackRating] = useState(5);
+  const [feedbackInterest, setFeedbackInterest] = useState<"interested" | "unsure" | "not_interested">("unsure");
+  const [feedbackNote, setFeedbackNote] = useState("");
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
   async function lookup(value = code) {
     const normalized = value.trim().toUpperCase().replace(/\s+/g, "");
@@ -90,6 +96,79 @@ function RequestTrackingPage() {
       void lookup(prefilled);
     }
   }, []);
+
+  function toIsoVisitTime(value: string) {
+    const parsed = new Date(value);
+    if (!Number.isFinite(parsed.getTime()) || parsed.getTime() < Date.now() + 30 * 60 * 1000) return null;
+    return parsed.toISOString();
+  }
+
+  async function postTrackingAction(body: Record<string, unknown>) {
+    const response = await fetch("/api/public-lead-actions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json().catch(() => null) as { success?: boolean; message?: string; statusMessage?: string } | null;
+    if (!response.ok || !data?.success) {
+      throw new Error(data?.statusMessage || data?.message || "عملیات انجام نشد.");
+    }
+    return data;
+  }
+
+  async function rescheduleVisit() {
+    const iso = toIsoVisitTime(rescheduleAt);
+    if (!result || !iso) {
+      setMessage("زمان جدید بازدید باید معتبر و حداقل ۳۰ دقیقه از اکنون فاصله داشته باشد.");
+      return;
+    }
+    setActionBusy(true);
+    try {
+      const data = await postTrackingAction({ action: "reschedule", code: result.trackingCode, visitPreferredAt: iso });
+      setMessage(data.message || "زمان بازدید تغییر کرد.");
+      setRescheduleAt("");
+      await lookup(result.trackingCode);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "تغییر زمان بازدید انجام نشد.");
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  async function cancelVisit() {
+    if (!result) return;
+    setActionBusy(true);
+    try {
+      const data = await postTrackingAction({ action: "cancel", code: result.trackingCode });
+      setMessage(data.message || "بازدید لغو شد.");
+      await lookup(result.trackingCode);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "لغو بازدید انجام نشد.");
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  async function submitFeedback() {
+    if (!result || result.visitStatus !== "completed") return;
+    setActionBusy(true);
+    try {
+      const data = await postTrackingAction({
+        action: "feedback",
+        code: result.trackingCode,
+        rating: feedbackRating,
+        interest: feedbackInterest,
+        note: feedbackNote,
+      });
+      setFeedbackSubmitted(true);
+      setMessage(data.message || "بازخورد ثبت شد.");
+      setFeedbackNote("");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "ثبت بازخورد انجام نشد.");
+    } finally {
+      setActionBusy(false);
+    }
+  }
 
   async function copyCode() {
     try {
@@ -210,6 +289,80 @@ function RequestTrackingPage() {
                     <span>زمان پیشنهادی</span>
                     <strong>{faDate(result.visitPreferredAt)}</strong>
                   </div>
+                  {result.visitStatus === "requested" || result.visitStatus === "confirmed" ? (
+                    <div className="request-tracking-visit-actions">
+                      <label className="field">
+                        <span>زمان جدید</span>
+                        <input
+                          type="datetime-local"
+                          value={rescheduleAt}
+                          onChange={(event) => setRescheduleAt(event.target.value)}
+                          disabled={actionBusy}
+                        />
+                      </label>
+                      <div className="request-tracking-action-row">
+                        <button type="button" className="btn-gold" onClick={() => void rescheduleVisit()} disabled={actionBusy || !rescheduleAt}>
+                          تغییر زمان بازدید
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-ghost"
+                          onClick={() => void cancelVisit()}
+                          disabled={actionBusy}
+                        >
+                          لغو بازدید
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {result.visitStatus === "completed" ? (
+                <div className="request-tracking-feedback">
+                  {feedbackSubmitted ? (
+                    <div className="request-tracking-feedback-success">
+                      <CheckCircle2 size={20} />
+                      <strong>بازخورد شما ثبت شد. از همراهی‌تان ممنونیم.</strong>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <span className="kicker">تجربه بازدید</span>
+                        <h3>بازدید چطور بود؟</h3>
+                        <p>امتیاز و نظر شما فقط برای بهبود خدمات هیرمند ثبت می‌شود.</p>
+                      </div>
+                      <div className="request-tracking-rating" role="radiogroup" aria-label="امتیاز بازدید">
+                        {[1, 2, 3, 4, 5].map((value) => (
+                          <button
+                            key={value}
+                            type="button"
+                            className={value <= feedbackRating ? "is-active" : ""}
+                            onClick={() => setFeedbackRating(value)}
+                            aria-label={value.toLocaleString("fa-IR") + " از ۵"}
+                            aria-pressed={value === feedbackRating}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                      <label className="field">
+                        <span>میزان علاقه شما</span>
+                        <select value={feedbackInterest} onChange={(event) => setFeedbackInterest(event.target.value as typeof feedbackInterest)} disabled={actionBusy}>
+                          <option value="interested">برای این ملک علاقه‌مندم</option>
+                          <option value="unsure">هنوز مطمئن نیستم</option>
+                          <option value="not_interested">مناسب من نبود</option>
+                        </select>
+                      </label>
+                      <label className="field">
+                        <span>نظر یا نکته (اختیاری)</span>
+                        <textarea rows={3} maxLength={1000} value={feedbackNote} onChange={(event) => setFeedbackNote(event.target.value)} disabled={actionBusy} />
+                      </label>
+                      <button type="button" className="btn-gold" onClick={() => void submitFeedback()} disabled={actionBusy}>
+                        {actionBusy ? "در حال ثبت…" : "ثبت بازخورد"}
+                      </button>
+                    </>
+                  )}
                 </div>
               ) : null}
 
