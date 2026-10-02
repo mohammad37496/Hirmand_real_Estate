@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Check, CircleDollarSign, Clock3, Plus, Trash2 } from "lucide-react";
 import type { Property } from "@/lib/properties";
 import { formatToman } from "@/lib/money";
+import { formatPersianDate } from "@/lib/persian-date";
+import { PersianDatePicker } from "./persian-date-picker";
 import "@/property-negotiation-log.css";
 
 const KEY_PREFIX = "hirmand-property-negotiation-log-v1:";
@@ -94,7 +96,7 @@ export function PropertyNegotiationLog({ property }: { property: Property }) {
       ) : null}
 
       <div className="property-negotiation-form">
-        <label><span>تاریخ</span><input type="date" value={date} onChange={(e) => setDate(e.target.value)} dir="ltr" /></label>
+        <label><span>تاریخ</span><PersianDatePicker value={date} onChange={setDate} title="تاریخ پیشنهاد" hint="" /></label>
         <label><span>مبلغ پیشنهاد</span><input inputMode="numeric" value={offer} onChange={(e) => setOffer(e.target.value)} placeholder="تومان" /></label>
         <label><span>وضعیت</span><select value={status} onChange={(e) => setStatus(e.target.value as (typeof STATUS)[number])}>{STATUS.map((item) => <option key={item}>{item}</option>)}</select></label>
         <label className="property-negotiation-note-field"><span>یادداشت</span><textarea rows={2} maxLength={600} value={note} onChange={(e) => setNote(e.target.value)} placeholder="مثلاً مالک گفت تا فردا پاسخ می‌دهد..." /></label>
@@ -107,7 +109,7 @@ export function PropertyNegotiationLog({ property }: { property: Property }) {
             <article key={entry.id} className="property-negotiation-entry">
               <div className="property-negotiation-entry-icon">{index === 0 ? <Check size={15} /> : <Clock3 size={15} />}</div>
               <div className="property-negotiation-entry-body">
-                <div className="property-negotiation-entry-head"><strong>{formatOffer(entry.offer)}</strong><span>{entry.status}</span><time>{entry.date}</time></div>
+                <div className="property-negotiation-entry-head"><strong>{formatOffer(entry.offer)}</strong><span>{entry.status}</span><time>{formatPersianDate(entry.date)}</time></div>
                 {asking > 0 ? <small>{Math.max(0, ((asking - entry.offer) / asking) * 100).toLocaleString("fa-IR", { maximumFractionDigits: 1 })}٪ پایین‌تر از قیمت اعلامی</small> : null}
                 {entry.note ? <p>{entry.note}</p> : null}
               </div>
