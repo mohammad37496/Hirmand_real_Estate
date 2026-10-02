@@ -88,6 +88,7 @@ export type Property = {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  virtualTourUrl: string;
   latitude: number | null;
   longitude: number | null;
   priceDropPercent?: number | null;
@@ -286,6 +287,10 @@ export const propertyInputSchema = z.object({
   featuredUntil: z.string().trim().max(80).nullable().optional().default(null),
   latitude: z.number().finite().min(-90).max(90).nullable().optional().default(null),
   longitude: z.number().finite().min(-180).max(180).nullable().optional().default(null),
+  virtualTourUrl: z.string().trim().max(2048).refine(
+    (value) => !value || /^https:\/\//i.test(value),
+    { message: "لینک تور مجازی باید با https شروع شود." },
+  ).default(""),
 });
 
 const budgetMatchSchema = z
@@ -413,6 +418,10 @@ function mapProperty(row: Record<string, unknown>, options: { admin?: boolean } 
     publishedAt: row.published_at ? new Date(String(row.published_at)).toISOString() : null,
     createdAt: new Date(String(row.created_at)).toISOString(),
     updatedAt: new Date(String(row.updated_at)).toISOString(),
+    virtualTourUrl:
+      typeof row.virtual_tour_url === "string" && /^https:\/\//i.test(row.virtual_tour_url.trim())
+        ? row.virtual_tour_url.trim()
+        : "",
     latitude: isAdmin ? latitude : roundPublicCoordinate(latitude),
     longitude: isAdmin ? longitude : roundPublicCoordinate(longitude),
     priceDropPercent: numberOrNull(row.price_drop_percent),
@@ -425,7 +434,7 @@ const LIST_COLUMNS = `
   built_year, parking, elevator, storage, painted, wallpaper, convertible, cabinet_type, flooring_type, cooling_system,
   heating_system, wall_closet_type, other_amenities, price, deposit, rent,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
-  latitude, longitude, price_drop_percent, floor_label, orientation,
+  latitude, longitude, price_drop_percent, virtual_tour_url, floor_label, orientation,
   owner_name, owner_phone, owner_info, internal_priority, internal_note,
   left(description, 280) as description
 `;
@@ -1524,7 +1533,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         built_year, parking, elevator, storage, cabinet_type, flooring_type, cooling_system,
         heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
         features, images, contact_name, contact_phone, published_at, featured_until,
-        latitude, longitude, floor_label, painted, wallpaper, convertible, orientation,
+        latitude, longitude, virtual_tour_url, floor_label, painted, wallpaper, convertible, orientation,
         owner_name, owner_phone, owner_info, availability_status, internal_priority, internal_note
       ) values (
         $1, $2, $3, $4, $5, $6, $7, 'اصفهان',
@@ -1532,8 +1541,8 @@ export const saveProperty = createServerFn({ method: "POST" })
         $15::smallint, $16::boolean, $17::boolean, $18::boolean, $19::text, $20::text, $21::text,
         $22::text, $23::text, $24::jsonb, $25::numeric, $26::numeric, $27::numeric, $28::text,
         $29::jsonb, $30::jsonb, $31::text, $32::text, $33::timestamptz, $34::timestamptz,
-        $35::double precision, $36::double precision, $37::text, $38::boolean, $39::boolean, $40::boolean, $41::text,
-        $42::text, $43::text, $44::text, $45::text, $46::text, $47::text
+        $35::double precision, $36::double precision, $37::text, $38::text, $39::boolean, $40::boolean, $41::boolean, $42::text,
+        $43::text, $44::text, $45::text, $46::text, $47::text, $48::text
       )
       on conflict (id) do update set
         slug = excluded.slug,
@@ -1565,6 +1574,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         rent = excluded.rent,
         latitude = excluded.latitude,
         longitude = excluded.longitude,
+        virtual_tour_url = excluded.virtual_tour_url,
         floor_label = excluded.floor_label,
         painted = excluded.painted,
         wallpaper = excluded.wallpaper,
@@ -1709,6 +1719,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         featuredUntil,
         data.latitude ?? null,
         data.longitude ?? null,
+        data.virtualTourUrl.trim(),
         savedFloorLabel,
         data.painted,
         data.wallpaper,
