@@ -32,6 +32,7 @@ export function Footer() {
       <h3>{SITE.nameFa}</h3>
       <p>{settings?.footerTagline || SITE.tagline}</p>
       <p className="footer-address">{settings?.address || SITE.address}</p>
+      {settings?.officeHours ? <p className="footer-address">{settings.officeHours}</p> : null}
 
       <div className="chip-row" style={{ justifyContent: "center", margin: "18px 0 8px" }} aria-label="شبکه‌های اجتماعی">
         {socials.map(({ href, label, Icon }) => (
