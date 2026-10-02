@@ -25,13 +25,11 @@ import {
   mapLinks,
   NEIGHBORHOOD_GROUPS,
   NEIGHBORHOODS,
-  personChat,
   PRINCIPLES,
   PROPERTY_TYPES,
   SERVICES,
   SITE,
   STEPS,
-  TEAM,
   type Neighborhood,
 } from "@/lib/site";
 import { FinanceTools } from "./finance-tools";
@@ -44,6 +42,8 @@ import { Reveal } from "./reveal";
 import { scrollToId } from "./scroll";
 import { SiteChrome } from "./site-chrome";
 import { SmartRecommendations } from "./smart-recommendations";
+import { useConsultants } from "./consultants-context";
+import type { Consultant } from "@/lib/consultants";
 import { EitaaIcon, InstagramIcon, TelegramIcon, WhatsAppIcon } from "./social-icons";
 
 const PRINCIPLE_ICONS = {
@@ -271,10 +271,11 @@ function Hero() {
 }
 
 function TrustStrip() {
+  const consultants = useConsultants();
   const highlights = [
     { value: `${NEIGHBORHOODS.length}+`, label: "محله روی نقشه" },
     { value: `${SERVICES.length}`, label: "مسیر اصلی معامله" },
-    { value: `${TEAM.length}`, label: "مشاور مستقیم" },
+    { value: `${consultants.length}`, label: "مشاور مستقیم" },
     { value: "۳", label: "سرویس نقشه و مسیریابی" },
   ] as const;
 
@@ -330,14 +331,12 @@ function About() {
   );
 }
 
-function TeamMessenger({ personId }: { personId: (typeof TEAM)[number]["id"] }) {
-  const person = TEAM.find((item) => item.id === personId) ?? TEAM[0];
-  const chat = personChat(person);
+function TeamMessenger({ person }: { person: Consultant }) {
   const items = [
-    { href: chat.whatsapp, label: "واتساپ", icon: <WhatsAppIcon size={18} />, external: true },
-    { href: chat.telegram, label: "تلگرام", icon: <TelegramIcon size={18} />, external: false },
-    { href: chat.eitaa, label: "ایتا", icon: <EitaaIcon size={18} />, external: true },
-    { href: chat.instagram, label: "اینستاگرام", icon: <InstagramIcon size={18} />, external: true },
+    { href: person.whatsapp, label: "واتساپ", icon: <WhatsAppIcon size={18} />, external: true },
+    { href: person.telegram, label: "تلگرام", icon: <TelegramIcon size={18} />, external: true },
+    { href: person.eitaa, label: "ایتا", icon: <EitaaIcon size={18} />, external: true },
+    { href: person.instagram, label: "اینستاگرام", icon: <InstagramIcon size={18} />, external: true },
   ];
 
   return (
@@ -358,8 +357,8 @@ function TeamMessenger({ personId }: { personId: (typeof TEAM)[number]["id"] }) 
     </div>
   );
 }
-
 function Team() {
+  const consultants = useConsultants();
   return (
     <Reveal as="section" className="section" id="team">
       <SectionHead
@@ -368,7 +367,7 @@ function Team() {
         text={`${SITE.managedBy}؛ برای خرید، فروش، رهن و اجاره مستقیم در دسترس هستید.`}
       />
       <div className="team-grid">
-        {TEAM.map((person) => {
+        {consultants.map((person) => {
           const Icon = TEAM_ICONS[person.icon];
           return (
             <article key={person.id} className="team-card">
@@ -392,7 +391,7 @@ function Team() {
               <Link className="team-profile-link" to="/consultants/$id" params={{ id: person.id }}>
                 پروفایل مشاور ↗
               </Link>
-              <TeamMessenger personId={person.id} />
+              <TeamMessenger person={person} />
             </article>
           );
         })}
@@ -645,6 +644,7 @@ function Inquiry({ draft }: { draft: InquiryDraft }) {
 }
 
 function Contact() {
+  const consultants = useConsultants();
   const socials = [
     { href: SITE.instagram, icon: <InstagramIcon />, title: "اینستاگرام", text: "صفحه رسمی" },
     { href: SITE.telegram, icon: <TelegramIcon />, title: "تلگرام", text: "کانال هیرمند" },
@@ -656,7 +656,7 @@ function Contact() {
     <Reveal as="section" className="section" id="contact">
       <SectionHead kicker="ارتباط" title="تماس مستقیم با مشاورین هیرمند" />
       <div className="contact-grid contact-grid-people">
-        {TEAM.map((person) => (
+        {consultants.map((person) => (
           <div key={person.id} className="contact-wrap">
             <a className="contact-card" href={`tel:${person.phone}`}>
               <div className="icon-box">
