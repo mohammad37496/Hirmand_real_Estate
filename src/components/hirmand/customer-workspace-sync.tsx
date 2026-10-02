@@ -1,5 +1,5 @@
 import { Cloud, LogIn, RefreshCw, ShieldCheck } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { authEnabled } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -72,7 +72,7 @@ export function CustomerWorkspaceSync() {
   const [status, setStatus] = useState("");
   const bootedUser = useRef<string | null>(null);
 
-  async function sync() {
+  const sync = useCallback(async () => {
     if (!user || !authEnabled) return;
     setBusy(true);
     setStatus("");
@@ -110,13 +110,13 @@ export function CustomerWorkspaceSync() {
     } finally {
       setBusy(false);
     }
-  }
+  }, [user]);
 
   useEffect(() => {
     if (isPending || !user || !authEnabled || bootedUser.current === user.id) return;
     bootedUser.current = user.id;
     void sync();
-  }, [isPending, user, authEnabled]);
+  }, [isPending, user, authEnabled, sync]);
 
   if (isPending || !authEnabled) return null;
 
