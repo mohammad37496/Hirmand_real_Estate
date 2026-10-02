@@ -35,6 +35,9 @@ import { Route as ToolsLoanRouteImport } from './routes/tools/loan'
 import { Route as ToolsRahnRentRouteImport } from './routes/tools/rahn-rent'
 import { Route as ValuationRouteImport } from './routes/valuation'
 import { Route as VSlugIdRouteImport } from './routes/v.$slug.$id'
+import { Route as SmartSearchRouteImport } from './routes/smart-search'
+import { Route as NearbyRouteImport } from './routes/nearby'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -166,6 +169,9 @@ const VSlugIdRoute = VSlugIdRouteImport.update({
   path: '/v/$slug/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SmartSearchRoute = SmartSearchRouteImport.update({ id: '/smart-search', path: '/smart-search', getParentRoute: () => rootRouteImport } as any)
+const NearbyRoute = NearbyRouteImport.update({ id: '/nearby', path: '/nearby', getParentRoute: () => rootRouteImport } as any)
+const NotificationsRoute = NotificationsRouteImport.update({ id: '/notifications', path: '/notifications', getParentRoute: () => rootRouteImport } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -194,6 +200,9 @@ export interface FileRoutesByFullPath {
   '/tools/': typeof ToolsIndexRoute
   '/valuation': typeof ValuationRoute
   '/v/$slug/$id': typeof VSlugIdRoute
+  '/smart-search': typeof SmartSearchRoute
+  '/nearby': typeof NearbyRoute
+  '/notifications': typeof NotificationsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -279,6 +288,9 @@ export interface FileRouteTypes {
     | '/guides'
     | '/valuation'
     | '/v/$slug/$id'
+    | '/smart-search'
+    | '/nearby'
+    | '/notifications'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -305,6 +317,9 @@ export interface FileRouteTypes {
     | '/tools'
     | '/valuation'
     | '/v/$slug/$id'
+    | '/smart-search'
+    | '/nearby'
+    | '/notifications'
   id:
     | '__root__'
     | '/'
@@ -333,6 +348,9 @@ export interface FileRouteTypes {
     | '/tools/'
     | '/valuation'
     | '/v/$slug/$id'
+    | '/smart-search'
+    | '/nearby'
+    | '/notifications'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -357,6 +375,9 @@ export interface RootRouteChildren {
   ToolsRahnRentRoute: typeof ToolsRahnRentRoute
   ToolsIndexRoute: typeof ToolsIndexRoute
   VSlugIdRoute: typeof VSlugIdRoute
+  SmartSearchRoute: typeof SmartSearchRoute
+  NearbyRoute: typeof NearbyRoute
+  NotificationsRoute: typeof NotificationsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -597,6 +618,9 @@ const rootRouteChildren: RootRouteChildren = {
   ToolsIndexRoute: ToolsIndexRoute,
   ValuationRoute: ValuationRoute,
   VSlugIdRoute: VSlugIdRoute,
+  SmartSearchRoute: SmartSearchRoute,
+  NearbyRoute: NearbyRoute,
+  NotificationsRoute: NotificationsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
