@@ -103,10 +103,40 @@ function SubmitPropertyPage() {
   const [done, setDone] = useState("");
   const [editToken, setEditToken] = useState("");
   const [loadingExisting, setLoadingExisting] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
+  const [draftSavedAt, setDraftSavedAt] = useState("");
+  const CUSTOMER_DRAFT_KEY = "hirmand:customer-property-draft:v1";
 
   useEffect(() => {
     const token = new URLSearchParams(window.location.search).get("code")?.trim().toUpperCase().replace(/\s+/g, "") || "";
-    if (!/^HIR-[A-Z0-9]{2}-[A-F0-9]{12}$/.test(token)) return;
+    if (!/^HIR-[A-Z0-9]{2}-[A-F0-9]{12}$/.test(token)) {
+      try {
+        const raw = window.localStorage.getItem(CUSTOMER_DRAFT_KEY);
+        const parsed = raw ? JSON.parse(raw) as { savedAt?: number; data?: Record<string, unknown> } : null;
+        const data = parsed?.data;
+        if (data && typeof data === "object") {
+          const text = (key: string) => String(data[key] ?? "");
+          const num = (key: string) => data[key] == null ? "" : String(data[key]);
+          const bool = (key: string) => Boolean(data[key]);
+          setOwnerName(text("ownerName")); setOwnerPhone(text("ownerPhone")); setTitle(text("title"));
+          if (["buy","sell","rent","mortgage"].includes(String(data.transactionType))) setTransactionType(String(data.transactionType) as typeof transactionType);
+          if (["apartment","villa","office","heritage","land","commercial"].includes(String(data.propertyType))) setPropertyType(String(data.propertyType) as typeof propertyType);
+          setNeighborhood(text("neighborhood")); setAddress(text("address")); setArea(text("area")); setBedrooms(num("bedrooms")); setBathrooms(num("bathrooms")); setFloor(num("floor")); setTotalFloors(num("totalFloors")); setBuiltYear(num("builtYear")); setOrientation(text("orientation"));
+          setCabinetType(text("cabinetType")); setFlooringType(text("flooringType")); setCoolingSystem(text("coolingSystem")); setHeatingSystem(text("heatingSystem")); setWallClosetType(text("wallClosetType"));
+          setParking(bool("parking")); setElevator(bool("elevator")); setStorage(bool("storage")); setPainted(bool("painted")); setWallpaper(bool("wallpaper")); setConvertible(bool("convertible"));
+          setOtherAmenities(Array.isArray(data.otherAmenities) ? data.otherAmenities.filter((v): v is string => typeof v === "string") : []);
+          setFeatures(Array.isArray(data.features) ? data.features.filter((v): v is string => typeof v === "string") : []);
+          setPrice(text("price")); setDeposit(text("deposit")); setRent(text("rent")); setDescription(text("description"));
+          setMedia(Array.isArray(data.media) ? data.media.filter((v): v is string => typeof v === "string") : []);
+          if (parsed?.savedAt) setDraftSavedAt(new Intl.DateTimeFormat("fa-IR", { hour: "2-digit", minute: "2-digit" }).format(new Date(parsed.savedAt)));
+          toast.info("پیش‌نویس قبلی فرم ثبت ملک بازیابی شد.");
+        }
+      } catch {
+        // Ignore an invalid local draft.
+      }
+      setDraftReady(true);
+      return;
+    }
     setEditToken(token);
     setLoadingExisting(true);
     void fetch("/api/customer-property-submissions", {
@@ -134,8 +164,32 @@ function SubmitPropertyPage() {
       if (payload.reviewNote) toast.info("علت نیاز به اصلاح: " + payload.reviewNote);
     }).catch((error) => {
       setError(error instanceof Error ? error.message : "اطلاعات درخواست قابل دریافت نیست.");
-    }).finally(() => setLoadingExisting(false));
+    }).finally(() => {
+      setLoadingExisting(false);
+      setDraftReady(true);
+    });
   }, []);
+
+  useEffect(() => {
+    if (!draftReady || editToken || done) return;
+    const draft = {
+      ownerName, ownerPhone, title, transactionType, propertyType, neighborhood, address, area,
+      bedrooms, bathrooms, floor, totalFloors, builtYear, orientation, cabinetType, flooringType,
+      coolingSystem, heatingSystem, wallClosetType, parking, elevator, storage, painted, wallpaper,
+      convertible, otherAmenities, features, price, deposit, rent, description, media,
+    };
+    try {
+      window.localStorage.setItem(CUSTOMER_DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), data: draft }));
+      setDraftSavedAt(new Intl.DateTimeFormat("fa-IR", { hour: "2-digit", minute: "2-digit" }).format(new Date()));
+    } catch {
+      // Best-effort only; form submission must keep working.
+    }
+  }, [
+    draftReady, editToken, done, ownerName, ownerPhone, title, transactionType, propertyType,
+    neighborhood, address, area, bedrooms, bathrooms, floor, totalFloors, builtYear, orientation,
+    cabinetType, flooringType, coolingSystem, heatingSystem, wallClosetType, parking, elevator,
+    storage, painted, wallpaper, convertible, otherAmenities, features, price, deposit, rent, description, media,
+  ]);
 
   const imageCount = useMemo(() => media.filter((src) => !isVideoUrl(src)).length, [media]);
 
@@ -252,6 +306,8 @@ function SubmitPropertyPage() {
         throw new Error(payload?.statusMessage || payload?.message || "ثبت ملک انجام نشد.");
       }
       setDone(String(payload.trackingToken || ""));
+      try { window.localStorage.removeItem(CUSTOMER_DRAFT_KEY); } catch {}
+      setDraftSavedAt("");
       if (payload.trackingToken) rememberCustomerTrackingCode(String(payload.trackingToken));
       toast.success(editToken ? "اصلاحات با موفقیت ارسال و دوباره وارد صف بررسی شد." : "ملک برای بررسی کارشناسان هیرمند ارسال شد.");
     } catch (cause) {
@@ -374,6 +430,7 @@ function SubmitPropertyPage() {
           <Link to="/" className="btn-ghost">انصراف</Link>
           <button type="submit" className="btn-gold" disabled={uploading || loadingExisting}>{loadingExisting ? <Loader2 size={18} className="owner-spin"/> : <FilePlus2 size={18}/>} {loadingExisting ? "در حال بارگذاری درخواست…" : uploading ? "در حال ارسال…" : editToken ? "اصلاح و ارسال مجدد" : "ارسال ملک برای بررسی"}</button>
         </div>
+        {draftReady && !done ? <div className="customer-property-draft-status"><span>{draftSavedAt ? "پیش‌نویس خودکار ذخیره شد • " + draftSavedAt : "ذخیره خودکار پیش‌نویس فعال است"}</span><button type="button" onClick={()=>{try{window.localStorage.removeItem(CUSTOMER_DRAFT_KEY);}catch{}setDraftSavedAt("");toast.success("پیش‌نویس پاک شد.");}}>پاک کردن پیش‌نویس</button></div> : null}
         <p className="customer-property-privacy"><Phone size={14}/> اطلاعات مالک و رسانه‌ها فقط برای بررسی و تکمیل فایل استفاده می‌شوند و انتشار عمومی منوط به تأیید است.</p>
       </form>
     </main>
