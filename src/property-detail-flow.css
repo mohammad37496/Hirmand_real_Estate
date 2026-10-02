@@ -1087,3 +1087,85 @@
     grid-template-columns:minmax(0,1fr) !important;
   }
 }
+
+
+/* Phase 4 — the hero facts stay useful, but stop competing with the full specs. */
+.property-detail-page .property-summary-facts{
+  display:flex !important;
+  align-items:center !important;
+  flex-wrap:wrap !important;
+  gap:6px !important;
+  margin-top:11px !important;
+  padding-top:10px !important;
+  border-top:1px solid var(--line-2) !important;
+}
+
+.property-detail-page .property-summary-facts > div{
+  min-height:32px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:6px !important;
+  padding:5px 8px !important;
+  border:1px solid var(--line) !important;
+  border-radius:999px !important;
+  background:var(--card-2) !important;
+  box-shadow:none !important;
+}
+
+.property-detail-page .property-summary-facts > div > svg{
+  width:14px !important;
+  height:14px !important;
+  flex:0 0 auto !important;
+  color:var(--brass-700) !important;
+}
+
+.property-detail-page .property-summary-facts > div > span{
+  min-width:0 !important;
+  display:inline-flex !important;
+  align-items:baseline !important;
+  gap:4px !important;
+}
+
+.property-detail-page .property-summary-facts small{
+  font-size:.52rem !important;
+  line-height:1.4 !important;
+  color:var(--subtle) !important;
+}
+
+.property-detail-page .property-summary-facts strong{
+  font-size:.62rem !important;
+  line-height:1.5 !important;
+  color:var(--navy-900) !important;
+  white-space:nowrap !important;
+}
+
+.property-detail-page .property-summary-facts > div:hover{
+  border-color:var(--brass-300) !important;
+  background:var(--brass-100) !important;
+}
+
+@media (max-width:760px){
+  .property-detail-page .property-summary-facts{
+    gap:5px !important;
+    margin-top:9px !important;
+    padding-top:8px !important;
+  }
+
+  .property-detail-page .property-summary-facts > div{
+    min-height:29px !important;
+    padding:4px 7px !important;
+  }
+
+  .property-detail-page .property-summary-facts > div > svg{
+    width:13px !important;
+    height:13px !important;
+  }
+
+  .property-detail-page .property-summary-facts small{
+    font-size:.49rem !important;
+  }
+
+  .property-detail-page .property-summary-facts strong{
+    font-size:.58rem !important;
+  }
+}
