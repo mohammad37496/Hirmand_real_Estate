@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Check, Clock3, Download, ExternalLink, X } from "lucide-react";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { formatPersianDate } from "@/lib/persian-date";
@@ -142,9 +142,41 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
   const [trackingToken, setTrackingToken] = useState("");
+  const [occupiedTimes, setOccupiedTimes] = useState<string[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
   const visitAllowed = property.availabilityStatus === "available" || property.availabilityStatus === "reserved";
   const minimumDate = useMemo(() => todayIsoDate(), []);
+
+  useEffect(() => {
+    if (!open || !date || !property.id) return;
+    let cancelled = false;
+    setLoadingSlots(true);
+    void fetch("/api/property-viewing-slots?propertyId=" + encodeURIComponent(property.id) + "&date=" + encodeURIComponent(date), {
+      method: "GET",
+      credentials: "same-origin",
+      headers: { accept: "application/json" },
+    })
+      .then((response) => response.json().catch(() => ({})))
+      .then((payload) => {
+        if (cancelled) return;
+        const next = Array.isArray(payload?.occupiedTimes)
+          ? payload.occupiedTimes.filter((value: unknown): value is string => typeof value === "string")
+          : [];
+        setOccupiedTimes(next);
+        if (next.includes(time)) {
+          const firstAvailable = TIMES.find((slot) => !next.includes(slot));
+          if (firstAvailable) setTime(firstAvailable);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setOccupiedTimes([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingSlots(false);
+      });
+    return () => { cancelled = true; };
+  }, [open, date, property.id]);
 
   function close() {
     if (busy) return;
@@ -152,6 +184,7 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
     setDone(false);
     setError("");
     setTrackingToken("");
+    setOccupiedTimes([]);
   }
 
   async function submit() {
@@ -325,9 +358,10 @@ export function PropertyViewingRequest({ property }: PropertyViewingRequestProps
                   </label>
                   <label className="field">
                     <span>ساعت پیشنهادی</span>
-                    <select value={time} onChange={(e) => setTime(e.target.value)} dir="ltr">
-                      {TIMES.map((item) => <option key={item} value={item}>{item}</option>)}
+                    <select value={time} onChange={(e) => setTime(e.target.value)} dir="ltr" disabled={loadingSlots}>
+                      {TIMES.map((item) => <option key={item} value={item} disabled={occupiedTimes.includes(item)}>{item}{occupiedTimes.includes(item) ? " · پر" : ""}</option>)}
                     </select>
+                    <small>{loadingSlots ? "در حال بررسی ظرفیت…" : occupiedTimes.length ? "زمان‌های «پر» قبلاً برای این فایل ثبت شده‌اند." : "ظرفیت این روز در لحظه بررسی شد."}</small>
                   </label>
                   <label className="field property-viewing-note">
                     <span>توضیح کوتاه (اختیاری)</span>
