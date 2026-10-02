@@ -2,7 +2,10 @@ import { SITE, TEAM } from "@/lib/site";
 import type { Property } from "@/lib/properties";
 import { propertyPath } from "@/lib/property-path";
 import { DB_MEDIA_PATH, isDivarRemoteHost } from "@/lib/media";
-import { getPropertyFallbackImage } from "@/lib/property-fallback-images";
+import {
+  getPropertyFallbackImage,
+  getPropertyFallbackLegacyImage,
+} from "@/lib/property-fallback-images";
 import { formatToman } from "@/lib/money";
 
 const TX_LABEL: Record<string, string> = {
@@ -55,10 +58,18 @@ export function propertySocialImage(property: Property): string {
     .find((candidate) => candidate && !candidate.endsWith(".svg"));
   if (own) return own;
 
-  const fallback = shareableImageUrl(
+  // Prefer the generated local photo when the build has produced it. The
+  // bundled SVG is the guaranteed no-network fallback, so social previews never
+  // point at an asset that can be missing after a failed image download.
+  const generatedFallback = shareableImageUrl(
     getPropertyFallbackImage(property.propertyType, property.id),
   );
-  return fallback || ogImageUrl();
+  if (generatedFallback) return generatedFallback;
+
+  const guaranteedFallback = shareableImageUrl(
+    getPropertyFallbackLegacyImage(property.propertyType, property.id),
+  );
+  return guaranteedFallback || ogImageUrl();
 }
 
 export function ogImageUrl(path = "/images/isfahan-hero.jpg"): string {
