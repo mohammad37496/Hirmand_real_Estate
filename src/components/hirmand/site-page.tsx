@@ -44,6 +44,7 @@ import { SiteChrome } from "./site-chrome";
 import { SmartRecommendations } from "./smart-recommendations";
 import { useConsultants } from "./consultants-context";
 import type { Consultant } from "@/lib/consultants";
+import type { SiteSettings } from "@/lib/site-settings";
 import { EitaaIcon, InstagramIcon, TelegramIcon, WhatsAppIcon } from "./social-icons";
 
 const PRINCIPLE_ICONS = {
@@ -794,7 +795,13 @@ function Location() {
   );
 }
 
-export function SitePage({ initialProperties = [] }: { initialProperties?: PropertyCardData[] }) {
+export function SitePage({
+  initialProperties = [],
+  announcement = "",
+}: {
+  initialProperties?: PropertyCardData[];
+  announcement?: string;
+}) {
   const [draft, setDraft] = useState<InquiryDraft>({
     deal: "خرید",
     propertyType: "",
@@ -834,6 +841,11 @@ export function SitePage({ initialProperties = [] }: { initialProperties?: Prope
           listings come straight after the hero, and the softer brand material
           (about, team, partner club) sits below the decision content. */}
       <main className="site-home">
+        {announcement.trim() ? (
+          <aside className="site-announcement" aria-label="اطلاعیه هیرمند">
+            <span>{announcement.trim()}</span>
+          </aside>
+        ) : null}
         <Hero />
         <TrustStrip />
         <PropertyShowcase initialProperties={initialProperties} />
