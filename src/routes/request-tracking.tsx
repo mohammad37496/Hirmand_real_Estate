@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowRight, CalendarDays, CheckCircle2, Clock3, Copy, Home, RefreshCw, Search, UserRound } from "lucide-react";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
+import { CustomerConversation } from "@/components/hirmand/customer-conversation";
 import { SITE } from "@/lib/site";
 import { rememberCustomerTrackingCode } from "@/lib/customer-tracking";
 import "@/request-tracking.css";
@@ -334,6 +335,8 @@ function RequestTrackingPage() {
                   </div>
                 </div>
               ) : null}
+
+              <CustomerConversation code={result.trackingCode} customerName="" />
 
               {result.visitStatus !== "none" ? (
                 <div className="request-tracking-visit">
