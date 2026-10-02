@@ -32,7 +32,7 @@ export function PwaInstallPrompt() {
   const [ios, setIos] = useState(false);
 
   useEffect(() => {
-    if (isStandalone() || dismissedRecently()) return;
+    if (isStandalone() || dismissedRecently() || window.location.pathname.startsWith("/admin")) return;
     const isiOS = isIOS();
     setIos(isiOS);
     if (isiOS) {
