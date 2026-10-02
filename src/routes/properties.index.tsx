@@ -393,6 +393,10 @@ function PropertiesIndexPage() {
     const storedSearches = readSavedSearches();
     setSavedSearches(storedSearches);
     void refreshSavedSearchAlerts(storedSearches);
+    const alertTimer = window.setInterval(() => {
+      const current = readSavedSearches();
+      void refreshSavedSearchAlerts(current);
+    }, 120_000);
     const params = new URLSearchParams(window.location.search);
     const tx = validTransaction(params.get("transaction") ?? "");
     const type = validPropertyType(params.get("type") ?? "");
@@ -435,6 +439,7 @@ function PropertiesIndexPage() {
     setSort(validSort);
     skipInitialFetch.current = Array.from(params.keys()).length === 0;
     setUrlReady(true);
+    return () => window.clearInterval(alertTimer);
   }, []);
 
   useEffect(() => {
@@ -1539,7 +1544,12 @@ function PropertiesIndexPage() {
                 >
                   <option value="">جست‌وجوهای ذخیره‌شده</option>
                   {savedSearches.map((item) => (
-                    <option key={item.id} value={item.id}>{item.name}</option>
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                      {savedSearchAlerts[item.id]
+                        ? " · " + savedSearchAlerts[item.id].toLocaleString("fa-IR") + " جدید"
+                        : ""}
+                    </option>
                   ))}
                 </select>
               ) : null}
