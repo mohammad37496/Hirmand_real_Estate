@@ -23,6 +23,8 @@ type Submission = {
   priority?: "low" | "normal" | "high";
   updatedAt?: string | null;
   ageHours?: number;
+  assignedConsultantName?: string | null;
+  assignedConsultantPhone?: string | null;
 };
 
 function faDate(value: string) {
@@ -71,6 +73,8 @@ export function AdminCustomerPropertySubmissions() {
   const [total, setTotal] = useState(0);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [counts, setCounts] = useState({ pending: 0, approved: 0, rejected: 0 });
+  const [queueFilter, setQueueFilter] = useState<"all"|"overdue"|"unassigned"|"high">("all");
+  const [queueStats, setQueueStats] = useState({ overdue: 0, highPriority: 0, unassigned: 0, averageAgeHours: 0, consultants: [] as Array<{name:string;phone:string;count:number}> });
   const [editDraft, setEditDraft] = useState<Record<string, unknown> | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -84,9 +88,9 @@ export function AdminCustomerPropertySubmissions() {
       const response = await fetch("/api/admin-customer-property-submissions", {
         method:"POST",
         headers:{"content-type":"application/json"},
-        body:JSON.stringify({ action:"list", status:statusFilter, query:appliedQuery, fromDate, toDate, page, pageSize }),
+        body:JSON.stringify({ action:"list", status:statusFilter, query:appliedQuery, fromDate, toDate, page, pageSize, queueFilter }),
       });
-      const data = await response.json().catch(() => null) as { submissions?:Submission[]; total?:number; page?:number; pageSize?:number; counts?:{pending:number;approved:number;rejected:number}; statusMessage?:string } | null;
+      const data = await response.json().catch(() => null) as { submissions?:Submission[]; total?:number; page?:number; pageSize?:number; counts?:{pending:number;approved:number;rejected:number}; queueStats?:{overdue:number;highPriority:number;unassigned:number;averageAgeHours:number;consultants:Array<{name:string;phone:string;count:number}>}; statusMessage?:string } | null;
       if (!response.ok) throw new Error(data?.statusMessage || "صف ثبت ملک مشتری بارگذاری نشد.");
       setSubmissions(Array.isArray(data?.submissions) ? data.submissions : []);
       setTotal(Number(data?.total) || 0);
@@ -95,12 +99,19 @@ export function AdminCustomerPropertySubmissions() {
         approved: Number(data?.counts?.approved) || 0,
         rejected: Number(data?.counts?.rejected) || 0,
       });
+      setQueueStats({
+        overdue: Number(data?.queueStats?.overdue) || 0,
+        highPriority: Number(data?.queueStats?.highPriority) || 0,
+        unassigned: Number(data?.queueStats?.unassigned) || 0,
+        averageAgeHours: Number(data?.queueStats?.averageAgeHours) || 0,
+        consultants: Array.isArray(data?.queueStats?.consultants) ? data.queueStats!.consultants : [],
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "بارگذاری درخواست‌ها انجام نشد.");
     } finally {
       setLoading(false);
     }
-  }, [appliedQuery, statusFilter, fromDate, toDate, page, pageSize]);
+  }, [appliedQuery, statusFilter, fromDate, toDate, page, pageSize, queueFilter]);
 
   useEffect(() => {
     void load();
@@ -222,6 +233,23 @@ export function AdminCustomerPropertySubmissions() {
     }
   }
 
+  async function assignConsultant(submission: Submission, value: string) {
+    const found = TEAM.find((person) => person.phone === value);
+    try {
+      const response = await fetch("/api/admin-customer-property-submissions", {
+        method:"POST",
+        headers:{"content-type":"application/json"},
+        body:JSON.stringify({ action:"assign_consultant", id:submission.id, assignedConsultantName:found?.name ?? "", assignedConsultantPhone:found?.phone ?? "" }),
+      });
+      const data = await response.json().catch(() => null) as { success?:boolean; assignedConsultantName?:string|null; assignedConsultantPhone?:string|null; statusMessage?:string } | null;
+      if (!response.ok || !data?.success) throw new Error(data?.statusMessage || "تخصیص مشاور انجام نشد.");
+      setSubmissions((items) => items.map((item) => item.id === submission.id ? { ...item, assignedConsultantName:data.assignedConsultantName ?? null, assignedConsultantPhone:data.assignedConsultantPhone ?? null } : item));
+      toast.success(found ? "مشاور پرونده مشخص شد." : "مسئول پرونده برداشته شد.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تخصیص مشاور انجام نشد.");
+    }
+  }
+
   async function setPriority(submission: Submission, priority: "low" | "normal" | "high") {
     try {
       const response = await fetch("/api/admin-customer-property-submissions", {
@@ -324,8 +352,10 @@ export function AdminCustomerPropertySubmissions() {
 
   async function act(action: "approve" | "reject", submission: Submission) {
     if (busyId) return;
+    const assigned = TEAM.find((person) => person.name === submission.assignedConsultantName && person.phone === submission.assignedConsultantPhone);
+    const effectiveConsultant = assigned ?? consultant;
     if (action === "approve") {
-      const ok = window.confirm("این ملک با مشاور «" + consultant.name + "» منتشر شود؟ پس از تأیید وارد فایل‌های عمومی خواهد شد.");
+      const ok = window.confirm("این ملک با مشاور «" + effectiveConsultant.name + "» منتشر شود؟ پس از تأیید وارد فایل‌های عمومی خواهد شد.");
       if (!ok) return;
     } else {
       const ok = window.confirm("این درخواست ثبت ملک رد شود؟");
@@ -336,13 +366,7 @@ export function AdminCustomerPropertySubmissions() {
       const response = await fetch("/api/admin-customer-property-submissions", {
         method:"POST",
         headers:{"content-type":"application/json"},
-        body:JSON.stringify({
-          action,
-          id: submission.id,
-          consultantName: consultant.name,
-          consultantPhone: consultant.phone,
-          reviewNote: reviewNote.trim(),
-        }),
+        body:JSON.stringify({ action, id:submission.id, consultantName:effectiveConsultant.name, consultantPhone:effectiveConsultant.phone, reviewNote:reviewNote.trim() }),
       });
       const data = await response.json().catch(() => null) as { success?:boolean; slug?:string; statusMessage?:string } | null;
       if (!response.ok || !data?.success) throw new Error(data?.statusMessage || "عملیات انجام نشد.");
@@ -360,6 +384,7 @@ export function AdminCustomerPropertySubmissions() {
   const pendingLabel = useMemo(() => counts.pending.toLocaleString("fa-IR") + " در انتظار بررسی", [counts.pending]);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const allCurrentPageSelected = submissions.length > 0 && submissions.every((item) => selectedIds.has(item.id));
+  const quickFilterLabel = queueFilter === "overdue" ? "فقط overdue" : queueFilter === "unassigned" ? "بدون مسئول" : queueFilter === "high" ? "فقط فوری" : "همه پرونده‌ها";
 
   return (
     <section className="admin-customer-submissions admin-panel">
@@ -381,6 +406,14 @@ export function AdminCustomerPropertySubmissions() {
         <div><span>رد شده</span><strong>{counts.rejected.toLocaleString("fa-IR")}</strong></div>
         <div><span>نرخ تأیید</span><strong>{(counts.approved + counts.rejected) ? ((counts.approved / (counts.approved + counts.rejected)) * 100).toFixed(0) + "٪" : "—"}</strong></div>
       </div>
+
+      <div className="admin-customer-queue-stats">
+        <button type="button" className={"admin-customer-queue-stat" + (queueFilter==="overdue" ? " is-active" : "")} onClick={()=>{setStatusFilter("pending");setQueueFilter("overdue");setPage(1);setSelectedIds(new Set());}}><Timer size={15}/><span><small>overdue +۲۴ساعت</small><strong>{queueStats.overdue.toLocaleString("fa-IR")}</strong></span></button>
+        <button type="button" className={"admin-customer-queue-stat" + (queueFilter==="high" ? " is-active" : "")} onClick={()=>{setStatusFilter("pending");setQueueFilter("high");setPage(1);setSelectedIds(new Set());}}><Star size={15}/><span><small>فوری</small><strong>{queueStats.highPriority.toLocaleString("fa-IR")}</strong></span></button>
+        <button type="button" className={"admin-customer-queue-stat" + (queueFilter==="unassigned" ? " is-active" : "")} onClick={()=>{setStatusFilter("pending");setQueueFilter("unassigned");setPage(1);setSelectedIds(new Set());}}><Pencil size={15}/><span><small>بدون مسئول</small><strong>{queueStats.unassigned.toLocaleString("fa-IR")}</strong></span></button>
+        <div className="admin-customer-queue-stat is-passive"><Timer size={15}/><span><small>میانگین انتظار</small><strong>{queueStats.averageAgeHours < 1 ? "کمتر از ۱ ساعت" : Math.floor(queueStats.averageAgeHours).toLocaleString("fa-IR") + " ساعت"}</strong></span></div>
+      </div>
+      <div className="admin-customer-queue-toolbar"><span>نمای فعلی: <strong>{quickFilterLabel}</strong></span>{queueFilter !== "all" ? <button type="button" className="btn-ghost" onClick={()=>{setQueueFilter("all");setPage(1);setSelectedIds(new Set());}}>نمایش همه</button> : null}</div>
 
       <div className="admin-customer-submissions-status-tabs">
         {([
@@ -462,6 +495,10 @@ export function AdminCustomerPropertySubmissions() {
                   <p>{String(data.neighborhood ?? "—")} · {String(data.areaM2 ?? "—")} متر · {priceText(data)}</p>
                   <div className="admin-customer-submission-owner"><strong>{submission.ownerName}</strong><a href={"tel:"+submission.ownerPhone}><Phone size={14}/>{submission.ownerPhone}</a><span dir="ltr">{submission.trackingToken}</span>{submission.possibleDuplicate?<span className="admin-customer-duplicate-badge">احتمال تکراری</span>:null}{submission.status==="pending"&&submission.ageHours!=null?<span className={"admin-customer-age-badge"+(submission.ageHours>=24?" is-overdue":"")}><Timer size={12}/>{ageLabel(submission.ageHours)}</span>:null}</div>
                   {submission.status === "pending" ? <div className="admin-customer-queue-controls">
+                     <label><span>مسئول</span><select value={submission.assignedConsultantPhone ?? ""} onChange={(e)=>void assignConsultant(submission,e.target.value)}>
+                       <option value="">بدون مسئول</option>
+                       {TEAM.map((person) => <option key={person.phone} value={person.phone}>{person.name} · {person.role}</option>)}
+                     </select></label>
                     <label><span>اولویت</span><select value={submission.priority || "normal"} onChange={(e)=>void setPriority(submission,e.target.value as "low"|"normal"|"high")}><option value="high">فوری</option><option value="normal">عادی</option><option value="low">کم</option></select></label>
                     <span className={"admin-customer-priority-badge priority-"+(submission.priority || "normal")}>{priorityLabel(submission.priority)}</span>
                   </div> : null}
@@ -609,8 +646,4 @@ export function AdminCustomerPropertySubmissions() {
        ) : null}
     </section>
   );
-}
-
-function isVideo(src: string) {
-  return /\.(mp4|webm|mov|m4v)(\?|$)/i.test(src) || src.toLowerCase().includes("/video/");
 }
