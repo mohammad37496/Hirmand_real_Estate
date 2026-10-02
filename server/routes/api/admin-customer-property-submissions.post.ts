@@ -7,7 +7,7 @@ import { isAllowedMediaRef, isVideoUrl } from "@/lib/media";
 import { clearPropertyReadCache, propertyInputSchema } from "@/lib/properties";
 import { getPublishReadiness } from "@/lib/property-publish-readiness";
 
-type Action = "list" | "approve" | "reject" | "update";
+type Action = "list" | "approve" | "reject" | "update" | "set_priority" | "history";
 
 function slugify(value: string) {
   const normalized = value.trim().toLowerCase()
@@ -22,6 +22,13 @@ function money(value: unknown) {
   if (value == null) return null;
   const text = String(value).replace(/[^0-9]/g, "");
   return text ? text : null;
+}
+
+async function logReviewEvent(sql: Awaited<ReturnType<typeof getSql>>, submissionId: string, action: string, note = "", metadata: Record<string, unknown> = {}) {
+  await sql.query(
+    "insert into customer_property_submission_events (id,submission_id,action,note,metadata) values ($1,$2,$3,$4,$5::jsonb)",
+    [crypto.randomUUID(), submissionId, action, note.slice(0, 1200), JSON.stringify(metadata)],
+  ).catch(() => {});
 }
 
 export default defineEventHandler(async (event) => {
@@ -41,6 +48,7 @@ export default defineEventHandler(async (event) => {
     consultantPhone?: string;
     query?: string;
     patch?: Record<string, unknown>;
+    priority?: "low" | "normal" | "high";
   };
   const action = body.action ?? "list";
   const sql = await getSql();
@@ -78,12 +86,52 @@ export default defineEventHandler(async (event) => {
         propertyId: row.property_id == null ? null : String(row.property_id),
         createdAt: new Date(String(row.created_at)).toISOString(),
         reviewedAt: row.reviewed_at == null ? null : new Date(String(row.reviewed_at)).toISOString(),
+        priority: String(row.priority ?? "normal"),
+        updatedAt: row.updated_at == null ? null : new Date(String(row.updated_at)).toISOString(),
+        ageHours: Math.max(0, (Date.now() - new Date(String(row.created_at)).getTime()) / 3600000),
         possibleDuplicate: Boolean(row.possible_duplicate),
       })),
     };
   }
 
   if (!body.id) throw createError({ statusCode: 400, statusMessage: "شناسه درخواست مشخص نیست." });
+
+  if (action === "history") {
+    const events = await sql.query<Record<string, unknown>>(
+      "select id,action,note,metadata,created_at from customer_property_submission_events where submission_id=$1 order by created_at desc limit 50",
+      [body.id],
+    );
+    return {
+      success: true,
+      events: events.map((row) => ({
+        id: String(row.id),
+        action: String(row.action),
+        note: String(row.note ?? ""),
+        metadata: row.metadata && typeof row.metadata === "object" ? row.metadata : {},
+        createdAt: new Date(String(row.created_at)).toISOString(),
+      })),
+    };
+  }
+
+  if (action === "set_priority") {
+    const priority = body.priority;
+    if (!priority || !["low","normal","high"].includes(priority)) {
+      throw createError({ statusCode: 422, statusMessage: "اولویت نامعتبر است." });
+    }
+    const rows = await sql.query<Record<string, unknown>>(
+      "select id,status from customer_property_submissions where id=$1 limit 1",
+      [body.id],
+    );
+    if (!rows[0]) throw createError({ statusCode: 404, statusMessage: "درخواست ثبت ملک پیدا نشد." });
+    await sql.query(
+      "update customer_property_submissions set priority=$2,updated_at=current_timestamp where id=$1",
+      [body.id, priority],
+    );
+    await logReviewEvent(sql, body.id, "priority", "اولویت پرونده به " + priority + " تغییر کرد.", { priority });
+    return { success: true, status: String(rows[0].status), priority };
+  }
+
+
 
   const rows = await sql.query<Record<string, unknown>>(
     "select * from customer_property_submissions where id=$1 limit 1",
@@ -179,6 +227,7 @@ export default defineEventHandler(async (event) => {
       );
     });
 
+    await logReviewEvent(sql, body.id, "edit", "اطلاعات و رسانه‌های پرونده قبل از انتشار ویرایش شد.");
     return {
       success: true,
       status: "pending",
@@ -201,9 +250,10 @@ export default defineEventHandler(async (event) => {
   if (action === "reject") {
     const reviewNote = typeof body.reviewNote === "string" ? body.reviewNote.trim().slice(0, 1200) : "";
     await sql.query(
-      "update customer_property_submissions set status='rejected', review_note=$2, reviewed_at=current_timestamp where id=$1",
+      "update customer_property_submissions set status='rejected', review_note=$2, reviewed_at=current_timestamp, updated_at=current_timestamp where id=$1",
       [body.id, reviewNote],
     );
+    await logReviewEvent(sql, body.id, "approve", typeof body.reviewNote === "string" ? body.reviewNote.trim() : "تأیید و انتشار شد.", { propertyId, propertySlug: slug, consultant: consultant.name });
     if (submission.lead_id) {
       await sql.query("update leads set status='closed', updated_at=current_timestamp where id=$1", [submission.lead_id]).catch(() => {});
       await sql.query(
@@ -211,6 +261,7 @@ export default defineEventHandler(async (event) => {
         [submission.lead_id, "ثبت ملک رد شد", reviewNote || "درخواست ثبت ملک توسط کارشناس رد شد.", JSON.stringify({ submissionId: body.id })],
       ).catch(() => {});
     }
+    await logReviewEvent(sql, body.id, "reject", reviewNote || "درخواست ثبت ملک رد شد.");
     return { success: true, status: "rejected" };
   }
 
@@ -321,7 +372,7 @@ export default defineEventHandler(async (event) => {
     ).catch(() => {});
 
     await sql.query(
-      "update customer_property_submissions set status='approved', property_id=$2, review_note=$3, reviewed_at=current_timestamp where id=$1",
+      "update customer_property_submissions set status='approved', property_id=$2, review_note=$3, reviewed_at=current_timestamp, updated_at=current_timestamp where id=$1",
       [body.id, propertyId, typeof body.reviewNote === "string" ? body.reviewNote.trim().slice(0,1200) : "تأیید و انتشار شد."],
     );
     if (submission.lead_id) {
