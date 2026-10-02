@@ -116,7 +116,7 @@ export function AdminCustomerPropertySubmissions() {
         const value = String(editDraft[key] ?? "").replace(/[^0-9]/g, "");
         return value || null;
       };
-      const featuresValue = String(editDraft.featuresText ?? String(editDraft.features ?? "")).split(/[،,\\n]/).map((v) => v.trim()).filter(Boolean).slice(0,20);
+      const featuresValue = String(editDraft.featuresText ?? String(editDraft.features ?? "")).split(/[،,\n]/).map((v) => v.trim()).filter(Boolean).slice(0,20);
       const patch = {
         title: String(editDraft.title ?? "").trim(),
         transactionType: String(editDraft.transactionType ?? ""),
