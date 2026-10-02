@@ -50,7 +50,7 @@ export default defineEventHandler(async (event) => {
     const query = typeof body.query === "string" ? body.query.trim().slice(0, 80) : "";
     const pattern = "%" + query + "%";
     const rows = await sql.query<Record<string, unknown>>(
-      "select id,lead_id,public_tracking_token,status,owner_name,owner_phone,property_data,review_note,property_id,created_at,reviewed_at from customer_property_submissions where status=$1 and ($2='' or owner_name ilike $3 or owner_phone ilike $3 or public_tracking_token ilike $3 or coalesce(property_data->>'title','') ilike $3 or coalesce(property_data->>'neighborhood','') ilike $3) order by created_at desc limit 40",
+      "select s.id,s.lead_id,s.public_tracking_token,s.status,s.owner_name,s.owner_phone,s.property_data,s.review_note,s.property_id,s.created_at,s.reviewed_at,exists(select 1 from customer_property_submissions d where d.id<>s.id and d.status in ('pending','approved') and (d.owner_phone=s.owner_phone or ((d.property_data->>'neighborhood')=(s.property_data->>'neighborhood') and (d.property_data->>'areaM2')=(s.property_data->>'areaM2') and lower(coalesce(d.property_data->>'title',''))=lower(coalesce(s.property_data->>'title',''))))) as possible_duplicate from customer_property_submissions s where s.status=$1 and ($2='' or s.owner_name ilike $3 or s.owner_phone ilike $3 or s.public_tracking_token ilike $3 or coalesce(s.property_data->>'title','') ilike $3 or coalesce(s.property_data->>'neighborhood','') ilike $3) order by s.created_at desc limit 40",
       [status, query, pattern],
     );
     const countRows = await sql.query<{ status: string; count: number }>(
@@ -75,6 +75,7 @@ export default defineEventHandler(async (event) => {
         propertyId: row.property_id == null ? null : String(row.property_id),
         createdAt: new Date(String(row.created_at)).toISOString(),
         reviewedAt: row.reviewed_at == null ? null : new Date(String(row.reviewed_at)).toISOString(),
+        possibleDuplicate: Boolean(row.possible_duplicate),
       })),
     };
   }
