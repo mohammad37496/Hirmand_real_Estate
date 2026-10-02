@@ -13,7 +13,8 @@ export type AnalyticsEvent =
   | "property_search"
   | "property_price_watch"
   | "visit_request_click"
-  | "visit_request";
+  | "visit_request"
+  | "property_report";
 
 export function trackAnalyticsEvent(
   event: AnalyticsEvent,
