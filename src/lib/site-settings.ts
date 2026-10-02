@@ -27,7 +27,7 @@ export type SiteSettings = {
 
 const DEFAULT_SETTINGS: SiteSettings = {
   siteTitle: "املاک هیرمند | خرید، فروش، رهن و اجاره ملک در اصفهان",
-  siteDescription: "گروه مشاورین املاک هیرمند؛ فایل‌های خرید، فروش، رهن و اجاره ملک در اصفهان با مشاوره تخصصی.",
+  siteDescription: "گروه مشاورین املاک هیرمند در اصفهان؛ خرید، فروش، رهن و اجاره آپارتمان، ویلا، زمین، اداری و تجاری با مشاوره تخصصی و همراهی از انتخاب تا قرارداد.",
   seoKeywords: "املاک اصفهان, املاک هیرمند, خرید خانه اصفهان, فروش آپارتمان اصفهان, رهن و اجاره اصفهان",
   googleSiteVerification: "",
   noindex: false,
@@ -35,13 +35,13 @@ const DEFAULT_SETTINGS: SiteSettings = {
   announcementText: "",
   phoneMobile: "09131056029",
   phoneOffice: "03137850615",
-  whatsappUrl: "",
-  instagramUrl: "",
+  whatsappUrl: "https://wa.me/989131056029",
+  instagramUrl: "https://www.instagram.com/hirmand.realestate/",,
   telegramUrl: "",
   eitaaUrl: "",
-  address: "",
+  address: "اصفهان، سه راه سیمین، خیابان جانبازان، بلوار شهید بخشی",
   officeHours: "",
-  footerTagline: "",
+  footerTagline: "همراه شما برای انتخاب خانه‌ای بهتر",
   updatedAt: null,
 };
 
