@@ -100,6 +100,7 @@ const PROPERTY_ORIENTATION_LABELS: Record<NonNullable<Property["orientation"]>, 
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { PropertyActions } from "@/components/hirmand/property-actions";
+import { PropertyMarketComparison } from "@/components/hirmand/property-market-comparison";
 import { PropertyViewingRequest } from "@/components/hirmand/property-viewing-request";
 import { PropertyDecisionTools } from "@/components/hirmand/property-decision-tools";
 import { PropertyVisitChecklist } from "@/components/hirmand/property-visit-checklist";
@@ -1547,6 +1548,8 @@ export function PropertyDetailView({
                     </small>
                   ) : null}
                 </div>
+
+                <PropertyMarketComparison property={property} />
 
                 <div className="property-primary-contact" aria-label="تماس سریع با مشاور">
                   <a
