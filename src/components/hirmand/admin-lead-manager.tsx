@@ -636,6 +636,19 @@ export function AdminLeadManager() {
                       <span>پیگیری بعدی: <strong>{formatDate(lead.followUpAt)}</strong></span>
                     </div>
                   ) : null}
+                  {lead.callbackPreferredAt ? (
+                    <div className="admin-lead-follow-up admin-lead-callback">
+                      <CalendarDays size={14} />
+                      <span>تماس پیشنهادی: <strong>{formatDate(lead.callbackPreferredAt)}</strong></span>
+                    </div>
+                  ) : null}
+                  {lead.offerAmount ? (
+                    <div className="admin-lead-follow-up admin-lead-offer">
+                      <Tag size={14} />
+                      <span>پیشنهاد قیمت: <strong>{formatToman(lead.offerAmount)} تومان</strong></span>
+                      {lead.offerConditions ? <small>{lead.offerConditions}</small> : null}
+                    </div>
+                  ) : null}
                   {lead.visitPreferredAt ? (
                     <div className="admin-lead-follow-up">
                       <CalendarDays size={14} />
