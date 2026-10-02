@@ -3,6 +3,7 @@ import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 import { TEAM } from "@/lib/site";
+import { isAllowedMediaRef, isVideoUrl } from "@/lib/media";
 import { clearPropertyReadCache, propertyInputSchema } from "@/lib/properties";
 import { getPublishReadiness } from "@/lib/property-publish-readiness";
 
@@ -108,7 +109,7 @@ export default defineEventHandler(async (event) => {
     const editableKeys = [
       "title","transactionType","propertyType","neighborhood","address","areaM2","bedrooms","bathrooms","floor","totalFloors",
       "builtYear","orientation","cabinetType","flooringType","coolingSystem","heatingSystem",
-      "wallClosetType","price","deposit","rent","description","features",
+      "wallClosetType","price","deposit","rent","description","features","images",
     ] as const;
     for (const key of editableKeys) {
       if (Object.prototype.hasOwnProperty.call(patch, key)) next[key] = patch[key];
@@ -150,6 +151,13 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 422, statusMessage: "ویژگی‌های ملک معتبر نیست." });
     }
     next.features = next.features.map((item) => item.trim()).filter(Boolean).slice(0, 20);
+    if (!Array.isArray(next.images) || next.images.length < 1 || next.images.length > 20 || next.images.some((item) => typeof item !== "string" || !isAllowedMediaRef(item))) {
+      throw createError({ statusCode: 422, statusMessage: "رسانه‌های ملک معتبر نیستند." });
+    }
+    const editedVideos = next.images.filter((item): item is string => typeof item === "string" && isVideoUrl(item));
+    const editedImages = next.images.filter((item): item is string => typeof item === "string" && !isVideoUrl(item));
+    if (!editedImages.length) throw createError({ statusCode: 422, statusMessage: "حداقل یک تصویر برای ملک لازم است." });
+    if (editedVideos.length > 1) throw createError({ statusCode: 422, statusMessage: "حداکثر یک ویدئو مجاز است." });
     next.title = title;
     next.neighborhood = neighborhood;
     next.address = String(next.address ?? "").trim().slice(0, 240);
