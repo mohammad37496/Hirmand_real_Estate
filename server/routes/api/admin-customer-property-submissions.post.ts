@@ -7,7 +7,7 @@ import { isAllowedMediaRef, isVideoUrl } from "@/lib/media";
 import { clearPropertyReadCache, propertyInputSchema } from "@/lib/properties";
 import { getPublishReadiness } from "@/lib/property-publish-readiness";
 
-type Action = "list" | "approve" | "reject" | "update" | "set_priority" | "history";
+type Action = "list" | "approve" | "reject" | "update" | "set_priority" | "history" | "bulk_set_priority" | "bulk_reject" | "export";
 
 function slugify(value: string) {
   const normalized = value.trim().toLowerCase()
@@ -49,6 +49,11 @@ export default defineEventHandler(async (event) => {
     query?: string;
     patch?: Record<string, unknown>;
     priority?: "low" | "normal" | "high";
+    ids?: string[];
+    page?: number;
+    pageSize?: number;
+    fromDate?: string;
+    toDate?: string;
   };
   const action = body.action ?? "list";
   const sql = await getSql();
@@ -57,12 +62,42 @@ export default defineEventHandler(async (event) => {
     const status = body.status && ["pending","approved","rejected"].includes(body.status) ? body.status : "pending";
     const query = typeof body.query === "string" ? body.query.trim().slice(0, 80) : "";
     const pattern = "%" + query + "%";
+    const fromDate = typeof body.fromDate === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(body.fromDate) ? body.fromDate : "";
+    const toDate = typeof body.toDate === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(body.toDate) ? body.toDate : "";
+    const requestedPage = Number.isInteger(body.page) ? Number(body.page) : 1;
+    const page = Math.min(Math.max(requestedPage, 1), 10000);
+    const requestedPageSize = Number.isInteger(body.pageSize) ? Number(body.pageSize) : 20;
+    const pageSize = [10, 20, 40].includes(requestedPageSize) ? requestedPageSize : 20;
+    const offset = (page - 1) * pageSize;
     const rows = await sql.query<Record<string, unknown>>(
-      "select s.id,s.lead_id,s.public_tracking_token,s.status,s.owner_name,s.owner_phone,s.property_data,s.review_note,s.property_id,s.created_at,s.reviewed_at,s.priority,s.updated_at,s.queue_started_at,(
-        exists(select 1 from customer_property_submissions d where d.id<>s.id and d.status in ('pending','approved') and (d.owner_phone=s.owner_phone or ((d.property_data->>'neighborhood')=(s.property_data->>'neighborhood') and (d.property_data->>'areaM2')=(s.property_data->>'areaM2') and lower(coalesce(d.property_data->>'title',''))=lower(coalesce(s.property_data->>'title','')))))
-        or exists(select 1 from properties p where p.status <> 'archived' and (p.owner_phone=s.owner_phone or ((p.neighborhood=(s.property_data->>'neighborhood')) and coalesce(p.area_m2,0)::text=(s.property_data->>'areaM2') and lower(coalesce(p.title,''))=lower(coalesce(s.property_data->>'title','')))))
-      ) as possible_duplicate from customer_property_submissions s where s.status=$1 and ($2='' or s.owner_name ilike $3 or s.owner_phone ilike $3 or s.public_tracking_token ilike $3 or coalesce(s.property_data->>'title','') ilike $3 or coalesce(s.property_data->>'neighborhood','') ilike $3) order by case s.priority when 'high' then 0 when 'normal' then 1 else 2 end, coalesce(s.updated_at,s.created_at) asc limit 40",
-      [status, query, pattern],
+      `select s.id,s.lead_id,s.public_tracking_token,s.status,s.owner_name,s.owner_phone,s.property_data,s.review_note,s.property_id,s.created_at,s.reviewed_at,s.priority,s.updated_at,s.queue_started_at,
+        (
+          exists(select 1 from customer_property_submissions d where d.id<>s.id and d.status in ('pending','approved') and (
+            d.owner_phone=s.owner_phone
+            or ((d.property_data->>'neighborhood')=(s.property_data->>'neighborhood') and (d.property_data->>'areaM2')=(s.property_data->>'areaM2') and lower(coalesce(d.property_data->>'title',''))=lower(coalesce(s.property_data->>'title','')))
+          ))
+          or exists(select 1 from properties p where p.status <> 'archived' and (
+            p.owner_phone=s.owner_phone
+            or ((p.neighborhood=(s.property_data->>'neighborhood')) and coalesce(p.area_m2,0)::text=(s.property_data->>'areaM2') and lower(coalesce(p.title,''))=lower(coalesce(s.property_data->>'title','')))
+          ))
+        ) as possible_duplicate
+      from customer_property_submissions s
+      where s.status=$1
+        and ($2='' or s.owner_name ilike $3 or s.owner_phone ilike $3 or s.public_tracking_token ilike $3 or coalesce(s.property_data->>'title','') ilike $3 or coalesce(s.property_data->>'neighborhood','') ilike $3)
+        and ($4='' or s.created_at >= $4::date)
+        and ($5='' or s.created_at < ($5::date + interval '1 day'))
+      order by case s.priority when 'high' then 0 when 'normal' then 1 else 2 end, coalesce(s.queue_started_at,s.created_at) asc
+      limit $6 offset $7`,
+      [status, query, pattern, fromDate, toDate, pageSize, offset],
+    );
+    const totalRows = await sql.query<{ count: number }>(
+      `select count(*)::int as count
+       from customer_property_submissions s
+       where s.status=$1
+         and ($2='' or s.owner_name ilike $3 or s.owner_phone ilike $3 or s.public_tracking_token ilike $3 or coalesce(s.property_data->>'title','') ilike $3 or coalesce(s.property_data->>'neighborhood','') ilike $3)
+         and ($4='' or s.created_at >= $4::date)
+         and ($5='' or s.created_at < ($5::date + interval '1 day'))`,
+      [status, query, pattern, fromDate, toDate],
     );
     const countRows = await sql.query<{ status: string; count: number }>(
       "select status,count(*)::int as count from customer_property_submissions group by status",
@@ -71,8 +106,11 @@ export default defineEventHandler(async (event) => {
     for (const row of countRows) {
       if (row.status === "pending" || row.status === "approved" || row.status === "rejected") counts[row.status] = Number(row.count) || 0;
     }
+    const total = Number(totalRows[0]?.count) || 0;
     return {
-      total: rows.length,
+      total,
+      page,
+      pageSize,
       counts,
       submissions: rows.map((row) => ({
         id: String(row.id),
@@ -92,6 +130,117 @@ export default defineEventHandler(async (event) => {
         possibleDuplicate: Boolean(row.possible_duplicate),
       })),
     };
+  }
+
+  if (action === "bulk_set_priority" || action === "bulk_reject") {
+    const ids = Array.from(new Set(Array.isArray(body.ids) ? body.ids.filter((id): id is string => typeof id === "string" && id.trim().length > 0).map((id) => id.trim()) : [])).slice(0, 50);
+    if (!ids.length) throw createError({ statusCode: 422, statusMessage: "حداقل یک پرونده را انتخاب کنید." });
+
+    if (action === "bulk_set_priority") {
+      const priority = body.priority;
+      if (!priority || !["low","normal","high"].includes(priority)) {
+        throw createError({ statusCode: 422, statusMessage: "اولویت نامعتبر است." });
+      }
+      const targets = await sql.query<{ id: string }>(
+        "select id from customer_property_submissions where id = any($1::text[]) and status='pending'",
+        [ids],
+      );
+      if (!targets.length) return { success: true, updatedCount: 0, priority };
+      await sql.query(
+        "update customer_property_submissions set priority=$2,updated_at=current_timestamp where id = any($1::text[]) and status='pending'",
+        [ids, priority],
+      );
+      for (const target of targets) {
+        await logReviewEvent(sql, target.id, "priority", "اولویت پرونده به " + priority + " تغییر کرد.", { priority, bulk: true });
+      }
+      return { success: true, updatedCount: targets.length, priority };
+    }
+
+    const reviewNote = typeof body.reviewNote === "string" ? body.reviewNote.trim().slice(0, 1200) : "";
+    const targets = await sql.query<{ id: string; lead_id: string | null }>(
+      "select id,lead_id from customer_property_submissions where id = any($1::text[]) and status='pending'",
+      [ids],
+    );
+    if (!targets.length) return { success: true, updatedCount: 0 };
+    await sql.query(
+      "update customer_property_submissions set status='rejected', review_note=$2, reviewed_at=current_timestamp, updated_at=current_timestamp where id = any($1::text[]) and status='pending'",
+      [ids, reviewNote],
+    );
+    for (const target of targets) {
+      if (target.lead_id) {
+        await sql.query("update leads set status='closed', updated_at=current_timestamp where id=$1", [target.lead_id]).catch(() => {});
+        await sql.query(
+          "insert into lead_activities (lead_id,activity_type,title,note,metadata) values ($1,'status',$2,$3,$4::jsonb)",
+          [target.lead_id, "ثبت ملک رد شد", reviewNote || "درخواست ثبت ملک توسط کارشناس رد شد.", JSON.stringify({ submissionId: target.id, bulk: true })],
+        ).catch(() => {});
+      }
+      await logReviewEvent(sql, target.id, "reject", reviewNote || "درخواست ثبت ملک رد شد.", { bulk: true });
+    }
+    return { success: true, updatedCount: targets.length, status: "rejected" };
+  }
+
+  if (action === "export") {
+    const status = body.status && ["pending","approved","rejected"].includes(body.status) ? body.status : "pending";
+    const query = typeof body.query === "string" ? body.query.trim().slice(0, 80) : "";
+    const pattern = "%" + query + "%";
+    const fromDate = typeof body.fromDate === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(body.fromDate) ? body.fromDate : "";
+    const toDate = typeof body.toDate === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(body.toDate) ? body.toDate : "";
+    const rows = await sql.query<Record<string, unknown>>(
+      `select s.id,s.public_tracking_token,s.status,s.owner_name,s.owner_phone,s.property_data,s.created_at,s.reviewed_at,s.priority
+       from customer_property_submissions s
+       where s.status=$1
+         and ($2='' or s.owner_name ilike $3 or s.owner_phone ilike $3 or s.public_tracking_token ilike $3 or coalesce(s.property_data->>'title','') ilike $3 or coalesce(s.property_data->>'neighborhood','') ilike $3)
+         and ($4='' or s.created_at >= $4::date)
+         and ($5='' or s.created_at < ($5::date + interval '1 day'))
+       order by s.created_at desc`,
+      [status, query, pattern, fromDate, toDate],
+    );
+    const txLabels: Record<string,string> = { buy:"خرید", sell:"فروش", rent:"اجاره", mortgage:"رهن" };
+    const typeLabels: Record<string,string> = { apartment:"آپارتمان", villa:"ویلا و باغ", office:"اداری", heritage:"خانه اصیل", land:"زمین", commercial:"تجاری" };
+    const statusLabels: Record<string,string> = { pending:"در انتظار", approved:"تأیید شده", rejected:"رد شده" };
+    const priorityLabels: Record<string,string> = { low:"کم", normal:"عادی", high:"فوری" };
+    const csvEscape = (value: unknown) => {
+      const text = String(value ?? "");
+      return /[",\\n\\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+    };
+    const headers = ["کد رهگیری","وضعیت","عنوان ملک","نوع معامله","نوع ملک","محله","متراژ","نام مالک","موبایل مالک","قیمت","رهن","اجاره","اولویت","تاریخ ثبت","تاریخ بررسی","تکراری"];
+    const lines = [headers.map(csvEscape).join(",")];
+    for (const row of rows) {
+      const data = row.property_data && typeof row.property_data === "object" ? row.property_data as Record<string, unknown> : {};
+      const possibleDuplicate = await sql.query<{ exists: boolean }>(
+        `select exists(
+          select 1 from customer_property_submissions d where d.id<>$1 and d.status in ('pending','approved') and (
+            d.owner_phone=$2 or ((d.property_data->>'neighborhood')=(d.property_data->>'neighborhood') and (d.property_data->>'areaM2')=(data->>'areaM2') and lower(coalesce(d.property_data->>'title',''))=lower(coalesce($3,'')))
+          )
+        ) or exists(
+          select 1 from properties p where p.status <> 'archived' and (
+            p.owner_phone=$2 or ((p.neighborhood=($4)) and coalesce(p.area_m2,0)::text=(data->>'areaM2') and lower(coalesce(p.title,''))=lower(coalesce($3,'')))
+          )
+        ) as exists`,
+        [String(row.id), String(row.owner_phone ?? ""), String(data.title ?? ""), String(data.neighborhood ?? "")],
+      ).catch(() => [{ exists: false }]);
+      lines.push([
+        row.public_tracking_token,
+        statusLabels[String(row.status)] ?? String(row.status),
+        data.title,
+        txLabels[String(data.transactionType)] ?? String(data.transactionType ?? ""),
+        typeLabels[String(data.propertyType)] ?? String(data.propertyType ?? ""),
+        data.neighborhood,
+        data.areaM2,
+        row.owner_name,
+        row.owner_phone,
+        data.price,
+        data.deposit,
+        data.rent,
+        priorityLabels[String(row.priority ?? "normal")] ?? String(row.priority ?? "normal"),
+        row.created_at ? new Date(String(row.created_at)).toLocaleString("fa-IR", { timeZone: "Asia/Tehran" }) : "",
+        row.reviewed_at ? new Date(String(row.reviewed_at)).toLocaleString("fa-IR", { timeZone: "Asia/Tehran" }) : "",
+        Boolean(possibleDuplicate[0]?.exists) ? "بله" : "خیر",
+      ].map(csvEscape).join(","));
+    }
+    setResponseHeader(event, "content-type", "text/csv; charset=utf-8");
+    setResponseHeader(event, "content-disposition", 'attachment; filename="hirmand-customer-submissions.csv"');
+    return "\ufeff" + lines.join("\r\n");
   }
 
   if (!body.id) throw createError({ statusCode: 400, statusMessage: "شناسه درخواست مشخص نیست." });
@@ -243,6 +392,9 @@ export default defineEventHandler(async (event) => {
         propertyId: submission.property_id == null ? null : String(submission.property_id),
         createdAt: new Date(String(submission.created_at)).toISOString(),
         reviewedAt: submission.reviewed_at == null ? null : new Date(String(submission.reviewed_at)).toISOString(),
+        priority: String(submission.priority ?? "normal"),
+        updatedAt: new Date().toISOString(),
+        ageHours: Math.max(0, (Date.now() - new Date(String(submission.queue_started_at ?? submission.created_at)).getTime()) / 3600000),
       },
     };
   }
