@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CheckCircle2, FilePlus2, Film, Home, ImagePlus, Loader2, Phone, Send, X } from "lucide-react";
-import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { PROPERTY_TYPES, SERVICES, NEIGHBORHOODS, SITE } from "@/lib/site";
 import {
@@ -101,6 +101,42 @@ function SubmitPropertyPage() {
   const [uploadLabel, setUploadLabel] = useState("");
   const [error, setError] = useState("");
   const [done, setDone] = useState("");
+  const [editToken, setEditToken] = useState("");
+  const [loadingExisting, setLoadingExisting] = useState(false);
+
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get("code")?.trim().toUpperCase().replace(/\\s+/g, "") || "";
+    if (!/^HIR-[A-Z0-9]{2}-[A-F0-9]{12}$/.test(token)) return;
+    setEditToken(token);
+    setLoadingExisting(true);
+    void fetch("/api/customer-property-submissions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ action: "load", trackingToken: token }),
+    }).then(async (response) => {
+      const payload = await response.json().catch(() => null) as { success?: boolean; propertyData?: Record<string, unknown>; reviewNote?: string; statusMessage?: string } | null;
+      if (!response.ok || !payload?.success || !payload.propertyData) throw new Error(payload?.statusMessage || "اطلاعات درخواست برای ویرایش قابل دریافت نیست.");
+      const data = payload.propertyData;
+      const text = (key: string) => String(data[key] ?? "");
+      const num = (key: string) => data[key] == null ? "" : String(data[key]);
+      const bool = (key: string) => Boolean(data[key]);
+      setOwnerName(text("ownerName")); setOwnerPhone(text("ownerPhone")); setTitle(text("title"));
+      if (["buy","sell","rent","mortgage"].includes(String(data.transactionType))) setTransactionType(String(data.transactionType) as typeof transactionType);
+      if (["apartment","villa","office","heritage","land","commercial"].includes(String(data.propertyType))) setPropertyType(String(data.propertyType) as typeof propertyType);
+      setNeighborhood(text("neighborhood")); setAddress(text("address")); setArea(num("areaM2")); setBedrooms(num("bedrooms")); setBathrooms(num("bathrooms")); setFloor(num("floor")); setTotalFloors(num("totalFloors")); setBuiltYear(num("builtYear")); setOrientation(text("orientation"));
+      setCabinetType(text("cabinetType")); setFlooringType(text("flooringType")); setCoolingSystem(text("coolingSystem")); setHeatingSystem(text("heatingSystem")); setWallClosetType(text("wallClosetType"));
+      setParking(bool("parking")); setElevator(bool("elevator")); setStorage(bool("storage")); setPainted(bool("painted")); setWallpaper(bool("wallpaper")); setConvertible(bool("convertible"));
+      setOtherAmenities(Array.isArray(data.otherAmenities) ? data.otherAmenities.filter((v): v is string => typeof v === "string") : []);
+      setFeatures(Array.isArray(data.features) ? data.features.filter((v): v is string => typeof v === "string") : []);
+      setPrice(text("price")); setDeposit(text("deposit")); setRent(text("rent")); setDescription(text("description"));
+      setMedia(Array.isArray(data.images) ? data.images.filter((v): v is string => typeof v === "string") : []);
+      if (payload.reviewNote) toast.info("علت نیاز به اصلاح: " + payload.reviewNote);
+    }).catch((error) => {
+      setEditToken("");
+      setError(error instanceof Error ? error.message : "اطلاعات درخواست قابل دریافت نیست.");
+    }).finally(() => setLoadingExisting(false));
+  }, []);
 
   const imageCount = useMemo(() => media.filter((src) => !isVideoUrl(src)).length, [media]);
 
@@ -184,6 +220,8 @@ function SubmitPropertyPage() {
         headers: { "content-type": "application/json" },
         credentials: "same-origin",
         body: JSON.stringify({
+          action: editToken ? "resubmit" : undefined,
+          trackingToken: editToken || undefined,
           ownerName: ownerName.trim(),
           ownerPhone: normalizedPhone,
           title: title.trim(),
@@ -216,7 +254,7 @@ function SubmitPropertyPage() {
       }
       setDone(String(payload.trackingToken || ""));
       if (payload.trackingToken) rememberCustomerTrackingCode(String(payload.trackingToken));
-      toast.success("ملک برای بررسی کارشناسان هیرمند ارسال شد.");
+      toast.success(editToken ? "اصلاحات با موفقیت ارسال و دوباره وارد صف بررسی شد." : "ملک برای بررسی کارشناسان هیرمند ارسال شد.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "ثبت ملک انجام نشد.");
     } finally {
@@ -230,8 +268,8 @@ function SubmitPropertyPage() {
         <section className="owner-success customer-submission-success">
           <div className="owner-success-icon"><CheckCircle2 size={30} /></div>
           <span className="kicker">ارسال موفق</span>
-          <h1>اطلاعات ملک شما دریافت شد.</h1>
-          <p>فایل ابتدا در صف بررسی هیرمند قرار می‌گیرد و تا تأیید کارشناسان در بخش فایل‌های عمومی نمایش داده نمی‌شود.</p>
+          <h1>{editToken ? "اصلاحات ملک شما دریافت شد." : "اطلاعات ملک شما دریافت شد."}</h1>
+          <p>{editToken ? "نسخه اصلاح‌شده دوباره در صف بررسی قرار گرفت و تا تأیید کارشناسان در بخش فایل‌های عمومی نمایش داده نمی‌شود." : "فایل ابتدا در صف بررسی هیرمند قرار می‌گیرد و تا تأیید کارشناسان در بخش فایل‌های عمومی نمایش داده نمی‌شود."}</p>
           <div className="owner-tracking">
             <small>کد رهگیری</small>
             <strong dir="ltr">{done || "—"}</strong>
@@ -247,13 +285,13 @@ function SubmitPropertyPage() {
     <main className="owner-submit-page customer-property-submit-page">
       <header className="owner-submit-header">
         <Link to="/" className="owner-back">بازگشت به هیرمند</Link>
-        <div className="owner-brand"><span className="owner-icon"><Home size={22}/></span><span><small>HIRMAND REAL ESTATE</small><strong>ثبت کامل ملک توسط مالک</strong></span></div>
+        <div className="owner-brand"><span className="owner-icon"><Home size={22}/></span><span><small>HIRMAND REAL ESTATE</small><strong>{editToken ? "اصلاح و ارسال مجدد ملک" : "ثبت کامل ملک توسط مالک"}</strong></span></div>
       </header>
 
       <section className="customer-property-intro">
         <span className="kicker">ثبت فایل توسط مشتری</span>
-        <h1>ملکتان را کامل برای ما ارسال کنید.</h1>
-        <p>مشخصات کامل ملک، امکانات، عکس و یک ویدئو را ارسال کنید. پس از بررسی و تأیید شما/کارشناس، فایل با مشاور هیرمند منتشر می‌شود.</p>
+        <h1>{editToken ? "اصلاحات درخواستتان را انجام دهید." : "ملکتان را کامل برای ما ارسال کنید."}</h1>
+        <p>{editToken ? "اطلاعات قبلی شما بارگذاری شده است. موارد موردنظر را اصلاح کنید و دوباره برای بررسی هیرمند بفرستید." : "مشخصات کامل ملک، امکانات، عکس و یک ویدئو را ارسال کنید. پس از بررسی و تأیید کارشناس، فایل با مشاور هیرمند منتشر می‌شود."}</p>
         <div className="customer-property-intro-points">
           <span><CheckCircle2 size={15}/> صف بررسی و تأیید</span>
           <span><CheckCircle2 size={15}/> آپلود مرحله‌ای رسانه</span>
@@ -335,7 +373,7 @@ function SubmitPropertyPage() {
         {error ? <p className="customer-property-error" role="alert">{error}</p> : null}
         <div className="customer-property-submit-actions">
           <Link to="/" className="btn-ghost">انصراف</Link>
-          <button type="submit" className="btn-gold" disabled={uploading}><FilePlus2 size={18}/>{uploading?"در حال ارسال…":"ارسال ملک برای بررسی"}</button>
+          <button type="submit" className="btn-gold" disabled={uploading || loadingExisting}>{loadingExisting ? <Loader2 size={18} className="owner-spin"/> : <FilePlus2 size={18}/>} {loadingExisting ? "در حال بارگذاری درخواست…" : uploading ? "در حال ارسال…" : editToken ? "اصلاح و ارسال مجدد" : "ارسال ملک برای بررسی"}</button>
         </div>
         <p className="customer-property-privacy"><Phone size={14}/> اطلاعات مالک و رسانه‌ها فقط برای بررسی و تکمیل فایل استفاده می‌شوند و انتشار عمومی منوط به تأیید است.</p>
       </form>
