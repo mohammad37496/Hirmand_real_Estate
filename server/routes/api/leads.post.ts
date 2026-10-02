@@ -282,6 +282,16 @@ export default defineEventHandler(async (event) => {
     );
     const property = propertyRows[0];
     if (!property) throw createError({ statusCode: 404, statusMessage: "فایل موردنظر برای بازدید در دسترس نیست." });
+    const conflictRows = await sql.query<{ id: string }>(
+      "select id from leads where property_id::text=$1 and visit_status in ('requested','confirmed') and abs(extract(epoch from (visit_preferred_at - $2::timestamptz))) < 2700 limit 1",
+      [property.id, visitDate.toISOString()],
+    );
+    if (conflictRows[0]) {
+      throw createError({
+        statusCode: 409,
+        statusMessage: "این بازه برای این فایل قبلاً درخواستی دارد. لطفاً یکی از زمان‌های خالی را انتخاب کنید.",
+      });
+    }
     const trackingToken = createPublicTrackingToken();
     const rows = await sql.query<{ id: string }>(
       "insert into leads (id, name, phone, people_count, job, deal, property_type, neighborhood, consultant, note, source, follow_up_at, floor_preference, property_id, visit_preferred_at, visit_requested_at, visit_status, public_tracking_token) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'website',current_timestamp + interval '4 hours',$11,$12,$13,current_timestamp,'requested',$14) returning id",
