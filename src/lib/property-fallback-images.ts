@@ -11,44 +11,28 @@ type FallbackMap = Record<PropertyType, readonly string[]>;
  */
 export const PROPERTY_FALLBACK_IMAGES: FallbackMap = {
   apartment: [
-    "/images/fallback/apartment-01.jpg",
-    "/images/fallback/apartment-02.jpg",
-    "/images/fallback/apartment-03.jpg",
-    "/images/fallback/apartment-04.jpg",
-    "/images/fallback/apartment-05.jpg",
-    "/images/fallback/apartment-06.jpg",
+    "/images/fallback/apartment-01.svg",
+    "/images/fallback/apartment-02.svg",
   ],
   villa: [
-    "/images/fallback/villa-01.jpg",
-    "/images/fallback/villa-02.jpg",
-    "/images/fallback/villa-03.jpg",
-    "/images/fallback/villa-04.jpg",
-    "/images/fallback/villa-05.jpg",
-    "/images/fallback/villa-06.jpg",
+    "/images/fallback/villa-01.svg",
+    "/images/fallback/villa-02.svg",
   ],
   office: [
-    "/images/fallback/office-01.jpg",
-    "/images/fallback/office-02.jpg",
-    "/images/fallback/office-03.jpg",
-    "/images/fallback/office-04.jpg",
+    "/images/fallback/office-01.svg",
+    "/images/fallback/office-02.svg",
   ],
   heritage: [
-    "/images/fallback/heritage-01.jpg",
-    "/images/fallback/heritage-02.jpg",
-    "/images/fallback/heritage-03.jpg",
-    "/images/fallback/heritage-04.jpg",
+    "/images/fallback/heritage-01.svg",
+    "/images/fallback/heritage-02.svg",
   ],
   land: [
-    "/images/fallback/land-01.jpg",
-    "/images/fallback/land-02.jpg",
-    "/images/fallback/land-03.jpg",
-    "/images/fallback/land-04.jpg",
+    "/images/fallback/land-01.svg",
+    "/images/fallback/land-02.svg",
   ],
   commercial: [
-    "/images/fallback/commercial-01.jpg",
-    "/images/fallback/commercial-02.jpg",
-    "/images/fallback/commercial-03.jpg",
-    "/images/fallback/commercial-04.jpg",
+    "/images/fallback/commercial-01.svg",
+    "/images/fallback/commercial-02.svg",
   ],
 };
 
