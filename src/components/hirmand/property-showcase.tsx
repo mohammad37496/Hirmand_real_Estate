@@ -19,6 +19,7 @@ import type { Property, PropertyCardData, PropertyType, PropertyTransaction } fr
 import { isFeaturedActive, listPublishedPropertyCards } from "@/lib/properties";
 import { PropertyActions } from "./property-actions";
 import { PropertyMediaWatermark } from "@/components/hirmand/property-media-watermark";
+import { isPermanentlyWatermarkedMediaUrl } from "@/lib/property-watermark";
 import { Reveal } from "./reveal";
 
 const PROPERTY_TYPE_LABEL: Record<PropertyType, string> = {
@@ -134,7 +135,7 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
         aria-label={`مشاهده جزئیات کامل فایل ${property.title}`}
       >
         <div className="pcard-media">
-          <PropertyMediaWatermark />
+          {!isPermanentlyWatermarkedMediaUrl(image) ? <PropertyMediaWatermark /> : null}
           <PropertyImage
             src={image}
             alt={property.title}

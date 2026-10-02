@@ -121,14 +121,26 @@ export async function storeMedia(input: {
  * Assembly happens inside Postgres (`string_agg` over the chunk rows) so a large
  * file never has to be materialised in the serverless function.
  */
+export type AssembledUploadTransform = (input: {
+  data: Buffer;
+  contentType: string;
+  pathname: string;
+}) => Promise<{
+  data: Buffer;
+  contentType: string;
+  pathname: string;
+} | null>;
+
 export async function storeAssembledUpload(input: {
   pathname: string;
   contentType: string;
   sessionId: string;
+  transform?: AssembledUploadTransform;
 }): Promise<StoredMedia> {
   requireDatabase();
   const sql = await getSql();
-  const contentType = input.contentType || "application/octet-stream";
+  let contentType = input.contentType || "application/octet-stream";
+  let pathname = input.pathname;
 
   // Completion can be retried after the business insert or the final cleanup
   // failed. Reuse the already assembled object instead of creating a second
@@ -151,6 +163,7 @@ export async function storeAssembledUpload(input: {
   }
 
   const id = crypto.randomUUID();
+
   // The chunks are concatenated inside Postgres, so a large file never has to
   // be assembled by the function itself.
   await sql.query(
@@ -158,8 +171,50 @@ export async function storeAssembledUpload(input: {
      select $1, $2, $3, coalesce(sum(octet_length(data)), 0), string_agg(data, ''::bytea order by chunk_index)
      from media_upload_chunks
      where session_id = $4`,
-    [id, input.pathname, contentType, input.sessionId],
+    [id, pathname, contentType, input.sessionId],
   );
+
+  let dataResult = await readMediaRange(id, 0, null);
+  if (!dataResult || !dataResult.bytes.length) {
+    throw new Error("فایل assembled شده در پایگاه داده پیدا نشد یا خالی است.");
+  }
+
+  // Transformations (such as permanent video watermarking) happen before the
+  // object can leave the database, so the final URL always points to the
+  // processed bytes and the original upload is never published as a fallback.
+  if (input.transform) {
+    try {
+      const transformed = await input.transform({
+        data: dataResult.bytes,
+        contentType,
+        pathname,
+      });
+
+      if (transformed) {
+        const nextData = Buffer.from(transformed.data);
+        if (!nextData.length) {
+          throw new Error("خروجی پردازش رسانه خالی است.");
+        }
+        contentType = transformed.contentType || contentType;
+        pathname = transformed.pathname || pathname;
+
+        await sql.query(
+          `update media_objects
+           set pathname = $2, content_type = $3, size_bytes = $4, data = $5
+           where id = $1`,
+          [id, pathname, contentType, nextData.length, nextData],
+        );
+        dataResult = {
+          bytes: nextData,
+          size: nextData.length,
+          contentType,
+        };
+      }
+    } catch (error) {
+      await sql.query("delete from media_objects where id = $1", [id]).catch(() => undefined);
+      throw error;
+    }
+  }
 
   // With an object store configured, move the finished file to the CDN and drop
   // the database copy; if that fails the stored row still serves the media.
@@ -168,12 +223,12 @@ export async function storeAssembledUpload(input: {
     storage: "database",
     id,
   };
-  const assembled = await readMediaRange(id, 0, null);
-  if (assembled && assembled.size > 0 && assembled.size <= MAX_OFFLOAD_BYTES) {
+
+  if (dataResult.size > 0 && dataResult.size <= MAX_OFFLOAD_BYTES) {
     if (liaraStorageConfigured()) {
       const url = await putLiaraObject({
-        key: input.pathname,
-        body: assembled.bytes,
+        key: pathname,
+        body: dataResult.bytes,
         contentType,
       });
       if (url) {
@@ -181,7 +236,7 @@ export async function storeAssembledUpload(input: {
         stored = { url, storage: "object-store", id: null };
       }
     } else if (blobConfigured()) {
-      const url = await putToObjectStore(input.pathname, assembled.bytes, contentType);
+      const url = await putToObjectStore(pathname, dataResult.bytes, contentType);
       if (url) {
         await sql.query("delete from media_objects where id = $1", [id]);
         stored = { url, storage: "object-store", id: null };
@@ -199,7 +254,6 @@ export async function storeAssembledUpload(input: {
   );
   return stored;
 }
-
 export async function deleteStoredMedia(
   url: string | null | undefined,
 ): Promise<void> {

@@ -65,7 +65,7 @@ export function AdminWatermarkSettings() {
         <div>
           <span className="kicker">برندینگ رسانه</span>
           <h1>واترمارک تصاویر و فیلم‌ها</h1>
-          <p>واترمارک در گوشه پایین سمت راست نمایش داده می‌شود. تصاویر جدید هنگام آپلود نیز با همین تنظیمات پردازش می‌شوند.</p>
+          <p>واترمارک در گوشه پایین سمت راست قرار می‌گیرد. تصاویر و ویدئوهای جدید هنگام آپلود با همین تنظیمات پردازش می‌شوند؛ ویدئوها با FFmpeg داخل خود فایل encode می‌شوند.</p>
         </div>
         <div className="admin-watermark-hero-icon" aria-hidden="true"><ShieldCheck size={34} /></div>
       </section>
@@ -122,7 +122,7 @@ export function AdminWatermarkSettings() {
             <img src="/images/fallback/interior-01.webp" alt="پیش‌نمایش واترمارک" />
             <PropertyMediaWatermarkPreview settings={settings} />
           </div>
-          <div className="admin-watermark-preview-note"><SlidersHorizontal size={15} /><span>همین تنظیمات روی فایل‌های جدید اعمال می‌شود و در صفحه جزئیات ملک هم دیده می‌شود.</span></div>
+          <div className="admin-watermark-preview-note"><SlidersHorizontal size={15} /><span>این تنظیمات روی رسانه‌های جدید اعمال می‌شود. ویدئوی جدید پس از آپلود دیگر به لایه نمایشی وابسته نیست و واترمارک داخل خود فایل ذخیره می‌شود؛ رسانه‌های قدیمی همچنان واترمارک نمایشی می‌گیرند.</span></div>
         </div>
       </section>
     </main>

@@ -1,5 +1,7 @@
 import { defineEventHandler } from "h3";
 import { handleChunkedUpload } from "@/lib/chunked-upload.server";
+import { getPropertyWatermarkSettingsServer } from "@/lib/property-watermark.server";
+import { applyPropertyVideoWatermark } from "@/lib/property-video-watermark.server";
 
 const MAX_BYTES = 25 * 1024 * 1024;
 
@@ -43,6 +45,24 @@ export default defineEventHandler((event) =>
     },
     unsupportedTypeMessage: "نوع فایل رسانه‌ای مجاز نیست.",
     sizeLimitMessage: (limitMb) => `حجم فایل بیش از ${limitMb} مگابایت است.`,
+    transform: async ({ data, contentType, pathname }) => {
+      if (!contentType.startsWith("video/")) return null;
+
+      const settings = await getPropertyWatermarkSettingsServer();
+      if (
+        !settings.enabled ||
+        (!settings.showLogo && !(settings.showText && settings.text.trim()))
+      ) {
+        return null;
+      }
+
+      return applyPropertyVideoWatermark({
+        data,
+        contentType,
+        pathname,
+        settings,
+      });
+    },
     finish: async ({ stored }) => ({ url: stored.url }),
   }),
 );
