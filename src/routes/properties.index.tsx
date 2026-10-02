@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   ArrowLeftRight,
+  BellDot,
   Bookmark,
   Heart,
   LayoutGrid,
@@ -72,6 +73,8 @@ type SavedSearch = {
   id: string;
   name: string;
   params: string;
+  alerts?: boolean;
+  lastCheckedAt?: string;
 };
 
 function readSavedSearches(): SavedSearch[] {
@@ -90,6 +93,14 @@ function readSavedSearches(): SavedSearch[] {
                   typeof item.params === "string",
               ),
           )
+          .map((item) => ({
+            ...item,
+            alerts: item.alerts !== false,
+            lastCheckedAt:
+              typeof item.lastCheckedAt === "string" && Number.isFinite(new Date(item.lastCheckedAt).getTime())
+                ? item.lastCheckedAt
+                : new Date().toISOString(),
+          }))
           .slice(0, MAX_SAVED_SEARCHES)
       : [];
   } catch {
@@ -357,6 +368,7 @@ function PropertiesIndexPage() {
   const [urlReady, setUrlReady] = useState(false);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [savedSearchId, setSavedSearchId] = useState("");
+  const [savedSearchAlerts, setSavedSearchAlerts] = useState<Record<string, number>>({});
   const [viewMode, setViewMode] = useState<"grid" | "list" | "split">("list");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
@@ -378,7 +390,9 @@ function PropertiesIndexPage() {
   }, []);
 
   useEffect(() => {
-    setSavedSearches(readSavedSearches());
+    const storedSearches = readSavedSearches();
+    setSavedSearches(storedSearches);
+    void refreshSavedSearchAlerts(storedSearches);
     const params = new URLSearchParams(window.location.search);
     const tx = validTransaction(params.get("transaction") ?? "");
     const type = validPropertyType(params.get("type") ?? "");
@@ -697,6 +711,68 @@ function PropertiesIndexPage() {
     return params;
   }
 
+  function filtersFromSavedSearch(searchParams: string) {
+    const params = new URLSearchParams(searchParams);
+    return buildFilterData(
+      params.get("q") ?? "",
+      validTransaction(params.get("transaction") ?? "") ?? "",
+      validPropertyType(params.get("type") ?? "") ?? "",
+      params.get("neighborhood") ?? "",
+      params.get("minArea") ?? "",
+      params.get("maxArea") ?? "",
+      params.get("minPrice") ?? "",
+      params.get("maxPrice") ?? "",
+      params.get("bedrooms") ?? "",
+      params.get("bathrooms") ?? "",
+      params.get("minFloor") ?? "",
+      params.get("maxFloor") ?? "",
+      params.get("floorType") === "suite" ? "suite" : "",
+      validOrientation(params.get("orientation") ?? "") ?? "",
+      params.get("convertible") === "1",
+      params.get("minFloors") ?? "",
+      params.get("maxFloors") ?? "",
+      params.get("minYear") ?? "",
+      params.get("maxYear") ?? "",
+      params.get("parking") === "1",
+      params.get("elevator") === "1",
+      params.get("storage") === "1",
+      (params.get("specs") ?? "").split(",").map((item) => item.trim()).filter(Boolean),
+      params.get("features") ?? "",
+      params.get("featured") === "1",
+      params.get("images") === "1",
+      params.get("location") === "1",
+      "newest",
+      0,
+    );
+  }
+
+  async function refreshSavedSearchAlerts(entries: SavedSearch[]) {
+    const enabled = entries.filter((item) => item.alerts !== false && item.lastCheckedAt);
+    if (!enabled.length) {
+      setSavedSearchAlerts({});
+      return;
+    }
+
+    const next: Record<string, number> = {};
+    await Promise.all(
+      enabled.map(async (item) => {
+        try {
+          const rows = await listPublishedPropertyCards({ data: filtersFromSavedSearch(item.params) });
+          const since = new Date(item.lastCheckedAt || "").getTime();
+          if (!Number.isFinite(since)) return;
+          const count = rows.filter((property) => {
+            const published = property.publishedAt ? new Date(property.publishedAt).getTime() : NaN;
+            return Number.isFinite(published) && published > since;
+          }).length;
+          if (count > 0) next[item.id] = count;
+        } catch {
+          // An individual alert check failing should not break the property list.
+        }
+      }),
+    );
+    setSavedSearchAlerts(next);
+  }
+
   function saveCurrentSearch() {
     const params = currentFilterParams();
     if (!params.toString()) {
@@ -712,6 +788,8 @@ function PropertiesIndexPage() {
       id: typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Date.now()),
       name: name.slice(0, 60),
       params: params.toString(),
+      alerts: true,
+      lastCheckedAt: new Date().toISOString(),
     };
     const next = [entry, ...savedSearches.filter((item) => item.params !== entry.params)].slice(0, MAX_SAVED_SEARCHES);
 
@@ -719,7 +797,8 @@ function PropertiesIndexPage() {
       localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(next));
       setSavedSearches(next);
       setSavedSearchId(entry.id);
-      toast.success("جست‌وجو ذخیره شد.");
+      setSavedSearchAlerts((current) => ({ ...current, [entry.id]: 0 }));
+      toast.success("جست‌وجو ذخیره شد و هشدار فایل جدید فعال شد.");
     } catch {
       toast.error("ذخیره جست‌وجو در این مرورگر ممکن نشد.");
     }
@@ -767,6 +846,21 @@ function PropertiesIndexPage() {
         ? savedSort
         : "newest",
     );
+    const checked = new Date().toISOString();
+    const updatedSearches = savedSearches.map((item) =>
+      item.id === id ? { ...item, lastCheckedAt: checked } : item,
+    );
+    try {
+      localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(updatedSearches));
+      setSavedSearches(updatedSearches);
+      setSavedSearchAlerts((current) => {
+        const copy = { ...current };
+        delete copy[id];
+        return copy;
+      });
+    } catch {
+      // Still apply the filters if persistence is unavailable.
+    }
     toast.success("جست‌وجوی ذخیره‌شده اعمال شد.");
   }
 
@@ -777,6 +871,11 @@ function PropertiesIndexPage() {
       localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(next));
       setSavedSearches(next);
       setSavedSearchId("");
+      setSavedSearchAlerts((current) => {
+        const copy = { ...current };
+        delete copy[savedSearchId];
+        return copy;
+      });
       toast.success("جست‌وجوی ذخیره‌شده حذف شد.");
     } catch {
       toast.error("حذف جست‌وجو انجام نشد.");
@@ -1445,9 +1544,43 @@ function PropertiesIndexPage() {
                 </select>
               ) : null}
               {savedSearchId ? (
-                <button type="button" onClick={deleteSavedSearch}>
-                  <X size={14} /> حذف جست‌وجوی ذخیره‌شده
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const checked = new Date().toISOString();
+                      const next = savedSearches.map((item) =>
+                        item.id === savedSearchId
+                          ? { ...item, alerts: item.alerts === false, lastCheckedAt: checked }
+                          : item,
+                      );
+                      try {
+                        localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(next));
+                        setSavedSearches(next);
+                        setSavedSearchAlerts((current) => {
+                          const copy = { ...current };
+                          delete copy[savedSearchId];
+                          return copy;
+                        });
+                        const enabled = next.find((item) => item.id === savedSearchId)?.alerts !== false;
+                        toast.success(enabled ? "هشدار فایل جدید فعال شد." : "هشدار فایل جدید خاموش شد.");
+                      } catch {
+                        toast.error("تغییر هشدار ذخیره نشد.");
+                      }
+                    }}
+                  >
+                    <BellDot size={14} />{" "}
+                    {savedSearches.find((item) => item.id === savedSearchId)?.alerts !== false
+                      ? "هشدار جدید روشن"
+                      : "هشدار جدید خاموش"}
+                    {savedSearchAlerts[savedSearchId]
+                      ? " · " + savedSearchAlerts[savedSearchId].toLocaleString("fa-IR") + " جدید"
+                      : ""}
+                  </button>
+                  <button type="button" onClick={deleteSavedSearch}>
+                    <X size={14} /> حذف جست‌وجوی ذخیره‌شده
+                  </button>
+                </>
               ) : null}
               <Link to="/" hash="inquiry">
                 درخواست فایل اختصاصی
