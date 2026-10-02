@@ -31,13 +31,17 @@ export function PropertyPaymentPlanner({ property }: { property: Property }) {
       if (typeof saved.monthlyAmount === "string") setMonthlyAmount(saved.monthlyAmount);
       if (typeof saved.firstPaymentDate === "string") setFirstPaymentDate(saved.firstPaymentDate);
       if (typeof saved.handoverDate === "string") setHandoverDate(saved.handoverDate);
-    } catch {}
+    } catch {
+      // Keep default payment settings when browser storage is unavailable.
+    }
   }, [key]);
 
   useEffect(() => {
     try {
       localStorage.setItem(key, JSON.stringify({ depositPercent, installments, monthlyAmount, firstPaymentDate, handoverDate }));
-    } catch {}
+    } catch {
+      // Ignore storage failures; the planner remains usable for this session.
+    }
   }, [depositPercent, installments, monthlyAmount, firstPaymentDate, handoverDate, key]);
 
   const deposit = Math.round(price * depositPercent / 100);
