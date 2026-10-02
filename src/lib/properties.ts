@@ -1150,7 +1150,7 @@ export const countAdminProperties = createServerFn({ method: "POST" })
       featured: number;
     }>(
       `select
-         count(*)::int as total,
+         count(*) filter (where deleted_at is null)::int as total,
          count(*) filter (where status = 'published' and deleted_at is null)::int as published,
          count(*) filter (where status = 'draft' and deleted_at is null)::int as draft,
          count(*) filter (where status = 'archived' and deleted_at is null)::int as archived,
