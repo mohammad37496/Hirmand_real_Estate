@@ -1475,17 +1475,14 @@ export function PropertyDetailView({
                 </div>
                 <div className="property-detail-tools-row">
                   <PropertyActions property={property} />
-                  <Link
-                    to="/"
-                    search={{}}
-                    hash="inquiry"
-                    className="property-similar-request-btn"
+                  <a
                     href={similarRequestHref(property)}
+                    className="property-similar-request-btn"
                     onClick={() => trackAnalyticsEvent("inquiry_click", property.slug)}
                   >
                     <Sparkles size={16} aria-hidden="true" />
                     درخواست فایل مشابه
-                  </Link>
+                  </a>
                 </div>
                 <button
                   type="button"
