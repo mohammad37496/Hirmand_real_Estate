@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Bell, BellRing, CheckCheck, ExternalLink, RefreshCw, TrendingDown } from "lucide-react";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
-import { listPublishedPropertyCards, type PropertyCardData, type PropertyType, type PropertyTransaction } from "@/lib/properties";
+import { listPublishedPropertyCards, type PropertyCardData, type PropertyOrientation, type PropertyType, type PropertyTransaction } from "@/lib/properties";
 import { absoluteUrl, socialMeta } from "@/lib/seo";
 
 type WatchAlert = { id: string; slug: string; type: string; message: string; createdAt: string };
@@ -73,6 +73,10 @@ function NotificationsPage() {
           const propertyType = ["apartment", "villa", "office", "heritage", "land", "commercial"].includes(rawPropertyType)
             ? rawPropertyType as PropertyType
             : undefined;
+          const rawOrientation = params.get("orientation") ?? "";
+          const orientation = ["north","south","east","west","northeast","northwest","southeast","southwest","two_fronts","three_fronts","four_fronts","other"].includes(rawOrientation)
+            ? rawOrientation as PropertyOrientation
+            : undefined;
           const rows = await listPublishedPropertyCards({ data: {
             search: params.get("q") || undefined,
             transactionType,
@@ -87,7 +91,20 @@ function NotificationsPage() {
             minFloor: numberParam("minFloor"),
             maxFloor: numberParam("maxFloor"),
             floorType: params.get("floorType") === "suite" ? "suite" : undefined,
-            convertibleOnly: params.get("convertible") === "1",
+            orientation,
+            convertibleOnly: params.get("convertible") === "1" || undefined,
+            minTotalFloors: numberParam("minFloors"),
+            maxTotalFloors: numberParam("maxFloors"),
+            minBuiltYear: numberParam("minYear"),
+            maxBuiltYear: numberParam("maxYear"),
+            parkingOnly: params.get("parking") === "1" || undefined,
+            elevatorOnly: params.get("elevator") === "1" || undefined,
+            storageOnly: params.get("storage") === "1" || undefined,
+            specFilters: (params.get("specs") || "").split(",").map((item) => item.trim()).filter(Boolean),
+            featureSearch: params.get("features") || undefined,
+            featuredOnly: params.get("featured") === "1" || undefined,
+            hasImagesOnly: params.get("images") === "1" || undefined,
+            hasLocationOnly: params.get("location") === "1" || undefined,
             sort: "newest",
             offset: 0,
           }});
@@ -113,7 +130,7 @@ function NotificationsPage() {
 
       const seen = new Set<string>(JSON.parse(safeRead(SEEN_ALERTS_KEY) ?? "[]"));
       const freshAlerts = nextAlerts.filter((alert) => !seen.has(alert.id));
-      const freshSearches = nextSearchMatches.filter((item) => !seen.has("search:" + item.id));
+      const freshSearches = nextSearchMatches.filter((item) => !seen.has("search:" + item.id + ":" + item.createdAt));
       if ("Notification" in window && Notification.permission === "granted" && (freshAlerts.length || freshSearches.length)) {
         for (const alert of freshAlerts.slice(0, 2)) {
           new Notification("هیرمند · اعلان ملک", { body: alert.message });
@@ -121,7 +138,7 @@ function NotificationsPage() {
         }
         for (const item of freshSearches.slice(0, 1)) {
           new Notification("هیرمند · فایل جدید مطابق جستجو", { body: item.name + " · " + item.count.toLocaleString("fa-IR") + " فایل جدید" });
-          seen.add("search:" + item.id);
+          seen.add("search:" + item.id + ":" + item.createdAt);
         }
         safeWrite(SEEN_ALERTS_KEY, JSON.stringify([...seen].slice(-100)));
       }
@@ -145,13 +162,13 @@ function NotificationsPage() {
     }));
     for (const item of savedSearchMatches) {
       items.push({
-        id: "search:" + item.id,
+        id: "search:" + item.id + ":" + item.createdAt,
         kind: "saved-search",
         title: "فایل جدید مطابق جستجوی «" + item.name + "»",
         text: item.count.toLocaleString("fa-IR") + " فایل تازه با معیارهای جستجوی ذخیره‌شده پیدا شد.",
         href: "/properties",
         createdAt: item.createdAt,
-        alertId: "search:" + item.id,
+        alertId: "search:" + item.id + ":" + item.createdAt,
       });
     }
     const seenAt = Date.parse(safeRead(SEEN_AT_KEY) ?? "");
@@ -181,7 +198,7 @@ function NotificationsPage() {
       await fetch("/api/property-watch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "seen", alertIds: ids }) }).catch(() => {});
     }
     const alertSeen = new Set<string>(JSON.parse(safeRead(SEEN_ALERTS_KEY) ?? "[]"));
-    savedSearchMatches.forEach((item) => alertSeen.add("search:" + item.id));
+    savedSearchMatches.forEach((item) => alertSeen.add("search:" + item.id + ":" + item.createdAt));
     alerts.forEach((alert) => alertSeen.add(alert.id));
     safeWrite(SEEN_ALERTS_KEY, JSON.stringify([...alertSeen].slice(-100)));
     safeWrite(SEEN_AT_KEY, new Date().toISOString());
