@@ -16,3 +16,10 @@
 .valuation-footer-card{margin-top:18px;padding:22px 24px;border-radius:22px;border:1px solid #dedad2;background:#faf9f6;display:flex;align-items:center;justify-content:space-between;gap:18px}.valuation-footer-card h2{margin:4px 0 8px;font-size:1.1rem}.valuation-footer-card p{margin:0;color:#778288;font-size:.76rem;line-height:1.85;max-width:720px}.valuation-footer-actions{display:flex;gap:10px;flex-wrap:wrap;flex:0 0 auto}
 @media (max-width:860px){.valuation-grid{grid-template-columns:1fr}.valuation-result-empty{min-height:260px}}
 @media (max-width:560px){.valuation-page{width:min(100% - 24px,var(--wrap));padding:30px 0 52px}.valuation-hero{grid-template-columns:auto 1fr;gap:12px}.valuation-hero-icon{width:48px;height:48px;border-radius:14px}.valuation-form,.valuation-result{padding:18px}.valuation-form-grid{grid-template-columns:1fr}.valuation-range{grid-template-columns:1fr}.valuation-footer-card{flex-direction:column;align-items:stretch}.valuation-footer-actions>*{flex:1 1 0;text-align:center;justify-content:center}.valuation-comparable{align-items:flex-start;flex-direction:column}.valuation-comparable b{white-space:normal}}
+.valuation-request-card{margin-top:16px;padding:18px;border:1px solid rgba(138,94,20,.18);border-radius:18px;background:var(--card-2,#f7f4ee);display:grid;gap:12px}
+.valuation-request-card h2{margin:6px 0;font-size:1.05rem}.valuation-request-card p{margin:0;color:var(--subtle,#6b7280);line-height:1.85;font-size:.8rem}
+.valuation-request-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.valuation-request-grid label span{display:block;font-size:.75rem;font-weight:700;margin-bottom:5px}
+.valuation-request-grid input{width:100%;min-height:44px;padding:9px 11px;border-radius:11px;border:1px solid rgba(17,24,39,.12);background:#fff;font:inherit}
+.valuation-request-error{padding:8px 10px;border-radius:10px;background:#fff3f1;color:#8b3028}.valuation-request-success{padding:11px 12px;border-radius:11px;background:rgba(40,110,70,.07);color:#2f6945;font-weight:700}
+@media(max-width:640px){.valuation-request-grid{grid-template-columns:1fr}}
