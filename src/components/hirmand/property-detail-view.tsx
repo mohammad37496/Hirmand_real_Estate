@@ -2083,11 +2083,11 @@ export function PropertyDetailView({
                     <span className="property-tool-category-index">۰۳</span>
                     <span className="property-tool-category-copy">
                       <strong>مذاکره و آماده‌سازی معامله</strong>
-                      <span>پیشنهاد، سابقه مذاکره، چک‌لیست، اتاق معامله، پیگیری و پرونده تصمیم</span>
+                      <span>پیشنهاد، چک‌لیست، اتاق معامله و پرونده تصمیم</span>
                     </span>
                   </span>
                   <span className="property-tool-category-meta">
-                    <span className="property-tool-category-count">۶ ابزار</span>
+                    <span className="property-tool-category-count">۴ ابزار</span>
                     <span className="property-tool-category-chevron" aria-hidden="true">
                       <ChevronDown size={17} />
                     </span>
@@ -2097,10 +2097,8 @@ export function PropertyDetailView({
                   <div className="property-tool-category-content-inner">
                     <div className="property-tool-category-stack">
                       <PropertyOfferMessage property={property} />
-                      <PropertyNegotiationLog property={property} />
                       <PropertyDealChecklist property={property} />
                       <PropertyDealRoom property={property} />
-                      <PropertyFollowUpReminder property={property} />
                       <PropertyDecisionDossier property={property} />
                     </div>
                   </div>
@@ -2112,12 +2110,12 @@ export function PropertyDetailView({
                   <span className="property-tool-category-main">
                     <span className="property-tool-category-index">۰۴</span>
                     <span className="property-tool-category-copy">
-                      <strong>بازدید، مدارک و یادداشت‌ها</strong>
-                      <span>مدارک، پرسش‌ها، گزارش بازدید، نوسازی و یادداشت تصاویر</span>
+                      <strong>مدارک و هماهنگی</strong>
+                      <span>مدارک موردنیاز و ابزارهای تکمیلی برای پرسش و هماهنگی</span>
                     </span>
                   </span>
                   <span className="property-tool-category-meta">
-                    <span className="property-tool-category-count">۶ ابزار</span>
+                    <span className="property-tool-category-count">۲ ابزار</span>
                     <span className="property-tool-category-chevron" aria-hidden="true">
                       <ChevronDown size={17} />
                     </span>
@@ -2127,8 +2125,34 @@ export function PropertyDetailView({
                   <div className="property-tool-category-content-inner">
                     <div className="property-tool-category-stack">
                       <PropertyDocumentPack property={property} />
-                      <PropertyQuestionLog property={property} />
                       <PropertyInquiryTools property={property} />
+                    </div>
+                  </div>
+                </div>
+              </details>
+
+              <details className="property-tool-category property-tool-personal">
+                <summary className="property-tool-category-summary">
+                  <span className="property-tool-category-main">
+                    <span className="property-tool-category-index">۰۵</span>
+                    <span className="property-tool-category-copy">
+                      <strong>دفتر شخصی این فایل</strong>
+                      <span>یادداشت‌ها، پیگیری، مذاکره و گزارش‌های شخصی شما درباره این ملک</span>
+                    </span>
+                  </span>
+                  <span className="property-tool-category-meta">
+                    <span className="property-tool-category-count">۶ ابزار</span>
+                    <span className="property-tool-category-chevron" aria-hidden="true">
+                      <ChevronDown size={17} aria-hidden="true" />
+                    </span>
+                  </span>
+                </summary>
+                <div className="property-tool-category-content">
+                  <div className="property-tool-category-content-inner">
+                    <div className="property-tool-category-stack">
+                      <PropertyNegotiationLog property={property} />
+                      <PropertyFollowUpReminder property={property} />
+                      <PropertyQuestionLog property={property} />
                       <PropertyVisitReport property={property} />
                       <PropertyRenovationTracker property={property} />
                       <PropertyPhotoNotes property={property} />
