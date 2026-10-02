@@ -45,7 +45,7 @@ export const getAdminMediaHealth = createServerFn({ method: "POST" })
         "select count(*)::int as count, coalesce(sum(size_bytes),0)::bigint as bytes from media_objects",
       ),
       sql.query<{ count: number }>(
-        "select count(distinct m.id)::int as count from media_objects m join (select distinct regexp_replace(value, '^/api/media/', '') as id from properties p cross join lateral jsonb_array_elements_text(coalesce(p.images, '[]'::jsonb)) where p.deleted_at is null) refs on refs.id = m.id",
+        "select count(distinct m.id)::int as count from media_objects m join (select distinct regexp_replace(value, '^.*/api/media/', '') as id from properties p cross join lateral jsonb_array_elements_text(coalesce(p.images, '[]'::jsonb)) where p.deleted_at is null) refs on refs.id = m.id where m.pathname like 'properties/%'",
       ),
       sql.query<{ count: number }>(
         "select count(*)::int as count from media_upload_sessions where created_at < current_timestamp - ($1::text || ' minutes')::interval",
@@ -82,7 +82,7 @@ export const cleanupAdminMedia = createServerFn({ method: "POST" })
     const sql = await getSql();
 
     const orphanRows = await sql.query<{ id: string }>(
-      "delete from media_objects m where not exists (select 1 from properties p cross join lateral jsonb_array_elements_text(coalesce(p.images, '[]'::jsonb)) refs(value) where p.deleted_at is null and regexp_replace(refs.value, '^/api/media/', '') = m.id) returning m.id",
+      "delete from media_objects m where m.pathname like 'properties/%' and not exists (select 1 from properties p cross join lateral jsonb_array_elements_text(coalesce(p.images, '[]'::jsonb)) refs(value) where p.deleted_at is null and regexp_replace(refs.value, '^.*/api/media/', '') = m.id) returning m.id",
     );
 
     const staleRows = await sql.query<{ id: string }>(
