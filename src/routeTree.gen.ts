@@ -87,13 +87,13 @@ const PropertiesRoute = PropertiesRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const TrackingRoute = TrackingRouteImport.update({
+  id: '/tracking',
+  path: '/tracking',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RequestTrackingRoute = RequestTrackingRouteImport.update({
   id: '/request-tracking',
   path: '/request-tracking',
-  getParentRoute: () => rootRouteImport,
-} as any)
-  id: '/tracking',
-  path: '/tracking',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MyHirmandRoute = MyHirmandRouteImport.update({
