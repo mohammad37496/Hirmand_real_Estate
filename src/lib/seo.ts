@@ -121,7 +121,7 @@ export function homeHead(settings?: SiteSettings) {
         content: keywords,
       },
       { name: "robots", content: settings?.noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
-      { name: "googlebot", content: "index, follow" },
+      { name: "googlebot", content: settings?.noindex ? "noindex, nofollow" : "index, follow" },
       { name: "author", content: SITE.nameFa },
       { name: "geo.region", content: "IR-04" },
       { name: "geo.placename", content: "Isfahan" },
@@ -349,7 +349,7 @@ export function enhancedOrganizationJsonLd(settings?: SiteSettings) {
         slogan: `${SITE.sloganStrong} ${SITE.sloganRest}`,
         address: {
           "@type": "PostalAddress",
-          streetAddress: address.replace(/^اصفهان،s*/,""),
+          streetAddress: address.replace(/^اصفهان،\s*/,""),
           addressLocality: SITE.locality,
           addressRegion: "اصفهان",
           addressCountry: "IR",
