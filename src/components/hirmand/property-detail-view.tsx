@@ -1890,7 +1890,7 @@ export function PropertyDetailView({
                   </span>
                 </div>
                 <div className="property-price-history-list">
-                  {priceHistory.map((item, index) => {
+                  {priceHistory.slice(0, 2).map((item, index) => {
                     const changes: Array<{ label: string; previous: string | null; next: string | null }> = [];
                     if (item.previousPrice !== item.newPrice) {
                       changes.push({ label: "قیمت کل", previous: item.previousPrice, next: item.newPrice });
@@ -1926,6 +1926,53 @@ export function PropertyDetailView({
                     );
                   })}
                 </div>
+
+                {priceHistory.length > 2 ? (
+                  <details className="property-price-history-more">
+                    <summary>
+                      <span>مشاهده تمام تغییرات قیمت</span>
+                      <small>{(priceHistory.length - 2).toLocaleString("fa-IR")} مورد دیگر</small>
+                      <ChevronDown size={16} aria-hidden="true" />
+                    </summary>
+                    <div className="property-price-history-list">
+                      {priceHistory.slice(2).map((item, index) => {
+                        const changes: Array<{ label: string; previous: string | null; next: string | null }> = [];
+                        if (item.previousPrice !== item.newPrice) {
+                          changes.push({ label: "قیمت کل", previous: item.previousPrice, next: item.newPrice });
+                        }
+                        if (item.previousDeposit !== item.newDeposit) {
+                          changes.push({ label: "رهن", previous: item.previousDeposit, next: item.newDeposit });
+                        }
+                        if (item.previousRent !== item.newRent) {
+                          changes.push({ label: "اجاره", previous: item.previousRent, next: item.newRent });
+                        }
+
+                        return (
+                          <article className="property-price-history-item" key={item.changedAt + "-more-" + index}>
+                            <div className="property-price-history-date">
+                              <ArrowDownRight size={16} aria-hidden="true" />
+                              <time dateTime={item.changedAt}>{formatAdDate(item.changedAt)}</time>
+                            </div>
+                            <div className="property-price-history-changes">
+                              {changes.map((change) => {
+                                const previous = change.previous ? formatToman(Number(change.previous)) + " تومان" : "ثبت نشده";
+                                const nextValue = change.next ? formatToman(Number(change.next)) + " تومان" : "حذف شد";
+                                return (
+                                  <div className="property-price-history-change" key={change.label}>
+                                    <span>{change.label}</span>
+                                    <strong>{previous}</strong>
+                                    <b>→</b>
+                                    <strong className="is-current">{nextValue}</strong>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  </details>
+                ) : null
                 <p className="property-price-history-note">
                   این سابقه فقط تغییرات ثبت‌شده در سامانه هیرمند را نشان می‌دهد و جایگزین بررسی شرایط نهایی معامله نیست.
                 </p>
