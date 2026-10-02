@@ -183,31 +183,36 @@ export async function storeAssembledUpload(input: {
   // object can leave the database, so the final URL always points to the
   // processed bytes and the original upload is never published as a fallback.
   if (input.transform) {
-    const transformed = await input.transform({
-      data: dataResult.bytes,
-      contentType,
-      pathname,
-    });
-
-    if (transformed) {
-      const nextData = Buffer.from(transformed.data);
-      if (!nextData.length) {
-        throw new Error("خروجی پردازش رسانه خالی است.");
-      }
-      contentType = transformed.contentType || contentType;
-      pathname = transformed.pathname || pathname;
-
-      await sql.query(
-        `update media_objects
-         set pathname = $2, content_type = $3, size_bytes = $4, data = $5
-         where id = $1`,
-        [id, pathname, contentType, nextData.length, nextData],
-      );
-      dataResult = {
-        bytes: nextData,
-        size: nextData.length,
+    try {
+      const transformed = await input.transform({
+        data: dataResult.bytes,
         contentType,
-      };
+        pathname,
+      });
+
+      if (transformed) {
+        const nextData = Buffer.from(transformed.data);
+        if (!nextData.length) {
+          throw new Error("خروجی پردازش رسانه خالی است.");
+        }
+        contentType = transformed.contentType || contentType;
+        pathname = transformed.pathname || pathname;
+
+        await sql.query(
+          `update media_objects
+           set pathname = $2, content_type = $3, size_bytes = $4, data = $5
+           where id = $1`,
+          [id, pathname, contentType, nextData.length, nextData],
+        );
+        dataResult = {
+          bytes: nextData,
+          size: nextData.length,
+          contentType,
+        };
+      }
+    } catch (error) {
+      await sql.query("delete from media_objects where id = $1", [id]).catch(() => undefined);
+      throw error;
     }
   }
 
