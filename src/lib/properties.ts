@@ -91,6 +91,8 @@ export type Property = {
   latitude: number | null;
   longitude: number | null;
   priceDropPercent?: number | null;
+  internalPriority?: "low" | "normal" | "high" | "urgent";
+  internalNote?: string;
 };
 
 export type PropertyHistoryState = {
@@ -275,6 +277,8 @@ export const propertyInputSchema = z.object({
   ownerName: z.string().trim().max(100).optional().default(""),
   ownerPhone: z.string().trim().max(30).optional().default(""),
   ownerInfo: z.string().trim().max(2000).optional().default(""),
+  internalPriority: z.enum(["low","normal","high","urgent"]).default("normal"),
+  internalNote: z.string().trim().max(3000).default(""),
   status: z.enum(["draft", "published", "archived"]).default("published"),
   availabilityStatus: z.enum(["available","reserved","sold","rented","unavailable"]).default("available"),
   featured: z.boolean().default(false),
@@ -399,6 +403,11 @@ function mapProperty(row: Record<string, unknown>, options: { admin?: boolean } 
       ownerName: row.owner_name == null ? "" : String(row.owner_name),
       ownerPhone: row.owner_phone == null ? "" : String(row.owner_phone),
       ownerInfo: row.owner_info == null ? "" : String(row.owner_info),
+      internalPriority:
+        row.internal_priority === "low" || row.internal_priority === "high" || row.internal_priority === "urgent"
+          ? row.internal_priority
+          : "normal",
+      internalNote: row.internal_note == null ? "" : String(row.internal_note),
     } : {}),
     publishedAt: row.published_at ? new Date(String(row.published_at)).toISOString() : null,
     createdAt: new Date(String(row.created_at)).toISOString(),
@@ -416,7 +425,7 @@ const LIST_COLUMNS = `
   heating_system, wall_closet_type, other_amenities, price, deposit, rent,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
   latitude, longitude, price_drop_percent, floor_label, orientation,
-  owner_name, owner_phone, owner_info,
+  owner_name, owner_phone, owner_info, internal_priority, internal_note,
   left(description, 280) as description
 `;
 
@@ -1514,7 +1523,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
         features, images, contact_name, contact_phone, published_at, featured_until,
         latitude, longitude, floor_label, painted, wallpaper, convertible, orientation,
-        owner_name, owner_phone, owner_info, availability_status
+        owner_name, owner_phone, owner_info, availability_status, internal_priority, internal_note
       ) values (
         $1, $2, $3, $4, $5, $6, $7, 'اصفهان',
         $8, $9, $10::integer, $11::smallint, $12::smallint, $13::smallint, $14::smallint,
@@ -1522,7 +1531,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         $22::text, $23::text, $24::jsonb, $25::numeric, $26::numeric, $27::numeric, $28::text,
         $29::jsonb, $30::jsonb, $31::text, $32::text, $33::timestamptz, $34::timestamptz,
         $35::double precision, $36::double precision, $37::text, $38::boolean, $39::boolean, $40::boolean, $41::text,
-        $42::text, $43::text, $44::text, $45::text
+        $42::text, $43::text, $44::text, $45::text, $46::text, $47::text
       )
       on conflict (id) do update set
         slug = excluded.slug,
