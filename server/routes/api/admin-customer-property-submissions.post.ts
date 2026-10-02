@@ -285,7 +285,7 @@ export default defineEventHandler(async (event) => {
         priorityLabels[String(row.priority ?? "normal")] ?? String(row.priority ?? "normal"),
         row.created_at ? new Date(String(row.created_at)).toLocaleString("fa-IR", { timeZone: "Asia/Tehran" }) : "",
         row.reviewed_at ? new Date(String(row.reviewed_at)).toLocaleString("fa-IR", { timeZone: "Asia/Tehran" }) : "",
-        Boolean(row.possible_duplicate) ? "بله" : "خیر",
+        row.possible_duplicate ? "بله" : "خیر",
       ].map(csvEscape).join(","));
     }
     setResponseHeader(event, "content-type", "text/csv; charset=utf-8");

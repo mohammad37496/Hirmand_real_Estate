@@ -337,7 +337,9 @@ function SubmitPropertyPage() {
         throw new Error(payload?.statusMessage || payload?.message || "ثبت ملک انجام نشد.");
       }
       setDone(String(payload.trackingToken || ""));
-      try { window.localStorage.removeItem(CUSTOMER_DRAFT_KEY); } catch {}
+      try { window.localStorage.removeItem(CUSTOMER_DRAFT_KEY); } catch {
+        // Ignore storage failures; the submission already succeeded.
+      }
       setDraftSavedAt("");
       if (payload.trackingToken) rememberCustomerTrackingCode(String(payload.trackingToken));
       toast.success(editToken ? "اصلاحات با موفقیت ارسال و دوباره وارد صف بررسی شد." : "ملک برای بررسی کارشناسان هیرمند ارسال شد.");
@@ -463,7 +465,7 @@ function SubmitPropertyPage() {
           <Link to="/" className="btn-ghost">انصراف</Link>
           <button type="submit" className="btn-gold" disabled={uploading || loadingExisting}>{loadingExisting ? <Loader2 size={18} className="owner-spin"/> : <FilePlus2 size={18}/>} {loadingExisting ? "در حال بارگذاری درخواست…" : uploading ? "در حال ارسال…" : editToken ? "اصلاح و ارسال مجدد" : "ارسال ملک برای بررسی"}</button>
         </div>
-        {draftReady && !done ? <div className="customer-property-draft-status"><span>{draftSavedAt ? "پیش‌نویس خودکار ذخیره شد • " + draftSavedAt : "ذخیره خودکار پیش‌نویس فعال است"}</span><button type="button" onClick={()=>{try{window.localStorage.removeItem(CUSTOMER_DRAFT_KEY);}catch{}setDraftSavedAt("");toast.success("پیش‌نویس پاک شد.");}}>پاک کردن پیش‌نویس</button></div> : null}
+        {draftReady && !done ? <div className="customer-property-draft-status"><span>{draftSavedAt ? "پیش‌نویس خودکار ذخیره شد • " + draftSavedAt : "ذخیره خودکار پیش‌نویس فعال است"}</span><button type="button" onClick={()=>{try{window.localStorage.removeItem(CUSTOMER_DRAFT_KEY);}catch{ /* storage may be blocked */ }setDraftSavedAt("");toast.success("پیش‌نویس پاک شد.");}}>پاک کردن پیش‌نویس</button></div> : null}
         <p className="customer-property-privacy"><Phone size={14}/> اطلاعات مالک و رسانه‌ها فقط برای بررسی و تکمیل فایل استفاده می‌شوند و انتشار عمومی منوط به تأیید است.</p>
       </form>
     </main>
