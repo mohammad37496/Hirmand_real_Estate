@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Bell, BellRing, CheckCheck, ExternalLink, RefreshCw, TrendingDown } from "lucide-react";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
-import { listPublishedPropertyCards, type PropertyCardData } from "@/lib/properties";
+import { listPublishedPropertyCards, type PropertyCardData, type PropertyType, type PropertyTransaction } from "@/lib/properties";
 import { absoluteUrl, socialMeta } from "@/lib/seo";
 
 type WatchAlert = { id: string; slug: string; type: string; message: string; createdAt: string };
@@ -63,18 +63,31 @@ function NotificationsPage() {
       const searchMatches = await Promise.all(savedSearches.map(async (search) => {
         try {
           const params = new URLSearchParams(search.params);
-          const transactionType = ["sell", "buy", "rent", "mortgage"].includes(params.get("transaction") ?? "") ? params.get("transaction") as "sell" | "buy" | "rent" | "mortgage" : undefined;
-          const propertyType = params.get("type") || undefined;
+          const numberParam = (key: string) => {
+            const value = Number(params.get(key));
+            return Number.isFinite(value) ? Math.round(value) : undefined;
+          };
+          const rawTransaction = params.get("transaction") ?? "";
+          const transactionType = ["sell", "buy", "rent", "mortgage"].includes(rawTransaction) ? rawTransaction as PropertyTransaction : undefined;
+          const rawPropertyType = params.get("type") ?? "";
+          const propertyType = ["apartment", "villa", "office", "heritage", "land", "commercial"].includes(rawPropertyType)
+            ? rawPropertyType as PropertyType
+            : undefined;
           const rows = await listPublishedPropertyCards({ data: {
-            q: params.get("q") || undefined,
+            search: params.get("q") || undefined,
             transactionType,
-            propertyType: propertyType as never,
+            propertyType,
             neighborhood: params.get("neighborhood") || undefined,
-            minArea: params.get("minArea") || undefined,
-            maxArea: params.get("maxArea") || undefined,
-            minPrice: params.get("minPrice") || undefined,
-            maxPrice: params.get("maxPrice") || undefined,
-            minBedrooms: params.get("bedrooms") || undefined,
+            minArea: numberParam("minArea"),
+            maxArea: numberParam("maxArea"),
+            minPrice: numberParam("minPrice"),
+            maxPrice: numberParam("maxPrice"),
+            minBedrooms: numberParam("bedrooms"),
+            minBathrooms: numberParam("bathrooms"),
+            minFloor: numberParam("minFloor"),
+            maxFloor: numberParam("maxFloor"),
+            floorType: params.get("floorType") === "suite" ? "suite" : undefined,
+            convertibleOnly: params.get("convertible") === "1",
             sort: "newest",
             offset: 0,
           }});
