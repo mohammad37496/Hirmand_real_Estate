@@ -120,6 +120,8 @@ import { PropertyNegotiationLog } from "@/components/hirmand/property-negotiatio
 import { PropertyOwnershipCost } from "@/components/hirmand/property-ownership-cost";
 import { PropertyDealRoom } from "@/components/hirmand/property-deal-room";
 import { PropertyRiskRadar } from "@/components/hirmand/property-risk-radar";
+import { PropertyDocumentPack } from "@/components/hirmand/property-document-pack";
+import "@/property-document-pack.css";
 import "@/property-risk-radar.css";
 import "@/property-deal-room.css";
 import { formatToman } from "@/lib/money";
@@ -1695,6 +1697,7 @@ export function PropertyDetailView({
         <PropertyDealChecklist property={property} />
         <PropertyDealRoom property={property} />
         <PropertyRiskRadar property={property} />
+        <PropertyDocumentPack property={property} />
         <PropertyScenarioAnalysis property={property} />
         <PropertyPersonalScore property={property} />
         <PropertyVisitOutcome property={property} />

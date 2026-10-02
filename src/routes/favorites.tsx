@@ -9,6 +9,8 @@ import { FavoritesViewingRoute } from "@/components/hirmand/favorites-viewing-ro
 import { BuyerFinancialProfile } from "@/components/hirmand/buyer-financial-profile";
 import { FavoriteActionCenter } from "@/components/hirmand/favorite-action-center";
 import { FavoriteMatchProfile } from "@/components/hirmand/favorite-match-profile";
+import { FavoriteNeighborhoodSnapshot } from "@/components/hirmand/favorite-neighborhood-snapshot";
+import { FavoriteShortlistReport } from "@/components/hirmand/favorite-shortlist-report";
 import { FavoriteWeightedMatrix } from "@/components/hirmand/favorite-weighted-matrix";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { listPublishedPropertiesBySlugs, type Property } from "@/lib/properties";
@@ -20,6 +22,8 @@ import "@/favorite-budget-dashboard.css";
 import "@/buyer-financial-profile.css";
 import "@/favorite-action-center.css";
 import "@/favorite-match-profile.css";
+import "@/favorite-neighborhood-snapshot.css";
+import "@/favorite-shortlist-report.css";
 import "@/favorites-route-planner.css";
 import "@/favorite-weighted-matrix.css";
 
@@ -422,6 +426,8 @@ function FavoritesPage() {
         <BuyerFinancialProfile properties={properties} />
         <FavoriteMatchProfile properties={properties} />
         <FavoriteActionCenter properties={properties} />
+        <FavoriteNeighborhoodSnapshot properties={properties} />
+        <FavoriteShortlistReport properties={properties} />
         <FavoriteListingChanges properties={properties} />
         <FavoritesBudgetDashboard properties={properties} />
         <FavoritesViewingRoute properties={properties} />
