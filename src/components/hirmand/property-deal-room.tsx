@@ -3,7 +3,6 @@ import { Check, ChevronLeft, ClipboardCheck, FileCheck2, FlagTriangleRight, List
 import type { Property } from "@/lib/properties";
 import "@/property-deal-room.css";
 import { PersianDatePicker } from "./persian-date-picker";
-import { formatPersianDate } from "@/lib/persian-date";
 
 type DealStage = "مذاکره" | "توافق اولیه" | "بیعانه" | "قرارداد" | "تسویه" | "تحویل";
 type DealCategory = "مدرک" | "مالی" | "حقوقی" | "تحویل" | "پیگیری";
