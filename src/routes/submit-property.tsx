@@ -337,7 +337,9 @@ function SubmitPropertyPage() {
         throw new Error(payload?.statusMessage || payload?.message || "ثبت ملک انجام نشد.");
       }
       setDone(String(payload.trackingToken || ""));
-      try { window.localStorage.removeItem(CUSTOMER_DRAFT_KEY); } catch {\n        // Ignore storage failures; the submission already succeeded.\n      }
+      try { window.localStorage.removeItem(CUSTOMER_DRAFT_KEY); } catch {
+        // Ignore storage failures; the submission already succeeded.
+      }
       setDraftSavedAt("");
       if (payload.trackingToken) rememberCustomerTrackingCode(String(payload.trackingToken));
       toast.success(editToken ? "اصلاحات با موفقیت ارسال و دوباره وارد صف بررسی شد." : "ملک برای بررسی کارشناسان هیرمند ارسال شد.");
