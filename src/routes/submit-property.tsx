@@ -12,6 +12,7 @@ import {
   PROPERTY_WALL_CLOSET_OPTIONS,
 } from "@/lib/property-options";
 import { normalizeMoneyText } from "@/lib/property-input-normalization";
+import { rememberCustomerTrackingCode } from "@/lib/customer-tracking";
 import { isVideoUrl } from "@/lib/media";
 import { uploadErrorMessage, uploadInChunks } from "@/lib/media-upload-client";
 import "@/owner-property.css";
@@ -37,6 +38,12 @@ function moneyValue(value: string) {
   const normalized = normalizeMoneyText(value);
   return normalized ? normalized : null;
 }
+
+const CUSTOMER_PROPERTY_TYPES = [
+  ...PROPERTY_TYPES,
+  { id: "land", title: "زمین", text: "" },
+  { id: "commercial", title: "تجاری", text: "" },
+] as const;
 
 const MAX_MEDIA = 12;
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
@@ -208,6 +215,7 @@ function SubmitPropertyPage() {
         throw new Error(payload?.statusMessage || payload?.message || "ثبت ملک انجام نشد.");
       }
       setDone(String(payload.trackingToken || ""));
+      if (payload.trackingToken) rememberCustomerTrackingCode(String(payload.trackingToken));
       toast.success("ملک برای بررسی کارشناسان هیرمند ارسال شد.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "ثبت ملک انجام نشد.");
@@ -267,7 +275,7 @@ function SubmitPropertyPage() {
           <div className="customer-property-grid">
             <label className="field customer-property-wide"><span>عنوان ملک</span><input value={title} onChange={(e)=>setTitle(e.target.value)} placeholder="مثلاً آپارتمان نوساز دوخوابه در سپاهان‌شهر"/></label>
             <label className="field"><span>نوع معامله</span><select value={transactionType} onChange={(e)=>setTransactionType(e.target.value as typeof transactionType)}>{SERVICES.map((item)=><option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
-            <label className="field"><span>نوع ملک</span><select value={propertyType} onChange={(e)=>setPropertyType(e.target.value as typeof propertyType)}>{PROPERTY_TYPES.map((item)=><option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
+            <label className="field"><span>نوع ملک</span><select value={propertyType} onChange={(e)=>setPropertyType(e.target.value as typeof propertyType)}>{CUSTOMER_PROPERTY_TYPES.map((item)=><option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
             <label className="field"><span>محله</span><select value={neighborhood} onChange={(e)=>setNeighborhood(e.target.value)}><option value="">انتخاب محله</option>{NEIGHBORHOODS.map((item)=><option key={item.name}>{item.name}</option>)}</select></label>
             <label className="field"><span>آدرس / توضیح موقعیت</span><input value={address} onChange={(e)=>setAddress(e.target.value)} placeholder="اختیاری؛ شماره واحد حساس ننویسید"/></label>
             <label className="field"><span>متراژ</span><input value={area} onChange={(e)=>setArea(e.target.value)} inputMode="decimal" dir="ltr" placeholder="120"/></label>
