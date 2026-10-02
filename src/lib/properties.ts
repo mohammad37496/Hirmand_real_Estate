@@ -131,10 +131,10 @@ export type PropertyCardData = Pick<
   | "priceDropPercent"
   | "latitude"
   | "longitude"
-  | "publishedAt"
 > & {
   featuredUntil?: string | null;
   image: string | null;
+  publishedAt?: string | null;
 };
 
 export type PropertySort = "newest" | "price_asc" | "price_desc" | "area_asc" | "area_desc";
