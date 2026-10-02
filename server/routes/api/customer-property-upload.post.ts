@@ -31,6 +31,6 @@ export default defineEventHandler((event) =>
     },
     unsupportedTypeMessage: "نوع فایل رسانه‌ای مجاز نیست.",
     sizeLimitMessage: (limitMb) => `حجم هر فایل بیش از ${limitMb} مگابایت است.`,
-    finish: async ({ stored }) => ({ url: stored.url }),
+    finish: async ({ stored, session }) => ({ url: stored.url + (String(session.content_type ?? "").startsWith("video/") ? "?type=video" : "") }),
   }),
 );
