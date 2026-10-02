@@ -118,7 +118,7 @@ export default defineEventHandler(async (event) => {
       : {}) as Record<string, unknown>;
     const next = { ...current };
     const editableKeys = [
-      "title","neighborhood","address","areaM2","bedrooms","bathrooms","floor","totalFloors",
+      "title","transactionType","propertyType","neighborhood","address","areaM2","bedrooms","bathrooms","floor","totalFloors",
       "builtYear","orientation","cabinetType","flooringType","coolingSystem","heatingSystem",
       "wallClosetType","price","deposit","rent","description","features",
     ] as const;
@@ -127,7 +127,11 @@ export default defineEventHandler(async (event) => {
     }
 
     const title = String(next.title ?? "").trim();
+    const transactionType = String(next.transactionType ?? "");
+    const propertyType = String(next.propertyType ?? "");
     const neighborhood = String(next.neighborhood ?? "").trim();
+    if (!["buy","sell","rent","mortgage"].includes(transactionType)) throw createError({ statusCode: 422, statusMessage: "نوع معامله معتبر نیست." });
+    if (!["apartment","villa","office","heritage","land","commercial"].includes(propertyType)) throw createError({ statusCode: 422, statusMessage: "نوع ملک معتبر نیست." });
     const description = String(next.description ?? "").trim();
     const area = next.areaM2 == null || next.areaM2 === "" ? null : Number(next.areaM2);
     const parseOptionalInt = (value: unknown) => value == null || value === "" ? null : Number(value);
@@ -150,6 +154,10 @@ export default defineEventHandler(async (event) => {
       }
       next[key] = value == null || value === "" ? null : String(value);
     }
+    const hasMoney = (key: string) => Boolean(next[key] && /^\d{1,20}$/.test(String(next[key])));
+    if (transactionType === "sell" && !hasMoney("price")) throw createError({ statusCode: 422, statusMessage: "برای فروش قیمت کل را وارد کنید." });
+    if (transactionType === "rent" && !hasMoney("deposit") && !hasMoney("rent")) throw createError({ statusCode: 422, statusMessage: "برای اجاره حداقل رهن یا اجاره را وارد کنید." });
+    if (transactionType === "mortgage" && !hasMoney("deposit")) throw createError({ statusCode: 422, statusMessage: "برای رهن مبلغ رهن را وارد کنید." });
     if (!Array.isArray(next.features) || next.features.some((item) => typeof item !== "string") || next.features.length > 20) {
       throw createError({ statusCode: 422, statusMessage: "ویژگی‌های ملک معتبر نیست." });
     }
