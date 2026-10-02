@@ -81,28 +81,29 @@ function readSavedSearches(): SavedSearch[] {
   try {
     const raw = localStorage.getItem(SAVED_SEARCHES_KEY);
     const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed)
-      ? parsed
-          .filter(
-            (item): item is SavedSearch =>
-              Boolean(
-                item &&
-                  typeof item === "object" &&
-                  typeof item.id === "string" &&
-                  typeof item.name === "string" &&
-                  typeof item.params === "string",
-              ),
-          )
-          .map((item) => ({
-            ...item,
-            alerts: item.alerts !== false,
-            lastCheckedAt:
-              typeof item.lastCheckedAt === "string" && Number.isFinite(new Date(item.lastCheckedAt).getTime())
-                ? item.lastCheckedAt
-                : new Date().toISOString(),
-          }))
-          .slice(0, MAX_SAVED_SEARCHES)
-      : [];
+    if (!Array.isArray(parsed)) return [];
+    const normalized = parsed
+      .filter(
+        (item): item is SavedSearch =>
+          Boolean(
+            item &&
+              typeof item === "object" &&
+              typeof item.id === "string" &&
+              typeof item.name === "string" &&
+              typeof item.params === "string",
+          ),
+      )
+      .map((item) => ({
+        ...item,
+        alerts: item.alerts !== false,
+        lastCheckedAt:
+          typeof item.lastCheckedAt === "string" && Number.isFinite(new Date(item.lastCheckedAt).getTime())
+            ? item.lastCheckedAt
+            : new Date().toISOString(),
+      }))
+      .slice(0, MAX_SAVED_SEARCHES);
+    localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(normalized));
+    return normalized;
   } catch {
     return [];
   }
