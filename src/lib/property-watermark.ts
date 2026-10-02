@@ -60,3 +60,9 @@ export function isPermanentlyWatermarkedVideoUrl(value: string | null | undefine
   if (typeof value !== "string" || !value.trim()) return false;
   return /-watermarked\.mp4(?:[?#]|$)/i.test(value);
 }
+
+
+export function isPermanentlyWatermarkedMediaUrl(value: string | null | undefined): boolean {
+  if (typeof value !== "string" || !value.trim()) return false;
+  return /-watermarked\.(?:webp|mp4)(?:[?#]|$)/i.test(value);
+}
