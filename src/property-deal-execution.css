@@ -396,3 +396,14 @@
     line-height:1.9;
   }
 }
+
+
+.property-offer-submit{margin-top:14px;padding:13px 14px;border:1px solid rgba(138,94,20,.16);border-radius:14px;background:rgba(138,94,20,.035)}
+.property-offer-submit>div:first-child{display:flex;flex-direction:column;gap:2px}
+.property-offer-submit>div:first-child strong{font-size:.84rem}.property-offer-submit>div:first-child span{font-size:.72rem;color:var(--subtle,#6b7280);line-height:1.8}
+.property-offer-submit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.property-offer-submit-grid label span{display:block;font-size:.72rem;font-weight:700;margin-bottom:5px}
+.property-offer-submit-grid input{width:100%;min-height:42px;border:1px solid rgba(17,24,39,.12);border-radius:10px;background:#fff;padding:8px 10px;font:inherit}
+.property-offer-submit-error{margin:8px 0;padding:8px 10px;border-radius:10px;background:#fff3f1;color:#8b3028;font-size:.72rem}
+.property-offer-submitted{margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(40,110,70,.07);color:#2f6945;font-size:.76rem;font-weight:700}
+@media(max-width:640px){.property-offer-submit-grid{grid-template-columns:1fr}}
