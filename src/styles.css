@@ -9707,3 +9707,9 @@ a.btn-ghost[href^="https://wa.me/"] svg {
     width:100%;
   }
 }
+
+
+/* Shared favorite basket */
+.favorites-share-banner{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 20px;padding:18px 20px;border:1px solid var(--gold-line);border-radius:var(--r-lg);background:linear-gradient(135deg,rgba(192,138,42,.08),rgba(255,255,255,.55));}
+.favorites-share-banner strong{display:block;margin-top:4px;font-size:.95rem}.favorites-share-banner p{margin-top:5px;color:var(--muted);font-size:.78rem;line-height:1.8}.favorites-share-banner .btn-ghost{white-space:nowrap}
+@media(max-width:720px){.favorites-share-banner{display:grid}.favorites-share-banner .btn-ghost{width:100%;justify-content:center}}
