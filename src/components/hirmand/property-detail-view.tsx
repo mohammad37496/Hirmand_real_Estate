@@ -121,6 +121,10 @@ import { PropertyOwnershipCost } from "@/components/hirmand/property-ownership-c
 import { PropertyDealRoom } from "@/components/hirmand/property-deal-room";
 import { PropertyRiskRadar } from "@/components/hirmand/property-risk-radar";
 import { PropertyDocumentPack } from "@/components/hirmand/property-document-pack";
+import { PropertyPhotoNotes } from "@/components/hirmand/property-photo-notes";
+import { PropertyDecisionReadiness } from "@/components/hirmand/property-decision-readiness";
+import "@/property-photo-notes.css";
+import "@/property-decision-readiness.css";
 import "@/property-document-pack.css";
 import "@/property-risk-radar.css";
 import "@/property-deal-room.css";
@@ -1698,6 +1702,8 @@ export function PropertyDetailView({
         <PropertyDealRoom property={property} />
         <PropertyRiskRadar property={property} />
         <PropertyDocumentPack property={property} />
+        <PropertyPhotoNotes property={property} />
+        <PropertyDecisionReadiness property={property} />
         <PropertyScenarioAnalysis property={property} />
         <PropertyPersonalScore property={property} />
         <PropertyVisitOutcome property={property} />
