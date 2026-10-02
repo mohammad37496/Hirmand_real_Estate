@@ -1,8 +1,9 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, Phone } from "lucide-react";
-import { SITE, TEAM } from "@/lib/site";
+import { SITE } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import { useConsultants } from "./consultants-context";
 
 export function CallMenu({
   className,
@@ -16,6 +17,7 @@ export function CallMenu({
   align?: "start" | "end";
 }) {
   const [open, setOpen] = useState(false);
+  const consultants = useConsultants();
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
 
@@ -51,7 +53,7 @@ export function CallMenu({
       </button>
       {open ? (
         <div id={menuId} role="menu" className={cn("action-menu-panel", align === "end" && "is-end")}>
-          {TEAM.map((person) => (
+          {consultants.map((person) => (
             <a key={person.id} role="menuitem" href={`tel:${person.phone}`} onClick={() => { trackAnalyticsEvent("call_click"); setOpen(false); }}>
               <span>
                 <strong>{person.name}</strong>
