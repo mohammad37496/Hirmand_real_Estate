@@ -1,13 +1,13 @@
-import { Banknote, Bus, ExternalLink, GraduationCap, HeartPulse, MapPinned, ShoppingBasket, Trees } from "lucide-react";
+import { Briefcase, Building2, ExternalLink, Home, MapPinned, Navigation, ShieldCheck, Trees } from "lucide-react";
 import type { Property } from "@/lib/properties";
 
 const CATEGORIES = [
-  { id: "school", label: "مدرسه و مهدکودک", query: "مدرسه مهدکودک", icon: GraduationCap },
-  { id: "medical", label: "درمانگاه و بیمارستان", query: "درمانگاه بیمارستان", icon: HeartPulse },
-  { id: "shopping", label: "فروشگاه و سوپرمارکت", query: "سوپرمارکت فروشگاه", icon: ShoppingBasket },
-  { id: "transit", label: "مترو و ایستگاه اتوبوس", query: "مترو ایستگاه اتوبوس", icon: Bus },
+  { id: "school", label: "مدرسه و مهدکودک", query: "مدرسه مهدکودک", icon: Building2 },
+  { id: "medical", label: "درمانگاه و بیمارستان", query: "درمانگاه بیمارستان", icon: ShieldCheck },
+  { id: "shopping", label: "فروشگاه و سوپرمارکت", query: "سوپرمارکت فروشگاه", icon: Home },
+  { id: "transit", label: "مترو و ایستگاه اتوبوس", query: "مترو ایستگاه اتوبوس", icon: Navigation },
   { id: "parks", label: "پارک و فضای سبز", query: "پارک فضای سبز", icon: Trees },
-  { id: "bank", label: "بانک و خودپرداز", query: "بانک خودپرداز", icon: Banknote },
+  { id: "bank", label: "بانک و خودپرداز", query: "بانک خودپرداز", icon: Briefcase },
 ] as const;
 
 function mapsSearchUrl(property: Pick<Property, "latitude" | "longitude" | "neighborhood">, query: string) {
