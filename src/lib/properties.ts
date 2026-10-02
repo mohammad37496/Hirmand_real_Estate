@@ -502,6 +502,7 @@ const DETAIL_COLUMNS = `
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
   latitude, longitude, price_drop_percent, virtual_tour_url, floor_label, orientation,
   owner_name, owner_phone, owner_info, internal_priority, internal_note,
+  publish_at, unpublish_at, deleted_at, deleted_from_status,
   last_verified_at, last_verified_by
 `;
 
@@ -545,7 +546,7 @@ function publicFilterParams(data: z.infer<typeof publicFiltersSchema>) {
 
 const PUBLIC_PUBLICATION_WHERE =
   "(deleted_at is null) and (" +
-  "${PUBLIC_PUBLICATION_WHERE} or (status = 'draft' and publish_at is not null and publish_at <= current_timestamp)" +
+  "status = 'published' or (status = 'draft' and publish_at is not null and publish_at <= current_timestamp)" +
   ") and (unpublish_at is null or unpublish_at > current_timestamp)";
 
 const PRICE_EXPR =
@@ -554,7 +555,7 @@ const PRICE_EXPR =
 
 function publicPropertyWhereSql() {
   return [
-    "${PUBLIC_PUBLICATION_WHERE}",
+    PUBLIC_PUBLICATION_WHERE,
     "and ($1::text is null or transaction_type = $1)",
     "and ($2::text is null or property_type = $2)",
     "and ($3::text is null or ($5::boolean is true and neighborhood = $3) or ($5::boolean is false and neighborhood ilike '%' || $3 || '%'))",
@@ -820,7 +821,7 @@ export const getPublishedPropertyPriceHistory = createServerFn({ method: "GET" }
     if (dbSource === "unconfigured") return [];
     setResponseHeader("cache-control", "public, max-age=30, s-maxage=120, stale-while-revalidate=600");
     const sql = await getSql();
-    const propertyRows = await sql.query<{ id: string }>("select id::text as id from properties where ${PUBLIC_PUBLICATION_WHERE} and slug=$1 limit 1", [data.slug]);
+    const propertyRows = await sql.query<{ id: string }>(`select id::text as id from properties where ${PUBLIC_PUBLICATION_WHERE} and slug=$1 limit 1`, [data.slug]);
     const propertyId = propertyRows[0]?.id;
     if (!propertyId) return [];
 
@@ -961,7 +962,7 @@ export const matchPublishedPropertiesByBudget = createServerFn({ method: "GET" }
         [
           "select " + DETAIL_COLUMNS,
           "from properties",
-          "where ${PUBLIC_PUBLICATION_WHERE}",
+          `where ${PUBLIC_PUBLICATION_WHERE}`,
           "and transaction_type in ('rent', 'mortgage')",
           "and (coalesce(deposit, 0) > 0 or coalesce(rent, 0) > 0)",
           "and ($5::text is null or property_type = $5)",
@@ -1834,7 +1835,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         contact_name = excluded.contact_name,
         contact_phone = excluded.contact_phone,
         published_at = case
-          when excluded.${PUBLIC_PUBLICATION_WHERE} and properties.published_at is null then excluded.published_at
+          when excluded.status = 'published' and properties.published_at is null then excluded.published_at
           when excluded.status <> 'published' then null
           else properties.published_at
         end,
@@ -1897,7 +1898,7 @@ export const saveProperty = createServerFn({ method: "POST" })
     );
 
     const rows = await sql.query<Record<string, unknown>>(
-      `select ${DETAIL_COLUMNS} from properties where id = $1 limit 1`,
+      `select ${DETAIL_COLUMNS} from properties where id = $1 and deleted_at is null limit 1`,
       [id],
     );
     if (!rows[0]) throw new Error("فایل ثبت نشد.");
