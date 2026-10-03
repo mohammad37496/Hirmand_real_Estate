@@ -27,6 +27,7 @@ import { PROPERTY_OTHER_AMENITY_OPTIONS } from "@/lib/property-options";
 import { daysUntilDateOnly, formatPersianDate } from "@/lib/persian-date";
 import { AdminLeadDedupe } from "@/components/hirmand/admin-lead-dedupe";
 import { AdminLeadAssignmentBalancer } from "@/components/hirmand/admin-lead-assignment-balancer";
+import { AdminLeadMessageTemplates } from "@/components/hirmand/admin-lead-message-templates";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 type VisitStatus = "none" | "requested" | "confirmed" | "completed" | "cancelled";
@@ -344,6 +345,7 @@ export function AdminLeadManager() {
 
   const filteredLeads = leads;
 
+
   function budgetWhatsappHref(lead: Lead) {
     const phone = lead.phone
       .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
@@ -435,6 +437,7 @@ export function AdminLeadManager() {
   return (
     <div className="admin-lead-manager">
       {confirmDialog}
+      <AdminLeadMessageTemplates leads={leads} />
       <AdminLeadAssignmentBalancer />
       <AdminLeadDedupe />
       <section className="admin-panel">
