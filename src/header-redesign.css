@@ -51,11 +51,17 @@
 }
 
 .header-redesign .nav-brand-mark .brand-logo-nav{
-  width:57px!important;
-  max-width:57px!important;
-  height:48px!important;
+  display:block;
+  width:44px!important;
+  max-width:44px!important;
+  height:44px!important;
+  max-height:44px!important;
+  margin:0!important;
+  padding:0!important;
   object-fit:contain;
-  transform:scale(1.08);
+  object-position:50% 50%;
+  transform:none!important;
+  flex:0 0 auto;
 }
 
 .header-redesign .nav-brand-copy{
@@ -611,9 +617,16 @@
   }
 
   .header-redesign .mobile-menu-head-mark .brand-logo-nav{
-    width:46px!important;
-    max-width:46px!important;
-    height:40px!important;
+    display:block;
+    width:38px!important;
+    max-width:38px!important;
+    height:38px!important;
+    max-height:38px!important;
+    margin:0!important;
+    padding:0!important;
+    object-fit:contain;
+    object-position:50% 50%;
+    transform:none!important;
   }
 
   .header-redesign .mobile-menu-head strong{
@@ -849,9 +862,10 @@
   }
 
   .header-redesign .nav-brand-mark .brand-logo-nav{
-    width:49px!important;
-    max-width:49px!important;
-    height:41px!important;
+    width:39px!important;
+    max-width:39px!important;
+    height:39px!important;
+    max-height:39px!important;
   }
 
   .header-redesign .nav-brand-copy strong{
