@@ -2216,6 +2216,21 @@ export function PropertyDetailView({
 
 
 
+        {related.length ? (
+          <section className="property-related" aria-labelledby="related-properties-title">
+            <div className="section-head">
+              <span className="kicker">پیشنهاد هیرمند</span>
+              <h2 id="related-properties-title">فایل‌های مشابه</h2>
+              <p>چند گزینه نزدیک به این فایل، بر اساس محله و نوع ملک.</p>
+            </div>
+            <div className="property-grid">
+              {related.slice(0, 3).map((item) => (
+                <PropertyCard key={item.id} property={item} />
+              ))}
+            </div>
+          </section>
+        ) : null
+
             <section id="property-tools-section" className="property-tool-center" aria-labelledby="property-tool-center-title">
               <header className="property-tool-center-head">
                 <div>
@@ -2432,20 +2447,7 @@ export function PropertyDetailView({
           </button>
         </div>
 
-        {related.length ? (
-          <section className="property-related" aria-labelledby="related-properties-title">
-            <div className="section-head">
-              <span className="kicker">پیشنهاد هیرمند</span>
-              <h2 id="related-properties-title">فایل‌های مشابه</h2>
-              <p>چند گزینه نزدیک به این فایل، بر اساس محله و نوع ملک.</p>
-            </div>
-            <div className="property-grid">
-              {related.slice(0, 3).map((item) => (
-                <PropertyCard key={item.id} property={item} />
-              ))}
-            </div>
-          </section>
-        ) : null}
+}
       </main>
     </SiteChrome>
   );
