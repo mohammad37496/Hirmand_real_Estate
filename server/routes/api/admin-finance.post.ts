@@ -2,6 +2,8 @@ import { createError, defineEventHandler, getCookie, readBody, setResponseHeader
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
+import { getAdminSessionClaims } from "@/lib/admin-session.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 
 type Kind = "income" | "expense";
 
@@ -10,6 +12,10 @@ async function requireAdmin(event:H3Event){
     throw createError({statusCode:401,statusMessage:"نشست مدیریت معتبر نیست. دوباره وارد پنل شوید."});
   }
   assertSameOrigin(event);
+  const claims = await getAdminSessionClaims(getCookie(event, ADMIN_SESSION_COOKIE));
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "finance.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "سطح دسترسی مالی برای این حساب فعال نیست." });
+  }
 }
 
 function parseAmount(value:unknown){
