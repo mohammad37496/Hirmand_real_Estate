@@ -28,7 +28,7 @@ export default defineEventHandler(async event=>{
     const [rows,deals,summary]=await Promise.all([
       sql.query<Record<string,unknown>>("select s.id,s.consultant,s.deal_id,s.commission_amount,s.consultant_share,s.office_share,s.status,s.paid_at,s.note,s.created_at,d.title as deal_title from admin_commission_settlements s left join admin_deals d on d.id=s.deal_id order by s.updated_at desc limit 200"),
       sql.query<Record<string,unknown>>("select id,title,consultant,commission,status,customer_name from admin_deals where status in ('contracted','completed') order by updated_at desc limit 100"),
-      sql.query<Record<string,unknown>>("select count(*) filter(where status='pending')::int as pending,count(*) filter(where status='approved')::int as approved,count(*) filter(where status='paid')::int as paid,coalesce(sum(commission_amount) filter(where status in ('pending','approved')),0)::numeric as total from admin_commission_settlements")
+      sql.query<Record<string,unknown>>("select count(*) filter(where status='pending')::int as pending,count(*) filter(where status='approved')::int as approved,count(*) filter(where status='paid')::int as paid,coalesce(sum(consultant_share) filter(where status in ('pending','approved')),0)::numeric as total from admin_commission_settlements")
     ]);
     const consultantRows=await sql.query<Record<string,unknown>>("select consultant,count(*)::int as count,coalesce(sum(consultant_share) filter(where status='paid'),0)::numeric as paid,coalesce(sum(consultant_share) filter(where status in ('pending','approved')),0)::numeric as due from admin_commission_settlements where trim(consultant)<>'' group by consultant order by due desc,consultant asc limit 50");
     return {
