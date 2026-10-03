@@ -197,7 +197,10 @@ const AUDIT = () => {
     return !hasElementChild;
   });
 
-  for (const element of textNodes.slice(0, 900)) {
+  // No cap here: the dashboard holds well over a thousand text nodes and a
+  // low cap made the finding set depend on the viewport width rather than on
+  // the panel.
+  for (const element of textNodes) {
     const style = getComputedStyle(element);
     if (style.visibility === "hidden" || style.display === "none") continue;
     if (Number(style.opacity) === 0) continue;
