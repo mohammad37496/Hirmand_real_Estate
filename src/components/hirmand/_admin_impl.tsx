@@ -583,6 +583,19 @@ export function AdminPropertiesPage() {
     [],
   );
 
+  const visibleNavItems = useMemo(() => {
+    if (adminRole === "owner" || adminRole === "manager") return navItems;
+    if (adminRole === "sales") {
+      const allowed = new Set<ViewMode>(["dashboard", "productivity", "list", "leads", "messages", "matching", "divar"]);
+      return navItems.filter((item) => allowed.has(item.view));
+    }
+    if (adminRole === "content") {
+      const allowed = new Set<ViewMode>(["dashboard", "productivity", "list", "form", "music", "watermark", "mediaHealth", "contentStudio"]);
+      return navItems.filter((item) => allowed.has(item.view));
+    }
+    return navItems.filter((item) => item.view === "dashboard");
+  }, [navItems, adminRole]);
+
   const [changeHistory, setChangeHistory] = useState<Array<{
     id: number;
     action: "created" | "updated" | "deleted";
@@ -1731,7 +1744,7 @@ export function AdminPropertiesPage() {
 
           {(() => {
             let previousSection = "";
-            return navItems.map((item) => {
+            return visibleNavItems.map((item) => {
               const Icon = item.icon;
               const active = view === item.view;
               const showSection = item.section !== previousSection;
@@ -1929,7 +1942,7 @@ export function AdminPropertiesPage() {
           <div className="admin-topbar-actions">
             <span className="admin-role-chip" title="سطح دسترسی حساب فعلی">{ADMIN_ROLE_LABELS[adminRole]}</span>
             <AdminCommandPalette
-              items={navItems.map((item) => ({ id: item.view, label: item.label }))}
+              items={visibleNavItems.map((item) => ({ id: item.view, label: item.label }))}
               onSelect={(id) => navigateTo(id as ViewMode)}
               onNewProperty={startNew}
               onRefresh={() => void refresh()}
