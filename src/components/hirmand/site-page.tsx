@@ -173,13 +173,11 @@ function Hero() {
         <div className="hero-veil" />
       </div>
       <div className="hero-inner">
-        <BrandLogo size="hero" />
-        <p className="hero-kicker">{SITE.kicker}</p>
-        <h1>{SITE.nameFa}</h1>
-        <p className="english-name">{SITE.nameEn}</p>
+        <p className="hero-kicker">{SITE.nameFa}</p>
+        <h1>ملک مناسب خود را در اصفهان پیدا کنید</h1>
         <p className="slogan">
-          <strong>{SITE.sloganStrong}</strong>
-          <span>{SITE.sloganRest}</span>
+          <strong>خرید، فروش، رهن و اجاره</strong>
+          <span>با مشاوره مستقیم هیرمند</span>
         </p>
         <form className="hero-search" onSubmit={submit}>
           <label className="sr-only" htmlFor="hero-deal">
@@ -239,40 +237,10 @@ function Hero() {
             درخواست اختصاصی
           </Link>
         </div>
-        <div className="hero-intents" aria-label="شروع سریع جست‌وجو">
-          <button
-            type="button"
-            className="hero-intent"
-            onClick={() => {
-              setDeal("خرید");
-              setPropertyType("آپارتمان");
-              setNeighborhood("");
-              window.location.assign("/properties?transaction=buy&type=apartment");
-            }}
-          >
-            خرید آپارتمان
-          </button>
-          <button
-            type="button"
-            className="hero-intent"
-            onClick={() => window.location.assign("/properties?transaction=mortgage&type=apartment")}
-          >
-            رهن آپارتمان
-          </button>
-          <button
-            type="button"
-            className="hero-intent"
-            onClick={() => window.location.assign("/properties?transaction=rent&type=apartment")}
-          >
-            اجاره آپارتمان
-          </button>
-          <button
-            type="button"
-            className="hero-intent"
-            onClick={() => window.location.assign("/properties?transaction=buy&type=villa")}
-          >
-            خرید ویلا و باغ
-          </button>
+        <div className="hero-intents" aria-label="جستجوی سریع">
+          <button type="button" className="hero-intent" onClick={() => window.location.assign("/properties?transaction=buy&type=apartment")}>خرید آپارتمان</button>
+          <button type="button" className="hero-intent" onClick={() => window.location.assign("/properties?transaction=mortgage&type=apartment")}>رهن آپارتمان</button>
+          <button type="button" className="hero-intent" onClick={() => window.location.assign("/properties?transaction=buy&type=villa")}>خرید ویلا و باغ</button>
         </div>
       </div>
     </section>
@@ -299,6 +267,58 @@ function TrustStrip() {
         ))}
       </div>
     </section>
+  );
+}
+
+function HomeDiscovery({ onPick }: { onPick: (title: string) => void }) {
+  return (
+    <Reveal as="section" className="section home-discovery" id="services">
+      <SectionHead
+        kicker="شروع جست‌وجو"
+        title="دنبال چه هستید؟"
+        text="مسیر معامله یا نوع ملک را انتخاب کنید و مستقیم به فایل‌های مرتبط بروید."
+      />
+      <div className="home-discovery-grid">
+        {SERVICES.map((item) => {
+          const Icon = SERVICE_ICONS[item.id];
+          return (
+            <Link
+              key={item.id}
+              to="/properties"
+              search={{ transaction: item.id }}
+              className="home-discovery-card"
+              aria-label={"جستجوی فایل برای " + item.title}
+              onClick={() => onPick(item.title)}
+            >
+              <span className="icon-box"><Icon size={20} strokeWidth={1.8} /></span>
+              <span>
+                <strong>{item.title}</strong>
+                <small>{item.text}</small>
+              </span>
+              <span aria-hidden="true">↗</span>
+            </Link>
+          );
+        })}
+      </div>
+      <div className="home-type-row" aria-label="انتخاب نوع ملک">
+        {PROPERTY_TYPES.map((item) => {
+          const Icon = TYPE_ICONS[item.id];
+          return (
+            <Link
+              key={item.id}
+              to="/properties"
+              search={{ type: item.id }}
+              className="home-type-chip"
+              aria-label={"جستجوی " + item.title}
+              onClick={() => onPick(item.title)}
+            >
+              <span className="icon-box sm"><Icon size={15} strokeWidth={1.8} /></span>
+              <span>{item.title}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </Reveal>
   );
 }
 
@@ -868,17 +888,28 @@ export function SitePage({
         <TrustStrip />
         <PropertyShowcase initialProperties={initialProperties} />
         <SmartRecommendations />
-        <Services onPick={(title) => goInquiry({ deal: title })} />
-        <Properties onPick={(title) => goInquiry({ propertyType: title })} />
-        <About />
-        <Process />
-        <Neighborhoods onPick={(name) => goInquiry({ neighborhood: name })} />
-        <Team />
-        <TrackingCta />
+        <HomeDiscovery onPick={(title) => goInquiry({ deal: title })} />
         <Inquiry draft={draft} />
-        <FAQ items={faqItems} />
-        <Contact />
-        <Location />
+        <details className="home-secondary">
+          <summary>
+            <span>
+              <strong>اطلاعات بیشتر درباره هیرمند</strong>
+              <small>محله‌ها، تیم، فرایند همکاری، ابزارها و راه‌های ارتباطی</small>
+            </span>
+            <span aria-hidden="true">⌄</span>
+          </summary>
+          <div className="home-secondary-body">
+            <About />
+            <Process />
+            <Neighborhoods onPick={(name) => goInquiry({ neighborhood: name })} />
+            <Team />
+            <Tools />
+            <TrackingCta />
+            <FAQ items={faqItems} />
+            <Contact />
+            <Location />
+          </div>
+        </details>
       </main>
     </SiteChrome>
   );
