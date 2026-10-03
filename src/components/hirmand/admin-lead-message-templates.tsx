@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Copy, MessageCircle, Phone, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -22,7 +22,7 @@ export function AdminLeadMessageTemplates({ leads }: { leads: Lead[] }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch("/api/admin-message-templates", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "list" }) });
@@ -36,7 +36,8 @@ export function AdminLeadMessageTemplates({ leads }: { leads: Lead[] }) {
       toast.error(error instanceof Error ? error.message : "قالب‌های پیام بارگذاری نشدند.");
     } finally { setLoading(false); }
   }
-  useEffect(() => { void load(); }, []);
+  }, [selectedId]);
+  useEffect(() => { void load(); }, [load]);
 
   const lead = useMemo(() => leads.find((item) => item.id === leadId), [leads, leadId]);
   const message = lead ? fill(draft.body, lead) : draft.body;
