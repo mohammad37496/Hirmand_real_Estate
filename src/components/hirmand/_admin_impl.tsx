@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type FormE
 import { Link } from "@tanstack/react-router";
 import {
   BarChart3,
+  BriefcaseBusiness,
   Building2,
   Copy,
   ExternalLink,
@@ -109,6 +110,8 @@ import { AdminContentStudio } from "@/components/hirmand/admin-content-studio";
 import { AdminPublicationQueue } from "@/components/hirmand/admin-publication-queue";
 import { AdminKpiHistory } from "@/components/hirmand/admin-kpi-history";
 import { AdminDataHealth } from "@/components/hirmand/admin-data-health";
+import { AdminDealsManager } from "@/components/hirmand/admin-deals";
+import { AdminPropertyExpiryCenter } from "@/components/hirmand/admin-property-expiry";
 import { AdminPropertyPreview } from "@/components/hirmand/admin-property-preview";
 import "@/admin-site-settings.css";
 import "@/admin-security.css";
@@ -137,7 +140,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "integrity" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
+type ViewMode = "dashboard" | "integrity" | "deals" | "expiry" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -559,6 +562,8 @@ export function AdminPropertiesPage() {
       { view: "dashboard" as ViewMode, section: "نمای کلی", label: "داشبورد", icon: BarChart3 },
       { view: "productivity" as ViewMode, section: "نمای کلی", label: "مرکز مدیریت", icon: ListTodo },
       { view: "integrity" as ViewMode, section: "نمای کلی", label: "سلامت داده", icon: ShieldAlert },
+      { view: "deals" as ViewMode, section: "فروش و معاملات", label: "معاملات", icon: BriefcaseBusiness },
+      { view: "expiry" as ViewMode, section: "فروش و معاملات", label: "انقضا و تمدید فایل", icon: Clock3 },
 
       { view: "list" as ViewMode, section: "فایل‌ها و مشتریان", label: "فایل‌های ملک", icon: LayoutDashboard },
       { view: "leads" as ViewMode, section: "فایل‌ها و مشتریان", label: "درخواست‌ها", icon: UsersRound },
@@ -591,7 +596,7 @@ export function AdminPropertiesPage() {
   const visibleNavItems = useMemo(() => {
     if (adminRole === "owner" || adminRole === "manager") return navItems;
     if (adminRole === "sales") {
-      const allowed = new Set<ViewMode>(["dashboard", "productivity", "list", "leads", "messages", "matching", "divar"]);
+      const allowed = new Set<ViewMode>(["dashboard", "productivity", "list", "leads", "messages", "matching", "divar", "deals", "expiry"]);
       return navItems.filter((item) => allowed.has(item.view));
     }
     if (adminRole === "content") {
@@ -1889,7 +1894,13 @@ export function AdminPropertiesPage() {
                                 ? "مالکین و سبد فایل‌ها"
                                 : view === "finance"
                                   ? "دفتر مالی و تسویه"
-                                  : view === "backup"
+                                  : view === "integrity"
+                                    ? "اسکن خطاها و ناسازگاری‌های اطلاعاتی"
+                                    : view === "deals"
+                                      ? "ثبت معامله، کمیسیون و کنترل مدارک قرارداد"
+                                      : view === "expiry"
+                                        ? "فایل‌های منقضی، نزدیک به انقضا و قدیمی را کنترل کنید"
+                                        : view === "backup"
                                     ? "پشتیبان‌گیری"
                                     : view === "watermark"
                                       ? "واترمارک تصاویر و فیلم‌ها"
@@ -1909,7 +1920,13 @@ export function AdminPropertiesPage() {
                                                     ? "ریدایرکت و ۴۰۴"
                                                     : view === "contentStudio"
                                                       ? "استودیو محتوا"
-                                                      : view === "divar"
+                                                      : view === "integrity"
+                                                        ? "سلامت داده و کنترل کیفیت"
+                                                        : view === "deals"
+                                                          ? "معاملات و قراردادها"
+                                                          : view === "expiry"
+                                                            ? "انقضا و تمدید فایل‌ها"
+                                                            : view === "divar"
                                                         ? "فایل‌های دیوار"
                           : form.id
                         ? "ویرایش فایل"
@@ -2006,6 +2023,12 @@ export function AdminPropertiesPage() {
             </>
           ) : view === "integrity" ? (
             <AdminDataHealth />
+          ) : view === "integrity" ? (
+            <AdminDataHealth />
+          ) : view === "deals" ? (
+            <AdminDealsManager />
+          ) : view === "expiry" ? (
+            <AdminPropertyExpiryCenter />
           ) : view === "productivity" ? (
             <AdminProductivityCenter />
           ) : null}
