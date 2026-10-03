@@ -2126,7 +2126,23 @@ export function PropertyDetailView({
 
             <PropertyFloorPlan property={property} />
             <PropertyNearbyServices property={property} />
-            {isClosedFile ? (
+
+            <details className="property-secondary-services">
+              <summary className="property-secondary-services-summary">
+                <span className="property-secondary-services-main">
+                  <span className="property-secondary-services-icon"><Sparkles size={17} aria-hidden="true" /></span>
+                  <span>
+                    <strong>خدمات و امکانات تکمیلی</strong>
+                    <small>بازدید، تأمین مالی، بررسی اطلاعات، مدارک و ارتباط با هیرمند</small>
+                  </span>
+                </span>
+                <span className="property-secondary-services-meta">
+                  <span>اختیاری</span>
+                  <ChevronDown size={18} aria-hidden="true" />
+                </span>
+              </summary>
+              <div className="property-secondary-services-content">
+{isClosedFile ? (
               <PropertyBackInMarketAlert
                 slug={property.slug}
                 title={property.title}
@@ -2145,6 +2161,9 @@ export function PropertyDetailView({
             <PropertyNeighborhoodInsight property={property} />
             <PropertyReport property={property} />
             <PropertyQuestions property={property} />
+              </div>
+            </details>
+
             <PropertyOpenHouse property={property} />
 
             <section id="property-tools-section" className="property-tool-center" aria-labelledby="property-tool-center-title">
