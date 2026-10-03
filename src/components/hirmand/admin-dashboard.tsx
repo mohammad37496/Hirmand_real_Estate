@@ -30,6 +30,7 @@ import { AdminVisitFeedback } from "@/components/hirmand/admin-visit-feedback";
 import { AdminPropertyReports } from "@/components/hirmand/admin-property-reports";
 import { AdminPropertyQualityCenter } from "@/components/hirmand/admin-property-quality-center";
 import { fa, faBytes } from "@/components/hirmand/admin-ui-utils";
+import { AdminSmartAlerts } from "@/components/hirmand/admin-smart-alerts";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 
@@ -323,6 +324,7 @@ export function AdminDashboard({
   return (
     <div className="admin-dashboard">
       <style>{`.admin-funnel-row{display:flex;flex-direction:column}`}</style>
+      <AdminSmartAlerts followUpsDue={data.followUps.due} leadSlaOverdue={data.leadSla.overdue} newLeadsOver4Hours={data.leadSla.newOver4Hours} propertiesWithoutImages={data.properties.withoutImages} incompleteProperties={data.properties.incomplete} onOpenLeads={onOpenLeads} onOpenProperties={onOpenProperties} />
       {loadError ? (
         <div style={{ marginBottom: 16 }}>
           <AdminErrorBanner message={loadError} onRetry={() => void load()} />

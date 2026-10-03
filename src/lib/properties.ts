@@ -2090,6 +2090,7 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
         beforePrice: before.price,
         beforeDeposit: before.deposit,
         beforeRent: before.rent,
+        beforeState: row.before_state,
         beforeContactName: before.contactName,
         beforeContactPhone: before.contactPhone,
         afterTitle: after.title,

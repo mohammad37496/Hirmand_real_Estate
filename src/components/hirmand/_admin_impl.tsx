@@ -106,6 +106,7 @@ import { AdminMediaHealth } from "@/components/hirmand/admin-media-health";
 import { AdminSecurityCenter } from "@/components/hirmand/admin-security-center";
 import { AdminSeoRedirects } from "@/components/hirmand/admin-seo-redirects";
 import { AdminContentStudio } from "@/components/hirmand/admin-content-studio";
+import { AdminPropertyPreview } from "@/components/hirmand/admin-property-preview";
 import "@/admin-site-settings.css";
 import "@/admin-security.css";
 import "@/admin-seo-redirects.css";
@@ -603,6 +604,7 @@ export function AdminPropertiesPage() {
     afterOwnerName: string | null;
     afterOwnerPhone: string | null;
     afterOwnerInfo: string | null;
+    beforeState?: unknown;
   }>>([]);
   const [form, setForm] = useState<FormState>(emptyForm());
   const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>(NEIGHBORHOOD_NAMES);
@@ -1400,6 +1402,15 @@ export function AdminPropertiesPage() {
       submitting.current = false;
       setSaving(false);
     }
+  }
+
+  function loadHistoryVersion(item: (typeof changeHistory)[number]) {
+    if (!item.beforeState || typeof item.beforeState !== "object") { toast.error("نسخه قابل بازیابی برای این رویداد در دسترس نیست."); return; }
+    const snapshot = item.beforeState as Partial<Property>;
+    if (typeof snapshot.title !== "string" || typeof snapshot.transactionType !== "string") { toast.error("اطلاعات نسخه قبلی کامل نیست."); return; }
+    setForm(propertyToForm(snapshot as Property)); setFormDirty(true); setDraftRestored(null);
+    window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+    toast.success("نسخه قبلی داخل فرم بارگذاری شد؛ برای اعمال نهایی، «ذخیره» را بزنید.");
   }
 
   const submitGuardReady = async (message: string) =>
@@ -2986,6 +2997,7 @@ export function AdminPropertiesPage() {
                               </strong>
                             </div>
                             <small>{title}</small>
+                            {item.action === "updated" && item.beforeState ? <button type="button" className="btn-ghost" style={{ marginTop: 8, minHeight: 34, fontSize: ".68rem" }} onClick={() => loadHistoryVersion(item)}>بارگذاری این نسخه</button> : null}
                           </div>
                         );
                       })}
@@ -3000,6 +3012,7 @@ export function AdminPropertiesPage() {
                   {formDirty ? " · تغییرات ذخیره‌نشده" : " · همه‌چیز ذخیره شده"}
                 </div>
                 <div className="admin-sticky-actions">
+                  <AdminPropertyPreview data={{title:form.title,transactionType:form.transactionType,propertyType:form.propertyType,neighborhood:form.neighborhood,areaM2:form.areaM2,bedrooms:form.bedrooms,bathrooms:form.bathrooms,floor:form.floorLabel==="suite"?"سوئیت":form.floor,parking:form.parking,elevator:form.elevator,storage:form.storage,price:form.price,deposit:form.deposit,rent:form.rent,description:form.description,images:form.images,contactName:form.contactName,contactPhone:form.contactPhone,featured:form.featured,status:form.status}} />
                   <button type="button" className="btn-ghost" onClick={() => navigateTo("list")} disabled={saving}>
                     انصراف
                   </button>
