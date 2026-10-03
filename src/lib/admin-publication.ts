@@ -11,7 +11,7 @@ import { getPublishReadiness } from "@/lib/property-publish-readiness";
 
 async function requirePublicationPermission(permission: "property.manage" | "property.publish") {
   const token = getCookie(ADMIN_SESSION_COOKIE);
-  if (!(await import("@/lib/admin-session.server")).verifyAdminSessionToken(token)) throw new Error("نشست مدیریت معتبر نیست.");
+  if (!(await verifyAdminSessionToken(token))) throw new Error("نشست مدیریت معتبر نیست.");
   assertAdminServerFnOrigin();
   const claims = await getAdminSessionClaims(token);
   const role = normalizeAdminRole(claims?.role);
