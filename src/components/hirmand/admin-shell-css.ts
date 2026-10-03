@@ -837,6 +837,184 @@ export const ADMIN_CSS = `
 .admin-sidebar-brand{min-height:82px;padding:18px 17px!important;border-color:rgb(255 255 255 / 10%)!important}
 .admin-sidebar-brand .brand-logo-nav{width:45px!important;height:45px!important;filter:drop-shadow(0 8px 18px rgb(192 138 42 / 18%))!important}
 .admin-sidebar-brand strong{color:#fff!important}.admin-sidebar-brand small{color:rgb(255 255 255 / 58%)!important}
+.admin-sidebar-brand{
+  min-height:86px!important;
+  padding:16px 14px!important;
+  gap:11px!important;
+  background:linear-gradient(180deg,rgb(255 255 255 / 3%),rgb(255 255 255 / 1%))!important;
+  border-bottom:1px solid rgb(255 255 255 / 12%)!important;
+}
+.admin-brand-icon{
+  width:42px!important;
+  height:42px!important;
+  flex:0 0 42px!important;
+  display:grid!important;
+  place-items:center!important;
+  border:1px solid rgb(192 138 42 / 42%)!important;
+  border-radius:12px!important;
+  background:linear-gradient(145deg,rgb(192 138 42 / 23%),rgb(255 255 255 / 7%))!important;
+  color:#f8ead0!important;
+  box-shadow:0 8px 18px rgb(0 0 0 / 15%),inset 0 1px 0 rgb(255 255 255 / 9%)!important;
+}
+.admin-brand-copy{
+  min-width:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  gap:2px!important;
+}
+.admin-brand-copy strong{
+  display:block!important;
+  color:#fff!important;
+  font-size:1rem!important;
+  font-weight:850!important;
+  line-height:1.45!important;
+}
+.admin-brand-copy small{
+  display:block!important;
+  color:rgb(255 255 255 / 58%)!important;
+  font-size:.72rem!important;
+  line-height:1.5!important;
+}
+.admin-brand-extra{
+  margin-inline-start:auto!important;
+  display:flex!important;
+  align-items:center!important;
+}
+.admin-brand-extra:empty{display:none!important}
+
+.admin-sidebar-nav{
+  padding:12px 11px 14px!important;
+  gap:5px!important;
+  background:linear-gradient(180deg,rgb(255 255 255 / 1%),transparent 20%)!important;
+}
+.admin-nav-intro{
+  display:flex!important;
+  align-items:center!important;
+  gap:9px!important;
+  min-height:22px!important;
+  padding:2px 5px 4px!important;
+  margin-bottom:1px!important;
+}
+.admin-nav-intro-kicker{
+  color:rgb(255 255 255 / 42%)!important;
+  font-size:.66rem!important;
+  font-weight:800!important;
+  letter-spacing:.03em!important;
+  white-space:nowrap!important;
+}
+.admin-nav-intro-line{
+  height:1px!important;
+  flex:1!important;
+  background:linear-gradient(90deg,rgb(255 255 255 / 14%),transparent)!important;
+}
+.admin-nav-section-label{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  min-height:27px!important;
+  padding:9px 7px 3px!important;
+  margin-top:3px!important;
+  color:rgb(255 255 255 / 43%)!important;
+  font-size:.67rem!important;
+  font-weight:800!important;
+  line-height:1.5!important;
+}
+.admin-nav-section-label:after{
+  content:""!important;
+  flex:1!important;
+  height:1px!important;
+  background:linear-gradient(90deg,rgb(255 255 255 / 10%),transparent)!important;
+}
+.admin-nav-btn{
+  min-height:46px!important;
+  padding:9px 11px!important;
+  gap:10px!important;
+  border-radius:12px!important;
+  position:relative!important;
+  isolation:isolate!important;
+}
+.admin-nav-btn-icon{
+  width:30px!important;
+  height:30px!important;
+  flex:0 0 30px!important;
+  display:grid!important;
+  place-items:center!important;
+  border:1px solid rgb(255 255 255 / 8%)!important;
+  border-radius:9px!important;
+  background:rgb(255 255 255 / 4%)!important;
+  color:rgb(255 255 255 / 70%)!important;
+  transition:background .16s ease,color .16s ease,border-color .16s ease,transform .16s ease!important;
+}
+.admin-nav-btn-icon svg{
+  width:17px!important;
+  height:17px!important;
+  flex:0 0 17px!important;
+}
+.admin-nav-btn-label{
+  min-width:0!important;
+  flex:1!important;
+  display:block!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+.admin-nav-btn-meta{
+  flex:0 0 auto!important;
+  padding:3px 7px!important;
+  border-radius:999px!important;
+  color:#f0d8a5!important;
+  background:rgb(192 138 42 / 13%)!important;
+  border:1px solid rgb(192 138 42 / 20%)!important;
+  font-size:.59rem!important;
+  font-weight:800!important;
+  line-height:1.4!important;
+}
+.admin-nav-btn:hover .admin-nav-btn-icon{
+  color:#fff!important;
+  background:rgb(255 255 255 / 8%)!important;
+  border-color:rgb(255 255 255 / 14%)!important;
+  transform:translateY(-1px)!important;
+}
+.admin-nav-btn.is-active .admin-nav-btn-icon{
+  color:#ffe9b9!important;
+  background:rgb(192 138 42 / 20%)!important;
+  border-color:rgb(192 138 42 / 32%)!important;
+}
+.admin-nav-btn-create{
+  min-height:50px!important;
+  margin:2px 0 4px!important;
+  border-color:rgb(192 138 42 / 32%)!important;
+  background:linear-gradient(135deg,rgb(192 138 42 / 21%),rgb(255 255 255 / 5%))!important;
+  box-shadow:0 7px 18px rgb(0 0 0 / 12%),inset 0 1px 0 rgb(255 255 255 / 6%)!important;
+}
+.admin-nav-btn-create .admin-nav-btn-icon{
+  color:#ffe9b9!important;
+  background:rgb(192 138 42 / 20%)!important;
+  border-color:rgb(192 138 42 / 32%)!important;
+}
+.admin-nav-btn-create:hover{
+  background:linear-gradient(135deg,rgb(192 138 42 / 28%),rgb(255 255 255 / 8%))!important;
+  border-color:rgb(192 138 42 / 46%)!important;
+  transform:translateY(-1px)!important;
+}
+.admin-nav-btn-context{
+  min-height:44px!important;
+  border-color:rgb(255 255 255 / 9%)!important;
+  background:rgb(255 255 255 / 4%)!important;
+}
+.admin-nav-btn-context-title{
+  min-width:0!important;
+  max-width:94px!important;
+  color:rgb(255 255 255 / 42%)!important;
+  font-size:.62rem!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+.admin-nav-btn-context.is-active{
+  border-color:rgb(192 138 42 / 28%)!important;
+}
+
 .admin-sidebar-nav{
   padding:16px 12px!important;
   gap:6px!important;
@@ -1193,7 +1371,7 @@ export const ADMIN_CSS = `
   --navy-900:#0b1a2b;
   /* Width of the desktop rail. The sidebar and the fixed save bar both read
      it, so they can no longer drift apart at a breakpoint. */
-  --admin-rail:264px;
+  --admin-rail:278px;
   color-scheme:light;
 }
 .admin-app .admin-money-hint,
