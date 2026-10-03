@@ -9882,3 +9882,106 @@ a.btn-ghost[href^="https://wa.me/"] svg {
   .home-discovery-grid { grid-template-columns:1fr; }
   .home-discovery-card { padding:.9rem; }
 }
+
+
+/* Homepage density pass — same Hirmand palette, cleaner first journey. */
+.site-home .hero {
+  min-height: min(72svh, 680px);
+}
+.site-home .hero-inner {
+  padding: 58px 0 48px;
+}
+.site-home .hero h1 {
+  max-width: 780px;
+  margin-inline: auto;
+}
+.site-home .hero .slogan {
+  margin-top: 14px;
+}
+.site-home .hero-search {
+  margin-top: 24px;
+}
+.site-home .hero-actions {
+  margin-top: 14px;
+}
+.site-home .hero-intents {
+  margin-top: 12px;
+  gap: 6px;
+}
+.site-home .hero-intent {
+  min-height: 34px;
+  padding-inline: 12px;
+}
+.site-home .trust-strip-wrap {
+  margin-top: -26px;
+}
+.site-home .trust-strip {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.site-home .trust-stat {
+  padding: 16px 12px;
+}
+.site-home .trust-stat strong {
+  font-size: 1.35rem;
+}
+.site-home .property-showcase {
+  padding-top: 42px;
+}
+.site-home .section-head {
+  margin-bottom: 18px;
+}
+.site-home > .home-secondary .section {
+  padding-block: 48px;
+}
+@media (max-width: 900px) {
+  .site-home .hero {
+    min-height: min(76svh, 650px);
+  }
+}
+@media (max-width: 720px) {
+  .site-home .hero {
+    min-height: auto;
+  }
+  .site-home .hero-inner {
+    width: min(100% - 24px, 760px);
+    padding: 42px 0 34px;
+  }
+  .site-home .hero h1 {
+    font-size: clamp(1.7rem, 7vw, 2.25rem);
+  }
+  .site-home .hero-search {
+    margin-top: 18px;
+  }
+  .site-home .hero-actions {
+    margin-top: 12px;
+  }
+  .site-home .hero-intents {
+    margin-top: 10px;
+    overflow-x: auto;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .site-home .hero-intents::-webkit-scrollbar { display: none; }
+  .site-home .hero-intent {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .site-home .trust-strip-wrap {
+    width: min(100% - 20px, 760px);
+    margin-top: -16px;
+  }
+  .site-home .trust-stat {
+    padding: 12px 8px;
+  }
+  .site-home .trust-stat strong {
+    font-size: 1.1rem;
+  }
+  .site-home .trust-stat span {
+    font-size: .7rem;
+  }
+  .site-home .property-showcase {
+    padding-top: 30px;
+  }
+}
