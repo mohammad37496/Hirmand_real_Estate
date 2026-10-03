@@ -37,7 +37,7 @@ const LIST_MAX_OFFSET = 100000;
 function parseListInput(body: Record<string, unknown>) {
   const status = typeof body.status === "string" ? body.status : "";
   const sortRaw = typeof body.sort === "string" ? body.sort : "newest";
-  const sort = ["newest", "oldest", "name", "follow_up"].includes(sortRaw)
+  const sort = ["newest", "oldest", "name", "follow_up", "priority"].includes(sortRaw)
     ? (sortRaw as "newest" | "oldest" | "name" | "follow_up")
     : "newest";
   const query = typeof body.query === "string" ? body.query.trim().slice(0, 80) : "";
