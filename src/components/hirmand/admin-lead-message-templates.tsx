@@ -35,7 +35,6 @@ export function AdminLeadMessageTemplates({ leads }: { leads: Lead[] }) {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "قالب‌های پیام بارگذاری نشدند.");
     } finally { setLoading(false); }
-  }
   }, [selectedId]);
   useEffect(() => { void load(); }, [load]);
 
