@@ -1576,9 +1576,6 @@ export function PropertyDetailView({
                   ) : null}
                 </div>
 
-                <PropertyMarketComparison property={property} />
-                <PropertyVerificationStamp property={property} />
-
                 <div className="property-primary-contact" aria-label="تماس سریع با مشاور">
                   <PropertyCallbackRequest propertyType={TYPE_LABEL[property.propertyType]} neighborhood={property.neighborhood} context={"فایل «" + property.title + "»"} />
                   <a
@@ -1952,6 +1949,11 @@ export function PropertyDetailView({
                   ) : null}
                 </div>
               ) : null}
+            </section>
+
+            <section className="property-detail-insight-grid" aria-label="اطلاعات تحلیلی فایل">
+              <PropertyVerificationStamp property={property} />
+              <PropertyMarketComparison property={property} />
             </section>
 
             {priceHistory.length ? (
