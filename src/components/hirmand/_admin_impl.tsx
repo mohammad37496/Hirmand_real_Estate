@@ -2440,7 +2440,6 @@ export function AdminPropertiesPage() {
           {view === "consultants" ? <AdminConsultantManager /> : null}
           {view === "consultantPerformance" ? <AdminConsultantPerformance /> : null}
           {view === "consultantTargets" ? <AdminConsultantTargets /> : null}
-          {view === "managementReport" ? <AdminManagementReport /> : null}
           {view === "attendance" ? <AdminAttendanceManager /> : null}
           {view === "matching" ? <AdminMatchingManager /> : null}
           {view === "owners" ? <AdminOwnerManager /> : null}
