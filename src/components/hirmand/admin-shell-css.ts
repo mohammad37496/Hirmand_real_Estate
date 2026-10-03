@@ -1975,3 +1975,29 @@ export const ADMIN_CSS = `
   .admin-message-manager-grid,.admin-message-send-box,.admin-performance-table-wrap,.admin-360-summary,.admin-360-grid{padding-inline:12px}
   .admin-360-summary{grid-template-columns:1fr}
 }
+
+/* Consultant targets + reusable CRM segments + printable deal pack */
+.admin-target-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.admin-target-toolbar input{min-height:38px;border:1px solid var(--line);border-radius:10px;background:var(--card,#fff);color:var(--fg);padding:6px 9px;font:inherit;font-size:.68rem}
+.admin-target-form{display:grid;grid-template-columns:1.15fr .7fr .7fr 1fr 1fr auto;gap:9px;align-items:end;padding:0 18px 16px}
+.admin-target-table-wrap{overflow:auto;padding:0 18px 18px}
+.admin-target-table{width:100%;min-width:820px;border-collapse:collapse}
+.admin-target-table th,.admin-target-table td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;font-size:.62rem;vertical-align:middle}
+.admin-target-table th{background:var(--surface-2,#f7f5f0);color:var(--subtle);font-size:.58rem}
+.admin-target-table td{color:var(--muted)}
+.admin-target-table td strong{color:var(--navy-900);font-size:.68rem}
+.admin-target-table td b{display:block;color:var(--navy-900);font-size:.61rem;white-space:nowrap}
+.admin-target-progress{display:block;height:6px;margin-top:4px;border-radius:999px;background:var(--surface-2,#f2f1ed);overflow:hidden;min-width:90px}
+.admin-target-progress i{display:block;height:100%;background:var(--brass-600);border-radius:inherit;min-width:0}
+.admin-lead-segments{margin-bottom:16px}
+.admin-segment-create{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:0 18px 12px}
+.admin-segment-create input{min-height:40px;border:1px solid var(--line);border-radius:10px;background:var(--card,#fff);color:var(--fg);padding:8px 11px;font:inherit;font-size:.68rem}
+.admin-segment-list{display:grid;gap:7px;padding:0 18px 18px}
+.admin-segment-list article{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:11px;background:var(--card,#fff)}
+.admin-segment-apply{display:grid;gap:2px;border:0;background:transparent;text-align:right;cursor:pointer;font:inherit;min-width:0}
+.admin-segment-apply strong{color:var(--navy-900);font-size:.67rem}
+.admin-segment-apply small{color:var(--muted);font-size:.57rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-segment-list article:hover{border-color:var(--brass-300,#d9bd86);background:var(--brass-50,#fbf7ef)}
+@media(max-width:1100px){.admin-target-form{grid-template-columns:repeat(3,minmax(0,1fr))}.admin-target-form .btn-gold{grid-column:1/-1;justify-self:start}}
+@media(max-width:700px){.admin-target-form{grid-template-columns:1fr 1fr}.admin-target-form .btn-gold{grid-column:1/-1;width:100%}.admin-target-table-wrap{padding-inline:12px}.admin-target-toolbar{width:100%}.admin-target-toolbar input{flex:1}.admin-segment-create{grid-template-columns:1fr;padding-inline:12px}.admin-segment-list{padding-inline:12px}}
+@media(max-width:460px){.admin-target-form{grid-template-columns:1fr}.admin-target-form .btn-gold{grid-column:1}.admin-segment-list article{grid-template-columns:minmax(0,1fr) auto}}
