@@ -4,6 +4,8 @@ import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
+import { getAdminSessionClaims } from "@/lib/admin-session.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 
 export type SiteSettings = {
   siteTitle: string;
@@ -46,11 +48,13 @@ const DEFAULT_SETTINGS: SiteSettings = {
 };
 
 async function requireAdminAsync() {
-  if (await verifyAdminSessionToken(getCookie(ADMIN_SESSION_COOKIE))) {
-    assertAdminServerFnOrigin();
-    return;
+  const token = getCookie(ADMIN_SESSION_COOKIE);
+  if (!(await verifyAdminSessionToken(token))) throw new Error("نشست مدیریت معتبر نیست.");
+  assertAdminServerFnOrigin();
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "settings.manage")) {
+    throw new Error("سطح دسترسی تنظیمات برای این حساب فعال نیست.");
   }
-  throw new Error("نشست مدیریت معتبر نیست.");
 }
 
 function mapRow(row: Record<string, unknown>): SiteSettings {
