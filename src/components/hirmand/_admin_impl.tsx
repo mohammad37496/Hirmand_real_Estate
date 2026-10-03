@@ -106,6 +106,9 @@ import { AdminMediaHealth } from "@/components/hirmand/admin-media-health";
 import { AdminSecurityCenter } from "@/components/hirmand/admin-security-center";
 import { AdminSeoRedirects } from "@/components/hirmand/admin-seo-redirects";
 import { AdminContentStudio } from "@/components/hirmand/admin-content-studio";
+import { AdminPublicationQueue } from "@/components/hirmand/admin-publication-queue";
+import { AdminKpiHistory } from "@/components/hirmand/admin-kpi-history";
+import { AdminDataHealth } from "@/components/hirmand/admin-data-health";
 import { AdminPropertyPreview } from "@/components/hirmand/admin-property-preview";
 import "@/admin-site-settings.css";
 import "@/admin-security.css";
@@ -133,7 +136,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
+type ViewMode = "dashboard" | "integrity" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -554,6 +557,7 @@ export function AdminPropertiesPage() {
     () => [
       { view: "dashboard" as ViewMode, section: "نمای کلی", label: "داشبورد", icon: BarChart3 },
       { view: "productivity" as ViewMode, section: "نمای کلی", label: "مرکز مدیریت", icon: ListTodo },
+      { view: "integrity" as ViewMode, section: "نمای کلی", label: "سلامت داده", icon: ShieldAlert },
 
       { view: "list" as ViewMode, section: "فایل‌ها و مشتریان", label: "فایل‌های ملک", icon: LayoutDashboard },
       { view: "leads" as ViewMode, section: "فایل‌ها و مشتریان", label: "درخواست‌ها", icon: UsersRound },
@@ -1964,6 +1968,13 @@ export function AdminPropertiesPage() {
         <div className="admin-content">
           {view === "dashboard" ? (
             <>
+              <AdminKpiHistory />
+              <AdminPublicationQueue />
+            <>
+              </>
+          ) : view === "integrity" ? (
+            <AdminDataHealth />
+          ) : view === "productivity" ? (
               <AdminOperationsCenter
                 onOpenLeads={() => navigateTo("leads")}
                 onOpenMatching={() => navigateTo("matching")}
