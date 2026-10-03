@@ -70,6 +70,7 @@ import {
 } from "@/components/hirmand/admin-ui";
 import { adminErrorMessage, fa, useConfirmDialog, useOverlayDismiss } from "@/components/hirmand/admin-ui-utils";
 import { AdminMediaField } from "@/components/hirmand/admin-media-field";
+import { AdminFloorPlanField } from "@/components/hirmand/admin-floor-plan-field";
 import { AdminPropertyDuplicateCheck } from "@/components/hirmand/admin-property-duplicate-check";
 import { AdminLocationPicker } from "@/components/hirmand/admin-location-picker";
 import { AdminPricingPanel } from "@/components/hirmand/admin-pricing-panel";
@@ -231,6 +232,7 @@ type FormState = {
   description: string;
   features: string;
   images: string;
+  floorPlanUrl: string;
   contactName: string;
   contactPhone: string;
   ownerName: string;
@@ -293,6 +295,7 @@ function emptyForm(): FormState {
     description: "",
     features: "",
     images: "",
+    floorPlanUrl: "",
     contactName: TEAM[0]?.name ?? "مشاور هیرمند",
     contactPhone: TEAM[0]?.phone ?? SITE.phone.mobile,
     ownerName: "",
@@ -471,6 +474,7 @@ function propertyToForm(property: Property): FormState {
     description: property.description ?? "",
     features: (property.features ?? []).join("\n"),
     images: (property.images ?? []).join("\n"),
+    floorPlanUrl: property.floorPlanUrl ?? "",
     contactName: property.contactName,
     contactPhone: property.contactPhone,
     ownerName: property.ownerName ?? "",
@@ -1358,6 +1362,7 @@ export function AdminPropertiesPage() {
           description: form.description.trim(),
           features: splitLines(form.features),
           images,
+          floorPlanUrl: form.floorPlanUrl.trim(),
           contactName: form.contactName.trim(),
           contactPhone: form.contactPhone.trim(),
           ownerName: form.ownerName.trim(),
@@ -1509,6 +1514,7 @@ export function AdminPropertiesPage() {
           description: base.description,
           features: splitLines(base.features),
           images: parseImageUrls(base.images).valid,
+          floorPlanUrl: base.floorPlanUrl.trim(),
           contactName: base.contactName,
           contactPhone: base.contactPhone,
           ownerName: base.ownerName.trim(),
@@ -2696,6 +2702,21 @@ export function AdminPropertiesPage() {
                     propertyType={form.propertyType}
                     propertyId={form.id}
                   />
+                  <div className="admin-floor-plan-separator" aria-hidden="true">
+                    <span />
+                    <strong>پلان معماری</strong>
+                    <span />
+                  </div>
+                  <label className="field admin-span-2">
+                    <span>پلان واقعی ملک (اختیاری)</span>
+                    <small className="admin-field-help">
+                      پلان را جدا از تصاویر گالری ثبت کنید؛ در صفحه ملک به‌عنوان «پلان واقعی» نمایش داده می‌شود.
+                    </small>
+                    <AdminFloorPlanField
+                      value={form.floorPlanUrl}
+                      onChange={(next) => update("floorPlanUrl", next)}
+                    />
+                  </label>
                   <div className="admin-form-grid" style={{ marginTop: 14 }}>
                     <label className="field admin-span-2">
                       <span>لینک تور مجازی ۳۶۰ (اختیاری)</span>
