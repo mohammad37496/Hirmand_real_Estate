@@ -1776,7 +1776,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
         features, images, contact_name, contact_phone, published_at, featured_until,
         latitude, longitude, virtual_tour_url, floor_label, painted, wallpaper, convertible, orientation,
-        owner_name, owner_phone, owner_info, availability_status, internal_priority, internal_note
+        owner_name, owner_phone, owner_info, availability_status, internal_priority, internal_note, floor_plan_url
       ) values (
         $1, $2, $3, $4, $5, $6, $7, 'اصفهان',
         $8, $9, $10::integer, $11::smallint, $12::smallint, $13::smallint, $14::smallint,
