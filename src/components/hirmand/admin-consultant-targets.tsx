@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BarChart3, Plus, RefreshCw, Save, Target, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { listAdminConsultants, type Consultant } from "@/lib/consultants";
@@ -15,7 +15,7 @@ const pct=(a:number,b:number)=>b>0?Math.min(100,Math.round(a/b*100)):0;
 export function AdminConsultantTargets(){
  const [month,setMonth]=useState(monthNow()),[rows,setRows]=useState<Row[]>([]),[consultants,setConsultants]=useState<Consultant[]>([]),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false);
  const [form,setForm]=useState({consultant:"",leadTarget:"",contractTarget:"",volumeTarget:"",commissionTarget:"",note:""});
- const load=async()=>{setLoading(true);try{const [r,team]=await Promise.all([
+ const load=useCallback(async()=>{setLoading(true);try{const [r,team]=await Promise.all([
    fetch("/api/admin-consultant-targets",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"list",month})}),
    listAdminConsultants()
  ]);const data=await r.json();if(!r.ok)throw new Error(data?.statusMessage||"اهداف مشاوران دریافت نشد.");setRows(data.rows||[]);setConsultants(team);if(!form.consultant&&team[0])setForm(v=>({...v,consultant:team[0].name}));}catch(e){toast.error(e instanceof Error?e.message:"اهداف دریافت نشد.");}finally{setLoading(false);}};
