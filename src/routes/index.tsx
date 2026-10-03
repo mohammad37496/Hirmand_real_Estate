@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SitePage } from "@/components/hirmand/site-page";
-import { buildFaqJsonLd, getPublicFaqs } from "@/lib/site-content";
+import { getPublicFaqs } from "@/lib/site-content";
+import { buildFaqJsonLd } from "@/lib/site-content-static";
 import { enhancedOrganizationJsonLd, homeHead } from "@/lib/seo";
 import { getPublicSiteSettings } from "@/lib/site-settings";
 

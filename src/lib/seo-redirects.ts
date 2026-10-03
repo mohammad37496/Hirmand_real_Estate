@@ -37,22 +37,10 @@ async function requireAdmin(){
   assertAdminServerFnOrigin();
 }
 
-export async function resolvePublicRedirect(path:string){
-  if(dbSource==="unconfigured") return null;
-  try{
-    const sql=await getSql();
-    const rows=await sql.query<Record<string,unknown>>(
-      `select id,target_path,status_code
-       from site_redirects
-       where source_path=$1 and active=true
-       limit 1`,[path.slice(0,500)]
-    );
-    const row=rows[0];
-    if(!row) return null;
-    await sql.query("update site_redirects set hit_count=hit_count+1,last_hit_at=current_timestamp where id=$1",[Number(row.id)]).catch(()=>{});
-    return {targetPath:String(row.target_path),statusCode:Number(row.status_code) as RedirectRow["statusCode"]};
-  }catch{return null;}
-}
+// A plain exported helper here used to keep this whole module — and with it
+// `@/lib/db` and `node:fs` — in the browser bundle, which broke every route
+// that imported a redirect server function. It had no callers; if it is needed
+// again it belongs in a `.server` module like `admin-audit-log.server`.
 
 export const listAdminRedirects=createServerFn({method:"POST"}).validator(z.object({limit:z.number().int().min(1).max(200).default(100)})).handler(async({data})=>{
   await requireAdmin(); if(dbSource==="unconfigured") return [];
@@ -125,6 +113,8 @@ export const trackPublic404=createServerFn({method:"POST"}).validator(z.object({
          last_seen_at=current_timestamp`,
       [data.path.slice(0,500),data.referrer.slice(0,1000),data.userAgent.slice(0,500)]
     );
-  }catch{}
+  }catch{
+    // 404 logging is best-effort: never surface a DB hiccup to the visitor.
+  }
   return {success:true};
 });

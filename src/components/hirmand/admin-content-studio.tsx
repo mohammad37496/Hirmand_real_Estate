@@ -5,9 +5,10 @@ import {
   deleteAdminSiteContent,
   listAdminSiteContent,
   upsertAdminSiteContent,
-  type FaqContent,
-  type GuideContent,
 } from "@/lib/site-content";
+// Types come from the client-safe module: importing them from
+// `@/lib/site-content` would pull the database into the browser bundle.
+import type { FaqContent, GuideContent } from "@/lib/site-content-static";
 
 type Kind="guide"|"faq";
 type Draft={id:string;kind:Kind;category:string;title:string;summary:string;answer:string;points:string[];sortOrder:number;active:boolean};
