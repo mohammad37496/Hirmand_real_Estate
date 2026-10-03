@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { BarChart3, BriefcaseBusiness, WalletCards, UsersRound } from "lucide-react";
 import { toast } from "sonner";
 import { formatToman } from "@/lib/money";
@@ -25,7 +25,7 @@ export function AdminConsultantPerformance() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch("/api/admin-consultant-performance?days=" + days);
