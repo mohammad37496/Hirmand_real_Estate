@@ -127,6 +127,7 @@ import {
 } from "@/lib/property-options";
 import { getPublishReadiness } from "@/lib/property-publish-readiness";
 import { ADMIN_ROLE_LABELS, type AdminRole } from "@/lib/admin-roles";
+import { requestPropertyPublication } from "@/lib/admin-publication";
 
 type PublishStatus = "draft" | "published" | "archived";
 const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
@@ -1295,6 +1296,21 @@ export function AdminPropertiesPage() {
   }, [properties, serverStats, filteredTotal]);
 
 
+
+  async function requestPublication() {
+    if (!form.id) {
+      toast.error("ابتدا فایل را ذخیره کنید.");
+      return;
+    }
+    const note = window.prompt("یادداشت برای مدیر تأییدکننده (اختیاری):", "");
+    if (note === null) return;
+    try {
+      await requestPropertyPublication({ data: { propertyId: form.id, note } });
+      toast.success("درخواست تأیید انتشار در صف مدیر ثبت شد.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "درخواست انتشار ثبت نشد.");
+    }
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -2878,7 +2894,7 @@ export function AdminPropertiesPage() {
                         value={form.status}
                         onChange={(e) => update("status", e.target.value as PublishStatus)}
                       >
-                        <option value="published">منتشرشده</option>
+                        <option value="published" disabled={adminRole !== "owner" && adminRole !== "manager"}>منتشرشده</option>
                         <option value="draft">پیش‌نویس</option>
                         <option value="archived">بایگانی</option>
                       </select>
