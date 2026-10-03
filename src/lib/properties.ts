@@ -1996,6 +1996,39 @@ export const saveProperty = createServerFn({ method: "POST" })
     );
     if (!rows[0]) throw new Error("فایل ثبت نشد.");
 
+    if (existing) {
+      const asNumber = (value: unknown) => {
+        if (value == null || value === "") return null;
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+      };
+      const oldPrice = asNumber(existing.price);
+      const oldDeposit = asNumber(existing.deposit);
+      const oldRent = asNumber(existing.rent);
+      const newPrice = asNumber(rows[0].price);
+      const newDeposit = asNumber(rows[0].deposit);
+      const newRent = asNumber(rows[0].rent);
+      const changed = oldPrice !== newPrice || oldDeposit !== newDeposit || oldRent !== newRent;
+      if (changed) {
+        await sql.query(
+          `insert into admin_property_price_history (
+             property_id, price_before, price_after, deposit_before, deposit_after,
+             rent_before, rent_after, created_by
+           ) values ($1,$2,$3,$4,$5,$6,$7,$8)`,
+          [
+            id,
+            oldPrice,
+            newPrice,
+            oldDeposit,
+            newDeposit,
+            oldRent,
+            newRent,
+            String(claims?.displayName ?? "مدیریت"),
+          ],
+        );
+      }
+    }
+
     const action = existing ? "updated" : "created";
     await sql.query(
       `insert into property_change_history (property_id, action, before_state, after_state)
