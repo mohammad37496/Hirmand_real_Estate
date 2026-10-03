@@ -44,7 +44,16 @@ import { SiteChrome } from "./site-chrome";
 import { SmartRecommendations } from "./smart-recommendations";
 import { useConsultants } from "./consultants-context";
 import type { Consultant } from "@/lib/consultants";
-import { EitaaIcon, InstagramIcon, TelegramIcon, WhatsAppIcon } from "./social-icons";
+import {
+  EitaaIcon,
+  InstagramIcon,
+  TelegramIcon,
+  WhatsAppIcon,
+  RubikaIcon,
+  BaleIcon,
+  IGAPPIcon,
+  SoroushIcon,
+} from "./social-icons";
 
 const PRINCIPLE_ICONS = {
   honesty: Scale,
@@ -337,7 +346,11 @@ function TeamMessenger({ person }: { person: Consultant }) {
     { href: person.telegram, label: "تلگرام", icon: <TelegramIcon size={18} />, external: true },
     { href: person.eitaa, label: "ایتا", icon: <EitaaIcon size={18} />, external: true },
     { href: person.instagram, label: "اینستاگرام", icon: <InstagramIcon size={18} />, external: true },
-  ];
+    { href: person.rubika, label: "روبیکا", icon: <RubikaIcon size={18} />, external: true },
+    { href: person.bale, label: "بله", icon: <BaleIcon size={18} />, external: true },
+    { href: person.igap, label: "ایگپ", icon: <IGAPPIcon size={18} />, external: true },
+    { href: person.soroush, label: "سروش", icon: <SoroushIcon size={18} />, external: true },
+  ].filter((item) => item.href.trim());
 
   return (
     <div className="team-socials" role="group" aria-label={`شبکه‌های اجتماعی ${person.name}`}>
