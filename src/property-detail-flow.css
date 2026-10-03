@@ -342,8 +342,8 @@
   .property-detail-top{
     grid-template-columns:1fr!important;
     grid-template-areas:
-      "summary"
-      "gallery"!important;
+      "gallery"
+      "summary"!important;
   }
 
   .property-detail-summary,
