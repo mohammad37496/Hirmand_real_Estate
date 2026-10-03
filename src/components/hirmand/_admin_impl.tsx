@@ -43,6 +43,7 @@ import {
   Settings,
   HardDrive,
   Route as RouteIcon,
+  Target,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import { isInvalidIntegerInput, normalizeMoneyText } from "@/lib/property-input-normalization";
