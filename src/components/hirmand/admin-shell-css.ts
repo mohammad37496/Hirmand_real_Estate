@@ -837,11 +837,45 @@ export const ADMIN_CSS = `
 .admin-sidebar-brand{min-height:82px;padding:18px 17px!important;border-color:rgb(255 255 255 / 10%)!important}
 .admin-sidebar-brand .brand-logo-nav{width:45px!important;height:45px!important;filter:drop-shadow(0 8px 18px rgb(192 138 42 / 18%))!important}
 .admin-sidebar-brand strong{color:#fff!important}.admin-sidebar-brand small{color:rgb(255 255 255 / 58%)!important}
-.admin-sidebar-nav{padding:16px 11px!important;gap:5px!important}
-.admin-nav-btn{min-height:45px!important;padding:10px 13px!important;border:1px solid transparent!important;border-radius:13px!important;color:rgb(255 255 255 / 68%)!important;font-size:.83rem!important;font-weight:700!important}
-.admin-nav-btn:hover{background:rgb(255 255 255 / 7%)!important;color:#fff!important;border-color:rgb(255 255 255 / 8%)!important}
-.admin-nav-btn.is-active{color:#fff!important;background:linear-gradient(135deg,rgb(192 138 42 / 19%),rgb(255 255 255 / 7%))!important;border-color:rgb(192 138 42 / 24%)!important;box-shadow:inset -3px 0 0 var(--brass-500,#c08a2a),0 5px 14px rgb(0 0 0 / 10%)!important}
-.admin-sidebar-foot{padding:12px 11px 16px!important;border-color:rgb(255 255 255 / 10%)!important}
+.admin-sidebar-nav{
+  padding:16px 12px!important;
+  gap:6px!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  scrollbar-width:thin;
+  scrollbar-gutter:stable;
+}
+.admin-nav-btn{
+  min-height:47px!important;
+  padding:10px 14px!important;
+  border:1px solid transparent!important;
+  border-radius:13px!important;
+  color:rgb(255 255 255 / 82%)!important;
+  font-size:.87rem!important;
+  font-weight:700!important;
+  line-height:1.65!important;
+  letter-spacing:0!important;
+  text-align:right!important;
+  justify-content:flex-start!important;
+  white-space:normal!important;
+  overflow-wrap:normal!important;
+  text-rendering:optimizeLegibility;
+}
+.admin-nav-btn:hover{
+  background:rgb(255 255 255 / 9%)!important;
+  color:#fff!important;
+  border-color:rgb(255 255 255 / 12%)!important;
+}
+.admin-nav-btn.is-active{
+  color:#fff!important;
+  background:linear-gradient(135deg,rgb(192 138 42 / 25%),rgb(255 255 255 / 8%))!important;
+  border-color:rgb(192 138 42 / 34%)!important;
+  box-shadow:inset -3px 0 0 var(--brass-500,#c08a2a),0 6px 16px rgb(0 0 0 / 12%)!important;
+}
+.admin-sidebar-foot{
+  padding:12px 12px 16px!important;
+  border-color:rgb(255 255 255 / 10%)!important;
+}
 .admin-main{min-width:0!important;background:radial-gradient(circle at 90% 0%,rgb(192 138 42 / 5%),transparent 24rem),var(--paper,#f7f4ee)!important;color:var(--fg,#152430)!important}
 .admin-topbar{min-height:72px!important;padding:13px 28px!important;background:rgb(255 255 255 / 92%)!important;border-bottom:1px solid #dfe5eb!important;box-shadow:0 8px 24px rgb(16 24 40 / 4%)!important;backdrop-filter:blur(16px)}
 .admin-topbar h1{color:#132333!important;font-size:1.18rem!important;font-weight:850!important;letter-spacing:-.02em!important}
@@ -1109,7 +1143,7 @@ export const ADMIN_CSS = `
   --navy-900:#0b1a2b;
   /* Width of the desktop rail. The sidebar and the fixed save bar both read
      it, so they can no longer drift apart at a breakpoint. */
-  --admin-rail:258px;
+  --admin-rail:264px;
   color-scheme:light;
 }
 .admin-app .admin-money-hint,
