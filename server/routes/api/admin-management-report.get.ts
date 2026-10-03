@@ -2,6 +2,7 @@ import { createError, defineEventHandler, getCookie, getQuery, setResponseHeader
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
+import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 
 const n = (value: unknown) => Number.isFinite(Number(value)) ? Number(value) : 0;
 const clean = (value: unknown) => typeof value === "string" ? value : "";
