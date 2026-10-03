@@ -1,10 +1,10 @@
-import { createError, defineEventHandler, getCookie, getQuery, setResponseHeader } from "h3";
+import { createError, defineEventHandler, getCookie, getQuery, setResponseHeader, type H3Event } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 
-async function requireReportAccess(event: Parameters<typeof defineEventHandler>[0]) {
+async function requireReportAccess(event: H3Event) {
   const token = getCookie(event, ADMIN_SESSION_COOKIE);
   if (!await verifyAdminSessionToken(token)) throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست." });
   assertSameOrigin(event);
