@@ -37,9 +37,9 @@ export function AdminConsultantPerformance() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [days]);
 
-  useEffect(() => { void load(); }, [days]);
+  useEffect(() => { void load(); }, [load]);
 
   const totals = rows.reduce((acc, row) => ({
     leads: acc.leads + row.leads,
