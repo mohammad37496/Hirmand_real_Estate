@@ -1758,23 +1758,11 @@ export function PropertyDetailView({
         </section>
 
         <nav className="property-detail-section-nav" aria-label="بخش‌های اصلی فایل">
-          <span className="property-detail-section-nav-label">پرش سریع</span>
+          <span className="property-detail-section-nav-label">بخش‌های اصلی</span>
+          <a href="#property-description-section">معرفی</a>
           <a href="#property-specs-section">مشخصات</a>
-          <a href="#property-description-section">توضیحات</a>
-          {priceHistory.length ? <a href="#property-price-history-section">تاریخچه قیمت</a> : null}
-          {(property.latitude != null && property.longitude != null) || property.neighborhood ? (
-            <a href="#property-location-section">موقعیت</a>
-          ) : null}
+          <a href="#property-location-section">موقعیت</a>
           <a href="#property-floor-plan">پلان</a>
-          <a href="#property-nearby-services">اطراف ملک</a>
-          {isClosedFile ? <a href="#property-back-in-market">بازگشت فایل</a> : null}
-          {(property.transactionType === "buy" || property.transactionType === "sell") && property.price ? <a href="#property-financing-request">تأمین مالی</a> : null}
-          <a href="#property-prep-budget">بازسازی</a>
-          <a href="#property-target-alert">هدف قیمت</a>
-          <a href="#property-verification-request">تأیید اطلاعات</a>
-          <a href="#property-expert-requests">خدمات تخصصی</a>
-          <a href="#property-questions">پرسش‌ها</a>
-          <a href="#property-open-house">اوپن‌هاوس</a>
           <a href="#property-tools-section">ابزارها</a>
         </nav>
 
