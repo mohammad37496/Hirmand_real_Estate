@@ -2,12 +2,14 @@ import { Copy, Gauge, WandSparkles } from "lucide-react";
 import { toast } from "sonner";
 
 const ASSISTANT_CSS = `
-.admin-assistant-suggestion{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-top:12px;border:1px solid rgb(0 0 0 / .1);border-radius:13px;background:rgb(0 0 0 / .02);padding:12px 14px}
-.admin-assistant-suggestion>div{min-width:0;flex:1}
+.admin-assistant-suggestion{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px;border:1px solid rgb(0 0 0 / .1);border-radius:13px;background:rgb(0 0 0 / .02);padding:12px 14px}
+/* The text keeps a real basis so the action buttons wrap underneath it on a
+   phone instead of squeezing the suggestion down to a 30px column. */
+.admin-assistant-suggestion>div{min-width:0;flex:1 1 200px}
 .admin-assistant-suggestion small{display:block;font-size:.66rem;color:rgb(0 0 0 / .52);margin-bottom:4px}
 .admin-assistant-suggestion strong{display:block;font-size:.86rem;color:#111315;line-height:1.7}
 .admin-assistant-suggestion p{margin:0;font-size:.78rem;line-height:1.9;color:rgb(0 0 0 / .68);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
-.admin-assistant-suggestion .btn-ghost{flex-shrink:0}
+.admin-assistant-suggestion .btn-ghost,.admin-assistant-suggestion .admin-icon-btn{flex:0 0 auto}
 .admin-quality-note{display:block;margin-top:8px;font-size:.68rem;line-height:1.8;color:rgb(0 0 0 / .52)}
 
 /* Admin 3.0 theme override */

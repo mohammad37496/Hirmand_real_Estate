@@ -147,6 +147,17 @@ npm run dev
 | `npm test` | اجرای تست‌ها |
 | `npm run qa:admin` | پیمایش خودکار پنل مدیریت (همه بخش‌ها، دسکتاپ و موبایل) |
 | `npm run qa:admin-a11y` | سنجش کنتراست، نام دسترس‌پذیر کنترل‌ها و همپوشانی چیدمان در پنل |
+
+> `qa:admin-a11y` به‌صورت پیش‌فرض کل ماتریس را می‌پیماید: ۱۴ عرض از ۳۲۰ تا ۱۹۲۰
+> پیکسل × ۹ بخش پنل، به‌علاوهٔ Drawer و تقویم شمسی در حالت باز (شامل بررسی بسته
+> شدن با Escape). برای اجرای بخشی:
+>
+> ```bash
+> QA_VIEWPORTS=360x800,1440x900 npm run qa:admin-a11y   # فقط این عرض‌ها
+> QA_VIEWPORTS=none QA_ZOOM=125%,150% npm run qa:admin-a11y  # فقط زوم Chrome
+> QA_VIEWS=list,form npm run qa:admin-a11y              # فقط این بخش‌ها
+> QA_FULL=1 npm run qa:admin-a11y                       # گزارش کامل JSON
+> ```
 | `npm run format` | Prettier |
 
 > دو دستور `qa:*` به `playwright` و `HIRMAND_ADMIN_KEY` نیاز دارند و باید روی سرور

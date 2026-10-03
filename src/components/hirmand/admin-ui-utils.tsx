@@ -6,8 +6,70 @@
  * only, otherwise React Fast Refresh has to fall back to a full reload every
  * time an admin-only file is edited while developing.
  */
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { AdminConfirmDialog } from "@/components/hirmand/admin-ui";
+
+/* ------------------------------------------------------------------ */
+/* Overlay behaviour — Escape, scroll lock and focus return            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Everything a panel that covers the page has to do and nothing it must not.
+ *
+ * Without this each overlay grew its own half-implementation: the confirm
+ * dialog knew Escape but not the scrollbar, the nav drawer knew neither and
+ * left focus on the hamburger behind the backdrop. A phone user could scroll
+ * the page underneath an open drawer, and a keyboard user could tab straight
+ * out of a modal.
+ */
+export function useOverlayDismiss({
+  open,
+  onClose,
+  initialFocusRef,
+}: {
+  open: boolean;
+  onClose: () => void;
+  /** Element that should receive focus when the overlay opens. */
+  initialFocusRef?: React.RefObject<HTMLElement | null>;
+}) {
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    restoreFocusRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    // Lock the page but keep the scrollbar's width, otherwise locking shifts
+    // the whole layout sideways on a desktop window.
+    const { body } = document;
+    const previousOverflow = body.style.overflow;
+    const previousPadding = body.style.paddingInlineEnd;
+    const scrollbar = window.innerWidth - document.documentElement.clientWidth;
+    body.style.overflow = "hidden";
+    if (scrollbar > 0) body.style.paddingInlineEnd = `${scrollbar}px`;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+
+    const focusTarget = initialFocusRef?.current;
+    (focusTarget ?? restoreFocusRef.current)?.focus?.();
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      body.style.overflow = previousOverflow;
+      body.style.paddingInlineEnd = previousPadding;
+      // Returning focus is what keeps a keyboard user from being dumped at the
+      // top of the document when an overlay closes.
+      restoreFocusRef.current?.focus?.();
+    };
+  }, [open, onClose, initialFocusRef]);
+}
 
 /* ------------------------------------------------------------------ */
 /* Busy guard — one submit per operation, even on a double click.      */
@@ -78,6 +140,9 @@ export function useConfirmDialog() {
       return null;
     });
   }, []);
+
+  const closeRequest = useCallback(() => settle(false), [settle]);
+  useOverlayDismiss({ open: Boolean(request), onClose: closeRequest });
 
   const dialog = request ? (
     <AdminConfirmDialog request={request} onSettle={settle} />
