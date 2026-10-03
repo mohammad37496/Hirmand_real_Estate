@@ -11,7 +11,8 @@ export type AdminPermission =
   | "security.manage"
   | "accounts.manage"
   | "reports.view"
-  | "deal.manage";
+  | "deal.manage"
+  | "commission.manage";
 
 export const ADMIN_ROLE_LABELS: Record<AdminRole, string> = {
   owner: "مالک سیستم",
@@ -34,6 +35,7 @@ export const ADMIN_ROLE_PERMISSIONS: Record<AdminRole, readonly AdminPermission[
     "accounts.manage",
     "reports.view",
     "deal.manage",
+    "commission.manage",
   ],
   manager: [
     "property.manage",
@@ -46,6 +48,7 @@ export const ADMIN_ROLE_PERMISSIONS: Record<AdminRole, readonly AdminPermission[
     "security.manage",
     "reports.view",
     "deal.manage",
+    "commission.manage",
   ],
   sales: ["property.manage", "lead.manage", "reports.view", "deal.manage"],
   content: ["property.manage", "content.manage", "reports.view"],
