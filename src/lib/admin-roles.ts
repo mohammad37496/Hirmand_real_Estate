@@ -50,7 +50,7 @@ export const ADMIN_ROLE_PERMISSIONS: Record<AdminRole, readonly AdminPermission[
     "deal.manage",
     "commission.manage",
   ],
-  sales: ["property.manage", "lead.manage", "reports.view", "deal.manage"],
+  sales: ["property.manage", "lead.manage", "reports.view", "deal.manage", "commission.manage"],
   content: ["property.manage", "content.manage", "reports.view"],
   viewer: ["reports.view"],
 };
