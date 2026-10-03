@@ -1060,6 +1060,14 @@ export const ADMIN_CSS = `
   background:linear-gradient(180deg,rgb(255 255 255 / 2%),rgb(255 255 255 / 4%))!important;
   border-top:1px solid rgb(255 255 255 / 14%)!important;
 }
+.admin-sidebar-foot-label{
+  padding:0 6px 2px!important;
+  color:rgb(255 255 255 / 40%)!important;
+  font-size:.62rem!important;
+  font-weight:800!important;
+  line-height:1.5!important;
+}
+
 .admin-sidebar-foot .admin-nav-btn{
   min-height:45px!important;
   padding:10px 13px!important;
