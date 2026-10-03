@@ -2115,6 +2115,67 @@ export function PropertyDetailView({
             <PropertyFloorPlan property={property} />
             <PropertyNearbyServices property={property} />
 
+            <section
+              id="property-final-cta"
+              className={"property-final-cta" + (isClosedFile ? " property-final-cta-closed" : "")}
+              aria-label={canRequestViewing ? "درخواست بازدید و اطلاعات بیشتر" : "پیگیری وضعیت فایل و اطلاعات بیشتر"}
+            >
+              <div>
+                <span className="kicker">{canRequestViewing ? "قدم بعدی" : "وضعیت فایل"}</span>
+                <h2>
+                  {canRequestViewing
+                    ? "برای بازدید یا اطلاعات بیشتر با مشاور فایل در ارتباط باشید."
+                    : "این فایل در حال حاضر برای بازدید جدید در دسترس نیست."}
+                </h2>
+                <p>
+                  {canRequestViewing
+                    ? "برای هماهنگی بازدید، دریافت توضیحات تکمیلی یا بررسی شرایط معامله تماس بگیرید."
+                    : "برای پیگیری وضعیت این فایل یا پیدا کردن گزینه‌های مشابه با مشاور هیرمند در ارتباط باشید."}
+                </p>
+              </div>
+              <div className="property-final-cta-actions">
+                <a
+                  href={`tel:${property.contactPhone}`}
+                  onClick={() => trackAnalyticsEvent("call_click", property.slug)}
+                  className="btn-gold"
+                >
+                  <Phone size={17} aria-hidden="true" />
+                  تماس تلفنی
+                </a>
+                <a
+                  href={whatsappLink(property.contactPhone, property.title)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
+                  className="btn-ghost"
+                >
+                  <WhatsAppIcon size={17} aria-hidden="true" />
+                  واتساپ
+                </a>
+                {canRequestViewing ? (
+                  <PropertyViewingRequest
+                    property={{
+                      id: property.id,
+                      slug: property.slug,
+                      title: property.title,
+                      neighborhood: property.neighborhood,
+                      availabilityStatus: property.availabilityStatus,
+                    }}
+                  />
+                ) : (
+                  <a
+                    href={similarRequestHref(property)}
+                    className="btn-ghost property-final-cta-similar"
+                    onClick={() => trackAnalyticsEvent("inquiry_click", property.slug)}
+                  >
+                    <Sparkles size={17} aria-hidden="true" />
+                    پیدا کردن فایل مشابه
+                  </a>
+                )}
+              </div>
+            </section>
+
+
             <details className="property-secondary-services">
               <summary className="property-secondary-services-summary">
                 <span className="property-secondary-services-main">
@@ -2149,10 +2210,11 @@ export function PropertyDetailView({
             <PropertyNeighborhoodInsight property={property} />
             <PropertyReport property={property} />
             <PropertyQuestions property={property} />
+              <PropertyOpenHouse property={property} />
               </div>
             </details>
 
-            <PropertyOpenHouse property={property} />
+
 
             <section id="property-tools-section" className="property-tool-center" aria-labelledby="property-tool-center-title">
               <header className="property-tool-center-head">
@@ -2310,67 +2372,6 @@ export function PropertyDetailView({
                 </div>
               </details>
             </section>
-
-            <section
-              id="property-final-cta"
-              className={"property-final-cta" + (isClosedFile ? " property-final-cta-closed" : "")}
-              aria-label={canRequestViewing ? "درخواست بازدید و اطلاعات بیشتر" : "پیگیری وضعیت فایل و اطلاعات بیشتر"}
-            >
-              <div>
-                <span className="kicker">{canRequestViewing ? "قدم بعدی" : "وضعیت فایل"}</span>
-                <h2>
-                  {canRequestViewing
-                    ? "برای بازدید یا اطلاعات بیشتر با مشاور فایل در ارتباط باشید."
-                    : "این فایل در حال حاضر برای بازدید جدید در دسترس نیست."}
-                </h2>
-                <p>
-                  {canRequestViewing
-                    ? "برای هماهنگی بازدید، دریافت توضیحات تکمیلی یا بررسی شرایط معامله تماس بگیرید."
-                    : "برای پیگیری وضعیت این فایل یا پیدا کردن گزینه‌های مشابه با مشاور هیرمند در ارتباط باشید."}
-                </p>
-              </div>
-              <div className="property-final-cta-actions">
-                <a
-                  href={`tel:${property.contactPhone}`}
-                  onClick={() => trackAnalyticsEvent("call_click", property.slug)}
-                  className="btn-gold"
-                >
-                  <Phone size={17} aria-hidden="true" />
-                  تماس تلفنی
-                </a>
-                <a
-                  href={whatsappLink(property.contactPhone, property.title)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
-                  className="btn-ghost"
-                >
-                  <WhatsAppIcon size={17} aria-hidden="true" />
-                  واتساپ
-                </a>
-                {canRequestViewing ? (
-                  <PropertyViewingRequest
-                    property={{
-                      id: property.id,
-                      slug: property.slug,
-                      title: property.title,
-                      neighborhood: property.neighborhood,
-                      availabilityStatus: property.availabilityStatus,
-                    }}
-                  />
-                ) : (
-                  <a
-                    href={similarRequestHref(property)}
-                    className="btn-ghost property-final-cta-similar"
-                    onClick={() => trackAnalyticsEvent("inquiry_click", property.slug)}
-                  >
-                    <Sparkles size={17} aria-hidden="true" />
-                    پیدا کردن فایل مشابه
-                  </a>
-                )}
-              </div>
-            </section>
-
 
             <Link
               to="/properties"
