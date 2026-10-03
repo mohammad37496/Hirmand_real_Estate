@@ -191,6 +191,12 @@ try {
       if (msg.type() === "error") routeErrors.push(`console: ${msg.text()}`);
     });
     page.on("pageerror", (err) => routeErrors.push(`page: ${String(err?.message || err)}`));
+    // A 404 shows up in the console as "Failed to load resource" with no URL, so
+    // record the responses too — otherwise the report cannot say what broke.
+    page.on("response", (response) => {
+      if (response.status() < 400) return;
+      routeErrors.push(`http ${response.status()}: ${response.url()}`);
+    });
     let routeStatus = 0;
     let routeBodyTextLen = 0;
     let routeHorizontalOverflow = false;
@@ -210,7 +216,7 @@ try {
       url: routeUrl,
       status: routeStatus,
       bodyTextLen: routeBodyTextLen,
-      consoleErrors: routeErrors.filter((item) => item.startsWith("console:")),
+      consoleErrors: routeErrors.filter((item) => item.startsWith("console:") || item.startsWith("http ")),
       pageErrors: routeErrors.filter((item) => item.startsWith("page:")),
       horizontalOverflow: routeHorizontalOverflow,
       ok:
