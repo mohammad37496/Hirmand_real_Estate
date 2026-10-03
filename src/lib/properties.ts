@@ -1720,8 +1720,14 @@ export const updatePropertySchedule = createServerFn({ method: "POST" })
 export const saveProperty = createServerFn({ method: "POST" })
   .validator(propertyInputSchema)
   .handler(async ({ data }) => {
-    await requireAdminPermission("property.manage");
+    const claims = await requireAdminPermission("property.manage");
     const sql = await getSql();
+    if (data.status === "published") {
+      const role = String(claims?.role ?? "owner");
+      if (role !== "owner" && role !== "manager") {
+        throw new Error("این حساب اجازه انتشار نهایی ندارد؛ فایل را برای تأیید مدیر ارسال کنید.");
+      }
+    }
 
     const id = data.id ?? crypto.randomUUID();
     const existingRows = await sql.query<Record<string, unknown>>(
