@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type ChangeEvent } from "react";
 import { CheckCircle2, FileImage, Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { uploadInChunks, uploadErrorMessage } from "@/lib/media-upload-client";
@@ -50,7 +50,7 @@ export function AdminFloorPlanField({ value, onChange }: Props) {
     }
   }
 
-  function onFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+  function onFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
     if (file) void upload(file);
