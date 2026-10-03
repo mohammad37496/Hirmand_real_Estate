@@ -1697,22 +1697,25 @@ export function AdminPropertiesPage() {
           })()}
         </nav>
         <div className="admin-sidebar-foot">
+          <div className="admin-sidebar-foot-label">اقدامات سریع</div>
           <button
             type="button"
             className="admin-nav-btn"
             onClick={() => void refresh()}
             disabled={loadingList}
           >
-            <RefreshCw size={18} className={loadingList ? "admin-spin" : undefined} aria-hidden="true" />
-            به‌روزرسانی
+            <span className="admin-nav-btn-icon" aria-hidden="true">
+              <RefreshCw size={18} className={loadingList ? "admin-spin" : undefined} />
+            </span>
+            <span className="admin-nav-btn-label">به‌روزرسانی</span>
           </button>
           <Link to="/" className="admin-nav-btn">
-            <Home size={18} aria-hidden="true" />
-            سایت
+            <span className="admin-nav-btn-icon" aria-hidden="true"><Home size={18} /></span>
+            <span className="admin-nav-btn-label">مشاهده سایت</span>
           </Link>
           <button type="button" className="admin-nav-btn" onClick={logout}>
-            <LogOut size={18} aria-hidden="true" />
-            خروج
+            <span className="admin-nav-btn-icon" aria-hidden="true"><LogOut size={18} /></span>
+            <span className="admin-nav-btn-label">خروج از پنل</span>
           </button>
         </div>
       </>
