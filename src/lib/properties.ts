@@ -1585,16 +1585,21 @@ export const permanentlyDeleteProperty = createServerFn({ method: "POST" })
     await requireAdmin();
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
-      `select images, title from properties where id = $1 and deleted_at is not null limit 1`,
+      `select images, floor_plan_url, title from properties where id = $1 and deleted_at is not null limit 1`,
       [data.id],
     );
     const existing = rows[0];
     if (!existing) return { success: false, deleted: 0 };
     await sql.query("delete from properties where id = $1 and deleted_at is not null", [data.id]);
-    const mediaUrls = Array.isArray(existing.images)
-      ? existing.images.filter((item): item is string => typeof item === "string")
-      : [];
-    await Promise.all(mediaUrls.map((url) => deleteStoredMedia(url)));
+    const mediaUrls = [
+      ...(Array.isArray(existing.images)
+        ? existing.images.filter((item): item is string => typeof item === "string")
+        : []),
+      ...(typeof existing.floor_plan_url === "string" && existing.floor_plan_url.trim()
+        ? [existing.floor_plan_url.trim()]
+        : []),
+    ];
+    await Promise.all(Array.from(new Set(mediaUrls)).map((url) => deleteStoredMedia(url)));
     await writeAdminAuditLog({
       action: "property.permanently_deleted",
       entityType: "property",
