@@ -5,6 +5,7 @@ import {
   BarChart3,
   Building2,
   Clock3,
+  Download,
   Eye,
   Globe2,
   ImageOff,
@@ -283,6 +284,42 @@ export function AdminDashboard({
     };
   }, [data]);
 
+
+  function downloadDailyReport() {
+    const rows: string[][] = [
+      ["بخش", "شاخص", "مقدار"],
+      ["فایل‌ها", "کل فایل‌ها", String(data.properties.total)],
+      ["فایل‌ها", "منتشرشده", String(data.properties.published)],
+      ["فایل‌ها", "پیش‌نویس", String(data.properties.draft)],
+      ["فایل‌ها", "ویژه", String(data.properties.featured)],
+      ["فایل‌ها", "بدون تصویر", String(data.properties.withoutImages)],
+      ["فایل‌ها", "ناقص", String(data.properties.incomplete)],
+      ["لید", "کل ۳۰ روز", String(data.leads.last30)],
+      ["لید", "جدید", String(data.leads.new)],
+      ["لید", "پیگیری", String(data.leads.follow_up)],
+      ["لید", "بازدید", String(data.leads.visited)],
+      ["لید", "قرارداد", String(data.leads.contract)],
+      ["لید", "پیگیری عقب‌افتاده", String(data.leadSla.overdue)],
+      ["لید", "جدید با تأخیر بیش از ۴ ساعت", String(data.leadSla.newOver4Hours)],
+      ["سایت", "بازدیدکننده امروز", String(data.visitors.today)],
+      ["سایت", "بازدیدکننده ۷ روز", String(data.visitors.last7)],
+      ["سایت", "بازدیدکننده ۳۰ روز", String(data.visitors.last30)],
+      ["سایت", "نمایش صفحه ۳۰ روز", String(data.visitors.pageviewsLast30)],
+      ["سایت", "کلیک تماس", String(conversion.calls)],
+      ["سایت", "کلیک واتساپ", String(conversion.whatsapp)],
+      ...data.consultantPerformance.map((item) => ["مشاور", item.name + " · لید", String(item.leads)]),
+      ...data.consultantPerformance.map((item) => ["مشاور", item.name + " · قرارداد", String(item.contracts)]),
+    ];
+    const csv = "\uFEFF" + rows.map((row) => row.map((cell) => '"' + String(cell).replace(/"/g, '""') + '"').join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "hirmand-گزارش-مدیریتی-" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(anchor);
+    anchor.click(); anchor.remove(); URL.revokeObjectURL(url);
+    toast.success("گزارش مدیریتی دانلود شد.");
+  }
+
   if (loading || !data) {
     return (
       <div className="admin-dashboard">
@@ -498,6 +535,7 @@ export function AdminDashboard({
               <span className="admin-dashboard-summary">
                 {lastUpdated ? "آخرین بروزرسانی " + lastUpdated.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }) : "در حال بروزرسانی"}
               </span>
+              <button type="button" className="btn-ghost" onClick={downloadDailyReport}><Download size={15} /> گزارش مدیریتی CSV</button>
               <button type="button" className="btn-ghost" onClick={() => void load()}>بروزرسانی</button>
               <button type="button" className="btn-ghost" onClick={onOpenLeads}>مشاهده همه</button>
             </div>
