@@ -81,6 +81,8 @@ import { AdminMusicManager } from "@/components/hirmand/admin-music-manager";
 import { AdminLeadManager } from "@/components/hirmand/admin-lead-manager";
 import { AdminCustomerInbox } from "@/components/hirmand/admin-customer-inbox";
 import { AdminDashboard } from "@/components/hirmand/admin-dashboard";
+import { AdminSalesFunnel } from "@/components/hirmand/admin-sales-funnel";
+import { AdminManagementReport } from "@/components/hirmand/admin-management-report";
 import { ADMIN_CSS } from "@/components/hirmand/admin-shell-css";
 import { AdminListingAssistant } from "@/components/hirmand/admin-listing-assistant";
 import { AdminPublishReadiness } from "@/components/hirmand/admin-publish-readiness";
@@ -96,6 +98,7 @@ import { AdminBackupManager } from "@/components/hirmand/admin-backup-manager";
 import { AdminOperationsCenter } from "@/components/hirmand/admin-operations-center";
 import { AdminProductivityCenter } from "@/components/hirmand/admin-productivity-center";
 import { AdminPropertyPerformance } from "@/components/hirmand/admin-property-performance";
+import { AdminPropertyPriceHistory } from "@/components/hirmand/admin-property-price-history";
 import { AdminCommandPalette } from "@/components/hirmand/admin-command-palette";
 import { AdminPropertyQuestions, AdminPropertyOpenHouse } from "@/components/hirmand/admin-property-features";
 import { AdminPropertyFilterPresets } from "@/components/hirmand/admin-property-filter-presets";
@@ -145,7 +148,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "integrity" | "deals" | "expiry" | "commission" | "consultantPerformance" | "consultantTargets" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
+type ViewMode = "dashboard" | "managementReport" | "integrity" | "deals" | "expiry" | "commission" | "consultantPerformance" | "consultantTargets" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -565,6 +568,7 @@ export function AdminPropertiesPage() {
   const navItems = useMemo(
     () => [
       { view: "dashboard" as ViewMode, section: "نمای کلی", label: "داشبورد", icon: BarChart3 },
+      { view: "managementReport" as ViewMode, section: "نمای کلی", label: "گزارش مدیریتی", icon: FileText },
       { view: "productivity" as ViewMode, section: "نمای کلی", label: "مرکز مدیریت", icon: ListTodo },
       { view: "integrity" as ViewMode, section: "نمای کلی", label: "سلامت داده", icon: ShieldAlert },
       { view: "deals" as ViewMode, section: "فروش و معاملات", label: "معاملات", icon: BriefcaseBusiness },
@@ -604,14 +608,14 @@ export function AdminPropertiesPage() {
   const visibleNavItems = useMemo(() => {
     if (adminRole === "owner" || adminRole === "manager") return navItems;
     if (adminRole === "sales") {
-      const allowed = new Set<ViewMode>(["dashboard", "productivity", "list", "leads", "messages", "matching", "divar", "deals", "expiry", "commission", "consultantPerformance", "consultantTargets"]);
+      const allowed = new Set<ViewMode>(["dashboard", "managementReport", "productivity", "list", "leads", "messages", "matching", "divar", "deals", "expiry", "commission", "consultantPerformance", "consultantTargets"]);
       return navItems.filter((item) => allowed.has(item.view));
     }
     if (adminRole === "content") {
-      const allowed = new Set<ViewMode>(["dashboard", "productivity", "list", "form", "music", "watermark", "mediaHealth", "contentStudio"]);
+      const allowed = new Set<ViewMode>(["dashboard", "managementReport", "productivity", "list", "form", "music", "watermark", "mediaHealth", "contentStudio"]);
       return navItems.filter((item) => allowed.has(item.view));
     }
-    return navItems.filter((item) => item.view === "dashboard");
+    return navItems.filter((item) => item.view === "dashboard" || item.view === "managementReport");
   }, [navItems, adminRole]);
 
   const [changeHistory, setChangeHistory] = useState<Array<{
@@ -1940,6 +1944,8 @@ export function AdminPropertiesPage() {
                                                                 ? "عملکرد و بازدهی مشاوران"
                                                               : view === "consultantTargets"
                                                                 ? "اهداف و سهمیه ماهانه مشاوران"
+                                                              : view === "managementReport"
+                                                                ? "گزارش مدیریتی و خروجی عملکرد"
                                                               : view === "divar"
                                                         ? "فایل‌های دیوار"
                           : form.id
@@ -1966,6 +1972,8 @@ export function AdminPropertiesPage() {
                             ? "ثبت درآمد و هزینه‌های دفتر"
                             : view === "consultantPerformance"
                               ? "نرخ تبدیل، معاملات، حجم فروش و وضعیت کمیسیون مشاوران"
+                            : view === "managementReport"
+                              ? "گزارش دوره‌ای فایل‌ها، CRM، معاملات و وضعیت مالی"
                             : view === "backup"
                               ? "دانلود نسخه امن از اطلاعات مدیریتی"
                               : view === "watermark"
@@ -2018,6 +2026,7 @@ export function AdminPropertiesPage() {
           {view === "dashboard" ? (
             <>
               <AdminKpiHistory />
+              <AdminSalesFunnel />
               <AdminPublicationQueue />
               <AdminOperationsCenter
                 onOpenLeads={() => navigateTo("leads")}
@@ -2037,6 +2046,8 @@ export function AdminPropertiesPage() {
                 onOpenMusic={() => navigateTo("music")}
               />
             </>
+          ) : view === "managementReport" ? (
+            <AdminManagementReport />
           ) : view === "integrity" ? (
             <AdminDataHealth />
           ) : view === "integrity" ? (
@@ -2429,6 +2440,7 @@ export function AdminPropertiesPage() {
           {view === "consultants" ? <AdminConsultantManager /> : null}
           {view === "consultantPerformance" ? <AdminConsultantPerformance /> : null}
           {view === "consultantTargets" ? <AdminConsultantTargets /> : null}
+          {view === "managementReport" ? <AdminManagementReport /> : null}
           {view === "attendance" ? <AdminAttendanceManager /> : null}
           {view === "matching" ? <AdminMatchingManager /> : null}
           {view === "owners" ? <AdminOwnerManager /> : null}
@@ -3051,6 +3063,7 @@ export function AdminPropertiesPage() {
                 </fieldset>
 
               {form.id ? <div id="section-performance"><AdminPropertyPerformance propertyId={form.id} /></div> : null}
+              {form.id ? <AdminPropertyPriceHistory propertyId={form.id} /> : null}
 
               {form.id ? (
                 <fieldset className="admin-section" id="section-history">
