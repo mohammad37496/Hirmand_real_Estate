@@ -115,6 +115,7 @@ import { AdminPropertyExpiryCenter } from "@/components/hirmand/admin-property-e
 import { AdminCommissionSettlement } from "@/components/hirmand/admin-commission-settlement";
 import { AdminFinanceInsights } from "@/components/hirmand/admin-finance-insights";
 import { AdminConsultantPerformance } from "@/components/hirmand/admin-consultant-performance";
+import { AdminConsultantTargets } from "@/components/hirmand/admin-consultant-targets";
 import { AdminPropertyPreview } from "@/components/hirmand/admin-property-preview";
 import "@/admin-site-settings.css";
 import "@/admin-security.css";
@@ -143,7 +144,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "integrity" | "deals" | "expiry" | "commission" | "consultantPerformance" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
+type ViewMode = "dashboard" | "integrity" | "deals" | "expiry" | "commission" | "consultantPerformance" | "consultantTargets" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -569,6 +570,7 @@ export function AdminPropertiesPage() {
       { view: "expiry" as ViewMode, section: "فروش و معاملات", label: "انقضا و تمدید فایل", icon: Clock3 },
       { view: "commission" as ViewMode, section: "فروش و معاملات", label: "تسویه کمیسیون", icon: WalletCards },
       { view: "consultantPerformance" as ViewMode, section: "تیم و روابط", label: "عملکرد مشاوران", icon: BarChart3 },
+      { view: "consultantTargets" as ViewMode, section: "تیم و روابط", label: "اهداف مشاوران", icon: Target },
 
       { view: "list" as ViewMode, section: "فایل‌ها و مشتریان", label: "فایل‌های ملک", icon: LayoutDashboard },
       { view: "leads" as ViewMode, section: "فایل‌ها و مشتریان", label: "درخواست‌ها", icon: UsersRound },
@@ -601,7 +603,7 @@ export function AdminPropertiesPage() {
   const visibleNavItems = useMemo(() => {
     if (adminRole === "owner" || adminRole === "manager") return navItems;
     if (adminRole === "sales") {
-      const allowed = new Set<ViewMode>(["dashboard", "productivity", "list", "leads", "messages", "matching", "divar", "deals", "expiry", "commission", "consultantPerformance"]);
+      const allowed = new Set<ViewMode>(["dashboard", "productivity", "list", "leads", "messages", "matching", "divar", "deals", "expiry", "commission", "consultantPerformance", "consultantTargets"]);
       return navItems.filter((item) => allowed.has(item.view));
     }
     if (adminRole === "content") {
@@ -1933,8 +1935,10 @@ export function AdminPropertiesPage() {
                                                             ? "انقضا و تمدید فایل‌ها"
                                                             : view === "commission"
                                                               ? "تسویه کمیسیون مشاوران"
-                                                              : view === "consultantPerformance"
+                                                               : view === "consultantPerformance"
                                                                 ? "عملکرد و بازدهی مشاوران"
+                                                              : view === "consultantTargets"
+                                                                ? "اهداف و سهمیه ماهانه مشاوران"
                                                               : view === "divar"
                                                         ? "فایل‌های دیوار"
                           : form.id
@@ -2423,6 +2427,7 @@ export function AdminPropertiesPage() {
           {view === "partners" ? <AdminPartnerManager /> : null}
           {view === "consultants" ? <AdminConsultantManager /> : null}
           {view === "consultantPerformance" ? <AdminConsultantPerformance /> : null}
+          {view === "consultantTargets" ? <AdminConsultantTargets /> : null}
           {view === "attendance" ? <AdminAttendanceManager /> : null}
           {view === "matching" ? <AdminMatchingManager /> : null}
           {view === "owners" ? <AdminOwnerManager /> : null}
