@@ -270,7 +270,7 @@ function TrustStrip() {
   );
 }
 
-function HomeDiscovery({ onPick }: { onPick: (title: string) => void }) {
+function HomeDiscovery() {
   return (
     <Reveal as="section" className="section home-discovery" id="services">
       <SectionHead
@@ -282,13 +282,11 @@ function HomeDiscovery({ onPick }: { onPick: (title: string) => void }) {
         {SERVICES.map((item) => {
           const Icon = SERVICE_ICONS[item.id];
           return (
-            <Link
+            <a
               key={item.id}
-              to="/properties"
-              search={{ transaction: item.id }}
+              href={"/properties?transaction=" + encodeURIComponent(item.id)}
               className="home-discovery-card"
               aria-label={"جستجوی فایل برای " + item.title}
-              onClick={() => onPick(item.title)}
             >
               <span className="icon-box"><Icon size={20} strokeWidth={1.8} /></span>
               <span>
@@ -296,7 +294,7 @@ function HomeDiscovery({ onPick }: { onPick: (title: string) => void }) {
                 <small>{item.text}</small>
               </span>
               <span aria-hidden="true">↗</span>
-            </Link>
+            </a>
           );
         })}
       </div>
@@ -304,17 +302,15 @@ function HomeDiscovery({ onPick }: { onPick: (title: string) => void }) {
         {PROPERTY_TYPES.map((item) => {
           const Icon = TYPE_ICONS[item.id];
           return (
-            <Link
+            <a
               key={item.id}
-              to="/properties"
-              search={{ type: item.id }}
+              href={"/properties?type=" + encodeURIComponent(item.id)}
               className="home-type-chip"
               aria-label={"جستجوی " + item.title}
-              onClick={() => onPick(item.title)}
             >
               <span className="icon-box sm"><Icon size={15} strokeWidth={1.8} /></span>
               <span>{item.title}</span>
-            </Link>
+            </a>
           );
         })}
       </div>
@@ -862,7 +858,12 @@ export function SitePage({
     const hash = window.location.hash.replace("#", "");
     if (!hash) return;
     const timer = window.setTimeout(() => {
-      document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const target = document.getElementById(hash);
+      const disclosure = target?.closest("details.home-secondary") as HTMLDetailsElement | null;
+      if (disclosure) disclosure.open = true;
+      window.requestAnimationFrame(() => {
+        target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
     }, 80);
     return () => window.clearTimeout(timer);
   }, []);
@@ -888,7 +889,7 @@ export function SitePage({
         <TrustStrip />
         <PropertyShowcase initialProperties={initialProperties} />
         <SmartRecommendations />
-        <HomeDiscovery onPick={(title) => goInquiry({ deal: title })} />
+        <HomeDiscovery />
         <Inquiry draft={draft} />
         <details className="home-secondary">
           <summary>
