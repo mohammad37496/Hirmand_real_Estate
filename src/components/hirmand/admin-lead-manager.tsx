@@ -28,6 +28,7 @@ import { daysUntilDateOnly, formatPersianDate } from "@/lib/persian-date";
 import { AdminLeadDedupe } from "@/components/hirmand/admin-lead-dedupe";
 import { AdminLeadAssignmentBalancer } from "@/components/hirmand/admin-lead-assignment-balancer";
 import { AdminLeadMessageTemplates } from "@/components/hirmand/admin-lead-message-templates";
+import { AdminLead360 } from "@/components/hirmand/admin-lead-360";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 type VisitStatus = "none" | "requested" | "confirmed" | "completed" | "cancelled";
@@ -436,6 +437,7 @@ export function AdminLeadManager() {
 
   return (
     <div className="admin-lead-manager">
+      <AdminLead360 leads={leads} />
       {confirmDialog}
       <AdminLeadMessageTemplates leads={leads} />
       <AdminLeadAssignmentBalancer />
