@@ -1685,8 +1685,6 @@ export const ADMIN_CSS = `
   .admin-lead-card>.admin-lead-actions{grid-column:1/-1;justify-content:flex-start}
   .admin-lead-matches a{min-height:32px;display:inline-flex;align-items:center}
 }
-`;
-
 /* --- Dedicated floor-plan control ------------------------------------- */
 .admin-floor-plan-separator{
   grid-column:1/-1;
@@ -1707,3 +1705,6 @@ export const ADMIN_CSS = `
   font-weight:850;
   white-space:nowrap;
 }
+
+`;
+

@@ -15,9 +15,9 @@ export function MapAppButtons({
   const apps = googleOnly
     ? [{ href: google, title: "گوگل مپ", text: "جستجوی دقیق محله" }]
     : [
-        { href: links.neshan, title: "نشان", text: "مرجع اصلی جستجوی موقعیت" },
-        { href: links.balad, title: "بلد", text: "بررسی نشانی و موقعیت" },
         { href: google, title: "Google Maps", text: "بررسی تکمیلی مقصد" },
+        { href: links.balad, title: "بلد", text: "اپلیکیشن بلد" },
+        { href: links.neshan, title: "نشان", text: "اپلیکیشن نشان" },
       ];
 
   return (
@@ -53,7 +53,7 @@ export function MapEmbed({ target, title }: { target: MapTarget; title: string }
 
   return (
     <div className="map-embed" role="region" aria-label={title}>
-      <div className={"map-local-preview" + (hasCoordinates ? "" : " is-search-only")}>
+      <div className="map-local-preview">
         <div className="map-grid" aria-hidden="true" />
         <div className="map-route map-route-a" aria-hidden="true" />
         <div className="map-route map-route-b" aria-hidden="true" />
@@ -63,7 +63,7 @@ export function MapEmbed({ target, title }: { target: MapTarget; title: string }
         </div>
         <div className="map-local-card">
           <strong>{target.label}</strong>
-          <span>{target.address || "اصفهان"}</span>
+          <span>اصفهان</span>
           {hasCoordinates ? (
             <small>{target.lat!.toFixed(6)}، {target.lng!.toFixed(6)}</small>
           ) : (

@@ -2449,7 +2449,6 @@ export function PropertyDetailView({
           </button>
         </div>
 
-}
       </main>
     </SiteChrome>
   );
