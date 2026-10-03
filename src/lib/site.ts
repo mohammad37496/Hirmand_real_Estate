@@ -18,11 +18,9 @@ export const SITE = {
     office: "03137850615",
     officeDisplay: "031 3785 0615",
   },
-  address: "اصفهان، سه راه سیمین، خیابان جانبازان، بلوار شهید بخشی",
+  address: "اصفهان، سه‌راه سیمین",
   locality: "اصفهان",
-  lat: 32.610108,
-  lng: 51.622979,
-  mapUrl: `https://balad.ir/location?latitude=32.610108&longitude=51.622979`,
+  mapUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent("گروه مشاورین املاک هیرمند، اصفهان")}`,
   instagram: "https://www.instagram.com/hirmand.realestate/",
   instagramDm: "https://ig.me/m/hirmand.realestate",
   telegram: "https://t.me/Hirmand_realestate",
@@ -76,31 +74,41 @@ export function personChat(person: TeamMember, extra = "") {
 }
 
 export type MapTarget = {
-  lat: number;
-  lng: number;
   label: string;
+  address?: string;
+  searchQuery?: string;
+  lat?: number;
+  lng?: number;
 };
 
-export function mapLinks(target: MapTarget = { lat: SITE.lat, lng: SITE.lng, label: SITE.shortName }) {
-  const q = encodeURIComponent(`${target.label}، اصفهان، ایران`);
+export function mapLinks(target: MapTarget = { label: SITE.shortName, address: SITE.address }) {
+  const query = (target.searchQuery || target.address || target.label).trim();
+  const scopedQuery = query.includes("ایران") ? query : `${query}، اصفهان، ایران`;
+  const q = encodeURIComponent(scopedQuery);
   const googleSearch = `https://www.google.com/maps/search/?api=1&query=${q}`;
-  const googleEmbed = `https://maps.google.com/maps?q=${q}&z=15&hl=fa&output=embed`;
+  const googleDirections = `https://www.google.com/maps/dir/?api=1&destination=${q}`;
+  const neshan = `https://neshan.org/maps/search/${q}`;
+  const balad = `https://balad.ir/search?query=${q}`;
+  const googleEmbed = target.lat != null && target.lng != null
+    ? `https://maps.google.com/maps?q=${target.lat},${target.lng}&z=16&hl=fa&output=embed`
+    : null;
   return {
     google: googleSearch,
     googlePlace: googleSearch,
+    googleDirections,
     googleEmbed,
-    balad: `https://balad.ir/location?latitude=${target.lat}&longitude=${target.lng}`,
-    neshan: `https://neshan.org/maps/@${target.lat},${target.lng},17z`,
+    balad,
+    neshan,
     embed: googleEmbed,
-    osm: `https://www.openstreetmap.org/export/embed.html?bbox=${target.lng - 0.012},${target.lat - 0.008},${target.lng + 0.012},${target.lat + 0.008}&layer=mapnik&marker=${target.lat},${target.lng}`,
+    osm: null,
     search: googleSearch,
   };
 }
 
 export const OFFICE_MAP = mapLinks({
-  lat: SITE.lat,
-  lng: SITE.lng,
   label: "گروه مشاورین املاک هیرمند",
+  address: SITE.address,
+  searchQuery: "گروه مشاورین املاک هیرمند، اصفهان",
 });
 
 // Primary navigation stays focused while keeping the partner club directly
@@ -199,7 +207,7 @@ export const NEIGHBORHOOD_GROUPS: { title: string; items: Neighborhood[] }[] = [
       "چرخاب","دردشت","درب‌کوش","دروازه دولت","سنبلستان","سی‌وسه‌پل","شهشهان","شهزاده ابراهیم",
       "صائب","عباس‌آباد","علی‌قلی‌آقا","قلعه تبرک","گلزار","مهرآباد","نقش جهان","هاتف","خواجو","حسن‌آباد",
       "چهارباغ بالا","چهارباغ پایین","چهارباغ عباسی","طوقچی","شمس‌آباد","سرچشمه","سرتاوه","امام‌زاده اسماعیل","ملک",
-    ].map((name) => ({ name, lat: 32.65, lng: 51.67 })),
+    ].map((name) => ({ name, address: `${name}، اصفهان`, searchQuery: `${name}، اصفهان` })),
   },
   {
     title: "جنوب اصفهان",
@@ -208,7 +216,7 @@ export const NEIGHBORHOOD_GROUPS: { title: string; items: Neighborhood[] }[] = [
       "رزمندگان","سپاهان‌شهر","سیچان","صفه","فیض","کوی امام","کوی امام جعفر صادق","کوی سپاهان","گل‌نرگس",
       "مرداویج","ملاصدرا","مصلی","هزارجریب","همت‌آباد","شهید کشوری","باغ نگار / آینه‌خانه","سعادت‌آباد",
       "فیزادان","کوهسار","مارنان","حسین‌آباد","فرح‌آباد",
-    ].map((name) => ({ name, lat: 32.62, lng: 51.66 })),
+    ].map((name) => ({ name, address: `${name}، اصفهان`, searchQuery: `${name}، اصفهان` })),
   },
   {
     title: "شمال و شرق",
@@ -218,7 +226,7 @@ export const NEIGHBORHOOD_GROUPS: { title: string; items: Neighborhood[] }[] = [
       "شیخ اشراق","شیخ طوسی","شاهد","عسکریه","فروردین","قهجاورستان","کوی نرگس","ملک‌شهر","محمودآباد","مولوی",
       "ناصرخسرو","نگارستان","یونارت","خوراسگان","هفتون","سروستان","دشتستان","گاوارت","خاتون‌آباد","آندوان",
       "کلمان","کنگاز","ارداجی","کردآباد","شهرک زاینده‌رود","شهرک سلامت","اشکاوند",
-    ].map((name) => ({ name, lat: 32.70, lng: 51.71 })),
+    ].map((name) => ({ name, address: `${name}، اصفهان`, searchQuery: `${name}، اصفهان` })),
   },
   {
     title: "غرب و شهرک‌ها",
@@ -227,7 +235,7 @@ export const NEIGHBORHOOD_GROUPS: { title: string; items: Neighborhood[] }[] = [
       "زهران","سجاد","سیمین","سه‌راه سیمین","صمدیه لباف","کاردالان","گلخانه","گلستان","گورتان","خرم","درچه",
       "لادان","لیمجیر","مشاهده","ناژوان","نصرآباد","وحید","والدان","شهرک قدس","شهرک نگین","شهرک ولی‌عصر",
       "فردوان","کوهانستان",
-    ].map((name) => ({ name, lat: 32.64, lng: 51.62 })),
+    ].map((name) => ({ name, address: `${name}، اصفهان`, searchQuery: `${name}، اصفهان` })),
   },
 ];
 export const NEIGHBORHOODS = NEIGHBORHOOD_GROUPS.flatMap((group) => group.items);
@@ -312,12 +320,7 @@ export const JSON_LD = {
         "@type": "PostalAddress",
         addressLocality: SITE.locality,
         addressCountry: "IR",
-        streetAddress: "سه راه سیمین، خیابان جانبازان، بلوار شهید بخشی",
-      },
-      geo: {
-        "@type": "GeoCoordinates",
-        latitude: SITE.lat,
-        longitude: SITE.lng,
+        streetAddress: SITE.address,
       },
       hasMap: SITE.mapUrl,
       areaServed: {
