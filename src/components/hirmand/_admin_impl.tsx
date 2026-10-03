@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   BarChart3,
@@ -542,29 +542,33 @@ export function AdminPropertiesPage() {
 
   const navItems = useMemo(
     () => [
-      { view: "dashboard" as ViewMode, label: "داشبورد", icon: BarChart3 },
-      { view: "productivity" as ViewMode, label: "مرکز مدیریت", icon: ListTodo },
-      { view: "list" as ViewMode, label: "فایل‌های ملک", icon: LayoutDashboard },
-      { view: "leads" as ViewMode, label: "درخواست‌ها", icon: UsersRound },
-      { view: "messages" as ViewMode, label: "گفت‌وگوی مشتری", icon: MessageCircle },
-      { view: "consultants" as ViewMode, label: "مشاوران", icon: UsersRound },
-      { view: "partners" as ViewMode, label: "همکاران", icon: UsersRound },
-      { view: "music" as ViewMode, label: "موسیقی", icon: Music2 },
-      { view: "attendance" as ViewMode, label: "حضور و غیاب", icon: Clock3 },
-      { view: "matching" as ViewMode, label: "مچ کردن", icon: GitCompareArrows },
-      { view: "owners" as ViewMode, label: "مالکین", icon: UserCog },
-      { view: "finance" as ViewMode, label: "دفتر مالی", icon: WalletCards },
-      { view: "backup" as ViewMode, label: "پشتیبان", icon: DatabaseBackup },
-      { view: "watermark" as ViewMode, label: "واترمارک", icon: ShieldCheck },
-      { view: "schedule" as ViewMode, label: "زمان‌بندی", icon: CalendarClock },
-      { view: "trash" as ViewMode, label: "سطل بازیابی", icon: ArchiveRestore },
-      { view: "audit" as ViewMode, label: "گزارش فعالیت", icon: ClipboardList },
-      { view: "settings" as ViewMode, label: "تنظیمات سایت", icon: Settings },
-      { view: "mediaHealth" as ViewMode, label: "سلامت رسانه", icon: HardDrive },
-      { view: "security" as ViewMode, label: "امنیت مدیران", icon: ShieldAlert },
-      { view: "seoRedirects" as ViewMode, label: "ریدایرکت و ۴۰۴", icon: RouteIcon },
-      { view: "contentStudio" as ViewMode, label: "استودیو محتوا", icon: FileText },
-      { view: "divar" as ViewMode, label: "فایل‌های دیوار", icon: Globe2 },
+      { view: "dashboard" as ViewMode, section: "نمای کلی", label: "داشبورد", icon: BarChart3 },
+      { view: "productivity" as ViewMode, section: "نمای کلی", label: "مرکز مدیریت", icon: ListTodo },
+
+      { view: "list" as ViewMode, section: "فایل‌ها و مشتریان", label: "فایل‌های ملک", icon: LayoutDashboard },
+      { view: "leads" as ViewMode, section: "فایل‌ها و مشتریان", label: "درخواست‌ها", icon: UsersRound },
+      { view: "messages" as ViewMode, section: "فایل‌ها و مشتریان", label: "گفت‌وگوی مشتری", icon: MessageCircle },
+      { view: "matching" as ViewMode, section: "فایل‌ها و مشتریان", label: "مچ کردن", icon: GitCompareArrows },
+      { view: "divar" as ViewMode, section: "فایل‌ها و مشتریان", label: "فایل‌های دیوار", icon: Globe2 },
+
+      { view: "consultants" as ViewMode, section: "تیم و روابط", label: "مشاوران", icon: UsersRound },
+      { view: "partners" as ViewMode, section: "تیم و روابط", label: "همکاران", icon: UsersRound },
+      { view: "owners" as ViewMode, section: "تیم و روابط", label: "مالکین", icon: UserCog },
+      { view: "attendance" as ViewMode, section: "تیم و روابط", label: "حضور و غیاب", icon: Clock3 },
+
+      { view: "finance" as ViewMode, section: "مالی و رسانه", label: "دفتر مالی", icon: WalletCards },
+      { view: "music" as ViewMode, section: "مالی و رسانه", label: "موسیقی", icon: Music2 },
+      { view: "watermark" as ViewMode, section: "مالی و رسانه", label: "واترمارک", icon: ShieldCheck },
+      { view: "backup" as ViewMode, section: "مالی و رسانه", label: "پشتیبان", icon: DatabaseBackup },
+      { view: "mediaHealth" as ViewMode, section: "مالی و رسانه", label: "سلامت رسانه", icon: HardDrive },
+
+      { view: "schedule" as ViewMode, section: "سیستم و محتوا", label: "زمان‌بندی", icon: CalendarClock },
+      { view: "trash" as ViewMode, section: "سیستم و محتوا", label: "سطل بازیابی", icon: ArchiveRestore },
+      { view: "audit" as ViewMode, section: "سیستم و محتوا", label: "گزارش فعالیت", icon: ClipboardList },
+      { view: "settings" as ViewMode, section: "سیستم و محتوا", label: "تنظیمات سایت", icon: Settings },
+      { view: "security" as ViewMode, section: "سیستم و محتوا", label: "امنیت مدیران", icon: ShieldAlert },
+      { view: "seoRedirects" as ViewMode, section: "سیستم و محتوا", label: "ریدایرکت و ۴۰۴", icon: RouteIcon },
+      { view: "contentStudio" as ViewMode, section: "سیستم و محتوا", label: "استودیو محتوا", icon: FileText },
     ],
     [],
   );
@@ -1627,48 +1631,70 @@ export function AdminPropertiesPage() {
     return (
       <>
         <div className="admin-sidebar-brand">
-          <Building2 size={22} color="#f7f5ef" aria-hidden="true" />
-          <div>
+          <div className="admin-brand-icon" aria-hidden="true">
+            <Building2 size={21} />
+          </div>
+          <div className="admin-brand-copy">
             <strong>هیرمند</strong>
             <small>پنل مدیریت</small>
           </div>
-          {extra}
+          <div className="admin-brand-extra">{extra}</div>
         </div>
         <nav className="admin-sidebar-nav" aria-label="ناوبری اصلی مدیریت">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = view === item.view;
-            return (
-              <button
-                key={item.view}
-                type="button"
-                className={"admin-nav-btn" + (active ? " is-active" : "")}
-                aria-current={active ? "page" : undefined}
-                onClick={() => navigateTo(item.view)}
-              >
-                <Icon size={18} aria-hidden="true" />
-                {item.label}
-              </button>
-            );
-          })}
+          <div className="admin-nav-intro">
+            <span className="admin-nav-intro-kicker">مرکز کنترل</span>
+            <span className="admin-nav-intro-line" aria-hidden="true" />
+          </div>
+
           <button
             type="button"
-            className={"admin-nav-btn" + (view === "form" && !form.id ? " is-active" : "")}
+            className={"admin-nav-btn admin-nav-btn-create" + (view === "form" && !form.id ? " is-active" : "")}
             onClick={startNew}
           >
-            <Plus size={18} aria-hidden="true" />
-            فایل جدید
+            <span className="admin-nav-btn-icon" aria-hidden="true"><Plus size={18} /></span>
+            <span className="admin-nav-btn-label">فایل جدید</span>
+            <span className="admin-nav-btn-meta">+ افزودن</span>
           </button>
+
           {form.id ? (
             <button
               type="button"
-              className={"admin-nav-btn" + (view === "form" ? " is-active" : "")}
+              className={"admin-nav-btn admin-nav-btn-context" + (view === "form" ? " is-active" : "")}
               onClick={() => navigateTo("form")}
             >
-              <FileEdit size={18} aria-hidden="true" />
-              ویرایش «{form.title.slice(0, 18) || "فایل فعلی"}»
+              <span className="admin-nav-btn-icon" aria-hidden="true"><FileEdit size={18} /></span>
+              <span className="admin-nav-btn-label">ویرایش فایل</span>
+              <span className="admin-nav-btn-context-title">{form.title.slice(0, 18) || "فایل فعلی"}</span>
             </button>
           ) : null}
+
+          {(() => {
+            let previousSection = "";
+            return navItems.map((item) => {
+              const Icon = item.icon;
+              const active = view === item.view;
+              const showSection = item.section !== previousSection;
+              previousSection = item.section;
+              return (
+                <Fragment key={item.view}>
+                  {showSection ? (
+                    <div className="admin-nav-section-label">
+                      <span>{item.section}</span>
+                    </div>
+                  ) : null}
+                  <button
+                    type="button"
+                    className={"admin-nav-btn" + (active ? " is-active" : "")}
+                    aria-current={active ? "page" : undefined}
+                    onClick={() => navigateTo(item.view)}
+                  >
+                    <span className="admin-nav-btn-icon" aria-hidden="true"><Icon size={18} /></span>
+                    <span className="admin-nav-btn-label">{item.label}</span>
+                  </button>
+                </Fragment>
+              );
+            });
+          })()}
         </nav>
         <div className="admin-sidebar-foot">
           <button
