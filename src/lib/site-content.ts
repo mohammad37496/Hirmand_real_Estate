@@ -4,6 +4,8 @@ import { getCookie } from "@tanstack/react-start/server";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
+import { getAdminSessionClaims } from "@/lib/admin-session.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import {
   DEFAULT_FAQS,
   DEFAULT_GUIDES,
@@ -16,8 +18,13 @@ export { DEFAULT_FAQS, DEFAULT_GUIDES, buildFaqJsonLd } from "@/lib/site-content
 export type { FaqContent, GuideContent } from "@/lib/site-content-static";
 
 async function requireAdmin(){
-  if(!(await verifyAdminSessionToken(getCookie(ADMIN_SESSION_COOKIE)))) throw new Error("نشست مدیریت معتبر نیست.");
+  const token = getCookie(ADMIN_SESSION_COOKIE);
+  if(!(await verifyAdminSessionToken(token))) throw new Error("نشست مدیریت معتبر نیست.");
   assertAdminServerFnOrigin();
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "content.manage")) {
+    throw new Error("سطح دسترسی محتوا برای این حساب فعال نیست.");
+  }
 }
 
 function text(value:unknown){return String(value??"").trim();}
