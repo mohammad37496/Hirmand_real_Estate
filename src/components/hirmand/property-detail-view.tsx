@@ -917,7 +917,9 @@ function Gallery({
     <div className="property-gallery-wrap" role="region" aria-label={"گالری تصاویر " + title}>
       <div className="property-gallery">
         <div className="property-gallery-main">
-          {!isVideoUrl(current) || !isPermanentlyWatermarkedMediaUrl(current) ? <PropertyMediaWatermark /> : null}
+          {!isVideoUrl(current) || !isPermanentlyWatermarkedMediaUrl(current) ? (
+            <PropertyMediaWatermark subtle={current.startsWith("/images/fallback/")} />
+          ) : null}
           {isVideoUrl(current) ? (
             <VideoPlayer src={current} title={title} className="is-gallery" />
           ) : (
