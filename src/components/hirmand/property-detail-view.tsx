@@ -2229,7 +2229,7 @@ export function PropertyDetailView({
               ))}
             </div>
           </section>
-        ) : null
+        ) : null}
 
             <section id="property-tools-section" className="property-tool-center" aria-labelledby="property-tool-center-title">
               <header className="property-tool-center-head">
