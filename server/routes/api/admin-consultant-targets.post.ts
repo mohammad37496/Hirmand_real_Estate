@@ -34,14 +34,14 @@ export default defineEventHandler(async event => {
         [selectedMonth],
       ),
     ]);
-    const [dealActual] = await sql.query<Record<string, unknown>>(
+    const dealActualRows = await sql.query<Record<string, unknown>>(
       "select consultant,count(*)::int as deals,coalesce(sum(amount),0)::numeric as volume,coalesce(sum(commission),0)::numeric as commissions from admin_deals where created_at >= date_trunc('month',$1::date) and created_at < date_trunc('month',$1::date)+interval '1 month' and status <> 'cancelled' group by consultant",
       [selectedMonth],
     );
     const map = new Map<string, { leads:number; contracts:number; deals:number; volume:number; commissions:number }>();
     const ensure = (v: unknown) => { const name=String(v??"").trim()||"بدون مشاور"; if(!map.has(name)) map.set(name,{leads:0,contracts:0,deals:0,volume:0,commissions:0}); return map.get(name)!; };
     for(const row of actual){ const x=ensure(row.consultant); x.leads=integer(row.leads); x.contracts=integer(row.contracts); }
-    for(const row of [dealActual as Record<string, unknown>]) { if (Object.keys(row).length) { const x=ensure(row.consultant); x.deals=integer(row.deals); x.volume=money(row.volume); x.commissions=money(row.commissions); } }
+    for(const row of dealActualRows) { const x=ensure(row.consultant); x.deals=integer(row.deals); x.volume=money(row.volume); x.commissions=money(row.commissions); } }
     const targetMap=new Map(targets.map(row=>[String(row.consultant),row]));
     const names=new Set([...targetMap.keys(),...map.keys()]);
     return { month:selectedMonth.slice(0,7), rows:[...names].sort((a,b)=>a.localeCompare(b,"fa")).map(name=>{
