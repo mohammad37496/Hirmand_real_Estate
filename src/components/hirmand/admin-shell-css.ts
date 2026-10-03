@@ -1918,3 +1918,60 @@ export const ADMIN_CSS = `
 .admin-finance-category small{display:flex;align-items:center;gap:4px;color:var(--muted);font-size:.58rem}
 @media(max-width:900px){.admin-commission-grid,.admin-finance-insights-grid{grid-template-columns:1fr}.admin-commission-row{grid-template-columns:minmax(0,1fr) auto}.admin-commission-row select{grid-column:2}.admin-message-grid{grid-template-columns:1fr}}
 @media(max-width:520px){.admin-commission-row{grid-template-columns:1fr}.admin-commission-row select{grid-column:1;width:100%}.admin-message-grid{padding:0 12px}.admin-message-preview{width:calc(100% - 24px);margin-inline:12px}.admin-message-actions{padding-inline:12px}.admin-finance-month{grid-template-columns:48px minmax(0,1fr)}}
+
+/* CRM intelligence: editable templates, customer 360 and consultant performance */
+.admin-message-manager-grid{display:grid;grid-template-columns:minmax(180px,.36fr) minmax(0,1fr);gap:14px;padding:0 18px 18px}
+.admin-message-template-list{display:grid;gap:7px;align-content:start}
+.admin-message-template-item{display:grid;gap:3px;text-align:right;padding:10px 11px;border:1px solid var(--line);border-radius:11px;background:var(--card,#fff);color:var(--fg);cursor:pointer;font:inherit}
+.admin-message-template-item span{font-size:.69rem;font-weight:800;color:var(--navy-900)}
+.admin-message-template-item small{font-size:.56rem;color:var(--muted)}
+.admin-message-template-item.is-active{border-color:var(--brass-500,#b88938);background:var(--brass-50,#fbf7ef)}
+.admin-message-editor{display:grid;gap:10px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--card,#fff)}
+.admin-message-editor-row{display:grid;grid-template-columns:1fr 1fr 170px;gap:10px}
+.admin-message-editor .field>textarea{min-height:138px}
+.admin-message-active-field{display:grid;align-content:start}
+.admin-message-help{color:var(--muted);font-size:.6rem}
+.admin-message-help code{display:inline-block;margin-inline-start:4px;padding:2px 5px;border-radius:6px;background:var(--surface-2,#f7f5f0);color:var(--navy-900);direction:rtl}
+.admin-message-editor-actions{display:flex;gap:8px;flex-wrap:wrap}
+.admin-message-send-box{padding:0 18px 18px;border-top:1px solid var(--line);margin-top:2px;padding-top:14px}
+.admin-customer-360{margin-bottom:16px}
+.admin-360-select{min-width:min(340px,100%);width:min(340px,100%)}
+.admin-360-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;padding:0 18px 14px}
+.admin-360-summary>div{padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2,#f7f5f0)}
+.admin-360-summary span,.admin-360-summary small{display:block;color:var(--muted);font-size:.58rem}
+.admin-360-summary strong{display:block;margin-top:4px;color:var(--navy-900);font-size:.75rem;line-height:1.6}
+.admin-360-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0 18px 18px}
+.admin-360-card{padding:13px;border:1px solid var(--line);border-radius:13px;background:var(--card,#fff);min-width:0}
+.admin-360-card h3{display:flex;align-items:center;gap:6px;margin:0 0 9px;color:var(--navy-900);font-size:.75rem}
+.admin-360-card>p{margin:0;color:var(--fg);font-size:.67rem;line-height:1.9;white-space:pre-wrap}
+.admin-360-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.admin-360-meta span{padding:4px 7px;border-radius:999px;background:var(--surface-2,#f7f5f0);color:var(--muted);font-size:.55rem}
+.admin-360-budget{display:grid;gap:6px}
+.admin-360-budget>div,.admin-360-list article{display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:7px 0}
+.admin-360-budget>div:last-child,.admin-360-list article:last-child{border-bottom:0}
+.admin-360-budget span,.admin-360-list small{color:var(--muted);font-size:.59rem}
+.admin-360-budget strong,.admin-360-list b{color:var(--navy-900);font-size:.64rem}
+.admin-360-timeline{display:grid;gap:7px;max-height:300px;overflow:auto}
+.admin-360-timeline article{padding:7px 8px;border-inline-start:3px solid var(--brass-500,#b88938);background:var(--surface-2,#f7f5f0);border-radius:8px}
+.admin-360-timeline strong{display:block;color:var(--navy-900);font-size:.62rem}
+.admin-360-timeline small{display:block;margin-top:2px;color:var(--subtle);font-size:.53rem}
+.admin-360-timeline p{margin:4px 0 0;color:var(--fg);font-size:.59rem;line-height:1.7}
+.admin-360-total{display:block;margin-top:8px;color:var(--brass-700);font-size:.6rem;font-weight:800}
+.admin-performance-kpis{margin:0 18px 14px}
+.admin-performance-table-wrap{overflow:auto;padding:0 18px 18px}
+.admin-performance-table{width:100%;border-collapse:separate;border-spacing:0;min-width:850px}
+.admin-performance-table th,.admin-performance-table td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;font-size:.62rem}
+.admin-performance-table th{color:var(--muted);background:var(--surface-2,#f7f5f0);font-size:.58rem}
+.admin-performance-table td{color:var(--fg)}
+.admin-performance-table td strong{display:block;color:var(--navy-900);font-size:.65rem}
+.admin-performance-table td small{display:block;margin-top:2px;color:var(--subtle);font-size:.52rem}
+.admin-performance-table td b{color:var(--brass-700)}
+@media(max-width:900px){
+  .admin-message-manager-grid,.admin-360-grid{grid-template-columns:1fr}
+  .admin-message-editor-row{grid-template-columns:1fr}
+  .admin-360-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:520px){
+  .admin-message-manager-grid,.admin-message-send-box,.admin-performance-table-wrap,.admin-360-summary,.admin-360-grid{padding-inline:12px}
+  .admin-360-summary{grid-template-columns:1fr}
+}
