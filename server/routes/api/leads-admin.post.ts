@@ -2,6 +2,8 @@ import { createError, defineEventHandler, getCookie, readBody, setResponseHeader
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
+import { getAdminSessionClaims } from "@/lib/admin-session.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 
 type Status = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 type VisitStatus = "none" | "requested" | "confirmed" | "completed" | "cancelled";
@@ -94,6 +96,10 @@ export default defineEventHandler(async (event) => {
   }
 
   assertSameOrigin(event);
+  const claims = await getAdminSessionClaims(getCookie(event, ADMIN_SESSION_COOKIE));
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "lead.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "سطح دسترسی CRM برای این حساب فعال نیست." });
+  }
 
   if (dbSource === "unconfigured") return { leads: [], total: 0 };
   const sql = await getSql();
