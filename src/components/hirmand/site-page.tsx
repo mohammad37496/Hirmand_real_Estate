@@ -249,10 +249,9 @@ function Hero() {
 function TrustStrip() {
   const consultants = useConsultants();
   const highlights = [
-    { value: `${NEIGHBORHOODS.length}+`, label: "محله روی نقشه" },
     { value: `${SERVICES.length}`, label: "مسیر اصلی معامله" },
     { value: `${consultants.length}`, label: "مشاور مستقیم" },
-    { value: "۳", label: "سرویس نقشه و مسیریابی" },
+    { value: `${NEIGHBORHOODS.length}+`, label: "محله و محدوده در اصفهان" },
   ] as const;
 
   return (
@@ -887,7 +886,6 @@ export function SitePage({
         <Hero />
         <TrustStrip />
         <PropertyShowcase initialProperties={initialProperties} />
-        <SmartRecommendations />
         <HomeDiscovery />
         <Inquiry draft={draft} />
         <details className="home-secondary">
@@ -903,6 +901,7 @@ export function SitePage({
             <Process />
             <Neighborhoods onPick={(name) => goInquiry({ neighborhood: name })} />
             <Team />
+            <SmartRecommendations />
             <Tools />
             <TrackingCta />
             <FAQ items={faqItems} />
