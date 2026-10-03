@@ -9,7 +9,7 @@ import {
   verifyAdminSessionToken,
 } from "@/lib/admin-session.server";
 import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
-import { writeAdminAuditLog } from "@/lib/admin-audit";
+import { writeAdminAuditLog } from "@/lib/admin-audit-log.server";
 
 async function requireAdmin() {
   const token = getCookie(ADMIN_SESSION_COOKIE);

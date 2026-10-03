@@ -12,7 +12,7 @@ export function PropertyPhotoNotes({ property }: { property: Property }) {
   const [notes, setNotes] = useState<Notes>(() => safeRead(property.id));
   const [active, setActive] = useState(0);
   const currentData = notes[String(active)] || { note: "", flag: false };
-  useEffect(() => { try { localStorage.setItem(KEY + property.id, JSON.stringify(notes)); } catch {} }, [notes, property.id]);
+  useEffect(() => { try { localStorage.setItem(KEY + property.id, JSON.stringify(notes)); } catch { /* Storage may be blocked; the in-memory notes still work. */ } }, [notes, property.id]);
   const flagged = useMemo(() => Object.values(notes).filter(x => x && x.flag).length, [notes]);
   if (!images.length) return null;
   const patch = (p: Partial<Notes[string]>) => setNotes(c => ({ ...c, [String(active)]: { ...currentData, ...p } }));

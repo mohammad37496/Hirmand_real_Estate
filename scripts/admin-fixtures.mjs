@@ -32,11 +32,28 @@ export async function servesNitroApi(base) {
  */
 export async function installAdminApiStubs(page, base) {
   if (await servesNitroApi(base)) return [];
+  // Registered first, so it stays the lowest-priority handler: Playwright
+  // matches the most recently registered route first, so every explicit stub
+  // below still wins over this fallback.
+  await page.route("**/api/**", async (route) => {
+    unshapedFallbacks.add(new URL(route.request().url()).pathname);
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({}),
+    });
+  });
   for (const [pattern, handler] of Object.entries(stubAdminApi)) {
     await page.route(pattern, handler);
   }
   return Object.keys(stubAdminApi);
 }
+
+/**
+ * Paths the generic fallback answered instead of an explicit fixture. The sweep
+ * prints them so an empty-state render is never mistaken for a shaped one.
+ */
+export const unshapedFallbacks = new Set();
 
 /**
  * Mints the same JWT the real `/api/admin/session` route issues, so the server
@@ -183,6 +200,21 @@ export const stubAdminApi = {
           { source: "direct", campaign: "بدون کمپین", visitors: 620 },
           { source: "instagram.com", campaign: "story", visitors: 210 },
         ],
+        consultantPerformance: [
+          {
+            id: "c1",
+            name: "آقای شیخ",
+            phone: "09131056029",
+            active: true,
+            files: 24,
+            leads: 42,
+            contracts: 12,
+            views: 420,
+            calls: 18,
+            whatsapp: 24,
+          },
+        ],
+        leadSla: { overdue: 4, newOver4Hours: 2 },
         followUps: { due: 6, next7: 14 },
         recentLeads: [
           {
@@ -281,6 +313,272 @@ export const stubAdminApi = {
     });
   },
 
+  "**/api/admin-operations": async (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        dueCount: 2,
+        dueLeads: [
+          {
+            id: "lead-1",
+            name: "زهرا محمدی",
+            phone: "09121112233",
+            deal: "خرید",
+            neighborhood: "مرداویج",
+            status: "follow_up",
+            followUpAt: new Date().toISOString(),
+          },
+          {
+            id: "lead-2",
+            name: "رضا کریمی",
+            phone: "09123334455",
+            deal: "رهن و اجاره",
+            neighborhood: "چهارباغ",
+            status: "contacted",
+            followUpAt: new Date().toISOString(),
+          },
+        ],
+        next7Count: 14,
+        staleProperties: 5,
+        finance: { income: 1_850_000_000, expense: 620_000_000, balance: 1_230_000_000 },
+      }),
+    }),
+
+  "**/api/admin-visit-feedback": async (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        total: 36,
+        average: 4.2,
+        interested: 19,
+        recent: [
+          {
+            id: "f1",
+            rating: 5,
+            interest: "high",
+            note: "بازدید انجام شد و برای واحد مشابه درخواست قیمت داد.",
+            createdAt: new Date().toISOString(),
+            trackingToken: "vt-2f19",
+            name: "مریم نوری",
+            consultant: "آقای شیخ",
+            deal: "خرید",
+            propertyTitle: "آپارتمان نمونه در چهارباغ",
+            propertySlug: "sample-one",
+          },
+          {
+            id: "f2",
+            rating: 3,
+            interest: "medium",
+            note: "قیمت برای بودجه درخواستی بالا بود.",
+            createdAt: new Date(Date.now() - 86_400_000).toISOString(),
+            trackingToken: "vt-8ac4",
+            name: "سینا راد",
+            consultant: "آقای مرادی",
+            deal: "رهن و اجاره",
+            propertyTitle: "ویلای نمونه در سپاهان‌شهر",
+            propertySlug: "sample-two",
+          },
+        ],
+      }),
+    }),
+
+  "**/api/admin-productivity": async (route) => {
+    let body = {};
+    try {
+      body = route.request().postDataJSON() ?? {};
+    } catch {
+      body = {};
+    }
+    const tasks = [
+      {
+        id: "t1",
+        title: "تماس با مشتری چهارباغ",
+        description: "پیگیری بودجه و زمان بازدید.",
+        status: "open",
+        priority: "urgent",
+        dueAt: new Date(Date.now() - 3_600_000).toISOString(),
+        assignee: "آقای شیخ",
+        entityType: "lead",
+        entityId: "lead-1",
+        createdAt: new Date(Date.now() - 172_800_000).toISOString(),
+        updatedAt: new Date(Date.now() - 3_600_000).toISOString(),
+      },
+      {
+        id: "t2",
+        title: "به‌روزرسانی قیمت فایل نمونه",
+        description: "قیمت با نرخ روز بازار به‌روزرسانی شود.",
+        status: "open",
+        priority: "high",
+        dueAt: new Date(Date.now() + 2 * 86_400_000).toISOString(),
+        assignee: "آقای مرادی",
+        entityType: "property",
+        entityId: "p-1",
+        createdAt: new Date(Date.now() - 86_400_000).toISOString(),
+        updatedAt: new Date(Date.now() - 43_200_000).toISOString(),
+      },
+    ];
+    if (body.action === "list_tasks") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ tasks }),
+      });
+    }
+    if (body.action !== "summary") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ success: true }),
+      });
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        tasks: { open: 2, overdue: 1, today: 1, next7: 2 },
+        propertyHealth: {
+          total: 128,
+          published: 96,
+          withoutImages: 11,
+          incomplete: 17,
+          stale: 5,
+          expiredFeatured: 2,
+        },
+        staleProperties: [
+          {
+            id: "p-1",
+            slug: "sample-one",
+            title: "آپارتمان نمونه در چهارباغ",
+            neighborhood: "چهارباغ",
+            updatedAt: new Date(Date.now() - 46 * 86_400_000).toISOString(),
+          },
+        ],
+        expiredFeatured: [
+          {
+            id: "p-2",
+            slug: "sample-two",
+            title: "ویلای نمونه در سپاهان‌شهر",
+            featuredUntil: new Date(Date.now() - 86_400_000).toISOString(),
+          },
+        ],
+        duplicateGroups: [
+          {
+            kind: "title",
+            key: "sample-one",
+            label: "آپارتمان نمونه در چهارباغ",
+            neighborhood: "چهارباغ",
+            fileCount: 2,
+            files: [
+              { id: "p-1", slug: "sample-one", title: "آپارتمان نمونه در چهارباغ" },
+              { id: "p-3", slug: "sample-one-copy", title: "آپارتمان نمونه در چهارباغ" },
+            ],
+          },
+        ],
+        recentActivity: [
+          {
+            source: "lead",
+            itemId: "lead-1",
+            event: "lead_created",
+            title: "لید جدید: زهرا محمدی",
+            createdAt: new Date(Date.now() - 7_200_000).toISOString(),
+          },
+        ],
+        system: {
+          database: "PostgreSQL",
+          counts: { properties: 128, leads: 214, consultants: 7 },
+          generatedAt: new Date().toISOString(),
+        },
+      }),
+    });
+  },
+
+  "**/api/admin-neighborhood-demand": async (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        items: [
+          {
+            neighborhood: "چهارباغ",
+            files: 34,
+            views: 512,
+            favorites: 41,
+            calls: 28,
+            visits: 12,
+            leads: 18,
+            demandIndex: 96,
+            demandPercent: 100,
+          },
+          {
+            neighborhood: "مرداویج",
+            files: 27,
+            views: 388,
+            favorites: 22,
+            calls: 17,
+            visits: 6,
+            leads: 9,
+            demandIndex: 64,
+            demandPercent: 67,
+          },
+          {
+            neighborhood: "سپاهان‌شهر",
+            files: 19,
+            views: 190,
+            favorites: 9,
+            calls: 6,
+            visits: 3,
+            leads: 4,
+            demandIndex: 31,
+            demandPercent: 32,
+          },
+        ],
+      }),
+    }),
+
+  "**/api/admin-property-lifecycle": async (route) => {
+    let body = {};
+    try {
+      body = route.request().postDataJSON() ?? {};
+    } catch {
+      body = {};
+    }
+    const items = [
+      {
+        id: "p-1",
+        slug: "sample-one",
+        title: "آپارتمان نمونه در چهارباغ",
+        neighborhood: "چهارباغ",
+        contactName: "آقای شیخ",
+        staleDays: 46,
+        missing: ["images", "price"],
+        priority: "urgent",
+        hasOpenTask: false,
+        updatedAt: new Date(Date.now() - 46 * 86_400_000).toISOString(),
+      },
+      {
+        id: "p-2",
+        slug: "sample-two",
+        title: "ویلای نمونه در سپاهان‌شهر",
+        neighborhood: "سپاهان‌شهر",
+        contactName: "آقای مرادی",
+        staleDays: 21,
+        missing: ["images"],
+        priority: "high",
+        hasOpenTask: true,
+        updatedAt: new Date(Date.now() - 21 * 86_400_000).toISOString(),
+      },
+    ];
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(
+        body.action === "createTasks" ? { items, createdTasks: 2 } : { items },
+      ),
+    });
+  },
+
   "**/api/admin-campaign-performance": async (route) => {
     let body = {};
     try {
@@ -298,6 +596,16 @@ export const stubAdminApi = {
           { source: "instagram", medium: "story", campaign: "baharestan", leads: 18, contacted: 14, visits: 7, contracts: 3, contactRate: 77.8, contractRate: 16.7 },
           { source: "google", medium: "organic", campaign: "بدون کمپین", leads: 12, contacted: 9, visits: 4, contracts: 2, contactRate: 75, contractRate: 16.7 },
         ],
+        daily: [
+          { day: "2026-09-24", leads: 4, contracts: 1 },
+          { day: "2026-09-25", leads: 7, contracts: 1 },
+          { day: "2026-09-26", leads: 3, contracts: 0 },
+          { day: "2026-09-27", leads: 9, contracts: 2 },
+          { day: "2026-09-28", leads: 6, contracts: 1 },
+          { day: "2026-09-29", leads: 8, contracts: 0 },
+          { day: "2026-09-30", leads: 5, contracts: 1 },
+        ],
+        quality: { leads: 30, source: 88, medium: 62, campaign: 41 },
         totals: { campaigns: 2, leads: 30, contacted: 23, visits: 11, contracts: 5 },
       }),
     });

@@ -10,7 +10,7 @@ import { decodeSlugCandidates, legacyIdFragments } from "@/lib/property-slug";
 import { calculateBudgetMatch, DEFAULT_MATCH_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
 import { MAX_PROPERTY_MEDIA, isAllowedMediaRef } from "@/lib/media";
 import { deleteStoredMedia } from "@/lib/media-store.server";
-import { writeAdminAuditLog } from "@/lib/admin-audit";
+import { writeAdminAuditLog } from "@/lib/admin-audit-log.server";
 import { getPublishReadiness } from "@/lib/property-publish-readiness";
 import {
   PROPERTY_CABINET_OPTIONS,

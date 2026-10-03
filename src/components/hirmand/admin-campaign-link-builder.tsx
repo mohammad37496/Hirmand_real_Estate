@@ -120,9 +120,9 @@ export function AdminCampaignLinkBuilder() {
           style={{
             marginTop: 14,
             padding: "13px 14px",
-            border: "1px solid rgba(244,239,230,.1)",
+            border: "1px solid rgb(8 19 32)",
             borderRadius: 14,
-            background: "rgba(7,9,13,.46)",
+            background: "rgb(11 26 43)",
           }}
         >
           <span style={{ display: "block", color: "rgb(247 245 239 / .55)", fontSize: ".73rem", marginBottom: 6 }}>

@@ -5,7 +5,8 @@
 .customer-workspace-copy p{display:flex;align-items:center;gap:4px;margin:3px 0 0;color:#67727d;font-size:.69rem;line-height:1.7}
 .customer-workspace-copy span{display:block;margin-top:4px;color:#8a5e14;font-size:.67rem}
 .customer-workspace-sync .btn-ghost,.customer-workspace-signin .btn-gold{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
-.customer-workspace-signin{background:#f7f4ee;border-color:rgba(11,26,43,.11)}
+.customer-workspace-signin{background:#f7f4ee;border-color:rgba(11,26,43,.11);flex-wrap:wrap}
+.customer-workspace-sync-error{flex-basis:100%;margin:0;color:#a74437;font-size:.67rem;line-height:1.7}
 @keyframes workspace-sync-spin{to{transform:rotate(360deg)}}
 .workspace-sync-spin{animation:workspace-sync-spin .8s linear infinite}
 @media(max-width:640px){.customer-workspace-sync{align-items:flex-start;flex-wrap:wrap}.customer-workspace-copy{flex-basis:calc(100% - 52px)}.customer-workspace-sync button,.customer-workspace-signin .btn-gold{margin-inline-start:50px}}

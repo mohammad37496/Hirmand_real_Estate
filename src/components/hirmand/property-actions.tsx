@@ -4,6 +4,12 @@ import { toast } from "sonner";
 import type { PropertyCardData } from "@/lib/properties";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { propertyPath } from "@/lib/property-path";
+import { SITE } from "@/lib/site";
+
+/** Absolute URL for a property, safe during SSR (no `window`). */
+function absolutePropertyUrl(property: Pick<PropertyCardData, "id" | "slug">): string {
+  return new URL(propertyPath(property), SITE.url).toString();
+}
 
 const FAVORITES_KEY = "hirmand-favorite-properties";
 const COMPARE_KEY = "hirmand-compare-properties";
@@ -415,7 +421,7 @@ export function PropertyActions({
   }
 
 
-  const qrTarget = new URL(propertyPath(property), window.location.origin).toString();
+  const qrTarget = absolutePropertyUrl(property);
   const qrImageUrl = "https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=12&data=" + encodeURIComponent(qrTarget);
 
   return (
@@ -545,7 +551,7 @@ export function PropertyActions({
             <div><span>نوع معامله</span><strong>{TRANSACTION_LABEL[property.transactionType]}</strong></div>
             <div><span>کد فایل</span><strong dir="ltr">{property.id.replace(/[^a-z0-9]/gi, "").slice(-6).toUpperCase()}</strong></div>
           </div>
-          <div className="property-brief-url" dir="ltr">{new URL(propertyPath(property), window.location.origin).toString()}</div>
+          <div className="property-brief-url" dir="ltr">{absolutePropertyUrl(property)}</div>
           <p className="property-brief-note">این برگه برای اشتراک‌گذاری و چاپ طراحی شده است. برای قیمت و شرایط نهایی با مشاور هیرمند هماهنگ کنید.</p>
           <div className="property-brief-footer">
             <span>املاک هیرمند · اصفهان</span>

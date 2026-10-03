@@ -14,7 +14,7 @@ const money=(n:number)=>n>0?formatToman(Math.round(n))+" تومان":"ثبت ن�
 function read():Profile{if(typeof window==="undefined")return DEF;try{const p=JSON.parse(localStorage.getItem(KEY)||"null");if(!p||typeof p!=="object")return DEF;return{mode:p.mode==="rent"?"rent":"buy",cash:typeof p.cash==="string"?p.cash:"",monthly:typeof p.monthly==="string"?p.monthly:"",months:Number.isFinite(p.months)?Math.min(60,Math.max(1,Number(p.months))):24,reserve:typeof p.reserve==="string"?p.reserve:"",reno:typeof p.reno==="string"?p.reno:"",deposit:typeof p.deposit==="string"?p.deposit:"",rent:typeof p.rent==="string"?p.rent:""};}catch{return DEF;}}
 export function BuyerFinancialProfile({properties}:{properties:Property[]}){
  const [p,setP]=useState<Profile>(()=>read());
- useEffect(()=>{try{localStorage.setItem(KEY,JSON.stringify(p));}catch{}},[p]);
+ useEffect(()=>{try{localStorage.setItem(KEY,JSON.stringify(p));}catch{/* Storage may be blocked; the in-memory profile still works. */}},[p]);
  const s=useMemo(()=>{const cash=amt(p.cash),monthly=amt(p.monthly),reserve=amt(p.reserve),reno=amt(p.reno),usable=Math.max(0,cash-reserve-reno),finance=monthly*p.months;return{usable,finance,total:usable+finance};},[p]);
  const rows=useMemo(()=>{const dep=amt(p.deposit),rent=amt(p.rent);return properties.map(property=>{
   if(p.mode==="buy"&&(property.transactionType==="buy"||property.transactionType==="sell")){const price=amt(property.price||"");if(!price)return{property,label:"قیمت ثبت نشده"};if(price<=s.usable)return{property,label:"قابل بررسی با نقدینگی"};if(price<=s.total)return{property,label:"قابل بررسی با اقساط"};return{property,label:"بالاتر از بودجه ثبت‌شده"};}
@@ -22,7 +22,7 @@ export function BuyerFinancialProfile({properties}:{properties:Property[]}){
   if(p.mode==="rent"&&property.transactionType==="mortgage"){const a=amt(property.deposit||"");return{property,label:a?(!dep||a<=dep?"داخل سقف رهن":"بالاتر از سقف رهن"):"رهن ثبت نشده"};}
   return null;
  }).filter((x):x is {property:Property;label:string}=>Boolean(x));},[p.mode,p.deposit,p.rent,properties,s.usable,s.total]);
- const reset=()=>{setP(DEF);try{localStorage.removeItem(KEY);}catch{}};
+ const reset=()=>{setP(DEF);try{localStorage.removeItem(KEY);}catch{/* Storage may be blocked; the reset still applies in memory. */}};
  return <section className="buyer-financial-profile" aria-labelledby="buyer-financial-profile-title">
   <header className="buyer-financial-profile-head"><div><span className="kicker">پروفایل مالی شخصی</span><h2 id="buyer-financial-profile-title"><WalletCards size={20}/> بودجه من برای خرید یا اجاره</h2><p>این اعداد فقط روی همین مرورگر ذخیره می‌شوند و برای برآورد شخصی هستند؛ هزینه‌های قطعی حقوقی، مالیاتی، وام و شرایط قرارداد را تأیید نمی‌کنند.</p></div><div className="buyer-financial-profile-actions"><button type="button" className="btn-ghost" onClick={()=>window.print()}><Calculator size={15}/> چاپ پروفایل</button><button type="button" className="btn-ghost" onClick={reset}><RotateCcw size={15}/> پاک‌کردن</button></div></header>
   <div className="buyer-financial-mode"><button type="button" className={p.mode==="buy"?"is-active":""} onClick={()=>setP(c=>({...c,mode:"buy"}))}>خرید</button><button type="button" className={p.mode==="rent"?"is-active":""} onClick={()=>setP(c=>({...c,mode:"rent"}))}>اجاره / رهن</button></div>

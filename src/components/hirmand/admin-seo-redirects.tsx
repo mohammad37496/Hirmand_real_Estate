@@ -44,7 +44,7 @@ export function AdminSeoRedirects() {
   function reset(){
     setEditingId(undefined);setSource("");setTarget("");setStatusCode(301);setActive(true);
   }
-  function use404(path:string){
+  function draftFrom404(path:string){
     setEditingId(undefined);setSource(path);setTarget("/");setStatusCode(301);setActive(true);
     window.scrollTo({top:0,behavior:"smooth"});
   }
@@ -103,7 +103,7 @@ export function AdminSeoRedirects() {
 
         <section className="admin-panel admin-seo-404">
           <div className="admin-panel-head"><div><span className="kicker">گزارش ۴۰۴</span><h2>مسیرهای خراب پرتکرار</h2></div><button type="button" className="btn-ghost" onClick={()=>void clearErrors()} disabled={loading||!notFound.length}>پاک‌سازی ۳۰ روزه</button></div>
-          {loading?<div className="admin-seo-empty">در حال بررسی…</div>:!notFound.length?<div className="admin-seo-empty"><AlertTriangle size={18}/> خطای ثبت‌شده‌ای نداریم.</div>:<div className="admin-seo-404-list">{notFound.slice(0,20).map(item=><button key={item.id} type="button" className="admin-seo-404-row" onClick={()=>use404(item.path)}><span><strong dir="ltr">{item.path}</strong><small>{fa(item.hitCount)} بازدید ۴۰۴ · آخرین بار {date(item.lastSeenAt)}</small></span><Plus size={15}/></button>)}</div>}
+          {loading?<div className="admin-seo-empty">در حال بررسی…</div>:!notFound.length?<div className="admin-seo-empty"><AlertTriangle size={18}/> خطای ثبت‌شده‌ای نداریم.</div>:<div className="admin-seo-404-list">{notFound.slice(0,20).map(item=><button key={item.id} type="button" className="admin-seo-404-row" onClick={()=>draftFrom404(item.path)}><span><strong dir="ltr">{item.path}</strong><small>{fa(item.hitCount)} بازدید ۴۰۴ · آخرین بار {date(item.lastSeenAt)}</small></span><Plus size={15}/></button>)}</div>}
         </section>
       </section>
 

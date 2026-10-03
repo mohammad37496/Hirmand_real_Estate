@@ -1,4 +1,4 @@
-import { resolvePublicRedirect } from "@/lib/seo-redirects";
+import { resolvePublicRedirect } from "@/lib/seo-redirects.server";
 
 type RedirectEvent = {
   url: URL;

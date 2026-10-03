@@ -52,7 +52,7 @@ export const DIVAR_CSS = `
 .divar-tab{display:inline-flex;align-items:center;gap:6px;border:1px solid rgb(0 0 0 / .12);background:#fff;color:#111315;border-radius:12px;padding:10px 14px;cursor:pointer;font:inherit;font-size:.82rem;transition:border-color .15s,background .15s,color .15s}
 .divar-tab:hover{border-color:rgba(183,123,72,.5)}
 .divar-tab.is-active{background:#111315;border-color:#111315;color:#f7f5ef}
-.divar-tab b{font-weight:800}
+.divar-tab b{font-weight:800;color:inherit}
 .divar-smart-toolbar{display:flex;gap:12px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid rgb(0 0 0 / .08)}
 .divar-search-box{display:flex;align-items:center;gap:9px;flex:1 1 260px;min-width:0;min-height:46px;padding:0 14px;border:1px solid rgb(0 0 0 / .14);border-radius:14px;background:#fff;color:rgb(0 0 0 / .55)}
 .divar-search-box:focus-within{border-color:#111315}
@@ -61,13 +61,15 @@ export const DIVAR_CSS = `
 .divar-search-clear:hover{background:rgb(0 0 0 / .06)}
 .divar-filter-group{display:flex;gap:10px;flex-wrap:wrap}
 .divar-select-field{display:flex;flex-direction:column;gap:5px}
-.divar-select-field>span{color:rgb(0 0 0 / .52);font-size:.68rem}
+.divar-select-field>span{color:rgb(0 0 0 / .62);font-size:.68rem}
 .divar-select-field select{min-height:44px;max-width:190px;padding:0 10px;border-radius:12px;border:1px solid rgb(0 0 0 / .14);background:#fff;color:#111315;font:inherit;font-size:.82rem}
 .divar-toggle{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border:1px solid rgb(0 0 0 / .14);border-radius:12px;background:#fff;color:#111315;font-size:.82rem;cursor:pointer}
 .divar-toggle input{accent-color:#111315}
 .divar-toolbar-result{display:flex;align-items:center;gap:7px;flex-wrap:wrap;color:rgb(0 0 0 / .6);font-size:.8rem}
 .divar-toolbar-result strong{color:#111315}
-.divar-toolbar-result button{border:0;background:transparent;color:#7a5220;cursor:pointer;font:inherit;font-size:.78rem;text-decoration:underline}
+.divar-toolbar-result button{min-height:40px;padding:0 8px;border-radius:9px;border:0;background:transparent;color:#7a5220;cursor:pointer;font:inherit;font-size:.78rem;text-decoration:underline}
+.divar-toolbar-result button:hover{background:rgb(0 0 0 / .04)}
+.divar-toolbar-result button:focus-visible{outline:3px solid rgba(192,138,42,.32);outline-offset:2px}
 .divar-bulkbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid rgba(183,123,72,.3);background:rgba(183,123,72,.08)}
 .divar-bulkbar strong{font-size:.82rem;color:#111315}
 .divar-bulk-actions{display:flex;gap:8px;flex-wrap:wrap}

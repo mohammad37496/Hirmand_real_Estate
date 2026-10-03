@@ -1,7 +1,6 @@
 import { Cloud, LogIn, RefreshCw, ShieldCheck } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { authEnabled } from "@/lib/auth/client";
+import { authEnabled, signIn, GROK_PROVIDERS } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import "@/customer-workspace-sync.css";
 
@@ -70,6 +69,8 @@ export function CustomerWorkspaceSync() {
   const { user, isPending } = useCurrentUserState();
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
+  const [signingIn, setSigningIn] = useState(false);
+  const [signInError, setSignInError] = useState("");
   const bootedUser = useRef<string | null>(null);
 
   const sync = useCallback(async () => {
@@ -128,7 +129,22 @@ export function CustomerWorkspaceSync() {
           <strong>فضای شخصی هیرمند</strong>
           <p>برای نگه‌داشتن علاقه‌مندی‌ها و جست‌وجوها روی موبایل و کامپیوتر، وارد حساب شوید.</p>
         </div>
-        <Link to="/login" className="btn-gold"><LogIn size={15} /> ورود</Link>
+        <button
+          type="button"
+          className="btn-gold"
+          disabled={signingIn || !GROK_PROVIDERS[0]}
+          onClick={() => {
+            const provider = GROK_PROVIDERS[0];
+            if (!provider) return;
+            setSigningIn(true);
+            void signIn(provider.providerId, { callbackURL: "/favorites" })
+              .catch(() => setSignInError("ورود به حساب انجام نشد. دوباره تلاش کنید."))
+              .finally(() => setSigningIn(false));
+          }}
+        >
+          <LogIn size={15} /> {signingIn ? "در حال ورود…" : "ورود"}
+        </button>
+        {signInError ? <p className="customer-workspace-sync-error" role="alert">{signInError}</p> : null}
       </section>
     );
   }

@@ -155,7 +155,7 @@ import { formatToman } from "@/lib/money";
 import { formatPersianDate } from "@/lib/persian-date";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { isVideoUrl, mediaSourceCandidates } from "@/lib/media";
-import { isPermanentlyWatermarkedMediaUrl } from "@/lib/property-watermark";
+import { isPermanentlyWatermarkedMediaUrl, isPermanentlyWatermarkedVideoUrl } from "@/lib/property-watermark";
 import { getPropertyFallbackImage, getPropertyFallbackImages, getPropertyFallbackLegacyImage, isPropertyFallbackImage } from "@/lib/property-fallback-images";
 import { areaSlug } from "@/lib/areas";
 import { SITE } from "@/lib/site";

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   BarChart3,
@@ -68,7 +68,7 @@ import {
   AdminListSkeleton,
   AdminPagination,
 } from "@/components/hirmand/admin-ui";
-import { adminErrorMessage, fa, useConfirmDialog } from "@/components/hirmand/admin-ui-utils";
+import { adminErrorMessage, fa, useConfirmDialog, useOverlayDismiss } from "@/components/hirmand/admin-ui-utils";
 import { AdminMediaField } from "@/components/hirmand/admin-media-field";
 import { AdminPropertyDuplicateCheck } from "@/components/hirmand/admin-property-duplicate-check";
 import { AdminLocationPicker } from "@/components/hirmand/admin-location-picker";
@@ -525,10 +525,20 @@ export function AdminPropertiesPage() {
   const [listError, setListError] = useState<string | null>(null);
   const [busyRowId, setBusyRowId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const drawerTriggerRef = useRef<HTMLButtonElement>(null);
   const [draftRestored, setDraftRestored] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkBusy, setBulkBusy] = useState(false);
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
+
+  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
+  // Escape, scroll lock and focus return live in one place so the drawer and
+  // the confirm dialog cannot drift apart again.
+  useOverlayDismiss({
+    open: drawerOpen,
+    onClose: closeDrawer,
+    initialFocusRef: drawerTriggerRef,
+  });
 
   const navItems = useMemo(
     () => [
@@ -1396,6 +1406,10 @@ export function AdminPropertiesPage() {
       setChangeHistory([]);
       setFormDirty(false);
       setDraftRestored(null);
+      // Every path into the form closes the nav drawer, the same way
+      // navigateTo does — otherwise "فایل جدید" from the drawer leaves the
+      // drawer open on top of the form it just opened.
+      setDrawerOpen(false);
       setView("form");
     })();
   }
@@ -1407,6 +1421,7 @@ export function AdminPropertiesPage() {
       setForm(propertyToForm(property));
       setFormDirty(false);
       setDraftRestored(null);
+      setDrawerOpen(false);
       setView("form");
     })();
   }
@@ -1427,6 +1442,7 @@ export function AdminPropertiesPage() {
       });
       setFormDirty(false);
       setDraftRestored(null);
+      setDrawerOpen(false);
       setView("form");
     })();
   }
@@ -1691,13 +1707,18 @@ export function AdminPropertiesPage() {
             role="presentation"
             onClick={() => setDrawerOpen(false)}
           />
-          <div className="admin-drawer" role="dialog" aria-modal="true" aria-label="ناوبری مدیریت">
+          <div
+            className="admin-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="ناوبری مدیریت"
+          >
             {renderSidebarBody(
               <button
                 type="button"
                 className="admin-icon-btn"
                 style={{ marginInlineStart: "auto" }}
-                onClick={() => setDrawerOpen(false)}
+                onClick={closeDrawer}
                 aria-label="بستن منو"
               >
                 <X size={16} />
@@ -1712,6 +1733,7 @@ export function AdminPropertiesPage() {
           <button
             type="button"
             className="admin-drawer-trigger"
+            ref={drawerTriggerRef}
             onClick={() => setDrawerOpen(true)}
             aria-label="باز کردن منوی مدیریت"
             aria-expanded={drawerOpen}
@@ -2973,7 +2995,7 @@ export function AdminPropertiesPage() {
           <UsersRound size={19} strokeWidth={2.1} />
           <span>درخواست‌ها</span>
         </button>
-        <button type="button" onClick={() => setDrawerOpen(true)} title="باز کردن منوی کامل">
+        <button type="button" onClick={() => setDrawerOpen(true)} title="باز کردن منوی کامل" aria-label="باز کردن منوی کامل مدیریت">
           <Menu size={19} strokeWidth={2.1} />
           <span>منو</span>
         </button>

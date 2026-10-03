@@ -9,6 +9,13 @@ function money(value: number | null) {
   return value && value > 0 ? formatToman(Math.round(value)) + " تومان" : "—";
 }
 
+/** Stored money columns are decimal strings; the validator wants a number. */
+function amount(value: string | null | undefined) {
+  if (value == null || !String(value).trim()) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 export function PropertyMarketComparison({ property }: { property: Property }) {
   const [result, setResult] = useState<PropertyMarketComparison | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,8 +30,8 @@ export function PropertyMarketComparison({ property }: { property: Property }) {
         transactionType: property.transactionType,
         neighborhood: property.neighborhood,
         areaM2: property.areaM2 ?? null,
-        price: property.price ?? null,
-        rent: property.rent ?? null,
+        price: amount(property.price),
+        rent: amount(property.rent),
       },
     }).then((next) => {
       if (!cancelled) setResult(next);

@@ -7,7 +7,7 @@
  */
 import { mkdirSync } from "node:fs";
 import { chromium } from "playwright";
-import { installAdminApiStubs } from "./admin-fixtures.mjs";
+import { installAdminApiStubs, unshapedFallbacks } from "./admin-fixtures.mjs";
 
 const BASE = process.env.QA_BASE_URL || "http://127.0.0.1:8080";
 const KEY = process.env.HIRMAND_ADMIN_KEY || "";
@@ -236,6 +236,7 @@ async function run() {
     base: BASE,
     at: new Date().toISOString(),
     stubbedApiRoutes: stubbedRoutes,
+    unshapedApiRoutes: [...unshapedFallbacks].sort(),
     results,
     consoleErrors: consoleErrors.slice(0, 25),
     pageErrors: pageErrors.slice(0, 25),

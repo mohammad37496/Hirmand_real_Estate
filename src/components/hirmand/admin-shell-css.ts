@@ -47,7 +47,7 @@ export const ADMIN_CSS = `
 .admin-property-tags span[data-status="draft"]{background:rgba(247,245,239,.16);color:#f7f5ef}
 .admin-property-tags span[data-status="archived"]{background:rgba(154,163,178,.16);color:rgb(247 245 239 / .52)}
 .admin-property-tags span[data-featured]{background:rgba(247,245,239,.2);color:#f7f5ef}
-.admin-property-meta h3{margin:0;font-size:.95rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.admin-property-meta h3{margin:0;font-size:.95rem;font-weight:600;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .admin-property-meta p{margin:4px 0 0;color:rgb(247 245 239 / .56);font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .admin-property-actions{display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:flex-end}
 .admin-icon-btn{width:36px;height:36px;display:grid;place-items:center;border:1px solid rgba(244,239,230,.1);border-radius:10px;background:rgba(255,255,255,.03);color:rgb(247 245 239 / .68);cursor:pointer;transition:border-color .15s,color .15s,background .15s}
@@ -69,7 +69,7 @@ export const ADMIN_CSS = `
 .admin-checks label{display:flex;align-items:center;gap:8px;font-size:.9rem;cursor:pointer;color:var(--muted);padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--card-2)}
 .admin-checks input{accent-color:var(--brass-700);width:16px;height:16px}
 .admin-money-hint{display:block;margin-top:4px;color:#f7f5ef;font-size:.78rem}
-.admin-sticky-bar{position:fixed;bottom:0;left:0;right:0;z-index:2000;padding:12px 24px;background:rgba(7,9,13,.92);backdrop-filter:blur(16px);border-top:1px solid rgba(244,239,230,.1);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.admin-sticky-bar{position:fixed;bottom:0;inset-inline:0;z-index:2000;padding:12px 24px;background:rgba(7,9,13,.92);backdrop-filter:blur(16px);border-top:1px solid rgba(244,239,230,.1);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .admin-sticky-bar-info{color:rgb(247 245 239 / .56);font-size:.85rem}
 .admin-sticky-bar-info strong{color:#f7f5ef}
 .admin-sticky-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -83,7 +83,7 @@ export const ADMIN_CSS = `
 .admin-key-row input:focus{border-color:rgba(247,245,239,.45);box-shadow:0 0 0 3px rgba(247,245,239,.12)}
 .admin-mobile-nav{display:none;position:fixed;left:10px;right:10px;bottom:10px;z-index:2001;min-height:64px;box-sizing:border-box;align-items:stretch;gap:5px;padding:6px;border:1px solid rgba(244,239,230,.12);border-radius:18px;background:linear-gradient(180deg,rgba(20,24,31,.96),rgba(9,12,17,.96));box-shadow:0 18px 48px rgba(0,0,0,.34),0 5px 16px rgba(0,0,0,.2);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);overflow-x:auto;overflow-y:hidden;justify-content:flex-start;scrollbar-width:none;direction:rtl;overscroll-behavior-x:contain}
 .admin-mobile-nav::-webkit-scrollbar{display:none}
-.admin-mobile-nav button,.admin-mobile-site{position:relative;flex:0 0 68px;min-width:68px;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 5px;border:1px solid transparent;border-radius:13px;background:transparent;color:rgb(247 245 239 / .56);font:inherit;font-size:.65rem;font-weight:600;line-height:1.2;cursor:pointer;white-space:nowrap;text-decoration:none;transition:background .16s ease,border-color .16s ease,color .16s ease,transform .16s ease}
+.admin-mobile-nav button,.admin-mobile-site{position:relative;flex:0 0 68px;min-width:68px;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 5px;border:1px solid transparent;border-radius:13px;background:transparent;color:rgb(247 245 239 / .56);font:inherit;font-size:.65rem;font-weight:600;line-height:1.45;cursor:pointer;white-space:nowrap;text-decoration:none;transition:background .16s ease,border-color .16s ease,color .16s ease,transform .16s ease}
 .admin-mobile-nav button svg,.admin-mobile-site svg{flex:0 0 auto;opacity:.82}
 .admin-mobile-nav button:hover,.admin-mobile-site:hover{background:rgba(255,255,255,.055);color:#f7f5ef}
 .admin-mobile-nav button:active,.admin-mobile-site:active{transform:scale(.97)}
@@ -131,12 +131,12 @@ export const ADMIN_CSS = `
 
 .admin-music-manager{display:flex;flex-direction:column;gap:16px}
 .admin-music-head h2{margin:0;font-size:1.05rem}
-.admin-music-head p{margin:6px 0 0;color:rgb(247 245 239 / .56);font-size:.82rem;line-height:1.8}
+.admin-music-head p{margin:6px 0 0;color:var(--subtle);font-size:.82rem;line-height:1.8}
 .admin-music-upload{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px;align-items:end}
 .admin-music-upload .admin-music-file{display:flex;flex-direction:column;gap:6px}
-.admin-music-file>span{color:rgb(247 245 239 / .68);font-size:.8rem;font-weight:600}
-.admin-music-file input{width:100%;min-height:46px;padding:9px 10px;border:1px solid rgba(244,239,230,.1);border-radius:12px;background:rgba(255,255,255,.03);color:rgb(247 245 239 / .68);font:inherit}
-.admin-music-file small{color:rgb(247 245 239 / .56);font-size:.74rem;line-height:1.6}
+.admin-music-file>span{color:var(--muted);font-size:.8rem;font-weight:600}
+.admin-music-file input{width:100%;min-height:46px;padding:9px 10px;border:1px solid rgba(244,239,230,.1);border-radius:12px;background:rgba(255,255,255,.03);color:var(--fg);font:inherit}
+.admin-music-file small{color:var(--subtle);font-size:.74rem;line-height:1.6}
 .admin-music-upload>.btn-gold{min-height:46px;width:max-content}
 .admin-music-list{display:flex;flex-direction:column}
 .admin-music-row{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 16px;border-bottom:1px solid rgba(244,239,230,.06)}
@@ -144,7 +144,7 @@ export const ADMIN_CSS = `
 .admin-music-main{min-width:0}
 .admin-music-title-row{display:flex;align-items:center;gap:8px;min-width:0}
 .admin-music-title-row strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem}
-.admin-music-main>span{display:block;margin-top:4px;color:rgb(247 245 239 / .56);font-size:.78rem}
+.admin-music-main>span{display:block;margin-top:4px;color:var(--subtle);font-size:.78rem}
 .admin-music-active,.admin-music-inactive{display:inline-flex;flex-shrink:0;padding:2px 7px;border-radius:999px;font-size:.68rem;font-weight:700}
 .admin-music-active{background:rgba(247,245,239,.16);color:#f7f5ef}
 .admin-music-inactive{background:rgba(154,163,178,.14);color:rgb(247 245 239 / .52)}
@@ -172,17 +172,15 @@ export const ADMIN_CSS = `
 .admin-lead-phone{display:inline-flex;align-items:center;gap:6px;margin-top:7px;color:#f7f5ef;text-decoration:none;direction:ltr}
 .admin-lead-main>p{margin:6px 0;color:rgb(247 245 239 / .52);font-size:.8rem;line-height:1.8}
 .admin-lead-main>small{display:block;margin-top:8px;color:rgb(247 245 239 / .48)}
-.admin-lead-note{margin-top:8px;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.03);color:rgb(247 245 239 / .68);font-size:.8rem;line-height:1.8}
+.admin-lead-note{margin-top:8px;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.03);color:var(--muted);font-size:.8rem;line-height:1.8}
 .admin-lead-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .admin-lead-status-select{min-height:36px;border:1px solid rgba(244,239,230,.1);border-radius:10px;background:#111315;color:#f7f5ef;padding:7px 10px;font:inherit;font-size:.78rem}
 
 @media (max-width:960px){
-  .admin-sidebar{display:none}
   .admin-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .admin-property-card{grid-template-columns:72px 1fr;gap:12px}
   .admin-property-actions{grid-column:1/-1;justify-content:flex-start;padding-top:4px}
   .admin-form-grid{grid-template-columns:1fr}
-  .admin-mobile-nav{display:flex}
   .admin-content{padding:16px 14px 96px}
   .admin-topbar{padding:12px 14px}
   .admin-sticky-bar{padding:10px 14px calc(10px + env(safe-area-inset-bottom))}
@@ -363,7 +361,7 @@ export const ADMIN_CSS = `
 .admin-quality{display:flex;align-items:center;gap:10px;margin-top:14px}
 .admin-quality-bar{height:8px;flex:1;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
 .admin-quality-bar span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#f7f5ef,rgb(247 245 239 / .72),#f7f5ef)}
-.admin-quality-score{font-size:.78rem;color:#f7f5ef;font-weight:700;min-width:42px;text-align:center}
+.admin-quality-score{font-size:.78rem;color:var(--fg);font-weight:700;min-width:42px;text-align:center}
 .admin-seo-preview small{display:block;color:rgb(247 245 239 / .56);font-size:.72rem;margin-bottom:6px}
 .admin-seo-preview strong{display:block;color:rgb(247 245 239 / .78);font-size:.95rem;line-height:1.7}
 .admin-seo-preview p{margin:8px 0 0;color:rgb(247 245 239 / .68);font-size:.78rem;line-height:1.85}
@@ -495,8 +493,6 @@ export const ADMIN_CSS = `
   .admin-property-actions{grid-column:1/-1;justify-content:flex-start}
 }
 @media (max-width:640px){
-  .admin-sidebar{display:none}
-  .admin-mobile-nav{display:flex}
   .admin-content{padding:12px 12px 92px}
   .admin-topbar{padding:12px 14px}
   .admin-topbar-actions{width:100%}
@@ -606,15 +602,12 @@ export const ADMIN_CSS = `
   box-shadow:0 0 0 3px rgba(154,106,58,.14)!important;
 }
 .admin-section .field>span,.admin-field label{font-weight:700!important;color:#344054!important}
-.admin-main .admin-dashboard *,
-.admin-main .admin-music-manager *,
-.admin-main .admin-lead-manager *,
-.admin-main .divar-wrap *,
-.admin-main [class*="admin-partner"] *,
-.admin-main .admin-section *,
-.admin-main .admin-panel *{
-  color:#172033;
-}
+/* The legacy "every descendant is #172033" rule used to sit here and was
+   removed on purpose: a blanket colour on the universal selector outranks
+   inheritance, so any explicit accent on a control (the active divar tab, a
+   selected chip, a brass counter) was silently repainted and ended up
+   invisible on its own dark background. Every container above already carries
+   this colour, so descendants inherit it and component colours win again. */
 .admin-main .admin-dashboard h1,.admin-main .admin-dashboard h2,.admin-main .admin-dashboard h3,
 .admin-main .admin-music-manager h1,.admin-main .admin-music-manager h2,.admin-main .admin-music-manager h3,
 .admin-main .admin-lead-manager h1,.admin-main .admin-lead-manager h2,.admin-main .admin-lead-manager h3,
@@ -840,7 +833,7 @@ export const ADMIN_CSS = `
    Hirmand Admin 3.0 — canonical light workspace
    ========================================================================== */
 .admin-app{min-height:100vh!important;background:var(--paper,#f7f4ee)!important;color:var(--fg,#152430)!important}
-.admin-sidebar{width:258px!important;background:linear-gradient(180deg,var(--navy-950,#081320),var(--navy-900,#0b1a2b))!important;border-left:0!important;box-shadow:8px 0 32px rgb(8 19 32 / 12%)!important}
+.admin-sidebar{width:var(--admin-rail)!important;background:linear-gradient(180deg,var(--navy-950,#081320),var(--navy-900,#0b1a2b))!important;border-left:0!important;box-shadow:8px 0 32px rgb(8 19 32 / 12%)!important}
 .admin-sidebar-brand{min-height:82px;padding:18px 17px!important;border-color:rgb(255 255 255 / 10%)!important}
 .admin-sidebar-brand .brand-logo-nav{width:45px!important;height:45px!important;filter:drop-shadow(0 8px 18px rgb(192 138 42 / 18%))!important}
 .admin-sidebar-brand strong{color:#fff!important}.admin-sidebar-brand small{color:rgb(255 255 255 / 58%)!important}
@@ -891,7 +884,7 @@ export const ADMIN_CSS = `
 .admin-section .field>span,.admin-field label{color:#344054!important;font-weight:800!important}.admin-section .field input,.admin-section .field select,.admin-section .field textarea,.admin-main input,.admin-main select,.admin-main textarea{min-height:46px;background:#fff!important;color:#132333!important;border:1px solid #cbd5df!important}.admin-section .field textarea{line-height:1.9}
 .admin-checks{gap:9px 10px!important}.admin-checks label{background:#f8fafc!important;color:#344054!important;border-color:#dce3e9!important;border-radius:11px!important}.admin-checks label:hover{border-color:#c3ccd5!important;background:#f4f7f9!important}.admin-checks input{accent-color:var(--brass-600,#a96f18)!important}
 .admin-field-help{display:block;margin-top:5px;color:#66717d!important;font-size:.72rem!important;line-height:1.8}
-.admin-sticky-bar{left:258px!important;padding:10px 22px!important;background:rgb(255 255 255 / 95%)!important;border-top:1px solid #d9e1e8!important;box-shadow:0 -10px 26px rgb(16 24 40 / 7%)!important}.admin-sticky-bar-info{color:#66717d!important}.admin-sticky-bar-info strong{color:#122333!important}
+.admin-sticky-bar{inset-inline-start:var(--admin-rail)!important;padding:10px 22px!important;background:rgb(255 255 255 / 95%)!important;border-top:1px solid #d9e1e8!important;box-shadow:0 -10px 26px rgb(16 24 40 / 7%)!important}.admin-sticky-bar-info{color:#66717d!important}.admin-sticky-bar-info strong{color:#122333!important}
 .btn-gold{background:linear-gradient(135deg,#8a5e14,#c08a2a)!important;color:#fff!important;border-color:#8a5e14!important;box-shadow:0 9px 20px rgb(138 94 20 / 20%)!important}.btn-gold:hover{filter:saturate(1.08) brightness(1.03)!important}
 .btn-ghost{background:#fff!important;color:#253545!important;border-color:#cbd5df!important}.btn-ghost:hover{color:#122333!important;background:#f7f9fb!important;border-color:#aeb9c4!important}
 .admin-media-drop{border-color:#d5bf9e!important;background:linear-gradient(145deg,#fffaf2,#fbfcfd)!important;color:#66717d!important}.admin-media-drop strong{color:#344054!important}.admin-media-drop.is-over{border-color:var(--brass-600,#a96f18)!important;background:#fff7e8!important}
@@ -905,8 +898,8 @@ export const ADMIN_CSS = `
 .admin-login{background:radial-gradient(circle at 50% 0%,rgb(192 138 42 / 14%),transparent 28rem),linear-gradient(145deg,var(--navy-950,#081320),var(--navy-900,#0b1a2b))!important}.admin-login-card{background:#fff!important;border-color:#dfe5eb!important}.admin-login-card .kicker{color:#8a5e14!important}.admin-login-card h1{color:#122333!important}.admin-login-card p{color:#66717d!important}.admin-key-row input{background:#fff!important;color:#122333!important;border-color:#cbd5df!important}
 .admin-mobile-nav{left:9px!important;right:9px!important;bottom:max(9px,env(safe-area-inset-bottom))!important;background:rgb(255 255 255 / 97%)!important;border:1px solid #d4dce4!important;box-shadow:0 16px 42px rgb(16 24 40 / 16%)!important}.admin-mobile-nav button,.admin-mobile-site{color:#66717d!important}.admin-mobile-nav button.is-active{color:#122333!important;background:#fff8ed!important;border-color:#ead8bd!important}.admin-mobile-nav button.is-active::after{background:#c08a2a!important}.admin-mobile-site{background:#f4f7f9!important;color:#344054!important}
 .admin-main *{box-sizing:border-box}.admin-main a{overflow-wrap:anywhere}.admin-main button,.admin-main select,.admin-main input,.admin-main textarea{max-width:100%}
-@media (max-width:1100px){.admin-sidebar{width:228px!important}.admin-sticky-bar{left:228px!important}.admin-content{padding:22px 20px 104px!important}.admin-dashboard-grid{grid-template-columns:1fr!important}.admin-property-card{grid-template-columns:28px 76px minmax(0,1fr)!important}.admin-property-actions{grid-column:2/-1!important;justify-content:flex-start!important}.admin-property-thumb{width:76px!important;height:60px!important}.admin-filter-row{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
-@media (max-width:640px){.admin-sidebar{display:none!important}.admin-sticky-bar{left:0!important}.admin-content{padding:12px 11px 102px!important}.admin-topbar{padding:11px 13px!important;align-items:flex-start!important}.admin-topbar h1{font-size:1rem!important}.admin-topbar p{font-size:.72rem!important;line-height:1.7!important}.admin-topbar-actions{width:100%!important}.admin-topbar-actions>*{flex:1 1 0!important;min-width:0}.admin-stats-grid,.admin-dashboard-stats{grid-template-columns:1fr 1fr!important;gap:9px!important}.admin-stat-card{min-height:92px!important;padding:13px 11px!important}.admin-stat-card strong{font-size:1.2rem!important}.admin-property-card{grid-template-columns:24px 58px minmax(0,1fr)!important;padding:11px!important;gap:9px!important}.admin-property-thumb{width:58px!important;height:50px!important}.admin-property-meta h3{font-size:.83rem!important}.admin-property-meta p{font-size:.71rem!important}.admin-property-actions{grid-column:1/-1!important;justify-content:flex-start!important}.admin-property-actions .admin-icon-btn{width:34px!important;height:34px!important}.admin-filter-row{grid-template-columns:1fr!important}.admin-list-toolbar{width:100%!important}.admin-search{min-width:0!important;width:100%!important}.admin-panel-head{padding:12px 13px!important}.admin-section{padding:15px!important;border-radius:16px!important}.admin-form-grid{grid-template-columns:1fr!important}.admin-span-2{grid-column:auto!important}.admin-sticky-bar{padding:9px 11px max(9px,env(safe-area-inset-bottom))!important}.admin-sticky-bar-info{display:none}.admin-sticky-actions{width:100%!important;display:grid!important;grid-template-columns:1fr 1.25fr!important}.admin-mobile-nav{min-height:61px!important}.admin-mobile-nav button,.admin-mobile-site{flex-basis:64px!important;min-width:64px!important;font-size:.61rem!important}}
+@media (max-width:1100px){.admin-content{padding:22px 20px 104px!important}.admin-dashboard-grid{grid-template-columns:1fr!important}.admin-property-card{grid-template-columns:28px 76px minmax(0,1fr)!important}.admin-property-actions{grid-column:2/-1!important;justify-content:flex-start!important}.admin-property-thumb{width:76px!important;height:60px!important}.admin-filter-row{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media (max-width:640px){.admin-sidebar{display:none!important}.admin-content{padding:12px 11px 102px!important}.admin-topbar{padding:11px 13px!important;align-items:flex-start!important}.admin-topbar h1{font-size:1rem!important}.admin-topbar p{font-size:.72rem!important;line-height:1.7!important}.admin-topbar-actions{width:100%!important}.admin-topbar-actions>*{flex:1 1 0!important;min-width:0}.admin-stats-grid,.admin-dashboard-stats{grid-template-columns:1fr 1fr!important;gap:9px!important}.admin-stat-card{min-height:92px!important;padding:13px 11px!important}.admin-stat-card strong{font-size:1.2rem!important}.admin-property-card{grid-template-columns:24px 58px minmax(0,1fr)!important;padding:11px!important;gap:9px!important}.admin-property-thumb{width:58px!important;height:50px!important}.admin-property-meta h3{font-size:.83rem!important}.admin-property-meta p{font-size:.71rem!important}.admin-property-actions{grid-column:1/-1!important;justify-content:flex-start!important}.admin-property-actions .admin-icon-btn{width:34px!important;height:34px!important}.admin-filter-row{grid-template-columns:1fr!important}.admin-list-toolbar{width:100%!important}.admin-search{min-width:0!important;width:100%!important}.admin-panel-head{padding:12px 13px!important}.admin-section{padding:15px!important;border-radius:16px!important}.admin-form-grid{grid-template-columns:1fr!important}.admin-span-2{grid-column:auto!important}.admin-sticky-bar{padding:9px 11px max(9px,env(safe-area-inset-bottom))!important}.admin-sticky-bar-info{display:none}.admin-sticky-actions{width:100%!important;display:grid!important;grid-template-columns:1fr 1.25fr!important}.admin-mobile-nav{min-height:61px!important}.admin-mobile-nav button,.admin-mobile-site{flex-basis:64px!important;min-width:64px!important;font-size:.61rem!important}}
 @media (max-width:390px){.admin-stats-grid,.admin-dashboard-stats{grid-template-columns:1fr!important}.admin-mobile-nav{overflow-x:auto!important}}
 @media (prefers-reduced-motion:reduce){.admin-main *,.admin-main *::before,.admin-main *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important}}
 
@@ -1003,8 +996,11 @@ export const ADMIN_CSS = `
 /* ==========================================================================
    Hirmand Admin 3.1 — workflow polish
    ========================================================================== */
-.admin-main .admin-mobile-nav.is-form-active{display:none!important}
-.admin-main .admin-sticky-bar{z-index:2100!important}
+/* The quick nav is a sibling of .admin-main (it is position:fixed to the
+   viewport), so a ".admin-main" prefix could never match it and the bottom
+   bar stayed on screen under the save bar while editing a property. */
+.admin-mobile-nav.is-form-active{display:none!important}
+.admin-sticky-bar{z-index:2100!important}
 .admin-main .admin-sticky-bar .btn-gold:disabled,
 .admin-main .admin-sticky-bar .btn-ghost:disabled{opacity:.55!important;cursor:not-allowed!important}
 .admin-main .admin-nav-btn:focus-visible,
@@ -1020,7 +1016,7 @@ export const ADMIN_CSS = `
 .admin-main .admin-property-actions .admin-icon-btn{flex:0 0 auto}
 .admin-main .admin-empty{min-height:180px;display:grid;gap:8px;align-content:center;justify-items:center;text-align:center}
 @media(max-width:640px){
-  .admin-main .admin-sticky-bar{left:0!important;right:0!important}
+  .admin-main .admin-sticky-bar{inset-inline:0!important}
   .admin-main .admin-form-wrap{padding-bottom:78px!important}
   .admin-main .admin-property-card{content-visibility:visible}
 }
@@ -1111,6 +1107,9 @@ export const ADMIN_CSS = `
   --brass-600:#8a5e14;
   --brass-700:#7a5414;
   --navy-900:#0b1a2b;
+  /* Width of the desktop rail. The sidebar and the fixed save bar both read
+     it, so they can no longer drift apart at a breakpoint. */
+  --admin-rail:258px;
   color-scheme:light;
 }
 .admin-app .admin-money-hint,
@@ -1262,8 +1261,32 @@ export const ADMIN_CSS = `
 .admin-icon-btn.is-busy svg{animation:admin-spin .8s linear infinite}
 
 /* --- Topbar + drawer trigger -------------------------------------------- */
+/* The drawer is a modal, so its own geometry is not width-conditional: it is
+   mounted by React only while open. Keeping the rules outside a media query
+   is what stops a 901-960px window (wider than the drawer breakpoint, hidden
+   sidebar) from rendering it as an unstyled block inside the shell. */
 .admin-drawer-trigger{display:none}
-.admin-drawer-overlay{display:none}
+.admin-drawer-overlay{
+  position:fixed;inset:0;z-index:3100;display:block;
+  background:rgb(11 26 43 / .5);backdrop-filter:blur(4px);
+  animation:admin-fade .14s ease-out;
+}
+.admin-drawer{
+  position:fixed;inset-block:0;inset-inline-end:0;z-index:3101;
+  width:min(86vw,320px);display:flex;flex-direction:column;
+  /* Same navy rail as the desktop sidebar: the drawer IS the sidebar, so it
+     inherits its dark-surface tokens and the white nav labels stay legible. */
+  background:linear-gradient(180deg,var(--navy-950,#081320),var(--navy-900,#0b1a2b));
+  color:#fff;
+  border-inline-start:1px solid rgb(255 255 255 / .1);
+  box-shadow:-24px 0 60px rgb(11 26 43 / .38);
+  animation:admin-drawer-in .2s ease-out;
+}
+@keyframes admin-drawer-in{from{transform:translateX(-100%)}to{transform:none}}
+.admin-drawer .admin-sidebar-brand{padding:18px 16px}
+.admin-drawer .admin-sidebar-nav{overflow-y:auto;flex:1}
+.admin-drawer .admin-nav-btn{color:rgb(255 255 255 / .72)}
+.admin-drawer .admin-nav-btn.is-active{color:#fff}
 .admin-section-nav{
   position:sticky;top:0;z-index:15;
   display:flex;gap:8px;flex-wrap:wrap;align-items:center;
@@ -1274,15 +1297,21 @@ export const ADMIN_CSS = `
   display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:999px;
   border:1px solid var(--line);background:#fff;
   color:var(--muted);text-decoration:none;font-size:.78rem;font-weight:600;
+  /* Chips are a scrolling row on a phone: without this they shrink to one
+     Persian word per line instead of staying tappable. */
+  flex:0 0 auto;white-space:nowrap;
 }
 .admin-section-nav a:hover{border-color:var(--brass-600);color:var(--fg);background:var(--brass-100)}
 
 @media(max-width:1100px){
   .admin-content{padding:18px}
-  .admin-sidebar{width:212px}
   .admin-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:900px){
+  /* Single source of truth for the rail: the sticky save bar is a child of
+     .admin-main, so its offset has to follow the sidebar width instead of
+     repeating the same pixel value in two places. */
+  .admin-app{--admin-rail:0px}
   .admin-app{flex-direction:column}
   .admin-sidebar{display:none}
   .admin-topbar{padding:12px 16px}
@@ -1292,41 +1321,22 @@ export const ADMIN_CSS = `
     width:44px;height:44px;border-radius:12px;
     border:1px solid var(--line);background:#fff;color:var(--navy-900);cursor:pointer;
   }
-  .admin-drawer-overlay{
-    display:block;position:fixed;inset:0;z-index:3100;
-    background:rgb(11 26 43 / .5);backdrop-filter:blur(4px);
-    animation:admin-fade .14s ease-out;
-  }
-  .admin-drawer{
-    position:fixed;inset-block:0;inset-inline-end:0;z-index:3101;
-    width:min(86vw,320px);display:flex;flex-direction:column;
-    background:linear-gradient(180deg,#ffffff,#f7f4ee);
-    border-inline-start:1px solid var(--line);
-    box-shadow:-24px 0 60px rgb(11 26 43 / .28);
-    animation:admin-drawer-in .2s ease-out;
-  }
-  @keyframes admin-drawer-in{from{transform:translateX(-100%)}to{transform:none}}
-  .admin-drawer .admin-sidebar-brand{padding:18px 16px}
-  .admin-drawer .admin-sidebar-nav{overflow-y:auto;flex:1}
-  .admin-mobile-nav{display:none}
-  .admin-sticky-bar{left:0;right:0;padding:10px 16px}
-}
-@media(max-width:640px){
+  .admin-mobile-nav{display:flex}
+  .admin-sticky-bar{inset-inline:0;padding:10px 16px}
+}@media(max-width:640px){
   .admin-content{padding:14px}
   .admin-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .admin-stat-card{padding:14px 12px}
   .admin-stat-card strong{font-size:1.3rem}
   .admin-panel-head{padding:14px}
-  .admin-property-card{grid-template-columns:64px 1fr;gap:12px;padding:12px 14px}
-  .admin-property-thumb{width:64px;height:52px}
-  .admin-property-actions{grid-column:1/-1;justify-content:flex-start}
+  /* Row geometry at this width is owned by the 3.0 block above (24px/58px
+     track + 58x50 thumb). The old 64px copy here could never win and only
+     made the cascade harder to reason about. */
   .admin-pagination{padding:14px}
   .admin-pagination-pages{width:100%;justify-content:center}
   .admin-dialog{padding:20px;border-radius:18px}
   .admin-dialog-actions{flex-direction:column-reverse}
   .admin-dialog-actions .btn-gold,.admin-dialog-actions .btn-ghost,.admin-dialog-actions .btn-danger-solid{width:100%}
-  .admin-mobile-nav{left:6px;right:6px;bottom:6px;min-height:58px}
-  .admin-mobile-nav button,.admin-mobile-site{flex:0 0 62px;min-width:62px;min-height:48px}
   .admin-section-nav{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
   .admin-section-nav::-webkit-scrollbar{display:none}
 }

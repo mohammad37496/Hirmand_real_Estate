@@ -43,7 +43,7 @@ function today(){return new Date().toISOString().slice(0,10);}
 
 export function PropertyDealRoom({property}:{property:Property}){
  const [s,setS]=useState<State>(()=>read(property.id)),[old,setOld]=useState(()=>legacy(property.id)),[payment,setPayment]=useState(()=>pay(property.id)),[negCount,setNegCount]=useState(()=>neg(property.id));
- useEffect(()=>{try{localStorage.setItem(KEY+property.id,JSON.stringify(s));}catch{}},[property.id,s]);
+ useEffect(()=>{try{localStorage.setItem(KEY+property.id,JSON.stringify(s));}catch{/* Storage may be blocked; the in-memory checklist still works. */}},[property.id,s]);
  useEffect(()=>{const sync=()=>{setOld(legacy(property.id));setPayment(pay(property.id));setNegCount(neg(property.id));};window.addEventListener("storage",sync);const t=window.setInterval(sync,1500);return()=>{window.removeEventListener("storage",sync);window.clearInterval(t);};},[property.id]);
  const idx=STAGES.indexOf(s.stage),items=useMemo(()=>s.items.filter(x=>x.stage===s.stage),[s.items,s.stage]),req=items.filter(x=>x.required),allReq=s.items.filter(x=>x.required),done=req.filter(x=>x.status==="تکمیل").length,allDone=allReq.filter(x=>x.status==="تکمیل").length,open=s.items.filter(x=>x.status!=="تکمیل"),overdue=open.filter(x=>x.dueDate&&x.dueDate<today()).length,next=open.map(x=>x.dueDate).filter(Boolean).sort()[0]||"",pct=allReq.length?Math.round(allDone/allReq.length*100):0,can=idx<5&&req.every(x=>x.status==="تکمیل"),linkedDate=payment.a||payment.b;
  const patch=(idv:string,p:Partial<Item>)=>setS(c=>({...c,items:c.items.map(x=>x.id===idv?{...x,...p}:x)}));
@@ -74,7 +74,7 @@ export function PropertyDealRoom({property}:{property:Property}){
    </div>
    <button type="button" className="property-deal-room-remove" onClick={()=>setS(c=>({...c,items:c.items.filter(i=>i.id!==x.id)}))} aria-label="حذف مورد"><Trash2 size={15}/></button>
   </article>)}</div>
-  <div className="property-deal-room-footer"><button type="button" className="btn-ghost" onClick={()=>setS(c=>({...c,items:[...c.items,{id:id(),title:"مورد جدید",stage:c.stage,category:"پیگیری",status:"باز",required:false,note:"",dueDate:""}].slice(0,50)}))}><Plus size={15}/> افزودن مورد</button>
+  <div className="property-deal-room-footer"><button type="button" className="btn-ghost" onClick={()=>setS(c=>{const item:Item={id:id(),title:"مورد جدید",stage:c.stage,category:"پیگیری",status:"باز",required:false,note:"",dueDate:""};return {...c,items:[...c.items,item].slice(0,50)};})}><Plus size={15}/> افزودن مورد</button>
    <div className="property-deal-room-next"><span><ListChecks size={15}/> مرحله بعد فقط با تکمیل موارد ضروری فعال است.</span>{idx<5?<button type="button" className="btn-gold" disabled={!can} onClick={()=>setS(c=>({...c,stage:STAGES[idx+1]}))}><ChevronLeft size={15}/> انتقال به {LABEL[STAGES[idx+1]]}</button>:<span className="property-deal-room-complete"><Check size={15}/> آخرین مرحله</span>}</div>
   </div>
  </section>;

@@ -269,6 +269,9 @@ export default defineEventHandler(async (event) => {
         acquisitionReferrer: row.acquisition_referrer == null ? null : String(row.acquisition_referrer),
         followUpAt: row.follow_up_at == null ? null : new Date(String(row.follow_up_at)).toISOString(),
         propertyId: row.property_id == null ? null : String(row.property_id),
+        callbackPreferredAt: row.callback_preferred_at == null ? null : new Date(String(row.callback_preferred_at)).toISOString(),
+        offerAmount: row.offer_amount == null ? null : Number(row.offer_amount),
+        offerConditions: String(row.offer_conditions ?? ""),
         visitPreferredAt: row.visit_preferred_at == null ? null : new Date(String(row.visit_preferred_at)).toISOString(),
         visitRequestedAt: row.visit_requested_at == null ? null : new Date(String(row.visit_requested_at)).toISOString(),
         visitStatus:

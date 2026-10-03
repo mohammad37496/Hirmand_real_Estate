@@ -12,6 +12,10 @@ export type AnalyticsEvent =
   | "search_share"
   | "property_search"
   | "property_price_watch"
+  | "property_price_target"
+  | "property_expert_request"
+  | "property_verification_request"
+  | "viewing_cta_jump"
   | "visit_request_click"
   | "visit_request"
   | "property_report";
