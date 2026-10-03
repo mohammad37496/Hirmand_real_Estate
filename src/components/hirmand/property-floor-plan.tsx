@@ -104,7 +104,8 @@ export function PropertyFloorPlan({ property }: { property: Property }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
   const activeRoom = rooms.find((room) => room.id === activeId) ?? null;
-  const hasRealPlan = Boolean(property.floorPlanUrl?.trim());
+  const floorPlanUrl = property.floorPlanUrl?.trim() ?? "";
+  const hasRealPlan = Boolean(floorPlanUrl);
 
   useEffect(() => {
     if (!lightboxOpen) return;
@@ -165,7 +166,7 @@ export function PropertyFloorPlan({ property }: { property: Property }) {
         <div className="property-floor-plan-real">
           <button type="button" className="property-floor-plan-real-image-button" onClick={openPlan} aria-label="مشاهده پلان واقعی در اندازه بزرگ">
             <img
-              src={property.floorPlanUrl}
+              src={floorPlanUrl}
               alt={"پلان واقعی " + property.title}
               loading="lazy"
               decoding="async"
@@ -236,7 +237,7 @@ export function PropertyFloorPlan({ property }: { property: Property }) {
           </button>
           <div className="property-floor-plan-lightbox-stage" onClick={(event) => event.stopPropagation()}>
             <img
-              src={property.floorPlanUrl}
+              src={floorPlanUrl}
               alt={"پلان واقعی " + property.title}
               style={{ transform: "scale(" + zoom + ")" }}
             />
@@ -247,7 +248,7 @@ export function PropertyFloorPlan({ property }: { property: Property }) {
             <button type="button" onClick={() => changeZoom(0.25)} disabled={zoom >= 3} aria-label="بزرگ‌نمایی"><ZoomIn size={17} /></button>
             <button type="button" onClick={() => setZoom(1)} aria-label="بازنشانی اندازه"><RotateCcw size={16} /></button>
           </div>
-          <p className="property-floor-plan-lightbox-note">{isInternalMediaUrl(property.floorPlanUrl) ? "پلان واقعی ذخیره‌شده در سامانه هیرمند" : "پلان ثبت‌شده برای این فایل"}</p>
+          <p className="property-floor-plan-lightbox-note">{isInternalMediaUrl(floorPlanUrl) ? "پلان واقعی ذخیره‌شده در سامانه هیرمند" : "پلان ثبت‌شده برای این فایل"}</p>
         </div>
       ) : null}
     </section>
