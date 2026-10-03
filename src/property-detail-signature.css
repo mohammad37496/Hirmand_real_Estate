@@ -4,7 +4,6 @@
    - enforce a professional reading order independent of component DOM order
    - keep specs directly after the hero
    - move optional plan/nearby/tools below core property information
-   - redesign the detail-page footer using existing Hirmand theme tokens
    ========================================================================== */
 
 body:has(.property-detail-page) {
@@ -310,8 +309,6 @@ body:has(.property-detail-page) .property-detail-page .property-related .propert
   gap: 14px !important;
 }
 
-/* The public footer intentionally uses the exact shared homepage footer styles. */
-
 /* Responsive */
 @media (max-width: 1100px) {
   body:has(.property-detail-page) .property-detail-page .property-detail-top {
@@ -324,10 +321,6 @@ body:has(.property-detail-page) .property-detail-page .property-related .propert
 
   body:has(.property-detail-page) .property-detail-page .property-detail-content {
     grid-template-columns: 1fr !important;
-  }
-
-  body:has(.property-detail-page) .footer-main {
-    grid-template-columns: minmax(260px, 1.2fr) repeat(2, minmax(160px, 1fr)) !important;
   }
 }
 
@@ -377,40 +370,6 @@ body:has(.property-detail-page) .property-detail-page .property-related .propert
     grid-template-columns: auto minmax(0, 1fr) !important;
     padding: 13px !important;
   }
-
-  body:has(.property-detail-page) .footer {
-    padding: 0 12px 18px !important;
-  }
-
-  body:has(.property-detail-page) .footer-shell {
-    padding: 22px 16px 15px !important;
-    border-radius: 20px !important;
-  }
-
-  body:has(.property-detail-page) .footer-main {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 23px 18px !important;
-  }
-
-  body:has(.property-detail-page) .footer-brand {
-    grid-column: 1 / -1 !important;
-  }
-
-  body:has(.property-detail-page) .footer-action {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
-    padding: 16px !important;
-  }
-
-  body:has(.property-detail-page) .footer .footer-cta {
-    width: 100% !important;
-  }
-
-  body:has(.property-detail-page) .footer-bottom {
-    align-items: flex-start !important;
-    flex-direction: column !important;
-    gap: 5px !important;
-  }
 }
 
 @media (max-width: 420px) {
@@ -425,13 +384,5 @@ body:has(.property-detail-page) .property-detail-page .property-related .propert
 
   body:has(.property-detail-page) .property-detail-page .property-spec-grid > div {
     min-height: 70px !important;
-  }
-
-  body:has(.property-detail-page) .footer-main {
-    grid-template-columns: 1fr !important;
-  }
-
-  body:has(.property-detail-page) .footer-brand {
-    grid-column: auto !important;
   }
 }
