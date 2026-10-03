@@ -1982,6 +1982,18 @@ summary:focus-visible {
 .team-social:nth-child(4) {
   --social-brand: #e1306c;
 }
+.team-social:nth-child(5) {
+  --social-brand: #7c3aed;
+}
+.team-social:nth-child(6) {
+  --social-brand: #1976d2;
+}
+.team-social:nth-child(7) {
+  --social-brand: #2479f5;
+}
+.team-social:nth-child(8) {
+  --social-brand: #20a96b;
+}
 
 .team-social::before {
   background: var(--social-brand);
