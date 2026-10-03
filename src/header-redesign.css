@@ -173,8 +173,9 @@
 
 .header-redesign .nav-tools-dropdown{
   top:calc(100% + 10px);
-  inset-inline-start:50%;
-  transform:translateX(50%) translateY(-4px);
+  inset-inline-end:0;
+  inset-inline-start:auto;
+  transform:translateY(-4px);
   width:min(500px,calc(100vw - 32px));
   padding:14px;
   border:1px solid var(--header-line);
@@ -184,7 +185,7 @@
 }
 
 .header-redesign .nav-tools-menu:hover .nav-tools-dropdown{
-  transform:translateX(50%) translateY(0);
+  transform:translateY(0);
 }
 
 .header-redesign .nav-tools-dropdown-head{
