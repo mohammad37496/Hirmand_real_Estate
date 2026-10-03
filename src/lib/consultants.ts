@@ -20,6 +20,10 @@ export type Consultant = {
   telegram: string;
   eitaa: string;
   instagram: string;
+  rubika: string;
+  bale: string;
+  igap: string;
+  soroush: string;
   sortOrder: number;
   isActive: boolean;
 };
@@ -36,6 +40,10 @@ type ConsultantRow = {
   telegram: string;
   eitaa: string;
   instagram: string;
+  rubika: string;
+  bale: string;
+  igap: string;
+  soroush: string;
   sort_order: number;
   is_active: boolean;
 };
@@ -53,6 +61,10 @@ function normalize(row: ConsultantRow): Consultant {
     telegram: row.telegram,
     eitaa: row.eitaa,
     instagram: row.instagram,
+    rubika: row.rubika,
+    bale: row.bale,
+    igap: row.igap,
+    soroush: row.soroush,
     sortOrder: row.sort_order,
     isActive: row.is_active,
   };
@@ -71,6 +83,10 @@ function staticConsultants(): Consultant[] {
     telegram: "https://t.me/Hirmand_realestate",
     eitaa: "https://eitaa.com/Hirmand_realestate",
     instagram: "https://ig.me/m/hirmand.realestate",
+    rubika: "",
+    bale: "",
+    igap: "",
+    soroush: "",
     sortOrder: (index + 1) * 10,
     isActive: true,
   }));
@@ -86,7 +102,7 @@ async function requireAdmin() {
 }
 
 const selectColumns =
-  "id, name, role, phone, phone_display, icon, bio, whatsapp, telegram, eitaa, instagram, sort_order, is_active";
+  "id, name, role, phone, phone_display, icon, bio, whatsapp, telegram, eitaa, instagram, rubika, bale, igap, soroush, sort_order, is_active";
 
 export const listConsultants = createServerFn({ method: "GET" }).handler(async () => {
   try {
@@ -127,6 +143,10 @@ const consultantInput = z.object({
   telegram: z.string().trim().max(500),
   eitaa: z.string().trim().max(500),
   instagram: z.string().trim().max(500),
+  rubika: z.string().trim().max(500),
+  bale: z.string().trim().max(500),
+  igap: z.string().trim().max(500),
+  soroush: z.string().trim().max(500),
   sortOrder: z.number().int().min(0).max(100000),
   isActive: z.boolean(),
 });
@@ -149,8 +169,8 @@ export const saveConsultant = createServerFn({ method: "POST" })
     const sql = await getSql();
     await sql.query(
       `insert into consultants
-        (id, name, role, phone, phone_display, icon, bio, whatsapp, telegram, eitaa, instagram, sort_order, is_active, updated_at)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,current_timestamp)
+        (id, name, role, phone, phone_display, icon, bio, whatsapp, telegram, eitaa, instagram, rubika, bale, igap, soroush, sort_order, is_active, updated_at)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,current_timestamp)
        on conflict (id) do update set
         name=excluded.name,
         role=excluded.role,
@@ -162,6 +182,10 @@ export const saveConsultant = createServerFn({ method: "POST" })
         telegram=excluded.telegram,
         eitaa=excluded.eitaa,
         instagram=excluded.instagram,
+        rubika=excluded.rubika,
+        bale=excluded.bale,
+        igap=excluded.igap,
+        soroush=excluded.soroush,
         sort_order=excluded.sort_order,
         is_active=excluded.is_active,
         updated_at=current_timestamp`,
@@ -177,6 +201,10 @@ export const saveConsultant = createServerFn({ method: "POST" })
         data.telegram,
         data.eitaa,
         data.instagram,
+        data.rubika,
+        data.bale,
+        data.igap,
+        data.soroush,
         data.sortOrder,
         data.isActive,
       ],
