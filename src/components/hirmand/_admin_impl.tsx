@@ -123,6 +123,7 @@ import {
   PROPERTY_WALL_CLOSET_OPTIONS,
 } from "@/lib/property-options";
 import { getPublishReadiness } from "@/lib/property-publish-readiness";
+import { ADMIN_ROLE_LABELS, type AdminRole } from "@/lib/admin-roles";
 
 type PublishStatus = "draft" | "published" | "archived";
 const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
@@ -495,6 +496,10 @@ function propertyToForm(property: Property): FormState {
 
 export function AdminPropertiesPage() {
   const [keyInput, setKeyInput] = useState("");
+  const [loginMode, setLoginMode] = useState<"key" | "account">("key");
+  const [usernameInput, setUsernameInput] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
+  const [adminRole, setAdminRole] = useState<AdminRole>("owner");
   const [unlocked, setUnlocked] = useState(false);
   const [sessionChecking, setSessionChecking] = useState(true);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -763,10 +768,11 @@ export function AdminPropertiesPage() {
           body: JSON.stringify({ action: "login" }),
         });
         const data = (await response.json().catch(() => null)) as
-          | { authenticated?: boolean }
+          | { authenticated?: boolean; role?: AdminRole }
           | null;
 
         if (!data?.authenticated || cancelled) return;
+        setAdminRole(data.role ?? "owner");
 
         const [rows, totals, filteredCount] = await Promise.all([
           listAdminProperties({ data: { limit: 50, offset: 0 } }),
@@ -931,8 +937,12 @@ export function AdminPropertiesPage() {
   }
 
   async function unlock(key = keyInput.trim(), showToast = true) {
-    if (!key) {
+    if (loginMode === "key" && !key) {
       toast.error("کلید مدیریت را وارد کنید.");
+      return;
+    }
+    if (loginMode === "account" && (!usernameInput.trim() || !passwordInput)) {
+      toast.error("نام کاربری و رمز عبور را کامل وارد کنید.");
       return;
     }
 
@@ -942,10 +952,14 @@ export function AdminPropertiesPage() {
         method: "POST",
         headers: { "content-type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ action: "login", adminKey: key }),
+        body: JSON.stringify(
+          loginMode === "key"
+            ? { action: "login", adminKey: key }
+            : { action: "login", username: usernameInput.trim(), password: passwordInput },
+        ),
       });
       const sessionData = (await sessionResponse.json().catch(() => null)) as
-        | { authenticated?: boolean; statusMessage?: string; message?: string }
+        | { authenticated?: boolean; role?: AdminRole; statusMessage?: string; message?: string }
         | null;
 
       if (!sessionResponse.ok || !sessionData?.authenticated) {
@@ -964,16 +978,18 @@ export function AdminPropertiesPage() {
       ]);
 
       setKeyInput("");
+      setPasswordInput("");
       setProperties(rows);
       setFilteredTotal(filteredCount);
       setPropertyHasMore(rows.length < filteredCount);
       setServerStats(totals);
+      setAdminRole(sessionData?.role ?? "owner");
       setUnlocked(true);
 
       if (showToast) toast.success("ورود به پنل مدیریت موفق بود.");
     } catch (error) {
       setUnlocked(false);
-      toast.error(adminErrorMessage(error, "کلید مدیریت نادرست است."));
+      toast.error(adminErrorMessage(error, loginMode === "key" ? "کلید مدیریت نادرست است." : "نام کاربری یا رمز عبور نادرست است."));
     } finally {
       setLoadingList(false);
     }
@@ -1005,7 +1021,10 @@ export function AdminPropertiesPage() {
 
       clearDraft(draftKeyRef.current);
       setUnlocked(false);
+      setAdminRole("owner");
       setKeyInput("");
+      setUsernameInput("");
+      setPasswordInput("");
       setProperties([]);
       setPropertyHasMore(false);
       setFilteredTotal(0);
@@ -1607,36 +1626,57 @@ export function AdminPropertiesPage() {
         <div className="admin-login-card">
           <span className="kicker">پنل داخلی هیرمند</span>
           <h1>ورود به مدیریت</h1>
-          <p>برای ورود، کلید مدیریت را وارد کنید. این بخش فقط برای مدیریت داخلی هیرمند است.</p>
+          <p>
+            {loginMode === "key"
+              ? "ورود سریع با کلید اصلی مدیریت."
+              : "با حساب اختصاصی مدیر وارد شوید تا سطح دسترسی شما دقیقاً اعمال شود."}
+          </p>
+          <div className="admin-login-switch" role="tablist" aria-label="روش ورود">
+            <button type="button" className={loginMode === "key" ? "is-active" : ""} onClick={() => setLoginMode("key")}>کلید اصلی</button>
+            <button type="button" className={loginMode === "account" ? "is-active" : ""} onClick={() => setLoginMode("account")}>حساب مدیر</button>
+          </div>
           <form
             onSubmit={(event) => {
               event.preventDefault();
               void unlock();
             }}
           >
-            <label className="field" style={{ marginBottom: 12 }}>
-              <span>کلید مدیریت</span>
-              <input
-                type="password"
-                dir="ltr"
-                autoComplete="current-password"
-                value={keyInput}
-                onChange={(e) => setKeyInput(e.target.value)}
-                placeholder="••••••••••"
-              />
-            </label>
+            {loginMode === "key" ? (
+              <label className="field" style={{ marginBottom: 12 }}>
+                <span>کلید مدیریت</span>
+                <input
+                  type="password"
+                  dir="ltr"
+                  autoComplete="current-password"
+                  value={keyInput}
+                  onChange={(e) => setKeyInput(e.target.value)}
+                  placeholder="••••••••••"
+                />
+              </label>
+            ) : (
+              <>
+                <label className="field" style={{ marginBottom: 12 }}>
+                  <span>نام کاربری</span>
+                  <input dir="ltr" autoComplete="username" value={usernameInput} onChange={(e) => setUsernameInput(e.target.value)} placeholder="operator01" />
+                </label>
+                <label className="field" style={{ marginBottom: 12 }}>
+                  <span>رمز عبور</span>
+                  <input type="password" dir="ltr" autoComplete="current-password" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} placeholder="••••••••••" />
+                </label>
+              </>
+            )}
             <button
               type="submit"
               className="btn-gold"
               style={{ width: "100%" }}
-              disabled={loadingList || !keyInput.trim()}
+              disabled={loadingList || (loginMode === "key" ? !keyInput.trim() : !usernameInput.trim() || !passwordInput)}
             >
               {loadingList ? <RefreshCw size={16} className="admin-spin" /> : <KeyRound size={16} />}
               {loadingList ? "در حال بررسی…" : "ورود"}
             </button>
           </form>
           <p style={{ marginTop: 14, fontSize: ".78rem" }}>
-            پس از چند تلاش ناموفق، ورود موقتاً محدود می‌شود تا کلید قابل حدس نباشد.
+            برای ساخت اولین حساب مستقل، با کلید اصلی وارد شوید و از «امنیت مدیران» یک حساب بسازید.
           </p>
           <div style={{ marginTop: 16, textAlign: "center" }}>
             <Link to="/" className="btn-ghost">
