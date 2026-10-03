@@ -142,6 +142,39 @@ function Hero() {
   const [deal, setDeal] = useState("خرید");
   const [propertyType, setPropertyType] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
+  const [maxBudget, setMaxBudget] = useState("");
+
+  const budgetOptions =
+    deal === "خرید" || deal === "فروش"
+      ? [
+          { value: "2000000000", label: "تا ۲ میلیارد" },
+          { value: "5000000000", label: "تا ۵ میلیارد" },
+          { value: "10000000000", label: "تا ۱۰ میلیارد" },
+          { value: "15000000000", label: "تا ۱۵ میلیارد" },
+          { value: "25000000000", label: "تا ۲۵ میلیارد" },
+          { value: "40000000000", label: "تا ۴۰ میلیارد" },
+          { value: "60000000000", label: "تا ۶۰ میلیارد" },
+          { value: "100000000000", label: "تا ۱۰۰ میلیارد" },
+        ]
+      : deal === "اجاره"
+        ? [
+            { value: "10000000", label: "تا ۱۰ میلیون" },
+            { value: "15000000", label: "تا ۱۵ میلیون" },
+            { value: "20000000", label: "تا ۲۰ میلیون" },
+            { value: "30000000", label: "تا ۳۰ میلیون" },
+            { value: "50000000", label: "تا ۵۰ میلیون" },
+            { value: "80000000", label: "تا ۸۰ میلیون" },
+            { value: "100000000", label: "تا ۱۰۰ میلیون" },
+          ]
+        : [
+            { value: "200000000", label: "تا ۲۰۰ میلیون" },
+            { value: "500000000", label: "تا ۵۰۰ میلیون" },
+            { value: "1000000000", label: "تا ۱ میلیارد" },
+            { value: "2000000000", label: "تا ۲ میلیارد" },
+            { value: "3000000000", label: "تا ۳ میلیارد" },
+            { value: "5000000000", label: "تا ۵ میلیارد" },
+            { value: "10000000000", label: "تا ۱۰ میلیارد" },
+          ];
 
   function searchProperties() {
     const transaction = SERVICES.find((item) => item.title === deal)?.id;
@@ -150,6 +183,7 @@ function Hero() {
     if (transaction) params.set("transaction", transaction);
     if (type) params.set("type", type);
     if (neighborhood) params.set("neighborhood", neighborhood);
+    if (maxBudget) params.set("maxPrice", maxBudget);
     trackAnalyticsEvent("property_search");
     window.location.assign(`/properties${params.toString() ? `?${params.toString()}` : ""}`);
   }
@@ -219,11 +253,30 @@ function Hero() {
               </option>
             ))}
           </select>
+          <label className="sr-only" htmlFor="hero-budget">
+            سقف بودجه
+          </label>
+          <select
+            id="hero-budget"
+            value={maxBudget}
+            onChange={(event) => setMaxBudget(event.target.value)}
+          >
+            <option value="">سقف بودجه</option>
+            {budgetOptions.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </select>
           <button type="submit" className="btn-gold search-submit">
             <Search size={16} />
             جستجوی فایل
           </button>
         </form>
+
+        <p className="hero-search-hint">
+          فیلترهای انتخابی از همان ابتدا روی فایل‌های منتشرشده هیرمند اعمال می‌شوند.
+        </p>
         {/* One primary action, one secondary, one contact affordance.
             The map shortcuts and the "services" anchor both duplicated
             links that already live in the header and in the sections below,
