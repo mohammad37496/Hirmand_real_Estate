@@ -1,8 +1,15 @@
 import { createError, defineEventHandler, getCookie, getQuery, setResponseHeader, type H3Event } from "h3";
 import { dbSource, getSql } from "@/lib/db";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
-async function requireAdmin(event:H3Event){if(!await verifyAdminSessionToken(getCookie(event,ADMIN_SESSION_COOKIE)))throw createError({statusCode:401,statusMessage:"نشست مدیریت معتبر نیست. دوباره وارد پنل شوید."});assertSameOrigin(event);}
+async function requireAdmin(event:H3Event){
+  const token=getCookie(event,ADMIN_SESSION_COOKIE);
+  if(!await verifyAdminSessionToken(token)) throw createError({statusCode:401,statusMessage:"نشست مدیریت معتبر نیست. دوباره وارد پنل شوید."});
+  assertSameOrigin(event);
+  const claims=await getAdminSessionClaims(token);
+  if(!hasAdminPermission(normalizeAdminRole(claims?.role),"backup.manage")) throw createError({statusCode:403,statusMessage:"سطح دسترسی پشتیبان برای این حساب فعال نیست."});
+}
 const TABLES=["properties","leads","lead_activities","finance_transactions","consultants","staff_attendance","admin_tasks","property_change_history","site_events"] as const;
 async function verifyTables(sql:Awaited<ReturnType<typeof getSql>>){return Promise.all(TABLES.map(async(table)=>{const existsRows=await sql.query<{name:string|null}>("select to_regclass($1) as name",[table]).catch(()=>[]);const exists=Boolean(existsRows[0]?.name);const count=exists?Number((await sql.query<{count:number}>(`select count(*)::int as count from ${table}`).catch(()=>[{count:0}]))[0]?.count)||0:0;return {table,exists,count};}));}
 export default defineEventHandler(async(event)=>{await requireAdmin(event);setResponseHeader(event,"cache-control","no-store");if(dbSource==="unconfigured")throw createError({statusCode:503,statusMessage:"پایگاه داده تنظیم نشده است."});const sql=await getSql();const query=getQuery(event) as Record<string,unknown>;
