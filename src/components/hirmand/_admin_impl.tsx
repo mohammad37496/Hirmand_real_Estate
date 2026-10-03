@@ -112,6 +112,8 @@ import { AdminKpiHistory } from "@/components/hirmand/admin-kpi-history";
 import { AdminDataHealth } from "@/components/hirmand/admin-data-health";
 import { AdminDealsManager } from "@/components/hirmand/admin-deals";
 import { AdminPropertyExpiryCenter } from "@/components/hirmand/admin-property-expiry";
+import { AdminCommissionSettlement } from "@/components/hirmand/admin-commission-settlement";
+import { AdminFinanceInsights } from "@/components/hirmand/admin-finance-insights";
 import { AdminPropertyPreview } from "@/components/hirmand/admin-property-preview";
 import "@/admin-site-settings.css";
 import "@/admin-security.css";
@@ -140,7 +142,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "integrity" | "deals" | "expiry" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
+type ViewMode = "dashboard" | "integrity" | "deals" | "expiry" | "commission" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -564,6 +566,7 @@ export function AdminPropertiesPage() {
       { view: "integrity" as ViewMode, section: "نمای کلی", label: "سلامت داده", icon: ShieldAlert },
       { view: "deals" as ViewMode, section: "فروش و معاملات", label: "معاملات", icon: BriefcaseBusiness },
       { view: "expiry" as ViewMode, section: "فروش و معاملات", label: "انقضا و تمدید فایل", icon: Clock3 },
+      { view: "commission" as ViewMode, section: "فروش و معاملات", label: "تسویه کمیسیون", icon: WalletCards },
 
       { view: "list" as ViewMode, section: "فایل‌ها و مشتریان", label: "فایل‌های ملک", icon: LayoutDashboard },
       { view: "leads" as ViewMode, section: "فایل‌ها و مشتریان", label: "درخواست‌ها", icon: UsersRound },
@@ -596,7 +599,7 @@ export function AdminPropertiesPage() {
   const visibleNavItems = useMemo(() => {
     if (adminRole === "owner" || adminRole === "manager") return navItems;
     if (adminRole === "sales") {
-      const allowed = new Set<ViewMode>(["dashboard", "productivity", "list", "leads", "messages", "matching", "divar", "deals", "expiry"]);
+      const allowed = new Set<ViewMode>(["dashboard", "productivity", "list", "leads", "messages", "matching", "divar", "deals", "expiry", "commission"]);
       return navItems.filter((item) => allowed.has(item.view));
     }
     if (adminRole === "content") {
@@ -1926,7 +1929,9 @@ export function AdminPropertiesPage() {
                                                           ? "معاملات و قراردادها"
                                                           : view === "expiry"
                                                             ? "انقضا و تمدید فایل‌ها"
-                                                            : view === "divar"
+                                                            : view === "commission"
+                                                              ? "تسویه کمیسیون مشاوران"
+                                                              : view === "divar"
                                                         ? "فایل‌های دیوار"
                           : form.id
                         ? "ویرایش فایل"
@@ -2414,7 +2419,7 @@ export function AdminPropertiesPage() {
           {view === "attendance" ? <AdminAttendanceManager /> : null}
           {view === "matching" ? <AdminMatchingManager /> : null}
           {view === "owners" ? <AdminOwnerManager /> : null}
-          {view === "finance" ? <AdminFinanceManager /> : null}
+          {view === "finance" ? <><AdminFinanceManager /><AdminFinanceInsights /></> : null}
           {view === "backup" ? <AdminBackupManager /> : null}
           {view === "watermark" ? <AdminWatermarkSettings /> : null}
           {view === "schedule" ? <AdminScheduleManager /> : null}
