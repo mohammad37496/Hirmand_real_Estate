@@ -1686,3 +1686,24 @@ export const ADMIN_CSS = `
   .admin-lead-matches a{min-height:32px;display:inline-flex;align-items:center}
 }
 `;
+
+/* --- Dedicated floor-plan control ------------------------------------- */
+.admin-floor-plan-separator{
+  grid-column:1/-1;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:16px 0 2px;
+  color:var(--muted);
+}
+.admin-floor-plan-separator span{
+  height:1px;
+  flex:1;
+  background:var(--line);
+}
+.admin-floor-plan-separator strong{
+  color:var(--navy-900);
+  font-size:.76rem;
+  font-weight:850;
+  white-space:nowrap;
+}
