@@ -19,7 +19,7 @@ function iso(value:unknown){const d=new Date(String(value));return Number.isFini
 export default defineEventHandler(async(event)=>{
   setResponseHeader(event,"cache-control","no-store");
   if(dbSource==="unconfigured") return {events:[]};
-  const body=await readBody(event).catch(()=>({}));
+  const body=await readBody<Record<string, unknown>>(event).catch(()=>({} as Record<string, unknown>));
   const action=String(body?.action??"");
   const sql=await getSql();
 

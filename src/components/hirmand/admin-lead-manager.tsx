@@ -70,6 +70,9 @@ type Lead = {
   budgetRate: number | null;
   matchCount: number;
   propertyId: string | null;
+  callbackPreferredAt: string | null;
+  offerAmount: number | null;
+  offerConditions: string;
   visitPreferredAt: string | null;
   visitRequestedAt: string | null;
   visitStatus: VisitStatus;

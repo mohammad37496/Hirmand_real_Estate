@@ -56,7 +56,7 @@ export function PwaInstallPrompt() {
 
   const close = () => {
     setVisible(false);
-    try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch {}
+    try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch { /* Storage may be blocked; the prompt simply shows again. */ }
   };
   const install = async () => {
     if (ios) { window.location.href = "/?install=1&platform=ios"; return; }

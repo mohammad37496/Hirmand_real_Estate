@@ -18,9 +18,9 @@ function calc(p:Property,s:Profile){let score=0;const miss:string[]=[];const min
  const wants=s.neighborhoods.split(",").map(x=>x.trim()).filter(Boolean);if(!wants.length||wants.some(x=>p.neighborhood.includes(x)))score+=8;else miss.push("محله");
  return{score,miss}}
 export function FavoriteMatchProfile({properties}:{properties:Property[]}){
- const [s,setS]=useState<Profile>(()=>load());useEffect(()=>{try{localStorage.setItem(KEY,JSON.stringify(s))}catch{}},[s]);
+ const [s,setS]=useState<Profile>(()=>load());useEffect(()=>{try{localStorage.setItem(KEY,JSON.stringify(s))}catch{/* Storage may be blocked; the in-memory profile still works. */}},[s]);
  const rows=useMemo(()=>properties.map(p=>({p,...calc(p,s)})).sort((a,b)=>b.score-a.score),[properties,s]);
- return <section className="favorite-match-profile"><header><div><span className="kicker">تطبیق خودکار</span><h2><Target size={19}/> پروفایل معیارهای انتخاب</h2><p>سازگاری هر فایل منتخب با معیارهای شخصی شما محاسبه می‌شود.</p></div><button type="button" className="btn-ghost" onClick={()=>{setS(DEF);try{localStorage.removeItem(KEY)}catch{}}}><RotateCcw size={14}/> بازنشانی</button></header>
+ return <section className="favorite-match-profile"><header><div><span className="kicker">تطبیق خودکار</span><h2><Target size={19}/> پروفایل معیارهای انتخاب</h2><p>سازگاری هر فایل منتخب با معیارهای شخصی شما محاسبه می‌شود.</p></div><button type="button" className="btn-ghost" onClick={()=>{setS(DEF);try{localStorage.removeItem(KEY)}catch{/* Storage may be blocked; the reset still applies in memory. */}}}><RotateCcw size={14}/> بازنشانی</button></header>
   <div className="favorite-match-grid">
    <label><span>نوع معامله</span><select value={s.transaction} onChange={e=>setS(c=>({...c,transaction:e.target.value as Profile["transaction"]}))}><option value="all">همه</option><option value="buy">خرید</option><option value="rent">اجاره / رهن</option></select></label>
    <label><span>حداقل متراژ</span><input value={s.minArea} onChange={e=>setS(c=>({...c,minArea:e.target.value}))}/></label><label><span>حداکثر متراژ</span><input value={s.maxArea} onChange={e=>setS(c=>({...c,maxArea:e.target.value}))}/></label>

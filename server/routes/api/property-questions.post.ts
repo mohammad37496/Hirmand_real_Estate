@@ -17,7 +17,7 @@ function statusLabel(status:string){return status==="answered"?"پاسخ داد�
 
 export default defineEventHandler(async(event)=>{
   setResponseHeader(event,"cache-control","no-store");
-  const body=await readBody(event).catch(()=>({}));
+  const body=await readBody<Record<string, unknown>>(event).catch(()=>({} as Record<string, unknown>));
   const action=String(body?.action??"");
   if(dbSource==="unconfigured") return action==="list"||action==="admin_list"?{questions:[]}:{success:true,accepted:false};
 

@@ -2,7 +2,8 @@ import { Camera, ExternalLink, Maximize2 } from "lucide-react";
 import type { Property } from "@/lib/properties";
 import "@/property-virtual-tour.css";
 
-function safeUrl(value: string) {
+function safeUrl(value: string | null | undefined) {
+  if (!value || !value.trim()) return null;
   try {
     const url = new URL(value);
     return url.protocol === "https:" ? url : null;
