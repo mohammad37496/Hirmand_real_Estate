@@ -2001,3 +2001,60 @@ export const ADMIN_CSS = `
 @media(max-width:1100px){.admin-target-form{grid-template-columns:repeat(3,minmax(0,1fr))}.admin-target-form .btn-gold{grid-column:1/-1;justify-self:start}}
 @media(max-width:700px){.admin-target-form{grid-template-columns:1fr 1fr}.admin-target-form .btn-gold{grid-column:1/-1;width:100%}.admin-target-table-wrap{padding-inline:12px}.admin-target-toolbar{width:100%}.admin-target-toolbar input{flex:1}.admin-segment-create{grid-template-columns:1fr;padding-inline:12px}.admin-segment-list{padding-inline:12px}}
 @media(max-width:460px){.admin-target-form{grid-template-columns:1fr}.admin-target-form .btn-gold{grid-column:1}.admin-segment-list article{grid-template-columns:minmax(0,1fr) auto}}
+
+/* Pricing history, sales funnel and management reports */
+.admin-price-history{margin-top:16px}
+.admin-price-history>legend{display:flex;align-items:center;gap:6px}
+.admin-price-history-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:0 18px 12px}
+.admin-price-history-head p{margin:5px 0 0;color:var(--muted);font-size:.62rem;line-height:1.8}
+.admin-price-history-list{display:grid;gap:8px;padding:0 18px 18px}
+.admin-price-history-row{display:grid;grid-template-columns:minmax(170px,.35fr) minmax(0,1fr);gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card,#fff)}
+.admin-price-history-main strong{display:block;color:var(--navy-900);font-size:.66rem}
+.admin-price-history-main small{display:block;margin-top:3px;color:var(--muted);font-size:.56rem}
+.admin-price-history-changes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.admin-price-history-changes>div{padding:7px 8px;border-radius:9px;background:var(--surface-2,#f7f5f0)}
+.admin-price-history-changes span{display:block;color:var(--muted);font-size:.54rem}
+.admin-price-history-changes b{display:block;margin-top:3px;color:var(--navy-900);font-size:.6rem;line-height:1.7}
+.admin-price-history-changes small{display:flex;align-items:center;gap:3px;margin-top:2px;color:var(--brass-700);font-size:.54rem}
+.admin-sales-funnel{margin-bottom:16px}
+.admin-funnel-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;padding:0 18px 14px}
+.admin-funnel-summary>div,.admin-report-kpis>div{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2,#f7f5f0)}
+.admin-funnel-summary span,.admin-report-kpis span{display:block;color:var(--muted);font-size:.57rem}
+.admin-funnel-summary strong,.admin-report-kpis strong{display:block;margin-top:4px;color:var(--navy-900);font-size:.8rem}
+.admin-funnel-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(260px,.65fr);gap:14px;padding:0 18px 18px}
+.admin-funnel-chart,.admin-funnel-side{padding:12px;border:1px solid var(--line);border-radius:13px;background:var(--card,#fff)}
+.admin-funnel-row{display:grid;gap:5px;margin-bottom:9px}
+.admin-funnel-row>div{display:flex;justify-content:space-between;gap:10px;color:var(--navy-900);font-size:.61rem}
+.admin-funnel-row>i{display:block;height:9px;border-radius:99px;background:var(--brass-600);max-width:100%}
+.admin-funnel-side{display:grid;align-content:start;gap:6px}
+.admin-funnel-side h3{display:flex;align-items:center;gap:5px;margin:0 0 3px;color:var(--navy-900);font-size:.69rem}
+.admin-funnel-side>div{display:flex;justify-content:space-between;gap:9px;padding:6px 0;border-bottom:1px solid var(--line)}
+.admin-funnel-side>div span{color:var(--muted);font-size:.57rem}
+.admin-funnel-side>div b{color:var(--navy-900);font-size:.6rem}
+.admin-funnel-subhead{margin-top:9px!important}
+.admin-management-report{margin-bottom:16px}
+.admin-report-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.admin-report-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:0 18px 14px}
+.admin-report-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0 18px 18px}
+.admin-report-grid>section{padding:12px;border:1px solid var(--line);border-radius:13px;background:var(--card,#fff)}
+.admin-report-grid h3{display:flex;align-items:center;gap:5px;margin:0 0 6px;color:var(--navy-900);font-size:.7rem}
+.admin-report-grid p{margin:0;color:var(--muted);font-size:.61rem;line-height:1.8}
+.admin-report-consultants{display:grid;gap:6px}
+.admin-report-consultants>div{display:flex;justify-content:space-between;gap:9px;border-bottom:1px solid var(--line);padding:6px 0}
+.admin-report-consultants>div:last-child{border-bottom:0}
+.admin-report-consultants strong{color:var(--navy-900);font-size:.61rem}
+.admin-report-consultants span{color:var(--muted);font-size:.57rem}
+@media(max-width:900px){
+ .admin-price-history-row{grid-template-columns:1fr}
+ .admin-price-history-changes{grid-template-columns:1fr}
+ .admin-funnel-layout{grid-template-columns:1fr}
+ .admin-report-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:520px){
+ .admin-price-history-head,.admin-price-history-list,.admin-funnel-summary,.admin-funnel-layout,.admin-report-kpis,.admin-report-grid{padding-inline:12px}
+ .admin-funnel-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .admin-report-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .admin-report-grid{grid-template-columns:1fr}
+ .admin-report-actions{width:100%}
+ .admin-report-actions>*{flex:1 1 auto}
+}
