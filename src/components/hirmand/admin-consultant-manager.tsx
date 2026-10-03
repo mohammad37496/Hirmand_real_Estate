@@ -27,6 +27,10 @@ function emptyForm(sortOrder = 30): FormState {
     telegram: "",
     eitaa: "",
     instagram: "",
+    rubika: "",
+    bale: "",
+    igap: "",
+    soroush: "",
     sortOrder: String(sortOrder),
     isActive: true,
   };
@@ -210,6 +214,10 @@ export function AdminConsultantManager() {
               <label className="field"><span>تلگرام</span><input value={form.telegram} onChange={(e) => update("telegram", e.target.value)} placeholder="https://t.me/..." dir="ltr" /></label>
               <label className="field"><span>ایتا</span><input value={form.eitaa} onChange={(e) => update("eitaa", e.target.value)} placeholder="https://eitaa.com/..." dir="ltr" /></label>
               <label className="field"><span>اینستاگرام</span><input value={form.instagram} onChange={(e) => update("instagram", e.target.value)} placeholder="https://ig.me/..." dir="ltr" /></label>
+              <label className="field"><span>روبیکا</span><input value={form.rubika} onChange={(e) => update("rubika", e.target.value)} placeholder="https://rubika.ir/..." dir="ltr" /></label>
+              <label className="field"><span>بله</span><input value={form.bale} onChange={(e) => update("bale", e.target.value)} placeholder="https://ble.ir/..." dir="ltr" /></label>
+              <label className="field"><span>ایگپ</span><input value={form.igap} onChange={(e) => update("igap", e.target.value)} placeholder="https://igap.net/..." dir="ltr" /></label>
+              <label className="field"><span>سروش</span><input value={form.soroush} onChange={(e) => update("soroush", e.target.value)} placeholder="https://splus.ir/..." dir="ltr" /></label>
             </div>
           </fieldset>
 
