@@ -81,9 +81,9 @@ const TEAM_ICONS = {
 } as const;
 
 const OFFICE_PLACE: Neighborhood = {
-  name: "دفتر هیرمند — سه راه سیمین",
-  lat: SITE.lat,
-  lng: SITE.lng,
+  name: "دفتر هیرمند",
+  address: SITE.address,
+  searchQuery: "گروه مشاورین املاک هیرمند، اصفهان",
 };
 
 async function copyText(value: string): Promise<boolean> {
@@ -552,7 +552,11 @@ function Neighborhoods({ onPick }: { onPick: (name: string) => void }) {
       .filter((group) => group.items.length > 0);
   }, [query]);
 
-  const target = { lat: selected.lat, lng: selected.lng, label: selected.name };
+  const target: Neighborhood = {
+    ...selected,
+    address: selected.address || `${selected.name}، اصفهان`,
+    searchQuery: selected.searchQuery || `${selected.name}، اصفهان`,
+  };
   const links = mapLinks(target);
 
   return (
@@ -560,7 +564,7 @@ function Neighborhoods({ onPick }: { onPick: (name: string) => void }) {
       <SectionHead
         kicker="اصفهان"
         title="محله‌هایی که در آن‌ها فعالیم"
-        text={`بیش از ${NEIGHBORHOODS.length} محله و محدوده در اصفهان. هر ناحیه را باز کنید، محله را انتخاب کنید و مقصد همان نام را در Google Maps ببینید.`}
+        text={`بیش از ${NEIGHBORHOODS.length} محله و محدوده در اصفهان. هر محله را انتخاب کنید تا نشانی و مقصد آن در نشان، بلد و Google Maps بررسی شود؛ بدون ذخیره مختصات حدسی.`}
       />
       <div className="area-layout">
         <div className="area-groups">
@@ -620,11 +624,11 @@ function Neighborhoods({ onPick }: { onPick: (name: string) => void }) {
             </div>
             <div>
               <h3>{selected.name}</h3>
-              <p>Google Maps — مقصد بر اساس نام دقیق محله</p>
+              <p>نشان و بلد مرجع اصلی؛ Google Maps برای بررسی تکمیلی</p>
             </div>
           </div>
           <MapEmbed target={target} title={`نقشه ${selected.name} در اصفهان`} />
-          <MapAppButtons target={target} googleHref={links.google} googleOnly />
+          <MapAppButtons target={target} googleHref={links.google} />
           {selected.name !== OFFICE_PLACE.name ? (
             <button type="button" className="btn-gold area-request" onClick={() => onPick(selected.name)}>
               درخواست ملک در {selected.name}
@@ -782,7 +786,7 @@ function FAQ({ items }: { items: ReadonlyArray<{ q: string; a: string }> }) {
 }
 
 function Location() {
-  const office = { lat: SITE.lat, lng: SITE.lng, label: "دفتر هیرمند" };
+  const office = OFFICE_PLACE;
   return (
     <Reveal as="section" className="section" id="location">
       <SectionHead kicker="دفتر" title="موقعیت گروه مشاورین املاک هیرمند" />
