@@ -56,6 +56,9 @@ const QUICK_ACTIONS = [
   { id: "file-code", href: "/file-code", label: "جستجوی کد فایل", text: "ورود سریع با کد اختصاصی ملک", icon: Hash },
 ] as const;
 
+const PRIMARY_NAV = NAV.filter((item) => item.id !== "contact" && item.id !== "partners");
+const SECONDARY_NAV = NAV.filter((item) => item.id === "contact" || item.id === "partners");
+
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -132,7 +135,7 @@ export function Header() {
         </Link>
 
         <nav className="nav-links" aria-label="ناوبری اصلی">
-          {NAV.map((item) => {
+          {PRIMARY_NAV.map((item) => {
             const isFinance = item.id === "tools";
             const isFinanceCurrent = pathname.startsWith("/tools/");
             if (isFinance) {
@@ -232,6 +235,26 @@ export function Header() {
                     <span className="nav-quick-item-copy"><strong>درخواست ملک</strong><small>نیازتان را برای ما ثبت کنید</small></span>
                     <span className="nav-quick-item-arrow" aria-hidden="true">←</span>
                   </Link>
+                  {SECONDARY_NAV.map((item) => {
+                    const Icon = NAV_ICONS[item.id];
+                    return (
+                      <Link
+                        key={item.id}
+                        to={item.to}
+                        hash={item.hash || undefined}
+                        className="nav-quick-item"
+                        role="menuitem"
+                        onClick={(event) => (item.to === "/" ? goHash(event, item.hash) : closeQuickMenu())}
+                      >
+                        <span className="nav-quick-item-icon" aria-hidden="true"><Icon size={17} strokeWidth={1.9} /></span>
+                        <span className="nav-quick-item-copy">
+                          <strong>{item.label}</strong>
+                          <small>{item.id === "contact" ? "تماس با دفتر و مشاوران" : "همکاری و پیگیری کد رهگیری"}</small>
+                        </span>
+                        <span className="nav-quick-item-arrow" aria-hidden="true">←</span>
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             ) : null}
@@ -254,6 +277,7 @@ export function Header() {
         <div className="mobile-nav-section">
           <span className="mobile-nav-section-title">ناوبری اصلی</span>
           {NAV.map((item) => {
+            if (item.id === "contact" || item.id === "partners") return null;
             if (item.id === "tools") {
               return (
                 <div key={item.id} className={cn("mobile-tools-group", financeOpen && "is-open")}>
@@ -300,6 +324,12 @@ export function Header() {
           <Link to="/submit-property" className="mobile-menu-inquiry is-submit" onClick={closeMenu}><Building2 size={17} aria-hidden="true" /><span>ثبت ملک</span></Link>
           <Link to="/" hash="inquiry" className="mobile-menu-inquiry" onClick={(event) => { if (onHome) scrollToId(event, "inquiry", closeMenu); else closeMenu(); }}>
             <BriefcaseBusiness size={17} aria-hidden="true" /> <span>درخواست ملک</span>
+          </Link>
+          <Link to="/#contact" className="mobile-menu-inquiry" onClick={closeMenu}>
+            <Phone size={17} aria-hidden="true" /> <span>تماس با هیرمند</span>
+          </Link>
+          <Link to="/tracking" className="mobile-menu-inquiry" onClick={closeMenu}>
+            <Handshake size={17} aria-hidden="true" /> <span>باشگاه همکاران</span>
           </Link>
         </div>
 
