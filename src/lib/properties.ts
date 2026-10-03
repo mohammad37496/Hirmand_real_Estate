@@ -6,6 +6,7 @@ import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
 import { nullableMoneyFieldSchema } from "@/lib/property-input-normalization";
+import { requireAdminPermission } from "@/lib/admin-role.server";
 import { decodeSlugCandidates, legacyIdFragments } from "@/lib/property-slug";
 import { calculateBudgetMatch, DEFAULT_MATCH_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
 import { MAX_PROPERTY_MEDIA, isAllowedMediaRef } from "@/lib/media";
@@ -1192,7 +1193,7 @@ export const countFilteredAdminProperties = createServerFn({ method: "POST" })
 export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
   .validator(adminBulkStatusSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     const sql = await getSql();
 
     const beforeRows = await sql.query<Record<string, unknown>>(
@@ -1311,7 +1312,7 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
 export const bulkSetPropertyFeatured = createServerFn({ method: "POST" })
   .validator(adminBulkFeaturedSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     const sql = await getSql();
 
     const beforeRows = await sql.query<Record<string, unknown>>(
@@ -1384,7 +1385,7 @@ export const bulkSetPropertyFeatured = createServerFn({ method: "POST" })
 export const bulkAssignPropertyConsultant = createServerFn({ method: "POST" })
   .validator(adminBulkConsultantSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     const sql = await getSql();
 
     const beforeRows = await sql.query<Record<string, unknown>>(
@@ -1461,7 +1462,7 @@ export const bulkAssignPropertyConsultant = createServerFn({ method: "POST" })
 export const bulkDeleteProperties = createServerFn({ method: "POST" })
   .validator(adminBulkSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     const sql = await getSql();
 
     const existingRows = await sql.query<Record<string, unknown>>(
@@ -1543,7 +1544,7 @@ export const listAdminTrashProperties = createServerFn({ method: "POST" })
 export const restoreDeletedProperty = createServerFn({ method: "POST" })
   .validator(idSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
       `update properties
@@ -1582,7 +1583,7 @@ export const restoreDeletedProperty = createServerFn({ method: "POST" })
 export const permanentlyDeleteProperty = createServerFn({ method: "POST" })
   .validator(idSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
       `select images, floor_plan_url, title from properties where id = $1 and deleted_at is not null limit 1`,
@@ -1646,7 +1647,7 @@ export const updatePropertySchedule = createServerFn({ method: "POST" })
     unpublishAt: z.string().datetime({ offset: true }).nullable().optional(),
   }))
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     const sql = await getSql();
     if (data.publishAt && data.unpublishAt && new Date(data.unpublishAt) <= new Date(data.publishAt)) {
       throw new Error("زمان پایان انتشار باید بعد از زمان شروع باشد.");
@@ -1719,7 +1720,7 @@ export const updatePropertySchedule = createServerFn({ method: "POST" })
 export const saveProperty = createServerFn({ method: "POST" })
   .validator(propertyInputSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     const sql = await getSql();
 
     const id = data.id ?? crypto.randomUUID();
@@ -2115,7 +2116,7 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
 export const deleteProperty = createServerFn({ method: "POST" })
   .validator(idSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     const sql = await getSql();
     const existingRows = await sql.query<Record<string, unknown>>(
       `select ${DETAIL_COLUMNS} from properties where id = $1 limit 1`,
