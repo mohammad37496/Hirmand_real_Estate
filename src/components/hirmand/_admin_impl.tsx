@@ -1927,6 +1927,7 @@ export function AdminPropertiesPage() {
                     : "مشاور مسئول را انتخاب کنید"}            </p>
           </div>
           <div className="admin-topbar-actions">
+            <span className="admin-role-chip" title="سطح دسترسی حساب فعلی">{ADMIN_ROLE_LABELS[adminRole]}</span>
             <AdminCommandPalette
               items={navItems.map((item) => ({ id: item.view, label: item.label }))}
               onSelect={(id) => navigateTo(id as ViewMode)}
