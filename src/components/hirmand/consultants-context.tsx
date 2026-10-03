@@ -15,6 +15,10 @@ function bundledConsultants(): Consultant[] {
     telegram: "https://t.me/Hirmand_realestate",
     eitaa: "https://eitaa.com/Hirmand_realestate",
     instagram: "https://ig.me/m/hirmand.realestate",
+    rubika: "",
+    bale: "",
+    igap: "",
+    soroush: "",
     sortOrder: (index + 1) * 10,
     isActive: true,
   }));
