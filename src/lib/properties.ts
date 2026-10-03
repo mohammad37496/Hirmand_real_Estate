@@ -94,6 +94,7 @@ export type Property = {
   createdAt: string;
   updatedAt: string;
   virtualTourUrl?: string;
+  floorPlanUrl?: string;
   latitude: number | null;
   longitude: number | null;
   priceDropPercent?: number | null;
@@ -298,6 +299,10 @@ export const propertyInputSchema = z.object({
     (value) => !value || /^https:\/\//i.test(value),
     { message: "لینک تور مجازی باید با https شروع شود." },
   ).default(""),
+  floorPlanUrl: z.string().trim().max(2048).refine(
+    (value) => !value || /^https:\/\//i.test(value) || isAllowedMediaRef(value),
+    { message: "نشانی پلان معتبر نیست." },
+  ).default(""),
 });
 
 const budgetMatchSchema = z
@@ -436,6 +441,8 @@ function mapProperty(row: Record<string, unknown>, options: { admin?: boolean } 
       typeof row.virtual_tour_url === "string" && /^https:\/\//i.test(row.virtual_tour_url.trim())
         ? row.virtual_tour_url.trim()
         : "",
+    floorPlanUrl:
+      typeof row.floor_plan_url === "string" ? row.floor_plan_url.trim() : "",
     latitude: isAdmin ? latitude : roundPublicCoordinate(latitude),
     longitude: isAdmin ? longitude : roundPublicCoordinate(longitude),
     priceDropPercent: numberOrNull(row.price_drop_percent),
@@ -450,7 +457,7 @@ const LIST_COLUMNS = `
   built_year, parking, elevator, storage, painted, wallpaper, convertible, cabinet_type, flooring_type, cooling_system,
   heating_system, wall_closet_type, other_amenities, price, deposit, rent,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
-  latitude, longitude, price_drop_percent, virtual_tour_url, floor_label, orientation,
+  latitude, longitude, price_drop_percent, virtual_tour_url, floor_plan_url, floor_label, orientation,
   owner_name, owner_phone, owner_info, internal_priority, internal_note,
   publish_at, unpublish_at, deleted_at, deleted_from_status,
   last_verified_at, last_verified_by,
@@ -501,7 +508,7 @@ const DETAIL_COLUMNS = `
   built_year, parking, elevator, storage, painted, wallpaper, convertible, cabinet_type, flooring_type, cooling_system,
   heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
-  latitude, longitude, price_drop_percent, virtual_tour_url, floor_label, orientation,
+  latitude, longitude, price_drop_percent, virtual_tour_url, floor_plan_url, floor_label, orientation,
   owner_name, owner_phone, owner_info, internal_priority, internal_note,
   publish_at, unpublish_at, deleted_at, deleted_from_status,
   last_verified_at, last_verified_by
@@ -1772,7 +1779,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         $22::text, $23::text, $24::jsonb, $25::numeric, $26::numeric, $27::numeric, $28::text,
         $29::jsonb, $30::jsonb, $31::text, $32::text, $33::timestamptz, $34::timestamptz,
         $35::double precision, $36::double precision, $37::text, $38::text, $39::boolean, $40::boolean, $41::boolean, $42::text,
-        $43::text, $44::text, $45::text, $46::text, $47::text, $48::text
+        $43::text, $44::text, $45::text, $46::text, $47::text, $48::text, $49::text
       )
       on conflict (id) do update set
         slug = excluded.slug,
@@ -1816,6 +1823,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         availability_status = excluded.availability_status,
         internal_priority = excluded.internal_priority,
         internal_note = excluded.internal_note,
+        floor_plan_url = excluded.floor_plan_url,
         previous_price = properties.price,
         previous_deposit = properties.deposit,
         previous_rent = properties.rent,
@@ -1966,6 +1974,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         data.availabilityStatus,
         data.internalPriority,
         data.internalNote,
+        data.floorPlanUrl.trim(),
       ],
     );
 
