@@ -289,7 +289,9 @@ function HomeDiscovery() {
               <span className="icon-box"><Icon size={20} strokeWidth={1.8} /></span>
               <span>
                 <strong>{item.title}</strong>
-                <small>{item.text}</small>
+                <small>
+                  {item.id === "buy" ? "انتخاب و خرید" : item.id === "sell" ? "قیمت‌گذاری و فروش" : item.id === "mortgage" ? "رهن ملک" : "اجاره ملک"}
+                </small>
               </span>
               <span aria-hidden="true">↗</span>
             </a>
