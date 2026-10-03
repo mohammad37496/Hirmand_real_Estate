@@ -876,6 +876,56 @@ export const ADMIN_CSS = `
   padding:12px 12px 16px!important;
   border-color:rgb(255 255 255 / 10%)!important;
 }
+.admin-sidebar-foot{
+  padding:13px 12px 16px!important;
+  gap:7px!important;
+  background:linear-gradient(180deg,rgb(255 255 255 / 2%),rgb(255 255 255 / 4%))!important;
+  border-top:1px solid rgb(255 255 255 / 14%)!important;
+}
+.admin-sidebar-foot .admin-nav-btn{
+  min-height:45px!important;
+  padding:10px 13px!important;
+  gap:11px!important;
+  border:1px solid rgb(255 255 255 / 11%)!important;
+  border-radius:12px!important;
+  background:rgb(255 255 255 / 5%)!important;
+  color:rgb(255 255 255 / 92%)!important;
+  font-size:.86rem!important;
+  font-weight:750!important;
+  line-height:1.55!important;
+  text-decoration:none!important;
+  text-align:right!important;
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / 4%)!important;
+}
+.admin-sidebar-foot .admin-nav-btn svg{
+  flex:0 0 18px!important;
+  width:18px!important;
+  height:18px!important;
+  color:rgb(255 255 255 / 82%)!important;
+  opacity:1!important;
+}
+.admin-sidebar-foot .admin-nav-btn:hover{
+  background:rgb(255 255 255 / 10%)!important;
+  border-color:rgb(255 255 255 / 18%)!important;
+  color:#fff!important;
+  box-shadow:0 5px 14px rgb(0 0 0 / 14%),inset 0 1px 0 rgb(255 255 255 / 7%)!important;
+}
+.admin-sidebar-foot .admin-nav-btn:hover svg{
+  color:#fff!important;
+}
+.admin-sidebar-foot .admin-nav-btn:last-child{
+  color:#fff1ef!important;
+  border-color:rgb(218 110 96 / 24%)!important;
+  background:rgb(170 55 43 / 12%)!important;
+}
+.admin-sidebar-foot .admin-nav-btn:last-child:hover{
+  background:rgb(170 55 43 / 20%)!important;
+  border-color:rgb(224 123 110 / 38%)!important;
+}
+.admin-sidebar-foot .admin-nav-btn:last-child svg{
+  color:#ffd9d4!important;
+}
+
 .admin-main{min-width:0!important;background:radial-gradient(circle at 90% 0%,rgb(192 138 42 / 5%),transparent 24rem),var(--paper,#f7f4ee)!important;color:var(--fg,#152430)!important}
 .admin-topbar{min-height:72px!important;padding:13px 28px!important;background:rgb(255 255 255 / 92%)!important;border-bottom:1px solid #dfe5eb!important;box-shadow:0 8px 24px rgb(16 24 40 / 4%)!important;backdrop-filter:blur(16px)}
 .admin-topbar h1{color:#132333!important;font-size:1.18rem!important;font-weight:850!important;letter-spacing:-.02em!important}
