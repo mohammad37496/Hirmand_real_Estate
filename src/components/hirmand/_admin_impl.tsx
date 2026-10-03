@@ -115,7 +115,6 @@ import { AdminPropertyExpiryCenter } from "@/components/hirmand/admin-property-e
 import { AdminCommissionSettlement } from "@/components/hirmand/admin-commission-settlement";
 import { AdminFinanceInsights } from "@/components/hirmand/admin-finance-insights";
 import { AdminConsultantPerformance } from "@/components/hirmand/admin-consultant-performance";
-import { AdminLead360 } from "@/components/hirmand/admin-lead-360";
 import { AdminPropertyPreview } from "@/components/hirmand/admin-property-preview";
 import "@/admin-site-settings.css";
 import "@/admin-security.css";
@@ -2419,7 +2418,7 @@ export function AdminPropertiesPage() {
           ) : null}
 
           {view === "music" ? <AdminMusicManager /> : null}
-          {view === "leads" ? <><AdminLead360 leads={leads} /><AdminLeadManager /></> : null}
+          {view === "leads" ? <AdminLeadManager /> : null}
           {view === "messages" ? <AdminCustomerInbox /> : null}
           {view === "partners" ? <AdminPartnerManager /> : null}
           {view === "consultants" ? <AdminConsultantManager /> : null}
