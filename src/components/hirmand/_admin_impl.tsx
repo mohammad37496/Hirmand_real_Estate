@@ -1970,11 +1970,6 @@ export function AdminPropertiesPage() {
             <>
               <AdminKpiHistory />
               <AdminPublicationQueue />
-            <>
-              </>
-          ) : view === "integrity" ? (
-            <AdminDataHealth />
-          ) : view === "productivity" ? (
               <AdminOperationsCenter
                 onOpenLeads={() => navigateTo("leads")}
                 onOpenMatching={() => navigateTo("matching")}
@@ -1983,16 +1978,20 @@ export function AdminPropertiesPage() {
               />
               <AdminDashboard
                 onOpenProperties={() => navigateTo("list")}
-              onOpenLeads={() => navigateTo("leads")}
-              onOpenProductivity={() => navigateTo("productivity")}
-              onCreateProperty={startNew}
-              onOpenDivar={() => navigateTo("divar")}
-              onOpenConsultants={() => navigateTo("consultants")}
-              onOpenPartners={() => navigateTo("partners")}
-              onOpenAttendance={() => navigateTo("attendance")}
+                onOpenLeads={() => navigateTo("leads")}
+                onOpenProductivity={() => navigateTo("productivity")}
+                onCreateProperty={startNew}
+                onOpenDivar={() => navigateTo("divar")}
+                onOpenConsultants={() => navigateTo("consultants")}
+                onOpenPartners={() => navigateTo("partners")}
+                onOpenAttendance={() => navigateTo("attendance")}
                 onOpenMusic={() => navigateTo("music")}
               />
             </>
+          ) : view === "integrity" ? (
+            <AdminDataHealth />
+          ) : view === "productivity" ? (
+            <AdminProductivityCenter />
           ) : null}
 
           {view === "list" ? (
@@ -2368,7 +2367,6 @@ export function AdminPropertiesPage() {
             </>
           ) : null}
 
-          {view === "productivity" ? <AdminProductivityCenter /> : null}
           {view === "music" ? <AdminMusicManager /> : null}
           {view === "leads" ? <AdminLeadManager /> : null}
           {view === "messages" ? <AdminCustomerInbox /> : null}
