@@ -29,6 +29,7 @@ import { AdminLeadDedupe } from "@/components/hirmand/admin-lead-dedupe";
 import { AdminLeadAssignmentBalancer } from "@/components/hirmand/admin-lead-assignment-balancer";
 import { AdminLeadMessageTemplates } from "@/components/hirmand/admin-lead-message-templates";
 import { AdminLead360 } from "@/components/hirmand/admin-lead-360";
+import { AdminLeadSegments } from "@/components/hirmand/admin-lead-segments";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 type VisitStatus = "none" | "requested" | "confirmed" | "completed" | "cancelled";
@@ -438,6 +439,16 @@ export function AdminLeadManager() {
   return (
     <div className="admin-lead-manager">
       <AdminLead360 leads={leads} />
+      <AdminLeadSegments
+        query={query}
+        status={statusFilter}
+        sort={sort}
+        onApply={(value) => {
+          setQuery(value.query);
+          setStatusFilter(value.status as "all" | LeadStatus);
+          setSort(value.sort as typeof sort);
+        }}
+      />
       {confirmDialog}
       <AdminLeadMessageTemplates leads={leads} />
       <AdminLeadAssignmentBalancer />
