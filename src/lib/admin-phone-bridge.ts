@@ -72,7 +72,7 @@ export type PhoneBridgeLocationConfig = {
 export const listPhoneBridgeLocations = createServerFn({ method: "POST" })
   .validator(z.object({
     deviceId: z.string().trim().min(1).max(120),
-    limit: z.number().int().min(1).max(1000).optional().default(200),
+    limit: z.number().int().min(1).max(5000).optional().default(200),
   }))
   .handler(async ({ data }) => {
     await requirePhoneBridgeAdmin();
