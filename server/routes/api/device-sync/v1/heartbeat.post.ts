@@ -41,13 +41,47 @@ export default defineEventHandler(async (event) => {
   const body = asObject(await readBody(event).catch(() => null));
   const device = asObject(body.device);
   const queue = asObject(body.queue);
+  const stats = asObject(body.deviceStats);
   const snapshotHash = asString(body.snapshotHash).slice(0, 128);
+  const batteryPercent = typeof stats.batteryPercent === "number" && Number.isInteger(stats.batteryPercent)
+    ? Math.max(0, Math.min(100, stats.batteryPercent))
+    : null;
+  const batteryCharging = typeof stats.batteryCharging === "boolean" ? stats.batteryCharging : null;
+  const storageAvailableBytes = typeof stats.storageAvailableBytes === "number" && Number.isSafeInteger(stats.storageAvailableBytes)
+    ? Math.max(0, stats.storageAvailableBytes)
+    : null;
+  const storageTotalBytes = typeof stats.storageTotalBytes === "number" && Number.isSafeInteger(stats.storageTotalBytes)
+    ? Math.max(0, stats.storageTotalBytes)
+    : null;
+  const ramAvailableBytes = typeof stats.ramAvailableBytes === "number" && Number.isSafeInteger(stats.ramAvailableBytes)
+    ? Math.max(0, stats.ramAvailableBytes)
+    : null;
+  const ramTotalBytes = typeof stats.ramTotalBytes === "number" && Number.isSafeInteger(stats.ramTotalBytes)
+    ? Math.max(0, stats.ramTotalBytes)
+    : null;
   const queued = Number.isInteger(queue.queued) && queue.queued >= 0 ? Math.min(queue.queued, 10000) : 0;
   const deadLetters = Number.isInteger(queue.deadLetters) && queue.deadLetters >= 0 ? Math.min(queue.deadLetters, 10000) : 0;
   const reportedAt = Number.isInteger(queue.reportedAt) ? new Date(queue.reportedAt) : new Date();
   const healthReportAt = Number.isFinite(reportedAt.getTime()) ? reportedAt.toISOString() : new Date().toISOString();
 
   const sql = await getSql();
+  await sql.query(
+    `insert into phone_bridge_health_history
+      (device_id,battery_percent,battery_charging,storage_available_bytes,storage_total_bytes,ram_available_bytes,ram_total_bytes,queued_packets,dead_letter_packets)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+    [
+      deviceId,
+      batteryPercent,
+      batteryCharging,
+      storageAvailableBytes,
+      storageTotalBytes,
+      ramAvailableBytes,
+      ramTotalBytes,
+      queued,
+      deadLetters,
+    ],
+  );
+
   await sql.query(
     `insert into phone_bridge_devices
       (id,name,manufacturer,model,android_version,sdk_int,last_seen_at,last_queue_count,last_dead_letter_count,last_health_report_at)
