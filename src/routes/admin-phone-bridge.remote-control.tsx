@@ -80,6 +80,7 @@ export function AdminPhoneBridgeRemoteControl() {
   const [selectedFlash, setSelectedFlash] = useState(false);
   const [audioFormat, setAudioFormat] = useState<"wav"|"amr"|"mp3">("wav");
   const [audioDuration, setAudioDuration] = useState(60);\n  const [fileSearch, setFileSearch] = useState("");\n  const [fileEntries, setFileEntries] = useState<Array<{id:string;uri:string;name:string;relativePath:string;mimeType:string;sizeBytes:number;modifiedAt:number;isDirectory:boolean}>>([]);
+  const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
 
   const loadDataPage = useCallback(async (commandId: string, page: number) => {
     setDataLoading(true);
@@ -294,6 +295,12 @@ export function AdminPhoneBridgeRemoteControl() {
     item.status === "succeeded" &&
     !!item.result?.fileId
   );
+  const mediaCommands = commands.filter((item) =>
+    item.action === "manage_files" &&
+    item.status === "succeeded" &&
+    !!item.result?.fileId &&
+    (item.result?.mimeType?.startsWith("image/") || item.result?.mimeType?.startsWith("video/"))
+  );
   const totalPages = Math.max(1, Math.ceil(dataTotal / PAGE_SIZE));
 
   return (
@@ -459,6 +466,40 @@ export function AdminPhoneBridgeRemoteControl() {
             ))
           }
         </div>
+      </section>
+
+      <section className="pbr-card pbr-media-gallery">
+        <div className="pbr-card-head">
+          <div><span>گالری رسانه</span><h2><ImageIcon size={19} /> رسانه‌های دریافت‌شده</h2></div>
+          <span>{fa(mediaCommands.length)} رسانه</span>
+        </div>
+        <div className="pbr-note"><ImageIcon size={16} /><span>فقط رسانه‌هایی در اینجا نمایش داده می‌شوند که کاربر روی گوشی دسترسی آن‌ها را تأیید کرده و فایل را به پنل منتقل کرده است.</span></div>
+        <div className="pbr-media-toolbar">
+          <button type="button" onClick={() => setSelectedMedia(mediaCommands.map(x => x.result!.fileId!))} disabled={!mediaCommands.length}>انتخاب همه</button>
+          <button type="button" onClick={() => setSelectedMedia([])} disabled={!selectedMedia.length}>لغو انتخاب</button>
+          <a className="pbr-primary pbr-media-zip" href={selectedMedia.length ? "/api/admin/phone-bridge/files/archive?ids=" + encodeURIComponent(selectedMedia.join(",")) : undefined} aria-disabled={!selectedMedia.length} onClick={(e) => { if (!selectedMedia.length) e.preventDefault(); }}>
+            <Download size={15} /> دریافت ZIP ({fa(selectedMedia.length)})
+          </a>
+        </div>
+        {mediaCommands.length === 0 ? <div className="pbr-empty">هنوز رسانه‌ای از گوشی به پنل منتقل نشده است. از بخش مدیریت فایل‌ها یک فایل عکس یا ویدیو را با تأیید روی گوشی دریافت کن.</div> : (
+          <div className="pbr-media-grid">
+            {mediaCommands.map((command) => {
+              const fileId = command.result!.fileId!;
+              const mime = command.result?.mimeType || "application/octet-stream";
+              const image = mime.startsWith("image/");
+              const checked = selectedMedia.includes(fileId);
+              const url = "/api/admin/phone-bridge/files/" + encodeURIComponent(fileId);
+              return <article className="pbr-media-card" key={command.id}>
+                <label className="pbr-media-check"><input type="checkbox" checked={checked} onChange={() => setSelectedMedia(cur => checked ? cur.filter(id => id !== fileId) : [...cur, fileId])} /><span>انتخاب</span></label>
+                <a href={url + (image ? "?inline=1" : "")} target="_blank" rel="noreferrer" className="pbr-media-preview">
+                  {image ? <img src={url + "?inline=1"} alt={command.result?.fileName || "رسانه"} loading="lazy" /> : <Video size={42} />}
+                </a>
+                <div className="pbr-media-meta"><strong>{command.result?.fileName || "رسانه"}</strong><span>{mime} · {command.result?.sizeBytes ? fa(command.result.sizeBytes) + " بایت" : "حجم نامشخص"}</span></div>
+                <a className="pbr-photo-download" href={url}><Download size={14} /> دانلود</a>
+              </article>;
+            })}
+          </div>
+        )}
       </section>
 
       <section className="pbr-grid">
