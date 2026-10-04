@@ -87,6 +87,9 @@ export type PhoneBridgeDevice = {
   model: string;
   androidVersion: string;
   sdkInt: number | null;
+  appVersionName: string;
+  appVersionCode: number;
+  minAppVersionCode: number;
   firstSeenAt: string;
   lastSeenAt: string;
   lastSyncId: string | null;
@@ -357,6 +360,35 @@ export type PhoneBridgeEvent = {
   createdAt: string;
 };
 
+export const setPhoneBridgeDeviceMinVersion = createServerFn({ method: "POST" })
+  .validator(z.object({
+    deviceId: z.string().trim().min(1).max(120),
+    minAppVersionCode: z.number().int().min(0).max(1000000),
+  }))
+  .handler(async ({ data }) => {
+    const claims = await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") return { success: false, minAppVersionCode: data.minAppVersionCode };
+    const sql = await getSql();
+    const rows = await sql.query<{ id: string }>(
+      `update phone_bridge_devices
+       set min_app_version_code=$2
+       where id=$1
+       returning id`,
+      [data.deviceId, data.minAppVersionCode],
+    );
+    if (rows.length > 0) {
+      await recordPhoneBridgeEvent({
+        deviceId: data.deviceId,
+        actorAccountId: claims?.options?.accountId ?? null,
+        eventType: "device.min_version_changed",
+        severity: "warning",
+        message: "حداقل نسخهٔ مجاز Phone Bridge تغییر کرد.",
+        metadata: { minAppVersionCode: data.minAppVersionCode },
+      });
+    }
+    return { success: rows.length > 0, minAppVersionCode: data.minAppVersionCode };
+  });
+
 export const getPhoneBridgeDevicePolicy = createServerFn({ method: "POST" })
   .validator(z.object({ deviceId: z.string().trim().min(1).max(120) }))
   .handler(async ({ data }) => {
@@ -600,6 +632,7 @@ export const listPhoneBridgeDevices = createServerFn({ method: "POST" })
         d.id,d.name,d.manufacturer,d.model,d.android_version,d.sdk_int,d.first_seen_at,d.last_seen_at,
         d.last_sync_id,d.last_summary,d.enabled,d.token_created_at,d.last_authenticated_at,
         d.last_queue_count,d.last_dead_letter_count,d.last_health_report_at,d.allowed_modules,
+        d.app_version_name,d.app_version_code,d.min_app_version_code,
         latest.recorded_at as latest_health_recorded_at,
         latest.battery_percent,latest.battery_charging,
         latest.storage_available_bytes,latest.storage_total_bytes,
@@ -631,6 +664,9 @@ export const listPhoneBridgeDevices = createServerFn({ method: "POST" })
         model: String(row.model ?? ""),
         androidVersion: String(row.android_version ?? ""),
         sdkInt: row.sdk_int == null ? null : Number(row.sdk_int),
+        appVersionName: String(row.app_version_name ?? ""),
+        appVersionCode: Number(row.app_version_code ?? 1),
+        minAppVersionCode: Number(row.min_app_version_code ?? 0),
         firstSeenAt: new Date(String(row.first_seen_at)).toISOString(),
         lastSeenAt: new Date(String(row.last_seen_at)).toISOString(),
         lastSyncId: row.last_sync_id ? String(row.last_sync_id) : null,
