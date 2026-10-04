@@ -3,6 +3,7 @@ import { createError, defineEventHandler, readBody, setResponseHeader } from "h3
 import { dbSource, getSql } from "@/lib/db";
 import { authenticateDevice } from "@/lib/phone-bridge-auth";
 import { recordPhoneBridgeEvent } from "@/lib/phone-bridge-events.server";
+import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
 const MAX_BODY_BYTES = 4 * 1024 * 1024;
 type JsonObject = Record<string, unknown>;
@@ -51,6 +52,11 @@ export default defineEventHandler(async (event) => {
   if (!deviceId) {
     throw createError({ statusCode: 400, statusMessage: "شناسهٔ نصب گوشی ارسال نشده است." });
   }
+  await enforcePhoneBridgeRateLimit(event, "sync", deviceId, {
+    windowMs: 10 * 60 * 1000,
+    maxHits: 120,
+    blockMs: 10 * 60 * 1000,
+  });
   try {
     await authenticateDevice(event, deviceId);
   } catch (error) {
