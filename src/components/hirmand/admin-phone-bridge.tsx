@@ -25,7 +25,7 @@ function bytes(value: number) {
   return (value / (1024 * 1024)).toLocaleString("fa-IR", { maximumFractionDigits: 1 }) + " MB";
 }
 
-function date(value: string | null) {
+function date(value: string | number | null | undefined) {
   if (!value) return "—";
   return new Date(value).toLocaleString("fa-IR");
 }
