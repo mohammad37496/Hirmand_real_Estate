@@ -23,65 +23,22 @@ async function requireRemoteControlAdmin() {
   return claims;
 }
 
-export type RemoteCommandAction = "get_location";
-export type PhoneBridgeRemoteCommand = {
-  id: string;
-  deviceId: string;
-  deviceName: string;
-  action: RemoteCommandAction;
-  status: "queued" | "running" | "succeeded" | "failed" | "expired";
-  result: {
-    latitude?: number;
-    longitude?: number;
-    accuracyMeters?: number | null;
-    altitudeMeters?: number | null;
-    speedMps?: number | null;
-    bearingDegrees?: number | null;
-    provider?: string;
-    recordedAt?: string;
-  } | null;
-  errorMessage: string | null;
-  createdAt: string;
-  startedAt: string | null;
-  completedAt: string | null;
-  expiresAt: string;
-};
-
-function mapRow(row: Record<string, unknown>): PhoneBridgeRemoteCommand {
-  const raw = row.result && typeof row.result === "object" ? row.result as Record<string, unknown> : null;
-  return {
-    id: String(row.id),
-    deviceId: String(row.device_id),
-    deviceName: String(row.device_name ?? "گوشی ناشناس"),
-    action: String(row.action) as RemoteCommandAction,
-    status: String(row.status) as PhoneBridgeRemoteCommand["status"],
-    result: raw ? {
-      latitude: typeof raw.latitude === "number" ? raw.latitude : undefined,
-      longitude: typeof raw.longitude === "number" ? raw.longitude : undefined,
-      accuracyMeters: typeof raw.accuracyMeters === "number" ? raw.accuracyMeters : null,
-      altitudeMeters: typeof raw.altitudeMeters === "number" ? raw.altitudeMeters : null,
-      speedMps: typeof raw.speedMps === "number" ? raw.speedMps : null,
-      bearingDegrees: typeof raw.bearingDegrees === "number" ? raw.bearingDegrees : null,
-      provider: typeof raw.provider === "string" ? raw.provider : undefined,
-      recordedAt: typeof raw.recordedAt === "string" ? raw.recordedAt : (typeof raw.recordedAt === "number" ? new Date(raw.recordedAt).toISOString() : undefined),
-    } : null,
-    errorMessage: row.error_message ? String(row.error_message) : null,
-    createdAt: new Date(String(row.created_at)).toISOString(),
-    startedAt: row.started_at ? new Date(String(row.started_at)).toISOString() : null,
-    completedAt: row.completed_at ? new Date(String(row.completed_at)).toISOString() : null,
-    expiresAt: new Date(String(row.expires_at)).toISOString(),
-  };
-}
-
-export type RemoteCommandAction = "get_location" | "restore_data";
+export type RemoteCommandAction = "get_location" | "restore_data" | "take_photo";
 export type RemoteDataType = "sms" | "incoming_calls";
+export type RemoteCamera = "front" | "back";
+
 export type PhoneBridgeRemoteCommand = {
   id: string;
   deviceId: string;
   deviceName: string;
   action: RemoteCommandAction;
   status: "queued" | "running" | "succeeded" | "failed" | "expired";
-  payload: { dataType?: RemoteDataType; requestedCount?: number };
+  payload: {
+    dataType?: RemoteDataType;
+    requestedCount?: number;
+    camera?: RemoteCamera;
+    flash?: boolean;
+  };
   result: {
     latitude?: number;
     longitude?: number;
@@ -95,6 +52,13 @@ export type PhoneBridgeRemoteCommand = {
     requestedCount?: number;
     receivedCount?: number;
     chunkCount?: number;
+    fileId?: string;
+    fileName?: string;
+    mimeType?: string;
+    sizeBytes?: number;
+    sha256?: string;
+    camera?: RemoteCamera;
+    flash?: boolean;
   } | null;
   errorMessage: string | null;
   createdAt: string;
@@ -108,15 +72,18 @@ const VALID_COUNTS = [15, 30, 60, 100, 250, 500, 1000, 5000, 10000] as const;
 function mapRow(row: Record<string, unknown>): PhoneBridgeRemoteCommand {
   const raw = row.result && typeof row.result === "object" ? row.result as Record<string, unknown> : null;
   const rawPayload = row.payload && typeof row.payload === "object" ? row.payload as Record<string, unknown> : {};
+  const action = String(row.action) as RemoteCommandAction;
   return {
     id: String(row.id),
     deviceId: String(row.device_id),
     deviceName: String(row.device_name ?? "گوشی ناشناس"),
-    action: String(row.action) as RemoteCommandAction,
+    action,
     status: String(row.status) as PhoneBridgeRemoteCommand["status"],
     payload: {
-      dataType: rawPayload.dataType === "sms" || rawPayload.dataType === "incoming_calls" ? rawPayload.dataType : undefined,
+      dataType: rawPayload.dataType === "sms" || rawPayload.dataType === "incoming_calls" ? rawPayload.dataType as RemoteDataType : undefined,
       requestedCount: typeof rawPayload.requestedCount === "number" ? rawPayload.requestedCount : undefined,
+      camera: rawPayload.camera === "front" || rawPayload.camera === "back" ? rawPayload.camera as RemoteCamera : undefined,
+      flash: typeof rawPayload.flash === "boolean" ? rawPayload.flash : undefined,
     },
     result: raw ? {
       latitude: typeof raw.latitude === "number" ? raw.latitude : undefined,
@@ -126,11 +93,20 @@ function mapRow(row: Record<string, unknown>): PhoneBridgeRemoteCommand {
       speedMps: typeof raw.speedMps === "number" ? raw.speedMps : null,
       bearingDegrees: typeof raw.bearingDegrees === "number" ? raw.bearingDegrees : null,
       provider: typeof raw.provider === "string" ? raw.provider : undefined,
-      recordedAt: typeof raw.recordedAt === "string" ? raw.recordedAt : (typeof raw.recordedAt === "number" ? new Date(raw.recordedAt).toISOString() : undefined),
-      dataType: raw.dataType === "sms" || raw.dataType === "incoming_calls" ? raw.dataType : undefined,
+      recordedAt: typeof raw.recordedAt === "string"
+        ? raw.recordedAt
+        : (typeof raw.recordedAt === "number" ? new Date(raw.recordedAt).toISOString() : undefined),
+      dataType: raw.dataType === "sms" || raw.dataType === "incoming_calls" ? raw.dataType as RemoteDataType : undefined,
       requestedCount: typeof raw.requestedCount === "number" ? raw.requestedCount : undefined,
       receivedCount: typeof raw.receivedCount === "number" ? raw.receivedCount : undefined,
       chunkCount: typeof raw.chunkCount === "number" ? raw.chunkCount : undefined,
+      fileId: typeof raw.fileId === "string" ? raw.fileId : undefined,
+      fileName: typeof raw.fileName === "string" ? raw.fileName : undefined,
+      mimeType: typeof raw.mimeType === "string" ? raw.mimeType : undefined,
+      sizeBytes: typeof raw.sizeBytes === "number" ? raw.sizeBytes : undefined,
+      sha256: typeof raw.sha256 === "string" ? raw.sha256 : undefined,
+      camera: raw.camera === "front" || raw.camera === "back" ? raw.camera as RemoteCamera : undefined,
+      flash: typeof raw.flash === "boolean" ? raw.flash : undefined,
     } : null,
     errorMessage: row.error_message ? String(row.error_message) : null,
     createdAt: new Date(String(row.created_at)).toISOString(),
@@ -142,12 +118,21 @@ function mapRow(row: Record<string, unknown>): PhoneBridgeRemoteCommand {
 
 export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
   .validator(z.discriminatedUnion("action", [
-    z.object({ deviceId: z.string().trim().min(1).max(120), action: z.literal("get_location") }),
+    z.object({
+      deviceId: z.string().trim().min(1).max(120),
+      action: z.literal("get_location"),
+    }),
     z.object({
       deviceId: z.string().trim().min(1).max(120),
       action: z.literal("restore_data"),
       dataType: z.enum(["sms", "incoming_calls"]),
       requestedCount: z.number().int().refine((v) => VALID_COUNTS.includes(v as typeof VALID_COUNTS[number])),
+    }),
+    z.object({
+      deviceId: z.string().trim().min(1).max(120),
+      action: z.literal("take_photo"),
+      camera: z.enum(["front", "back"]),
+      flash: z.boolean(),
     }),
   ]))
   .handler(async ({ data }) => {
@@ -166,6 +151,7 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
     const modules = device.allowed_modules && typeof device.allowed_modules === "object"
       ? device.allowed_modules as Record<string, unknown>
       : {};
+
     if (data.action === "get_location" && modules.location === false) {
       throw new Error("ماژول موقعیت برای این دستگاه غیرفعال است.");
     }
@@ -175,6 +161,9 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
     if (data.action === "restore_data" && data.dataType === "incoming_calls" && modules.calls === false) {
       throw new Error("ماژول تاریخچه تماس‌ها برای این دستگاه غیرفعال است.");
     }
+    if (data.action === "take_photo" && modules.selectedFiles === false) {
+      throw new Error("ذخیرهٔ فایل برای این دستگاه غیرفعال است؛ برای گالری عکس ریموت، «فایل‌های انتخابی» را فعال کن.");
+    }
 
     const active = await sql.query<{ id: string }>(
       "select id from phone_bridge_remote_commands where device_id=$1 and status in ('queued','running') and expires_at >= current_timestamp limit 1",
@@ -183,14 +172,26 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
     if (active.length) throw new Error("یک فرمان ریموت هنوز در حال اجراست؛ ابتدا نتیجهٔ آن را دریافت کن.");
 
     const id = randomUUID();
-    const payload = data.action === "restore_data" ? JSON.stringify({ dataType: data.dataType, requestedCount: data.requestedCount }) : "{}";
+    let payload: string;
+    if (data.action === "restore_data") {
+      payload = JSON.stringify({ dataType: data.dataType, requestedCount: data.requestedCount });
+    } else if (data.action === "take_photo") {
+      payload = JSON.stringify({ camera: data.camera, flash: data.camera === "front" ? false : data.flash });
+    } else {
+      payload = "{}";
+    }
+
     const expiresSql = data.action === "restore_data"
       ? "current_timestamp + interval '180 seconds'"
-      : "current_timestamp + interval '60 seconds'";
+      : data.action === "take_photo"
+        ? "current_timestamp + interval '180 seconds'"
+        : "current_timestamp + interval '60 seconds'";
+
     await sql.query(
       "insert into phone_bridge_remote_commands (id,device_id,action,status,payload,requested_by,expires_at) values ($1,$2,$3,'queued',$4::jsonb,$5," + expiresSql + ")",
       [id, data.deviceId, data.action, payload, claims?.options?.accountId ?? null],
     );
+
     await recordPhoneBridgeEvent({
       deviceId: data.deviceId,
       actorAccountId: claims?.options?.accountId ?? null,
@@ -198,8 +199,18 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
       severity: "warning",
       message: data.action === "restore_data"
         ? "فرمان بازگردانی دیتا ثبت شد؛ تأیید روی گوشی لازم است."
-        : "فرمان ریموت دریافت لوکیشن ثبت شد.",
-      metadata: { commandId: id, action: data.action, ...(data.action === "restore_data" ? { dataType: data.dataType, requestedCount: data.requestedCount } : {}) },
+        : data.action === "take_photo"
+          ? "فرمان گرفتن عکس ثبت شد؛ اقدام روی خود گوشی لازم است."
+          : "فرمان ریموت دریافت لوکیشن ثبت شد.",
+      metadata: {
+        commandId: id,
+        action: data.action,
+        ...(data.action === "restore_data"
+          ? { dataType: data.dataType, requestedCount: data.requestedCount }
+          : data.action === "take_photo"
+            ? { camera: data.camera, flash: data.camera === "front" ? false : data.flash }
+            : {}),
+      },
     });
     return { success: true, commandId: id };
   });
@@ -256,5 +267,9 @@ export const getPhoneBridgeRemoteDataPage = createServerFn({ method: "POST" })
       "select item as row from phone_bridge_remote_data_chunks c cross join lateral jsonb_array_elements(c.rows) with ordinality as x(item,ordinal) where c.command_id=$1 order by c.chunk_index asc,x.ordinal asc limit $2 offset $3",
       [data.commandId, data.pageSize, data.page * data.pageSize],
     );
-    return { dataType, totalCount, rows: rows.map((x) => x.row && typeof x.row === "object" && !Array.isArray(x.row) ? x.row as Record<string, unknown> : {}) };
+    return {
+      dataType,
+      totalCount,
+      rows: rows.map((x) => x.row && typeof x.row === "object" && !Array.isArray(x.row) ? x.row as Record<string, unknown> : {}),
+    };
   });
