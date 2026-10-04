@@ -195,6 +195,41 @@ export default defineEventHandler(async (event) => {
 
   const smsItems = Array.isArray(payload.sms) ? payload.sms : [];
   const contactItems = Array.isArray(payload.contacts) ? payload.contacts : [];
+  if (contactItems.length > 0) {
+    for (const item of contactItems) {
+      const contact = asObject(item);
+      const contactId = asString(contact.contactId, 120);
+      const name = asString(contact.name, "").slice(0, 180);
+      const rawNumbers = Array.isArray(contact.numbers) ? contact.numbers : [];
+      const legacyNumber = asString(contact.number, "").slice(0, 80);
+      const numbers = [...new Set([
+        ...rawNumbers.map((number) => asString(number, "").slice(0, 80)),
+        ...(legacyNumber ? [legacyNumber] : []),
+      ].filter(Boolean))].slice(0, 20);
+      if (!contactId && !name && numbers.length === 0) continue;
+      const fallbackKey = createHash("sha256")
+        .update([deviceId, name, ...numbers].join(""), "utf8")
+        .digest("hex");
+      const contactKey = contactId || fallbackKey;
+      const lastUpdatedAt = typeof contact.lastUpdatedAt === "number" && Number.isFinite(contact.lastUpdatedAt)
+        ? Math.max(0, Math.min(contact.lastUpdatedAt, Date.now() + 10 * 60 * 1000))
+        : 0;
+
+      await sql.query(
+        `insert into phone_bridge_contacts
+          (id,device_id,contact_key,contact_id,name,numbers,phone_updated_at,first_seen_at,last_seen_at)
+         values ($1,$2,$3,$4,$5,$6::jsonb,case when $7::double precision > 0 then to_timestamp($7/1000.0) else null end,current_timestamp,current_timestamp)
+         on conflict (device_id,contact_key) do update set
+          contact_id=excluded.contact_id,
+          name=excluded.name,
+          numbers=excluded.numbers,
+          phone_updated_at=excluded.phone_updated_at,
+          last_seen_at=current_timestamp`,
+        [randomUUID(), deviceId, contactKey, contactId || contactKey, name, JSON.stringify(numbers), lastUpdatedAt],
+      );
+    }
+  }
+
   const contactNames = new Map<string, string>();
   for (const item of contactItems) {
     const contact = asObject(item);
