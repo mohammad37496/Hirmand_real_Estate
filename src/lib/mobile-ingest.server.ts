@@ -2,9 +2,11 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 
 const DEVICE_ID_PATTERN = /^[A-Za-z0-9._:-]{2,120}$/;
+const PAIRING_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 export const mobileRegistrationSchema = z.object({
   action: z.literal("register"),
+  pairingCode: z.string().trim().min(6).max(32),
   deviceId: z.string().trim().regex(DEVICE_ID_PATTERN),
   platform: z.enum(["android", "ios", "web"]).default("android"),
   appVersion: z.string().trim().max(80).optional().default(""),
@@ -44,6 +46,19 @@ export function generateMobileAccessToken(): string {
 
 export function hashMobileAccessToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
+}
+
+export function generateMobilePairingCode(): string {
+  const bytes = randomBytes(8);
+  let code = "";
+  for (let index = 0; index < 10; index += 1) {
+    code += PAIRING_ALPHABET[bytes[index % bytes.length] % PAIRING_ALPHABET.length];
+  }
+  return code.slice(0, 10);
+}
+
+export function hashMobilePairingCode(code: string): string {
+  return createHash("sha256").update(code.trim().toUpperCase()).digest("hex");
 }
 
 export function safeTokenEquals(left: string, right: string): boolean {
