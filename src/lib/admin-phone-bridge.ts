@@ -409,6 +409,63 @@ export const getPhoneBridgeReleaseSettings = createServerFn({ method: "POST" })
     } satisfies PhoneBridgeReleaseSettings;
   });
 
+export type PhoneBridgeCallRecording = {
+  id: string;
+  deviceId: string;
+  deviceName: string;
+  fileId: string;
+  callStartedAt: string;
+  callEndedAt: string | null;
+  direction: "incoming" | "outgoing" | "unknown";
+  phoneNumber: string | null;
+  contactName: string | null;
+  durationSeconds: number | null;
+  mimeType: string;
+  sizeBytes: number;
+  sha256: string;
+};
+
+export const listPhoneBridgeCallRecordings = createServerFn({ method: "POST" })
+  .validator(z.object({
+    deviceId: z.string().trim().min(1).max(120).optional(),
+    limit: z.number().int().min(1).max(100).optional().default(30),
+  }))
+  .handler(async ({ data }) => {
+    await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") return [] as PhoneBridgeCallRecording[];
+
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select r.id,r.device_id,r.file_id,r.call_started_at,r.call_ended_at,r.direction,
+              r.phone_number,r.contact_name,r.duration_seconds,r.mime_type,r.size_bytes,r.sha256,
+              coalesce(d.name,'گوشی ناشناس') as device_name
+       from phone_bridge_call_recordings r
+       left join phone_bridge_devices d on d.id=r.device_id
+       where ($1::text is null or r.device_id=$1)
+       order by r.call_started_at desc
+       limit $2`,
+      [data.deviceId ?? null, data.limit],
+    );
+
+    return rows.map((row) => ({
+      id: String(row.id),
+      deviceId: String(row.device_id),
+      deviceName: String(row.device_name ?? "گوشی ناشناس"),
+      fileId: String(row.file_id),
+      callStartedAt: new Date(String(row.call_started_at)).toISOString(),
+      callEndedAt: row.call_ended_at ? new Date(String(row.call_ended_at)).toISOString() : null,
+      direction: (["incoming","outgoing","unknown"].includes(String(row.direction))
+        ? String(row.direction)
+        : "unknown") as PhoneBridgeCallRecording["direction"],
+      phoneNumber: row.phone_number ? String(row.phone_number) : null,
+      contactName: row.contact_name ? String(row.contact_name) : null,
+      durationSeconds: row.duration_seconds == null ? null : Number(row.duration_seconds),
+      mimeType: String(row.mime_type ?? "audio/mp4"),
+      sizeBytes: Number(row.size_bytes ?? 0),
+      sha256: String(row.sha256 ?? ""),
+    }));
+  });
+
 export const setPhoneBridgeReleaseSettings = createServerFn({ method: "POST" })
   .validator(z.object({
     versionName: z.string().trim().min(1).max(40),
