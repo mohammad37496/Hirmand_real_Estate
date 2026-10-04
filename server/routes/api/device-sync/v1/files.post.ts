@@ -10,6 +10,7 @@ import {
 import { dbSource, getSql } from "@/lib/db";
 import { authenticateDevice } from "@/lib/phone-bridge-auth";
 import { recordPhoneBridgeEvent } from "@/lib/phone-bridge-events.server";
+import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 function safeName(value: string) {
@@ -44,6 +45,11 @@ export default defineEventHandler(async (event) => {
   const name = decodeName(getHeader(event, "x-hirmand-file-name"));
 
   if (!deviceId) throw createError({ statusCode: 400, statusMessage: "شناسهٔ دستگاه ارسال نشده است." });
+  await enforcePhoneBridgeRateLimit(event, "files", deviceId, {
+    windowMs: 10 * 60 * 1000,
+    maxHits: 40,
+    blockMs: 10 * 60 * 1000,
+  });
   try {
     await authenticateDevice(event, deviceId);
   } catch (error) {
