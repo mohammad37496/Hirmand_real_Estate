@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowRight, MapPin, RefreshCw, Navigation, Clock3, Signal, Satellite } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -42,7 +42,7 @@ export function AdminPhoneBridgeLocation() {
       if (selected) {
         const [cfg, history] = await Promise.all([
           getPhoneBridgeLocationConfig({ data: { deviceId: selected } }),
-          listPhoneBridgeLocations({ data: { deviceId: selected, limit: 1000 } }),
+          listPhoneBridgeLocations({ data: { deviceId: selected, limit: 5000 } }),
         ]);
         setConfig(cfg);
         setPoints(history);
