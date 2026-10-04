@@ -168,6 +168,7 @@ export const PHONE_BRIDGE_MODULES = [
   "sms",
   "calendar",
   "apps",
+  "camera",
   "selectedFiles",
 ] as const;
 
@@ -182,6 +183,7 @@ const defaultPhoneBridgeModulePolicy: PhoneBridgeModulePolicy = {
   sms: true,
   calendar: true,
   apps: true,
+  camera: true,
   selectedFiles: true,
 };
 
