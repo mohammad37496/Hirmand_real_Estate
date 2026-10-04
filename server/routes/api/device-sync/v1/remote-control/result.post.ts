@@ -4,7 +4,7 @@ import { authenticateDevice } from "@/lib/phone-bridge-auth";
 import { requirePhoneBridgeSignedRequest } from "@/lib/phone-bridge-signature.server";
 import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
-const ALLOWED_ACTIONS = new Set(["get_location", "take_photo", "record_audio", "manage_files"]);
+const ALLOWED_ACTIONS = new Set(["get_location", "take_photo", "record_audio", "manage_files", "list_apps", "list_notifications"]);
 
 function obj(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -82,6 +82,18 @@ export default defineEventHandler(async (event) => {
     result={fileId,fileName:String(file.name),mimeType:String(file.mime_type),sizeBytes:Number(file.size_bytes),sha256:String(file.sha256)};
   }
 
+  if (action === "list_apps" && success) {
+    const count = finite(payload.count);
+    const apps = Array.isArray(payload.apps) ? payload.apps.slice(0, 300) : [];
+    if (count === null || count < 0 || count > 300) throw createError({ statusCode: 422, statusMessage: "فهرست برنامه‌ها معتبر نیست." });
+    result = { count, apps };
+  }
+  if (action === "list_notifications" && success) {
+    const count = finite(payload.count);
+    const notifications = Array.isArray(payload.notifications) ? payload.notifications.slice(0, 50) : [];
+    if (count === null || count < 0 || count > 50) throw createError({ statusCode: 422, statusMessage: "فهرست اعلان‌ها معتبر نیست." });
+    result = { count, notifications };
+  }
   if (action === "record_audio" && success) {
     const fileId = text(payload.fileId, 120);
     const audioFormat = text(payload.audioFormat, 12);
