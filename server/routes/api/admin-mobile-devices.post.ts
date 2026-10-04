@@ -3,6 +3,7 @@ import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
+import { writeAdminAuditLog } from "@/lib/admin-audit-log.server";
 import { generateMobilePairingCode, hashMobilePairingCode } from "@/lib/mobile-ingest.server";
 
 async function requireMobileAdmin(event: H3Event) {
@@ -61,11 +62,18 @@ export default defineEventHandler(async (event) => {
     const expiresMinutes = Math.min(30, Math.max(3, Number(body.expiresMinutes) || 10));
     const label = String(body.label ?? "دستگاه جدید").trim().slice(0, 120) || "دستگاه جدید";
     await sql.query("update mobile_pairing_codes set used_at=current_timestamp where used_at is null and expires_at <= current_timestamp");
+    const pairingId = crypto.randomUUID();
     await sql.query(
       `insert into mobile_pairing_codes (id, code_hash, created_by, expires_at)
        values ($1,$2,$3,current_timestamp + ($4::text || ' minutes')::interval)`,
-      [crypto.randomUUID(), hashMobilePairingCode(code), String(claims?.displayName ?? "مدیر").slice(0, 120), String(expiresMinutes)],
+      [pairingId, hashMobilePairingCode(code), String(claims?.displayName ?? "مدیر").slice(0, 120), String(expiresMinutes)],
     );
+    await writeAdminAuditLog({
+      action: "mobile_pairing_created",
+      entityType: "mobile_pairing_code",
+      entityId: pairingId,
+      metadata: { label, expiresMinutes },
+    });
     return {
       success: true, pairingCode: code, expiresMinutes,
       expiresAt: new Date(Date.now() + expiresMinutes * 60_000).toISOString(), label,
@@ -77,6 +85,11 @@ export default defineEventHandler(async (event) => {
     if (!deviceId) throw createError({ statusCode: 400, statusMessage: "شناسه دستگاه مشخص نیست." });
     const changed = await sql.query("update mobile_devices set enabled=false where id=$1 returning id", [deviceId]);
     if (!changed.length) throw createError({ statusCode: 404, statusMessage: "دستگاه پیدا نشد." });
+    await writeAdminAuditLog({
+      action: "mobile_device_revoked",
+      entityType: "mobile_device",
+      entityId: deviceId,
+    });
     return { success: true, deviceId };
   }
 
