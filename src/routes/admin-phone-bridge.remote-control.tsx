@@ -73,7 +73,15 @@ export function AdminPhoneBridgeRemoteControl() {
       setDevices(ds);
       const selected = deviceId || ds[0]?.id || "";
       if (selected && selected !== deviceId) setDeviceId(selected);
-      if (selected) setCommands(await listPhoneBridgeRemoteCommands({ data: { deviceId: selected, limit: 20 } }));
+      if (selected) {
+        const history = await listPhoneBridgeRemoteCommands({ data: { deviceId: selected, limit: 20 } });
+        setCommands(history);
+        const latestRestore = history.find((item) => item.action === "restore_data" && item.status === "succeeded");
+        if (latestRestore) {
+          setDataCommandId(latestRestore.id);
+          void loadDataPage(latestRestore.id, 0);
+        }
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "دریافت وضعیت ریموت انجام نشد.");
     } finally {
