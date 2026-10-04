@@ -3,6 +3,7 @@ import { createError, defineEventHandler, readRawBody, setResponseHeader } from 
 import { dbSource, getSql } from "@/lib/db";
 import { authenticateDevice } from "@/lib/phone-bridge-auth";
 import { requirePhoneBridgeSignedRequest } from "@/lib/phone-bridge-signature.server";
+import { sanitizePhoneBridgePayload } from "@/lib/phone-bridge-payload.server";
 import { recordPhoneBridgeEvent } from "@/lib/phone-bridge-events.server";
 import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
@@ -48,14 +49,15 @@ export default defineEventHandler(async (event) => {
 
   const raw = await readRawBody(event);
   const rawBody = Buffer.isBuffer(raw) ? raw : Buffer.from(raw ?? "");
-  const payload = asObject(await (async () => {
+  const parsedPayload: unknown = (() => {
     try {
       return JSON.parse(rawBody.toString("utf8"));
     } catch {
       return null;
     }
-  })());
-  const device = asObject(payload.device);
+  })();
+  const envelope = asObject(parsedPayload);
+  const device = asObject(envelope.device);
   const deviceId = asString(device.id);
 
   if (!deviceId) {
@@ -83,9 +85,9 @@ export default defineEventHandler(async (event) => {
     throw error;
   }
 
+  const payload = sanitizePhoneBridgePayload(parsedPayload, authPolicy.allowedModules);
   const originalModuleKeys = ["location", "wifi", "contacts", "calls", "sms", "calendar", "apps", "selectedFiles"] as const;
-  const strippedModules = originalModuleKeys.filter((key) => payload[key] != null && authPolicy.allowedModules[key] === false);
-  for (const key of strippedModules) delete payload[key];
+  const strippedModules = originalModuleKeys.filter((key) => envelope[key] != null && payload[key] == null);
 
   if (strippedModules.length > 0) {
     await recordPhoneBridgeEvent({
@@ -95,11 +97,6 @@ export default defineEventHandler(async (event) => {
       message: "بخش‌هایی از بستهٔ Phone Bridge طبق سیاست دستگاه ذخیره نشدند.",
       metadata: { blockedModules: strippedModules },
     }).catch(() => undefined);
-  }
-
-  const schemaName = asString(payload.schema);
-  if (schemaName !== "hirmand.phone-bridge.v1") {
-    throw createError({ statusCode: 400, statusMessage: "نسخهٔ دادهٔ Phone Bridge پشتیبانی نمی‌شود." });
   }
 
   const encoded = JSON.stringify(payload);
