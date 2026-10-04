@@ -99,6 +99,11 @@ export function PersianDatePicker({
             </button>
           </div>
 
+          <div className="persian-date-picker-calendar-guide">
+            <span>ماه و سال را از بالا انتخاب کنید</span>
+            <b>سپس روز موردنظر را انتخاب کنید</b>
+          </div>
+
           <DayPicker
             mode="single"
             selected={selectedDate}
@@ -110,7 +115,7 @@ export function PersianDatePicker({
             captionLayout="dropdown"
             navLayout="after"
             reverseYears
-            showOutsideDays
+            showOutsideDays={false}
             disabled={minDate ? { before: minDate } : undefined}
           />
 
