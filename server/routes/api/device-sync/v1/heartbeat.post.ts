@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
 
   const sql = await getSql();
   const policyRows = await sql.query<{ policy_revision: number; last_snapshot_policy_revision: number; min_app_version_code: number }>(
-    `select policy_revision,last_snapshot_policy_revision from phone_bridge_devices where id=$1 limit 1`,
+    `select policy_revision,last_snapshot_policy_revision,min_app_version_code from phone_bridge_devices where id=$1 limit 1`,
     [deviceId],
   );
   const policyRevision = Number(policyRows[0]?.policy_revision ?? 1);
@@ -113,8 +113,8 @@ export default defineEventHandler(async (event) => {
 
   await sql.query(
     `insert into phone_bridge_devices
-      (id,name,manufacturer,model,android_version,sdk_int,app_version_name,app_version_code,last_seen_at,last_queue_count,last_dead_letter_count,last_health_report_at)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,current_timestamp,$9,$10,$11)
+      (id,name,manufacturer,model,android_version,sdk_int,app_version_name,app_version_code,last_seen_at,last_queue_count,last_dead_letter_count,last_health_report_at,last_snapshot_hash)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,current_timestamp,$9,$10,$11,$12)
      on conflict (id) do update set
        name=excluded.name,
        manufacturer=excluded.manufacturer,
@@ -124,10 +124,10 @@ export default defineEventHandler(async (event) => {
        app_version_name=excluded.app_version_name,
        app_version_code=excluded.app_version_code,
        last_seen_at=current_timestamp,
-       last_queue_count=$7,
-       last_dead_letter_count=$8,
-       last_health_report_at=$9,
-       last_snapshot_hash=case when $10 <> '' then $10 else phone_bridge_devices.last_snapshot_hash end`,
+       last_queue_count=excluded.last_queue_count,
+       last_dead_letter_count=excluded.last_dead_letter_count,
+       last_health_report_at=excluded.last_health_report_at,
+       last_snapshot_hash=case when excluded.last_snapshot_hash <> '' then excluded.last_snapshot_hash else phone_bridge_devices.last_snapshot_hash end`,
     [
       deviceId,
       asString(device.name, "گوشی"),
