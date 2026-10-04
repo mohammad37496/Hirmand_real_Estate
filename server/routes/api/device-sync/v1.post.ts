@@ -230,6 +230,37 @@ export default defineEventHandler(async (event) => {
       );
     }
   }
+  const appItems = Array.isArray(payload.apps) ? payload.apps : [];
+  if (appItems.length > 0) {
+    await sql.query(
+      `insert into phone_bridge_apps
+        (id,device_id,package_name,label,activity,version_name,first_install_at,last_update_at,is_system_app,enabled,last_seen_at)
+       select
+        md5($1 || ':' || (item->>'packageName'))::uuid,
+        $1,
+        left(item->>'packageName',220),
+        left(coalesce(item->>'label',''),180),
+        left(coalesce(item->>'activity',''),300),
+        left(coalesce(item->>'versionName',''),120),
+        case when coalesce((item->>'firstInstallTime')::double precision,0) > 0 then to_timestamp((item->>'firstInstallTime')::double precision / 1000.0) else null end,
+        case when coalesce((item->>'lastUpdateTime')::double precision,0) > 0 then to_timestamp((item->>'lastUpdateTime')::double precision / 1000.0) else null end,
+        coalesce((item->>'isSystemApp')::boolean,false),
+        coalesce((item->>'enabled')::boolean,true),
+        current_timestamp
+       from jsonb_array_elements($2::jsonb) item
+       on conflict (device_id,package_name) do update set
+        label=excluded.label,
+        activity=excluded.activity,
+        version_name=excluded.version_name,
+        first_install_at=excluded.first_install_at,
+        last_update_at=excluded.last_update_at,
+        is_system_app=excluded.is_system_app,
+        enabled=excluded.enabled,
+        last_seen_at=current_timestamp`,
+      [deviceId, JSON.stringify(appItems)],
+    );
+  }
+
 
   return {
     ok: true,

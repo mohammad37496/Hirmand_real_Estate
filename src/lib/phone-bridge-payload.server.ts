@@ -8,7 +8,7 @@ const MAX_CONTACTS = 200;
 const MAX_CALLS = 200;
 const MAX_SMS = 200;
 const MAX_CALENDAR = 200;
-const MAX_APPS = 300;
+const MAX_APPS = 1000;
 const MAX_FILES = 20;
 
 function asObject(value: unknown): JsonObject | null {
@@ -109,6 +109,8 @@ function sanitizeApps(value: unknown) {
       versionName: text(o.versionName, 120),
       firstInstallTime: isoMs(o.firstInstallTime) ?? 0,
       lastUpdateTime: isoMs(o.lastUpdateTime) ?? 0,
+      isSystemApp: o.isSystemApp === true,
+      enabled: o.enabled !== false,
     }];
   });
 }

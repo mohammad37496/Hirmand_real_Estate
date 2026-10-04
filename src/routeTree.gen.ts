@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminPhoneBridgeRouteImport } from './routes/admin-phone-bridge'
 import { Route as AdminPhoneBridgeLocationRouteImport } from './routes/admin-phone-bridge.location'
+import { Route as AdminPhoneBridgeAppsRouteImport } from './routes/admin-phone-bridge.apps'
 import { Route as BudgetMatchRouteImport } from './routes/budget-match'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as GuidesRouteImport } from './routes/guides'
@@ -59,6 +60,11 @@ const AdminPhoneBridgeRoute = AdminPhoneBridgeRouteImport.update({
 const AdminPhoneBridgeLocationRoute = AdminPhoneBridgeLocationRouteImport.update({
   id: '/admin-phone-bridge/location',
   path: '/admin-phone-bridge/location',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPhoneBridgeAppsRoute = AdminPhoneBridgeAppsRouteImport.update({
+  id: '/admin-phone-bridge/apps',
+  path: '/admin-phone-bridge/apps',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BudgetMatchRoute = BudgetMatchRouteImport.update({
@@ -190,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/admin-phone-bridge': typeof AdminPhoneBridgeRoute
   '/admin-phone-bridge/location': typeof AdminPhoneBridgeLocationRoute
+  '/admin-phone-bridge/apps': typeof AdminPhoneBridgeAppsRoute
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
   '/consultants': typeof ConsultantsRouteWithChildren
@@ -381,6 +388,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AdminPhoneBridgeRoute: typeof AdminPhoneBridgeRoute
   AdminPhoneBridgeLocationRoute: typeof AdminPhoneBridgeLocationRoute
+  AdminPhoneBridgeAppsRoute: typeof AdminPhoneBridgeAppsRoute
   BudgetMatchRoute: typeof BudgetMatchRoute
   CompareRoute: typeof CompareRoute
   ConsultantsRoute: typeof ConsultantsRouteWithChildren
@@ -433,6 +441,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-phone-bridge/location'
       fullPath: '/admin-phone-bridge/location'
       preLoaderRoute: typeof AdminPhoneBridgeLocationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-phone-bridge/apps': {
+      id: '/admin-phone-bridge/apps'
+      path: '/admin-phone-bridge/apps'
+      fullPath: '/admin-phone-bridge/apps'
+      preLoaderRoute: typeof AdminPhoneBridgeAppsRouteImport
       parentRoute: typeof rootRouteImport
     }
 
@@ -649,6 +664,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AdminPhoneBridgeRoute: AdminPhoneBridgeRoute,
   AdminPhoneBridgeLocationRoute: AdminPhoneBridgeLocationRoute,
+  AdminPhoneBridgeAppsRoute: AdminPhoneBridgeAppsRoute,
   BudgetMatchRoute: BudgetMatchRoute,
   CompareRoute: CompareRoute,
   GuidesRoute: GuidesRoute,
