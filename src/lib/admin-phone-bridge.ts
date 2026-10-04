@@ -160,9 +160,7 @@ export const listPhoneBridgeDevices = createServerFn({ method: "POST" })
         tokenCreatedAt: row.token_created_at ? new Date(String(row.token_created_at)).toISOString() : null,
         lastAuthenticatedAt: row.last_authenticated_at ? new Date(String(row.last_authenticated_at)).toISOString() : null,
         health: (() => {
-          const heartbeatAt = row.latest_sync_received_at
-            ? new Date(String(row.latest_sync_received_at))
-            : new Date(String(row.last_seen_at));
+          const heartbeatAt = new Date(String(row.last_seen_at));
           const ageMs = Math.max(0, Date.now() - heartbeatAt.getTime());
           const status: PhoneBridgeDevice["health"]["status"] =
             ageMs <= 30 * 60 * 1000 ? "online" :
