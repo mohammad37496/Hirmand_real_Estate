@@ -20,6 +20,7 @@ import {
   RefreshCw,
   Smartphone,
   SwitchCamera,
+  Video,
   Zap,
   XCircle,
 } from "lucide-react";
@@ -30,7 +31,8 @@ import {
   getPhoneBridgeRemoteDataPage,
   listPhoneBridgeRemoteCommands,
   type PhoneBridgeRemoteCommand,
-  type RemoteCamera,\n  listPhoneBridgeFileEntries,
+  type RemoteCamera,
+  listPhoneBridgeFileEntries,
   type RemoteDataType,
 } from "@/lib/admin-phone-bridge-remote";
 import { listPhoneBridgeDevices, type PhoneBridgeDevice } from "@/lib/admin-phone-bridge";
@@ -79,7 +81,9 @@ export function AdminPhoneBridgeRemoteControl() {
   const [selectedCamera, setSelectedCamera] = useState<RemoteCamera>("back");
   const [selectedFlash, setSelectedFlash] = useState(false);
   const [audioFormat, setAudioFormat] = useState<"wav"|"amr"|"mp3">("wav");
-  const [audioDuration, setAudioDuration] = useState(60);\n  const [fileSearch, setFileSearch] = useState("");\n  const [fileEntries, setFileEntries] = useState<Array<{id:string;uri:string;name:string;relativePath:string;mimeType:string;sizeBytes:number;modifiedAt:number;isDirectory:boolean}>>([]);
+  const [audioDuration, setAudioDuration] = useState(60);
+  const [fileSearch, setFileSearch] = useState("");
+  const [fileEntries, setFileEntries] = useState<Array<{id:string;uri:string;name:string;relativePath:string;mimeType:string;sizeBytes:number;modifiedAt:number;isDirectory:boolean}>>([]);
   const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
 
   const loadDataPage = useCallback(async (commandId: string, page: number) => {
@@ -121,7 +125,8 @@ export function AdminPhoneBridgeRemoteControl() {
     }
   }, [deviceId, loadDataPage]);
 
-  useEffect(() => { void load(); }, [load]);\n  useEffect(() => { if (deviceId) void loadFiles(""); }, [deviceId]);
+  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { if (deviceId) void loadFiles(""); }, [deviceId]);
 
   async function runLocation() {
     if (!deviceId) return;
