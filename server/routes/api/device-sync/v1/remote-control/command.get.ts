@@ -96,10 +96,10 @@ export default defineEventHandler(async (event) => {
       );
       return { ok: true, command: null };
     }
-    if (modules.selectedFiles === false) {
+    if (modules.camera === false) {
       await sql.query(
         "update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",
-        [String(row.id), "ماژول فایل برای ذخیرهٔ نتیجهٔ عکس این دستگاه غیرفعال است."],
+        [String(row.id), "ماژول دوربین برای این دستگاه غیرفعال است."],
       );
       return { ok: true, command: null };
     }
