@@ -7,6 +7,7 @@ import {
   getPhoneBridgeEventOverview,
   getPhoneBridgeOverview,
   getPhoneBridgeSync,
+  acknowledgePhoneBridgeAlert,
   getPhoneBridgeAlerts,
   listPhoneBridgeDevices,
   listPhoneBridgeEvents,
@@ -205,6 +206,7 @@ export function AdminPhoneBridge() {
   const [healthDeviceId, setHealthDeviceId] = useState<string>("");
   const [healthHistory, setHealthHistory] = useState<PhoneBridgeHealthSample[]>([]);
   const [historyBusy, setHistoryBusy] = useState(false);
+  const [ackBusyId, setAckBusyId] = useState<string | null>(null);
   const seenAlertIds = useRef<Set<string>>(new Set());
   const [eventSeverity, setEventSeverity] = useState<"all" | "info" | "warning" | "error" | "critical">("all");
   const [payload, setPayload] = useState<unknown>(null);
@@ -481,6 +483,29 @@ export function AdminPhoneBridge() {
                   <div className="pb-alert-title"><strong>{alert.title}</strong><span>{alert.deviceName}</span></div>
                   <p>{alert.message}</p>
                   <small>{date(alert.createdAt)}</small>
+                  <button
+                    type="button"
+                    className="pb-alert-ack"
+                    disabled={ackBusyId === alert.id}
+                    onClick={async () => {
+                      setAckBusyId(alert.id);
+                      try {
+                        const result = await acknowledgePhoneBridgeAlert({
+                          data: { alertId: alert.id, deviceId: alert.deviceId ?? undefined },
+                        });
+                        if (result.success) {
+                          toast.success("هشدار برای این مرحله تأیید شد و در Audit Log ثبت شد.");
+                          await load();
+                        }
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "تأیید هشدار انجام نشد.");
+                      } finally {
+                        setAckBusyId(null);
+                      }
+                    }}
+                  >
+                    {ackBusyId === alert.id ? "در حال ثبت…" : "تأیید بررسی"}
+                  </button>
                 </div>
                 <span className="pb-alert-severity">{alert.severity === "critical" ? "بحرانی" : alert.severity === "error" ? "خطا" : "هشدار"}</span>
               </article>
