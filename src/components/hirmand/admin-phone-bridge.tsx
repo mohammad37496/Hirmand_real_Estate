@@ -189,7 +189,7 @@ export function AdminPhoneBridge() {
     if (!window.confirm(`همهٔ بسته‌های قدیمی‌تر از ${fa(days)} روز حذف شوند؟`)) return;
     try {
       const result = await purgePhoneBridgeData({ data: { olderThanDays: days } });
-      toast.success(`${fa(result.deleted)} بسته حذف شد.`);
+      toast.success(`${fa(result.deleted)} بسته و ${fa(result.filesDeleted ?? 0)} فایل قدیمی حذف شد.`);
       setSelectedSync(null); setPayload(null);
       await load();
     } catch (error) {
