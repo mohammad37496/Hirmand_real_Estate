@@ -50,8 +50,9 @@ export default defineEventHandler(async (event) => {
     maxHits: 40,
     blockMs: 10 * 60 * 1000,
   });
+  let authPolicy: Awaited<ReturnType<typeof authenticateDevice>>;
   try {
-    await authenticateDevice(event, deviceId);
+    authPolicy = await authenticateDevice(event, deviceId);
   } catch (error) {
     await recordPhoneBridgeEvent({
       deviceId,
@@ -62,6 +63,10 @@ export default defineEventHandler(async (event) => {
     }).catch(() => undefined);
     throw error;
   }
+  if (authPolicy.allowedModules.selectedFiles === false) {
+    throw createError({ statusCode: 403, statusMessage: "ارسال فایل برای این دستگاه توسط سیاست سرور غیرفعال است." });
+  }
+
   if (!validSha(declaredSha)) throw createError({ statusCode: 400, statusMessage: "SHA-256 فایل معتبر نیست." });
   if (!Number.isInteger(declaredSize) || declaredSize < 1 || declaredSize > MAX_FILE_BYTES) {
     throw createError({ statusCode: 413, statusMessage: "حجم فایل بیش از حد مجاز است." });
