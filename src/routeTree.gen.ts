@@ -222,7 +222,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/admin-phone-bridge': typeof AdminPhoneBridgeRoute
-  '/admin-phone-bridge/location': typeof AdminPhoneBridgeLocationRoute
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
   '/favorites': typeof FavoritesRoute
@@ -381,6 +380,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AdminPhoneBridgeRoute: typeof AdminPhoneBridgeRoute
+  AdminPhoneBridgeLocationRoute: typeof AdminPhoneBridgeLocationRoute
   BudgetMatchRoute: typeof BudgetMatchRoute
   CompareRoute: typeof CompareRoute
   ConsultantsRoute: typeof ConsultantsRouteWithChildren
@@ -428,7 +428,14 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPhoneBridgeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin-phone-bridge': {
+    '/admin-phone-bridge/location': {
+      id: '/admin-phone-bridge/location'
+      path: '/admin-phone-bridge/location'
+      fullPath: '/admin-phone-bridge/location'
+      preLoaderRoute: typeof AdminPhoneBridgeLocationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+
       id: '/admin-phone-bridge'
       path: '/admin-phone-bridge'
       fullPath: '/admin-phone-bridge'
@@ -641,6 +648,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AdminPhoneBridgeRoute: AdminPhoneBridgeRoute,
+  AdminPhoneBridgeLocationRoute: AdminPhoneBridgeLocationRoute,
   BudgetMatchRoute: BudgetMatchRoute,
   CompareRoute: CompareRoute,
   GuidesRoute: GuidesRoute,
