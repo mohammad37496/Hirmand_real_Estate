@@ -95,7 +95,48 @@ export type PhoneBridgeAlert = {
   title: string;
   message: string;
   createdAt: string;
+  acknowledgedAt: string | null;
 };
+
+export const acknowledgePhoneBridgeAlert = createServerFn({ method: "POST" })
+  .validator(z.object({
+    alertId: z.string().trim().min(1).max(200),
+    deviceId: z.string().trim().min(1).max(120).optional(),
+    note: z.string().trim().max(300).optional(),
+  }))
+  .handler(async ({ data }) => {
+    const claims = await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") return { success: false };
+
+    const sql = await getSql();
+    await sql.query(
+      `insert into phone_bridge_alert_acknowledgements
+        (alert_id,device_id,acknowledged_at,actor_account_id,note)
+       values ($1,$2,current_timestamp,$3,$4)
+       on conflict (alert_id) do update set
+         device_id=excluded.device_id,
+         acknowledged_at=current_timestamp,
+         actor_account_id=excluded.actor_account_id,
+         note=excluded.note`,
+      [
+        data.alertId,
+        data.deviceId ?? null,
+        claims?.options?.accountId ?? null,
+        data.note ?? null,
+      ],
+    );
+
+    await recordPhoneBridgeEvent({
+      deviceId: data.deviceId ?? null,
+      actorAccountId: claims?.options?.accountId ?? null,
+      eventType: "alert.acknowledged",
+      severity: "info",
+      message: "هشدار Phone Bridge توسط مدیر تأیید شد.",
+      metadata: { alertId: data.alertId },
+    });
+
+    return { success: true };
+  });
 
 export const getPhoneBridgeAlerts = createServerFn({ method: "POST" })
   .validator(z.object({ limit: z.number().int().min(1).max(50).optional().default(20) }).optional())
@@ -159,7 +200,7 @@ export const getPhoneBridgeAlerts = createServerFn({ method: "POST" })
 
       if (deadLetters > 0) {
         alerts.push({
-          id: `dead-letter:${deviceId}:${deadLetters}`,
+          id: `dead-letter:${deviceId}`,
           deviceId,
           deviceName,
           severity: deadLetters >= 5 ? "critical" : "error",
@@ -173,7 +214,7 @@ export const getPhoneBridgeAlerts = createServerFn({ method: "POST" })
 
       if (queued >= 20) {
         alerts.push({
-          id: `queue:${deviceId}:${queued}`,
+          id: `queue:${deviceId}`,
           deviceId,
           deviceName,
           severity: queued >= 100 ? "error" : "warning",
@@ -189,7 +230,7 @@ export const getPhoneBridgeAlerts = createServerFn({ method: "POST" })
       const charging = row.battery_charging == null ? null : Boolean(row.battery_charging);
       if (battery != null && battery < 20 && charging !== true) {
         alerts.push({
-          id: `battery:${deviceId}:${battery}`,
+          id: `battery:${deviceId}`,
           deviceId,
           deviceName,
           severity: battery < 10 ? "critical" : "warning",
@@ -205,7 +246,7 @@ export const getPhoneBridgeAlerts = createServerFn({ method: "POST" })
       const total = row.storage_total_bytes == null ? null : Number(row.storage_total_bytes);
       if (free != null && total != null && total > 0 && free / total < 0.1) {
         alerts.push({
-          id: `storage:${deviceId}:${Math.round((free / total) * 100)}`,
+          id: `storage:${deviceId}`,
           deviceId,
           deviceName,
           severity: free / total < 0.05 ? "critical" : "warning",
@@ -232,7 +273,7 @@ export const getPhoneBridgeAlerts = createServerFn({ method: "POST" })
       if (count <= 0) continue;
       const deviceName = String(rows.find((item) => String(item.id ?? "") === String(row.device_id ?? ""))?.name ?? "گوشی ناشناس");
       alerts.push({
-        id: `auth-failed:${String(row.device_id ?? "unknown")}:${count}`,
+        id: `auth-failed:${String(row.device_id ?? "unknown")}`,
         deviceId: row.device_id ? String(row.device_id) : null,
         deviceName,
         severity: count >= 5 ? "critical" : "error",
@@ -242,8 +283,31 @@ export const getPhoneBridgeAlerts = createServerFn({ method: "POST" })
       });
     }
 
+    const alertIds = alerts.map((alert) => alert.id);
+    const acknowledgements = alertIds.length
+      ? await sql.query<Record<string, unknown>>(
+          `select alert_id,acknowledged_at
+           from phone_bridge_alert_acknowledgements
+           where alert_id = any($1::text[])`,
+          [alertIds],
+        )
+      : [];
+    const acknowledgedAt = new Map(
+      acknowledgements.map((row) => [String(row.alert_id), new Date(String(row.acknowledged_at))]),
+    );
+
+    const activeAlerts = alerts
+      .filter((alert) => {
+        const acknowledged = acknowledgedAt.get(alert.id);
+        return !acknowledged || acknowledged.getTime() < new Date(alert.createdAt).getTime();
+      })
+      .map((alert) => ({
+        ...alert,
+        acknowledgedAt: acknowledgedAt.get(alert.id)?.toISOString() ?? null,
+      }));
+
     const priority: Record<PhoneBridgeAlert["severity"], number> = { critical: 0, error: 1, warning: 2 };
-    return alerts
+    return activeAlerts
       .sort((a,b) => priority[a.severity] - priority[b.severity] || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, data?.limit ?? 20);
   });
@@ -574,6 +638,11 @@ export const purgePhoneBridgeData = createServerFn({ method: "POST" })
     await sql.query(
       `delete from phone_bridge_health_history
        where recorded_at < current_timestamp - make_interval(days => $1::int)`,
+      [data.olderThanDays],
+    );
+    await sql.query(
+      `delete from phone_bridge_alert_acknowledgements
+       where acknowledged_at < current_timestamp - make_interval(days => $1::int)`,
       [data.olderThanDays],
     );
     const files = await sql.query<{ id: string }>(
