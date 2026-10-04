@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Activity, Smartphone, RefreshCw, ShieldCheck, Database, Eye, X, Trash2, UsersRound, PhoneCall, MessageSquareText, CalendarDays, ArrowRight, Package, ContactRound, FileText, BatteryCharging, HardDrive, MemoryStick, MapPin, Wifi, Download, Clock3, AlertTriangle, WifiOff, Bell, BellRing, LockKeyhole } from "lucide-react";
+import { Activity, Smartphone, RefreshCw, ShieldCheck, Database, Eye, X, Trash2, UsersRound, PhoneCall, MessageSquareText, CalendarDays, ArrowRight, Package, ContactRound, Radio, FileText, BatteryCharging, HardDrive, MemoryStick, MapPin, Wifi, Download, Clock3, AlertTriangle, WifiOff, Bell, BellRing, LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
 import "@/admin-phone-bridge-details.css";
 import {
@@ -513,7 +513,7 @@ export function AdminPhoneBridge() {
           <h1>گوشی‌ها و همگام‌سازی داخلی</h1>
           <p>داده فقط با کلید اختصاصی دستگاه و از طریق مسیر Sync ثبت می‌شود؛ پنل عمومی به این اطلاعات دسترسی ندارد.</p>
         </div>
-        <div className="pb-actions"><Link to="/admin" className="pb-back"><ArrowRight size={16} /> بازگشت به پنل</Link><Link to="/admin-phone-bridge/location" className="pb-back"><MapPin size={16} /> موقعیت</Link><Link to="/admin-phone-bridge/apps" className="pb-back"><Package size={16} /> برنامه‌ها</Link><Link to="/admin-phone-bridge/contacts" className="pb-back"><ContactRound size={16} /> مخاطبین</Link>
+        <div className="pb-actions"><Link to="/admin" className="pb-back"><ArrowRight size={16} /> بازگشت به پنل</Link><Link to="/admin-phone-bridge/location" className="pb-back"><MapPin size={16} /> موقعیت</Link><Link to="/admin-phone-bridge/apps" className="pb-back"><Package size={16} /> برنامه‌ها</Link><Link to="/admin-phone-bridge/contacts" className="pb-back"><ContactRound size={16} /> مخاطبین</Link><Link to="/admin-phone-bridge/remote-control" className="pb-back"><Radio size={16} /> ریموت کنترل</Link>
           <button type="button" onClick={() => void load()} disabled={busy}><RefreshCw size={16} className={busy ? "pb-spin" : ""} /> بروزرسانی</button>
           <button type="button" className="pb-danger" onClick={() => void purge()} disabled={busy}><Trash2 size={16} /> پاک‌سازی قدیمی‌ها</button>
         </div>
