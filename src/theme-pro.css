@@ -4976,6 +4976,21 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
   color:var(--navy-900);
   border-color:var(--brass-300);
 }
+.persian-date-picker-calendar-guide{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin:8px 2px 2px;
+  padding:7px 9px;
+  border-radius:9px;
+  background:var(--brass-100);
+  color:var(--brass-800);
+  font-size:.62rem;
+  line-height:1.6;
+}
+.persian-date-picker-calendar-guide span{font-weight:650}
+.persian-date-picker-calendar-guide b{color:var(--navy-900);font-size:.61rem}
 .persian-date-picker-popover .rdp-root{
   --rdp-accent-color:var(--brass-500);
   --rdp-accent-background-color:var(--brass-100);
@@ -5147,6 +5162,14 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
   }
   .persian-date-picker-head strong{
     font-size:.9rem;
+  }
+  .persian-date-picker-calendar-guide{
+    display:grid;
+    justify-content:stretch;
+    gap:1px;
+  }
+  .persian-date-picker-calendar-guide b{
+    font-size:.6rem;
   }
   .persian-date-picker-popover .rdp-dropdown{
     min-height:46px;
