@@ -47,40 +47,69 @@ export default defineEventHandler(async (event) => {
 
   if (action === "register") {
     const data = mobileRegistrationSchema.parse(body);
-    const pairingId = await claimPairingCode(data.pairingCode, data.deviceId);
-    if (!pairingId) {
-      throw createError({ statusCode: 401, statusMessage: "کد جفت‌سازی نامعتبر، منقضی یا قبلاً مصرف شده است." });
-    }
-
     const accessToken = generateMobileAccessToken();
     const tokenHash = hashMobileAccessToken(accessToken);
     const sql = await getSql();
 
-    await sql.query(
-      `insert into mobile_devices (
-         id, platform, app_version, device_model, os_version, device_label,
-         access_token_hash, enabled, first_seen_at, last_seen_at, metadata
+    const rows = await sql.query<{ device_id: string }>(
+      `with claimed as (
+         update mobile_pairing_codes
+            set used_at = current_timestamp,
+                used_device_id = $2
+          where code_hash = $1
+            and used_at is null
+            and expires_at > current_timestamp
+          returning id
+       ),
+       upserted as (
+         insert into mobile_devices (
+           id, platform, app_version, device_model, os_version, device_label,
+           access_token_hash, enabled, first_seen_at, last_seen_at, metadata
+         )
+         select $2, $3, $4, $5, $6, $7, $8, true,
+                current_timestamp, current_timestamp, $9::jsonb
+           from claimed
+         on conflict (id) do update set
+           platform = excluded.platform,
+           app_version = excluded.app_version,
+           device_model = excluded.device_model,
+           os_version = excluded.os_version,
+           device_label = excluded.device_label,
+           access_token_hash = excluded.access_token_hash,
+           enabled = true,
+           last_seen_at = current_timestamp,
+           metadata = excluded.metadata
+         returning id as device_id
        )
-       values ($1,$2,$3,$4,$5,$6,$7,true,current_timestamp,current_timestamp,$8::jsonb)
-       on conflict (id) do update set
-         platform = excluded.platform,
-         app_version = excluded.app_version,
-         device_model = excluded.device_model,
-         os_version = excluded.os_version,
-         device_label = excluded.device_label,
-         access_token_hash = excluded.access_token_hash,
-         enabled = true,
-         last_seen_at = current_timestamp,
-         metadata = excluded.metadata`,
+       select device_id from upserted`,
       [
-        data.deviceId, data.platform, data.appVersion, data.deviceModel, data.osVersion,
-        data.deviceLabel, tokenHash, JSON.stringify(data.metadata ?? {}),
+        hashMobilePairingCode(data.pairingCode),
+        data.deviceId,
+        data.platform,
+        data.appVersion,
+        data.deviceModel,
+        data.osVersion,
+        data.deviceLabel,
+        tokenHash,
+        JSON.stringify(data.metadata ?? {}),
       ],
     );
 
-    return { ok: true, apiVersion: 1, deviceId: data.deviceId, accessToken, serverTime: new Date().toISOString() };
-  }
+    if (!rows.length) {
+      throw createError({
+        statusCode: 401,
+        statusMessage: "کد جفت‌سازی نامعتبر، منقضی یا قبلاً مصرف شده است.",
+      });
+    }
 
+    return {
+      ok: true,
+      apiVersion: 1,
+      deviceId: data.deviceId,
+      accessToken,
+      serverTime: new Date().toISOString(),
+    };
+  }
   if (action === "sync") {
     const token = readBearerToken(getHeader(event, "authorization"));
     if (!token) throw createError({ statusCode: 401, statusMessage: "Authorization دستگاه ارسال نشده است." });
