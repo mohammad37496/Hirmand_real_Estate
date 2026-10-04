@@ -13,6 +13,7 @@ import {
   FileText,
   Image as ImageIcon,
   MapPin,
+  Mic,
   MessageSquareText,
   Navigation,
   PhoneIncoming,
