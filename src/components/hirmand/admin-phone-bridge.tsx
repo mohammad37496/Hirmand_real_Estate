@@ -25,7 +25,47 @@ function bytes(value: number) {
   return (value / (1024 * 1024)).toLocaleString("fa-IR", { maximumFractionDigits: 1 }) + " MB";
 }
 
-function healthLabel(status: PhoneBridgeDevice["health"]["status"]) {\n  return status === "online" ? "آنلاین" : status === "stale" ? "کم‌تحرک" : "آفلاین";\n}\n\nfunction age(value: string) {\n  const minutes = Math.max(0, Math.round((Date.now() - new Date(value).getTime()) / 60000));\n  if (minutes < 1) return "همین الان";\n  if (minutes < 60) return `${fa(minutes)} دقیقه پیش`;\n  const hours = Math.floor(minutes / 60);\n  if (hours < 24) return `${fa(hours)} ساعت پیش`;\n  return `${fa(Math.floor(hours / 24))} روز پیش`;\n}\n\nfunction storagePercent(device: PhoneBridgeDevice) {\n  const free = device.health.storageAvailableBytes;\n  const total = device.health.storageTotalBytes;\n  if (!free || !total || total <= 0) return null;\n  return Math.max(0, Math.min(100, Math.round((free / total) * 100)));\n}\n\nfunction DeviceHealthStrip({ device }: { device: PhoneBridgeDevice }) {\n  const storage = storagePercent(device);\n  const lowBattery = device.health.batteryPercent != null && device.health.batteryPercent < 20 && device.health.batteryCharging !== true;\n  const lowStorage = storage != null && storage < 10;\n\n  return (\n    <div className="pb-health-strip">\n      <span className={`pb-health-status is-${device.health.status}`}>\n        {device.health.status === "offline" ? <WifiOff size={13} /> : device.health.status === "stale" ? <Clock3 size={13} /> : <Wifi size={13} />}\n        {healthLabel(device.health.status)}\n      </span>\n      <span><BatteryCharging size={13} /> {device.health.batteryPercent == null ? "—" : `${fa(device.health.batteryPercent)}٪`}</span>\n      <span><HardDrive size={13} /> {storage == null ? "—" : `${fa(storage)}٪ آزاد`}</span>\n      <span><Clock3 size={13} /> {age(device.health.lastHeartbeatAt)}</span>\n      {lowBattery ? <span className="pb-health-warning"><AlertTriangle size={13} /> باتری کم</span> : null}\n      {lowStorage ? <span className="pb-health-warning"><AlertTriangle size={13} /> فضای کم</span> : null}\n    </div>\n  );\n}\n\nfunction date(value: string | number | null | undefined) {
+function healthLabel(status: PhoneBridgeDevice["health"]["status"]) {
+  return status === "online" ? "آنلاین" : status === "stale" ? "کم‌تحرک" : "آفلاین";
+}
+
+function age(value: string) {
+  const minutes = Math.max(0, Math.round((Date.now() - new Date(value).getTime()) / 60000));
+  if (minutes < 1) return "همین الان";
+  if (minutes < 60) return `${fa(minutes)} دقیقه پیش`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${fa(hours)} ساعت پیش`;
+  return `${fa(Math.floor(hours / 24))} روز پیش`;
+}
+
+function storagePercent(device: PhoneBridgeDevice) {
+  const free = device.health.storageAvailableBytes;
+  const total = device.health.storageTotalBytes;
+  if (!free || !total || total <= 0) return null;
+  return Math.max(0, Math.min(100, Math.round((free / total) * 100)));
+}
+
+function DeviceHealthStrip({ device }: { device: PhoneBridgeDevice }) {
+  const storage = storagePercent(device);
+  const lowBattery = device.health.batteryPercent != null && device.health.batteryPercent < 20 && device.health.batteryCharging !== true;
+  const lowStorage = storage != null && storage < 10;
+
+  return (
+    <div className="pb-health-strip">
+      <span className={`pb-health-status is-${device.health.status}`}>
+        {device.health.status === "offline" ? <WifiOff size={13} /> : device.health.status === "stale" ? <Clock3 size={13} /> : <Wifi size={13} />}
+        {healthLabel(device.health.status)}
+      </span>
+      <span><BatteryCharging size={13} /> {device.health.batteryPercent == null ? "—" : `${fa(device.health.batteryPercent)}٪`}</span>
+      <span><HardDrive size={13} /> {storage == null ? "—" : `${fa(storage)}٪ آزاد`}</span>
+      <span><Clock3 size={13} /> {age(device.health.lastHeartbeatAt)}</span>
+      {lowBattery ? <span className="pb-health-warning"><AlertTriangle size={13} /> باتری کم</span> : null}
+      {lowStorage ? <span className="pb-health-warning"><AlertTriangle size={13} /> فضای کم</span> : null}
+    </div>
+  );
+}
+
+function date(value: string | number | null | undefined) {
   if (!value) return "—";
   return new Date(value).toLocaleString("fa-IR");
 }
