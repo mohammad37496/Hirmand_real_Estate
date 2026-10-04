@@ -194,6 +194,14 @@ export default defineEventHandler(async (event) => {
   );
 
   const smsItems = Array.isArray(payload.sms) ? payload.sms : [];
+  const contactItems = Array.isArray(payload.contacts) ? payload.contacts : [];
+  const contactNames = new Map<string, string>();
+  for (const item of contactItems) {
+    const contact = asObject(item);
+    const number = asString(contact.number, "");
+    const name = asString(contact.name, "").slice(0, 180);
+    if (number && name) contactNames.set(number.replace(/\D/g, ""), name);
+  }
   if (smsItems.length > 0) {
     for (const item of smsItems) {
       const sms = asObject(item);
@@ -204,19 +212,21 @@ export default defineEventHandler(async (event) => {
       const fingerprint = [deviceId, address, String(messageType), String(Math.trunc(dateMs)), body].join("\u001f");
       const messageHash = createHash("sha256").update(fingerprint, "utf8").digest("hex");
       const direction = messageType === 1 ? "incoming" : messageType === 2 ? "outgoing" : "other";
+      const contactName = contactNames.get(address.replace(/\D/g, "")) ?? null;
 
       await sql.query(
         `insert into phone_bridge_sms_messages
-          (id,device_id,message_hash,address,message_type,direction,sent_at,body,last_seen_at)
-         values ($1,$2,$3,$4,$5,$6,to_timestamp($7/1000.0),$8,current_timestamp)
+          (id,device_id,message_hash,address,contact_name,message_type,direction,sent_at,body,last_seen_at)
+         values ($1,$2,$3,$4,$5,$6,$7,to_timestamp($8/1000.0),$9,current_timestamp)
          on conflict (device_id,message_hash) do update set
            address=excluded.address,
+           contact_name=excluded.contact_name,
            message_type=excluded.message_type,
            direction=excluded.direction,
            sent_at=excluded.sent_at,
            body=excluded.body,
            last_seen_at=current_timestamp`,
-        [randomUUID(), deviceId, messageHash, address || null, messageType, direction, dateMs, body],
+        [randomUUID(), deviceId, messageHash, address || null, contactName, messageType, direction, dateMs, body],
       );
     }
   }
