@@ -953,6 +953,7 @@ export function AdminPhoneBridge() {
                       ["calendar", "تقویم"],
                       ["apps", "برنامه‌ها"],
                       ["camera", "دوربین"],
+                      ["microphone", "میکروفون"],
                       ["selectedFiles", "فایل‌های انتخابی"],
                     ] as const).map(([key, label]) => (
                       <label className="pb-policy-item" key={key}>
