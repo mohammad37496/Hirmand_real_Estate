@@ -34,7 +34,6 @@ export default defineEventHandler(async (event) => {
   const modules = device.allowed_modules && typeof device.allowed_modules === "object"
     ? device.allowed_modules as Record<string, unknown>
     : {};
-  if (modules.location === false) return { ok: true, command: null, reason: "location_module_disabled" };
 
   await sql.query(
     "update phone_bridge_remote_commands set status='expired', completed_at=current_timestamp where device_id=$1 and status in ('queued','running') and expires_at < current_timestamp",
@@ -61,15 +60,26 @@ export default defineEventHandler(async (event) => {
   const payload = row.payload && typeof row.payload === "object"
     ? row.payload as Record<string, unknown>
     : {};
+  if (String(row.action) === "get_location" && modules.location === false) {
+    await sql.query(
+      "update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",
+      [String(row.id), "ماژول موقعیت برای این دستگاه غیرفعال است."],
+    );
+    return { ok: true, command: null };
+  }
+
   if (String(row.action) === "restore_data") {
     const dataType = String(payload.dataType ?? "");
     const requestedCount = Number(payload.requestedCount ?? 0);
     const validType = dataType === "sms" || dataType === "incoming_calls";
     const validCount = [15, 30, 60, 100, 250, 500, 1000, 5000, 10000].includes(requestedCount);
-    if (!validType || !validCount) {
+    const moduleAllowed =
+      (dataType === "sms" && modules.sms !== false) ||
+      (dataType === "incoming_calls" && modules.calls !== false);
+    if (!validType || !validCount || !moduleAllowed) {
       await sql.query(
         "update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",
-        [String(row.id), "پارامترهای بازگردانی دیتا معتبر نیستند."],
+        [String(row.id), "پارامتر یا ماژول بازگردانی دیتا معتبر نیست."],
       );
       return { ok: true, command: null };
     }
