@@ -38,6 +38,8 @@ export type PhoneBridgeRemoteCommand = {
     requestedCount?: number;
     camera?: RemoteCamera;
     flash?: boolean;
+    operation?: "pick_folder" | "download";
+    uri?: string;
   };
   result: {
     latitude?: number;
@@ -59,6 +61,10 @@ export type PhoneBridgeRemoteCommand = {
     sha256?: string;
     camera?: RemoteCamera;
     flash?: boolean;
+    operation?: "pick_folder" | "download";
+    uri?: string;
+    rootUri?: string;
+    entries?: number;
   } | null;
   errorMessage: string | null;
   createdAt: string;
@@ -83,7 +89,9 @@ function mapRow(row: Record<string, unknown>): PhoneBridgeRemoteCommand {
       dataType: rawPayload.dataType === "sms" || rawPayload.dataType === "incoming_calls" ? rawPayload.dataType as RemoteDataType : undefined,
       requestedCount: typeof rawPayload.requestedCount === "number" ? rawPayload.requestedCount : undefined,
       camera: rawPayload.camera === "front" || rawPayload.camera === "back" ? rawPayload.camera as RemoteCamera : undefined,
-      flash: typeof rawPayload.flash === "boolean" ? rawPayload.flash : undefined,\n      operation: rawPayload.operation === "pick_folder" || rawPayload.operation === "download" ? rawPayload.operation : undefined,\n      uri: typeof rawPayload.uri === "string" ? rawPayload.uri : undefined,
+      flash: typeof rawPayload.flash === "boolean" ? rawPayload.flash : undefined,
+      operation: rawPayload.operation === "pick_folder" || rawPayload.operation === "download" ? rawPayload.operation : undefined,
+      uri: typeof rawPayload.uri === "string" ? rawPayload.uri : undefined,
     },
     result: raw ? {
       latitude: typeof raw.latitude === "number" ? raw.latitude : undefined,
@@ -106,7 +114,11 @@ function mapRow(row: Record<string, unknown>): PhoneBridgeRemoteCommand {
       sizeBytes: typeof raw.sizeBytes === "number" ? raw.sizeBytes : undefined,
       sha256: typeof raw.sha256 === "string" ? raw.sha256 : undefined,
       camera: raw.camera === "front" || raw.camera === "back" ? raw.camera as RemoteCamera : undefined,
-      flash: typeof raw.flash === "boolean" ? raw.flash : undefined,\n      operation: raw.operation === "pick_folder" || raw.operation === "download" ? raw.operation : undefined,\n      uri: typeof raw.uri === "string" ? raw.uri : undefined,\n      rootUri: typeof raw.rootUri === "string" ? raw.rootUri : undefined,\n      entries: typeof raw.entries === "number" ? raw.entries : undefined,
+      flash: typeof raw.flash === "boolean" ? raw.flash : undefined,
+      operation: raw.operation === "pick_folder" || raw.operation === "download" ? raw.operation : undefined,
+      uri: typeof raw.uri === "string" ? raw.uri : undefined,
+      rootUri: typeof raw.rootUri === "string" ? raw.rootUri : undefined,
+      entries: typeof raw.entries === "number" ? raw.entries : undefined,
     } : null,
     errorMessage: row.error_message ? String(row.error_message) : null,
     createdAt: new Date(String(row.created_at)).toISOString(),
@@ -139,6 +151,14 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
       action: z.literal("manage_files"),
       operation: z.enum(["pick_folder","download"]),
       uri: z.string().trim().max(3000).optional(),
+    }),
+    z.object({
+      deviceId: z.string().trim().min(1).max(120),
+      action: z.literal("list_apps"),
+    }),
+    z.object({
+      deviceId: z.string().trim().min(1).max(120),
+      action: z.literal("list_notifications"),
     }),
     z.object({
       deviceId: z.string().trim().min(1).max(120),
@@ -185,7 +205,9 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
       );
       if (!allowedFile.length) throw new Error("این فایل در فهرست مجاز گوشی وجود ندارد؛ ابتدا پوشه را دوباره انتخاب و همگام‌سازی کن.");
     }
-    if (data.action === "list_apps" && modules.apps === false) throw new Error("ماژول برنامه‌ها برای این دستگاه غیرفعال است.");\n    if (data.action === "list_notifications" && modules.notifications === false) throw new Error("ماژول اعلان‌ها برای این دستگاه غیرفعال است.");\n    if (data.action === "record_audio" && modules.microphone === false) {
+    if (data.action === "list_apps" && modules.apps === false) throw new Error("ماژول برنامه‌ها برای این دستگاه غیرفعال است.");
+    if (data.action === "list_notifications" && modules.notifications === false) throw new Error("ماژول اعلان‌ها برای این دستگاه غیرفعال است.");
+    if (data.action === "record_audio" && modules.microphone === false) {
       throw new Error("ماژول میکروفون برای این دستگاه غیرفعال است.");
     }
     if (data.action === "record_audio" && data.audioFormat === "mp3") {
