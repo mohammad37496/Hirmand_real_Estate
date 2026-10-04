@@ -38,7 +38,7 @@
 - **Frontend:** React 19 · TanStack Router / Start · Vite 8 · TypeScript
 - **UI:** Tailwind CSS 4 · Lucide · Vazirmatn · Sonner
 - **Data:** PostgreSQL / Neon (اختیاری) · PGlite (لوکال)
-- **Deploy:** Nitro · Vercel
+- **Deploy:** Nitro · Liara (Node.js) / Vercel-compatible Nitro runtime
 
 ---
 
@@ -75,6 +75,7 @@ npm run dev
 | `VITE_GOOGLE_SITE_VERIFICATION` | توکن تأیید Google Search Console | اختیاری |
 | `VITE_AUTH_ENABLED` | فعال‌سازی Better Auth | خیر |
 | `BLOB_READ_WRITE_TOKEN` | فضای ذخیره‌سازی Vercel Blob برای رسانه‌های حجیم | اختیاری |
+| `HIRMAND_PHONE_BRIDGE_TOKEN` | کلید خصوصی اپ Phone Bridge برای ارسال دادهٔ گوشی به `/api/device-sync/v1` | برای اتصال اپ الزامی |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | شمارنده مشترک محدودسازی تلاش ورود و آپلود | اختیاری ولی روی Vercel لازم |
 
 > بدون `UPSTASH_*` محدودسازی نرخ در حافظه همان پروسه نگه‌داری می‌شود؛ برای `npm run dev`
@@ -107,6 +108,12 @@ npm run dev
 5. محتوای واقعی و مفید برای محله‌ها و خدمات اضافه کنید و لینک‌های طبیعی و معتبر بسازید.
 
 > **نکته:** هیچ کدی رتبه ۱ گوگل را تضمین نمی‌کند. هدف این تغییرات، تقویت سیگنال‌های فنی، محتوایی و محلی برای جست‌وجوی «املاک هیرمند» است.
+
+## اتصال Phone Bridge
+
+اپ **Hirmand Phone Bridge** می‌تواند داده‌های ماژول‌های انتخاب‌شدهٔ گوشی را به‌صورت کنترل‌شده به مسیر `/api/device-sync/v1` بفرستد. بسته‌ها ابتدا روی خود گوشی صف می‌شوند و بعد از برقراری شبکه دوباره ارسال می‌شوند. دادهٔ خام عمومی نیست و مشاهدهٔ آن فقط از بخش مدیریتی `/admin-phone-bridge` با مجوز امنیت مدیران انجام می‌شود.
+
+برای استقرار سمت سایت، متغیر `HIRMAND_PHONE_BRIDGE_TOKEN` را در Environment پروژه تنظیم کنید و همان مقدار را در اپ وارد کنید. برای شبکهٔ داخلی می‌توانید Endpoint اپ را به IP خصوصی سرور داخل LAN تغییر دهید؛ برای HTTPS عمومی Endpoint پیش‌فرض `https://www.hirmandrealestate.ir/api/device-sync/v1` است.
 
 ## مسیرهای اصلی
 
