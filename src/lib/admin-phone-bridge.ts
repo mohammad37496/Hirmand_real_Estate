@@ -377,6 +377,83 @@ export type PhoneBridgeEvent = {
   createdAt: string;
 };
 
+export type PhoneBridgeReleaseSettings = {
+  versionName: string;
+  versionCode: number;
+  downloadUrl: string;
+  releaseNotes: string;
+  forceUpdate: boolean;
+  updatedAt: string | null;
+};
+
+export const getPhoneBridgeReleaseSettings = createServerFn({ method: "POST" })
+  .validator(z.object({}).optional())
+  .handler(async () => {
+    await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") {
+      return { versionName: "0.2.0", versionCode: 20, downloadUrl: "", releaseNotes: "", forceUpdate: false, updatedAt: null };
+    }
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select version_name,version_code,download_url,release_notes,force_update,updated_at
+       from phone_bridge_release_settings where id=1 limit 1`,
+    );
+    const row = rows[0];
+    return {
+      versionName: String(row?.version_name ?? "0.2.0"),
+      versionCode: Number(row?.version_code ?? 20),
+      downloadUrl: String(row?.download_url ?? ""),
+      releaseNotes: String(row?.release_notes ?? ""),
+      forceUpdate: Boolean(row?.force_update),
+      updatedAt: row?.updated_at ? new Date(String(row.updated_at)).toISOString() : null,
+    } satisfies PhoneBridgeReleaseSettings;
+  });
+
+export const setPhoneBridgeReleaseSettings = createServerFn({ method: "POST" })
+  .validator(z.object({
+    versionName: z.string().trim().min(1).max(40),
+    versionCode: z.number().int().min(1).max(1000000),
+    downloadUrl: z.string().trim().url().max(1000).or(z.literal("")),
+    releaseNotes: z.string().trim().max(4000),
+    forceUpdate: z.boolean(),
+  }))
+  .handler(async ({ data }) => {
+    const claims = await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") return { success: false, ...data, updatedAt: null };
+
+    const sql = await getSql();
+    const rows = await sql.query<{ id: number }>(
+      `insert into phone_bridge_release_settings
+        (id,version_name,version_code,download_url,release_notes,force_update,updated_at)
+       values (1,$1,$2,$3,$4,$5,current_timestamp)
+       on conflict (id) do update set
+         version_name=excluded.version_name,
+         version_code=excluded.version_code,
+         download_url=excluded.download_url,
+         release_notes=excluded.release_notes,
+         force_update=excluded.force_update,
+         updated_at=current_timestamp
+       returning id`,
+      [data.versionName, data.versionCode, data.downloadUrl, data.releaseNotes, data.forceUpdate],
+    );
+
+    if (rows.length > 0) {
+      await recordPhoneBridgeEvent({
+        actorAccountId: claims?.options?.accountId ?? null,
+        eventType: "release.updated",
+        severity: "warning",
+        message: "اطلاعات انتشار نسخهٔ Phone Bridge تغییر کرد.",
+        metadata: { versionCode: data.versionCode, forceUpdate: data.forceUpdate },
+      });
+    }
+
+    return {
+      success: rows.length > 0,
+      ...data,
+      updatedAt: rows.length > 0 ? new Date().toISOString() : null,
+    };
+  });
+
 export const setPhoneBridgeDeviceMinVersion = createServerFn({ method: "POST" })
   .validator(z.object({
     deviceId: z.string().trim().min(1).max(120),
