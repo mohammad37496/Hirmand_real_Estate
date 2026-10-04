@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AdminPhoneBridgeRouteImport } from './routes/admin-phone-bridge'
 import { Route as BudgetMatchRouteImport } from './routes/budget-match'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as GuidesRouteImport } from './routes/guides'
@@ -270,6 +271,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/admin-phone-bridge'
     | '/budget-match'
     | '/compare'
     | '/consultants'
@@ -362,6 +364,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AdminPhoneBridgeRoute: typeof AdminPhoneBridgeRoute
   BudgetMatchRoute: typeof BudgetMatchRoute
   CompareRoute: typeof CompareRoute
   ConsultantsRoute: typeof ConsultantsRouteWithChildren
@@ -400,6 +403,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-phone-bridge': {
+      id: '/admin-phone-bridge'
+      path: '/admin-phone-bridge'
+      fullPath: '/admin-phone-bridge'
+      preLoaderRoute: typeof AdminPhoneBridgeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/budget-match': {
@@ -607,6 +617,7 @@ const PropertiesRouteWithChildren = PropertiesRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AdminPhoneBridgeRoute: AdminPhoneBridgeRoute,
   BudgetMatchRoute: BudgetMatchRoute,
   CompareRoute: CompareRoute,
   GuidesRoute: GuidesRoute,
