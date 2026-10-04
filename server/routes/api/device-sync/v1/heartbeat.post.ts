@@ -44,6 +44,15 @@ export default defineEventHandler(async (event) => {
     throw error;
   }
 
+  const sql = await getSql();
+  const policyRows = await sql.query<{ policy_revision: number; last_snapshot_policy_revision: number }>(
+    `select policy_revision,last_snapshot_policy_revision from phone_bridge_devices where id=$1 limit 1`,
+    [deviceId],
+  );
+  const policyRevision = Number(policyRows[0]?.policy_revision ?? 1);
+  const appliedPolicyRevision = Number(policyRows[0]?.last_snapshot_policy_revision ?? 1);
+  const snapshotRequired = policyRevision !== appliedPolicyRevision;
+
   const body = asObject(await readBody(event).catch(() => null));
   const device = asObject(body.device);
   const queue = asObject(body.queue);
@@ -70,7 +79,6 @@ export default defineEventHandler(async (event) => {
   const reportedAt = Number.isInteger(queue.reportedAt) ? new Date(queue.reportedAt) : new Date();
   const healthReportAt = Number.isFinite(reportedAt.getTime()) ? reportedAt.toISOString() : new Date().toISOString();
 
-  const sql = await getSql();
   await sql.query(
     `insert into phone_bridge_health_history
       (device_id,battery_percent,battery_charging,storage_available_bytes,storage_total_bytes,ram_available_bytes,ram_total_bytes,queued_packets,dead_letter_packets)
@@ -121,6 +129,8 @@ export default defineEventHandler(async (event) => {
     ok: true,
     deviceId,
     snapshotHash: snapshotHash || null,
+    snapshotRequired,
+    policyRevision,
     receivedAt: new Date().toISOString(),
   };
 });
