@@ -15,7 +15,17 @@ function int(value: unknown): number | null {
 
 export default defineEventHandler(async (event: H3Event) => {
   setResponseHeader(event, "cache-control", "no-store");
-  requireBootstrap(event);
+  try {
+    requireBootstrap(event);
+  } catch (error) {
+    await recordPhoneBridgeEvent({
+      eventType: "security.bootstrap_failed",
+      severity: "error",
+      message: "تلاش ناموفق برای ثبت اولیهٔ Phone Bridge.",
+      metadata: { route: "/api/device-sync/v1/register" },
+    }).catch(() => undefined);
+    throw error;
+  }
   if (dbSource === "unconfigured") {
     throw createError({ statusCode: 503, statusMessage: "پایگاه داده برای ثبت دستگاه در دسترس نیست." });
   }
@@ -51,6 +61,14 @@ export default defineEventHandler(async (event: H3Event) => {
       hashToken(token),
     ],
   );
+
+  await recordPhoneBridgeEvent({
+    deviceId,
+    eventType: "device.registered",
+    severity: "info",
+    message: "یک دستگاه Phone Bridge ثبت شد یا توکن آن بازتولید شد.",
+    metadata: { route: "/api/device-sync/v1/register" },
+  }).catch(() => undefined);
 
   return {
     ok: true,
