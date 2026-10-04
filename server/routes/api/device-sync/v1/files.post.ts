@@ -9,6 +9,7 @@ import {
 } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { authenticateDevice } from "@/lib/phone-bridge-auth";
+import { requirePhoneBridgeSignedRequest } from "@/lib/phone-bridge-signature.server";
 import { recordPhoneBridgeEvent } from "@/lib/phone-bridge-events.server";
 import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
@@ -50,9 +51,16 @@ export default defineEventHandler(async (event) => {
     maxHits: 40,
     blockMs: 10 * 60 * 1000,
   });
+  if (content.length === 0) {
+    throw createError({ statusCode: 400, statusMessage: "محتوای فایل ارسال نشده است." });
+  }
+
   let authPolicy: Awaited<ReturnType<typeof authenticateDevice>>;
   try {
     authPolicy = await authenticateDevice(event, deviceId);
+    if (authPolicy.mode === "device") {
+      await requirePhoneBridgeSignedRequest(event, deviceId, content);
+    }
   } catch (error) {
     await recordPhoneBridgeEvent({
       deviceId,
