@@ -383,7 +383,8 @@ export const setPhoneBridgeDevicePolicy = createServerFn({ method: "POST" })
     const sql = await getSql();
     const rows = await sql.query<{ id: string }>(
       `update phone_bridge_devices
-       set allowed_modules=$2::jsonb
+       set allowed_modules=$2::jsonb,
+           policy_revision=policy_revision + 1
        where id=$1
        returning id`,
       [data.deviceId, JSON.stringify(allowedModules)],
