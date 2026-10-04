@@ -107,7 +107,7 @@ function StructuredPayload({ payload }: { payload: unknown }) {
     <div className="pb-structured">
       <section className="pb-detail-grid">
         <div className="pb-detail-card"><span>دستگاه</span><strong>{textValue(device.model)}</strong><small>{textValue(device.manufacturer)} · Android {textValue(device.androidVersion)}</small></div>
-        <div className="pb-detail-card"><span>شناسه نصب</span><strong className="pb-mono">{textValue(device.id)}</strong><small>ارسال: {date(Number(root.sentAt ?? 0))}</small></div>
+        <div className="pb-detail-card"><span>شناسه نصب</span><strong className="pb-mono">{textValue(device.id)}</strong><small>ارسال: {date(String(root.sentAt ?? ""))}</small></div>
       </section>
       <section className="pb-stat-grid">
         <div><BatteryCharging size={17} /><span>باتری</span><strong>{textValue(stats.batteryPercent)}{stats.batteryPercent != null ? "٪" : ""}</strong></div>
