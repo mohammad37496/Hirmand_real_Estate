@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const sql = await getSql();
-  const policyRows = await sql.query<{ policy_revision: number; last_snapshot_policy_revision: number }>(
+  const policyRows = await sql.query<{ policy_revision: number; last_snapshot_policy_revision: number; min_app_version_code: number }>(
     `select policy_revision,last_snapshot_policy_revision from phone_bridge_devices where id=$1 limit 1`,
     [deviceId],
   );
