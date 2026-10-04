@@ -37,8 +37,11 @@ function summaryFor(payload: JsonObject) {
     calls: arrayCount(payload.calls),
     sms: arrayCount(payload.sms),
     calendar: arrayCount(payload.calendar),
+    apps: arrayCount(payload.apps),
+    selectedFiles: arrayCount(payload.selectedFiles),
     hasLocation: Boolean(payload.location),
     hasWifi: Boolean(payload.wifi),
+    hasDeviceStats: Boolean(payload.deviceStats),
   };
 }
 
