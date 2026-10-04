@@ -193,5 +193,11 @@ export const purgePhoneBridgeData = createServerFn({ method: "POST" })
        returning id`,
       [data.olderThanDays],
     );
-    return { deleted: rows.length };
+    const files = await sql.query<{ id: string }>(
+      `delete from phone_bridge_files
+       where uploaded_at < current_timestamp - make_interval(days => $1::int)
+       returning id`,
+      [data.olderThanDays],
+    );
+    return { deleted: rows.length, filesDeleted: files.length };
   });
