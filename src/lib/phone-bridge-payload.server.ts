@@ -4,7 +4,7 @@ import type { PhoneBridgeModulePolicy } from "@/lib/phone-bridge-auth";
 type JsonObject = Record<string, unknown>;
 
 const MAX_TEXT = 500;
-const MAX_CONTACTS = 200;
+const MAX_CONTACTS = 1000;
 const MAX_CALLS = 200;
 const MAX_SMS = 200;
 const MAX_CALENDAR = 200;
@@ -40,9 +40,15 @@ function sanitizeContacts(value: unknown) {
   return limitedArray(value, MAX_CONTACTS).flatMap((item) => {
     const o = asObject(item);
     if (!o) return [];
+    const contactId = text(o.contactId, 120);
     const name = text(o.name, 180);
     const number = text(o.number, 80);
-    return name || number ? [{ name, number }] : [];
+    const lastUpdatedAt = isoMs(o.lastUpdatedAt) ?? 0;
+    const rawNumbers = Array.isArray(o.numbers) ? o.numbers : (number ? [number] : []);
+    const numbers = [...new Set(rawNumbers.map((item) => text(item, 80)).filter(Boolean))].slice(0, 20);
+    return contactId || name || numbers.length
+      ? [{ contactId, name, numbers, lastUpdatedAt }]
+      : [];
   });
 }
 
