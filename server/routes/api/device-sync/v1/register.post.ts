@@ -1,6 +1,8 @@
 import { createError, defineEventHandler, readBody, setResponseHeader, type H3Event } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { generateDeviceToken, hashToken, requireBootstrap } from "@/lib/phone-bridge-auth";
+import { recordPhoneBridgeEvent } from "@/lib/phone-bridge-events.server";
+import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
 type Obj = Record<string, unknown>;
 function obj(value: unknown): Obj {
@@ -15,6 +17,11 @@ function int(value: unknown): number | null {
 
 export default defineEventHandler(async (event: H3Event) => {
   setResponseHeader(event, "cache-control", "no-store");
+  await enforcePhoneBridgeRateLimit(event, "register", "bootstrap", {
+    windowMs: 15 * 60 * 1000,
+    maxHits: 5,
+    blockMs: 30 * 60 * 1000,
+  });
   try {
     requireBootstrap(event);
   } catch (error) {
