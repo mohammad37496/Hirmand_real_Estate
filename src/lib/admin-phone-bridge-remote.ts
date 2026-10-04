@@ -178,6 +178,13 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
     }
     if (data.action === "manage_files" && modules.selectedFiles === false) throw new Error("ماژول مدیریت فایل برای این دستگاه غیرفعال است.");
     if (data.action === "manage_files" && data.operation === "download" && !data.uri) throw new Error("مسیر فایل برای دانلود مشخص نشده است.");
+    if (data.action === "manage_files" && data.operation === "download" && data.uri) {
+      const allowedFile = await sql.query<{ id: string }>(
+        "select id from phone_bridge_file_entries where device_id=$1 and uri=$2 and is_directory=false limit 1",
+        [data.deviceId, data.uri],
+      );
+      if (!allowedFile.length) throw new Error("این فایل در فهرست مجاز گوشی وجود ندارد؛ ابتدا پوشه را دوباره انتخاب و همگام‌سازی کن.");
+    }
     if (data.action === "record_audio" && modules.microphone === false) {
       throw new Error("ماژول میکروفون برای این دستگاه غیرفعال است.");
     }
