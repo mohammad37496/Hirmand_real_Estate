@@ -68,6 +68,8 @@ export default defineEventHandler(async (event) => {
     }
   })());
   const device = asObject(body.device);
+  const appVersionCode = Number.isInteger(device.appVersionCode) ? Math.max(1, Math.min(device.appVersionCode, 1000000)) : 1;
+  const appVersionName = asString(device.appVersionName, "unknown");
   const queue = asObject(body.queue);
   const stats = asObject(body.deviceStats);
   const snapshotHash = asString(body.snapshotHash).slice(0, 128);
@@ -111,14 +113,16 @@ export default defineEventHandler(async (event) => {
 
   await sql.query(
     `insert into phone_bridge_devices
-      (id,name,manufacturer,model,android_version,sdk_int,last_seen_at,last_queue_count,last_dead_letter_count,last_health_report_at)
-     values ($1,$2,$3,$4,$5,$6,current_timestamp,$7,$8,$9)
+      (id,name,manufacturer,model,android_version,sdk_int,app_version_name,app_version_code,last_seen_at,last_queue_count,last_dead_letter_count,last_health_report_at)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,current_timestamp,$9,$10,$11)
      on conflict (id) do update set
        name=excluded.name,
        manufacturer=excluded.manufacturer,
        model=excluded.model,
        android_version=excluded.android_version,
        sdk_int=excluded.sdk_int,
+       app_version_name=excluded.app_version_name,
+       app_version_code=excluded.app_version_code,
        last_seen_at=current_timestamp,
        last_queue_count=$7,
        last_dead_letter_count=$8,
@@ -131,6 +135,8 @@ export default defineEventHandler(async (event) => {
       asString(device.model),
       asString(device.androidVersion),
       Number.isInteger(device.sdkInt) ? device.sdkInt : null,
+      appVersionName,
+      appVersionCode,
       queued,
       deadLetters,
       healthReportAt,
@@ -144,6 +150,10 @@ export default defineEventHandler(async (event) => {
     snapshotHash: snapshotHash || null,
     snapshotRequired,
     policyRevision,
+    appVersionName,
+    appVersionCode,
+    minAppVersionCode: Number(versionRows[0]?.min_app_version_code ?? 0),
+    updateRequired: snapshotRequired || (Number(versionRows[0]?.min_app_version_code ?? 0) > appVersionCode),
     receivedAt: new Date().toISOString(),
   };
 });
