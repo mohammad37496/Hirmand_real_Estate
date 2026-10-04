@@ -280,7 +280,7 @@ export function AdminPhoneBridge() {
     } finally {
       setHistoryBusy(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     const first = healthDeviceId || devices[0]?.id || "";
@@ -289,7 +289,7 @@ export function AdminPhoneBridge() {
 
   useEffect(() => {
     if (healthDeviceId) void loadHealthHistory(healthDeviceId);
-  }, [healthDeviceId]);
+  }, [healthDeviceId, loadHealthHistory]);
 
   async function openSync(id: string) {
     try {
