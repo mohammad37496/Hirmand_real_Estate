@@ -48,6 +48,118 @@ const listInput = z.object({
   deviceId: z.string().trim().min(1).max(120).optional(),
 });
 
+export type PhoneBridgeLocationPoint = {
+  id: string;
+  deviceId: string;
+  deviceName: string;
+  recordedAt: string;
+  latitude: number;
+  longitude: number;
+  accuracyMeters: number | null;
+  altitudeMeters: number | null;
+  speedMps: number | null;
+  bearingDegrees: number | null;
+  provider: string | null;
+  receivedAt: string;
+};
+
+export type PhoneBridgeLocationConfig = {
+  deviceId: string;
+  enabled: boolean;
+  intervalMinutes: 5 | 15 | 30 | 60;
+};
+
+export const listPhoneBridgeLocations = createServerFn({ method: "POST" })
+  .validator(z.object({
+    deviceId: z.string().trim().min(1).max(120),
+    limit: z.number().int().min(1).max(1000).optional().default(200),
+  }))
+  .handler(async ({ data }) => {
+    await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") return [] as PhoneBridgeLocationPoint[];
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select p.id,p.device_id,p.recorded_at,p.latitude,p.longitude,p.accuracy_meters,
+              p.altitude_meters,p.speed_mps,p.bearing_degrees,p.provider,p.received_at,
+              coalesce(d.name,'گوشی ناشناس') as device_name
+       from phone_bridge_location_points p
+       left join phone_bridge_devices d on d.id=p.device_id
+       where p.device_id=$1
+       order by p.recorded_at desc
+       limit $2`,
+      [data.deviceId, data.limit],
+    );
+    return rows.map((row) => ({
+      id: String(row.id),
+      deviceId: String(row.device_id),
+      deviceName: String(row.device_name ?? "گوشی ناشناس"),
+      recordedAt: new Date(String(row.recorded_at)).toISOString(),
+      latitude: Number(row.latitude),
+      longitude: Number(row.longitude),
+      accuracyMeters: row.accuracy_meters == null ? null : Number(row.accuracy_meters),
+      altitudeMeters: row.altitude_meters == null ? null : Number(row.altitude_meters),
+      speedMps: row.speed_mps == null ? null : Number(row.speed_mps),
+      bearingDegrees: row.bearing_degrees == null ? null : Number(row.bearing_degrees),
+      provider: row.provider ? String(row.provider) : null,
+      receivedAt: new Date(String(row.received_at)).toISOString(),
+    }));
+  });
+
+export const getPhoneBridgeLocationConfig = createServerFn({ method: "POST" })
+  .validator(z.object({ deviceId: z.string().trim().min(1).max(120) }))
+  .handler(async ({ data }) => {
+    await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") {
+      return { deviceId: data.deviceId, enabled: false, intervalMinutes: 15 as const };
+    }
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select location_tracking_enabled,location_interval_minutes
+       from phone_bridge_devices where id=$1 limit 1`,
+      [data.deviceId],
+    );
+    const row = rows[0];
+    const interval = [5, 15, 30, 60].includes(Number(row?.location_interval_minutes))
+      ? Number(row?.location_interval_minutes) as 5 | 15 | 30 | 60
+      : 15;
+    return {
+      deviceId: data.deviceId,
+      enabled: Boolean(row?.location_tracking_enabled),
+      intervalMinutes: interval,
+    };
+  });
+
+export const setPhoneBridgeLocationConfig = createServerFn({ method: "POST" })
+  .validator(z.object({
+    deviceId: z.string().trim().min(1).max(120),
+    enabled: z.boolean(),
+    intervalMinutes: z.union([z.literal(5),z.literal(15),z.literal(30),z.literal(60)]),
+  }))
+  .handler(async ({ data }) => {
+    const claims = await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") return { success: false, ...data };
+    const sql = await getSql();
+    const rows = await sql.query<{ id: string }>(
+      `update phone_bridge_devices
+       set location_tracking_enabled=$2,location_interval_minutes=$3
+       where id=$1 returning id`,
+      [data.deviceId, data.enabled, data.intervalMinutes],
+    );
+    if (rows.length > 0) {
+      await recordPhoneBridgeEvent({
+        deviceId: data.deviceId,
+        actorAccountId: claims?.options?.accountId ?? null,
+        eventType: "location.tracking_config_changed",
+        severity: "warning",
+        message: data.enabled
+          ? "ردیابی موقعیت برای دستگاه فعال شد."
+          : "ردیابی موقعیت برای دستگاه غیرفعال شد.",
+        metadata: { enabled: data.enabled, intervalMinutes: data.intervalMinutes },
+      });
+    }
+    return { success: rows.length > 0, ...data };
+  });
+
 export const PHONE_BRIDGE_MODULES = [
   "location",
   "wifi",
