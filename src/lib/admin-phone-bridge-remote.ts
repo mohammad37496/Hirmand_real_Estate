@@ -161,8 +161,8 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
     if (data.action === "restore_data" && data.dataType === "incoming_calls" && modules.calls === false) {
       throw new Error("ماژول تاریخچه تماس‌ها برای این دستگاه غیرفعال است.");
     }
-    if (data.action === "take_photo" && modules.selectedFiles === false) {
-      throw new Error("ذخیرهٔ فایل برای این دستگاه غیرفعال است؛ برای گالری عکس ریموت، «فایل‌های انتخابی» را فعال کن.");
+    if (data.action === "take_photo" && modules.camera === false) {
+      throw new Error("ماژول دوربین برای این دستگاه غیرفعال است.");
     }
 
     const active = await sql.query<{ id: string }>(
