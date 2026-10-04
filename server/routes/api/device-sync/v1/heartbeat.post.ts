@@ -152,8 +152,8 @@ export default defineEventHandler(async (event) => {
     policyRevision,
     appVersionName,
     appVersionCode,
-    minAppVersionCode: Number(versionRows[0]?.min_app_version_code ?? 0),
-    updateRequired: snapshotRequired || (Number(versionRows[0]?.min_app_version_code ?? 0) > appVersionCode),
+    minAppVersionCode: Number(policyRows[0]?.min_app_version_code ?? 0),
+    updateRequired: snapshotRequired || (Number(policyRows[0]?.min_app_version_code ?? 0) > appVersionCode),
     receivedAt: new Date().toISOString(),
   };
 });
