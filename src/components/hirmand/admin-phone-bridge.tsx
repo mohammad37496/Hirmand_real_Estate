@@ -639,6 +639,16 @@ export function AdminPhoneBridge() {
             <input type="date" value={eventTo} onChange={(event) => setEventTo(event.target.value)} />
           </label>
           <button type="button" onClick={() => void loadEvents()}><RefreshCw size={14} /> اعمال فیلتر</button>
+          <button
+            type="button"
+            onClick={() => {
+              setEventDeviceId("all");
+              setEventSeverity("all");
+              setEventFrom("");
+              setEventTo("");
+              void loadEvents("all", "all", "", "");
+            }}
+          >حذف فیلتر</button>
           <button type="button" onClick={() => void exportEvents()}>خروجی CSV رویدادها</button>
           <button type="button" onClick={exportDevices}>خروجی CSV دستگاه‌ها</button>
         </div>
