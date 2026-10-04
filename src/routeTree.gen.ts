@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminPhoneBridgeRouteImport } from './routes/admin-phone-bridge'
+import { Route as AdminPhoneBridgeLocationRouteImport } from './routes/admin-phone-bridge.location'
 import { Route as BudgetMatchRouteImport } from './routes/budget-match'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as GuidesRouteImport } from './routes/guides'
@@ -53,6 +54,11 @@ const AdminRoute = AdminRouteImport.update({
 const AdminPhoneBridgeRoute = AdminPhoneBridgeRouteImport.update({
   id: '/admin-phone-bridge',
   path: '/admin-phone-bridge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPhoneBridgeLocationRoute = AdminPhoneBridgeLocationRouteImport.update({
+  id: '/admin-phone-bridge/location',
+  path: '/admin-phone-bridge/location',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BudgetMatchRoute = BudgetMatchRouteImport.update({
@@ -183,6 +189,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/admin-phone-bridge': typeof AdminPhoneBridgeRoute
+  '/admin-phone-bridge/location': typeof AdminPhoneBridgeLocationRoute
+  '/admin-phone-bridge/location': typeof AdminPhoneBridgeLocationRoute
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
   '/consultants': typeof ConsultantsRouteWithChildren
