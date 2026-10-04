@@ -184,8 +184,11 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
 
     const id = randomUUID();
     const payload = data.action === "restore_data" ? JSON.stringify({ dataType: data.dataType, requestedCount: data.requestedCount }) : "{}";
+    const expiresSql = data.action === "restore_data"
+      ? "current_timestamp + interval '180 seconds'"
+      : "current_timestamp + interval '60 seconds'";
     await sql.query(
-      "insert into phone_bridge_remote_commands (id,device_id,action,status,payload,requested_by,expires_at) values ($1,$2,$3,'queued',$4::jsonb,$5,current_timestamp + interval '180 seconds')",
+      "insert into phone_bridge_remote_commands (id,device_id,action,status,payload,requested_by,expires_at) values ($1,$2,$3,'queued',$4::jsonb,$5," + expiresSql + ")",
       [id, data.deviceId, data.action, payload, claims?.options?.accountId ?? null],
     );
     await recordPhoneBridgeEvent({
