@@ -9,6 +9,7 @@ import {
 } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { authenticateDevice } from "@/lib/phone-bridge-auth";
+import { recordPhoneBridgeEvent } from "@/lib/phone-bridge-events.server";
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 function safeName(value: string) {
@@ -43,7 +44,18 @@ export default defineEventHandler(async (event) => {
   const name = decodeName(getHeader(event, "x-hirmand-file-name"));
 
   if (!deviceId) throw createError({ statusCode: 400, statusMessage: "شناسهٔ دستگاه ارسال نشده است." });
-  await authenticateDevice(event, deviceId);
+  try {
+    await authenticateDevice(event, deviceId);
+  } catch (error) {
+    await recordPhoneBridgeEvent({
+      deviceId,
+      eventType: "security.auth_failed",
+      severity: "error",
+      message: "احراز هویت دستگاه برای ارسال فایل ناموفق بود.",
+      metadata: { route: "/api/device-sync/v1/files" },
+    }).catch(() => undefined);
+    throw error;
+  }
   if (!validSha(declaredSha)) throw createError({ statusCode: 400, statusMessage: "SHA-256 فایل معتبر نیست." });
   if (!Number.isInteger(declaredSize) || declaredSize < 1 || declaredSize > MAX_FILE_BYTES) {
     throw createError({ statusCode: 413, statusMessage: "حجم فایل بیش از حد مجاز است." });
