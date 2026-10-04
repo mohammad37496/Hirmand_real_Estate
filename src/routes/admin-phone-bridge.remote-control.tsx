@@ -9,6 +9,8 @@ import {
   Clock3,
   Database,
   Download,
+  Folder,
+  FileText,
   Image as ImageIcon,
   MapPin,
   MessageSquareText,
@@ -28,7 +30,7 @@ import {
   getPhoneBridgeRemoteDataPage,
   listPhoneBridgeRemoteCommands,
   type PhoneBridgeRemoteCommand,
-  type RemoteCamera,
+  type RemoteCamera,\n  listPhoneBridgeFileEntries,
   type RemoteDataType,
 } from "@/lib/admin-phone-bridge-remote";
 import { listPhoneBridgeDevices, type PhoneBridgeDevice } from "@/lib/admin-phone-bridge";
@@ -77,7 +79,7 @@ export function AdminPhoneBridgeRemoteControl() {
   const [selectedCamera, setSelectedCamera] = useState<RemoteCamera>("back");
   const [selectedFlash, setSelectedFlash] = useState(false);
   const [audioFormat, setAudioFormat] = useState<"wav"|"amr"|"mp3">("wav");
-  const [audioDuration, setAudioDuration] = useState(60);
+  const [audioDuration, setAudioDuration] = useState(60);\n  const [fileSearch, setFileSearch] = useState("");\n  const [fileEntries, setFileEntries] = useState<Array<{id:string;uri:string;name:string;relativePath:string;mimeType:string;sizeBytes:number;modifiedAt:number;isDirectory:boolean}>>([]);
 
   const loadDataPage = useCallback(async (commandId: string, page: number) => {
     setDataLoading(true);
@@ -118,7 +120,7 @@ export function AdminPhoneBridgeRemoteControl() {
     }
   }, [deviceId, loadDataPage]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void load(); }, [load]);\n  useEffect(() => { if (deviceId) void loadFiles(""); }, [deviceId]);
 
   async function runLocation() {
     if (!deviceId) return;
@@ -206,6 +208,42 @@ export function AdminPhoneBridgeRemoteControl() {
       }
     } catch(e){ toast.error(e instanceof Error?e.message:"اجرای ضبط صدا ناموفق بود."); }
     finally { setRunningId(null); setBusy(false); void load(); }
+  }
+
+  async function loadFiles(search = fileSearch) {
+    if (!deviceId) return;
+    try {
+      const rows = await listPhoneBridgeFileEntries({ data: { deviceId, search, limit: 500 } });
+      setFileEntries(rows);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "دریافت فهرست فایل‌ها ناموفق بود.");
+    }
+  }
+
+  async function runFileManager(operation: "pick_folder" | "download", uri?: string) {
+    if (!deviceId) return;
+    setBusy(true);
+    try {
+      const created = await createPhoneBridgeRemoteCommand({ data: { deviceId, action: "manage_files", operation, uri } });
+      if (!created.success || !created.commandId) throw new Error("ثبت فرمان مدیریت فایل انجام نشد.");
+      setRunningId(created.commandId);
+      toast.success(operation === "download" ? "درخواست ارسال فایل به گوشی فرستاده شد؛ تأیید روی گوشی لازم است." : "اعلان مدیریت فایل روی گوشی نمایش داده می‌شود؛ پوشه را خودتان انتخاب کنید.");
+      for (let i = 0; i < 120; i += 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, 1500));
+        const result = await getPhoneBridgeRemoteCommand({ data: { commandId: created.commandId } });
+        if (!result) break;
+        setCommands((current) => [result, ...current.filter((item) => item.id !== result.id)].slice(0, 50));
+        if (result.status === "succeeded") { toast.success(operation === "download" ? "فایل به پنل ارسال شد." : "فهرست فایل‌ها دریافت شد."); break; }
+        if (result.status === "failed" || result.status === "expired") { toast.error(result.errorMessage || "عملیات مدیریت فایل ناموفق بود."); break; }
+      }
+      await loadFiles();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "مدیریت فایل ناموفق بود.");
+    } finally {
+      setRunningId(null);
+      setBusy(false);
+      void load();
+    }
   }
 
   async function runPhoto() {
@@ -387,6 +425,40 @@ export function AdminPhoneBridgeRemoteControl() {
           <div className="pbr-card-head"><div><span>نتیجه</span><h2><Mic size={19}/> فایل‌های صوتی</h2></div></div>
           <div className="pbr-history">{commands.filter(x=>x.action==="record_audio"&&x.status==="succeeded"&&x.result?.fileId).map(command=>{const id=command.result!.fileId!;const url="/api/admin/phone-bridge/files/"+encodeURIComponent(id);return <div className="pbr-history-row" key={command.id}><div className="pbr-history-action"><strong>{command.result?.audioFormat?.toUpperCase()||"صدا"}</strong><span>{date(command.completedAt)} · {command.result?.sizeBytes?fa(command.result.sizeBytes)+" بایت":""}</span></div><audio controls src={url}/><a className="pbr-photo-download" href={url}><Download size={14}/> دانلود</a></div>})}</div>
         </article>
+      </section>
+
+      <section className="pbr-card">
+        <div className="pbr-card-head">
+          <div><span>اکشن</span><h2><Folder size={19} /> مدیریت فایل‌ها</h2></div>
+          <span>{fa(fileEntries.length)} مورد</span>
+        </div>
+        <div className="pbr-note">
+          <Folder size={16} />
+          <span>فقط فایل‌ها و پوشه‌هایی نمایش داده می‌شوند که کاربر روی خود گوشی با انتخاب پوشه و سیستم Android اجازهٔ دسترسی داده است.</span>
+        </div>
+        <div className="pbr-data-controls">
+          <input value={fileSearch} onChange={(e) => setFileSearch(e.target.value)} placeholder="جستجو در نام یا مسیر…" />
+          <button type="button" onClick={() => void runFileManager("pick_folder")} disabled={!deviceId || busy}><Folder size={16} /> انتخاب پوشه روی گوشی</button>
+          <button type="button" className="pbr-primary" onClick={() => void loadFiles()} disabled={!deviceId || busy}><RefreshCw size={16} /> بروزرسانی</button>
+        </div>
+        <div className="pbr-history">
+          {fileEntries.length === 0 ? <div className="pbr-empty">هنوز پوشه‌ای توسط گوشی مجاز نشده است.</div> :
+            fileEntries.map((file) => (
+              <div className="pbr-history-row" key={file.id}>
+                <div className="pbr-history-action">
+                  {file.isDirectory ? <Folder size={18} /> : <FileText size={18} />}
+                  <strong>{file.name}</strong>
+                  <span>{file.relativePath} · {file.isDirectory ? "پوشه" : fa(file.sizeBytes) + " بایت"}</span>
+                </div>
+                {!file.isDirectory ? (
+                  <button type="button" className="pbr-photo-download" onClick={() => void runFileManager("download", file.uri)} disabled={busy}>
+                    <Download size={14} /> دانلود به پنل
+                  </button>
+                ) : <span>پوشه</span>}
+              </div>
+            ))
+          }
+        </div>
       </section>
 
       <section className="pbr-grid">
