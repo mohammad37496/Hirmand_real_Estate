@@ -1,3 +1,4 @@
+.pb-admin-shortcut{position:fixed;left:20px;bottom:20px;z-index:99990;display:inline-flex;align-items:center;gap:8px;padding:10px 13px;border:1px solid var(--line-2,#ddd5cb);border-radius:14px;background:var(--surface,#fff);color:var(--ink,#1e2734);text-decoration:none;box-shadow:var(--el-2,0 12px 36px rgba(31,42,55,.12));font-weight:700;font-size:12px}.pb-admin-shortcut:hover{transform:translateY(-1px)}
 .pb-page{min-height:100vh;padding:28px;max-width:1400px;margin:0 auto;color:var(--ink,#1e2734)}
 .pb-hero,.pb-card,.pb-kpis>div{background:var(--surface,#fff);border:1px solid var(--line-2,#e3ded6);box-shadow:var(--el-1,0 8px 30px rgba(31,42,55,.06));border-radius:22px}
 .pb-hero{display:flex;align-items:center;gap:18px;padding:20px 22px;margin-bottom:18px}
@@ -36,4 +37,5 @@
 .pb-warning{padding:10px 14px;border-bottom:1px solid var(--line-2,#e1dbd1);background:#fffaf0;color:#6e5a34;font-size:12px;line-height:1.7}.pb-modal pre{margin:0;padding:16px;overflow:auto;font:12px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;direction:ltr;text-align:left;background:#f8f5f1;white-space:pre-wrap;overflow-wrap:anywhere}
 .pb-spin{animation:pb-spin 1s linear infinite}@keyframes pb-spin{to{transform:rotate(360deg)}}
 @media(max-width:900px){.pb-page{padding:14px}.pb-hero{align-items:flex-start;flex-wrap:wrap}.pb-actions{width:100%}.pb-actions button{flex:1}.pb-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.pb-device{grid-template-columns:1fr}.pb-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pb-sync-row{grid-template-columns:1fr auto}.pb-sync-row .pb-summary-grid{grid-column:1/-1}}
-@media(max-width:520px){.pb-kpis{grid-template-columns:1fr}.pb-hero h1{font-size:19px}.pb-card{padding:14px}.pb-summary-item{grid-template-columns:auto 1fr}.pb-summary-item strong{grid-column:2}}
+@media(max-width:520px){.pb-admin-shortcut{left:12px;bottom:12px;padding:9px 11px;font-size:11px}
+.pb-kpis{grid-template-columns:1fr}.pb-hero h1{font-size:19px}.pb-card{padding:14px}.pb-summary-item{grid-template-columns:auto 1fr}.pb-summary-item strong{grid-column:2}}
