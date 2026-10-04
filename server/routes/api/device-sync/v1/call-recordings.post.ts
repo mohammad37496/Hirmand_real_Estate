@@ -1,7 +1,5 @@
 import { createError, defineEventHandler, getHeader, readRawBody, setResponseHeader } from "h3";
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
 import { authenticateDevice } from "@/lib/phone-bridge-auth";
 import { requirePhoneBridgeSignedRequest } from "@/lib/phone-bridge-signature.server";
 import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
@@ -39,13 +37,6 @@ export default defineEventHandler(async (event) => {
   const declaredSha = String(getHeader(event, "x-hirmand-file-sha256") || "");
   if (declaredSha && declaredSha !== sha256) throw createError({ statusCode: 422, statusMessage: "هش فایل صحیح نیست." });
 
-  const id = randomUUID();
-  const dir = join(process.cwd(), "storage", "phone-bridge", "call-recordings", deviceId);
-  const extension = mime.includes("wav") ? "wav" : mime.includes("ogg") ? "ogg" : mime.includes("webm") ? "webm" : "m4a";
-  const storagePath = join(dir, id + "." + extension);
-  await mkdir(dir, { recursive: true });
-  await writeFile(storagePath, bytes, { flag: "wx" });
-
   const started = String(getHeader(event, "x-hirmand-call-started-at") || "");
   const ended = String(getHeader(event, "x-hirmand-call-ended-at") || "");
   const direction = String(getHeader(event, "x-hirmand-call-direction") || "unknown");
@@ -58,27 +49,39 @@ export default defineEventHandler(async (event) => {
   }
 
   const sql = await getSql();
-  const existing = await sql.query<{ id: string }>(
-    `select id from phone_bridge_call_recordings where device_id=$1 and sha256=$2 limit 1`,
+  const existing = await sql.query<{ id: string; file_id: string }>(
+    `select id,file_id from phone_bridge_call_recordings where device_id=$1 and sha256=$2 limit 1`,
     [deviceId, sha256],
   );
   if (existing[0]) {
-    return { ok: true, duplicate: true, recordingId: existing[0].id };
+    return { ok: true, duplicate: true, recordingId: existing[0].id, fileId: existing[0].file_id };
   }
+
+  const recordingId = randomUUID();
+  const fileId = randomUUID();
+  const extension = mime.includes("wav") ? "wav" : mime.includes("ogg") ? "ogg" : mime.includes("webm") ? "webm" : "m4a";
+  const fileName = `call-recording-${recordingId}.${extension}`;
+
+  await sql.query(
+    `insert into phone_bridge_files
+      (id,device_id,name,mime_type,size_bytes,sha256,content)
+     values ($1,$2,$3,$4,$5,$6,$7)`,
+    [fileId, deviceId, fileName, mime, bytes.length, sha256, bytes],
+  );
 
   await sql.query(
     `insert into phone_bridge_call_recordings
-      (id,device_id,call_started_at,call_ended_at,direction,phone_number,contact_name,duration_seconds,mime_type,size_bytes,sha256,storage_path)
+      (id,device_id,file_id,call_started_at,call_ended_at,direction,phone_number,contact_name,duration_seconds,mime_type,size_bytes,sha256)
      values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
     [
-      id, deviceId,
+      recordingId, deviceId, fileId,
       started ? new Date(started) : new Date(),
       ended ? new Date(ended) : null,
       direction,
       phoneNumber || null,
       contactName || null,
       Number.isFinite(duration) ? Math.max(0, Math.min(Math.trunc(duration), 86400)) : null,
-      mime, bytes.length, sha256, storagePath,
+      mime, bytes.length, sha256,
     ],
   );
 
@@ -87,8 +90,8 @@ export default defineEventHandler(async (event) => {
     eventType: "call_recording.uploaded",
     severity: "info",
     message: "فایل ضبط تماس با موفقیت دریافت شد.",
-    metadata: { recordingId: id, sizeBytes: bytes.length, mimeType: mime },
+    metadata: { recordingId, fileId, sizeBytes: bytes.length, mimeType: mime },
   });
 
-  return { ok: true, duplicate: false, recordingId: id };
+  return { ok: true, duplicate: false, recordingId, fileId };
 });
