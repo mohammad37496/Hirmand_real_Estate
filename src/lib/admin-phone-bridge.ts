@@ -1046,6 +1046,11 @@ export const purgePhoneBridgeData = createServerFn({ method: "POST" })
       [data.olderThanDays],
     );
     await sql.query(
+      `delete from phone_bridge_sms_messages
+       where created_at < current_timestamp - make_interval(days => $1::int)`,
+      [data.olderThanDays],
+    );
+    await sql.query(
       `delete from phone_bridge_alert_acknowledgements
        where acknowledged_at < current_timestamp - make_interval(days => $1::int)`,
       [data.olderThanDays],
