@@ -4,14 +4,17 @@ import { Activity, Smartphone, RefreshCw, ShieldCheck, Database, Eye, X, Trash2,
 import { toast } from "sonner";
 import "@/admin-phone-bridge-details.css";
 import {
+  getPhoneBridgeEventOverview,
   getPhoneBridgeOverview,
   getPhoneBridgeSync,
   listPhoneBridgeDevices,
+  listPhoneBridgeEvents,
   listPhoneBridgeSyncs,
   purgePhoneBridgeData,
   setPhoneBridgeDeviceEnabled,
   rotatePhoneBridgeDeviceToken,
   type PhoneBridgeDevice,
+  type PhoneBridgeEvent,
 } from "@/lib/admin-phone-bridge";
 
 function fa(value: number) {
@@ -188,6 +191,9 @@ export function AdminPhoneBridge() {
   const [devices, setDevices] = useState<PhoneBridgeDevice[]>([]);
   const [syncs, setSyncs] = useState<any[]>([]);
   const [overview, setOverview] = useState<{ devices: number; syncs: number; lastReceivedAt: string | null } | null>(null);
+  const [eventOverview, setEventOverview] = useState<{ total: number; last24h: number; errors24h: number; critical24h: number } | null>(null);
+  const [events, setEvents] = useState<PhoneBridgeEvent[]>([]);
+  const [eventSeverity, setEventSeverity] = useState<"all" | "info" | "warning" | "error" | "critical">("all");
   const [payload, setPayload] = useState<unknown>(null);
   const [selectedSync, setSelectedSync] = useState<string | null>(null);
   const [busy, setBusy] = useState(true);
@@ -196,12 +202,19 @@ export function AdminPhoneBridge() {
   const load = useCallback(async () => {
     setBusy(true);
     try {
-      const [o,d,s] = await Promise.all([
+      const [o,d,s,eo,es] = await Promise.all([
         getPhoneBridgeOverview({ data: {} }),
         listPhoneBridgeDevices({ data: { limit: 100 } }),
         listPhoneBridgeSyncs({ data: { limit: 50 } }),
+        getPhoneBridgeEventOverview({ data: {} }),
+        listPhoneBridgeEvents({
+          data: {
+            limit: 80,
+            ...(eventSeverity === "all" ? {} : { severity: eventSeverity }),
+          },
+        }),
       ]);
-      setOverview(o); setDevices(d); setSyncs(s);
+      setOverview(o); setDevices(d); setSyncs(s); setEventOverview(eo); setEvents(es);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "دریافت داده‌های Phone Bridge انجام نشد.");
     } finally {
@@ -211,7 +224,21 @@ export function AdminPhoneBridge() {
 
   useEffect(() => { void load(); }, [load]);
 
-  async function openSync(id: string) {
+  async function loadEvents(severity = eventSeverity) {
+    try {
+      const result = await listPhoneBridgeEvents({
+        data: {
+          limit: 80,
+          ...(severity === "all" ? {} : { severity }),
+        },
+      });
+      setEvents(result);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "دریافت مرکز خطا انجام نشد.");
+    }
+  }
+
+    async function openSync(id: string) {
     try {
       const result = await getPhoneBridgeSync({ data: { syncId: id } });
       setSelectedSync(id);
@@ -300,6 +327,61 @@ export function AdminPhoneBridge() {
           </section>
         );
       })()}
+
+      <section className="pb-card pb-events-card">
+        <div className="pb-card-head">
+          <div><span>امنیت و عملیات</span><h2>مرکز خطا و Audit Log</h2></div>
+          <ShieldCheck size={18} />
+        </div>
+        <div className="pb-event-kpis">
+          <div><strong>{fa(eventOverview?.last24h ?? 0)}</strong><span>رویداد در ۲۴ ساعت</span></div>
+          <div><strong>{fa(eventOverview?.errors24h ?? 0)}</strong><span>خطای ۲۴ ساعت</span></div>
+          <div><strong>{fa(eventOverview?.critical24h ?? 0)}</strong><span>بحرانی</span></div>
+          <div><strong>{fa(eventOverview?.total ?? 0)}</strong><span>کل رویدادها</span></div>
+        </div>
+        <div className="pb-event-toolbar">
+          <label>
+            <span>فیلتر شدت</span>
+            <select
+              value={eventSeverity}
+              onChange={(event) => {
+                const next = event.target.value as typeof eventSeverity;
+                setEventSeverity(next);
+                void loadEvents(next);
+              }}
+            >
+              <option value="all">همه</option>
+              <option value="info">اطلاعات</option>
+              <option value="warning">هشدار</option>
+              <option value="error">خطا</option>
+              <option value="critical">بحرانی</option>
+            </select>
+          </label>
+          <button type="button" onClick={() => void loadEvents()}><RefreshCw size={14} /> بروزرسانی رویدادها</button>
+        </div>
+        {events.length === 0 ? (
+          <div className="pb-empty">رویدادی برای نمایش وجود ندارد.</div>
+        ) : (
+          <div className="pb-event-list">
+            {events.map((event) => (
+              <article className={`pb-event-row severity-${event.severity}`} key={event.id}>
+                <div className="pb-event-icon">
+                  {event.severity === "critical" || event.severity === "error" ? <AlertTriangle size={16} /> :
+                    event.severity === "warning" ? <Clock3 size={16} /> : <Activity size={16} />}
+                </div>
+                <div className="pb-event-main">
+                  <div className="pb-event-title">
+                    <strong>{event.message}</strong>
+                    <span>{date(event.createdAt)}</span>
+                  </div>
+                  <p>{event.deviceName} · {event.eventType}</p>
+                </div>
+                <span className="pb-event-severity">{event.severity}</span>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="pb-card">
         <div className="pb-card-head"><div><span>دستگاه‌ها</span><h2>گوشی‌های متصل</h2></div><ShieldCheck size={18} /></div>
