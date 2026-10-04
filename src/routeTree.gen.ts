@@ -450,13 +450,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPhoneBridgeAppsRouteImport
       parentRoute: typeof rootRouteImport
     }
-
-      id: '/admin-phone-bridge'
-      path: '/admin-phone-bridge'
-      fullPath: '/admin-phone-bridge'
-      preLoaderRoute: typeof AdminPhoneBridgeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/budget-match': {
       id: '/budget-match'
       path: '/budget-match'
