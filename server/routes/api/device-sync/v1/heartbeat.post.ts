@@ -1,6 +1,7 @@
-import { createError, defineEventHandler, getHeader, readBody, setResponseHeader } from "h3";
+import { createError, defineEventHandler, getHeader, readRawBody, setResponseHeader } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { authenticateDevice } from "@/lib/phone-bridge-auth";
+import { requirePhoneBridgeSignedRequest } from "@/lib/phone-bridge-signature.server";
 import { recordPhoneBridgeEvent } from "@/lib/phone-bridge-events.server";
 import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
@@ -31,8 +32,14 @@ export default defineEventHandler(async (event) => {
     maxHits: 30,
     blockMs: 10 * 60 * 1000,
   });
+  const raw = await readRawBody(event);
+  const rawBody = Buffer.isBuffer(raw) ? raw : Buffer.from(raw ?? "");
+
   try {
-    await authenticateDevice(event, deviceId);
+    const auth = await authenticateDevice(event, deviceId);
+    if (auth.mode === "device") {
+      await requirePhoneBridgeSignedRequest(event, deviceId, rawBody);
+    }
   } catch (error) {
     await recordPhoneBridgeEvent({
       deviceId,
@@ -53,7 +60,13 @@ export default defineEventHandler(async (event) => {
   const appliedPolicyRevision = Number(policyRows[0]?.last_snapshot_policy_revision ?? 1);
   const snapshotRequired = policyRevision !== appliedPolicyRevision;
 
-  const body = asObject(await readBody(event).catch(() => null));
+  const body = asObject(await (async () => {
+    try {
+      return JSON.parse(rawBody.toString("utf8"));
+    } catch {
+      return null;
+    }
+  })());
   const device = asObject(body.device);
   const queue = asObject(body.queue);
   const stats = asObject(body.deviceStats);
