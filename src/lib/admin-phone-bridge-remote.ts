@@ -205,8 +205,10 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
       payload = "{}";
     }
 
-    const expiresSql = data.action === "restore_data"
+    const expiresSql = data.action === "manage_files"
       ? "current_timestamp + interval '180 seconds'"
+      : data.action === "restore_data"
+        ? "current_timestamp + interval '180 seconds'"
       : data.action === "take_photo"
         ? "current_timestamp + interval '180 seconds'"
         : "current_timestamp + interval '60 seconds'";
