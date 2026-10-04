@@ -233,9 +233,18 @@ export default defineEventHandler(async (event) => {
   const contactNames = new Map<string, string>();
   for (const item of contactItems) {
     const contact = asObject(item);
-    const number = asString(contact.number, "");
     const name = asString(contact.name, "").slice(0, 180);
-    if (number && name) contactNames.set(number.replace(/\D/g, ""), name);
+    const rawNumbers = Array.isArray(contact.numbers) ? contact.numbers : [];
+    const legacyNumber = asString(contact.number, "");
+    const numbers = [...new Set([
+      ...rawNumbers.map((number) => asString(number, "")),
+      ...(legacyNumber ? [legacyNumber] : []),
+    ].filter(Boolean))];
+    if (name) {
+      for (const number of numbers) {
+        contactNames.set(number.replace(/\D/g, ""), name);
+      }
+    }
   }
   if (smsItems.length > 0) {
     for (const item of smsItems) {
