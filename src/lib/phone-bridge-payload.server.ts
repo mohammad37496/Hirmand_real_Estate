@@ -170,6 +170,9 @@ export function sanitizePhoneBridgePayload(input: unknown, allowedModules: Phone
     syncId: text(root.syncId, 120),
     deviceStats: sanitizeDeviceStats(root.deviceStats),
   };
+  const snapshotHash = text(root.snapshotHash, 64).toLowerCase();
+  if (/^[a-f0-9]{64}$/.test(snapshotHash)) result.snapshotHash = snapshotHash;
+  };
 
   if (allowedModules.location) {
     const location = asObject(root.location);
