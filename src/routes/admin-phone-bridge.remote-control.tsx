@@ -563,6 +563,7 @@ export function AdminPhoneBridgeRemoteControl() {
             const Icon = meta.Icon;
             const restore = command.action === "restore_data";
             const photo = command.action === "take_photo";
+            const fileTransfer = command.action === "manage_files";
             const photoFile = command.result?.fileId;
             return <div className="pbr-history-row" key={command.id}>
               <div className="pbr-history-action">
@@ -571,7 +572,9 @@ export function AdminPhoneBridgeRemoteControl() {
                     ? "گرفتن لوکیشن"
                     : restore
                       ? "بازگردانی " + typeLabel(command.result?.dataType ?? command.payload.dataType)
-                      : "گرفتن عکس · " + cameraLabel(command.result?.camera ?? command.payload.camera)}
+                      : fileTransfer
+                        ? "مدیریت فایل‌ها"
+                        : "گرفتن عکس · " + cameraLabel(command.result?.camera ?? command.payload.camera)}
                 </strong>
                 <span>{command.deviceName} · {date(command.createdAt)}</span>
               </div>
@@ -579,7 +582,9 @@ export function AdminPhoneBridgeRemoteControl() {
               <div className="pbr-history-result">
                 {restore
                   ? <span>{command.result?.receivedCount != null ? fa(command.result.receivedCount) + " مورد از " + fa(command.result.requestedCount ?? command.payload.requestedCount ?? 0) + " درخواست" : command.errorMessage || "—"}</span>
-                  : photo && photoFile
+                  : fileTransfer && command.result?.fileId
+                    ? <a href={"/api/admin/phone-bridge/files/" + encodeURIComponent(command.result.fileId)}><Download size={14} /> دانلود {command.result.fileName || "فایل"}</a>
+                    : photo && photoFile
                     ? <a href={"/api/admin/phone-bridge/files/" + encodeURIComponent(photoFile) + "?inline=1"} target="_blank" rel="noreferrer">نمایش عکس · فلش {command.result?.flash ? "روشن" : "خاموش"}</a>
                     : command.result?.latitude != null && command.result.longitude != null
                       ? <span>{command.result.latitude.toFixed(6)}, {command.result.longitude.toFixed(6)}</span>
