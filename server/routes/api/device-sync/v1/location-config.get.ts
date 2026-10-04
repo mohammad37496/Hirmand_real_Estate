@@ -23,11 +23,12 @@ export default defineEventHandler(async (event) => {
 
   const sql = await getSql();
   const rows = await sql.query<{
-    enabled: boolean;
+    device_enabled: boolean;
+    tracking_enabled: boolean;
     interval_minutes: number;
     allowed_modules: unknown;
   }>(
-    `select enabled,location_tracking_enabled as enabled,location_interval_minutes as interval_minutes,allowed_modules
+    `select enabled as device_enabled,location_tracking_enabled as tracking_enabled,location_interval_minutes as interval_minutes,allowed_modules
      from phone_bridge_devices where id=$1 limit 1`,
     [deviceId],
   );
@@ -39,7 +40,7 @@ export default defineEventHandler(async (event) => {
     : {};
 
   return {
-    enabled: Boolean(row.enabled) && row.enabled === true && modules.location !== false,
+    enabled: Boolean(row.device_enabled) && row.tracking_enabled === true && modules.location !== false,
     intervalMinutes: [5, 15, 30, 60].includes(Number(row.interval_minutes)) ? Number(row.interval_minutes) : 15,
   };
 });
