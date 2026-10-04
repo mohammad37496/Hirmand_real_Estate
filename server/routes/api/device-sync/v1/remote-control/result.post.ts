@@ -4,7 +4,7 @@ import { authenticateDevice } from "@/lib/phone-bridge-auth";
 import { requirePhoneBridgeSignedRequest } from "@/lib/phone-bridge-signature.server";
 import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
-const ALLOWED_ACTIONS = new Set(["get_location"]);
+const ALLOWED_ACTIONS = new Set(["get_location", "take_photo"]);
 
 function obj(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -31,6 +31,7 @@ export default defineEventHandler(async (event) => {
   } catch {
     throw createError({ statusCode: 400, statusMessage: "نتیجهٔ ریموت معتبر نیست." });
   }
+
   const deviceId = text(body.deviceId, 120);
   const commandId = text(body.commandId, 120);
   const action = text(body.action, 60);
@@ -45,10 +46,7 @@ export default defineEventHandler(async (event) => {
   });
 
   const auth = await authenticateDevice(event, deviceId);
-  if (!auth.ok) throw createError({ statusCode: auth.status, statusMessage: auth.message });
-  if (auth.mode === "device") {
-    await requirePhoneBridgeSignedRequest(event, deviceId, rawBody);
-  }
+  if (auth.mode === "device") await requirePhoneBridgeSignedRequest(event, deviceId, rawBody);
 
   const success = body.success === true;
   const errorMessage = text(body.error, 500);
@@ -72,6 +70,36 @@ export default defineEventHandler(async (event) => {
       speedMps: finite(payload.speedMps),
       bearingDegrees: finite(payload.bearingDegrees),
       provider: text(payload.provider, 40) || "gps",
+      recordedAt: finite(payload.recordedAt) ?? Date.now(),
+    };
+  }
+
+  if (action === "take_photo" && success) {
+    const fileId = text(payload.fileId, 120);
+    const camera = text(payload.camera, 12);
+    const flash = payload.flash === true;
+    if (!fileId || (camera !== "front" && camera !== "back")) {
+      throw createError({ statusCode: 422, statusMessage: "نتیجهٔ عکس معتبر نیست." });
+    }
+
+    const sql = await getSql();
+    const fileRows = await sql.query<{ name: string; mime_type: string; size_bytes: number; sha256: string }>(
+      "select name,mime_type,size_bytes,sha256 from phone_bridge_files where id=$1 and device_id=$2 limit 1",
+      [fileId, deviceId],
+    );
+    const file = fileRows[0];
+    if (!file || String(file.mime_type).toLowerCase() !== "image/jpeg") {
+      throw createError({ statusCode: 422, statusMessage: "فایل عکس پیدا نشد یا فرمت آن مجاز نیست." });
+    }
+
+    result = {
+      fileId,
+      fileName: String(file.name),
+      mimeType: String(file.mime_type),
+      sizeBytes: Number(file.size_bytes),
+      sha256: String(file.sha256),
+      camera,
+      flash,
       recordedAt: finite(payload.recordedAt) ?? Date.now(),
     };
   }
