@@ -352,7 +352,47 @@ const eventListInput = z.object({
   limit: z.number().int().min(1).max(100).optional().default(50),
   deviceId: z.string().trim().min(1).max(120).optional(),
   severity: z.enum(["info","warning","error","critical"]).optional(),
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
 });
+
+export const exportPhoneBridgeEvents = createServerFn({ method: "POST" })
+  .validator(z.object({
+    deviceId: z.string().trim().min(1).max(120).optional(),
+    severity: z.enum(["info","warning","error","critical"]).optional(),
+    from: z.string().datetime().optional(),
+    to: z.string().datetime().optional(),
+  }))
+  .handler(async ({ data }) => {
+    await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") return [];
+
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select
+        e.created_at,e.event_type,e.severity,e.message,e.device_id,e.actor_account_id,
+        coalesce(d.name,'گوشی ناشناس') as device_name
+       from phone_bridge_events e
+       left join phone_bridge_devices d on d.id=e.device_id
+       where ($1::text is null or e.device_id=$1)
+         and ($2::text is null or e.severity=$2)
+         and ($3::timestamptz is null or e.created_at >= $3::timestamptz)
+         and ($4::timestamptz is null or e.created_at < $4::timestamptz)
+       order by e.created_at desc
+       limit 500`,
+      [data.deviceId ?? null, data.severity ?? null, data.from ?? null, data.to ?? null],
+    );
+
+    return rows.map((row) => ({
+      createdAt: new Date(String(row.created_at)).toISOString(),
+      eventType: String(row.event_type ?? ""),
+      severity: String(row.severity ?? ""),
+      message: String(row.message ?? ""),
+      deviceId: row.device_id ? String(row.device_id) : "",
+      deviceName: String(row.device_name ?? "گوشی ناشناس"),
+      actorAccountId: row.actor_account_id ? String(row.actor_account_id) : "",
+    }));
+  });
 
 export const listPhoneBridgeEvents = createServerFn({ method: "POST" })
   .validator(eventListInput)
@@ -369,9 +409,11 @@ export const listPhoneBridgeEvents = createServerFn({ method: "POST" })
        left join phone_bridge_devices d on d.id=e.device_id
        where ($1::text is null or e.device_id=$1)
          and ($2::text is null or e.severity=$2)
+         and ($3::timestamptz is null or e.created_at >= $3::timestamptz)
+         and ($4::timestamptz is null or e.created_at < $4::timestamptz)
        order by e.created_at desc
-       limit $3`,
-      [data.deviceId ?? null, data.severity ?? null, data.limit],
+       limit $5`,
+      [data.deviceId ?? null, data.severity ?? null, data.from ?? null, data.to ?? null, data.limit],
     );
 
     return rows.map((row) => ({
