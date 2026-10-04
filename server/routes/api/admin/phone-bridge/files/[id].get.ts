@@ -2,9 +2,9 @@ import {
   createError,
   defineEventHandler,
   getCookie,
-  getHeader,
   send,
   setResponseHeader,
+  getQuery,
   type H3Event,
 } from "h3";
 import { dbSource, getSql } from "@/lib/db";
@@ -46,17 +46,20 @@ export default defineEventHandler(async (event) => {
 
   const sql = await getSql();
   const rows = await sql.query<{ name: string; mime_type: string; content: Buffer }>(
-    `select name,mime_type,content from phone_bridge_files where id=$1 limit 1`,
+    "select name,mime_type,content from phone_bridge_files where id=$1 limit 1",
     [fileId],
   );
   const row = rows[0];
   if (!row) throw createError({ statusCode: 404, statusMessage: "فایل پیدا نشد." });
 
+  const inline = String(getQuery(event).inline ?? "") === "1";
   setResponseHeader(event, "content-type", row.mime_type || "application/octet-stream");
   setResponseHeader(
     event,
     "content-disposition",
-    `attachment; filename="phone-bridge-file"; filename*=UTF-8''${encodeURIComponent(safeDownloadName(row.name))}`,
+    inline
+      ? "inline"
+      : "attachment; filename=\"phone-bridge-file\"; filename*=UTF-8''" + encodeURIComponent(safeDownloadName(row.name)),
   );
   setResponseHeader(event, "x-content-type-options", "nosniff");
   return send(event, row.content);
