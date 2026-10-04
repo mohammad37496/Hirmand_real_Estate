@@ -148,6 +148,8 @@ function sanitizeDevice(value: unknown) {
     model: text(o.model, 180),
     androidVersion: text(o.androidVersion, 80),
     sdkInt: int(o.sdkInt),
+    appVersionName: text(o.appVersionName, 80) || "unknown",
+    appVersionCode: int(o.appVersionCode) == null ? 1 : Math.max(1, Math.min(int(o.appVersionCode) as number, 1000000)),
   };
 }
 
