@@ -12,6 +12,10 @@ test-results/
 tmp/
 temp/
 .grok/
+# Monorepo: the Android Gradle project has its own CI and is never part of the
+# Liara upload/build context. Keeping it out means an Android change can never
+# break the website deploy.
+android/
 node_modules/
 dist/
 .output/

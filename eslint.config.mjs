@@ -14,6 +14,9 @@ export default tseslint.config(
       ".vercel/**",
       ".nitro/**",
       "node_modules/**",
+      // The Android module has its own toolchain (Gradle/Kotlin + a LAN test
+      // receiver). The website lint must not try to lint it.
+      "android/**",
       "src/routeTree.gen.ts",
     ],
   },
