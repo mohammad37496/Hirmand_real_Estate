@@ -88,6 +88,7 @@ export type PhoneBridgeEvent = {
   id: string;
   deviceId: string | null;
   deviceName: string;
+  actorAccountId: string | null;
   eventType: string;
   severity: PhoneBridgeEventSeverity;
   message: string;
@@ -134,7 +135,7 @@ export const listPhoneBridgeEvents = createServerFn({ method: "POST" })
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
       `select
-        e.id,e.device_id,e.event_type,e.severity,e.message,e.metadata,e.created_at,
+        e.id,e.device_id,e.actor_account_id,e.event_type,e.severity,e.message,e.metadata,e.created_at,
         coalesce(d.name,'گوشی ناشناس') as device_name
        from phone_bridge_events e
        left join phone_bridge_devices d on d.id=e.device_id
@@ -149,6 +150,7 @@ export const listPhoneBridgeEvents = createServerFn({ method: "POST" })
       id: String(row.id),
       deviceId: row.device_id ? String(row.device_id) : null,
       deviceName: String(row.device_name ?? "گوشی ناشناس"),
+      actorAccountId: row.actor_account_id ? String(row.actor_account_id) : null,
       eventType: String(row.event_type ?? ""),
       severity: (["info","warning","error","critical"].includes(String(row.severity))
         ? String(row.severity)
@@ -331,7 +333,7 @@ export const getPhoneBridgeSync = createServerFn({ method: "POST" })
 export const purgePhoneBridgeData = createServerFn({ method: "POST" })
   .validator(z.object({ olderThanDays: z.number().int().min(1).max(3650).default(30) }))
   .handler(async ({ data }) => {
-    await requirePhoneBridgeAdmin();
+    const claims = await requirePhoneBridgeAdmin();
     if (dbSource === "unconfigured") return { deleted: 0 };
 
     const sql = await getSql();
@@ -352,6 +354,13 @@ export const purgePhoneBridgeData = createServerFn({ method: "POST" })
        returning id`,
       [data.olderThanDays],
     );
+    await recordPhoneBridgeEvent({
+      actorAccountId: claims?.options?.accountId ?? null,
+      eventType: "maintenance.purged",
+      severity: "warning",
+      message: "داده‌های قدیمی Phone Bridge پاک‌سازی شدند.",
+      metadata: { olderThanDays: data.olderThanDays, syncs: rows.length, files: files.length },
+    });
     return { deleted: rows.length, filesDeleted: files.length };
   });
 
@@ -359,7 +368,7 @@ export const purgePhoneBridgeData = createServerFn({ method: "POST" })
 export const setPhoneBridgeDeviceEnabled = createServerFn({ method: "POST" })
   .validator(z.object({ deviceId: z.string().trim().min(1).max(120), enabled: z.boolean() }))
   .handler(async ({ data }) => {
-    await requirePhoneBridgeAdmin();
+    const claims = await requirePhoneBridgeAdmin();
     if (dbSource === "unconfigured") return { success: false, enabled: data.enabled };
     const sql = await getSql();
     const rows = await sql.query<{ id: string }>(
@@ -369,6 +378,7 @@ export const setPhoneBridgeDeviceEnabled = createServerFn({ method: "POST" })
     if (rows.length > 0) {
       await recordPhoneBridgeEvent({
         deviceId: data.deviceId,
+        actorAccountId: claims?.options?.accountId ?? null,
         eventType: "device.enabled_changed",
         severity: data.enabled ? "info" : "warning",
         message: data.enabled ? "دستگاه توسط مدیر فعال شد." : "دستگاه توسط مدیر غیرفعال شد.",
@@ -381,7 +391,7 @@ export const setPhoneBridgeDeviceEnabled = createServerFn({ method: "POST" })
 export const rotatePhoneBridgeDeviceToken = createServerFn({ method: "POST" })
   .validator(z.object({ deviceId: z.string().trim().min(1).max(120) }))
   .handler(async ({ data }) => {
-    await requirePhoneBridgeAdmin();
+    const claims = await requirePhoneBridgeAdmin();
     if (dbSource === "unconfigured") return { success: false, token: null };
     const token = generateDeviceToken();
     const sql = await getSql();
@@ -395,6 +405,7 @@ export const rotatePhoneBridgeDeviceToken = createServerFn({ method: "POST" })
     if (rows.length > 0) {
       await recordPhoneBridgeEvent({
         deviceId: data.deviceId,
+        actorAccountId: claims?.options?.accountId ?? null,
         eventType: "security.token_rotated",
         severity: "warning",
         message: "توکن اختصاصی دستگاه توسط مدیر تعویض شد.",
