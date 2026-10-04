@@ -62,8 +62,8 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 413, statusMessage: "حجم عکس بیش از حد مجاز است." });
     }
     await requirePhoneBridgeSignedRequest(event, deviceId, content);
-    if (auth.allowedModules.selectedFiles === false) {
-      throw createError({ statusCode: 403, statusMessage: "ذخیرهٔ فایل برای این دستگاه غیرفعال است." });
+    if (auth.allowedModules.camera === false) {
+      throw createError({ statusCode: 403, statusMessage: "ماژول دوربین برای این دستگاه غیرفعال است." });
     }
 
     if (mimeType !== "image/jpeg") {
