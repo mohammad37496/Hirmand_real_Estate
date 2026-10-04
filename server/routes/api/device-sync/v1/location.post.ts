@@ -1,5 +1,5 @@
 import { createError, defineEventHandler, readRawBody, setResponseHeader } from "h3";
-import { createHash } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { dbSource, getSql } from "@/lib/db";
 import { authenticateDevice } from "@/lib/phone-bridge-auth";
 import { requirePhoneBridgeSignedRequest } from "@/lib/phone-bridge-signature.server";
@@ -84,10 +84,10 @@ export default defineEventHandler(async (event) => {
   const inserted = await sql.query<{ id: string }>(
     `insert into phone_bridge_location_points
       (id,device_id,client_point_id,recorded_at,latitude,longitude,accuracy_meters,altitude_meters,speed_mps,bearing_degrees,provider)
-     values (gen_random_uuid(),$1,$2,to_timestamp($3/1000.0),$4,$5,$6,$7,$8,$9,$10)
+     values ($1,$2,$3,to_timestamp($4/1000.0),$5,$6,$7,$8,$9,$10,$11)
      on conflict (device_id,client_point_id) do nothing
      returning id`,
-    [deviceId, clientPointId, timestamp, lat, lng, accuracy, altitude, speed, bearing, provider],
+    [randomUUID(), deviceId, clientPointId, timestamp, lat, lng, accuracy, altitude, speed, bearing, provider],
   );
 
   await sql.query(
