@@ -14,6 +14,7 @@ import {
   purgePhoneBridgeData,
   setPhoneBridgeDeviceEnabled,
   rotatePhoneBridgeDeviceToken,
+  type PhoneBridgeAlert,
   type PhoneBridgeDevice,
   type PhoneBridgeEvent,
 } from "@/lib/admin-phone-bridge";
@@ -198,7 +199,7 @@ export function AdminPhoneBridge() {
   const [overview, setOverview] = useState<{ devices: number; syncs: number; lastReceivedAt: string | null } | null>(null);
   const [eventOverview, setEventOverview] = useState<{ total: number; last24h: number; errors24h: number; critical24h: number } | null>(null);
   const [events, setEvents] = useState<PhoneBridgeEvent[]>([]);
-  const [alerts, setAlerts] = useState<import("@/lib/admin-phone-bridge").PhoneBridgeAlert[]>([]);
+  const [alerts, setAlerts] = useState<PhoneBridgeAlert[]>([]);
   const seenAlertIds = useRef<Set<string>>(new Set());
   const [eventSeverity, setEventSeverity] = useState<"all" | "info" | "warning" | "error" | "critical">("all");
   const [payload, setPayload] = useState<unknown>(null);
@@ -237,7 +238,7 @@ export function AdminPhoneBridge() {
     } finally {
       setBusy(false);
     }
-  }, []);
+  }, [eventSeverity]);
 
   useEffect(() => {
     void load();
