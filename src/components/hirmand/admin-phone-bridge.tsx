@@ -33,6 +33,23 @@ function bytes(value: number) {
   return (value / (1024 * 1024)).toLocaleString("fa-IR", { maximumFractionDigits: 1 }) + " MB";
 }
 
+function csvCell(value: unknown) {
+  return '"' + String(value ?? "").replace(/"/g, '""').replace(/\r?\n/g, " ") + '"';
+}
+
+function downloadCsv(filename: string, rows: string[][]) {
+  const csv = "\uFEFF" + rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
 function healthLabel(status: PhoneBridgeDevice["health"]["status"]) {
   return status === "online" ? "آنلاین" : status === "stale" ? "کم‌تحرک" : "آفلاین";
 }
@@ -203,6 +220,9 @@ export function AdminPhoneBridge() {
   const [eventOverview, setEventOverview] = useState<{ total: number; last24h: number; errors24h: number; critical24h: number } | null>(null);
   const [events, setEvents] = useState<PhoneBridgeEvent[]>([]);
   const [alerts, setAlerts] = useState<PhoneBridgeAlert[]>([]);
+  const [eventDeviceId, setEventDeviceId] = useState<string>("all");
+  const [eventFrom, setEventFrom] = useState<string>("");
+  const [eventTo, setEventTo] = useState<string>("");
   const [healthDeviceId, setHealthDeviceId] = useState<string>("");
   const [healthHistory, setHealthHistory] = useState<PhoneBridgeHealthSample[]>([]);
   const [historyBusy, setHistoryBusy] = useState(false);
@@ -226,7 +246,10 @@ export function AdminPhoneBridge() {
         listPhoneBridgeEvents({
           data: {
             limit: 80,
+            ...(eventDeviceId === "all" ? {} : { deviceId: eventDeviceId }),
             ...(eventSeverity === "all" ? {} : { severity: eventSeverity }),
+            ...(eventFrom ? { from: eventFrom ? new Date(eventFrom + "T00:00:00").toISOString() : undefined } : {}),
+            ...(eventTo ? { to: eventTo ? (() => { const value = new Date(eventTo + "T00:00:00"); value.setDate(value.getDate() + 1); return value.toISOString(); })() : undefined } : {}),
           },
         }),
       ]);
@@ -245,7 +268,7 @@ export function AdminPhoneBridge() {
     } finally {
       setBusy(false);
     }
-  }, [eventSeverity]);
+  }, [eventSeverity, eventDeviceId, eventFrom, eventTo]);
 
   useEffect(() => {
     void load();
@@ -253,12 +276,20 @@ export function AdminPhoneBridge() {
     return () => window.clearInterval(timer);
   }, [load]);
 
-  async function loadEvents(severity = eventSeverity) {
+  async function loadEvents(
+    severity = eventSeverity,
+    deviceId = eventDeviceId,
+    fromDate = eventFrom,
+    toDate = eventTo,
+  ) {
     try {
       const result = await listPhoneBridgeEvents({
         data: {
           limit: 80,
+          ...(deviceId === "all" ? {} : { deviceId }),
           ...(severity === "all" ? {} : { severity }),
+          ...(fromDate ? { from: new Date(fromDate + "T00:00:00").toISOString() } : {}),
+          ...(toDate ? { to: (() => { const value = new Date(toDate + "T00:00:00"); value.setDate(value.getDate() + 1); return value.toISOString(); })() } : {}),
         },
       });
       setEvents(result);
@@ -292,6 +323,48 @@ export function AdminPhoneBridge() {
   useEffect(() => {
     if (healthDeviceId) void loadHealthHistory(healthDeviceId);
   }, [healthDeviceId, loadHealthHistory]);
+
+  async function exportEvents() {
+    try {
+      const rows = await exportPhoneBridgeEvents({
+        data: {
+          ...(eventDeviceId === "all" ? {} : { deviceId: eventDeviceId }),
+          ...(eventSeverity === "all" ? {} : { severity: eventSeverity }),
+          ...(eventFrom ? { from: new Date(eventFrom + "T00:00:00").toISOString() } : {}),
+          ...(eventTo ? { to: (() => { const value = new Date(eventTo + "T00:00:00"); value.setDate(value.getDate() + 1); return value.toISOString(); })() } : {}),
+        },
+      });
+      downloadCsv("phone-bridge-events.csv", [
+        ["تاریخ", "نوع رویداد", "شدت", "شرح", "دستگاه", "شناسه دستگاه", "شناسه حساب مدیر"],
+        ...rows.map((row) => [date(row.createdAt), row.eventType, row.severity, row.message, row.deviceName, row.deviceId, row.actorAccountId]),
+      ]);
+      toast.success(fa(rows.length) + " رویداد در CSV خروجی گرفته شد.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "خروجی رویدادها انجام نشد.");
+    }
+  }
+
+  function exportDevices() {
+    downloadCsv("phone-bridge-devices.csv", [
+      ["نام دستگاه", "سازنده", "مدل", "Android", "وضعیت", "آخرین Heartbeat", "باتری", "فضای آزاد", "صف", "Dead-Letter"],
+      ...devices.map((device) => {
+        const storage = storagePercent(device);
+        return [
+          device.name,
+          device.manufacturer,
+          device.model,
+          device.androidVersion,
+          healthLabel(device.health.status),
+          date(device.health.lastHeartbeatAt),
+          device.health.batteryPercent == null ? "" : device.health.batteryPercent + "٪",
+          storage == null ? "" : storage + "٪",
+          String(device.health.queuedPackets),
+          String(device.health.deadLetterPackets),
+        ];
+      }),
+    ]);
+    toast.success(fa(devices.length) + " دستگاه در CSV خروجی گرفته شد.");
+  }
 
   async function openSync(id: string) {
     try {
@@ -527,13 +600,27 @@ export function AdminPhoneBridge() {
         </div>
         <div className="pb-event-toolbar">
           <label>
-            <span>فیلتر شدت</span>
+            <span>دستگاه</span>
+            <select
+              value={eventDeviceId}
+              onChange={(event) => {
+                const next = event.target.value;
+                setEventDeviceId(next);
+                void loadEvents(eventSeverity, next, eventFrom, eventTo);
+              }}
+            >
+              <option value="all">همه دستگاه‌ها</option>
+              {devices.map((device) => <option value={device.id} key={device.id}>{device.name} · {device.model}</option>)}
+            </select>
+          </label>
+          <label>
+            <span>شدت</span>
             <select
               value={eventSeverity}
               onChange={(event) => {
                 const next = event.target.value as typeof eventSeverity;
                 setEventSeverity(next);
-                void loadEvents(next);
+                void loadEvents(next, eventDeviceId, eventFrom, eventTo);
               }}
             >
               <option value="all">همه</option>
@@ -543,7 +630,17 @@ export function AdminPhoneBridge() {
               <option value="critical">بحرانی</option>
             </select>
           </label>
-          <button type="button" onClick={() => void loadEvents()}><RefreshCw size={14} /> بروزرسانی رویدادها</button>
+          <label>
+            <span>از تاریخ</span>
+            <input type="date" value={eventFrom} onChange={(event) => setEventFrom(event.target.value)} />
+          </label>
+          <label>
+            <span>تا تاریخ</span>
+            <input type="date" value={eventTo} onChange={(event) => setEventTo(event.target.value)} />
+          </label>
+          <button type="button" onClick={() => void loadEvents()}><RefreshCw size={14} /> اعمال فیلتر</button>
+          <button type="button" onClick={() => void exportEvents()}>خروجی CSV رویدادها</button>
+          <button type="button" onClick={exportDevices}>خروجی CSV دستگاه‌ها</button>
         </div>
         {events.length === 0 ? (
           <div className="pb-empty">رویدادی برای نمایش وجود ندارد.</div>
