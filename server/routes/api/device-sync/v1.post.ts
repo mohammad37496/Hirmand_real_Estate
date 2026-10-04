@@ -56,6 +56,10 @@ function assertAuthorized(event: H3Event) {
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
   assertAuthorized(event);
+
+  if (event.req.method === "GET") {
+    return { ok: true, service: "hirmand-phone-bridge", protocol: "hirmand.phone-bridge.v1" };
+  }
   if (dbSource === "unconfigured") {
     throw createError({ statusCode: 503, statusMessage: "پایگاه داده برای دریافت دادهٔ گوشی در دسترس نیست." });
   }
