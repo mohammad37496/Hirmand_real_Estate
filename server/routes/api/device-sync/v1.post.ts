@@ -85,7 +85,20 @@ export default defineEventHandler(async (event) => {
     throw error;
   }
 
-  const payload = sanitizePhoneBridgePayload(parsedPayload, authPolicy.allowedModules);
+  let payload: JsonObject;
+  try {
+    payload = sanitizePhoneBridgePayload(parsedPayload, authPolicy.allowedModules);
+  } catch (error) {
+    await recordPhoneBridgeEvent({
+      deviceId,
+      eventType: "security.payload_rejected",
+      severity: "warning",
+      message: "بستهٔ Phone Bridge به‌دلیل ساختار یا مقدار نامعتبر رد شد.",
+      metadata: { route: "/api/device-sync/v1" },
+    }).catch(() => undefined);
+    throw error;
+  }
+
   const originalModuleKeys = ["location", "wifi", "contacts", "calls", "sms", "calendar", "apps", "selectedFiles"] as const;
   const strippedModules = originalModuleKeys.filter((key) => envelope[key] != null && payload[key] == null);
 
