@@ -4,7 +4,7 @@ import { authenticateDevice } from "@/lib/phone-bridge-auth";
 import { requirePhoneBridgeSignedRequest } from "@/lib/phone-bridge-signature.server";
 import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
-const ALLOWED_ACTIONS = new Set(["get_location", "take_photo"]);
+const ALLOWED_ACTIONS = new Set(["get_location", "take_photo", "record_audio"]);
 
 function obj(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -72,6 +72,25 @@ export default defineEventHandler(async (event) => {
       provider: text(payload.provider, 40) || "gps",
       recordedAt: finite(payload.recordedAt) ?? Date.now(),
     };
+  }
+
+  if (action === "record_audio" && success) {
+    const fileId = text(payload.fileId, 120);
+    const audioFormat = text(payload.audioFormat, 12);
+    const durationSeconds = finite(payload.durationSeconds);
+    if (!fileId || !["wav","amr"].includes(audioFormat) || durationSeconds === null || durationSeconds < 60 || durationSeconds > 3600) {
+      throw createError({ statusCode: 422, statusMessage: "نتیجهٔ ضبط صدا معتبر نیست." });
+    }
+    const sql = await getSql();
+    const fileRows = await sql.query<{ name: string; mime_type: string; size_bytes: number; sha256: string }>(
+      "select name,mime_type,size_bytes,sha256 from phone_bridge_files where id=$1 and device_id=$2 limit 1",
+      [fileId, deviceId],
+    );
+    const file = fileRows[0];
+    if (!file || !["audio/wav","audio/amr"].includes(String(file.mime_type).toLowerCase())) {
+      throw createError({ statusCode: 422, statusMessage: "فایل صوتی پیدا نشد یا فرمت آن مجاز نیست." });
+    }
+    result = { fileId, fileName: String(file.name), mimeType: String(file.mime_type), sizeBytes: Number(file.size_bytes), sha256: String(file.sha256), audioFormat, durationSeconds };
   }
 
   if (action === "take_photo" && success) {
