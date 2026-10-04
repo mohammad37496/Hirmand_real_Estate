@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Activity, Smartphone, RefreshCw, ShieldCheck, Database, Eye, X, Trash2, Wifi, MapPin, UsersRound, PhoneCall, MessageSquareText, CalendarDays } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Activity, Smartphone, RefreshCw, ShieldCheck, Database, Eye, X, Trash2, UsersRound, PhoneCall, MessageSquareText, CalendarDays, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import {
   getPhoneBridgeOverview,
@@ -111,7 +112,7 @@ export function AdminPhoneBridge() {
           <h1>گوشی‌ها و همگام‌سازی داخلی</h1>
           <p>داده فقط با کلید اختصاصی دستگاه و از طریق مسیر Sync ثبت می‌شود؛ پنل عمومی به این اطلاعات دسترسی ندارد.</p>
         </div>
-        <div className="pb-actions">
+        <div className="pb-actions"><Link to="/admin" className="pb-back"><ArrowRight size={16} /> بازگشت به پنل</Link>
           <button type="button" onClick={() => void load()} disabled={busy}><RefreshCw size={16} className={busy ? "pb-spin" : ""} /> بروزرسانی</button>
           <button type="button" className="pb-danger" onClick={() => void purge()} disabled={busy}><Trash2 size={16} /> پاک‌سازی قدیمی‌ها</button>
         </div>
@@ -160,7 +161,7 @@ export function AdminPhoneBridge() {
         <div className="pb-modal-backdrop" onClick={() => { setSelectedSync(null); setPayload(null); }}>
           <section className="pb-modal" role="dialog" aria-modal="true" aria-label="دادهٔ بستهٔ انتخاب‌شده" onClick={(event) => event.stopPropagation()}>
             <header><div><span>بستهٔ دریافتی</span><h2>{selectedDevice?.name ?? "گوشی"}</h2></div><button type="button" onClick={() => { setSelectedSync(null); setPayload(null); }}><X size={18} /></button></header>
-            <pre>{JSON.stringify(payload, null, 2)}</pre>
+            <div className="pb-warning">دادهٔ خام می‌تواند شامل اطلاعات خصوصی ماژول‌های فعال گوشی باشد؛ فقط در صورت نیاز آن را بررسی کنید.</div><pre>{JSON.stringify(payload, null, 2)}</pre>
           </section>
         </div>
       )}
