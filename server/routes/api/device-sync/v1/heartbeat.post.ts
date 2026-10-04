@@ -1,6 +1,7 @@
 import { createError, defineEventHandler, getHeader, readBody, setResponseHeader } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { authenticateDevice } from "@/lib/phone-bridge-auth";
+import { recordPhoneBridgeEvent } from "@/lib/phone-bridge-events.server";
 
 type JsonObject = Record<string, unknown>;
 
@@ -24,7 +25,18 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "شناسهٔ دستگاه ارسال نشده است." });
   }
 
-  await authenticateDevice(event, deviceId);
+  try {
+    await authenticateDevice(event, deviceId);
+  } catch (error) {
+    await recordPhoneBridgeEvent({
+      deviceId,
+      eventType: "security.auth_failed",
+      severity: "error",
+      message: "احراز هویت دستگاه برای Heartbeat ناموفق بود.",
+      metadata: { route: "/api/device-sync/v1/heartbeat" },
+    }).catch(() => undefined);
+    throw error;
+  }
 
   const body = asObject(await readBody(event).catch(() => null));
   const device = asObject(body.device);
