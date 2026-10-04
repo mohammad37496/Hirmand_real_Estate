@@ -4,7 +4,7 @@ import { authenticateDevice } from "@/lib/phone-bridge-auth";
 import { requirePhoneBridgeSignedRequest } from "@/lib/phone-bridge-signature.server";
 import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
-const ALLOWED_ACTIONS = new Set(["get_location"]);
+const ALLOWED_ACTIONS = new Set(["get_location", "restore_data"]);
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
@@ -58,12 +58,29 @@ export default defineEventHandler(async (event) => {
   const row = rows[0];
   if (!row || !ALLOWED_ACTIONS.has(String(row.action))) return { ok: true, command: null };
 
+  const payload = row.payload && typeof row.payload === "object"
+    ? row.payload as Record<string, unknown>
+    : {};
+  if (String(row.action) === "restore_data") {
+    const dataType = String(payload.dataType ?? "");
+    const requestedCount = Number(payload.requestedCount ?? 0);
+    const validType = dataType === "sms" || dataType === "incoming_calls";
+    const validCount = [15, 30, 60, 100, 250, 500, 1000, 5000, 10000].includes(requestedCount);
+    if (!validType || !validCount) {
+      await sql.query(
+        "update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",
+        [String(row.id), "پارامترهای بازگردانی دیتا معتبر نیستند."],
+      );
+      return { ok: true, command: null };
+    }
+  }
+
   return {
     ok: true,
     command: {
       id: String(row.id),
       action: String(row.action),
-      payload: row.payload && typeof row.payload === "object" ? row.payload : {},
+      payload,
       createdAt: new Date(String(row.created_at)).toISOString(),
       expiresAt: new Date(String(row.expires_at)).toISOString(),
     },
