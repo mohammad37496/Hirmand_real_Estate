@@ -145,3 +145,8 @@
   .pb-history-toolbar label{min-width:100%;width:100%}
   .pb-history-bars{height:90px}
 }
+
+.pb-alert-ack{margin-top:7px;min-height:32px;border:1px solid #ddd5cb;border-radius:9px;background:#fbf8f3;padding:0 10px;font:inherit;font-size:10px;font-weight:800;cursor:pointer}
+.pb-alert-ack:hover{background:#f3eee7}
+.pb-alert-ack:disabled{opacity:.55;cursor:wait}
+.pb-alert-row.severity-critical .pb-alert-ack{border-color:#e6c8c3;background:#fff4f2}
