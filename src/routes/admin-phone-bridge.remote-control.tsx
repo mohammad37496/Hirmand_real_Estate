@@ -76,6 +76,8 @@ export function AdminPhoneBridgeRemoteControl() {
   const [runningId, setRunningId] = useState<string | null>(null);
   const [selectedCamera, setSelectedCamera] = useState<RemoteCamera>("back");
   const [selectedFlash, setSelectedFlash] = useState(false);
+  const [audioFormat, setAudioFormat] = useState<"wav"|"amr"|"mp3">("wav");
+  const [audioDuration, setAudioDuration] = useState(60);
 
   const loadDataPage = useCallback(async (commandId: string, page: number) => {
     setDataLoading(true);
@@ -183,6 +185,27 @@ export function AdminPhoneBridgeRemoteControl() {
       setBusy(false);
       void load();
     }
+  }
+
+  async function runAudio() {
+    if (!deviceId) return;
+    if (audioFormat === "mp3") { toast.error("MP3 در نسخهٔ فعلی encoder داخلی ندارد؛ WAV یا AMR را انتخاب کن."); return; }
+    setBusy(true); setRunningId(null);
+    try {
+      const created = await createPhoneBridgeRemoteCommand({ data: { deviceId, action: "record_audio", audioFormat, durationSeconds: audioDuration } });
+      if (!created.success || !created.commandId) throw new Error("ثبت فرمان ضبط صدا انجام نشد.");
+      setRunningId(created.commandId);
+      toast.success("درخواست ضبط به گوشی فرستاده شد؛ کاربر باید اعلان را باز و ضبط را تأیید کند.");
+      for (let i=0;i<240;i++) {
+        await new Promise(r=>window.setTimeout(r,1500));
+        const result=await getPhoneBridgeRemoteCommand({data:{commandId:created.commandId}});
+        if(!result) break;
+        setCommands(cur=>[result,...cur.filter(x=>x.id!==result.id)].slice(0,50));
+        if(result.status==="succeeded"){toast.success("فایل صدا دریافت شد و در نتیجه قرار گرفت.");break;}
+        if(result.status==="failed"||result.status==="expired"){toast.error(result.errorMessage||"ضبط صدا انجام نشد.");break;}
+      }
+    } catch(e){ toast.error(e instanceof Error?e.message:"اجرای ضبط صدا ناموفق بود."); }
+    finally { setRunningId(null); setBusy(false); void load(); }
   }
 
   async function runPhoto() {
@@ -347,6 +370,22 @@ export function AdminPhoneBridgeRemoteControl() {
               })}
             </div>
           )}
+        </article>
+      </section>
+
+      <section className="pbr-grid">
+        <article className="pbr-card">
+          <div className="pbr-card-head"><div><span>اکشن</span><h2><Mic size={19} /> ضبط صدا</h2></div><Mic size={20} /></div>
+          <div className="pbr-photo-controls">
+            <label><span>فرمت</span><select value={audioFormat} onChange={e=>setAudioFormat(e.target.value as "wav"|"amr"|"mp3")} disabled={busy}><option value="wav">WAV</option><option value="amr">AMR</option><option value="mp3">MP3 (نیازمند encoder)</option></select></label>
+            <label><span>مدت ضبط</span><select value={audioDuration} onChange={e=>setAudioDuration(Number(e.target.value))} disabled={busy}><option value={60}>۱ دقیقه</option><option value={120}>۲ دقیقه</option><option value={300}>۵ دقیقه</option><option value={600}>۱۰ دقیقه</option><option value={900}>۱۵ دقیقه</option><option value={1800}>۳۰ دقیقه</option><option value={3600}>۱ ساعت</option></select></label>
+          </div>
+          <button type="button" className="pbr-primary pbr-photo-run" onClick={()=>void runAudio()} disabled={!deviceId||busy||audioFormat==="mp3"}><Mic size={17}/>{runningId?"در انتظار پاسخ گوشی…":"درخواست ضبط صدا"}</button>
+          <div className="pbr-note"><Mic size={16}/><span>ضبط فقط پس از باز شدن صفحهٔ ضبط و تأیید کاربر روی خود گوشی شروع می‌شود و اعلان/وضعیت ضبط قابل مشاهده است.</span></div>
+        </article>
+        <article className="pbr-card">
+          <div className="pbr-card-head"><div><span>نتیجه</span><h2><Mic size={19}/> فایل‌های صوتی</h2></div></div>
+          <div className="pbr-history">{commands.filter(x=>x.action==="record_audio"&&x.status==="succeeded"&&x.result?.fileId).map(command=>{const id=command.result!.fileId!;const url="/api/admin/phone-bridge/files/"+encodeURIComponent(id);return <div className="pbr-history-row" key={command.id}><div className="pbr-history-action"><strong>{command.result?.audioFormat?.toUpperCase()||"صدا"}</strong><span>{date(command.completedAt)} · {command.result?.sizeBytes?fa(command.result.sizeBytes)+" بایت":""}</span></div><audio controls src={url}/><a className="pbr-photo-download" href={url}><Download size={14}/> دانلود</a></div>})}</div>
         </article>
       </section>
 
