@@ -2058,3 +2058,37 @@ export const ADMIN_CSS = `
  .admin-report-actions{width:100%}
  .admin-report-actions>*{flex:1 1 auto}
 }
+
+
+/* Internal mobile sync / device pairing */
+.admin-mobile-devices{display:grid;gap:16px;max-width:1380px;margin:0 auto}
+.admin-mobile-pairing{overflow:hidden}
+.admin-mobile-pairing-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;padding:0 18px 16px}
+.admin-mobile-pairing-form .field{min-width:0}
+.admin-mobile-pairing-result{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 18px 18px;padding:14px;border:1px solid rgb(184 137 56 / 28%);border-radius:14px;background:var(--brass-50,#fbf7ef)}
+.admin-mobile-pairing-result>div{min-width:0;display:grid;gap:3px}
+.admin-mobile-pairing-result span{color:var(--muted);font-size:.6rem}
+.admin-mobile-pairing-result strong{font-size:1.35rem;letter-spacing:.16em;color:var(--navy-900)}
+.admin-mobile-pairing-result small{color:var(--muted);font-size:.58rem}
+.admin-mobile-device-list{display:grid;gap:8px;padding:0 18px 18px}
+.admin-mobile-device-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:13px;background:var(--card,#fff)}
+.admin-mobile-device-row.is-revoked{opacity:.72}
+.admin-mobile-device-main{min-width:0}
+.admin-mobile-device-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.admin-mobile-device-title strong{color:var(--navy-900);font-size:.73rem}
+.admin-mobile-device-main p{margin:4px 0 0;color:var(--muted);font-size:.6rem;line-height:1.7}
+.admin-mobile-device-main small{display:block;margin-top:3px;color:var(--subtle);font-size:.55rem}
+.admin-mobile-device-main small bdi{color:var(--navy-700);font-weight:700}
+.admin-device-status{display:inline-flex;align-items:center;min-height:23px;padding:3px 8px;border-radius:999px;background:var(--surface-2,#f7f5f0);color:var(--muted);font-size:.53rem;font-weight:800}
+.admin-device-status.is-on{background:rgb(44 124 91 / 10%);color:#2c7c5b}
+@media(max-width:700px){
+  .admin-mobile-pairing-form{grid-template-columns:1fr;padding-inline:12px}
+  .admin-mobile-pairing-result{margin-inline:12px;align-items:flex-start;flex-direction:column}
+  .admin-mobile-pairing-result .btn-ghost{width:100%}
+  .admin-mobile-device-list{padding-inline:12px}
+  .admin-mobile-device-row{grid-template-columns:1fr}
+  .admin-mobile-device-row .admin-icon-btn{justify-self:start}
+}
+@media(max-width:420px){
+  .admin-mobile-pairing-result strong{font-size:1.05rem;letter-spacing:.11em}
+}
