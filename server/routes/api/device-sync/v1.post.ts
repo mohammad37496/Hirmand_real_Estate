@@ -112,6 +112,7 @@ export default defineEventHandler(async (event) => {
     }).catch(() => undefined);
   }
 
+  const schemaName = String(payload.schema);
   const encoded = JSON.stringify(payload);
   const payloadBytes = Buffer.byteLength(encoded, "utf8");
   if (payloadBytes > MAX_BODY_BYTES) {
