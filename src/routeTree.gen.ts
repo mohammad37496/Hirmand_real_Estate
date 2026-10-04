@@ -50,6 +50,11 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminPhoneBridgeRoute = AdminPhoneBridgeRouteImport.update({
+  id: '/admin-phone-bridge',
+  path: '/admin-phone-bridge',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BudgetMatchRoute = BudgetMatchRouteImport.update({
   id: '/budget-match',
   path: '/budget-match',
@@ -177,6 +182,7 @@ const NotificationsRoute = NotificationsRouteImport.update({ id: '/notifications
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-phone-bridge': typeof AdminPhoneBridgeRoute
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
   '/consultants': typeof ConsultantsRouteWithChildren
@@ -208,6 +214,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-phone-bridge': typeof AdminPhoneBridgeRoute
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
   '/favorites': typeof FavoritesRoute
@@ -238,6 +245,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-phone-bridge': typeof AdminPhoneBridgeRoute
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
   '/consultants': typeof ConsultantsRouteWithChildren
@@ -403,6 +411,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-phone-bridge': {
+      id: '/admin-phone-bridge'
+      path: '/admin-phone-bridge'
+      fullPath: '/admin-phone-bridge'
+      preLoaderRoute: typeof AdminPhoneBridgeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin-phone-bridge': {
