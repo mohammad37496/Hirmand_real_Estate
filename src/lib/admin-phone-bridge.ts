@@ -9,6 +9,7 @@ import {
 } from "@/lib/admin-session.server";
 import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
 import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
+import { generateDeviceToken, hashToken } from "@/lib/phone-bridge-auth";
 
 async function requirePhoneBridgeAdmin() {
   const token = getCookie(ADMIN_SESSION_COOKIE);
@@ -48,6 +49,8 @@ export type PhoneBridgeDevice = {
     hasDeviceStats: boolean;
   };
   enabled: boolean;
+  tokenCreatedAt: string | null;
+  lastAuthenticatedAt: string | null;
 };
 
 export const getPhoneBridgeOverview = createServerFn({ method: "POST" })
@@ -79,7 +82,7 @@ export const listPhoneBridgeDevices = createServerFn({ method: "POST" })
 
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
-      `select id,name,manufacturer,model,android_version,sdk_int,first_seen_at,last_seen_at,last_sync_id,last_summary,enabled
+      `select id,name,manufacturer,model,android_version,sdk_int,first_seen_at,last_seen_at,last_sync_id,last_summary,enabled,token_created_at,last_authenticated_at
        from phone_bridge_devices
        order by last_seen_at desc
        limit $1`,
@@ -113,6 +116,8 @@ export const listPhoneBridgeDevices = createServerFn({ method: "POST" })
           hasDeviceStats: Boolean(summary.hasDeviceStats),
         },
         enabled: Boolean(row.enabled),
+        tokenCreatedAt: row.token_created_at ? new Date(String(row.token_created_at)).toISOString() : null,
+        lastAuthenticatedAt: row.last_authenticated_at ? new Date(String(row.last_authenticated_at)).toISOString() : null,
       };
     });
   });
@@ -200,4 +205,35 @@ export const purgePhoneBridgeData = createServerFn({ method: "POST" })
       [data.olderThanDays],
     );
     return { deleted: rows.length, filesDeleted: files.length };
+  });
+
+
+export const setPhoneBridgeDeviceEnabled = createServerFn({ method: "POST" })
+  .validator(z.object({ deviceId: z.string().trim().min(1).max(120), enabled: z.boolean() }))
+  .handler(async ({ data }) => {
+    await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") return { success: false, enabled: data.enabled };
+    const sql = await getSql();
+    const rows = await sql.query<{ id: string }>(
+      `update phone_bridge_devices set enabled=$2 where id=$1 returning id`,
+      [data.deviceId, data.enabled],
+    );
+    return { success: rows.length > 0, enabled: data.enabled };
+  });
+
+export const rotatePhoneBridgeDeviceToken = createServerFn({ method: "POST" })
+  .validator(z.object({ deviceId: z.string().trim().min(1).max(120) }))
+  .handler(async ({ data }) => {
+    await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") return { success: false, token: null };
+    const token = generateDeviceToken();
+    const sql = await getSql();
+    const rows = await sql.query<{ id: string }>(
+      `update phone_bridge_devices
+       set token_hash=$2,token_created_at=current_timestamp,enabled=true
+       where id=$1
+       returning id`,
+      [data.deviceId, hashToken(token)],
+    );
+    return { success: rows.length > 0, token: rows.length > 0 ? token : null };
   });
