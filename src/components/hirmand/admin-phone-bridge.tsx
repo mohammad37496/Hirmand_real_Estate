@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Activity, Smartphone, RefreshCw, ShieldCheck, Database, Eye, X, Trash2, UsersRound, PhoneCall, MessageSquareText, CalendarDays, ArrowRight } from "lucide-react";
+import { Activity, Smartphone, RefreshCw, ShieldCheck, Database, Eye, X, Trash2, UsersRound, PhoneCall, MessageSquareText, CalendarDays, ArrowRight, Package, FileText, BatteryCharging, HardDrive, MemoryStick, MapPin, Wifi, Download } from "lucide-react";
 import { toast } from "sonner";
 import {
   getPhoneBridgeOverview,
@@ -33,12 +33,110 @@ function Summary({ summary }: { summary: PhoneBridgeDevice["summary"] }) {
     { label: "تماس", value: summary.calls, Icon: PhoneCall },
     { label: "پیامک", value: summary.sms, Icon: MessageSquareText },
     { label: "تقویم", value: summary.calendar, Icon: CalendarDays },
+    { label: "برنامه", value: summary.apps, Icon: Package },
+    { label: "فایل", value: summary.selectedFiles, Icon: FileText },
   ];
   return (
     <div className="pb-summary-grid">
       {items.map(({ label, value, Icon }) => (
         <div className="pb-summary-item" key={label}><Icon size={15} /><span>{label}</span><strong>{fa(value)}</strong></div>
       ))}
+    </div>
+  );
+}
+
+function objectValue(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function arrayObjects(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is Record<string, unknown> => !!item && typeof item === "object" && !Array.isArray(item))
+    : [];
+}
+
+function textValue(value: unknown, fallback = "—") {
+  if (value == null || value === "") return fallback;
+  if (typeof value === "boolean") return value ? "فعال" : "خاموش";
+  return String(value);
+}
+
+function DataSection({ title, count, children }: { title: string; count: number; children: ReactNode }) {
+  if (!count) return null;
+  return (
+    <section className="pb-data-section">
+      <div className="pb-data-section-head"><h3>{title}</h3><span>{fa(count)} مورد</span></div>
+      {children}
+    </section>
+  );
+}
+
+function MiniRows({ rows, fields }: { rows: Record<string, unknown>[]; fields: { key: string; label: string }[] }) {
+  return (
+    <div className="pb-mini-table">
+      {rows.slice(0, 60).map((row, index) => (
+        <div className="pb-mini-row" key={index}>
+          {fields.map((field) => (
+            <div className="pb-mini-cell" key={field.key}>
+              <span>{field.label}</span>
+              <strong>{textValue(row[field.key])}</strong>
+            </div>
+          ))}
+        </div>
+      ))}
+      {rows.length > 60 && <p className="pb-more-note">فقط ۶۰ مورد اول نمایش داده شده است.</p>}
+    </div>
+  );
+}
+
+function StructuredPayload({ payload }: { payload: unknown }) {
+  const root = objectValue(payload);
+  const device = objectValue(root.device);
+  const stats = objectValue(root.deviceStats);
+  const location = objectValue(root.location);
+  const wifi = objectValue(root.wifi);
+  const contacts = arrayObjects(root.contacts);
+  const calls = arrayObjects(root.calls);
+  const sms = arrayObjects(root.sms);
+  const calendar = arrayObjects(root.calendar);
+  const apps = arrayObjects(root.apps);
+  const files = arrayObjects(root.selectedFiles);
+
+  return (
+    <div className="pb-structured">
+      <section className="pb-detail-grid">
+        <div className="pb-detail-card"><span>دستگاه</span><strong>{textValue(device.model)}</strong><small>{textValue(device.manufacturer)} · Android {textValue(device.androidVersion)}</small></div>
+        <div className="pb-detail-card"><span>شناسه نصب</span><strong className="pb-mono">{textValue(device.id)}</strong><small>ارسال: {date(Number(root.sentAt ?? 0))}</small></div>
+      </section>
+      <section className="pb-stat-grid">
+        <div><BatteryCharging size={17} /><span>باتری</span><strong>{textValue(stats.batteryPercent)}{stats.batteryPercent != null ? "٪" : ""}</strong></div>
+        <div><HardDrive size={17} /><span>فضای آزاد</span><strong>{bytes(Number(stats.storageAvailableBytes ?? 0))}</strong></div>
+        <div><MemoryStick size={17} /><span>RAM آزاد</span><strong>{bytes(Number(stats.ramAvailableBytes ?? 0))}</strong></div>
+        <div><Activity size={17} /><span>حافظه کم</span><strong>{textValue(stats.lowMemory)}</strong></div>
+      </section>
+      <section className="pb-location-grid">
+        <div className="pb-detail-card"><span><MapPin size={15} /> موقعیت</span><strong>{Object.keys(location).length ? String(location.latitude ?? "—") + "، " + String(location.longitude ?? "—") : "ارسال نشده"}</strong></div>
+        <div className="pb-detail-card"><span><Wifi size={15} /> Wi-Fi</span><strong>{Object.keys(wifi).length ? textValue(wifi.ssid) : "ارسال نشده"}</strong></div>
+      </section>
+      <DataSection title="مخاطبین" count={contacts.length}><MiniRows rows={contacts} fields={[{ key: "name", label: "نام" }, { key: "number", label: "شماره" }]} /></DataSection>
+      <DataSection title="تماس‌ها" count={calls.length}><MiniRows rows={calls.map((row) => ({ ...row, dateText: date(Number(row.date ?? 0)), durationText: fa(Number(row.durationSeconds ?? 0)) + " ثانیه" }))} fields={[{ key: "number", label: "شماره" }, { key: "type", label: "نوع" }, { key: "durationText", label: "مدت" }, { key: "dateText", label: "تاریخ" }]} /></DataSection>
+      <DataSection title="پیامک‌ها" count={sms.length}><MiniRows rows={sms.map((row) => ({ ...row, dateText: date(Number(row.date ?? 0)) }))} fields={[{ key: "address", label: "فرستنده/گیرنده" }, { key: "type", label: "نوع" }, { key: "dateText", label: "تاریخ" }, { key: "body", label: "متن" }]} /></DataSection>
+      <DataSection title="تقویم" count={calendar.length}><MiniRows rows={calendar.map((row) => ({ ...row, startText: date(Number(row.start ?? 0)), endText: date(Number(row.end ?? 0)) }))} fields={[{ key: "title", label: "عنوان" }, { key: "startText", label: "شروع" }, { key: "endText", label: "پایان" }, { key: "location", label: "مکان" }]} /></DataSection>
+      <DataSection title="برنامه‌های قابل اجرا" count={apps.length}><MiniRows rows={apps} fields={[{ key: "label", label: "نام برنامه" }, { key: "packageName", label: "Package" }, { key: "versionName", label: "نسخه" }]} /></DataSection>
+      <DataSection title="فایل‌های انتخابی" count={files.length}>
+        <div className="pb-file-list">
+          {files.slice(0, 60).map((file, index) => {
+            const fileId = textValue(file.lastUploadedFileId, "");
+            return (
+              <div className="pb-file-row" key={index}>
+                <div><strong>{textValue(file.name, "فایل")}</strong><span>{textValue(file.mimeType)} · {bytes(Number(file.sizeBytes ?? 0))}</span></div>
+                {fileId ? <a href={"/api/admin/phone-bridge/files/" + encodeURIComponent(fileId)} target="_blank" rel="noreferrer"><Download size={15} /> دریافت فایل</a> : <span className="pb-file-pending">در سرور ثبت نشده</span>}
+              </div>
+            );
+          })}
+        </div>
+      </DataSection>
+      {!contacts.length && !calls.length && !sms.length && !calendar.length && !apps.length && !files.length ? <div className="pb-empty">در این Sync ماژول داده‌ای برای نمایش ثبت نشده است.</div> : null}
     </div>
   );
 }
@@ -161,7 +259,14 @@ export function AdminPhoneBridge() {
         <div className="pb-modal-backdrop" onClick={() => { setSelectedSync(null); setPayload(null); }}>
           <section className="pb-modal" role="dialog" aria-modal="true" aria-label="دادهٔ بستهٔ انتخاب‌شده" onClick={(event) => event.stopPropagation()}>
             <header><div><span>بستهٔ دریافتی</span><h2>{selectedDevice?.name ?? "گوشی"}</h2></div><button type="button" onClick={() => { setSelectedSync(null); setPayload(null); }}><X size={18} /></button></header>
-            <div className="pb-warning">دادهٔ خام می‌تواند شامل اطلاعات خصوصی ماژول‌های فعال گوشی باشد؛ فقط در صورت نیاز آن را بررسی کنید.</div><pre>{JSON.stringify(payload, null, 2)}</pre>
+            <div className="pb-warning">این صفحه داده‌های ماژول‌های فعال گوشی را تفکیک می‌کند؛ دادهٔ خام را فقط هنگام نیاز بررسی کنید.</div>
+            <div className="pb-modal-body">
+              <StructuredPayload payload={payload} />
+              <details className="pb-raw-details">
+                <summary>نمایش JSON خام</summary>
+                <pre>{JSON.stringify(payload, null, 2)}</pre>
+              </details>
+            </div>
           </section>
         </div>
       )}
