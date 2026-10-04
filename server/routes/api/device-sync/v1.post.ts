@@ -1,11 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { createError, defineEventHandler, getHeader, readBody, setResponseHeader, type H3Event } from "h3";
+import { createError, defineEventHandler, readBody, setResponseHeader } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { authenticateDevice } from "@/lib/phone-bridge-auth";
 
 const MAX_BODY_BYTES = 4 * 1024 * 1024;
-const TOKEN_KEYS = ["HIRMAND_PHONE_BRIDGE_TOKEN", "PHONE_BRIDGE_SYNC_TOKEN"] as const;
-
 type JsonObject = Record<string, unknown>;
 
 function asObject(value: unknown): JsonObject {
