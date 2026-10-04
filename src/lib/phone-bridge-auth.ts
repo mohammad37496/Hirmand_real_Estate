@@ -20,6 +20,55 @@ export const PHONE_BRIDGE_MODULES = [
 
 export type PhoneBridgeModule = typeof PHONE_BRIDGE_MODULES[number];
 export type PhoneBridgeModulePolicy = Record<PhoneBridgeModule, boolean>;
+export type PhoneBridgeConsent = {
+  version: number;
+  acceptedAt: string | null;
+  scopes: string[];
+};
+
+const CONSENT_SCOPE_BY_MODULE: Record<PhoneBridgeModule, string> = {
+  location: "location",
+  wifi: "device_status",
+  contacts: "contacts_calls_sms",
+  calls: "contacts_calls_sms",
+  sms: "contacts_calls_sms",
+  calendar: "calendar",
+  apps: "apps",
+  camera: "camera",
+  microphone: "microphone",
+  selectedFiles: "selected_files",
+  notifications: "notifications",
+};
+
+function normalizeConsent(value: unknown): PhoneBridgeConsent {
+  const raw = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  const version = typeof raw.version === "number" && Number.isInteger(raw.version) ? Math.max(0, Math.min(raw.version, 100)) : 0;
+  const acceptedAt = typeof raw.acceptedAt === "string" && !Number.isNaN(Date.parse(raw.acceptedAt)) ? raw.acceptedAt : null;
+  const scopes = Array.isArray(raw.scopes)
+    ? [...new Set(raw.scopes.filter((scope): scope is string => typeof scope === "string").map(scope => scope.trim().slice(0, 80)).filter(Boolean))].slice(0, 32)
+    : [];
+  return { version, acceptedAt, scopes };
+}
+
+export function hasValidPhoneBridgeConsent(value: PhoneBridgeConsent) {
+  return value.version >= 1 && Boolean(value.acceptedAt) && value.scopes.includes("device_status");
+}
+
+export function effectivePhoneBridgePolicy(
+  allowedModules: PhoneBridgeModulePolicy,
+  consent: PhoneBridgeConsent,
+): PhoneBridgeModulePolicy {
+  if (!hasValidPhoneBridgeConsent(consent)) {
+    return Object.fromEntries(PHONE_BRIDGE_MODULES.map(module => [module, false])) as PhoneBridgeModulePolicy;
+  }
+  return Object.fromEntries(
+    PHONE_BRIDGE_MODULES.map(module => [
+      module,
+      allowedModules[module] && consent.scopes.includes(CONSENT_SCOPE_BY_MODULE[module]),
+    ]),
+  ) as PhoneBridgeModulePolicy;
+}
+
 
 export function normalizePhoneBridgePolicy(value: unknown): PhoneBridgeModulePolicy {
   const raw = value && typeof value === "object" ? value as Record<string, unknown> : {};
@@ -62,8 +111,15 @@ export async function authenticateDevice(event: H3Event, deviceId: string) {
   if (!bootstrap) throw createError({ statusCode: 503, statusMessage: "کلید Phone Bridge روی سرور تنظیم نشده است." });
 
   const sql = await getSql();
-  const rows = await sql.query<{ token_hash: string | null; enabled: boolean; allowed_modules: unknown }>(
-    `select token_hash,enabled,allowed_modules from phone_bridge_devices where id=$1 limit 1`,
+  const rows = await sql.query<{
+    token_hash: string | null;
+    enabled: boolean;
+    allowed_modules: unknown;
+    consent_version: number | null;
+    consent_accepted_at: string | null;
+    consent_scopes: unknown;
+  }>(
+    `select token_hash,enabled,allowed_modules,consent_version,consent_accepted_at,consent_scopes from phone_bridge_devices where id=$1 limit 1`,
     [deviceId],
   );
   const row = rows[0];
@@ -71,7 +127,19 @@ export async function authenticateDevice(event: H3Event, deviceId: string) {
   // Bootstrap is only a compatibility/enrollment credential. Once a device
   // has a per-device token, Bootstrap can no longer bypass its revocation.
   if (!row || !row.token_hash) {
-    if (sameSecret(supplied, bootstrap)) return { mode: "bootstrap" as const, deviceId, allowedModules: normalizePhoneBridgePolicy(row?.allowed_modules) };
+    if (sameSecret(supplied, bootstrap)) {
+      const consent = normalizeConsent({
+        version: row?.consent_version ?? 0,
+        acceptedAt: row?.consent_accepted_at ?? null,
+        scopes: row?.consent_scopes ?? [],
+      });
+      return {
+        mode: "bootstrap" as const,
+        deviceId,
+        allowedModules: effectivePhoneBridgePolicy(normalizePhoneBridgePolicy(row?.allowed_modules), consent),
+        consent,
+      };
+    }
     throw createError({ statusCode: 401, statusMessage: "توکن دستگاه معتبر نیست." });
   }
 
@@ -87,7 +155,17 @@ export async function authenticateDevice(event: H3Event, deviceId: string) {
     `update phone_bridge_devices set last_authenticated_at=current_timestamp where id=$1`,
     [deviceId],
   );
-  return { mode: "device" as const, deviceId, allowedModules: normalizePhoneBridgePolicy(row.allowed_modules) };
+  const consent = normalizeConsent({
+    version: row.consent_version ?? 0,
+    acceptedAt: row.consent_accepted_at ?? null,
+    scopes: row.consent_scopes ?? [],
+  });
+  return {
+    mode: "device" as const,
+    deviceId,
+    allowedModules: effectivePhoneBridgePolicy(normalizePhoneBridgePolicy(row.allowed_modules), consent),
+    consent,
+  };
 }
 
 export function requireBootstrap(event: H3Event) {
