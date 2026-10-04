@@ -409,6 +409,92 @@ export const getPhoneBridgeReleaseSettings = createServerFn({ method: "POST" })
     } satisfies PhoneBridgeReleaseSettings;
   });
 
+export type PhoneBridgeSmsMessage = {
+  id: string;
+  deviceId: string;
+  deviceName: string;
+  address: string | null;
+  contactName: string | null;
+  messageType: number;
+  direction: "incoming" | "outgoing" | "other";
+  sentAt: string;
+  body: string;
+};
+
+export const listPhoneBridgeSmsMessages = createServerFn({ method: "POST" })
+  .validator(z.object({
+    deviceId: z.string().trim().min(1).max(120).optional(),
+    direction: z.enum(["all","incoming","outgoing","other"]).optional().default("all"),
+    search: z.string().trim().max(120).optional(),
+    limit: z.number().int().min(1).max(200).optional().default(100),
+  }))
+  .handler(async ({ data }) => {
+    await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") return [] as PhoneBridgeSmsMessage[];
+
+    const sql = await getSql();
+    const search = data.search?.trim() || null;
+    const rows = await sql.query<Record<string, unknown>>(
+      `select m.id,m.device_id,m.address,m.contact_name,m.message_type,m.direction,m.sent_at,m.body,
+              coalesce(d.name,'گوشی ناشناس') as device_name
+       from phone_bridge_sms_messages m
+       left join phone_bridge_devices d on d.id=m.device_id
+       where ($1::text is null or m.device_id=$1)
+         and ($2::text is null or m.direction=$2)
+         and ($3::text is null or m.address ilike '%' || $3 || '%' or m.contact_name ilike '%' || $3 || '%' or m.body ilike '%' || $3 || '%')
+       order by m.sent_at desc
+       limit $4`,
+      [data.deviceId ?? null, data.direction === "all" ? null : data.direction, search, data.limit],
+    );
+    return rows.map((row) => ({
+      id: String(row.id),
+      deviceId: String(row.device_id),
+      deviceName: String(row.device_name ?? "گوشی ناشناس"),
+      address: row.address ? String(row.address) : null,
+      contactName: row.contact_name ? String(row.contact_name) : null,
+      messageType: Number(row.message_type ?? 0),
+      direction: (["incoming","outgoing","other"].includes(String(row.direction)) ? String(row.direction) : "other") as PhoneBridgeSmsMessage["direction"],
+      sentAt: new Date(String(row.sent_at)).toISOString(),
+      body: String(row.body ?? ""),
+    }));
+  });
+
+export const exportPhoneBridgeSms = createServerFn({ method: "POST" })
+  .validator(z.object({
+    deviceId: z.string().trim().min(1).max(120).optional(),
+    direction: z.enum(["all","incoming","outgoing","other"]).optional().default("all"),
+    search: z.string().trim().max(120).optional(),
+  }))
+  .handler(async ({ data }) => {
+    await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") return [] as PhoneBridgeSmsMessage[];
+    const sql = await getSql();
+    const search = data.search?.trim() || null;
+    const rows = await sql.query<Record<string, unknown>>(
+      `select m.id,m.device_id,m.address,m.contact_name,m.message_type,m.direction,m.sent_at,m.body,
+              coalesce(d.name,'گوشی ناشناس') as device_name
+       from phone_bridge_sms_messages m
+       left join phone_bridge_devices d on d.id=m.device_id
+       where ($1::text is null or m.device_id=$1)
+         and ($2::text is null or m.direction=$2)
+         and ($3::text is null or m.address ilike '%' || $3 || '%' or m.contact_name ilike '%' || $3 || '%' or m.body ilike '%' || $3 || '%')
+       order by m.sent_at desc
+       limit 5000`,
+      [data.deviceId ?? null, data.direction === "all" ? null : data.direction, search],
+    );
+    return rows.map((row) => ({
+      id: String(row.id),
+      deviceId: String(row.device_id),
+      deviceName: String(row.device_name ?? "گوشی ناشناس"),
+      address: row.address ? String(row.address) : null,
+      contactName: row.contact_name ? String(row.contact_name) : null,
+      messageType: Number(row.message_type ?? 0),
+      direction: (["incoming","outgoing","other"].includes(String(row.direction)) ? String(row.direction) : "other") as PhoneBridgeSmsMessage["direction"],
+      sentAt: new Date(String(row.sent_at)).toISOString(),
+      body: String(row.body ?? ""),
+    }));
+  });
+
 export type PhoneBridgeCallRecording = {
   id: string;
   deviceId: string;
