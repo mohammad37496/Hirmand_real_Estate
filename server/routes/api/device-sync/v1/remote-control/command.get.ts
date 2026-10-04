@@ -4,7 +4,7 @@ import { authenticateDevice } from "@/lib/phone-bridge-auth";
 import { requirePhoneBridgeSignedRequest } from "@/lib/phone-bridge-signature.server";
 import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
-const ALLOWED_ACTIONS = new Set(["get_location", "restore_data", "take_photo"]);
+const ALLOWED_ACTIONS = new Set(["get_location", "restore_data", "take_photo", "record_audio"]);
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
@@ -81,6 +81,18 @@ export default defineEventHandler(async (event) => {
       await sql.query(
         "update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",
         [String(row.id), "پارامتر یا ماژول بازگردانی دیتا معتبر نیست."],
+      );
+      return { ok: true, command: null };
+    }
+  }
+
+  if (action === "record_audio") {
+    const format = String(payload.audioFormat ?? "");
+    const duration = Number(payload.durationSeconds ?? 0);
+    if (!["wav","amr"].includes(format) || !Number.isInteger(duration) || duration < 60 || duration > 3600 || modules.microphone === false) {
+      await sql.query(
+        "update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",
+        [String(row.id), "پارامتر یا ماژول ضبط صدا معتبر نیست."],
       );
       return { ok: true, command: null };
     }
