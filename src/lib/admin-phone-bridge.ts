@@ -22,6 +22,26 @@ async function requirePhoneBridgeAdmin() {
   return claims;
 }
 
+type PhoneBridgeJson =
+  | string
+  | number
+  | boolean
+  | null
+  | PhoneBridgeJson[]
+  | { [key: string]: PhoneBridgeJson };
+
+function toPhoneBridgeJson(value: unknown): PhoneBridgeJson {
+  if (value == null) return null;
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return value;
+  if (Array.isArray(value)) return value.map(toPhoneBridgeJson);
+  if (typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, toPhoneBridgeJson(item)]),
+    );
+  }
+  return String(value);
+}
+
 const listInput = z.object({
   limit: z.number().int().min(1).max(100).optional().default(50),
   deviceId: z.string().trim().min(1).max(120).optional(),
@@ -181,7 +201,7 @@ export const getPhoneBridgeSync = createServerFn({ method: "POST" })
       syncId: data.syncId,
       deviceId: String(row.device_id),
       receivedAt: new Date(String(row.received_at)).toISOString(),
-      payload: row.payload,
+      payload: toPhoneBridgeJson(row.payload),
     };
   });
 
