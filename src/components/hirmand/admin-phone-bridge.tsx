@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { Link } from "@tanstack/react-router";
 import { Activity, Smartphone, RefreshCw, ShieldCheck, Database, Eye, X, Trash2, UsersRound, PhoneCall, MessageSquareText, CalendarDays, ArrowRight, Package, FileText, BatteryCharging, HardDrive, MemoryStick, MapPin, Wifi, Download } from "lucide-react";
 import { toast } from "sonner";
+import "@/admin-phone-bridge-details.css";
 import {
   getPhoneBridgeOverview,
   getPhoneBridgeSync,
