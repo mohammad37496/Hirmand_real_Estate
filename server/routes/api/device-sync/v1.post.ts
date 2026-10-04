@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { createError, defineEventHandler, readBody, setResponseHeader } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { authenticateDevice } from "@/lib/phone-bridge-auth";
+import { recordPhoneBridgeEvent } from "@/lib/phone-bridge-events.server";
 
 const MAX_BODY_BYTES = 4 * 1024 * 1024;
 type JsonObject = Record<string, unknown>;
@@ -50,7 +51,18 @@ export default defineEventHandler(async (event) => {
   if (!deviceId) {
     throw createError({ statusCode: 400, statusMessage: "شناسهٔ نصب گوشی ارسال نشده است." });
   }
-  await authenticateDevice(event, deviceId);
+  try {
+    await authenticateDevice(event, deviceId);
+  } catch (error) {
+    await recordPhoneBridgeEvent({
+      deviceId,
+      eventType: "security.auth_failed",
+      severity: "error",
+      message: "احراز هویت دستگاه برای Sync ناموفق بود.",
+      metadata: { route: "/api/device-sync/v1" },
+    }).catch(() => undefined);
+    throw error;
+  }
 
   const schemaName = asString(payload.schema);
   if (schemaName !== "hirmand.phone-bridge.v1") {
