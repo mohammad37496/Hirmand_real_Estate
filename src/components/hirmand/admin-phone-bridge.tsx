@@ -16,6 +16,7 @@ import {
   purgePhoneBridgeData,
   setPhoneBridgeDeviceEnabled,
   rotatePhoneBridgeDeviceToken,
+  setPhoneBridgeDeviceMinVersion,
   type PhoneBridgeAlert,
   type PhoneBridgeDevice,
   type PhoneBridgeHealthSample,
@@ -229,6 +230,7 @@ export function AdminPhoneBridge() {
   const [ackBusyId, setAckBusyId] = useState<string | null>(null);
   const [policyBusyId, setPolicyBusyId] = useState<string | null>(null);
   const [expandedPolicyId, setExpandedPolicyId] = useState<string | null>(null);
+  const [versionBusyId, setVersionBusyId] = useState<string | null>(null);
   const seenAlertIds = useRef<Set<string>>(new Set());
   const [eventSeverity, setEventSeverity] = useState<"all" | "info" | "warning" | "error" | "critical">("all");
   const [payload, setPayload] = useState<unknown>(null);
@@ -346,9 +348,38 @@ export function AdminPhoneBridge() {
     }
   }
 
+  async function changeMinimumVersion(device: PhoneBridgeDevice) {
+    const raw = window.prompt(
+      "حداقل versionCode مجاز برای این دستگاه را وارد کن (۰ = بدون محدودیت):",
+      String(device.minAppVersionCode),
+    );
+    if (raw == null) return;
+    const value = Number(raw);
+    if (!Number.isInteger(value) || value < 0 || value > 1000000) {
+      toast.error("versionCode معتبر نیست.");
+      return;
+    }
+    setVersionBusyId(device.id);
+    try {
+      const result = await setPhoneBridgeDeviceMinVersion({
+        data: { deviceId: device.id, minAppVersionCode: value },
+      });
+      if (result.success) {
+        setDevices((current) => current.map((item) =>
+          item.id === device.id ? { ...item, minAppVersionCode: result.minAppVersionCode } : item
+        ));
+        toast.success("حداقل نسخهٔ مجاز ذخیره شد.");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "ذخیرهٔ حداقل نسخه انجام نشد.");
+    } finally {
+      setVersionBusyId(null);
+    }
+  }
+
   function exportDevices() {
     downloadCsv("phone-bridge-devices.csv", [
-      ["نام دستگاه", "سازنده", "مدل", "Android", "وضعیت", "آخرین Heartbeat", "باتری", "فضای آزاد", "صف", "Dead-Letter"],
+      ["نام دستگاه", "سازنده", "مدل", "Android", "نسخه اپ", "VersionCode", "حداقل نسخه", "وضعیت", "آخرین Heartbeat", "باتری", "فضای آزاد", "صف", "Dead-Letter"],
       ...devices.map((device) => {
         const storage = storagePercent(device);
         return [
@@ -356,6 +387,9 @@ export function AdminPhoneBridge() {
           device.manufacturer,
           device.model,
           device.androidVersion,
+          device.appVersionName,
+          String(device.appVersionCode),
+          String(device.minAppVersionCode),
           healthLabel(device.health.status),
           date(device.health.lastHeartbeatAt),
           device.health.batteryPercent == null ? "" : device.health.batteryPercent + "٪",
@@ -690,6 +724,20 @@ export function AdminPhoneBridge() {
                     <strong>{device.name}</strong>
                     <span>{device.manufacturer} {device.model} · Android {device.androidVersion || "—"}</span>
                     <small>آخرین Sync: {date(device.lastSeenAt)} · {device.tokenCreatedAt ? "توکن اختصاصی فعال" : "توکن اختصاصی هنوز ثبت نشده"}</small>
+                    <div className="pb-version-strip">
+                      <span className={device.minAppVersionCode > 0 && device.appVersionCode < device.minAppVersionCode ? "is-outdated" : ""}>
+                        نسخه {device.appVersionName || "—"} · code {fa(device.appVersionCode)}
+                      </span>
+                      <span>حداقل مجاز: {device.minAppVersionCode > 0 ? fa(device.minAppVersionCode) : "بدون محدودیت"}</span>
+                      <button
+                        type="button"
+                        className="pb-inline-action"
+                        disabled={versionBusyId === device.id}
+                        onClick={() => changeMinimumVersion(device)}
+                      >
+                        تغییر حداقل نسخه
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <Summary summary={device.summary} />
