@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { createError, defineEventHandler, getHeader, readBody, setResponseHeader } from "h3";
+import { createError, defineEventHandler, getHeader, readBody, setResponseHeader, type H3Event } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 
 const MAX_BODY_BYTES = 4 * 1024 * 1024;
@@ -42,7 +42,7 @@ function summaryFor(payload: JsonObject) {
   };
 }
 
-function assertAuthorized(event: Parameters<typeof defineEventHandler>[0] extends never ? never : any) {
+function assertAuthorized(event: H3Event) {
   const token = configuredToken();
   if (!token) {
     throw createError({ statusCode: 503, statusMessage: "کلید Phone Bridge روی سرور تنظیم نشده است." });
