@@ -127,16 +127,36 @@ export default defineEventHandler(async (event) => {
 
   const sql = await getSql();
 
+  const appVersionCode = asInt(asObject(payload.device).appVersionCode) ?? 1;
+  const appVersionName = asString(asObject(payload.device).appVersionName, "unknown");
+  const versionRows = await sql.query<{ min_app_version_code: number }>(
+    `select min_app_version_code from phone_bridge_devices where id=$1 limit 1`,
+    [deviceId],
+  );
+  const minAppVersionCode = Number(versionRows[0]?.min_app_version_code ?? 0);
+  if (minAppVersionCode > 0 && appVersionCode < minAppVersionCode) {
+    await recordPhoneBridgeEvent({
+      deviceId,
+      eventType: "security.outdated_client_blocked",
+      severity: "warning",
+      message: "Sync دستگاه به‌دلیل قدیمی بودن نسخهٔ Phone Bridge رد شد.",
+      metadata: { appVersionCode, minAppVersionCode },
+    }).catch(() => undefined);
+    throw createError({ statusCode: 426, statusMessage: "نسخهٔ Phone Bridge قدیمی است و باید به‌روزرسانی شود." });
+  }
+
   await sql.query(
     `insert into phone_bridge_devices
-      (id,name,manufacturer,model,android_version,sdk_int,last_seen_at,last_sync_id,last_summary)
-     values ($1,$2,$3,$4,$5,$6,current_timestamp,$7,$8::jsonb)
+      (id,name,manufacturer,model,android_version,sdk_int,app_version_name,app_version_code,last_seen_at,last_sync_id,last_summary)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,current_timestamp,$9,$10::jsonb)
      on conflict (id) do update set
        name=excluded.name,
        manufacturer=excluded.manufacturer,
        model=excluded.model,
        android_version=excluded.android_version,
        sdk_int=excluded.sdk_int,
+       app_version_name=excluded.app_version_name,
+       app_version_code=excluded.app_version_code,
        last_seen_at=current_timestamp,
        last_sync_id=excluded.last_sync_id,
        last_summary=excluded.last_summary,
@@ -148,6 +168,8 @@ export default defineEventHandler(async (event) => {
       asString(device.model),
       asString(device.androidVersion),
       asInt(device.sdkInt),
+      appVersionName,
+      appVersionCode,
       syncId,
       JSON.stringify(summary),
     ],
