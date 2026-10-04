@@ -11,8 +11,6 @@ import { dbSource, getSql } from "@/lib/db";
 import { authenticateDevice } from "@/lib/phone-bridge-auth";
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
-const TOKEN_KEYS = ["HIRMAND_PHONE_BRIDGE_TOKEN", "PHONE_BRIDGE_SYNC_TOKEN"] as const;
-
 function safeName(value: string) {
   const normalized = value.replace(/[\\/\x00-\x1f]+/g, "-").trim().slice(-180);
   return normalized || "file";
