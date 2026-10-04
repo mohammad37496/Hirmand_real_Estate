@@ -41,19 +41,23 @@ export default defineEventHandler(async (event: H3Event) => {
   const device = obj(body.device);
   const deviceId = str(device.id, "", 120);
   if (!deviceId) throw createError({ statusCode: 400, statusMessage: "شناسهٔ نصب گوشی ارسال نشده است." });
+  const appVersionName = str(device.appVersionName, "unknown", 80);
+  const appVersionCode = Math.max(1, Math.min(int(device.appVersionCode) ?? 1, 1000000));
 
   const token = generateDeviceToken();
   const sql = await getSql();
   await sql.query(
     `insert into phone_bridge_devices
-      (id,name,manufacturer,model,android_version,sdk_int,token_hash,token_created_at,last_authenticated_at,enabled)
-     values ($1,$2,$3,$4,$5,$6,$7,current_timestamp,current_timestamp,true)
+      (id,name,manufacturer,model,android_version,sdk_int,app_version_name,app_version_code,token_hash,token_created_at,last_authenticated_at,enabled)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,current_timestamp,current_timestamp,true)
      on conflict (id) do update set
        name=excluded.name,
        manufacturer=excluded.manufacturer,
        model=excluded.model,
        android_version=excluded.android_version,
        sdk_int=excluded.sdk_int,
+       app_version_name=excluded.app_version_name,
+       app_version_code=excluded.app_version_code,
        token_hash=excluded.token_hash,
        token_created_at=current_timestamp,
        last_authenticated_at=current_timestamp,
@@ -65,6 +69,8 @@ export default defineEventHandler(async (event: H3Event) => {
       str(device.model),
       str(device.androidVersion),
       int(device.sdkInt),
+      appVersionName,
+      appVersionCode,
       hashToken(token),
     ],
   );
