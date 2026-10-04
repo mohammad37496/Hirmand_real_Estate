@@ -81,8 +81,176 @@ export type PhoneBridgeDevice = {
     storageTotalBytes: number | null;
     ramAvailableBytes: number | null;
     ramTotalBytes: number | null;
+    queuedPackets: number;
+    deadLetterPackets: number;
+    lastHealthReportAt: string | null;
   };
 };
+
+export type PhoneBridgeAlert = {
+  id: string;
+  deviceId: string | null;
+  deviceName: string;
+  severity: "warning" | "error" | "critical";
+  title: string;
+  message: string;
+  createdAt: string;
+};
+
+export const getPhoneBridgeAlerts = createServerFn({ method: "POST" })
+  .validator(z.object({ limit: z.number().int().min(1).max(50).optional().default(20) }).optional())
+  .handler(async ({ data }) => {
+    await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") return [];
+
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select
+        d.id,d.name,d.enabled,d.last_seen_at,d.last_queue_count,d.last_dead_letter_count,
+        d.last_health_report_at,
+        latest.device_stats
+       from phone_bridge_devices d
+       left join lateral (
+         select s.payload->'deviceStats' as device_stats
+         from phone_bridge_syncs s
+         where s.device_id=d.id
+         order by s.received_at desc
+         limit 1
+       ) latest on true
+       where d.enabled=true
+       order by d.last_seen_at desc
+       limit 100`,
+    );
+
+    const alerts: PhoneBridgeAlert[] = [];
+    const now = Date.now();
+
+    for (const row of rows) {
+      const deviceId = String(row.id ?? "");
+      const deviceName = String(row.name ?? "گوشی");
+      const seen = new Date(String(row.last_seen_at)).getTime();
+      const ageMs = Number.isFinite(seen) ? Math.max(0, now - seen) : Number.MAX_SAFE_INTEGER;
+      const deadLetters = Number(row.last_dead_letter_count ?? 0);
+      const queued = Number(row.last_queue_count ?? 0);
+
+      if (ageMs > 24 * 60 * 60 * 1000) {
+        alerts.push({
+          id: `offline:${deviceId}`,
+          deviceId,
+          deviceName,
+          severity: "critical",
+          title: "دستگاه آفلاین است",
+          message: "بیش از ۲۴ ساعت است که Heartbeat دریافت نشده است.",
+          createdAt: new Date(Number.isFinite(seen) ? seen : now).toISOString(),
+        });
+      } else if (ageMs > 30 * 60 * 1000) {
+        alerts.push({
+          id: `stale:${deviceId}`,
+          deviceId,
+          deviceName,
+          severity: "warning",
+          title: "Heartbeat قدیمی",
+          message: "آخرین Heartbeat بیشتر از ۳۰ دقیقه قبل بوده و دستگاه نیاز به بررسی دارد.",
+          createdAt: new Date(Number.isFinite(seen) ? seen : now).toISOString(),
+        });
+      }
+
+      if (deadLetters > 0) {
+        alerts.push({
+          id: `dead-letter:${deviceId}:${deadLetters}`,
+          deviceId,
+          deviceName,
+          severity: deadLetters >= 5 ? "critical" : "error",
+          title: "بسته‌های متوقف‌شده",
+          message: `${deadLetters.toLocaleString("fa-IR")} بسته پس از خطاهای تکراری در Dead-Letter باقی مانده است.`,
+          createdAt: row.last_health_report_at
+            ? new Date(String(row.last_health_report_at)).toISOString()
+            : new Date().toISOString(),
+        });
+      }
+
+      if (queued >= 20) {
+        alerts.push({
+          id: `queue:${deviceId}:${queued}`,
+          deviceId,
+          deviceName,
+          severity: queued >= 100 ? "error" : "warning",
+          title: "صف ارسال بزرگ شده است",
+          message: `${queued.toLocaleString("fa-IR")} بسته هنوز در صف ارسال دستگاه هستند.`,
+          createdAt: row.last_health_report_at
+            ? new Date(String(row.last_health_report_at)).toISOString()
+            : new Date().toISOString(),
+        });
+      }
+
+      const rawStats = row.device_stats && typeof row.device_stats === "string"
+        ? JSON.parse(row.device_stats)
+        : row.device_stats;
+      const stats = rawStats && typeof rawStats === "object"
+        ? rawStats as Record<string, unknown>
+        : {};
+      const battery = typeof stats.batteryPercent === "number" ? stats.batteryPercent : null;
+      const charging = typeof stats.batteryCharging === "boolean" ? stats.batteryCharging : null;
+      if (battery != null && battery < 20 && charging !== true) {
+        alerts.push({
+          id: `battery:${deviceId}:${battery}`,
+          deviceId,
+          deviceName,
+          severity: battery < 10 ? "critical" : "warning",
+          title: "باتری کم",
+          message: `باتری دستگاه روی ${battery.toLocaleString("fa-IR")}٪ است.`,
+          createdAt: row.last_health_report_at
+            ? new Date(String(row.last_health_report_at)).toISOString()
+            : new Date().toISOString(),
+        });
+      }
+
+      const free = typeof stats.storageAvailableBytes === "number" ? stats.storageAvailableBytes : null;
+      const total = typeof stats.storageTotalBytes === "number" ? stats.storageTotalBytes : null;
+      if (free != null && total != null && total > 0 && free / total < 0.1) {
+        alerts.push({
+          id: `storage:${deviceId}:${Math.round((free / total) * 100)}`,
+          deviceId,
+          deviceName,
+          severity: free / total < 0.05 ? "critical" : "warning",
+          title: "فضای ذخیره‌سازی کم",
+          message: `${Math.round((free / total) * 100).toLocaleString("fa-IR")}٪ از فضای دستگاه آزاد است.`,
+          createdAt: row.last_health_report_at
+            ? new Date(String(row.last_health_report_at)).toISOString()
+            : new Date().toISOString(),
+        });
+      }
+    }
+
+    const authRows = await sql.query<Record<string, unknown>>(
+      `select device_id,count(*) as failures,max(created_at) as latest
+       from phone_bridge_events
+       where event_type='security.auth_failed'
+         and created_at >= current_timestamp - interval '1 hour'
+       group by device_id
+       order by count(*) desc
+       limit 20`,
+    );
+    for (const row of authRows) {
+      const count = Number(row.failures ?? 0);
+      if (count <= 0) continue;
+      const deviceName = String(rows.find((item) => String(item.id ?? "") === String(row.device_id ?? ""))?.name ?? "گوشی ناشناس");
+      alerts.push({
+        id: `auth-failed:${String(row.device_id ?? "unknown")}:${count}`,
+        deviceId: row.device_id ? String(row.device_id) : null,
+        deviceName,
+        severity: count >= 5 ? "critical" : "error",
+        title: "خطای احراز هویت",
+        message: `${count.toLocaleString("fa-IR")} تلاش ناموفق برای احراز هویت در یک ساعت اخیر ثبت شده است.`,
+        createdAt: row.latest ? new Date(String(row.latest)).toISOString() : new Date().toISOString(),
+      });
+    }
+
+    const priority: Record<PhoneBridgeAlert["severity"], number> = { critical: 0, error: 1, warning: 2 };
+    return alerts
+      .sort((a,b) => priority[a.severity] - priority[b.severity] || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, data?.limit ?? 20);
+  });
 
 export type PhoneBridgeEvent = {
   id: string;
@@ -193,6 +361,7 @@ export const listPhoneBridgeDevices = createServerFn({ method: "POST" })
       `select
         d.id,d.name,d.manufacturer,d.model,d.android_version,d.sdk_int,d.first_seen_at,d.last_seen_at,
         d.last_sync_id,d.last_summary,d.enabled,d.token_created_at,d.last_authenticated_at,
+        d.last_queue_count,d.last_dead_letter_count,d.last_health_report_at,
         latest.received_at as latest_sync_received_at,
         latest.device_stats as latest_device_stats
        from phone_bridge_devices d
@@ -261,6 +430,11 @@ export const listPhoneBridgeDevices = createServerFn({ method: "POST" })
             storageTotalBytes: numberOrNull(stats.storageTotalBytes),
             ramAvailableBytes: numberOrNull(stats.ramAvailableBytes),
             ramTotalBytes: numberOrNull(stats.ramTotalBytes),
+            queuedPackets: Number(row.last_queue_count ?? 0),
+            deadLetterPackets: Number(row.last_dead_letter_count ?? 0),
+            lastHealthReportAt: row.last_health_report_at
+              ? new Date(String(row.last_health_report_at)).toISOString()
+              : null,
           };
         })(),
       };
