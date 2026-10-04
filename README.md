@@ -207,7 +207,7 @@ android/                   # پروژه مستقل Gradle (Phone Bridge)
 | **Admin** | `src/routes/admin.tsx` + `src/components/hirmand/admin-*.tsx` | `ci.yml` | Liara |
 | **Backend / API** | `server/routes/` | `ci.yml` | Liara |
 | **Database** | `migrations/` (تا `0067`) | `ci.yml` | با `npm run db:migrate` |
-| **Android** | `android/` | `android/.github/workflows/android-ci.yml` | GitHub Release |
+| **Android** | `android/` | `.github/workflows/android-ci.yml` | GitHub Release |
 | **Phone Bridge** | `android/app/` | همان CI اندروید | — |
 
 ### جداسازی سایت و اندروید
@@ -216,6 +216,7 @@ android/                   # پروژه مستقل Gradle (Phone Bridge)
 - `android/**` در `ignores` اسکیمای ESLint هست، پس lint سایت روی سورس Kotlin/Gradle اجرا نمی‌شود.
 - `android/` در `.liaraignore` هست، پس یک تغییر اندروید هرگز payload و build لیارا را تحت تأثیر قرار نمی‌دهد.
 - workflow اندروید `paths: android/**` دارد، پس commitهای عادی سایت CI اندروید را اجرا نمی‌کنند.
+- workflowهای اندروید در ریشهٔ `.github/workflows/` هستند، چون GitHub Actions فقط همین مسیر را اسکن می‌کند. خود پروژه در `android/` است و workflowها با `working-directory: android` اجرا می‌شوند.
 
 ### Android
 
