@@ -25,6 +25,8 @@ const basePayload = {
     model: "Model",
     androidVersion: "14",
     sdkInt: 34,
+    appVersionName: "0.2.0",
+    appVersionCode: 20,
   },
   deviceStats: {
     batteryPercent: 55,
@@ -86,4 +88,12 @@ test("keeps only approved root fields and validates snapshot hash", () => {
 
   assert.equal("secret" in result, false);
   assert.equal("snapshotHash" in result, false);
+});
+
+
+test("preserves validated app version fields", () => {
+  const result = sanitizePhoneBridgePayload(basePayload, allowAll);
+  const device = result.device as { appVersionName: string; appVersionCode: number };
+  assert.equal(device.appVersionName, "0.2.0");
+  assert.equal(device.appVersionCode, 20);
 });
