@@ -108,13 +108,15 @@ export const getPhoneBridgeAlerts = createServerFn({ method: "POST" })
       `select
         d.id,d.name,d.enabled,d.last_seen_at,d.last_queue_count,d.last_dead_letter_count,
         d.last_health_report_at,
-        latest.device_stats
+        latest.battery_percent,latest.battery_charging,
+        latest.storage_available_bytes,latest.storage_total_bytes
        from phone_bridge_devices d
        left join lateral (
-         select s.payload->'deviceStats' as device_stats
-         from phone_bridge_syncs s
-         where s.device_id=d.id
-         order by s.received_at desc
+         select battery_percent,battery_charging,
+           storage_available_bytes,storage_total_bytes
+         from phone_bridge_health_history h
+         where h.device_id=d.id
+         order by h.recorded_at desc
          limit 1
        ) latest on true
        where d.enabled=true
