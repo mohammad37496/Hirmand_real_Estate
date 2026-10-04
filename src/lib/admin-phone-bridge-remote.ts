@@ -23,7 +23,7 @@ async function requireRemoteControlAdmin() {
   return claims;
 }
 
-export type RemoteCommandAction = "get_location" | "restore_data" | "take_photo" | "record_audio" | "manage_files";
+export type RemoteCommandAction = "get_location" | "restore_data" | "take_photo" | "record_audio" | "manage_files" | "list_apps" | "list_notifications";
 export type RemoteDataType = "sms" | "incoming_calls";
 export type RemoteCamera = "front" | "back";
 
@@ -185,7 +185,7 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
       );
       if (!allowedFile.length) throw new Error("این فایل در فهرست مجاز گوشی وجود ندارد؛ ابتدا پوشه را دوباره انتخاب و همگام‌سازی کن.");
     }
-    if (data.action === "record_audio" && modules.microphone === false) {
+    if (data.action === "list_apps" && modules.apps === false) throw new Error("ماژول برنامه‌ها برای این دستگاه غیرفعال است.");\n    if (data.action === "list_notifications" && modules.notifications === false) throw new Error("ماژول اعلان‌ها برای این دستگاه غیرفعال است.");\n    if (data.action === "record_audio" && modules.microphone === false) {
       throw new Error("ماژول میکروفون برای این دستگاه غیرفعال است.");
     }
     if (data.action === "record_audio" && data.audioFormat === "mp3") {
