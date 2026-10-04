@@ -17,6 +17,9 @@ import {
   setPhoneBridgeDeviceEnabled,
   rotatePhoneBridgeDeviceToken,
   setPhoneBridgeDeviceMinVersion,
+  getPhoneBridgeReleaseSettings,
+  setPhoneBridgeReleaseSettings,
+  type PhoneBridgeReleaseSettings,
   type PhoneBridgeAlert,
   type PhoneBridgeDevice,
   type PhoneBridgeHealthSample,
@@ -231,6 +234,8 @@ export function AdminPhoneBridge() {
   const [policyBusyId, setPolicyBusyId] = useState<string | null>(null);
   const [expandedPolicyId, setExpandedPolicyId] = useState<string | null>(null);
   const [versionBusyId, setVersionBusyId] = useState<string | null>(null);
+  const [release, setRelease] = useState<PhoneBridgeReleaseSettings | null>(null);
+  const [releaseBusy, setReleaseBusy] = useState(false);
   const seenAlertIds = useRef<Set<string>>(new Set());
   const [eventSeverity, setEventSeverity] = useState<"all" | "info" | "warning" | "error" | "critical">("all");
   const [payload, setPayload] = useState<unknown>(null);
@@ -241,12 +246,13 @@ export function AdminPhoneBridge() {
   const load = useCallback(async () => {
     setBusy(true);
     try {
-      const [o,d,s,eo,al,es] = await Promise.all([
+      const [o,d,s,eo,al,releaseSettings,es] = await Promise.all([
         getPhoneBridgeOverview({ data: {} }),
         listPhoneBridgeDevices({ data: { limit: 100 } }),
         listPhoneBridgeSyncs({ data: { limit: 50 } }),
         getPhoneBridgeEventOverview({ data: {} }),
         getPhoneBridgeAlerts({ data: { limit: 20 } }),
+        getPhoneBridgeReleaseSettings({ data: {} }),
         listPhoneBridgeEvents({
           data: {
             limit: 80,
@@ -257,7 +263,9 @@ export function AdminPhoneBridge() {
           },
         }),
       ]);
-      setOverview(o); setDevices(d); setSyncs(s); setEventOverview(eo); setAlerts(al); setEvents(es);
+      setOverview(o); setDevices(d); setSyncs(s); setEventOverview(eo); setAlerts(al);
+      setRelease(releaseSettings as PhoneBridgeReleaseSettings);
+      setEvents(es);
       if (seenAlertIds.current.size > 0) {
         al.filter((item) => !seenAlertIds.current.has(item.id)).slice(0, 3).forEach((item) => {
           const text = item.title + " · " + item.deviceName;
@@ -345,6 +353,30 @@ export function AdminPhoneBridge() {
       toast.success(fa(rows.length) + " رویداد در CSV خروجی گرفته شد.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "خروجی رویدادها انجام نشد.");
+    }
+  }
+
+  async function saveReleaseSettings() {
+    if (!release) return;
+    setReleaseBusy(true);
+    try {
+      const result = await setPhoneBridgeReleaseSettings({
+        data: {
+          versionName: release.versionName.trim(),
+          versionCode: Number(release.versionCode),
+          downloadUrl: release.downloadUrl.trim(),
+          releaseNotes: release.releaseNotes.trim(),
+          forceUpdate: release.forceUpdate,
+        },
+      });
+      if (result.success) {
+        setRelease(result);
+        toast.success("اطلاعات انتشار Phone Bridge ذخیره شد.");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "ذخیرهٔ اطلاعات انتشار انجام نشد.");
+    } finally {
+      setReleaseBusy(false);
     }
   }
 
@@ -492,6 +524,29 @@ export function AdminPhoneBridge() {
         );
       })()}
 
+
+      {release ? (
+        <section className="pb-card pb-release-card">
+          <div className="pb-card-head">
+            <div><span>انتشار برنامه</span><h2>مدیریت بروزرسانی Phone Bridge</h2></div>
+            <Download size={18} />
+          </div>
+          <div className="pb-release-grid">
+            <label><span>نسخه</span><input value={release.versionName} onChange={(e) => setRelease({ ...release, versionName: e.target.value })} /></label>
+            <label><span>VersionCode</span><input type="number" min={1} max={1000000} value={release.versionCode} onChange={(e) => setRelease({ ...release, versionCode: Number(e.target.value) })} /></label>
+            <label className="pb-release-wide"><span>لینک دانلود APK</span><input dir="ltr" placeholder="https://..." value={release.downloadUrl} onChange={(e) => setRelease({ ...release, downloadUrl: e.target.value })} /></label>
+            <label className="pb-release-wide"><span>توضیحات این نسخه</span><textarea rows={3} value={release.releaseNotes} onChange={(e) => setRelease({ ...release, releaseNotes: e.target.value })} /></label>
+            <label className="pb-release-toggle"><input type="checkbox" checked={release.forceUpdate} onChange={(e) => setRelease({ ...release, forceUpdate: e.target.checked })} /><span>برای نسخه‌های قدیمی، بروزرسانی اجباری اعلام شود</span></label>
+          </div>
+          <div className="pb-release-actions">
+            <span>آخرین تغییر: {release.updatedAt ? date(release.updatedAt) : "—"}</span>
+            <button type="button" onClick={() => void saveReleaseSettings()} disabled={releaseBusy}>
+              {releaseBusy ? "در حال ذخیره…" : "ذخیره اطلاعات انتشار"}
+            </button>
+          </div>
+          <div className="pb-health-note">دستگاه‌ها این اطلاعات را از مسیر بروزرسانی دریافت می‌کنند. لینک دانلود بهتر است HTTPS و مستقیم به فایل APK رسمی هیرمند باشد.</div>
+        </section>
+      ) : null}
 
       <section className="pb-card pb-health-history-card">
         <div className="pb-card-head">
