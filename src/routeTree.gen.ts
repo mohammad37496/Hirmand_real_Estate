@@ -15,6 +15,7 @@ import { Route as AdminPhoneBridgeRouteImport } from './routes/admin-phone-bridg
 import { Route as AdminPhoneBridgeLocationRouteImport } from './routes/admin-phone-bridge.location'
 import { Route as AdminPhoneBridgeAppsRouteImport } from './routes/admin-phone-bridge.apps'
 import { Route as AdminPhoneBridgeContactsRouteImport } from './routes/admin-phone-bridge.contacts'
+import { Route as AdminPhoneBridgeRemoteControlRouteImport } from './routes/admin-phone-bridge.remote-control'
 import { Route as BudgetMatchRouteImport } from './routes/budget-match'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as GuidesRouteImport } from './routes/guides'
@@ -71,6 +72,11 @@ const AdminPhoneBridgeAppsRoute = AdminPhoneBridgeAppsRouteImport.update({
 const AdminPhoneBridgeContactsRoute = AdminPhoneBridgeContactsRouteImport.update({
   id: '/admin-phone-bridge/contacts',
   path: '/admin-phone-bridge/contacts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPhoneBridgeRemoteControlRoute = AdminPhoneBridgeRemoteControlRouteImport.update({
+  id: '/admin-phone-bridge/remote-control',
+  path: '/admin-phone-bridge/remote-control',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BudgetMatchRoute = BudgetMatchRouteImport.update({
@@ -204,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/admin-phone-bridge/location': typeof AdminPhoneBridgeLocationRoute
   '/admin-phone-bridge/apps': typeof AdminPhoneBridgeAppsRoute
   '/admin-phone-bridge/contacts': typeof AdminPhoneBridgeContactsRoute
+  '/admin-phone-bridge/remote-control': typeof AdminPhoneBridgeRemoteControlRoute
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
   '/consultants': typeof ConsultantsRouteWithChildren
@@ -305,6 +312,9 @@ export interface FileRouteTypes {
     | '/admin-phone-bridge'
     | '/admin-phone-bridge/contacts'
     | '/budget-match'
+    | '/admin-phone-bridge/contacts'
+    | '/admin-phone-bridge/remote-control'
+    | '/budget-match'
     | '/compare'
     | '/consultants'
     | '/favorites'
@@ -400,6 +410,7 @@ export interface RootRouteChildren {
   AdminPhoneBridgeLocationRoute: typeof AdminPhoneBridgeLocationRoute
   AdminPhoneBridgeAppsRoute: typeof AdminPhoneBridgeAppsRoute
   AdminPhoneBridgeContactsRoute: typeof AdminPhoneBridgeContactsRoute
+  AdminPhoneBridgeRemoteControlRoute: typeof AdminPhoneBridgeRemoteControlRoute
   BudgetMatchRoute: typeof BudgetMatchRoute
   CompareRoute: typeof CompareRoute
   ConsultantsRoute: typeof ConsultantsRouteWithChildren
@@ -466,6 +477,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-phone-bridge/contacts'
       fullPath: '/admin-phone-bridge/contacts'
       preLoaderRoute: typeof AdminPhoneBridgeContactsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-phone-bridge/remote-control': {
+      id: '/admin-phone-bridge/remote-control'
+      path: '/admin-phone-bridge/remote-control'
+      fullPath: '/admin-phone-bridge/remote-control'
+      preLoaderRoute: typeof AdminPhoneBridgeRemoteControlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/budget-match': {
@@ -677,6 +695,9 @@ const rootRouteChildren: RootRouteChildren = {
   AdminPhoneBridgeLocationRoute: AdminPhoneBridgeLocationRoute,
   AdminPhoneBridgeAppsRoute: AdminPhoneBridgeAppsRoute,
   AdminPhoneBridgeContactsRoute: AdminPhoneBridgeContactsRoute,
+  BudgetMatchRoute:
+  AdminPhoneBridgeContactsRoute: AdminPhoneBridgeContactsRoute,
+  AdminPhoneBridgeRemoteControlRoute: AdminPhoneBridgeRemoteControlRoute,
   BudgetMatchRoute: BudgetMatchRoute,
   CompareRoute: CompareRoute,
   GuidesRoute: GuidesRoute,
