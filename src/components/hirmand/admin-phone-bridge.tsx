@@ -10,6 +10,7 @@ import {
   getPhoneBridgeAlerts,
   listPhoneBridgeDevices,
   listPhoneBridgeEvents,
+  listPhoneBridgeHealthHistory,
   listPhoneBridgeSyncs,
   purgePhoneBridgeData,
   setPhoneBridgeDeviceEnabled,
@@ -200,6 +201,9 @@ export function AdminPhoneBridge() {
   const [eventOverview, setEventOverview] = useState<{ total: number; last24h: number; errors24h: number; critical24h: number } | null>(null);
   const [events, setEvents] = useState<PhoneBridgeEvent[]>([]);
   const [alerts, setAlerts] = useState<PhoneBridgeAlert[]>([]);
+  const [healthDeviceId, setHealthDeviceId] = useState<string>("");
+  const [healthHistory, setHealthHistory] = useState<import("@/lib/admin-phone-bridge").PhoneBridgeHealthSample[]>([]);
+  const [historyBusy, setHistoryBusy] = useState(false);
   const seenAlertIds = useRef<Set<string>>(new Set());
   const [eventSeverity, setEventSeverity] = useState<"all" | "info" | "warning" | "error" | "critical">("all");
   const [payload, setPayload] = useState<unknown>(null);
@@ -260,7 +264,33 @@ export function AdminPhoneBridge() {
     }
   }
 
-    async function openSync(id: string) {
+  
+  async function loadHealthHistory(deviceId: string) {
+    if (!deviceId) {
+      setHealthHistory([]);
+      return;
+    }
+    setHistoryBusy(true);
+    try {
+      const result = await listPhoneBridgeHealthHistory({ data: { deviceId, limit: 48 } });
+      setHealthHistory(result);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "دریافت تاریخچه سلامت انجام نشد.");
+    } finally {
+      setHistoryBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    const first = healthDeviceId || devices[0]?.id || "";
+    if (first && first !== healthDeviceId) setHealthDeviceId(first);
+  }, [devices, healthDeviceId]);
+
+  useEffect(() => {
+    if (healthDeviceId) void loadHealthHistory(healthDeviceId);
+  }, [healthDeviceId]);
+
+  async function openSync(id: string) {
     try {
       const result = await getPhoneBridgeSync({ data: { syncId: id } });
       setSelectedSync(id);
@@ -349,6 +379,87 @@ export function AdminPhoneBridge() {
           </section>
         );
       })()}
+
+
+      <section className="pb-card pb-health-history-card">
+        <div className="pb-card-head">
+          <div><span>تحلیل روند</span><h2>تاریخچه سلامت دستگاه</h2></div>
+          <Activity size={18} />
+        </div>
+        <div className="pb-history-toolbar">
+          <label>
+            <span>دستگاه</span>
+            <select value={healthDeviceId} onChange={(event) => setHealthDeviceId(event.target.value)}>
+              {devices.length === 0 ? <option value="">دستگاهی نیست</option> : null}
+              {devices.map((device) => <option key={device.id} value={device.id}>{device.name} · {device.model}</option>)}
+            </select>
+          </label>
+          {historyBusy ? <span className="pb-history-loading">در حال دریافت تاریخچه…</span> : null}
+        </div>
+        {healthHistory.length === 0 ? (
+          <div className="pb-empty">هنوز نمونه سلامت برای این دستگاه ثبت نشده است.</div>
+        ) : (() => {
+          const last = healthHistory[healthHistory.length - 1];
+          const batterySamples = healthHistory.map((item) => item.batteryPercent).filter((value): value is number => value != null);
+          const queueMax = Math.max(0, ...healthHistory.map((item) => item.queuedPackets));
+          const deadMax = Math.max(0, ...healthHistory.map((item) => item.deadLetterPackets));
+          const storage = last.storageAvailableBytes != null && last.storageTotalBytes != null && last.storageTotalBytes > 0
+            ? Math.round((last.storageAvailableBytes / last.storageTotalBytes) * 100)
+            : null;
+          const battery = batterySamples.length ? batterySamples[batterySamples.length - 1] : null;
+          return (
+            <div className="pb-history-body">
+              <div className="pb-history-summary">
+                <div><span>باتری فعلی</span><strong>{battery == null ? "—" : `${fa(battery)}٪`}</strong></div>
+                <div><span>فضای آزاد</span><strong>{storage == null ? "—" : `${fa(storage)}٪`}</strong></div>
+                <div><span>صف فعلی</span><strong>{fa(last.queuedPackets)}</strong></div>
+                <div><span>Dead-Letter</span><strong>{fa(last.deadLetterPackets)}</strong></div>
+              </div>
+              <div className="pb-history-chart">
+                <div className="pb-history-chart-title">روند ۴۸ گزارش اخیر · باتری</div>
+                <div className="pb-history-bars">
+                  {healthHistory.map((item, index) => {
+                    const value = item.batteryPercent ?? 0;
+                    return (
+                      <div className="pb-history-bar-wrap" title={date(item.recordedAt) + " · " + value + "٪"} key={item.recordedAt + index}>
+                        <div className="pb-history-bar" style={{ height: Math.max(4, value) + "%" }} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="pb-history-chart">
+                <div className="pb-history-chart-title">روند صف ارسال</div>
+                <div className="pb-history-bars is-queue">
+                  {healthHistory.map((item, index) => {
+                    const height = queueMax > 0 ? (item.queuedPackets / queueMax) * 100 : 4;
+                    return (
+                      <div className="pb-history-bar-wrap" title={date(item.recordedAt) + " · " + item.queuedPackets + " بسته"} key={"q-" + item.recordedAt + index}>
+                        <div className="pb-history-bar" style={{ height: Math.max(4, height) + "%" }} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              {deadMax > 0 ? (
+                <div className="pb-history-chart">
+                  <div className="pb-history-chart-title">روند Dead-Letter</div>
+                  <div className="pb-history-bars is-dead">
+                    {healthHistory.map((item, index) => {
+                      const height = (item.deadLetterPackets / deadMax) * 100;
+                      return (
+                        <div className="pb-history-bar-wrap" title={date(item.recordedAt) + " · " + item.deadLetterPackets + " خطا"} key={"d-" + item.recordedAt + index}>
+                          <div className="pb-history-bar" style={{ height: Math.max(4, height) + "%" }} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          );
+        })()}
+      </section>
 
       <section className="pb-card pb-alerts-card">
         <div className="pb-card-head">
