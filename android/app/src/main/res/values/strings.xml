@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">همراه هیرمند</string>
+    <string name="pairing_title">اتصال گوشی به هیرمند</string>
+    <string name="pairing_hint">کد جفت‌سازی ۱۰ رقمی</string>
+    <string name="label_hint">نام دستگاه</string>
+</resources>
