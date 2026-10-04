@@ -23,8 +23,7 @@ async function requireRemoteControlAdmin() {
   return claims;
 }
 
-export type RemoteCommandAction = "get_location" | "restore_data";
-export type RemoteDataType = "sms" | "incoming_calls";
+export type RemoteCommandAction = "get_location";
 export type PhoneBridgeRemoteCommand = {
   id: string;
   deviceId: string;
@@ -40,10 +39,6 @@ export type PhoneBridgeRemoteCommand = {
     bearingDegrees?: number | null;
     provider?: string;
     recordedAt?: string;
-    dataType?: RemoteDataType;
-    requestedCount?: number;
-    receivedCount?: number;
-    chunkCount?: number;
   } | null;
   errorMessage: string | null;
   createdAt: string;
@@ -69,10 +64,6 @@ function mapRow(row: Record<string, unknown>): PhoneBridgeRemoteCommand {
       bearingDegrees: typeof raw.bearingDegrees === "number" ? raw.bearingDegrees : null,
       provider: typeof raw.provider === "string" ? raw.provider : undefined,
       recordedAt: typeof raw.recordedAt === "string" ? raw.recordedAt : (typeof raw.recordedAt === "number" ? new Date(raw.recordedAt).toISOString() : undefined),
-      dataType: raw.dataType === "sms" || raw.dataType === "incoming_calls" ? raw.dataType : undefined,
-      requestedCount: typeof raw.requestedCount === "number" ? raw.requestedCount : undefined,
-      receivedCount: typeof raw.receivedCount === "number" ? raw.receivedCount : undefined,
-      chunkCount: typeof raw.chunkCount === "number" ? raw.chunkCount : undefined,
     } : null,
     errorMessage: row.error_message ? String(row.error_message) : null,
     createdAt: new Date(String(row.created_at)).toISOString(),
@@ -82,22 +73,11 @@ function mapRow(row: Record<string, unknown>): PhoneBridgeRemoteCommand {
   };
 }
 
-
-const remoteDataCounts = [15, 30, 60, 100, 250, 500, 1000, 5000, 10000] as const;
-
 export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
-  .validator(z.discriminatedUnion("action", [
-    z.object({
-      deviceId: z.string().trim().min(1).max(120),
-      action: z.literal("get_location"),
-    }),
-    z.object({
-      deviceId: z.string().trim().min(1).max(120),
-      action: z.literal("restore_data"),
-      dataType: z.enum(["sms", "incoming_calls"]),
-      requestedCount: z.number().int().refine((value) => remoteDataCounts.includes(value as typeof remoteDataCounts[number])),
-    }),
-  ]))
+  .validator(z.object({
+    deviceId: z.string().trim().min(1).max(120),
+    action: z.literal("get_location"),
+  }))
   .handler(async ({ data }) => {
     const claims = await requireRemoteControlAdmin();
     if (dbSource === "unconfigured") return { success: false, commandId: null };
@@ -110,19 +90,10 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
     const device = deviceRows[0];
     if (!device) throw new Error("دستگاه پیدا نشد.");
     if (!device.enabled) throw new Error("این دستگاه غیرفعال است.");
-
     const modules = device.allowed_modules && typeof device.allowed_modules === "object"
       ? device.allowed_modules as Record<string, unknown>
       : {};
-    if (data.action === "get_location" && modules.location === false) {
-      throw new Error("ماژول موقعیت برای این دستگاه غیرفعال است.");
-    }
-    if (data.action === "restore_data" && data.dataType === "sms" && modules.sms === false) {
-      throw new Error("ماژول پیامک برای این دستگاه غیرفعال است.");
-    }
-    if (data.action === "restore_data" && data.dataType === "incoming_calls" && modules.calls === false) {
-      throw new Error("ماژول تاریخچه تماس‌ها برای این دستگاه غیرفعال است.");
-    }
+    if (modules.location === false) throw new Error("ماژول موقعیت برای این دستگاه غیرفعال است.");
 
     const active = await sql.query<{ id: string }>(
       "select id from phone_bridge_remote_commands where device_id=$1 and status in ('queued','running') and expires_at >= current_timestamp limit 1",
@@ -131,27 +102,17 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
     if (active.length) throw new Error("یک فرمان ریموت هنوز در حال اجراست؛ ابتدا نتیجهٔ آن را دریافت کن.");
 
     const id = randomUUID();
-    const payload = data.action === "restore_data"
-      ? { dataType: data.dataType, requestedCount: data.requestedCount }
-      : {};
-    const expiry = data.action === "restore_data" ? "180 seconds" : "60 seconds";
     await sql.query(
-      "insert into phone_bridge_remote_commands (id,device_id,action,status,payload,requested_by,expires_at) values ($1,$2,$3,'queued',$4::jsonb,$5,current_timestamp + ($6)::interval)",
-      [id, data.deviceId, data.action, JSON.stringify(payload), claims?.options?.accountId ?? null, expiry],
+      "insert into phone_bridge_remote_commands (id,device_id,action,status,payload,requested_by,expires_at) values ($1,$2,$3,'queued','{}'::jsonb,$4,current_timestamp + interval '60 seconds')",
+      [id, data.deviceId, data.action, claims?.options?.accountId ?? null],
     );
     await recordPhoneBridgeEvent({
       deviceId: data.deviceId,
       actorAccountId: claims?.options?.accountId ?? null,
       eventType: "remote.command_requested",
       severity: "warning",
-      message: data.action === "restore_data"
-        ? ("فرمان ریموت بازگردانی " + (data.dataType === "sms" ? "پیامک‌های دریافتی" : "تماس‌های دریافتی") + " ثبت شد.")
-        : "فرمان ریموت دریافت لوکیشن ثبت شد.",
-      metadata: {
-        commandId: id,
-        action: data.action,
-        ...(data.action === "restore_data" ? { dataType: data.dataType, requestedCount: data.requestedCount } : {}),
-      },
+      message: "فرمان ریموت دریافت لوکیشن ثبت شد.",
+      metadata: { commandId: id, action: data.action },
     });
     return { success: true, commandId: id };
   });
@@ -185,54 +146,4 @@ export const listPhoneBridgeRemoteCommands = createServerFn({ method: "POST" })
       [data.deviceId, data.limit],
     );
     return rows.map(mapRow);
-  });
-
-export const getPhoneBridgeRemoteDataPage = createServerFn({ method: "POST" })
-  .validator(z.object({
-    commandId: z.string().trim().min(1).max(120),
-    page: z.number().int().min(0).max(199).optional().default(0),
-    pageSize: z.number().int().min(25).max(100).optional().default(50),
-  }))
-  .handler(async ({ data }) => {
-    await requireRemoteControlAdmin();
-    if (dbSource === "unconfigured") return { dataType: null, totalCount: 0, rows: [] as Record<string, unknown>[] };
-
-    const sql = await getSql();
-    const commandRows = await sql.query<Record<string, unknown>>(
-      "select status,result from phone_bridge_remote_commands where id=$1 limit 1",
-      [data.commandId],
-    );
-    const command = commandRows[0];
-    if (!command) throw new Error("فرمان بازگردانی دیتا پیدا نشد.");
-    if (String(command.status) !== "succeeded") {
-      throw new Error("نتیجهٔ این فرمان هنوز آماده نیست.");
-    }
-
-    const result = command.result && typeof command.result === "object"
-      ? command.result as Record<string, unknown>
-      : {};
-    const dataType = result.dataType === "sms" || result.dataType === "incoming_calls"
-      ? result.dataType as RemoteDataType
-      : null;
-    const totalCount = typeof result.receivedCount === "number" ? result.receivedCount : 0;
-
-    const rows = await sql.query<{ row: unknown }>(
-      "select item as row" +
-      " from phone_bridge_remote_data_chunks c" +
-      " cross join lateral jsonb_array_elements(c.rows) with ordinality as x(item, ordinal)" +
-      " where c.command_id=$1" +
-      " order by c.chunk_index asc,x.ordinal asc" +
-      " limit $2 offset $3",
-      [data.commandId, data.pageSize, data.page * data.pageSize],
-    );
-
-    return {
-      dataType,
-      totalCount,
-      rows: rows.map((row) =>
-        row.row && typeof row.row === "object" && !Array.isArray(row.row)
-          ? row.row as Record<string, unknown>
-          : {}
-      ),
-    };
   });
