@@ -20,8 +20,11 @@ import {
   getPhoneBridgeReleaseSettings,
   setPhoneBridgeReleaseSettings,
   listPhoneBridgeCallRecordings,
+  listPhoneBridgeSmsMessages,
+  exportPhoneBridgeSms,
   type PhoneBridgeReleaseSettings,
   type PhoneBridgeCallRecording,
+  type PhoneBridgeSmsMessage,
   type PhoneBridgeAlert,
   type PhoneBridgeDevice,
   type PhoneBridgeHealthSample,
@@ -239,6 +242,11 @@ export function AdminPhoneBridge() {
   const [release, setRelease] = useState<PhoneBridgeReleaseSettings | null>(null);
   const [releaseBusy, setReleaseBusy] = useState(false);
   const [callRecordings, setCallRecordings] = useState<PhoneBridgeCallRecording[]>([]);
+  const [smsMessages, setSmsMessages] = useState<PhoneBridgeSmsMessage[]>([]);
+  const [smsDeviceId, setSmsDeviceId] = useState<string>("all");
+  const [smsDirection, setSmsDirection] = useState<"all" | "incoming" | "outgoing" | "other">("all");
+  const [smsSearch, setSmsSearch] = useState<string>("");
+  const [smsBusy, setSmsBusy] = useState(false);
   const seenAlertIds = useRef<Set<string>>(new Set());
   const [eventSeverity, setEventSeverity] = useState<"all" | "info" | "warning" | "error" | "critical">("all");
   const [payload, setPayload] = useState<unknown>(null);
@@ -331,6 +339,29 @@ export function AdminPhoneBridge() {
       setHistoryBusy(false);
     }
   }, []);
+
+  const loadSmsMessages = useCallback(async () => {
+    setSmsBusy(true);
+    try {
+      const result = await listPhoneBridgeSmsMessages({
+        data: {
+          limit: 100,
+          ...(smsDeviceId === "all" ? {} : { deviceId: smsDeviceId }),
+          direction: smsDirection,
+          ...(smsSearch.trim() ? { search: smsSearch.trim() } : {}),
+        },
+      });
+      setSmsMessages(result);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "دریافت مرکز پیامک انجام نشد.");
+    } finally {
+      setSmsBusy(false);
+    }
+  }, [smsDeviceId, smsDirection, smsSearch]);
+
+  useEffect(() => {
+    void loadSmsMessages();
+  }, [loadSmsMessages]);
 
   useEffect(() => {
     const first = healthDeviceId || devices[0]?.id || "";
@@ -587,6 +618,70 @@ export function AdminPhoneBridge() {
                 </article>
               );
             })}
+          </div>
+        )}
+      </section>
+      <section className="pb-card pb-sms-center-card">
+        <div className="pb-card-head">
+          <div><span>مرکز پیامک</span><h2>پیامک‌های ارسال‌شده و دریافتی</h2></div>
+          <MessageSquareText size={18} />
+        </div>
+        <div className="pb-sms-toolbar">
+          <label><span>دستگاه</span>
+            <select value={smsDeviceId} onChange={(event) => setSmsDeviceId(event.target.value)}>
+              <option value="all">همه دستگاه‌ها</option>
+              {devices.map((device) => <option key={device.id} value={device.id}>{device.name}</option>)}
+            </select>
+          </label>
+          <label><span>نوع</span>
+            <select value={smsDirection} onChange={(event) => setSmsDirection(event.target.value as typeof smsDirection)}>
+              <option value="all">همه</option><option value="incoming">دریافتی</option><option value="outgoing">ارسالی</option><option value="other">سایر</option>
+            </select>
+          </label>
+          <label className="pb-sms-search"><span>جستجو</span>
+            <input value={smsSearch} onChange={(event) => setSmsSearch(event.target.value)} placeholder="نام، شماره یا متن پیامک" />
+          </label>
+          <div className="pb-sms-actions">
+            <button type="button" onClick={() => void loadSmsMessages()} disabled={smsBusy}>بروزرسانی</button>
+            <button type="button" onClick={async () => {
+              try {
+                const rows = await exportPhoneBridgeSms({
+                  data: {
+                    ...(smsDeviceId === "all" ? {} : { deviceId: smsDeviceId }),
+                    direction: smsDirection,
+                    ...(smsSearch.trim() ? { search: smsSearch.trim() } : {}),
+                  },
+                });
+                downloadCsv("phone-bridge-sms.csv", [
+                  ["تاریخ", "نوع", "مخاطب", "شماره", "دستگاه", "متن"],
+                  ...rows.map((row) => [
+                    date(row.sentAt),
+                    row.direction === "incoming" ? "دریافتی" : row.direction === "outgoing" ? "ارسالی" : "سایر",
+                    row.contactName ?? "", row.address ?? "", row.deviceName, row.body,
+                  ]),
+                ]);
+                toast.success(fa(rows.length) + " پیامک در CSV خروجی گرفته شد.");
+              } catch (error) {
+                toast.error(error instanceof Error ? error.message : "خروجی پیامک‌ها انجام نشد.");
+              }
+            }} disabled={smsBusy}>خروجی CSV</button>
+          </div>
+        </div>
+        <div className="pb-sms-summary"><span>{smsBusy ? "در حال دریافت…" : fa(smsMessages.length) + " پیامک"}</span><span>مرتب‌شده از جدیدترین</span></div>
+        {smsMessages.length === 0 ? (
+          <div className="pb-empty">پیامکی مطابق فیلترها پیدا نشد. برای جمع‌آوری پیامک‌ها، گزینهٔ «پیامک‌ها» را در گوشی فعال و Sync را اجرا کن.</div>
+        ) : (
+          <div className="pb-sms-list">
+            {smsMessages.map((sms) => (
+              <article className="pb-sms-row" key={sms.id}>
+                <div className="pb-sms-head">
+                  <div><strong>{sms.contactName || sms.address || "شماره نامشخص"}</strong><span>{sms.address || "بدون شماره"} · {sms.deviceName}</span></div>
+                  <div className={"pb-sms-badge " + sms.direction}>{sms.direction === "incoming" ? "دریافتی" : sms.direction === "outgoing" ? "ارسالی" : "سایر"}</div>
+                </div>
+                <div className="pb-sms-body">{sms.body || "پیامک بدون متن"}</div>
+                <time>{date(sms.sentAt)}</time>
+              </article>
+            ))}
           </div>
         )}
       </section>
