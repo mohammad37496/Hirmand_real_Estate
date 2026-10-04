@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { createError, defineEventHandler, readBody, setResponseHeader } from "h3";
+import { createError, defineEventHandler, readRawBody, setResponseHeader } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { authenticateDevice } from "@/lib/phone-bridge-auth";
+import { requirePhoneBridgeSignedRequest } from "@/lib/phone-bridge-signature.server";
 import { recordPhoneBridgeEvent } from "@/lib/phone-bridge-events.server";
 import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
@@ -45,7 +46,15 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 503, statusMessage: "پایگاه داده برای دریافت دادهٔ گوشی در دسترس نیست." });
   }
 
-  const payload = asObject(await readBody(event).catch(() => null));
+  const raw = await readRawBody(event);
+  const rawBody = Buffer.isBuffer(raw) ? raw : Buffer.from(raw ?? "");
+  const payload = asObject(await (async () => {
+    try {
+      return JSON.parse(rawBody.toString("utf8"));
+    } catch {
+      return null;
+    }
+  })());
   const device = asObject(payload.device);
   const deviceId = asString(device.id);
 
@@ -60,6 +69,9 @@ export default defineEventHandler(async (event) => {
   let authPolicy: Awaited<ReturnType<typeof authenticateDevice>>;
   try {
     authPolicy = await authenticateDevice(event, deviceId);
+    if (authPolicy.mode === "device") {
+      await requirePhoneBridgeSignedRequest(event, deviceId, rawBody);
+    }
   } catch (error) {
     await recordPhoneBridgeEvent({
       deviceId,
