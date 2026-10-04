@@ -312,7 +312,7 @@ export const listPhoneBridgeSyncs = createServerFn({ method: "POST" })
 export const getPhoneBridgeSync = createServerFn({ method: "POST" })
   .validator(z.object({ syncId: z.string().trim().min(1).max(120) }))
   .handler(async ({ data }) => {
-    await requirePhoneBridgeAdmin();
+    const claims = await requirePhoneBridgeAdmin();
     if (dbSource === "unconfigured") return null;
 
     const sql = await getSql();
@@ -322,6 +322,14 @@ export const getPhoneBridgeSync = createServerFn({ method: "POST" })
     );
     const row = rows[0];
     if (!row) return null;
+    await recordPhoneBridgeEvent({
+      deviceId: String(row.device_id),
+      actorAccountId: claims?.options?.accountId ?? null,
+      eventType: "data.sync_viewed",
+      severity: "info",
+      message: "جزئیات یک بستهٔ Phone Bridge توسط مدیر مشاهده شد.",
+      metadata: { syncId: data.syncId },
+    });
     return {
       syncId: data.syncId,
       deviceId: String(row.device_id),
