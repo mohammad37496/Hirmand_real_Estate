@@ -4,7 +4,7 @@ import { authenticateDevice } from "@/lib/phone-bridge-auth";
 import { requirePhoneBridgeSignedRequest } from "@/lib/phone-bridge-signature.server";
 import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
-const ALLOWED_ACTIONS = new Set(["get_location", "restore_data", "take_photo", "record_audio"]);
+const ALLOWED_ACTIONS = new Set(["get_location", "restore_data", "take_photo", "record_audio", "manage_files"]);
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
@@ -96,6 +96,13 @@ export default defineEventHandler(async (event) => {
       );
       return { ok: true, command: null };
     }
+  }
+
+  if (action === "manage_files") {
+    const operation=String(payload.operation??"pick_folder");
+    if(operation!=="pick_folder"&&operation!=="download"){await sql.query("update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",[String(row.id),"عملیات مدیریت فایل معتبر نیست."]);return {ok:true,command:null};}
+    if(modules.selectedFiles===false){await sql.query("update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",[String(row.id),"ماژول مدیریت فایل برای این دستگاه غیرفعال است."]);return {ok:true,command:null};}
+    if(operation==="download"&&!String(payload.uri??"").trim()){await sql.query("update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",[String(row.id),"مسیر فایل ارسال نشده است."]);return {ok:true,command:null};}
   }
 
   if (action === "take_photo") {
