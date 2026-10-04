@@ -210,7 +210,7 @@ export function AdminPhoneBridge() {
   const load = useCallback(async () => {
     setBusy(true);
     try {
-      const [o,d,s,eo,es] = await Promise.all([
+      const [o,d,s,eo,al,es] = await Promise.all([
         getPhoneBridgeOverview({ data: {} }),
         listPhoneBridgeDevices({ data: { limit: 100 } }),
         listPhoneBridgeSyncs({ data: { limit: 50 } }),
