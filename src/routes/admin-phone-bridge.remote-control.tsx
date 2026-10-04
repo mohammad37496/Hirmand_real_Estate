@@ -86,6 +86,8 @@ export function AdminPhoneBridgeRemoteControl() {
   const [fileSearch, setFileSearch] = useState("");
   const [fileEntries, setFileEntries] = useState<Array<{id:string;uri:string;name:string;relativePath:string;mimeType:string;sizeBytes:number;modifiedAt:number;isDirectory:boolean}>>([]);
   const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
+  const [appRows, setAppRows] = useState<Array<Record<string, unknown>>>([]);
+  const [notificationRows, setNotificationRows] = useState<Array<Record<string, unknown>>>([]);
 
   const loadDataPage = useCallback(async (commandId: string, page: number) => {
     setDataLoading(true);
@@ -215,6 +217,42 @@ export function AdminPhoneBridgeRemoteControl() {
       }
     } catch(e){ toast.error(e instanceof Error?e.message:"اجرای ضبط صدا ناموفق بود."); }
     finally { setRunningId(null); setBusy(false); void load(); }
+  }
+
+  async function runSimpleRemote(action: "list_apps" | "list_notifications") {
+    if (!deviceId) return;
+    setBusy(true);
+    try {
+      const created = await createPhoneBridgeRemoteCommand({ data: { deviceId, action } });
+      if (!created.success || !created.commandId) throw new Error("ثبت فرمان انجام نشد.");
+      setRunningId(created.commandId);
+      toast.success(action === "list_apps" ? "درخواست فهرست برنامه‌ها ثبت شد؛ تأیید روی گوشی لازم است." : "درخواست اعلان‌ها ثبت شد؛ دسترسی Notification Access روی گوشی لازم است.");
+      for (let i=0;i<120;i++) {
+        await new Promise(r=>window.setTimeout(r,1500));
+        const result=await getPhoneBridgeRemoteCommand({data:{commandId:created.commandId}});
+        if(!result)break;
+        setCommands(cur=>[result,...cur.filter(v=>v.id!==result.id)].slice(0,50));
+        if(result.status==="succeeded"){
+          if(action==="list_apps")setAppRows(result.result?.apps||[]);
+          else setNotificationRows(result.result?.notifications||[]);
+          toast.success(action==="list_apps" ? "فهرست برنامه‌ها دریافت شد." : "اعلان‌های اخیر دریافت شد.");
+          break;
+        }
+        if(result.status==="failed"||result.status==="expired"){toast.error(result.errorMessage||"فرمان ناموفق بود.");break;}
+      }
+    } catch(e){toast.error(e instanceof Error?e.message:"اجرای فرمان ناموفق بود.");}
+    finally{setRunningId(null);setBusy(false);void load();}
+  }
+
+  async function restoreBackup(file: File) {
+    try {
+      const body=JSON.parse(await file.text());
+      const response=await fetch("/api/admin/phone-bridge/backup",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify(body)});
+      const result=await response.json();
+      if(!response.ok)throw new Error(result?.message||"بازیابی ناموفق بود.");
+      toast.success("پشتیبان بازیابی شد: "+fa(Number(result.updated||0))+" دستگاه.");
+      void load();
+    } catch(e){toast.error(e instanceof Error?e.message:"فایل پشتیبان معتبر نیست.");}
   }
 
   async function loadFiles(search = fileSearch) {
@@ -506,6 +544,30 @@ export function AdminPhoneBridgeRemoteControl() {
             })}
           </div>
         )}
+      </section>
+
+      <section className="pbr-grid">
+        <article className="pbr-card">
+          <div className="pbr-card-head"><div><span>اکشن</span><h2><Smartphone size={19} /> مدیریت برنامه‌ها</h2></div><span>{fa(appRows.length)} برنامه</span></div>
+          <div className="pbr-note"><Smartphone size={16}/><span>فهرست برنامه‌ها فقط با تأیید روی خود گوشی ارسال می‌شود. حذف برنامه از راه دور انجام نمی‌شود؛ تنظیمات هر برنامه از خود Android باز می‌شود.</span></div>
+          <button type="button" className="pbr-primary pbr-data-run" onClick={()=>void runSimpleRemote("list_apps")} disabled={!deviceId||busy}><RefreshCw size={17}/> دریافت فهرست برنامه‌ها</button>
+          <div className="pbr-history">{appRows.slice(0,100).map((app,i)=><div className="pbr-history-row" key={String(app.packageName||i)}><div className="pbr-history-action"><strong>{String(app.name||"برنامه")}</strong><span dir="ltr">{String(app.packageName||"—")} · {String(app.versionName||"—")}</span></div><span>{app.system===true?"سیستمی":"کاربر"}</span></div>)}</div>
+        </article>
+        <article className="pbr-card">
+          <div className="pbr-card-head"><div><span>اکشن</span><h2><MessageSquareText size={19}/> مدیریت اعلان‌ها</h2></div><span>{fa(notificationRows.length)} اعلان</span></div>
+          <div className="pbr-note"><MessageSquareText size={16}/><span>برای این قابلیت باید کاربر در تنظیمات Android، دسترسی Notification Access را خودش فعال کند؛ سپس فقط با تأیید او اعلان‌های اخیر ارسال می‌شوند.</span></div>
+          <button type="button" className="pbr-primary pbr-data-run" onClick={()=>void runSimpleRemote("list_notifications")} disabled={!deviceId||busy}><RefreshCw size={17}/> دریافت اعلان‌های اخیر</button>
+          <div className="pbr-history">{notificationRows.map((n,i)=><div className="pbr-history-row" key={i}><div className="pbr-history-action"><strong>{String(n.title||"بدون عنوان")}</strong><span>{String(n.packageName||"—")} · {epoch(n.postedAt)}</span></div><span>{String(n.text||"")}</span></div>)}</div>
+        </article>
+      </section>
+
+      <section className="pbr-card">
+        <div className="pbr-card-head"><div><span>پشتیبان</span><h2><Database size={19}/> Backup & Restore</h2></div></div>
+        <div className="pbr-note"><Database size={16}/><span>این پشتیبان تنظیمات و سیاست‌های Phone Bridge پنل و سوابق ریموت را ذخیره می‌کند؛ اطلاعات خصوصی Android یا داده‌های محافظت‌شدهٔ برنامه‌ها را دور نمی‌زند.</span></div>
+        <div className="pbr-data-controls">
+          <a className="pbr-primary" href="/api/admin/phone-bridge/backup"><Download size={16}/> دانلود پشتیبان JSON</a>
+          <label className="pbr-photo-download"><input type="file" accept="application/json,.json" onChange={e=>{const f=e.target.files?.[0];if(f)void restoreBackup(f);}}/> بازیابی پشتیبان</label>
+        </div>
       </section>
 
       <section className="pbr-grid">
