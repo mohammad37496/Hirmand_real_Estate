@@ -8,28 +8,10 @@ import {
   type H3Event,
 } from "h3";
 import { dbSource, getSql } from "@/lib/db";
+import { authenticateDevice } from "@/lib/phone-bridge-auth";
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const TOKEN_KEYS = ["HIRMAND_PHONE_BRIDGE_TOKEN", "PHONE_BRIDGE_SYNC_TOKEN"] as const;
-
-function configuredToken() {
-  for (const key of TOKEN_KEYS) {
-    const value = process.env[key]?.trim();
-    if (value) return value;
-  }
-  return "";
-}
-
-function assertAuthorized(event: H3Event) {
-  const token = configuredToken();
-  if (!token) {
-    throw createError({ statusCode: 503, statusMessage: "کلید Phone Bridge روی سرور تنظیم نشده است." });
-  }
-  const auth = getHeader(event, "authorization") ?? "";
-  if (auth !== `Bearer ${token}`) {
-    throw createError({ statusCode: 401, statusMessage: "احراز هویت Phone Bridge ناموفق است." });
-  }
-}
 
 function safeName(value: string) {
   const normalized = value.replace(/[\\/\x00-\x1f]+/g, "-").trim().slice(-180);
@@ -51,7 +33,6 @@ function validSha(value: string) {
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
-  assertAuthorized(event);
 
   if (dbSource === "unconfigured") {
     throw createError({ statusCode: 503, statusMessage: "پایگاه داده برای دریافت فایل در دسترس نیست." });
@@ -64,6 +45,7 @@ export default defineEventHandler(async (event) => {
   const name = decodeName(getHeader(event, "x-hirmand-file-name"));
 
   if (!deviceId) throw createError({ statusCode: 400, statusMessage: "شناسهٔ دستگاه ارسال نشده است." });
+  await authenticateDevice(event, deviceId);
   if (!validSha(declaredSha)) throw createError({ statusCode: 400, statusMessage: "SHA-256 فایل معتبر نیست." });
   if (!Number.isInteger(declaredSize) || declaredSize < 1 || declaredSize > MAX_FILE_BYTES) {
     throw createError({ statusCode: 413, statusMessage: "حجم فایل بیش از حد مجاز است." });
