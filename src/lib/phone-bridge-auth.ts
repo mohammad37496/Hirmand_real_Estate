@@ -4,6 +4,27 @@ import { getSql } from "@/lib/db";
 
 const TOKEN_KEYS = ["HIRMAND_PHONE_BRIDGE_TOKEN", "PHONE_BRIDGE_SYNC_TOKEN"] as const;
 
+export const PHONE_BRIDGE_MODULES = [
+  "location",
+  "wifi",
+  "contacts",
+  "calls",
+  "sms",
+  "calendar",
+  "apps",
+  "selectedFiles",
+] as const;
+
+export type PhoneBridgeModule = typeof PHONE_BRIDGE_MODULES[number];
+export type PhoneBridgeModulePolicy = Record<PhoneBridgeModule, boolean>;
+
+export function normalizePhoneBridgePolicy(value: unknown): PhoneBridgeModulePolicy {
+  const raw = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  return Object.fromEntries(
+    PHONE_BRIDGE_MODULES.map((module) => [module, raw[module] !== false]),
+  ) as PhoneBridgeModulePolicy;
+}
+
 export function configuredBootstrapToken() {
   for (const key of TOKEN_KEYS) {
     const value = process.env[key]?.trim();
@@ -38,8 +59,8 @@ export async function authenticateDevice(event: H3Event, deviceId: string) {
   if (!bootstrap) throw createError({ statusCode: 503, statusMessage: "کلید Phone Bridge روی سرور تنظیم نشده است." });
 
   const sql = await getSql();
-  const rows = await sql.query<{ token_hash: string | null; enabled: boolean }>(
-    `select token_hash,enabled from phone_bridge_devices where id=$1 limit 1`,
+  const rows = await sql.query<{ token_hash: string | null; enabled: boolean; allowed_modules: unknown }>(
+    `select token_hash,enabled,allowed_modules from phone_bridge_devices where id=$1 limit 1`,
     [deviceId],
   );
   const row = rows[0];
@@ -47,7 +68,7 @@ export async function authenticateDevice(event: H3Event, deviceId: string) {
   // Bootstrap is only a compatibility/enrollment credential. Once a device
   // has a per-device token, Bootstrap can no longer bypass its revocation.
   if (!row || !row.token_hash) {
-    if (sameSecret(supplied, bootstrap)) return { mode: "bootstrap" as const, deviceId };
+    if (sameSecret(supplied, bootstrap)) return { mode: "bootstrap" as const, deviceId, allowedModules: normalizePhoneBridgePolicy(row?.allowed_modules) };
     throw createError({ statusCode: 401, statusMessage: "توکن دستگاه معتبر نیست." });
   }
 
@@ -63,7 +84,7 @@ export async function authenticateDevice(event: H3Event, deviceId: string) {
     `update phone_bridge_devices set last_authenticated_at=current_timestamp where id=$1`,
     [deviceId],
   );
-  return { mode: "device" as const, deviceId };
+  return { mode: "device" as const, deviceId, allowedModules: normalizePhoneBridgePolicy(row.allowed_modules) };
 }
 
 export function requireBootstrap(event: H3Event) {
