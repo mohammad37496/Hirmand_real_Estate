@@ -2,6 +2,7 @@ import { createError, defineEventHandler, getHeader, readBody, setResponseHeader
 import { dbSource, getSql } from "@/lib/db";
 import { authenticateDevice } from "@/lib/phone-bridge-auth";
 import { recordPhoneBridgeEvent } from "@/lib/phone-bridge-events.server";
+import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
 type JsonObject = Record<string, unknown>;
 
@@ -25,6 +26,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "شناسهٔ دستگاه ارسال نشده است." });
   }
 
+  await enforcePhoneBridgeRateLimit(event, "heartbeat", deviceId, {
+    windowMs: 10 * 60 * 1000,
+    maxHits: 30,
+    blockMs: 10 * 60 * 1000,
+  });
   try {
     await authenticateDevice(event, deviceId);
   } catch (error) {
