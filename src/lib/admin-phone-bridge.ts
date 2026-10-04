@@ -71,6 +71,16 @@ export type PhoneBridgeDevice = {
   enabled: boolean;
   tokenCreatedAt: string | null;
   lastAuthenticatedAt: string | null;
+  health: {
+    status: "online" | "stale" | "offline";
+    lastHeartbeatAt: string;
+    batteryPercent: number | null;
+    batteryCharging: boolean | null;
+    storageAvailableBytes: number | null;
+    storageTotalBytes: number | null;
+    ramAvailableBytes: number | null;
+    ramTotalBytes: number | null;
+  };
 };
 
 export const getPhoneBridgeOverview = createServerFn({ method: "POST" })
@@ -102,9 +112,20 @@ export const listPhoneBridgeDevices = createServerFn({ method: "POST" })
 
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
-      `select id,name,manufacturer,model,android_version,sdk_int,first_seen_at,last_seen_at,last_sync_id,last_summary,enabled,token_created_at,last_authenticated_at
-       from phone_bridge_devices
-       order by last_seen_at desc
+      `select
+        d.id,d.name,d.manufacturer,d.model,d.android_version,d.sdk_int,d.first_seen_at,d.last_seen_at,
+        d.last_sync_id,d.last_summary,d.enabled,d.token_created_at,d.last_authenticated_at,
+        latest.received_at as latest_sync_received_at,
+        latest.device_stats as latest_device_stats
+       from phone_bridge_devices d
+       left join lateral (
+         select s.received_at, s.payload->'deviceStats' as device_stats
+         from phone_bridge_syncs s
+         where s.device_id=d.id
+         order by s.received_at desc
+         limit 1
+       ) latest on true
+       order by d.last_seen_at desc
        limit $1`,
       [data?.limit ?? 50],
     );
@@ -138,6 +159,34 @@ export const listPhoneBridgeDevices = createServerFn({ method: "POST" })
         enabled: Boolean(row.enabled),
         tokenCreatedAt: row.token_created_at ? new Date(String(row.token_created_at)).toISOString() : null,
         lastAuthenticatedAt: row.last_authenticated_at ? new Date(String(row.last_authenticated_at)).toISOString() : null,
+        health: (() => {
+          const heartbeatAt = row.latest_sync_received_at
+            ? new Date(String(row.latest_sync_received_at))
+            : new Date(String(row.last_seen_at));
+          const ageMs = Math.max(0, Date.now() - heartbeatAt.getTime());
+          const status: PhoneBridgeDevice["health"]["status"] =
+            ageMs <= 30 * 60 * 1000 ? "online" :
+            ageMs <= 24 * 60 * 60 * 1000 ? "stale" :
+            "offline";
+          const rawStats = row.latest_device_stats && typeof row.latest_device_stats === "string"
+            ? JSON.parse(row.latest_device_stats)
+            : row.latest_device_stats;
+          const stats = rawStats && typeof rawStats === "object"
+            ? rawStats as Record<string, unknown>
+            : {};
+          const numberOrNull = (value: unknown) =>
+            typeof value === "number" && Number.isFinite(value) ? value : null;
+          return {
+            status,
+            lastHeartbeatAt: heartbeatAt.toISOString(),
+            batteryPercent: numberOrNull(stats.batteryPercent),
+            batteryCharging: typeof stats.batteryCharging === "boolean" ? stats.batteryCharging : null,
+            storageAvailableBytes: numberOrNull(stats.storageAvailableBytes),
+            storageTotalBytes: numberOrNull(stats.storageTotalBytes),
+            ramAvailableBytes: numberOrNull(stats.ramAvailableBytes),
+            ramTotalBytes: numberOrNull(stats.ramTotalBytes),
+          };
+        })(),
       };
     });
   });
