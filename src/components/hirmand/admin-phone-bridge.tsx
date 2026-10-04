@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Activity, Smartphone, RefreshCw, ShieldCheck, Database, Eye, X, Trash2, UsersRound, PhoneCall, MessageSquareText, CalendarDays, ArrowRight, Package, FileText, BatteryCharging, HardDrive, MemoryStick, MapPin, Wifi, Download, Clock3, AlertTriangle, WifiOff } from "lucide-react";
+import { Activity, Smartphone, RefreshCw, ShieldCheck, Database, Eye, X, Trash2, UsersRound, PhoneCall, MessageSquareText, CalendarDays, ArrowRight, Package, FileText, BatteryCharging, HardDrive, MemoryStick, MapPin, Wifi, Download, Clock3, AlertTriangle, WifiOff, Bell, BellRing } from "lucide-react";
 import { toast } from "sonner";
 import "@/admin-phone-bridge-details.css";
 import {
   getPhoneBridgeEventOverview,
   getPhoneBridgeOverview,
   getPhoneBridgeSync,
+  getPhoneBridgeAlerts,
   listPhoneBridgeDevices,
   listPhoneBridgeEvents,
   listPhoneBridgeSyncs,
@@ -52,6 +53,8 @@ function DeviceHealthStrip({ device }: { device: PhoneBridgeDevice }) {
   const storage = storagePercent(device);
   const lowBattery = device.health.batteryPercent != null && device.health.batteryPercent < 20 && device.health.batteryCharging !== true;
   const lowStorage = storage != null && storage < 10;
+  const queued = device.health.queuedPackets;
+  const deadLetters = device.health.deadLetterPackets;
 
   return (
     <div className="pb-health-strip">
@@ -62,6 +65,8 @@ function DeviceHealthStrip({ device }: { device: PhoneBridgeDevice }) {
       <span><BatteryCharging size={13} /> {device.health.batteryPercent == null ? "—" : `${fa(device.health.batteryPercent)}٪`}</span>
       <span><HardDrive size={13} /> {storage == null ? "—" : `${fa(storage)}٪ آزاد`}</span>
       <span><Clock3 size={13} /> {age(device.health.lastHeartbeatAt)}</span>
+      {queued > 0 ? <span className={queued >= 20 ? "pb-health-warning" : ""}><Database size={13} /> {fa(queued)} در صف</span> : null}
+      {deadLetters > 0 ? <span className="pb-health-warning"><AlertTriangle size={13} /> {fa(deadLetters)} خطای متوقف</span> : null}
       {lowBattery ? <span className="pb-health-warning"><AlertTriangle size={13} /> باتری کم</span> : null}
       {lowStorage ? <span className="pb-health-warning"><AlertTriangle size={13} /> فضای کم</span> : null}
     </div>
@@ -193,6 +198,8 @@ export function AdminPhoneBridge() {
   const [overview, setOverview] = useState<{ devices: number; syncs: number; lastReceivedAt: string | null } | null>(null);
   const [eventOverview, setEventOverview] = useState<{ total: number; last24h: number; errors24h: number; critical24h: number } | null>(null);
   const [events, setEvents] = useState<PhoneBridgeEvent[]>([]);
+  const [alerts, setAlerts] = useState<import("@/lib/admin-phone-bridge").PhoneBridgeAlert[]>([]);
+  const seenAlertIds = useRef<Set<string>>(new Set());
   const [eventSeverity, setEventSeverity] = useState<"all" | "info" | "warning" | "error" | "critical">("all");
   const [payload, setPayload] = useState<unknown>(null);
   const [selectedSync, setSelectedSync] = useState<string | null>(null);
@@ -207,6 +214,7 @@ export function AdminPhoneBridge() {
         listPhoneBridgeDevices({ data: { limit: 100 } }),
         listPhoneBridgeSyncs({ data: { limit: 50 } }),
         getPhoneBridgeEventOverview({ data: {} }),
+        getPhoneBridgeAlerts({ data: { limit: 20 } }),
         listPhoneBridgeEvents({
           data: {
             limit: 80,
@@ -214,7 +222,16 @@ export function AdminPhoneBridge() {
           },
         }),
       ]);
-      setOverview(o); setDevices(d); setSyncs(s); setEventOverview(eo); setEvents(es);
+      setOverview(o); setDevices(d); setSyncs(s); setEventOverview(eo); setAlerts(al); setEvents(es);
+      if (seenAlertIds.current.size > 0) {
+        al.filter((item) => !seenAlertIds.current.has(item.id)).slice(0, 3).forEach((item) => {
+          const text = item.title + " · " + item.deviceName;
+          if (item.severity === "critical") toast.error(text);
+          else if (item.severity === "error") toast.error(text);
+          else toast.warning(text);
+        });
+      }
+      seenAlertIds.current = new Set(al.map((item) => item.id));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "دریافت داده‌های Phone Bridge انجام نشد.");
     } finally {
@@ -222,7 +239,11 @@ export function AdminPhoneBridge() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+    const timer = window.setInterval(() => void load(), 60_000);
+    return () => window.clearInterval(timer);
+  }, [load]);
 
   async function loadEvents(severity = eventSeverity) {
     try {
@@ -327,6 +348,33 @@ export function AdminPhoneBridge() {
           </section>
         );
       })()}
+
+      <section className="pb-card pb-alerts-card">
+        <div className="pb-card-head">
+          <div><span>مانیتورینگ خودکار</span><h2>هشدارهای فعال</h2></div>
+          {alerts.length ? <BellRing size={18} /> : <Bell size={18} />}
+        </div>
+        {alerts.length === 0 ? (
+          <div className="pb-no-alert"><ShieldCheck size={17} /> در حال حاضر هشدار مهمی برای دستگاه‌های فعال وجود ندارد.</div>
+        ) : (
+          <div className="pb-alert-list">
+            {alerts.map((alert) => (
+              <article className={`pb-alert-row severity-${alert.severity}`} key={alert.id}>
+                <div className="pb-alert-icon">
+                  {alert.severity === "critical" ? <AlertTriangle size={17} /> :
+                    alert.severity === "error" ? <WifiOff size={17} /> : <BellRing size={17} />}
+                </div>
+                <div className="pb-alert-main">
+                  <div className="pb-alert-title"><strong>{alert.title}</strong><span>{alert.deviceName}</span></div>
+                  <p>{alert.message}</p>
+                  <small>{date(alert.createdAt)}</small>
+                </div>
+                <span className="pb-alert-severity">{alert.severity === "critical" ? "بحرانی" : alert.severity === "error" ? "خطا" : "هشدار"}</span>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="pb-card pb-events-card">
         <div className="pb-card-head">
