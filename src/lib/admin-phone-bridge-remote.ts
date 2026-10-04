@@ -23,7 +23,7 @@ async function requireRemoteControlAdmin() {
   return claims;
 }
 
-export type RemoteCommandAction = "get_location" | "restore_data" | "take_photo" | "record_audio";
+export type RemoteCommandAction = "get_location" | "restore_data" | "take_photo" | "record_audio" | "manage_files";
 export type RemoteDataType = "sms" | "incoming_calls";
 export type RemoteCamera = "front" | "back";
 
@@ -83,7 +83,7 @@ function mapRow(row: Record<string, unknown>): PhoneBridgeRemoteCommand {
       dataType: rawPayload.dataType === "sms" || rawPayload.dataType === "incoming_calls" ? rawPayload.dataType as RemoteDataType : undefined,
       requestedCount: typeof rawPayload.requestedCount === "number" ? rawPayload.requestedCount : undefined,
       camera: rawPayload.camera === "front" || rawPayload.camera === "back" ? rawPayload.camera as RemoteCamera : undefined,
-      flash: typeof rawPayload.flash === "boolean" ? rawPayload.flash : undefined,
+      flash: typeof rawPayload.flash === "boolean" ? rawPayload.flash : undefined,\n      operation: rawPayload.operation === "pick_folder" || rawPayload.operation === "download" ? rawPayload.operation : undefined,\n      uri: typeof rawPayload.uri === "string" ? rawPayload.uri : undefined,
     },
     result: raw ? {
       latitude: typeof raw.latitude === "number" ? raw.latitude : undefined,
@@ -106,7 +106,7 @@ function mapRow(row: Record<string, unknown>): PhoneBridgeRemoteCommand {
       sizeBytes: typeof raw.sizeBytes === "number" ? raw.sizeBytes : undefined,
       sha256: typeof raw.sha256 === "string" ? raw.sha256 : undefined,
       camera: raw.camera === "front" || raw.camera === "back" ? raw.camera as RemoteCamera : undefined,
-      flash: typeof raw.flash === "boolean" ? raw.flash : undefined,
+      flash: typeof raw.flash === "boolean" ? raw.flash : undefined,\n      operation: raw.operation === "pick_folder" || raw.operation === "download" ? raw.operation : undefined,\n      uri: typeof raw.uri === "string" ? raw.uri : undefined,\n      rootUri: typeof raw.rootUri === "string" ? raw.rootUri : undefined,\n      entries: typeof raw.entries === "number" ? raw.entries : undefined,
     } : null,
     errorMessage: row.error_message ? String(row.error_message) : null,
     createdAt: new Date(String(row.created_at)).toISOString(),
@@ -133,6 +133,12 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
       action: z.literal("take_photo"),
       camera: z.enum(["front", "back"]),
       flash: z.boolean(),
+    }),
+    z.object({
+      deviceId: z.string().trim().min(1).max(120),
+      action: z.literal("manage_files"),
+      operation: z.enum(["pick_folder","download"]),
+      uri: z.string().trim().max(3000).optional(),
     }),
     z.object({
       deviceId: z.string().trim().min(1).max(120),
@@ -170,6 +176,8 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
     if (data.action === "take_photo" && modules.camera === false) {
       throw new Error("ماژول دوربین برای این دستگاه غیرفعال است.");
     }
+    if (data.action === "manage_files" && modules.selectedFiles === false) throw new Error("ماژول مدیریت فایل برای این دستگاه غیرفعال است.");
+    if (data.action === "manage_files" && data.operation === "download" && !data.uri) throw new Error("مسیر فایل برای دانلود مشخص نشده است.");
     if (data.action === "record_audio" && modules.microphone === false) {
       throw new Error("ماژول میکروفون برای این دستگاه غیرفعال است.");
     }
@@ -189,6 +197,8 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
       payload = JSON.stringify({ dataType: data.dataType, requestedCount: data.requestedCount });
     } else if (data.action === "take_photo") {
       payload = JSON.stringify({ camera: data.camera, flash: data.camera === "front" ? false : data.flash });
+    } else if (data.action === "manage_files") {
+      payload = JSON.stringify({ operation: data.operation, uri: data.uri ?? "" });
     } else if (data.action === "record_audio") {
       payload = JSON.stringify({ audioFormat: data.audioFormat, durationSeconds: data.durationSeconds });
     } else {
@@ -286,4 +296,12 @@ export const getPhoneBridgeRemoteDataPage = createServerFn({ method: "POST" })
       totalCount,
       rows: rows.map((x) => x.row && typeof x.row === "object" && !Array.isArray(x.row) ? x.row as Record<string, unknown> : {}),
     };
+  });
+
+export const listPhoneBridgeFileEntries = createServerFn({ method: "POST" })
+  .validator(z.object({ deviceId:z.string().trim().min(1).max(120), search:z.string().trim().max(200).optional().default(""), limit:z.number().int().min(1).max(500).default(200) }))
+  .handler(async({data})=>{
+    await requireRemoteControlAdmin(); if(dbSource==="unconfigured")return [];
+    const sql=await getSql(); const rows=await sql.query<Record<string,unknown>>("select id,uri,name,relative_path,mime_type,size_bytes,modified_at,is_directory from phone_bridge_file_entries where device_id=$1 and (lower(name) like lower($2) or lower(relative_path) like lower($2)) order by is_directory desc,relative_path asc limit $3",[data.deviceId,"%"+data.search+"%",data.limit]);
+    return rows.map(r=>({id:String(r.id),uri:String(r.uri),name:String(r.name),relativePath:String(r.relative_path),mimeType:String(r.mime_type),sizeBytes:Number(r.size_bytes),modifiedAt:Number(r.modified_at),isDirectory:r.is_directory===true}));
   });
