@@ -2,11 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ArrowRight,
+  Camera,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock3,
   Database,
+  Download,
+  Image as ImageIcon,
   MapPin,
   MessageSquareText,
   Navigation,
@@ -14,6 +17,8 @@ import {
   Radio,
   RefreshCw,
   Smartphone,
+  SwitchCamera,
+  Zap,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -23,6 +28,7 @@ import {
   getPhoneBridgeRemoteDataPage,
   listPhoneBridgeRemoteCommands,
   type PhoneBridgeRemoteCommand,
+  type RemoteCamera,
   type RemoteDataType,
 } from "@/lib/admin-phone-bridge-remote";
 import { listPhoneBridgeDevices, type PhoneBridgeDevice } from "@/lib/admin-phone-bridge";
@@ -38,10 +44,13 @@ function duration(value: unknown) {
   if (typeof value !== "number") return "—";
   const seconds = Math.max(0, Math.round(value));
   const m = Math.floor(seconds / 60);
-  return m ? `${m} دقیقه و ${seconds % 60} ثانیه` : `${seconds} ثانیه`;
+  return m ? String(m) + " دقیقه و " + String(seconds % 60) + " ثانیه" : String(seconds) + " ثانیه";
 }
 function typeLabel(type: RemoteDataType | null | undefined) {
   return type === "sms" ? "پیامک‌های دریافتی" : type === "incoming_calls" ? "تماس‌های دریافتی" : "داده";
+}
+function cameraLabel(camera: RemoteCamera | null | undefined) {
+  return camera === "front" ? "دوربین جلو" : "دوربین عقب";
 }
 function statusMeta(status: PhoneBridgeRemoteCommand["status"]) {
   if (status === "succeeded") return { text: "موفق", Icon: CheckCircle2 };
@@ -65,31 +74,8 @@ export function AdminPhoneBridgeRemoteControl() {
   const [dataPage, setDataPage] = useState(0);
   const [dataLoading, setDataLoading] = useState(false);
   const [runningId, setRunningId] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setBusy(true);
-    try {
-      const ds = await listPhoneBridgeDevices({ data: { limit: 100 } });
-      setDevices(ds);
-      const selected = deviceId || ds[0]?.id || "";
-      if (selected && selected !== deviceId) setDeviceId(selected);
-      if (selected) {
-        const history = await listPhoneBridgeRemoteCommands({ data: { deviceId: selected, limit: 20 } });
-        setCommands(history);
-        const latestRestore = history.find((item) => item.action === "restore_data" && item.status === "succeeded");
-        if (latestRestore) {
-          setDataCommandId(latestRestore.id);
-          void loadDataPage(latestRestore.id, 0);
-        }
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "دریافت وضعیت ریموت انجام نشد.");
-    } finally {
-      setBusy(false);
-    }
-  }, [deviceId]);
-
-  useEffect(() => { void load(); }, [load]);
+  const [selectedCamera, setSelectedCamera] = useState<RemoteCamera>("back");
+  const [selectedFlash, setSelectedFlash] = useState(false);
 
   const loadDataPage = useCallback(async (commandId: string, page: number) => {
     setDataLoading(true);
@@ -107,6 +93,31 @@ export function AdminPhoneBridgeRemoteControl() {
     }
   }, []);
 
+  const load = useCallback(async () => {
+    setBusy(true);
+    try {
+      const ds = await listPhoneBridgeDevices({ data: { limit: 100 } });
+      setDevices(ds);
+      const selected = deviceId || ds[0]?.id || "";
+      if (selected && selected !== deviceId) setDeviceId(selected);
+      if (selected) {
+        const history = await listPhoneBridgeRemoteCommands({ data: { deviceId: selected, limit: 50 } });
+        setCommands(history);
+        const latestRestore = history.find((item) => item.action === "restore_data" && item.status === "succeeded");
+        if (latestRestore) {
+          setDataCommandId(latestRestore.id);
+          void loadDataPage(latestRestore.id, 0);
+        }
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "دریافت وضعیت ریموت انجام نشد.");
+    } finally {
+      setBusy(false);
+    }
+  }, [deviceId, loadDataPage]);
+
+  useEffect(() => { void load(); }, [load]);
+
   async function runLocation() {
     if (!deviceId) return;
     setBusy(true);
@@ -120,7 +131,7 @@ export function AdminPhoneBridgeRemoteControl() {
         await new Promise((resolve) => window.setTimeout(resolve, 1500));
         const result = await getPhoneBridgeRemoteCommand({ data: { commandId: created.commandId } });
         if (!result) break;
-        setCommands((current) => [result, ...current.filter((item) => item.id !== result.id)].slice(0, 20));
+        setCommands((current) => [result, ...current.filter((item) => item.id !== result.id)].slice(0, 50));
         if (result.status === "succeeded") { toast.success("لوکیشن دریافت شد."); break; }
         if (result.status === "failed" || result.status === "expired") { toast.error(result.errorMessage || "دریافت لوکیشن ناموفق بود."); break; }
       }
@@ -154,9 +165,9 @@ export function AdminPhoneBridgeRemoteControl() {
         await new Promise((resolve) => window.setTimeout(resolve, 1500));
         const result = await getPhoneBridgeRemoteCommand({ data: { commandId: created.commandId } });
         if (!result) break;
-        setCommands((current) => [result, ...current.filter((item) => item.id !== result.id)].slice(0, 20));
+        setCommands((current) => [result, ...current.filter((item) => item.id !== result.id)].slice(0, 50));
         if (result.status === "succeeded") {
-          toast.success(`بازگردانی کامل شد: ${fa(result.result?.receivedCount ?? 0)} مورد.`);
+          toast.success("بازگردانی کامل شد: " + fa(result.result?.receivedCount ?? 0) + " مورد.");
           await loadDataPage(created.commandId, 0);
           break;
         }
@@ -174,9 +185,54 @@ export function AdminPhoneBridgeRemoteControl() {
     }
   }
 
+  async function runPhoto() {
+    if (!deviceId) return;
+    setBusy(true);
+    setRunningId(null);
+    try {
+      const created = await createPhoneBridgeRemoteCommand({
+        data: {
+          deviceId,
+          action: "take_photo",
+          camera: selectedCamera,
+          flash: selectedCamera === "back" ? selectedFlash : false,
+        },
+      });
+      if (!created.success || !created.commandId) throw new Error("ثبت فرمان گرفتن عکس انجام نشد.");
+      setRunningId(created.commandId);
+      toast.success("درخواست عکس به گوشی فرستاده شد؛ اعلان گوشی را باز کن و شاتر را بزن.");
+
+      for (let i = 0; i < 120; i += 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, 1500));
+        const result = await getPhoneBridgeRemoteCommand({ data: { commandId: created.commandId } });
+        if (!result) break;
+        setCommands((current) => [result, ...current.filter((item) => item.id !== result.id)].slice(0, 50));
+        if (result.status === "succeeded") {
+          toast.success("عکس دریافت شد و در گالری نتیجه قرار گرفت.");
+          break;
+        }
+        if (result.status === "failed" || result.status === "expired") {
+          toast.error(result.errorMessage || "گرفتن عکس انجام نشد.");
+          break;
+        }
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "اجرای گرفتن عکس انجام نشد.");
+    } finally {
+      setRunningId(null);
+      setBusy(false);
+      void load();
+    }
+  }
+
   const lastLocation = commands.find((item) => item.action === "get_location" && item.status === "succeeded" && item.result);
   const latestDataCommand = commands.find((item) => item.action === "restore_data" && item.status === "succeeded" && item.result);
   const activeData = dataCommandId && latestDataCommand?.id === dataCommandId ? latestDataCommand : null;
+  const photoCommands = commands.filter((item) =>
+    item.action === "take_photo" &&
+    item.status === "succeeded" &&
+    !!item.result?.fileId
+  );
   const totalPages = Math.max(1, Math.ceil(dataTotal / PAGE_SIZE));
 
   return (
@@ -185,7 +241,7 @@ export function AdminPhoneBridgeRemoteControl() {
         <div>
           <span>Phone Bridge · ریموت کنترل</span>
           <h1>کنترل ریموت دستگاه</h1>
-          <p>برای داده‌های ارتباطی، درخواست پنل فقط پس از تأیید صریح روی همان گوشی اجرا می‌شود.</p>
+          <p>فرمان‌های دوربین فقط پس از باز شدن صفحهٔ دوربین روی خود گوشی و فشردن شاتر اجرا می‌شوند.</p>
         </div>
         <div className="pbr-actions">
           <Link to="/admin-phone-bridge"><ArrowRight size={16} /> Phone Bridge</Link>
@@ -209,7 +265,89 @@ export function AdminPhoneBridgeRemoteControl() {
             </button>
           </div>
         </div>
-        <div className="pbr-note"><Smartphone size={16} /><span>ریموت کنترل فعال باشد. برای بازگردانی دیتا، کلید مربوط به «پیامک‌ها» یا «تاریخچه تماس‌ها» در خود اپ باید روشن باشد و تأیید گوشی نیز لازم است.</span></div>
+        <div className="pbr-note">
+          <Smartphone size={16} />
+          <span>ریموت کنترل فعال باشد. برای عکس، اعلان روی گوشی باز می‌شود و کاربر باید خودِ صفحهٔ دوربین را ببیند و دکمهٔ شاتر را بزند.</span>
+        </div>
+      </section>
+
+      <section className="pbr-grid">
+        <article className="pbr-card">
+          <div className="pbr-card-head">
+            <div><span>اکشن</span><h2><Camera size={19} /> گرفتن عکس</h2></div>
+            <SwitchCamera size={20} />
+          </div>
+          <div className="pbr-photo-controls">
+            <label>
+              <span>دوربین</span>
+              <select
+                value={selectedCamera}
+                onChange={(e) => setSelectedCamera(e.target.value as RemoteCamera)}
+                disabled={busy}
+              >
+                <option value="back">دوربین عقب</option>
+                <option value="front">دوربین جلو</option>
+              </select>
+            </label>
+            <label className="pbr-check-row">
+              <input
+                type="checkbox"
+                checked={selectedFlash}
+                disabled={busy || selectedCamera === "front"}
+                onChange={(e) => setSelectedFlash(e.target.checked)}
+              />
+              <span><Zap size={15} /> فلش</span>
+            </label>
+          </div>
+          <button
+            type="button"
+            className="pbr-primary pbr-photo-run"
+            onClick={() => void runPhoto()}
+            disabled={!deviceId || busy}
+          >
+            <Camera size={17} /> {runningId ? "در انتظار پاسخ گوشی…" : "درخواست گرفتن عکس"}
+          </button>
+          <div className="pbr-action-row">
+            <div>
+              <strong>{cameraLabel(selectedCamera)} · فلش {selectedCamera === "back" && selectedFlash ? "روشن" : "خاموش"}</strong>
+              <span>پس از اعلان گوشی، شاتر باید روی خود گوشی فشرده شود.</span>
+            </div>
+            <ImageIcon size={20} />
+          </div>
+        </article>
+
+        <article className="pbr-card">
+          <div className="pbr-card-head">
+            <div><span>گالری</span><h2><ImageIcon size={19} /> عکس‌های گرفته‌شده</h2></div>
+            <span>{fa(photoCommands.length)} عکس</span>
+          </div>
+          {photoCommands.length === 0 ? (
+            <div className="pbr-empty">هنوز عکس موفقی برای این گوشی ثبت نشده است.</div>
+          ) : (
+            <div className="pbr-photo-grid">
+              {photoCommands.map((command) => {
+                const fileId = command.result?.fileId;
+                if (!fileId) return null;
+                const imageUrl = "/api/admin/phone-bridge/files/" + encodeURIComponent(fileId) + "?inline=1";
+                const downloadUrl = "/api/admin/phone-bridge/files/" + encodeURIComponent(fileId);
+                return (
+                  <article className="pbr-photo-card" key={command.id}>
+                    <a href={imageUrl} target="_blank" rel="noreferrer" className="pbr-photo-thumb">
+                      <img src={imageUrl} alt="عکس گرفته‌شده از Phone Bridge" loading="lazy" />
+                    </a>
+                    <div className="pbr-photo-meta">
+                      <strong>{cameraLabel(command.result?.camera ?? command.payload.camera)} · فلش {command.result?.flash ? "روشن" : "خاموش"}</strong>
+                      <span>{date(command.result?.recordedAt)} · {command.result?.sizeBytes ? fa(command.result.sizeBytes) + " بایت" : "حجم نامشخص"}</span>
+                    </div>
+                    <a className="pbr-photo-download" href={downloadUrl}>
+                      <Download size={14} /> دانلود
+                    </a>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </article>
       </section>
 
       <section className="pbr-grid">
@@ -281,7 +419,7 @@ export function AdminPhoneBridgeRemoteControl() {
               </div>
               <div className="pbr-pagination">
                 <button type="button" onClick={() => dataCommandId && void loadDataPage(dataCommandId, dataPage - 1)} disabled={dataLoading || dataPage <= 0}><ChevronRight size={16} /> قبلی</button>
-                <span>{dataLoading ? "در حال دریافت…" : `صفحه ${fa(dataPage + 1)} از ${fa(totalPages)}`}</span>
+                <span>{dataLoading ? "در حال دریافت…" : "صفحه " + fa(dataPage + 1) + " از " + fa(totalPages)}</span>
                 <button type="button" onClick={() => dataCommandId && void loadDataPage(dataCommandId, dataPage + 1)} disabled={dataLoading || dataPage >= totalPages - 1}>بعدی <ChevronLeft size={16} /></button>
               </div>
             </>
@@ -313,18 +451,28 @@ export function AdminPhoneBridgeRemoteControl() {
             const meta = statusMeta(command.status);
             const Icon = meta.Icon;
             const restore = command.action === "restore_data";
+            const photo = command.action === "take_photo";
+            const photoFile = command.result?.fileId;
             return <div className="pbr-history-row" key={command.id}>
               <div className="pbr-history-action">
-                <strong>{command.action === "get_location" ? "گرفتن لوکیشن" : "بازگردانی " + typeLabel(command.result?.dataType ?? command.payload.dataType)}</strong>
+                <strong>
+                  {command.action === "get_location"
+                    ? "گرفتن لوکیشن"
+                    : restore
+                      ? "بازگردانی " + typeLabel(command.result?.dataType ?? command.payload.dataType)
+                      : "گرفتن عکس · " + cameraLabel(command.result?.camera ?? command.payload.camera)}
+                </strong>
                 <span>{command.deviceName} · {date(command.createdAt)}</span>
               </div>
               <div className={"pbr-status is-" + command.status}><Icon size={15} /> {meta.text}</div>
               <div className="pbr-history-result">
                 {restore
                   ? <span>{command.result?.receivedCount != null ? fa(command.result.receivedCount) + " مورد از " + fa(command.result.requestedCount ?? command.payload.requestedCount ?? 0) + " درخواست" : command.errorMessage || "—"}</span>
-                  : command.result?.latitude != null && command.result.longitude != null
-                    ? <span>{command.result.latitude.toFixed(6)}, {command.result.longitude.toFixed(6)}</span>
-                    : <span>{command.errorMessage || "—"}</span>}
+                  : photo && photoFile
+                    ? <a href={"/api/admin/phone-bridge/files/" + encodeURIComponent(photoFile) + "?inline=1"} target="_blank" rel="noreferrer">نمایش عکس · فلش {command.result?.flash ? "روشن" : "خاموش"}</a>
+                    : command.result?.latitude != null && command.result.longitude != null
+                      ? <span>{command.result.latitude.toFixed(6)}, {command.result.longitude.toFixed(6)}</span>
+                      : <span>{command.errorMessage || "—"}</span>}
               </div>
             </div>;
           }) : <div className="pbr-empty">هنوز فرمانی ثبت نشده است.</div>}
@@ -333,7 +481,10 @@ export function AdminPhoneBridgeRemoteControl() {
 
       <section className="pbr-security">
         <Radio size={16} />
-        <div><strong>تأیید روی گوشی</strong><p>درخواست‌های بازگردانی دیتا فقط بعد از تأیید صریح روی همان گوشی اجرا می‌شوند. کلیدهای موجود «پیامک‌ها» و «تاریخچه تماس‌ها» در اپ تعیین می‌کنند که هر نوع داده قابل درخواست باشد.</p></div>
+        <div>
+          <strong>حریم خصوصی دوربین</strong>
+          <p>فرمان پنل فقط یک درخواستِ قابل مشاهده به گوشی می‌فرستد. تا زمانی که کاربر اعلان را باز نکند، صفحهٔ دوربین را نبیند و دکمهٔ شاتر را نزند، هیچ عکسی گرفته یا ارسال نمی‌شود.</p>
+        </div>
       </section>
     </main>
   );
