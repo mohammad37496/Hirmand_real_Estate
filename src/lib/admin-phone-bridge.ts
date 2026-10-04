@@ -329,6 +329,53 @@ export const listPhoneBridgeEvents = createServerFn({ method: "POST" })
     }));
   });
 
+export type PhoneBridgeHealthSample = {
+  recordedAt: string;
+  batteryPercent: number | null;
+  batteryCharging: boolean | null;
+  storageAvailableBytes: number | null;
+  storageTotalBytes: number | null;
+  ramAvailableBytes: number | null;
+  ramTotalBytes: number | null;
+  queuedPackets: number;
+  deadLetterPackets: number;
+};
+
+export const listPhoneBridgeHealthHistory = createServerFn({ method: "POST" })
+  .validator(z.object({
+    deviceId: z.string().trim().min(1).max(120),
+    limit: z.number().int().min(1).max(96).optional().default(48),
+  }))
+  .handler(async ({ data }) => {
+    await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") return [];
+
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select recorded_at,battery_percent,battery_charging,
+        storage_available_bytes,storage_total_bytes,
+        ram_available_bytes,ram_total_bytes,
+        queued_packets,dead_letter_packets
+       from phone_bridge_health_history
+       where device_id=$1
+       order by recorded_at desc
+       limit $2`,
+      [data.deviceId, data.limit],
+    );
+
+    return rows.map((row) => ({
+      recordedAt: new Date(String(row.recorded_at)).toISOString(),
+      batteryPercent: row.battery_percent == null ? null : Number(row.battery_percent),
+      batteryCharging: row.battery_charging == null ? null : Boolean(row.battery_charging),
+      storageAvailableBytes: row.storage_available_bytes == null ? null : Number(row.storage_available_bytes),
+      storageTotalBytes: row.storage_total_bytes == null ? null : Number(row.storage_total_bytes),
+      ramAvailableBytes: row.ram_available_bytes == null ? null : Number(row.ram_available_bytes),
+      ramTotalBytes: row.ram_total_bytes == null ? null : Number(row.ram_total_bytes),
+      queuedPackets: Number(row.queued_packets ?? 0),
+      deadLetterPackets: Number(row.dead_letter_packets ?? 0),
+    })).reverse();
+  });
+
 export const getPhoneBridgeOverview = createServerFn({ method: "POST" })
   .validator(z.object({}).optional())
   .handler(async () => {
