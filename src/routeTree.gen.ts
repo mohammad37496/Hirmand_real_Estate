@@ -190,7 +190,6 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/admin-phone-bridge': typeof AdminPhoneBridgeRoute
   '/admin-phone-bridge/location': typeof AdminPhoneBridgeLocationRoute
-  '/admin-phone-bridge/location': typeof AdminPhoneBridgeLocationRoute
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
   '/consultants': typeof ConsultantsRouteWithChildren
@@ -223,6 +222,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/admin-phone-bridge': typeof AdminPhoneBridgeRoute
+  '/admin-phone-bridge/location': typeof AdminPhoneBridgeLocationRoute
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
   '/favorites': typeof FavoritesRoute
