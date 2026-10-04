@@ -1706,9 +1706,6 @@ export const ADMIN_CSS = `
   white-space:nowrap;
 }
 
-`;
-
-
 .admin-lead-priority-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 7px;border:1px solid var(--line);border-radius:999px;background:var(--card-2);font-size:.64rem;font-weight:900;color:var(--muted)}
 .admin-lead-priority-badge.is-hot{background:#f7e5df;border-color:#e5c3ba;color:#9a3f2e}
 .admin-lead-priority-badge.is-warm{background:#fff1d6;border-color:#ead5ab;color:#9a6b1f}
@@ -2058,3 +2055,4 @@ export const ADMIN_CSS = `
  .admin-report-actions{width:100%}
  .admin-report-actions>*{flex:1 1 auto}
 }
+`;
