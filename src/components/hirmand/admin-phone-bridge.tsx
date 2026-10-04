@@ -952,6 +952,7 @@ export function AdminPhoneBridge() {
                       ["sms", "پیامک"],
                       ["calendar", "تقویم"],
                       ["apps", "برنامه‌ها"],
+                      ["camera", "دوربین"],
                       ["selectedFiles", "فایل‌های انتخابی"],
                     ] as const).map(([key, label]) => (
                       <label className="pb-policy-item" key={key}>
