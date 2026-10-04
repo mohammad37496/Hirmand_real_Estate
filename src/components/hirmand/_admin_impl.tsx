@@ -109,6 +109,7 @@ import "@/admin-automation.css";
 import { AdminSiteSettings } from "@/components/hirmand/admin-site-settings";
 import { AdminMediaHealth } from "@/components/hirmand/admin-media-health";
 import { AdminSecurityCenter } from "@/components/hirmand/admin-security-center";
+import { AdminMobileDevices } from "@/components/hirmand/admin-mobile-devices";
 import { AdminSeoRedirects } from "@/components/hirmand/admin-seo-redirects";
 import { AdminContentStudio } from "@/components/hirmand/admin-content-studio";
 import { AdminPublicationQueue } from "@/components/hirmand/admin-publication-queue";
@@ -148,7 +149,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "managementReport" | "integrity" | "deals" | "expiry" | "commission" | "consultantPerformance" | "consultantTargets" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
+type ViewMode = "dashboard" | "managementReport" | "integrity" | "deals" | "expiry" | "commission" | "consultantPerformance" | "consultantTargets" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "mobileDevices" | "seoRedirects" | "contentStudio";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -599,6 +600,7 @@ export function AdminPropertiesPage() {
       { view: "audit" as ViewMode, section: "سیستم و محتوا", label: "گزارش فعالیت", icon: ClipboardList },
       { view: "settings" as ViewMode, section: "سیستم و محتوا", label: "تنظیمات سایت", icon: Settings },
       { view: "security" as ViewMode, section: "سیستم و محتوا", label: "امنیت مدیران", icon: ShieldAlert },
+      { view: "mobileDevices" as ViewMode, section: "سیستم و محتوا", label: "دستگاه‌های موبایل", icon: SmartphoneNfc },
       { view: "seoRedirects" as ViewMode, section: "سیستم و محتوا", label: "ریدایرکت و ۴۰۴", icon: RouteIcon },
       { view: "contentStudio" as ViewMode, section: "سیستم و محتوا", label: "استودیو محتوا", icon: FileText },
     ],
@@ -2452,6 +2454,7 @@ export function AdminPropertiesPage() {
           {view === "settings" ? <AdminSiteSettings /> : null}
           {view === "mediaHealth" ? <AdminMediaHealth /> : null}
           {view === "security" ? <AdminSecurityCenter /> : null}
+          {view === "mobileDevices" ? <AdminMobileDevices /> : null}
           {view === "seoRedirects" ? <AdminSeoRedirects /> : null}
           {view === "contentStudio" ? <AdminContentStudio /> : null}
           {view === "divar" ? <AdminDivarFiles /> : null}
