@@ -57,8 +57,9 @@ export default defineEventHandler(async (event) => {
     maxHits: 120,
     blockMs: 10 * 60 * 1000,
   });
+  let authPolicy: Awaited<ReturnType<typeof authenticateDevice>>;
   try {
-    await authenticateDevice(event, deviceId);
+    authPolicy = await authenticateDevice(event, deviceId);
   } catch (error) {
     await recordPhoneBridgeEvent({
       deviceId,
@@ -68,6 +69,20 @@ export default defineEventHandler(async (event) => {
       metadata: { route: "/api/device-sync/v1" },
     }).catch(() => undefined);
     throw error;
+  }
+
+  const originalModuleKeys = ["location", "wifi", "contacts", "calls", "sms", "calendar", "apps", "selectedFiles"] as const;
+  const strippedModules = originalModuleKeys.filter((key) => payload[key] != null && authPolicy.allowedModules[key] === false);
+  for (const key of strippedModules) delete payload[key];
+
+  if (strippedModules.length > 0) {
+    await recordPhoneBridgeEvent({
+      deviceId,
+      eventType: "security.module_policy_blocked",
+      severity: "warning",
+      message: "بخش‌هایی از بستهٔ Phone Bridge طبق سیاست دستگاه ذخیره نشدند.",
+      metadata: { blockedModules: strippedModules },
+    }).catch(() => undefined);
   }
 
   const schemaName = asString(payload.schema);
@@ -139,5 +154,6 @@ export default defineEventHandler(async (event) => {
     deviceId,
     receivedAt: new Date().toISOString(),
     summary,
+    allowedModules: authPolicy.allowedModules,
   };
 });
