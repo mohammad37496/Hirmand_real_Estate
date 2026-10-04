@@ -4926,11 +4926,12 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
   background:#fff7f7;
 }
 .persian-date-picker-popover{
-  position:absolute;
-  z-index:80;
-  inset-inline-end:0;
-  top:calc(100% + 9px);
-  width:min(370px,calc(100vw - 28px));
+  position:fixed;
+  z-index:2147483000;
+  inset-inline:auto;
+  top:0;
+  left:0;
+  width:min(370px,calc(100vw - 24px));
   padding:13px;
   border:1px solid var(--line-2);
   border-radius:18px;
@@ -5153,8 +5154,7 @@ body:has(.music-player:not(.music-player-empty)) .floating-call-menu {
 @media(max-width:720px){
   .persian-date-picker-popover{
     width:min(390px,calc(100vw - 24px));
-    inset-inline-end:auto;
-    inset-inline-start:0;
+    inset-inline:auto;
     padding:12px;
   }
   .persian-date-picker-head{
