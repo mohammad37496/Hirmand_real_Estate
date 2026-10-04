@@ -513,7 +513,7 @@ export function AdminPhoneBridge() {
           <h1>گوشی‌ها و همگام‌سازی داخلی</h1>
           <p>داده فقط با کلید اختصاصی دستگاه و از طریق مسیر Sync ثبت می‌شود؛ پنل عمومی به این اطلاعات دسترسی ندارد.</p>
         </div>
-        <div className="pb-actions"><Link to="/admin" className="pb-back"><ArrowRight size={16} /> بازگشت به پنل</Link>
+        <div className="pb-actions"><Link to="/admin" className="pb-back"><ArrowRight size={16} /> بازگشت به پنل</Link><Link to="/admin-phone-bridge/location" className="pb-back"><MapPin size={16} /> موقعیت</Link>
           <button type="button" onClick={() => void load()} disabled={busy}><RefreshCw size={16} className={busy ? "pb-spin" : ""} /> بروزرسانی</button>
           <button type="button" className="pb-danger" onClick={() => void purge()} disabled={busy}><Trash2 size={16} /> پاک‌سازی قدیمی‌ها</button>
         </div>
