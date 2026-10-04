@@ -9,6 +9,8 @@ import {
   listPhoneBridgeDevices,
   listPhoneBridgeSyncs,
   purgePhoneBridgeData,
+  setPhoneBridgeDeviceEnabled,
+  rotatePhoneBridgeDeviceToken,
   type PhoneBridgeDevice,
 } from "@/lib/admin-phone-bridge";
 
@@ -149,6 +151,7 @@ export function AdminPhoneBridge() {
   const [payload, setPayload] = useState<unknown>(null);
   const [selectedSync, setSelectedSync] = useState<string | null>(null);
   const [busy, setBusy] = useState(true);
+  const [revealedToken, setRevealedToken] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setBusy(true);
@@ -232,9 +235,28 @@ export function AdminPhoneBridge() {
               <article className="pb-device" key={device.id}>
                 <div className="pb-device-main">
                   <div className="pb-device-icon"><Smartphone size={19} /></div>
-                  <div><strong>{device.name}</strong><span>{device.manufacturer} {device.model} · Android {device.androidVersion || "—"}</span><small>آخرین Sync: {date(device.lastSeenAt)}</small></div>
+                  <div>
+                    <strong>{device.name}</strong>
+                    <span>{device.manufacturer} {device.model} · Android {device.androidVersion || "—"}</span>
+                    <small>آخرین Sync: {date(device.lastSeenAt)} · {device.tokenCreatedAt ? "توکن اختصاصی فعال" : "توکن اختصاصی هنوز ثبت نشده"}</small>
+                  </div>
                 </div>
                 <Summary summary={device.summary} />
+                <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:10}}>
+                  <button type="button" onClick={async () => {
+                    try {
+                      const result = await setPhoneBridgeDeviceEnabled({ data: { deviceId: device.id, enabled: !device.enabled } });
+                      if (result.success) { toast.success(result.enabled ? "دستگاه فعال شد." : "دستگاه غیرفعال شد."); await load(); }
+                    } catch (error) { toast.error(error instanceof Error ? error.message : "تغییر وضعیت دستگاه انجام نشد."); }
+                  }}>{device.enabled ? "غیرفعال کردن" : "فعال کردن"}</button>
+                  <button type="button" onClick={async () => {
+                    if (!window.confirm("توکن اختصاصی این دستگاه تعویض شود؟ توکن قبلی بلافاصله بی‌اعتبار می‌شود.")) return;
+                    try {
+                      const result = await rotatePhoneBridgeDeviceToken({ data: { deviceId: device.id } });
+                      if (result.success && result.token) { setRevealedToken(result.token); toast.success("توکن جدید ساخته شد؛ فقط همین‌بار نمایش داده می‌شود."); await load(); }
+                    } catch (error) { toast.error(error instanceof Error ? error.message : "تعویض توکن انجام نشد."); }
+                  }}>تعویض توکن</button>
+                </div>
               </article>
             ))}
           </div>
@@ -256,6 +278,18 @@ export function AdminPhoneBridge() {
         )}
       </section>
 
+      {revealedToken && (
+        <div className="pb-modal-backdrop" onClick={() => setRevealedToken(null)}>
+          <section className="pb-modal" role="dialog" aria-modal="true" aria-label="توکن جدید دستگاه" onClick={(event) => event.stopPropagation()}>
+            <header><div><span>توکن جدید دستگاه</span><h2>فقط یک‌بار نمایش داده می‌شود</h2></div><button type="button" onClick={() => setRevealedToken(null)}><X size={18} /></button></header>
+            <div className="pb-warning">این مقدار را در Phone Bridge ذخیره کن. بعد از بستن این پنجره، توکن از سرور دوباره قابل مشاهده نیست.</div>
+            <div style={{padding:18}}>
+              <code className="pb-mono" style={{display:"block",padding:12,wordBreak:"break-all"}}>{revealedToken}</code>
+              <button type="button" style={{marginTop:10}} onClick={() => navigator.clipboard?.writeText(revealedToken).then(() => toast.success("توکن کپی شد."))}>کپی توکن</button>
+            </div>
+          </section>
+        </div>
+      )}
       {selectedSync && (
         <div className="pb-modal-backdrop" onClick={() => { setSelectedSync(null); setPayload(null); }}>
           <section className="pb-modal" role="dialog" aria-modal="true" aria-label="دادهٔ بستهٔ انتخاب‌شده" onClick={(event) => event.stopPropagation()}>
