@@ -117,7 +117,8 @@ export default defineEventHandler(async (event) => {
        sdk_int=excluded.sdk_int,
        last_seen_at=current_timestamp,
        last_sync_id=excluded.last_sync_id,
-       last_summary=excluded.last_summary`,
+       last_summary=excluded.last_summary,
+       last_snapshot_policy_revision=phone_bridge_devices.policy_revision`,
     [
       deviceId,
       asString(device.name, "گوشی"),
