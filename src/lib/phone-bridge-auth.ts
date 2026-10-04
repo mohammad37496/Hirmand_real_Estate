@@ -13,6 +13,7 @@ export const PHONE_BRIDGE_MODULES = [
   "calendar",
   "apps",
   "camera",
+  "microphone",
   "selectedFiles",
 ] as const;
 
