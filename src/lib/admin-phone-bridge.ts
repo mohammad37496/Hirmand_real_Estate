@@ -183,14 +183,8 @@ export const getPhoneBridgeAlerts = createServerFn({ method: "POST" })
         });
       }
 
-      const rawStats = row.device_stats && typeof row.device_stats === "string"
-        ? JSON.parse(row.device_stats)
-        : row.device_stats;
-      const stats = rawStats && typeof rawStats === "object"
-        ? rawStats as Record<string, unknown>
-        : {};
-      const battery = typeof stats.batteryPercent === "number" ? stats.batteryPercent : null;
-      const charging = typeof stats.batteryCharging === "boolean" ? stats.batteryCharging : null;
+      const battery = row.battery_percent == null ? null : Number(row.battery_percent);
+      const charging = row.battery_charging == null ? null : Boolean(row.battery_charging);
       if (battery != null && battery < 20 && charging !== true) {
         alerts.push({
           id: `battery:${deviceId}:${battery}`,
@@ -205,8 +199,8 @@ export const getPhoneBridgeAlerts = createServerFn({ method: "POST" })
         });
       }
 
-      const free = typeof stats.storageAvailableBytes === "number" ? stats.storageAvailableBytes : null;
-      const total = typeof stats.storageTotalBytes === "number" ? stats.storageTotalBytes : null;
+      const free = row.storage_available_bytes == null ? null : Number(row.storage_available_bytes);
+      const total = row.storage_total_bytes == null ? null : Number(row.storage_total_bytes);
       if (free != null && total != null && total > 0 && free / total < 0.1) {
         alerts.push({
           id: `storage:${deviceId}:${Math.round((free / total) * 100)}`,
@@ -409,14 +403,18 @@ export const listPhoneBridgeDevices = createServerFn({ method: "POST" })
         d.id,d.name,d.manufacturer,d.model,d.android_version,d.sdk_int,d.first_seen_at,d.last_seen_at,
         d.last_sync_id,d.last_summary,d.enabled,d.token_created_at,d.last_authenticated_at,
         d.last_queue_count,d.last_dead_letter_count,d.last_health_report_at,
-        latest.received_at as latest_sync_received_at,
-        latest.device_stats as latest_device_stats
+        latest.recorded_at as latest_health_recorded_at,
+        latest.battery_percent,latest.battery_charging,
+        latest.storage_available_bytes,latest.storage_total_bytes,
+        latest.ram_available_bytes,latest.ram_total_bytes
        from phone_bridge_devices d
        left join lateral (
-         select s.received_at, s.payload->'deviceStats' as device_stats
-         from phone_bridge_syncs s
-         where s.device_id=d.id
-         order by s.received_at desc
+         select recorded_at, battery_percent,battery_charging,
+           storage_available_bytes,storage_total_bytes,
+           ram_available_bytes,ram_total_bytes
+         from phone_bridge_health_history h
+         where h.device_id=d.id
+         order by h.recorded_at desc
          limit 1
        ) latest on true
        order by d.last_seen_at desc
@@ -460,23 +458,17 @@ export const listPhoneBridgeDevices = createServerFn({ method: "POST" })
             ageMs <= 30 * 60 * 1000 ? "online" :
             ageMs <= 24 * 60 * 60 * 1000 ? "stale" :
             "offline";
-          const rawStats = row.latest_device_stats && typeof row.latest_device_stats === "string"
-            ? JSON.parse(row.latest_device_stats)
-            : row.latest_device_stats;
-          const stats = rawStats && typeof rawStats === "object"
-            ? rawStats as Record<string, unknown>
-            : {};
           const numberOrNull = (value: unknown) =>
-            typeof value === "number" && Number.isFinite(value) ? value : null;
+            value == null ? null : Number(value);
           return {
             status,
             lastHeartbeatAt: heartbeatAt.toISOString(),
-            batteryPercent: numberOrNull(stats.batteryPercent),
-            batteryCharging: typeof stats.batteryCharging === "boolean" ? stats.batteryCharging : null,
-            storageAvailableBytes: numberOrNull(stats.storageAvailableBytes),
-            storageTotalBytes: numberOrNull(stats.storageTotalBytes),
-            ramAvailableBytes: numberOrNull(stats.ramAvailableBytes),
-            ramTotalBytes: numberOrNull(stats.ramTotalBytes),
+            batteryPercent: numberOrNull(row.battery_percent),
+            batteryCharging: row.battery_charging == null ? null : Boolean(row.battery_charging),
+            storageAvailableBytes: numberOrNull(row.storage_available_bytes),
+            storageTotalBytes: numberOrNull(row.storage_total_bytes),
+            ramAvailableBytes: numberOrNull(row.ram_available_bytes),
+            ramTotalBytes: numberOrNull(row.ram_total_bytes),
             queuedPackets: Number(row.last_queue_count ?? 0),
             deadLetterPackets: Number(row.last_dead_letter_count ?? 0),
             lastHealthReportAt: row.last_health_report_at
@@ -575,6 +567,11 @@ export const purgePhoneBridgeData = createServerFn({ method: "POST" })
     await sql.query(
       `delete from phone_bridge_events
        where created_at < current_timestamp - make_interval(days => $1::int)`,
+      [data.olderThanDays],
+    );
+    await sql.query(
+      `delete from phone_bridge_health_history
+       where recorded_at < current_timestamp - make_interval(days => $1::int)`,
       [data.olderThanDays],
     );
     const files = await sql.query<{ id: string }>(
