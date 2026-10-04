@@ -17,6 +17,7 @@ import {
   rotatePhoneBridgeDeviceToken,
   type PhoneBridgeAlert,
   type PhoneBridgeDevice,
+  type PhoneBridgeHealthSample,
   type PhoneBridgeEvent,
 } from "@/lib/admin-phone-bridge";
 
@@ -202,7 +203,7 @@ export function AdminPhoneBridge() {
   const [events, setEvents] = useState<PhoneBridgeEvent[]>([]);
   const [alerts, setAlerts] = useState<PhoneBridgeAlert[]>([]);
   const [healthDeviceId, setHealthDeviceId] = useState<string>("");
-  const [healthHistory, setHealthHistory] = useState<import("@/lib/admin-phone-bridge").PhoneBridgeHealthSample[]>([]);
+  const [healthHistory, setHealthHistory] = useState<PhoneBridgeHealthSample[]>([]);
   const [historyBusy, setHistoryBusy] = useState(false);
   const seenAlertIds = useRef<Set<string>>(new Set());
   const [eventSeverity, setEventSeverity] = useState<"all" | "info" | "warning" | "error" | "critical">("all");
@@ -265,7 +266,7 @@ export function AdminPhoneBridge() {
   }
 
   
-  async function loadHealthHistory(deviceId: string) {
+  const loadHealthHistory = useCallback(async (deviceId: string) => {
     if (!deviceId) {
       setHealthHistory([]);
       return;
