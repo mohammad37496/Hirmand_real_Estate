@@ -189,3 +189,26 @@
 .pb-call-recording-player{width:100%;height:38px}
 .pb-call-recording-actions{display:flex;gap:7px;flex-wrap:wrap}
 .pb-call-recording-actions a{display:inline-flex;align-items:center;justify-content:center;border:1px solid #d9d0c6;background:#fff;border-radius:8px;padding:6px 10px;color:inherit;text-decoration:none;font-size:10px;font-weight:800}
+
+.pb-sms-center-card{overflow:hidden}
+.pb-sms-toolbar{display:grid;grid-template-columns:1fr 1fr 2fr auto;gap:9px;align-items:end;margin-top:12px}
+.pb-sms-toolbar label{display:flex;flex-direction:column;gap:5px;font-size:10px;font-weight:800}
+.pb-sms-toolbar select,.pb-sms-toolbar input{box-sizing:border-box;width:100%;border:1px solid #ddd4ca;border-radius:9px;background:#fff;padding:8px;font:inherit}
+.pb-sms-search{min-width:0}
+.pb-sms-actions{display:flex;gap:7px;flex-wrap:wrap}
+.pb-sms-actions button{border:1px solid #d9d0c6;background:#fff;border-radius:9px;padding:8px 11px;font:inherit;font-size:10px;font-weight:800;cursor:pointer}
+.pb-sms-actions button:disabled{opacity:.55;cursor:wait}
+.pb-sms-summary{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:10px 0 6px;color:var(--muted,#746f67);font-size:10px}
+.pb-sms-list{display:grid;gap:8px}
+.pb-sms-row{border:1px solid var(--line-2,#e7e0d7);border-radius:12px;background:#fbf8f3;padding:11px}
+.pb-sms-head{display:flex;justify-content:space-between;gap:8px;align-items:start}
+.pb-sms-head>div:first-child{min-width:0;display:flex;flex-direction:column;gap:3px}
+.pb-sms-head strong{font-size:11px}
+.pb-sms-head span{font-size:9px;color:var(--muted,#746f67)}
+.pb-sms-badge{white-space:nowrap;border:1px solid #ddd4ca;border-radius:999px;padding:4px 8px;font-size:9px;font-weight:900;background:#fff}
+.pb-sms-badge.incoming{background:#f4f8f5}
+.pb-sms-badge.outgoing{background:#f6f5fa}
+.pb-sms-body{margin-top:9px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;line-height:1.9}
+.pb-sms-row time{display:block;margin-top:7px;color:var(--muted,#746f67);font-size:9px}
+@media(max-width:900px){.pb-sms-toolbar{grid-template-columns:1fr 1fr}.pb-sms-search{grid-column:1/-1}.pb-sms-actions{grid-column:1/-1}}
+@media(max-width:520px){.pb-sms-toolbar{grid-template-columns:1fr}.pb-sms-search{grid-column:auto}.pb-sms-actions{grid-column:auto}.pb-sms-actions button{flex:1}}
