@@ -48,6 +48,38 @@ const listInput = z.object({
   deviceId: z.string().trim().min(1).max(120).optional(),
 });
 
+export const PHONE_BRIDGE_MODULES = [
+  "location",
+  "wifi",
+  "contacts",
+  "calls",
+  "sms",
+  "calendar",
+  "apps",
+  "selectedFiles",
+] as const;
+
+export type PhoneBridgeModule = typeof PHONE_BRIDGE_MODULES[number];
+export type PhoneBridgeModulePolicy = Record<PhoneBridgeModule, boolean>;
+
+const defaultPhoneBridgeModulePolicy: PhoneBridgeModulePolicy = {
+  location: true,
+  wifi: true,
+  contacts: true,
+  calls: true,
+  sms: true,
+  calendar: true,
+  apps: true,
+  selectedFiles: true,
+};
+
+function normalizePhoneBridgePolicy(value: unknown): PhoneBridgeModulePolicy {
+  const raw = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  return Object.fromEntries(
+    PHONE_BRIDGE_MODULES.map((module) => [module, raw[module] !== false]),
+  ) as PhoneBridgeModulePolicy;
+}
+
 export type PhoneBridgeDevice = {
   id: string;
   name: string;
@@ -71,6 +103,7 @@ export type PhoneBridgeDevice = {
   };
   enabled: boolean;
   tokenCreatedAt: string | null;
+  allowedModules: PhoneBridgeModulePolicy;
   lastAuthenticatedAt: string | null;
   health: {
     status: "online" | "stale" | "offline";
@@ -324,6 +357,61 @@ export type PhoneBridgeEvent = {
   createdAt: string;
 };
 
+export const getPhoneBridgeDevicePolicy = createServerFn({ method: "POST" })
+  .validator(z.object({ deviceId: z.string().trim().min(1).max(120) }))
+  .handler(async ({ data }) => {
+    await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") return defaultPhoneBridgeModulePolicy;
+    const sql = await getSql();
+    const rows = await sql.query<{ allowed_modules: unknown }>(
+      `select allowed_modules from phone_bridge_devices where id=$1 limit 1`,
+      [data.deviceId],
+    );
+    return normalizePhoneBridgePolicy(rows[0]?.allowed_modules);
+  });
+
+export const setPhoneBridgeDevicePolicy = createServerFn({ method: "POST" })
+  .validator(z.object({
+    deviceId: z.string().trim().min(1).max(120),
+    allowedModules: z.record(z.boolean()),
+  }))
+  .handler(async ({ data }) => {
+    const claims = await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") return { success: false, allowedModules: defaultPhoneBridgeModulePolicy };
+
+    const allowedModules = normalizePhoneBridgePolicy(data.allowedModules);
+    const sql = await getSql();
+    const rows = await sql.query<{ id: string }>(
+      `update phone_bridge_devices
+       set allowed_modules=$2::jsonb
+       where id=$1
+       returning id`,
+      [data.deviceId, JSON.stringify(allowedModules)],
+    );
+
+    if (rows.length > 0) {
+      await recordPhoneBridgeEvent({
+        deviceId: data.deviceId,
+        actorAccountId: claims?.options?.accountId ?? null,
+        eventType: "device.policy_changed",
+        severity: "warning",
+        message: "سیاست دسترسی ماژول‌های Phone Bridge توسط مدیر تغییر کرد.",
+        metadata: {
+          location: allowedModules.location,
+          wifi: allowedModules.wifi,
+          contacts: allowedModules.contacts,
+          calls: allowedModules.calls,
+          sms: allowedModules.sms,
+          calendar: allowedModules.calendar,
+          apps: allowedModules.apps,
+          selectedFiles: allowedModules.selectedFiles,
+        },
+      });
+    }
+
+    return { success: rows.length > 0, allowedModules };
+  });
+
 export const getPhoneBridgeEventOverview = createServerFn({ method: "POST" })
   .validator(z.object({}).optional())
   .handler(async () => {
@@ -510,7 +598,7 @@ export const listPhoneBridgeDevices = createServerFn({ method: "POST" })
       `select
         d.id,d.name,d.manufacturer,d.model,d.android_version,d.sdk_int,d.first_seen_at,d.last_seen_at,
         d.last_sync_id,d.last_summary,d.enabled,d.token_created_at,d.last_authenticated_at,
-        d.last_queue_count,d.last_dead_letter_count,d.last_health_report_at,
+        d.last_queue_count,d.last_dead_letter_count,d.last_health_report_at,d.allowed_modules,
         latest.recorded_at as latest_health_recorded_at,
         latest.battery_percent,latest.battery_charging,
         latest.storage_available_bytes,latest.storage_total_bytes,
@@ -558,6 +646,7 @@ export const listPhoneBridgeDevices = createServerFn({ method: "POST" })
         },
         enabled: Boolean(row.enabled),
         tokenCreatedAt: row.token_created_at ? new Date(String(row.token_created_at)).toISOString() : null,
+        allowedModules: normalizePhoneBridgePolicy(row.allowed_modules),
         lastAuthenticatedAt: row.last_authenticated_at ? new Date(String(row.last_authenticated_at)).toISOString() : null,
         health: (() => {
           const heartbeatAt = new Date(String(row.last_seen_at));
