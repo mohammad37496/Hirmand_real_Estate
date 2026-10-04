@@ -1,19 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { createError, defineEventHandler, getHeader, readBody, setResponseHeader, type H3Event } from "h3";
 import { dbSource, getSql } from "@/lib/db";
+import { authenticateDevice } from "@/lib/phone-bridge-auth";
 
 const MAX_BODY_BYTES = 4 * 1024 * 1024;
 const TOKEN_KEYS = ["HIRMAND_PHONE_BRIDGE_TOKEN", "PHONE_BRIDGE_SYNC_TOKEN"] as const;
 
 type JsonObject = Record<string, unknown>;
-
-function configuredToken() {
-  for (const key of TOKEN_KEYS) {
-    const value = process.env[key]?.trim();
-    if (value) return value;
-  }
-  return "";
-}
 
 function asObject(value: unknown): JsonObject {
   return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
@@ -45,20 +38,8 @@ function summaryFor(payload: JsonObject) {
   };
 }
 
-function assertAuthorized(event: H3Event) {
-  const token = configuredToken();
-  if (!token) {
-    throw createError({ statusCode: 503, statusMessage: "کلید Phone Bridge روی سرور تنظیم نشده است." });
-  }
-  const auth = getHeader(event, "authorization") ?? "";
-  if (auth !== `Bearer ${token}`) {
-    throw createError({ statusCode: 401, statusMessage: "احراز هویت Phone Bridge ناموفق است." });
-  }
-}
-
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
-  assertAuthorized(event);
 
   if (dbSource === "unconfigured") {
     throw createError({ statusCode: 503, statusMessage: "پایگاه داده برای دریافت دادهٔ گوشی در دسترس نیست." });
@@ -71,6 +52,7 @@ export default defineEventHandler(async (event) => {
   if (!deviceId) {
     throw createError({ statusCode: 400, statusMessage: "شناسهٔ نصب گوشی ارسال نشده است." });
   }
+  await authenticateDevice(event, deviceId);
 
   const schemaName = asString(payload.schema);
   if (schemaName !== "hirmand.phone-bridge.v1") {
