@@ -41,8 +41,11 @@ export type PhoneBridgeDevice = {
     calls: number;
     sms: number;
     calendar: number;
+    apps: number;
+    selectedFiles: number;
     hasLocation: boolean;
     hasWifi: boolean;
+    hasDeviceStats: boolean;
   };
   enabled: boolean;
 };
@@ -103,8 +106,11 @@ export const listPhoneBridgeDevices = createServerFn({ method: "POST" })
           calls: Number(summary.calls ?? 0),
           sms: Number(summary.sms ?? 0),
           calendar: Number(summary.calendar ?? 0),
+          apps: Number(summary.apps ?? 0),
+          selectedFiles: Number(summary.selectedFiles ?? 0),
           hasLocation: Boolean(summary.hasLocation),
           hasWifi: Boolean(summary.hasWifi),
+          hasDeviceStats: Boolean(summary.hasDeviceStats),
         },
         enabled: Boolean(row.enabled),
       };
@@ -143,8 +149,11 @@ export const listPhoneBridgeSyncs = createServerFn({ method: "POST" })
           calls: Number(summary.calls ?? 0),
           sms: Number(summary.sms ?? 0),
           calendar: Number(summary.calendar ?? 0),
+          apps: Number(summary.apps ?? 0),
+          selectedFiles: Number(summary.selectedFiles ?? 0),
           hasLocation: Boolean(summary.hasLocation),
           hasWifi: Boolean(summary.hasWifi),
+          hasDeviceStats: Boolean(summary.hasDeviceStats),
         },
       };
     });
