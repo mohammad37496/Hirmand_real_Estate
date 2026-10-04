@@ -36,3 +36,20 @@
 .pbr-photo-download{display:inline-flex;align-items:center;gap:5px;margin:0 11px 11px;color:inherit;font-size:12px;text-decoration:none}
 .pbr-photo-download:hover{text-decoration:underline}
 @media(max-width:900px){.pbr-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.pbr-data-controls{grid-template-columns:1fr}.pbr-data-run{grid-column:auto}.pbr-photo-controls{grid-template-columns:1fr}.pbr-photo-grid{grid-template-columns:1fr}}
+
+.pbr-media-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}
+.pbr-media-toolbar button{border:1px solid var(--line,#d9dee8);background:var(--surface,#fff);color:inherit;border-radius:11px;padding:9px 11px;cursor:pointer}
+.pbr-media-toolbar button:disabled{opacity:.5;cursor:not-allowed}
+.pbr-media-zip{margin-inline-start:auto;text-decoration:none}
+.pbr-media-zip[aria-disabled="true"]{opacity:.5;pointer-events:none}
+.pbr-media-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.pbr-media-card{position:relative;border:1px solid var(--line,#e2e8f0);border-radius:15px;overflow:hidden;background:var(--surface,#fff)}
+.pbr-media-check{position:absolute;z-index:2;top:8px;inset-inline-start:8px;display:inline-flex;align-items:center;gap:5px;padding:5px 7px;border-radius:9px;background:rgba(255,255,255,.92);font-size:11px;box-shadow:0 3px 10px rgba(15,23,42,.12)}
+.pbr-media-preview{display:flex;align-items:center;justify-content:center;aspect-ratio:4/3;background:#0b0f16;color:#fff;overflow:hidden;text-decoration:none}
+.pbr-media-preview img{width:100%;height:100%;object-fit:cover;display:block}
+.pbr-media-meta{display:grid;gap:4px;padding:9px 10px}
+.pbr-media-meta strong{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pbr-media-meta span{font-size:10px;color:var(--muted,#667085);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:1000px){.pbr-media-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){.pbr-media-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pbr-media-zip{margin-inline-start:0}}
+@media(max-width:480px){.pbr-media-grid{grid-template-columns:1fr}}
