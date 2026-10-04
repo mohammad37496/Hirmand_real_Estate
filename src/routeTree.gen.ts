@@ -268,6 +268,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/admin-phone-bridge': typeof AdminPhoneBridgeRoute
+  '/admin-phone-bridge/contacts': typeof AdminPhoneBridgeContactsRoute
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
   '/consultants': typeof ConsultantsRouteWithChildren
