@@ -183,7 +183,7 @@ npm run dev
 > `npm run build:deploy` وابستگی‌های توسعه را حذف می‌کند (که برای استقرار لازم
 > است)؛ اگر آن را محلی اجرا کردید، ابتدا دوباره `bun install` بزنید.
 
-## ساختار پروژه
+## ساختار پروژه (monorepo)
 
 ```text
 src/
@@ -203,7 +203,47 @@ public/
 ├── robots.txt
 └── og.jpg
 migrations/                # migrationهای PostgreSQL
+android/                   # پروژه مستقل Gradle (Phone Bridge)
+├── app/                   # ماژول :app
+├── .github/workflows/     # CI و Release اندروید (مستقل از CI سایت)
+├── server/                # گیرنده آزمایشی Node برای تست LAN
+├── build.gradle.kts
+└── settings.gradle.kts
 ```
+
+## Monorepo — اجزای پروژه
+
+این مخزن یک monorepo است: سایت و اپلیکیشن Android در یک ریپو زندگی می‌کنند،
+اما **هیچ‌کدام دیگری را نمی‌شکند**.
+
+| بخش | مسیر | CI | استقرار |
+|------|------|----|---------|
+| **Website** | `src/routes/` | `ci.yml` | Liara |
+| **Admin** | `src/routes/admin.tsx` + `src/components/hirmand/admin-*.tsx` | `ci.yml` | Liara |
+| **Backend / API** | `server/routes/` | `ci.yml` | Liara |
+| **Database** | `migrations/` (تا `0067`) | `ci.yml` | با `npm run db:migrate` |
+| **Android** | `android/` | `.github/workflows/android-ci.yml` | GitHub Release |
+| **Phone Bridge** | `android/app/` | همان CI اندروید | — |
+
+### جداسازی سایت و اندروید
+
+- `android/` در `tsconfig.json` (که فقط `src` و `server` را شامل می‌شود) نیست، پس typecheck سایت آن را نمی‌بیند.
+- `android/**` در `ignores` اسکیمای ESLint هست، پس lint سایت روی سورس Kotlin/Gradle اجرا نمی‌شود.
+- `android/` در `.liaraignore` هست، پس یک تغییر اندروید هرگز payload و build لیارا را تحت تأثیر قرار نمی‌دهد.
+- workflow اندروید `paths: android/**` دارد، پس commitهای عادی سایت CI اندروید را اجرا نمی‌کنند.
+- workflowهای اندروید در ریشهٔ `.github/workflows/` هستند، چون GitHub Actions فقط همین مسیر را اسکن می‌کند. خود پروژه در `android/` است و workflowها با `working-directory: android` اجرا می‌شوند.
+
+### Android
+
+پروژه Gradle مستقل است و از داخل پوشهٔ `android/` ساخته می‌شود
+(`working-directory: android`). namespace و applicationId هر دو
+`ir.hirmand.phonebridge` باقی مانده‌اند. جزئیات: [`android/README.md`](android/README.md)
+و [`android/SETUP.md`](android/SETUP.md).
+
+> این مخزن **Gradle wrapper ندارد** (`gradlew` وجود ندارد)، چون ریپوی مبدأ آن را
+> commit نکرده بود. در حال حاضر CI از Gradle سیستمی (`gradle/actions/setup-gradle`)
+> استفاده می‌کند. اگر `./gradlew` لازم شد، یک‌بار روی سیستمی که Gradle و Android SDK
+> دارد اجرا کنید تا wrapper تولید و commit شود.
 
 ## توسعه
 
