@@ -19,7 +19,9 @@ import {
   setPhoneBridgeDeviceMinVersion,
   getPhoneBridgeReleaseSettings,
   setPhoneBridgeReleaseSettings,
+  listPhoneBridgeCallRecordings,
   type PhoneBridgeReleaseSettings,
+  type PhoneBridgeCallRecording,
   type PhoneBridgeAlert,
   type PhoneBridgeDevice,
   type PhoneBridgeHealthSample,
@@ -236,6 +238,7 @@ export function AdminPhoneBridge() {
   const [versionBusyId, setVersionBusyId] = useState<string | null>(null);
   const [release, setRelease] = useState<PhoneBridgeReleaseSettings | null>(null);
   const [releaseBusy, setReleaseBusy] = useState(false);
+  const [callRecordings, setCallRecordings] = useState<PhoneBridgeCallRecording[]>([]);
   const seenAlertIds = useRef<Set<string>>(new Set());
   const [eventSeverity, setEventSeverity] = useState<"all" | "info" | "warning" | "error" | "critical">("all");
   const [payload, setPayload] = useState<unknown>(null);
@@ -246,13 +249,14 @@ export function AdminPhoneBridge() {
   const load = useCallback(async () => {
     setBusy(true);
     try {
-      const [o,d,s,eo,al,releaseSettings,es] = await Promise.all([
+      const [o,d,s,eo,al,releaseSettings,recordings,es] = await Promise.all([
         getPhoneBridgeOverview({ data: {} }),
         listPhoneBridgeDevices({ data: { limit: 100 } }),
         listPhoneBridgeSyncs({ data: { limit: 50 } }),
         getPhoneBridgeEventOverview({ data: {} }),
         getPhoneBridgeAlerts({ data: { limit: 20 } }),
         getPhoneBridgeReleaseSettings({ data: {} }),
+        listPhoneBridgeCallRecordings({ data: { limit: 50 } }),
         listPhoneBridgeEvents({
           data: {
             limit: 80,
@@ -265,6 +269,7 @@ export function AdminPhoneBridge() {
       ]);
       setOverview(o); setDevices(d); setSyncs(s); setEventOverview(eo); setAlerts(al);
       setRelease(releaseSettings as PhoneBridgeReleaseSettings);
+      setCallRecordings(recordings as PhoneBridgeCallRecording[]);
       setEvents(es);
       if (seenAlertIds.current.size > 0) {
         al.filter((item) => !seenAlertIds.current.has(item.id)).slice(0, 3).forEach((item) => {
@@ -548,6 +553,43 @@ export function AdminPhoneBridge() {
         </section>
       ) : null}
 
+      <section className="pb-card pb-call-recordings-card">
+        <div className="pb-card-head">
+          <div><span>ضبط تماس</span><h2>تماس‌های ضبط‌شده</h2></div>
+          <PhoneCall size={18} />
+        </div>
+        <div className="pb-health-note">
+          فایل‌های صوتی فقط از مسیر مدیریتِ احراز هویت‌شده قابل دسترسی هستند. پخش و دانلود هر فایل با همان نشست مدیر انجام می‌شود.
+        </div>
+        {callRecordings.length === 0 ? (
+          <div className="pb-empty">هنوز فایل ضبط تماسی در سرور ثبت نشده است.</div>
+        ) : (
+          <div className="pb-call-recordings-list">
+            {callRecordings.map((recording) => {
+              const direction = recording.direction === "incoming" ? "ورودی" : recording.direction === "outgoing" ? "خروجی" : "نامشخص";
+              const duration = recording.durationSeconds == null
+                ? "—"
+                : fa(Math.floor(recording.durationSeconds / 60)) + ":" + String(recording.durationSeconds % 60).padStart(2, "0");
+              const audioUrl = "/api/admin/phone-bridge/call-recordings/" + recording.id;
+              return (
+                <article className="pb-call-recording-row" key={recording.id}>
+                  <div className="pb-call-recording-meta">
+                    <strong>{recording.contactName || recording.phoneNumber || "شماره/مخاطب نامشخص"}</strong>
+                    <span>{recording.deviceName} · {direction} · {date(recording.callStartedAt)} · {duration} · {bytes(recording.sizeBytes)}</span>
+                  </div>
+                  <audio className="pb-call-recording-player" controls preload="none" src={audioUrl}>
+                    مرورگر از پخش این فایل صوتی پشتیبانی نمی‌کند.
+                  </audio>
+                  <div className="pb-call-recording-actions">
+                    <a href={audioUrl} target="_blank" rel="noreferrer">پخش جداگانه</a>
+                    <a href={audioUrl + "?download=1"}>دانلود</a>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
       <section className="pb-card pb-health-history-card">
         <div className="pb-card-head">
           <div><span>تحلیل روند</span><h2>تاریخچه سلامت دستگاه</h2></div>
