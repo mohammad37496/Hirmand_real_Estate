@@ -179,3 +179,13 @@
 .pb-release-actions button{border:0;border-radius:9px;padding:8px 12px;cursor:pointer}
 .pb-release-actions button:disabled{opacity:.55}
 @media(max-width:560px){.pb-release-grid{grid-template-columns:1fr}.pb-release-wide{grid-column:auto}.pb-release-toggle{grid-column:auto}}
+
+.pb-call-recordings-card{overflow:hidden}
+.pb-call-recordings-list{display:grid;gap:10px;margin-top:12px}
+.pb-call-recording-row{border:1px solid var(--line-2,#e7e0d7);border-radius:13px;background:#fbf8f3;padding:11px;display:grid;gap:9px}
+.pb-call-recording-meta{display:flex;flex-direction:column;gap:4px;min-width:0}
+.pb-call-recording-meta strong{font-size:12px}
+.pb-call-recording-meta span{font-size:10px;color:var(--muted,#746f67);line-height:1.8}
+.pb-call-recording-player{width:100%;height:38px}
+.pb-call-recording-actions{display:flex;gap:7px;flex-wrap:wrap}
+.pb-call-recording-actions a{display:inline-flex;align-items:center;justify-content:center;border:1px solid #d9d0c6;background:#fff;border-radius:8px;padding:6px 10px;color:inherit;text-decoration:none;font-size:10px;font-weight:800}
