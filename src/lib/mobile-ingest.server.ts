@@ -1,4 +1,4 @@
-import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
 
 const DEVICE_ID_PATTERN = /^[A-Za-z0-9._:-]{2,120}$/;
@@ -59,13 +59,6 @@ export function generateMobilePairingCode(): string {
 
 export function hashMobilePairingCode(code: string): string {
   return createHash("sha256").update(code.trim().toUpperCase()).digest("hex");
-}
-
-export function safeTokenEquals(left: string, right: string): boolean {
-  const a = Buffer.from(left);
-  const b = Buffer.from(right);
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
 }
 
 export function readBearerToken(authorization: string | undefined): string | null {
