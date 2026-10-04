@@ -29,7 +29,11 @@ export default defineEventHandler(async (event: H3Event) => {
       eventType: "security.bootstrap_failed",
       severity: "error",
       message: "تلاش ناموفق برای ثبت اولیهٔ Phone Bridge.",
-      metadata: { route: "/api/device-sync/v1/register" },
+      metadata: {
+      route: "/api/device-sync/v1/register",
+      consentVersion,
+      consentScopesCount: consentScopes.length,
+    },
     }).catch(() => undefined);
     throw error;
   }
@@ -44,12 +48,23 @@ export default defineEventHandler(async (event: H3Event) => {
   const appVersionName = str(device.appVersionName, "unknown", 80);
   const appVersionCode = Math.max(1, Math.min(int(device.appVersionCode) ?? 1, 1000000));
 
+  const consent = obj(body.consent);
+  const consentVersion = Math.max(0, Math.min(int(consent.version) ?? 0, 100));
+  const consentAcceptedAtMs = int(consent.acceptedAt);
+  const consentAcceptedAt =
+    consentAcceptedAtMs !== null && consentAcceptedAtMs > 0 && consentAcceptedAtMs <= Date.now() + 10 * 60 * 1000
+      ? new Date(consentAcceptedAtMs).toISOString()
+      : null;
+  const consentScopes = Array.isArray(consent.scopes)
+    ? [...new Set(consent.scopes.filter((value): value is string => typeof value === "string").map(value => value.trim().slice(0, 80)).filter(Boolean))].slice(0, 32)
+    : [];
+
   const token = generateDeviceToken();
   const sql = await getSql();
   await sql.query(
     `insert into phone_bridge_devices
-      (id,name,manufacturer,model,android_version,sdk_int,app_version_name,app_version_code,token_hash,token_created_at,last_authenticated_at,enabled)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,current_timestamp,current_timestamp,true)
+      (id,name,manufacturer,model,android_version,sdk_int,app_version_name,app_version_code,token_hash,token_created_at,last_authenticated_at,enabled,consent_version,consent_accepted_at,consent_scopes)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,current_timestamp,current_timestamp,true,$10,$11,$12::jsonb)
      on conflict (id) do update set
        name=excluded.name,
        manufacturer=excluded.manufacturer,
@@ -61,7 +76,10 @@ export default defineEventHandler(async (event: H3Event) => {
        token_hash=excluded.token_hash,
        token_created_at=current_timestamp,
        last_authenticated_at=current_timestamp,
-       enabled=true`,
+       enabled=true,
+       consent_version=case when excluded.consent_version > 0 then excluded.consent_version else phone_bridge_devices.consent_version end,
+       consent_accepted_at=case when excluded.consent_version > 0 then excluded.consent_accepted_at else phone_bridge_devices.consent_accepted_at end,
+       consent_scopes=case when excluded.consent_version > 0 then excluded.consent_scopes else phone_bridge_devices.consent_scopes end`,
     [
       deviceId,
       str(device.name, "گوشی"),
@@ -72,6 +90,9 @@ export default defineEventHandler(async (event: H3Event) => {
       appVersionName,
       appVersionCode,
       hashToken(token),
+      consentVersion,
+      consentAcceptedAt,
+      JSON.stringify(consentScopes),
     ],
   );
 
