@@ -23,7 +23,7 @@ async function requireRemoteControlAdmin() {
   return claims;
 }
 
-export type RemoteCommandAction = "get_location" | "restore_data" | "take_photo";
+export type RemoteCommandAction = "get_location" | "restore_data" | "take_photo" | "record_audio";
 export type RemoteDataType = "sms" | "incoming_calls";
 export type RemoteCamera = "front" | "back";
 
@@ -134,6 +134,12 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
       camera: z.enum(["front", "back"]),
       flash: z.boolean(),
     }),
+    z.object({
+      deviceId: z.string().trim().min(1).max(120),
+      action: z.literal("record_audio"),
+      audioFormat: z.enum(["wav", "amr", "mp3"]),
+      durationSeconds: z.number().int().refine((v) => v >= 60 && v <= 3600 && v % 60 === 0),
+    }),
   ]))
   .handler(async ({ data }) => {
     const claims = await requireRemoteControlAdmin();
@@ -164,6 +170,12 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
     if (data.action === "take_photo" && modules.camera === false) {
       throw new Error("ماژول دوربین برای این دستگاه غیرفعال است.");
     }
+    if (data.action === "record_audio" && modules.microphone === false) {
+      throw new Error("ماژول میکروفون برای این دستگاه غیرفعال است.");
+    }
+    if (data.action === "record_audio" && data.audioFormat === "mp3") {
+      throw new Error("MP3 در نسخهٔ فعلی encoder داخلی ندارد؛ WAV یا AMR را انتخاب کن.");
+    }
 
     const active = await sql.query<{ id: string }>(
       "select id from phone_bridge_remote_commands where device_id=$1 and status in ('queued','running') and expires_at >= current_timestamp limit 1",
@@ -177,6 +189,8 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
       payload = JSON.stringify({ dataType: data.dataType, requestedCount: data.requestedCount });
     } else if (data.action === "take_photo") {
       payload = JSON.stringify({ camera: data.camera, flash: data.camera === "front" ? false : data.flash });
+    } else if (data.action === "record_audio") {
+      payload = JSON.stringify({ audioFormat: data.audioFormat, durationSeconds: data.durationSeconds });
     } else {
       payload = "{}";
     }
