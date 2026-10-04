@@ -19,3 +19,20 @@
 .pbr-pagination button{border:1px solid var(--line,#d9dee8);background:var(--surface,#fff);padding:8px 11px;border-radius:11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;color:inherit}
 .pbr-pagination button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:620px){.pbr-data-controls{grid-template-columns:1fr}.pbr-data-run{grid-column:auto}}
+.pbr-photo-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.pbr-photo-controls label{display:flex;flex-direction:column;gap:7px}
+.pbr-photo-controls label>span{font-size:12px;color:var(--muted,#667085);font-weight:700}
+.pbr-photo-controls select{border:1px solid var(--line,#d9dee8);border-radius:12px;padding:11px 12px;background:transparent;color:inherit;min-height:44px}
+.pbr-check-row{display:flex!important;flex-direction:row!important;align-items:center;justify-content:flex-start;gap:8px;padding:0 10px;border:1px solid var(--line,#d9dee8);border-radius:12px;min-height:44px}
+.pbr-check-row>span{display:inline-flex;align-items:center;gap:6px}
+.pbr-photo-run{width:100%;margin-bottom:12px}
+.pbr-photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.pbr-photo-card{border:1px solid var(--line,#e2e8f0);border-radius:15px;overflow:hidden;background:var(--surface,#fff)}
+.pbr-photo-thumb{display:block;aspect-ratio:4/3;background:#0b0f16;overflow:hidden}
+.pbr-photo-thumb img{width:100%;height:100%;display:block;object-fit:cover}
+.pbr-photo-meta{display:grid;gap:4px;padding:10px 11px}
+.pbr-photo-meta strong{font-size:12px}
+.pbr-photo-meta span{font-size:11px;color:var(--muted,#667085)}
+.pbr-photo-download{display:inline-flex;align-items:center;gap:5px;margin:0 11px 11px;color:inherit;font-size:12px;text-decoration:none}
+.pbr-photo-download:hover{text-decoration:underline}
+@media(max-width:900px){.pbr-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.pbr-data-controls{grid-template-columns:1fr}.pbr-data-run{grid-column:auto}.pbr-photo-controls{grid-template-columns:1fr}.pbr-photo-grid{grid-template-columns:1fr}}
