@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { authenticateDevice } from "@/lib/phone-bridge-auth";
+import { requirePhoneBridgeSignedRequest } from "@/lib/phone-bridge-signature.server";
 import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 import { getSql, dbSource } from "@/lib/db";
 import { recordPhoneBridgeEvent } from "@/lib/phone-bridge-events.server";
@@ -21,17 +22,18 @@ export default defineEventHandler(async (event) => {
     maxHits: 20,
     blockMs: 10 * 60 * 1000,
   });
+  const raw = await readRawBody(event, false);
+  const bytes = raw ? Buffer.from(raw) : Buffer.alloc(0);
+  if (!bytes.length || bytes.length > MAX_BYTES) throw createError({ statusCode: 413, statusMessage: "اندازه فایل صوتی مجاز نیست." });
+
   const auth = await authenticateDevice(event, deviceId);
   if (!auth.ok) throw createError({ statusCode: auth.status, statusMessage: auth.message });
+  if (auth.mode === "device") await requirePhoneBridgeSignedRequest(event, deviceId, bytes);
 
   if (dbSource === "unconfigured") throw createError({ statusCode: 503, statusMessage: "پایگاه داده آماده نیست." });
 
   const mime = String(getHeader(event, "x-hirmand-file-mime") || getHeader(event, "content-type") || "").split(";")[0].toLowerCase();
   if (!allowedMime.has(mime)) throw createError({ statusCode: 415, statusMessage: "فرمت فایل صوتی مجاز نیست." });
-
-  const raw = await readRawBody(event, false);
-  const bytes = raw ? Buffer.from(raw) : Buffer.alloc(0);
-  if (!bytes.length || bytes.length > MAX_BYTES) throw createError({ statusCode: 413, statusMessage: "اندازه فایل صوتی مجاز نیست." });
 
   const sha256 = createHash("sha256").update(bytes).digest("hex");
   const declaredSha = String(getHeader(event, "x-hirmand-file-sha256") || "");
