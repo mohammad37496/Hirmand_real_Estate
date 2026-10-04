@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Activity, Smartphone, RefreshCw, ShieldCheck, Database, Eye, X, Trash2, UsersRound, PhoneCall, MessageSquareText, CalendarDays, ArrowRight, Package, FileText, BatteryCharging, HardDrive, MemoryStick, MapPin, Wifi, Download, Clock3, AlertTriangle, WifiOff, Bell, BellRing } from "lucide-react";
+import { Activity, Smartphone, RefreshCw, ShieldCheck, Database, Eye, X, Trash2, UsersRound, PhoneCall, MessageSquareText, CalendarDays, ArrowRight, Package, FileText, BatteryCharging, HardDrive, MemoryStick, MapPin, Wifi, Download, Clock3, AlertTriangle, WifiOff, Bell, BellRing, LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
 import "@/admin-phone-bridge-details.css";
 import {
@@ -227,6 +227,8 @@ export function AdminPhoneBridge() {
   const [healthHistory, setHealthHistory] = useState<PhoneBridgeHealthSample[]>([]);
   const [historyBusy, setHistoryBusy] = useState(false);
   const [ackBusyId, setAckBusyId] = useState<string | null>(null);
+  const [policyBusyId, setPolicyBusyId] = useState<string | null>(null);
+  const [expandedPolicyId, setExpandedPolicyId] = useState<string | null>(null);
   const seenAlertIds = useRef<Set<string>>(new Set());
   const [eventSeverity, setEventSeverity] = useState<"all" | "info" | "warning" | "error" | "critical">("all");
   const [payload, setPayload] = useState<unknown>(null);
@@ -692,6 +694,57 @@ export function AdminPhoneBridge() {
                 </div>
                 <Summary summary={device.summary} />
                 <DeviceHealthStrip device={device} />
+                <details
+                  className="pb-policy"
+                  open={expandedPolicyId === device.id}
+                  onToggle={(event) => {
+                    const open = (event.currentTarget as HTMLDetailsElement).open;
+                    setExpandedPolicyId(open ? device.id : null);
+                  }}
+                >
+                  <summary><LockKeyhole size={14} /> سیاست دسترسی این دستگاه</summary>
+                  <div className="pb-policy-grid">
+                    {([
+                      ["location", "موقعیت مکانی"],
+                      ["wifi", "Wi‑Fi"],
+                      ["contacts", "مخاطبین"],
+                      ["calls", "تاریخچه تماس"],
+                      ["sms", "پیامک"],
+                      ["calendar", "تقویم"],
+                      ["apps", "برنامه‌ها"],
+                      ["selectedFiles", "فایل‌های انتخابی"],
+                    ] as const).map(([key, label]) => (
+                      <label className="pb-policy-item" key={key}>
+                        <input
+                          type="checkbox"
+                          checked={device.allowedModules[key]}
+                          disabled={policyBusyId === device.id}
+                          onChange={async (event) => {
+                            const next = { ...device.allowedModules, [key]: event.target.checked };
+                            setPolicyBusyId(device.id);
+                            try {
+                              const result = await setPhoneBridgeDevicePolicy({
+                                data: { deviceId: device.id, allowedModules: next },
+                              });
+                              if (result.success) {
+                                setDevices((current) => current.map((item) =>
+                                  item.id === device.id ? { ...item, allowedModules: result.allowedModules } : item
+                                ));
+                                toast.success("سیاست دسترسی دستگاه ذخیره شد.");
+                              }
+                            } catch (error) {
+                              toast.error(error instanceof Error ? error.message : "ذخیره سیاست دسترسی انجام نشد.");
+                            } finally {
+                              setPolicyBusyId(null);
+                            }
+                          }}
+                        />
+                        <span>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <small>محدودیت در سمت سرور اعمال می‌شود؛ خاموش بودن یک ماژول باعث ذخیره نشدن همان بخش از Sync می‌شود.</small>
+                </details>
                 <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:10}}>
                   <button type="button" onClick={async () => {
                     try {
