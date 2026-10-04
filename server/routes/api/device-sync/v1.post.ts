@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { createError, defineEventHandler, readRawBody, setResponseHeader } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { authenticateDevice } from "@/lib/phone-bridge-auth";
@@ -192,6 +192,34 @@ export default defineEventHandler(async (event) => {
       encoded,
     ],
   );
+
+  const smsItems = Array.isArray(payload.sms) ? payload.sms : [];
+  if (smsItems.length > 0) {
+    for (const item of smsItems) {
+      const sms = asObject(item);
+      const address = asString(sms.address, "").slice(0, 120);
+      const body = asString(sms.body, "").slice(0, 4000);
+      const messageType = asInt(sms.type) ?? 0;
+      const dateMs = typeof sms.date === "number" && Number.isFinite(sms.date) ? sms.date : Date.now();
+      const fingerprint = [deviceId, address, String(messageType), String(Math.trunc(dateMs)), body].join("\u001f");
+      const messageHash = createHash("sha256").update(fingerprint, "utf8").digest("hex");
+      const direction = messageType === 1 ? "incoming" : messageType === 2 ? "outgoing" : "other";
+
+      await sql.query(
+        `insert into phone_bridge_sms_messages
+          (id,device_id,message_hash,address,message_type,direction,sent_at,body,last_seen_at)
+         values ($1,$2,$3,$4,$5,$6,to_timestamp($7/1000.0),$8,current_timestamp)
+         on conflict (device_id,message_hash) do update set
+           address=excluded.address,
+           message_type=excluded.message_type,
+           direction=excluded.direction,
+           sent_at=excluded.sent_at,
+           body=excluded.body,
+           last_seen_at=current_timestamp`,
+        [randomUUID(), deviceId, messageHash, address || null, messageType, direction, dateMs, body],
+      );
+    }
+  }
 
   return {
     ok: true,
