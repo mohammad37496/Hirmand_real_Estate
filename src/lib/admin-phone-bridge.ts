@@ -10,6 +10,7 @@ import {
 import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
 import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import { generateDeviceToken, hashToken } from "@/lib/phone-bridge-auth";
+import { recordPhoneBridgeEvent, type PhoneBridgeEventSeverity } from "@/lib/phone-bridge-events.server";
 
 async function requirePhoneBridgeAdmin() {
   const token = getCookie(ADMIN_SESSION_COOKIE);
@@ -82,6 +83,81 @@ export type PhoneBridgeDevice = {
     ramTotalBytes: number | null;
   };
 };
+
+export type PhoneBridgeEvent = {
+  id: string;
+  deviceId: string | null;
+  deviceName: string;
+  eventType: string;
+  severity: PhoneBridgeEventSeverity;
+  message: string;
+  metadata: PhoneBridgeJson;
+  createdAt: string;
+};
+
+export const getPhoneBridgeEventOverview = createServerFn({ method: "POST" })
+  .validator(z.object({}).optional())
+  .handler(async () => {
+    await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") return { total: 0, last24h: 0, errors24h: 0, critical24h: 0 };
+
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select
+        count(*) as total,
+        count(*) filter (where created_at >= current_timestamp - interval '24 hours') as last_24h,
+        count(*) filter (where created_at >= current_timestamp - interval '24 hours' and severity in ('error','critical')) as errors_24h,
+        count(*) filter (where created_at >= current_timestamp - interval '24 hours' and severity='critical') as critical_24h
+       from phone_bridge_events`,
+    );
+    const row = rows[0] ?? {};
+    return {
+      total: Number(row.total ?? 0),
+      last24h: Number(row.last_24h ?? 0),
+      errors24h: Number(row.errors_24h ?? 0),
+      critical24h: Number(row.critical_24h ?? 0),
+    };
+  });
+
+const eventListInput = z.object({
+  limit: z.number().int().min(1).max(100).optional().default(50),
+  deviceId: z.string().trim().min(1).max(120).optional(),
+  severity: z.enum(["info","warning","error","critical"]).optional(),
+});
+
+export const listPhoneBridgeEvents = createServerFn({ method: "POST" })
+  .validator(eventListInput)
+  .handler(async ({ data }) => {
+    await requirePhoneBridgeAdmin();
+    if (dbSource === "unconfigured") return [];
+
+    const sql = await getSql();
+    const rows = await sql.query<Record<string, unknown>>(
+      `select
+        e.id,e.device_id,e.event_type,e.severity,e.message,e.metadata,e.created_at,
+        coalesce(d.name,'گوشی ناشناس') as device_name
+       from phone_bridge_events e
+       left join phone_bridge_devices d on d.id=e.device_id
+       where ($1::text is null or e.device_id=$1)
+         and ($2::text is null or e.severity=$2)
+       order by e.created_at desc
+       limit $3`,
+      [data.deviceId ?? null, data.severity ?? null, data.limit],
+    );
+
+    return rows.map((row) => ({
+      id: String(row.id),
+      deviceId: row.device_id ? String(row.device_id) : null,
+      deviceName: String(row.device_name ?? "گوشی ناشناس"),
+      eventType: String(row.event_type ?? ""),
+      severity: (["info","warning","error","critical"].includes(String(row.severity))
+        ? String(row.severity)
+        : "info") as PhoneBridgeEventSeverity,
+      message: String(row.message ?? ""),
+      metadata: toPhoneBridgeJson(row.metadata),
+      createdAt: new Date(String(row.created_at)).toISOString(),
+    }));
+  });
 
 export const getPhoneBridgeOverview = createServerFn({ method: "POST" })
   .validator(z.object({}).optional())
@@ -265,6 +341,11 @@ export const purgePhoneBridgeData = createServerFn({ method: "POST" })
        returning id`,
       [data.olderThanDays],
     );
+    await sql.query(
+      `delete from phone_bridge_events
+       where created_at < current_timestamp - make_interval(days => $1::int)`,
+      [data.olderThanDays],
+    );
     const files = await sql.query<{ id: string }>(
       `delete from phone_bridge_files
        where uploaded_at < current_timestamp - make_interval(days => $1::int)
@@ -285,6 +366,15 @@ export const setPhoneBridgeDeviceEnabled = createServerFn({ method: "POST" })
       `update phone_bridge_devices set enabled=$2 where id=$1 returning id`,
       [data.deviceId, data.enabled],
     );
+    if (rows.length > 0) {
+      await recordPhoneBridgeEvent({
+        deviceId: data.deviceId,
+        eventType: "device.enabled_changed",
+        severity: data.enabled ? "info" : "warning",
+        message: data.enabled ? "دستگاه توسط مدیر فعال شد." : "دستگاه توسط مدیر غیرفعال شد.",
+        metadata: { enabled: data.enabled },
+      });
+    }
     return { success: rows.length > 0, enabled: data.enabled };
   });
 
@@ -302,5 +392,13 @@ export const rotatePhoneBridgeDeviceToken = createServerFn({ method: "POST" })
        returning id`,
       [data.deviceId, hashToken(token)],
     );
+    if (rows.length > 0) {
+      await recordPhoneBridgeEvent({
+        deviceId: data.deviceId,
+        eventType: "security.token_rotated",
+        severity: "warning",
+        message: "توکن اختصاصی دستگاه توسط مدیر تعویض شد.",
+      });
+    }
     return { success: rows.length > 0, token: rows.length > 0 ? token : null };
   });
