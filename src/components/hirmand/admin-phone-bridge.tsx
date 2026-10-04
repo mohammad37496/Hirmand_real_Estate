@@ -374,7 +374,7 @@ export function AdminPhoneBridge() {
                     <strong>{event.message}</strong>
                     <span>{date(event.createdAt)}</span>
                   </div>
-                  <p>{event.deviceName} · {event.eventType}</p>
+                  <p>{event.deviceName} · {event.eventType} · مدیر: {event.actorAccountId ?? "سیستم / نامشخص"}</p>
                 </div>
                 <span className="pb-event-severity">{event.severity}</span>
               </article>
