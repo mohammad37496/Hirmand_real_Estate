@@ -4,7 +4,7 @@ import { authenticateDevice } from "@/lib/phone-bridge-auth";
 import { requirePhoneBridgeSignedRequest } from "@/lib/phone-bridge-signature.server";
 import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
-const ALLOWED_ACTIONS = new Set(["get_location", "restore_data"]);
+const ALLOWED_ACTIONS = new Set(["get_location", "restore_data", "take_photo"]);
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
@@ -20,7 +20,6 @@ export default defineEventHandler(async (event) => {
   });
 
   const auth = await authenticateDevice(event, deviceId);
-  if (!auth.ok) throw createError({ statusCode: auth.status, statusMessage: auth.message });
   if (auth.mode === "device") await requirePhoneBridgeSignedRequest(event, deviceId, Buffer.alloc(0));
 
   const sql = await getSql();
@@ -60,7 +59,9 @@ export default defineEventHandler(async (event) => {
   const payload = row.payload && typeof row.payload === "object"
     ? row.payload as Record<string, unknown>
     : {};
-  if (String(row.action) === "get_location" && modules.location === false) {
+  const action = String(row.action);
+
+  if (action === "get_location" && modules.location === false) {
     await sql.query(
       "update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",
       [String(row.id), "ماژول موقعیت برای این دستگاه غیرفعال است."],
@@ -68,7 +69,7 @@ export default defineEventHandler(async (event) => {
     return { ok: true, command: null };
   }
 
-  if (String(row.action) === "restore_data") {
+  if (action === "restore_data") {
     const dataType = String(payload.dataType ?? "");
     const requestedCount = Number(payload.requestedCount ?? 0);
     const validType = dataType === "sms" || dataType === "incoming_calls";
@@ -85,11 +86,33 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  if (action === "take_photo") {
+    const camera = String(payload.camera ?? "").trim();
+    const flash = payload.flash === true;
+    if (camera !== "front" && camera !== "back") {
+      await sql.query(
+        "update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",
+        [String(row.id), "دوربین انتخاب‌شده معتبر نیست."],
+      );
+      return { ok: true, command: null };
+    }
+    if (modules.selectedFiles === false) {
+      await sql.query(
+        "update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",
+        [String(row.id), "ماژول فایل برای ذخیرهٔ نتیجهٔ عکس این دستگاه غیرفعال است."],
+      );
+      return { ok: true, command: null };
+    }
+    if (camera === "front" && flash) {
+      payload.flash = false;
+    }
+  }
+
   return {
     ok: true,
     command: {
       id: String(row.id),
-      action: String(row.action),
+      action,
       payload,
       createdAt: new Date(String(row.created_at)).toISOString(),
       expiresAt: new Date(String(row.expires_at)).toISOString(),
