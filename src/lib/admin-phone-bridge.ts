@@ -185,6 +185,7 @@ export const getPhoneBridgeAlerts = createServerFn({ method: "POST" })
       `select
         d.id,d.name,d.enabled,d.last_seen_at,d.last_queue_count,d.last_dead_letter_count,
         d.last_health_report_at,
+        d.app_version_name,d.app_version_code,d.min_app_version_code,
         latest.battery_percent,latest.battery_charging,
         latest.storage_available_bytes,latest.storage_total_bytes
        from phone_bridge_devices d
@@ -211,6 +212,22 @@ export const getPhoneBridgeAlerts = createServerFn({ method: "POST" })
       const ageMs = Number.isFinite(seen) ? Math.max(0, now - seen) : Number.MAX_SAFE_INTEGER;
       const deadLetters = Number(row.last_dead_letter_count ?? 0);
       const queued = Number(row.last_queue_count ?? 0);
+      const appVersionCode = Number(row.app_version_code ?? 1);
+      const minAppVersionCode = Number(row.min_app_version_code ?? 0);
+
+      if (minAppVersionCode > 0 && appVersionCode < minAppVersionCode) {
+        alerts.push({
+          id: `outdated-client:${deviceId}`,
+          deviceId,
+          deviceName,
+          severity: "error",
+          title: "نسخهٔ Phone Bridge قدیمی است",
+          message: `نسخهٔ نصب‌شده ${appVersionCode} است و حداقل نسخهٔ مجاز ${minAppVersionCode} تعیین شده است.`,
+          createdAt: row.last_health_report_at
+            ? new Date(String(row.last_health_report_at)).toISOString()
+            : new Date(String(row.last_seen_at)).toISOString(),
+        });
+      }
 
       if (ageMs > 24 * 60 * 60 * 1000) {
         alerts.push({
