@@ -413,7 +413,7 @@ export const setPhoneBridgeReleaseSettings = createServerFn({ method: "POST" })
   .validator(z.object({
     versionName: z.string().trim().min(1).max(40),
     versionCode: z.number().int().min(1).max(1000000),
-    downloadUrl: z.string().trim().url().max(1000).or(z.literal("")),
+    downloadUrl: z.string().trim().refine((value) => !value || value.startsWith("https://"), "لینک دانلود باید HTTPS باشد.").max(1000),
     releaseNotes: z.string().trim().max(4000),
     forceUpdate: z.boolean(),
   }))
