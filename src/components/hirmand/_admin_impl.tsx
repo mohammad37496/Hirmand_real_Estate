@@ -1932,11 +1932,11 @@ export function AdminPropertiesPage() {
                                                     ? "ریدایرکت و ۴۰۴"
                                                     : view === "contentStudio"
                                                       ? "استودیو محتوا"
-                                                      : view === "integrity"
+                                                      : (view as string) === "integrity"
                                                         ? "سلامت داده و کنترل کیفیت"
-                                                        : view === "deals"
+                                                        : (view as string) === "deals"
                                                           ? "معاملات و قراردادها"
-                                                          : view === "expiry"
+                                                          : (view as string) === "expiry"
                                                             ? "انقضا و تمدید فایل‌ها"
                                                             : view === "commission"
                                                               ? "تسویه کمیسیون مشاوران"
@@ -2048,9 +2048,7 @@ export function AdminPropertiesPage() {
             </>
           ) : view === "managementReport" ? (
             <AdminManagementReport />
-          ) : view === "integrity" ? (
-            <AdminDataHealth />
-          ) : view === "integrity" ? (
+          ) : (view as string) === "integrity" ? (
             <AdminDataHealth />
           ) : view === "deals" ? (
             <AdminDealsManager />
