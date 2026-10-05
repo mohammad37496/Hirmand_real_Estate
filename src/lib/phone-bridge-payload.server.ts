@@ -47,7 +47,7 @@ export function stripDisallowedModules(
 export const syncPacketSchema = "hirmand.phone-bridge.v1";
 
 const MAX_TEXT = 500;
-const MAX_CONTACTS = 1000;
+const MAX_CONTACTS = 200;
 const MAX_CALLS = 200;
 const MAX_SMS = 200;
 const MAX_CALENDAR = 200;
