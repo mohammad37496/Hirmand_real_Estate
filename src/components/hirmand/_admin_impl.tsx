@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   BarChart3,
+  BriefcaseBusiness,
   Building2,
   Copy,
   ExternalLink,
@@ -42,6 +43,7 @@ import {
   Settings,
   HardDrive,
   Route as RouteIcon,
+  Target,
 } from "lucide-react";
 import { NEIGHBORHOOD_NAMES, PROPERTY_TYPES, SITE, TEAM } from "@/lib/site";
 import { isInvalidIntegerInput, normalizeMoneyText } from "@/lib/property-input-normalization";
@@ -70,6 +72,7 @@ import {
 } from "@/components/hirmand/admin-ui";
 import { adminErrorMessage, fa, useConfirmDialog, useOverlayDismiss } from "@/components/hirmand/admin-ui-utils";
 import { AdminMediaField } from "@/components/hirmand/admin-media-field";
+import { AdminFloorPlanField } from "@/components/hirmand/admin-floor-plan-field";
 import { AdminPropertyDuplicateCheck } from "@/components/hirmand/admin-property-duplicate-check";
 import { AdminLocationPicker } from "@/components/hirmand/admin-location-picker";
 import { AdminPricingPanel } from "@/components/hirmand/admin-pricing-panel";
@@ -78,6 +81,8 @@ import { AdminMusicManager } from "@/components/hirmand/admin-music-manager";
 import { AdminLeadManager } from "@/components/hirmand/admin-lead-manager";
 import { AdminCustomerInbox } from "@/components/hirmand/admin-customer-inbox";
 import { AdminDashboard } from "@/components/hirmand/admin-dashboard";
+import { AdminSalesFunnel } from "@/components/hirmand/admin-sales-funnel";
+import { AdminManagementReport } from "@/components/hirmand/admin-management-report";
 import { ADMIN_CSS } from "@/components/hirmand/admin-shell-css";
 import { AdminListingAssistant } from "@/components/hirmand/admin-listing-assistant";
 import { AdminPublishReadiness } from "@/components/hirmand/admin-publish-readiness";
@@ -93,6 +98,7 @@ import { AdminBackupManager } from "@/components/hirmand/admin-backup-manager";
 import { AdminOperationsCenter } from "@/components/hirmand/admin-operations-center";
 import { AdminProductivityCenter } from "@/components/hirmand/admin-productivity-center";
 import { AdminPropertyPerformance } from "@/components/hirmand/admin-property-performance";
+import { AdminPropertyPriceHistory } from "@/components/hirmand/admin-property-price-history";
 import { AdminCommandPalette } from "@/components/hirmand/admin-command-palette";
 import { AdminPropertyQuestions, AdminPropertyOpenHouse } from "@/components/hirmand/admin-property-features";
 import { AdminPropertyFilterPresets } from "@/components/hirmand/admin-property-filter-presets";
@@ -105,6 +111,16 @@ import { AdminMediaHealth } from "@/components/hirmand/admin-media-health";
 import { AdminSecurityCenter } from "@/components/hirmand/admin-security-center";
 import { AdminSeoRedirects } from "@/components/hirmand/admin-seo-redirects";
 import { AdminContentStudio } from "@/components/hirmand/admin-content-studio";
+import { AdminPublicationQueue } from "@/components/hirmand/admin-publication-queue";
+import { AdminKpiHistory } from "@/components/hirmand/admin-kpi-history";
+import { AdminDataHealth } from "@/components/hirmand/admin-data-health";
+import { AdminDealsManager } from "@/components/hirmand/admin-deals";
+import { AdminPropertyExpiryCenter } from "@/components/hirmand/admin-property-expiry";
+import { AdminCommissionSettlement } from "@/components/hirmand/admin-commission-settlement";
+import { AdminFinanceInsights } from "@/components/hirmand/admin-finance-insights";
+import { AdminConsultantPerformance } from "@/components/hirmand/admin-consultant-performance";
+import { AdminConsultantTargets } from "@/components/hirmand/admin-consultant-targets";
+import { AdminPropertyPreview } from "@/components/hirmand/admin-property-preview";
 import "@/admin-site-settings.css";
 import "@/admin-security.css";
 import "@/admin-seo-redirects.css";
@@ -121,6 +137,8 @@ import {
   PROPERTY_WALL_CLOSET_OPTIONS,
 } from "@/lib/property-options";
 import { getPublishReadiness } from "@/lib/property-publish-readiness";
+import { ADMIN_ROLE_LABELS, type AdminRole } from "@/lib/admin-roles";
+import { requestPropertyPublication } from "@/lib/admin-publication";
 
 type PublishStatus = "draft" | "published" | "archived";
 const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
@@ -130,7 +148,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
+type ViewMode = "dashboard" | "managementReport" | "integrity" | "deals" | "expiry" | "commission" | "consultantPerformance" | "consultantTargets" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -231,6 +249,7 @@ type FormState = {
   description: string;
   features: string;
   images: string;
+  floorPlanUrl: string;
   contactName: string;
   contactPhone: string;
   ownerName: string;
@@ -293,6 +312,7 @@ function emptyForm(): FormState {
     description: "",
     features: "",
     images: "",
+    floorPlanUrl: "",
     contactName: TEAM[0]?.name ?? "مشاور هیرمند",
     contactPhone: TEAM[0]?.phone ?? SITE.phone.mobile,
     ownerName: "",
@@ -471,6 +491,7 @@ function propertyToForm(property: Property): FormState {
     description: property.description ?? "",
     features: (property.features ?? []).join("\n"),
     images: (property.images ?? []).join("\n"),
+    floorPlanUrl: property.floorPlanUrl ?? "",
     contactName: property.contactName,
     contactPhone: property.contactPhone,
     ownerName: property.ownerName ?? "",
@@ -490,6 +511,10 @@ function propertyToForm(property: Property): FormState {
 
 export function AdminPropertiesPage() {
   const [keyInput, setKeyInput] = useState("");
+  const [loginMode, setLoginMode] = useState<"key" | "account">("key");
+  const [usernameInput, setUsernameInput] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
+  const [adminRole, setAdminRole] = useState<AdminRole>("owner");
   const [unlocked, setUnlocked] = useState(false);
   const [sessionChecking, setSessionChecking] = useState(true);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -542,32 +567,56 @@ export function AdminPropertiesPage() {
 
   const navItems = useMemo(
     () => [
-      { view: "dashboard" as ViewMode, label: "داشبورد", icon: BarChart3 },
-      { view: "productivity" as ViewMode, label: "مرکز مدیریت", icon: ListTodo },
-      { view: "list" as ViewMode, label: "فایل‌های ملک", icon: LayoutDashboard },
-      { view: "leads" as ViewMode, label: "درخواست‌ها", icon: UsersRound },
-      { view: "messages" as ViewMode, label: "گفت‌وگوی مشتری", icon: MessageCircle },
-      { view: "consultants" as ViewMode, label: "مشاوران", icon: UsersRound },
-      { view: "partners" as ViewMode, label: "همکاران", icon: UsersRound },
-      { view: "music" as ViewMode, label: "موسیقی", icon: Music2 },
-      { view: "attendance" as ViewMode, label: "حضور و غیاب", icon: Clock3 },
-      { view: "matching" as ViewMode, label: "مچ کردن", icon: GitCompareArrows },
-      { view: "owners" as ViewMode, label: "مالکین", icon: UserCog },
-      { view: "finance" as ViewMode, label: "دفتر مالی", icon: WalletCards },
-      { view: "backup" as ViewMode, label: "پشتیبان", icon: DatabaseBackup },
-      { view: "watermark" as ViewMode, label: "واترمارک", icon: ShieldCheck },
-      { view: "schedule" as ViewMode, label: "زمان‌بندی", icon: CalendarClock },
-      { view: "trash" as ViewMode, label: "سطل بازیابی", icon: ArchiveRestore },
-      { view: "audit" as ViewMode, label: "گزارش فعالیت", icon: ClipboardList },
-      { view: "settings" as ViewMode, label: "تنظیمات سایت", icon: Settings },
-      { view: "mediaHealth" as ViewMode, label: "سلامت رسانه", icon: HardDrive },
-      { view: "security" as ViewMode, label: "امنیت مدیران", icon: ShieldAlert },
-      { view: "seoRedirects" as ViewMode, label: "ریدایرکت و ۴۰۴", icon: RouteIcon },
-      { view: "contentStudio" as ViewMode, label: "استودیو محتوا", icon: FileText },
-      { view: "divar" as ViewMode, label: "فایل‌های دیوار", icon: Globe2 },
+      { view: "dashboard" as ViewMode, section: "نمای کلی", label: "داشبورد", icon: BarChart3 },
+      { view: "managementReport" as ViewMode, section: "نمای کلی", label: "گزارش مدیریتی", icon: FileText },
+      { view: "productivity" as ViewMode, section: "نمای کلی", label: "مرکز مدیریت", icon: ListTodo },
+      { view: "integrity" as ViewMode, section: "نمای کلی", label: "سلامت داده", icon: ShieldAlert },
+      { view: "deals" as ViewMode, section: "فروش و معاملات", label: "معاملات", icon: BriefcaseBusiness },
+      { view: "expiry" as ViewMode, section: "فروش و معاملات", label: "انقضا و تمدید فایل", icon: Clock3 },
+      { view: "commission" as ViewMode, section: "فروش و معاملات", label: "تسویه کمیسیون", icon: WalletCards },
+      { view: "consultantPerformance" as ViewMode, section: "تیم و روابط", label: "عملکرد مشاوران", icon: BarChart3 },
+      { view: "consultantTargets" as ViewMode, section: "تیم و روابط", label: "اهداف مشاوران", icon: Target },
+
+      { view: "list" as ViewMode, section: "فایل‌ها و مشتریان", label: "فایل‌های ملک", icon: LayoutDashboard },
+      { view: "leads" as ViewMode, section: "فایل‌ها و مشتریان", label: "درخواست‌ها", icon: UsersRound },
+      { view: "messages" as ViewMode, section: "فایل‌ها و مشتریان", label: "گفت‌وگوی مشتری", icon: MessageCircle },
+      { view: "matching" as ViewMode, section: "فایل‌ها و مشتریان", label: "مچ کردن", icon: GitCompareArrows },
+      { view: "divar" as ViewMode, section: "فایل‌ها و مشتریان", label: "فایل‌های دیوار", icon: Globe2 },
+
+      { view: "consultants" as ViewMode, section: "تیم و روابط", label: "مشاوران", icon: UsersRound },
+      { view: "partners" as ViewMode, section: "تیم و روابط", label: "همکاران", icon: UsersRound },
+      { view: "owners" as ViewMode, section: "تیم و روابط", label: "مالکین", icon: UserCog },
+      { view: "attendance" as ViewMode, section: "تیم و روابط", label: "حضور و غیاب", icon: Clock3 },
+
+      { view: "finance" as ViewMode, section: "مالی و رسانه", label: "دفتر مالی", icon: WalletCards },
+      { view: "music" as ViewMode, section: "مالی و رسانه", label: "موسیقی", icon: Music2 },
+      { view: "watermark" as ViewMode, section: "مالی و رسانه", label: "واترمارک", icon: ShieldCheck },
+      { view: "backup" as ViewMode, section: "مالی و رسانه", label: "پشتیبان", icon: DatabaseBackup },
+      { view: "mediaHealth" as ViewMode, section: "مالی و رسانه", label: "سلامت رسانه", icon: HardDrive },
+
+      { view: "schedule" as ViewMode, section: "سیستم و محتوا", label: "زمان‌بندی", icon: CalendarClock },
+      { view: "trash" as ViewMode, section: "سیستم و محتوا", label: "سطل بازیابی", icon: ArchiveRestore },
+      { view: "audit" as ViewMode, section: "سیستم و محتوا", label: "گزارش فعالیت", icon: ClipboardList },
+      { view: "settings" as ViewMode, section: "سیستم و محتوا", label: "تنظیمات سایت", icon: Settings },
+      { view: "security" as ViewMode, section: "سیستم و محتوا", label: "امنیت مدیران", icon: ShieldAlert },
+      { view: "seoRedirects" as ViewMode, section: "سیستم و محتوا", label: "ریدایرکت و ۴۰۴", icon: RouteIcon },
+      { view: "contentStudio" as ViewMode, section: "سیستم و محتوا", label: "استودیو محتوا", icon: FileText },
     ],
     [],
   );
+
+  const visibleNavItems = useMemo(() => {
+    if (adminRole === "owner" || adminRole === "manager") return navItems;
+    if (adminRole === "sales") {
+      const allowed = new Set<ViewMode>(["dashboard", "managementReport", "productivity", "list", "leads", "messages", "matching", "divar", "deals", "expiry", "commission", "consultantPerformance", "consultantTargets"]);
+      return navItems.filter((item) => allowed.has(item.view));
+    }
+    if (adminRole === "content") {
+      const allowed = new Set<ViewMode>(["dashboard", "managementReport", "productivity", "list", "form", "music", "watermark", "mediaHealth", "contentStudio"]);
+      return navItems.filter((item) => allowed.has(item.view));
+    }
+    return navItems.filter((item) => item.view === "dashboard" || item.view === "managementReport");
+  }, [navItems, adminRole]);
 
   const [changeHistory, setChangeHistory] = useState<Array<{
     id: number;
@@ -595,6 +644,7 @@ export function AdminPropertiesPage() {
     afterOwnerName: string | null;
     afterOwnerPhone: string | null;
     afterOwnerInfo: string | null;
+    beforeState?: unknown;
   }>>([]);
   const [form, setForm] = useState<FormState>(emptyForm());
   const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>(NEIGHBORHOOD_NAMES);
@@ -611,6 +661,10 @@ export function AdminPropertiesPage() {
       telegram: "",
       eitaa: "",
       instagram: "",
+      rubika: "",
+      bale: "",
+      igap: "",
+      soroush: "",
       sortOrder: (index + 1) * 10,
       isActive: true,
     })),
@@ -749,10 +803,11 @@ export function AdminPropertiesPage() {
           body: JSON.stringify({ action: "login" }),
         });
         const data = (await response.json().catch(() => null)) as
-          | { authenticated?: boolean }
+          | { authenticated?: boolean; role?: AdminRole }
           | null;
 
         if (!data?.authenticated || cancelled) return;
+        setAdminRole(data.role ?? "owner");
 
         const [rows, totals, filteredCount] = await Promise.all([
           listAdminProperties({ data: { limit: 50, offset: 0 } }),
@@ -917,8 +972,12 @@ export function AdminPropertiesPage() {
   }
 
   async function unlock(key = keyInput.trim(), showToast = true) {
-    if (!key) {
+    if (loginMode === "key" && !key) {
       toast.error("کلید مدیریت را وارد کنید.");
+      return;
+    }
+    if (loginMode === "account" && (!usernameInput.trim() || !passwordInput)) {
+      toast.error("نام کاربری و رمز عبور را کامل وارد کنید.");
       return;
     }
 
@@ -928,10 +987,14 @@ export function AdminPropertiesPage() {
         method: "POST",
         headers: { "content-type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ action: "login", adminKey: key }),
+        body: JSON.stringify(
+          loginMode === "key"
+            ? { action: "login", adminKey: key }
+            : { action: "login", username: usernameInput.trim(), password: passwordInput },
+        ),
       });
       const sessionData = (await sessionResponse.json().catch(() => null)) as
-        | { authenticated?: boolean; statusMessage?: string; message?: string }
+        | { authenticated?: boolean; role?: AdminRole; statusMessage?: string; message?: string }
         | null;
 
       if (!sessionResponse.ok || !sessionData?.authenticated) {
@@ -950,16 +1013,18 @@ export function AdminPropertiesPage() {
       ]);
 
       setKeyInput("");
+      setPasswordInput("");
       setProperties(rows);
       setFilteredTotal(filteredCount);
       setPropertyHasMore(rows.length < filteredCount);
       setServerStats(totals);
+      setAdminRole(sessionData?.role ?? "owner");
       setUnlocked(true);
 
       if (showToast) toast.success("ورود به پنل مدیریت موفق بود.");
     } catch (error) {
       setUnlocked(false);
-      toast.error(adminErrorMessage(error, "کلید مدیریت نادرست است."));
+      toast.error(adminErrorMessage(error, loginMode === "key" ? "کلید مدیریت نادرست است." : "نام کاربری یا رمز عبور نادرست است."));
     } finally {
       setLoadingList(false);
     }
@@ -991,7 +1056,10 @@ export function AdminPropertiesPage() {
 
       clearDraft(draftKeyRef.current);
       setUnlocked(false);
+      setAdminRole("owner");
       setKeyInput("");
+      setUsernameInput("");
+      setPasswordInput("");
       setProperties([]);
       setPropertyHasMore(false);
       setFilteredTotal(0);
@@ -1246,6 +1314,21 @@ export function AdminPropertiesPage() {
 
 
 
+  async function requestPublication() {
+    if (!form.id) {
+      toast.error("ابتدا فایل را ذخیره کنید.");
+      return;
+    }
+    const note = window.prompt("یادداشت برای مدیر تأییدکننده (اختیاری):", "");
+    if (note === null) return;
+    try {
+      await requestPropertyPublication({ data: { propertyId: form.id, note } });
+      toast.success("درخواست تأیید انتشار در صف مدیر ثبت شد.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "درخواست انتشار ثبت نشد.");
+    }
+  }
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     // A ref guard, not just `disabled={saving}`: two clicks inside the same
@@ -1350,6 +1433,7 @@ export function AdminPropertiesPage() {
           description: form.description.trim(),
           features: splitLines(form.features),
           images,
+          floorPlanUrl: form.floorPlanUrl.trim(),
           contactName: form.contactName.trim(),
           contactPhone: form.contactPhone.trim(),
           ownerName: form.ownerName.trim(),
@@ -1387,6 +1471,15 @@ export function AdminPropertiesPage() {
       submitting.current = false;
       setSaving(false);
     }
+  }
+
+  function loadHistoryVersion(item: (typeof changeHistory)[number]) {
+    if (!item.beforeState || typeof item.beforeState !== "object") { toast.error("نسخه قابل بازیابی برای این رویداد در دسترس نیست."); return; }
+    const snapshot = item.beforeState as Partial<Property>;
+    if (typeof snapshot.title !== "string" || typeof snapshot.transactionType !== "string") { toast.error("اطلاعات نسخه قبلی کامل نیست."); return; }
+    setForm(propertyToForm(snapshot as Property)); setFormDirty(true); setDraftRestored(null);
+    window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+    toast.success("نسخه قبلی داخل فرم بارگذاری شد؛ برای اعمال نهایی، «ذخیره» را بزنید.");
   }
 
   const submitGuardReady = async (message: string) =>
@@ -1501,6 +1594,7 @@ export function AdminPropertiesPage() {
           description: base.description,
           features: splitLines(base.features),
           images: parseImageUrls(base.images).valid,
+          floorPlanUrl: base.floorPlanUrl.trim(),
           contactName: base.contactName,
           contactPhone: base.contactPhone,
           ownerName: base.ownerName.trim(),
@@ -1582,36 +1676,57 @@ export function AdminPropertiesPage() {
         <div className="admin-login-card">
           <span className="kicker">پنل داخلی هیرمند</span>
           <h1>ورود به مدیریت</h1>
-          <p>برای ورود، کلید مدیریت را وارد کنید. این بخش فقط برای مدیریت داخلی هیرمند است.</p>
+          <p>
+            {loginMode === "key"
+              ? "ورود سریع با کلید اصلی مدیریت."
+              : "با حساب اختصاصی مدیر وارد شوید تا سطح دسترسی شما دقیقاً اعمال شود."}
+          </p>
+          <div className="admin-login-switch" role="tablist" aria-label="روش ورود">
+            <button type="button" className={loginMode === "key" ? "is-active" : ""} onClick={() => setLoginMode("key")}>کلید اصلی</button>
+            <button type="button" className={loginMode === "account" ? "is-active" : ""} onClick={() => setLoginMode("account")}>حساب مدیر</button>
+          </div>
           <form
             onSubmit={(event) => {
               event.preventDefault();
               void unlock();
             }}
           >
-            <label className="field" style={{ marginBottom: 12 }}>
-              <span>کلید مدیریت</span>
-              <input
-                type="password"
-                dir="ltr"
-                autoComplete="current-password"
-                value={keyInput}
-                onChange={(e) => setKeyInput(e.target.value)}
-                placeholder="••••••••••"
-              />
-            </label>
+            {loginMode === "key" ? (
+              <label className="field" style={{ marginBottom: 12 }}>
+                <span>کلید مدیریت</span>
+                <input
+                  type="password"
+                  dir="ltr"
+                  autoComplete="current-password"
+                  value={keyInput}
+                  onChange={(e) => setKeyInput(e.target.value)}
+                  placeholder="••••••••••"
+                />
+              </label>
+            ) : (
+              <>
+                <label className="field" style={{ marginBottom: 12 }}>
+                  <span>نام کاربری</span>
+                  <input dir="ltr" autoComplete="username" value={usernameInput} onChange={(e) => setUsernameInput(e.target.value)} placeholder="operator01" />
+                </label>
+                <label className="field" style={{ marginBottom: 12 }}>
+                  <span>رمز عبور</span>
+                  <input type="password" dir="ltr" autoComplete="current-password" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} placeholder="••••••••••" />
+                </label>
+              </>
+            )}
             <button
               type="submit"
               className="btn-gold"
               style={{ width: "100%" }}
-              disabled={loadingList || !keyInput.trim()}
+              disabled={loadingList || (loginMode === "key" ? !keyInput.trim() : !usernameInput.trim() || !passwordInput)}
             >
               {loadingList ? <RefreshCw size={16} className="admin-spin" /> : <KeyRound size={16} />}
               {loadingList ? "در حال بررسی…" : "ورود"}
             </button>
           </form>
           <p style={{ marginTop: 14, fontSize: ".78rem" }}>
-            پس از چند تلاش ناموفق، ورود موقتاً محدود می‌شود تا کلید قابل حدس نباشد.
+            برای ساخت اولین حساب مستقل، با کلید اصلی وارد شوید و از «امنیت مدیران» یک حساب بسازید.
           </p>
           <div style={{ marginTop: 16, textAlign: "center" }}>
             <Link to="/" className="btn-ghost">
@@ -1627,66 +1742,91 @@ export function AdminPropertiesPage() {
     return (
       <>
         <div className="admin-sidebar-brand">
-          <Building2 size={22} color="#f7f5ef" aria-hidden="true" />
-          <div>
+          <div className="admin-brand-icon" aria-hidden="true">
+            <Building2 size={21} />
+          </div>
+          <div className="admin-brand-copy">
             <strong>هیرمند</strong>
             <small>پنل مدیریت</small>
           </div>
-          {extra}
+          <div className="admin-brand-extra">{extra}</div>
         </div>
         <nav className="admin-sidebar-nav" aria-label="ناوبری اصلی مدیریت">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = view === item.view;
-            return (
-              <button
-                key={item.view}
-                type="button"
-                className={"admin-nav-btn" + (active ? " is-active" : "")}
-                aria-current={active ? "page" : undefined}
-                onClick={() => navigateTo(item.view)}
-              >
-                <Icon size={18} aria-hidden="true" />
-                {item.label}
-              </button>
-            );
-          })}
+          <div className="admin-nav-intro">
+            <span className="admin-nav-intro-kicker">مرکز کنترل</span>
+            <span className="admin-nav-intro-line" aria-hidden="true" />
+          </div>
+
           <button
             type="button"
-            className={"admin-nav-btn" + (view === "form" && !form.id ? " is-active" : "")}
+            className={"admin-nav-btn admin-nav-btn-create" + (view === "form" && !form.id ? " is-active" : "")}
             onClick={startNew}
           >
-            <Plus size={18} aria-hidden="true" />
-            فایل جدید
+            <span className="admin-nav-btn-icon" aria-hidden="true"><Plus size={18} /></span>
+            <span className="admin-nav-btn-label">فایل جدید</span>
+            <span className="admin-nav-btn-meta">+ افزودن</span>
           </button>
+
           {form.id ? (
             <button
               type="button"
-              className={"admin-nav-btn" + (view === "form" ? " is-active" : "")}
+              className={"admin-nav-btn admin-nav-btn-context" + (view === "form" ? " is-active" : "")}
               onClick={() => navigateTo("form")}
             >
-              <FileEdit size={18} aria-hidden="true" />
-              ویرایش «{form.title.slice(0, 18) || "فایل فعلی"}»
+              <span className="admin-nav-btn-icon" aria-hidden="true"><FileEdit size={18} /></span>
+              <span className="admin-nav-btn-label">ویرایش فایل</span>
+              <span className="admin-nav-btn-context-title">{form.title.slice(0, 18) || "فایل فعلی"}</span>
             </button>
           ) : null}
+
+          {(() => {
+            let previousSection = "";
+            return visibleNavItems.map((item) => {
+              const Icon = item.icon;
+              const active = view === item.view;
+              const showSection = item.section !== previousSection;
+              previousSection = item.section;
+              return (
+                <Fragment key={item.view}>
+                  {showSection ? (
+                    <div className="admin-nav-section-label">
+                      <span>{item.section}</span>
+                    </div>
+                  ) : null}
+                  <button
+                    type="button"
+                    className={"admin-nav-btn" + (active ? " is-active" : "")}
+                    aria-current={active ? "page" : undefined}
+                    onClick={() => navigateTo(item.view)}
+                  >
+                    <span className="admin-nav-btn-icon" aria-hidden="true"><Icon size={18} /></span>
+                    <span className="admin-nav-btn-label">{item.label}</span>
+                  </button>
+                </Fragment>
+              );
+            });
+          })()}
         </nav>
         <div className="admin-sidebar-foot">
+          <div className="admin-sidebar-foot-label">اقدامات سریع</div>
           <button
             type="button"
             className="admin-nav-btn"
             onClick={() => void refresh()}
             disabled={loadingList}
           >
-            <RefreshCw size={18} className={loadingList ? "admin-spin" : undefined} aria-hidden="true" />
-            به‌روزرسانی
+            <span className="admin-nav-btn-icon" aria-hidden="true">
+              <RefreshCw size={18} className={loadingList ? "admin-spin" : undefined} />
+            </span>
+            <span className="admin-nav-btn-label">به‌روزرسانی</span>
           </button>
           <Link to="/" className="admin-nav-btn">
-            <Home size={18} aria-hidden="true" />
-            سایت
+            <span className="admin-nav-btn-icon" aria-hidden="true"><Home size={18} /></span>
+            <span className="admin-nav-btn-label">مشاهده سایت</span>
           </Link>
           <button type="button" className="admin-nav-btn" onClick={logout}>
-            <LogOut size={18} aria-hidden="true" />
-            خروج
+            <span className="admin-nav-btn-icon" aria-hidden="true"><LogOut size={18} /></span>
+            <span className="admin-nav-btn-label">خروج از پنل</span>
           </button>
         </div>
       </>
@@ -1766,7 +1906,13 @@ export function AdminPropertiesPage() {
                                 ? "مالکین و سبد فایل‌ها"
                                 : view === "finance"
                                   ? "دفتر مالی و تسویه"
-                                  : view === "backup"
+                                  : view === "integrity"
+                                    ? "اسکن خطاها و ناسازگاری‌های اطلاعاتی"
+                                    : view === "deals"
+                                      ? "ثبت معامله، کمیسیون و کنترل مدارک قرارداد"
+                                      : view === "expiry"
+                                        ? "فایل‌های منقضی، نزدیک به انقضا و قدیمی را کنترل کنید"
+                                        : view === "backup"
                                     ? "پشتیبان‌گیری"
                                     : view === "watermark"
                                       ? "واترمارک تصاویر و فیلم‌ها"
@@ -1786,7 +1932,21 @@ export function AdminPropertiesPage() {
                                                     ? "ریدایرکت و ۴۰۴"
                                                     : view === "contentStudio"
                                                       ? "استودیو محتوا"
-                                                      : view === "divar"
+                                                      : view === "integrity"
+                                                        ? "سلامت داده و کنترل کیفیت"
+                                                        : view === "deals"
+                                                          ? "معاملات و قراردادها"
+                                                          : view === "expiry"
+                                                            ? "انقضا و تمدید فایل‌ها"
+                                                            : view === "commission"
+                                                              ? "تسویه کمیسیون مشاوران"
+                                                               : view === "consultantPerformance"
+                                                                ? "عملکرد و بازدهی مشاوران"
+                                                              : view === "consultantTargets"
+                                                                ? "اهداف و سهمیه ماهانه مشاوران"
+                                                              : view === "managementReport"
+                                                                ? "گزارش مدیریتی و خروجی عملکرد"
+                                                              : view === "divar"
                                                         ? "فایل‌های دیوار"
                           : form.id
                         ? "ویرایش فایل"
@@ -1810,6 +1970,10 @@ export function AdminPropertiesPage() {
                           ? "فهرست مالکین و همه فایل‌های وابسته"
                           : view === "finance"
                             ? "ثبت درآمد و هزینه‌های دفتر"
+                            : view === "consultantPerformance"
+                              ? "نرخ تبدیل، معاملات، حجم فروش و وضعیت کمیسیون مشاوران"
+                            : view === "managementReport"
+                              ? "گزارش دوره‌ای فایل‌ها، CRM، معاملات و وضعیت مالی"
                             : view === "backup"
                               ? "دانلود نسخه امن از اطلاعات مدیریتی"
                               : view === "watermark"
@@ -1837,8 +2001,9 @@ export function AdminPropertiesPage() {
                     : "مشاور مسئول را انتخاب کنید"}            </p>
           </div>
           <div className="admin-topbar-actions">
+            <span className="admin-role-chip" title="سطح دسترسی حساب فعلی">{ADMIN_ROLE_LABELS[adminRole]}</span>
             <AdminCommandPalette
-              items={navItems.map((item) => ({ id: item.view, label: item.label }))}
+              items={visibleNavItems.map((item) => ({ id: item.view, label: item.label }))}
               onSelect={(id) => navigateTo(id as ViewMode)}
               onNewProperty={startNew}
               onRefresh={() => void refresh()}
@@ -1860,6 +2025,9 @@ export function AdminPropertiesPage() {
         <div className="admin-content">
           {view === "dashboard" ? (
             <>
+              <AdminKpiHistory />
+              <AdminSalesFunnel />
+              <AdminPublicationQueue />
               <AdminOperationsCenter
                 onOpenLeads={() => navigateTo("leads")}
                 onOpenMatching={() => navigateTo("matching")}
@@ -1868,16 +2036,28 @@ export function AdminPropertiesPage() {
               />
               <AdminDashboard
                 onOpenProperties={() => navigateTo("list")}
-              onOpenLeads={() => navigateTo("leads")}
-              onOpenProductivity={() => navigateTo("productivity")}
-              onCreateProperty={startNew}
-              onOpenDivar={() => navigateTo("divar")}
-              onOpenConsultants={() => navigateTo("consultants")}
-              onOpenPartners={() => navigateTo("partners")}
-              onOpenAttendance={() => navigateTo("attendance")}
+                onOpenLeads={() => navigateTo("leads")}
+                onOpenProductivity={() => navigateTo("productivity")}
+                onCreateProperty={startNew}
+                onOpenDivar={() => navigateTo("divar")}
+                onOpenConsultants={() => navigateTo("consultants")}
+                onOpenPartners={() => navigateTo("partners")}
+                onOpenAttendance={() => navigateTo("attendance")}
                 onOpenMusic={() => navigateTo("music")}
               />
             </>
+          ) : view === "managementReport" ? (
+            <AdminManagementReport />
+          ) : view === "integrity" ? (
+            <AdminDataHealth />
+          ) : view === "integrity" ? (
+            <AdminDataHealth />
+          ) : view === "deals" ? (
+            <AdminDealsManager />
+          ) : view === "expiry" ? (
+            <AdminPropertyExpiryCenter />
+          ) : view === "productivity" ? (
+            <AdminProductivityCenter />
           ) : null}
 
           {view === "list" ? (
@@ -2253,16 +2433,17 @@ export function AdminPropertiesPage() {
             </>
           ) : null}
 
-          {view === "productivity" ? <AdminProductivityCenter /> : null}
           {view === "music" ? <AdminMusicManager /> : null}
           {view === "leads" ? <AdminLeadManager /> : null}
           {view === "messages" ? <AdminCustomerInbox /> : null}
           {view === "partners" ? <AdminPartnerManager /> : null}
           {view === "consultants" ? <AdminConsultantManager /> : null}
+          {view === "consultantPerformance" ? <AdminConsultantPerformance /> : null}
+          {view === "consultantTargets" ? <AdminConsultantTargets /> : null}
           {view === "attendance" ? <AdminAttendanceManager /> : null}
           {view === "matching" ? <AdminMatchingManager /> : null}
           {view === "owners" ? <AdminOwnerManager /> : null}
-          {view === "finance" ? <AdminFinanceManager /> : null}
+          {view === "finance" ? <><AdminFinanceManager /><AdminFinanceInsights /></> : null}
           {view === "backup" ? <AdminBackupManager /> : null}
           {view === "watermark" ? <AdminWatermarkSettings /> : null}
           {view === "schedule" ? <AdminScheduleManager /> : null}
@@ -2663,6 +2844,21 @@ export function AdminPropertiesPage() {
                     propertyType={form.propertyType}
                     propertyId={form.id}
                   />
+                  <div className="admin-floor-plan-separator" aria-hidden="true">
+                    <span />
+                    <strong>پلان معماری</strong>
+                    <span />
+                  </div>
+                  <label className="field admin-span-2">
+                    <span>پلان واقعی ملک (اختیاری)</span>
+                    <small className="admin-field-help">
+                      پلان را جدا از تصاویر گالری ثبت کنید؛ در صفحه ملک به‌عنوان «پلان واقعی» نمایش داده می‌شود.
+                    </small>
+                    <AdminFloorPlanField
+                      value={form.floorPlanUrl}
+                      onChange={(next) => update("floorPlanUrl", next)}
+                    />
+                  </label>
                   <div className="admin-form-grid" style={{ marginTop: 14 }}>
                     <label className="field admin-span-2">
                       <span>لینک تور مجازی ۳۶۰ (اختیاری)</span>
@@ -2750,7 +2946,7 @@ export function AdminPropertiesPage() {
                         value={form.status}
                         onChange={(e) => update("status", e.target.value as PublishStatus)}
                       >
-                        <option value="published">منتشرشده</option>
+                        <option value="published" disabled={adminRole !== "owner" && adminRole !== "manager"}>منتشرشده</option>
                         <option value="draft">پیش‌نویس</option>
                         <option value="archived">بایگانی</option>
                       </select>
@@ -2866,6 +3062,7 @@ export function AdminPropertiesPage() {
                 </fieldset>
 
               {form.id ? <div id="section-performance"><AdminPropertyPerformance propertyId={form.id} /></div> : null}
+              {form.id ? <AdminPropertyPriceHistory propertyId={form.id} /> : null}
 
               {form.id ? (
                 <fieldset className="admin-section" id="section-history">
@@ -2932,6 +3129,7 @@ export function AdminPropertiesPage() {
                               </strong>
                             </div>
                             <small>{title}</small>
+                            {item.action === "updated" && item.beforeState ? <button type="button" className="btn-ghost" style={{ marginTop: 8, minHeight: 34, fontSize: ".68rem" }} onClick={() => loadHistoryVersion(item)}>بارگذاری این نسخه</button> : null}
                           </div>
                         );
                       })}
@@ -2946,6 +3144,7 @@ export function AdminPropertiesPage() {
                   {formDirty ? " · تغییرات ذخیره‌نشده" : " · همه‌چیز ذخیره شده"}
                 </div>
                 <div className="admin-sticky-actions">
+                  <AdminPropertyPreview data={{title:form.title,transactionType:form.transactionType,propertyType:form.propertyType,neighborhood:form.neighborhood,areaM2:form.areaM2,bedrooms:form.bedrooms,bathrooms:form.bathrooms,floor:form.floorLabel==="suite"?"سوئیت":form.floor,parking:form.parking,elevator:form.elevator,storage:form.storage,price:form.price,deposit:form.deposit,rent:form.rent,description:form.description,images:form.images,contactName:form.contactName,contactPhone:form.contactPhone,featured:form.featured,status:form.status}} />
                   <button type="button" className="btn-ghost" onClick={() => navigateTo("list")} disabled={saving}>
                     انصراف
                   </button>

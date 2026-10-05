@@ -135,7 +135,9 @@ export function PropertyCard({ property }: { property: Property | PropertyCardDa
         aria-label={`مشاهده جزئیات کامل فایل ${property.title}`}
       >
         <div className="pcard-media">
-          {!isPermanentlyWatermarkedMediaUrl(image) ? <PropertyMediaWatermark /> : null}
+          {!isPermanentlyWatermarkedMediaUrl(image) ? (
+            <PropertyMediaWatermark subtle={isPropertyFallbackImage(image) || image.startsWith("/images/fallback/")} />
+          ) : null}
           <PropertyImage
             src={image}
             alt={property.title}

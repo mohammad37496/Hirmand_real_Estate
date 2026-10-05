@@ -15,7 +15,7 @@ export function MapAppButtons({
   const apps = googleOnly
     ? [{ href: google, title: "گوگل مپ", text: "جستجوی دقیق محله" }]
     : [
-        { href: google, title: "گوگل مپ", text: "Google Maps" },
+        { href: google, title: "Google Maps", text: "بررسی تکمیلی مقصد" },
         { href: links.balad, title: "بلد", text: "اپلیکیشن بلد" },
         { href: links.neshan, title: "نشان", text: "اپلیکیشن نشان" },
       ];
@@ -31,7 +31,7 @@ export function MapAppButtons({
           rel="noopener noreferrer"
         >
           <span className="icon-box sm">
-            {app.title === "گوگل مپ" ? (
+            {app.title === "Google Maps" ? (
               <MapPinned size={15} strokeWidth={1.8} />
             ) : (
               <Navigation size={15} strokeWidth={1.8} />
@@ -49,6 +49,7 @@ export function MapAppButtons({
 
 export function MapEmbed({ target, title }: { target: MapTarget; title: string }) {
   const links = mapLinks(target);
+  const hasCoordinates = target.lat != null && target.lng != null;
 
   return (
     <div className="map-embed" role="region" aria-label={title}>
@@ -63,7 +64,11 @@ export function MapEmbed({ target, title }: { target: MapTarget; title: string }
         <div className="map-local-card">
           <strong>{target.label}</strong>
           <span>اصفهان</span>
-          <small>{target.lat.toFixed(6)}، {target.lng.toFixed(6)}</small>
+          {hasCoordinates ? (
+            <small>{target.lat!.toFixed(6)}، {target.lng!.toFixed(6)}</small>
+          ) : (
+            <small className="map-accuracy-note">مختصات ثابت ذخیره نشده؛ موقعیت از جستجوی مستقیم نقشه انتخاب می‌شود.</small>
+          )}
           <div className="map-local-actions">
             <a href={links.neshan} target="_blank" rel="noopener noreferrer">
               <Navigation size={14} />

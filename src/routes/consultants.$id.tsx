@@ -2,7 +2,16 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Briefcase, Check, Handshake, Phone, ArrowRight } from "lucide-react";
 import { PropertyCard } from "@/components/hirmand/property-showcase";
 import { SiteChrome } from "@/components/hirmand/site-chrome";
-import { EitaaIcon, TelegramIcon, WhatsAppIcon, InstagramIcon } from "@/components/hirmand/social-icons";
+import {
+  EitaaIcon,
+  TelegramIcon,
+  WhatsAppIcon,
+  InstagramIcon,
+  RubikaIcon,
+  BaleIcon,
+  IGAPPIcon,
+  SoroushIcon,
+} from "@/components/hirmand/social-icons";
 import { listPublishedPropertiesByContact } from "@/lib/properties";
 import { absoluteUrl, socialMeta } from "@/lib/seo";
 import { SITE } from "@/lib/site";
@@ -76,6 +85,10 @@ function ConsultantProfilePage() {
     { href: person.telegram, label: "تلگرام", icon: <TelegramIcon size={19} /> },
     { href: person.eitaa, label: "ایتا", icon: <EitaaIcon size={19} /> },
     { href: person.instagram, label: "اینستاگرام", icon: <InstagramIcon size={19} /> },
+    { href: person.rubika, label: "روبیکا", icon: <RubikaIcon size={19} /> },
+    { href: person.bale, label: "بله", icon: <BaleIcon size={19} /> },
+    { href: person.igap, label: "ایگپ", icon: <IGAPPIcon size={19} /> },
+    { href: person.soroush, label: "سروش", icon: <SoroushIcon size={19} /> },
   ].filter((item) => item.href.trim());
 
   return (

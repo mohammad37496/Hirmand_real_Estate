@@ -34,7 +34,6 @@ import {
 } from "@/lib/site";
 import { FinanceTools } from "./finance-tools";
 import { InquiryForm, type InquiryDraft } from "./inquiry-form";
-import { BrandLogo } from "./logo";
 import { MapAppButtons, MapEmbed } from "./map-apps";
 import { PropertyShowcase } from "./property-showcase";
 import type { PropertyCardData } from "@/lib/properties";
@@ -44,7 +43,16 @@ import { SiteChrome } from "./site-chrome";
 import { SmartRecommendations } from "./smart-recommendations";
 import { useConsultants } from "./consultants-context";
 import type { Consultant } from "@/lib/consultants";
-import { EitaaIcon, InstagramIcon, TelegramIcon, WhatsAppIcon } from "./social-icons";
+import {
+  EitaaIcon,
+  InstagramIcon,
+  TelegramIcon,
+  WhatsAppIcon,
+  RubikaIcon,
+  BaleIcon,
+  IGAPPIcon,
+  SoroushIcon,
+} from "./social-icons";
 
 const PRINCIPLE_ICONS = {
   honesty: Scale,
@@ -72,9 +80,9 @@ const TEAM_ICONS = {
 } as const;
 
 const OFFICE_PLACE: Neighborhood = {
-  name: "دفتر هیرمند — سه راه سیمین",
-  lat: SITE.lat,
-  lng: SITE.lng,
+  name: "دفتر هیرمند",
+  address: SITE.address,
+  searchQuery: "گروه مشاورین املاک هیرمند، اصفهان",
 };
 
 async function copyText(value: string): Promise<boolean> {
@@ -134,6 +142,39 @@ function Hero() {
   const [deal, setDeal] = useState("خرید");
   const [propertyType, setPropertyType] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
+  const [maxBudget, setMaxBudget] = useState("");
+
+  const budgetOptions =
+    deal === "خرید" || deal === "فروش"
+      ? [
+          { value: "2000000000", label: "تا ۲ میلیارد" },
+          { value: "5000000000", label: "تا ۵ میلیارد" },
+          { value: "10000000000", label: "تا ۱۰ میلیارد" },
+          { value: "15000000000", label: "تا ۱۵ میلیارد" },
+          { value: "25000000000", label: "تا ۲۵ میلیارد" },
+          { value: "40000000000", label: "تا ۴۰ میلیارد" },
+          { value: "60000000000", label: "تا ۶۰ میلیارد" },
+          { value: "100000000000", label: "تا ۱۰۰ میلیارد" },
+        ]
+      : deal === "اجاره"
+        ? [
+            { value: "10000000", label: "تا ۱۰ میلیون" },
+            { value: "15000000", label: "تا ۱۵ میلیون" },
+            { value: "20000000", label: "تا ۲۰ میلیون" },
+            { value: "30000000", label: "تا ۳۰ میلیون" },
+            { value: "50000000", label: "تا ۵۰ میلیون" },
+            { value: "80000000", label: "تا ۸۰ میلیون" },
+            { value: "100000000", label: "تا ۱۰۰ میلیون" },
+          ]
+        : [
+            { value: "200000000", label: "تا ۲۰۰ میلیون" },
+            { value: "500000000", label: "تا ۵۰۰ میلیون" },
+            { value: "1000000000", label: "تا ۱ میلیارد" },
+            { value: "2000000000", label: "تا ۲ میلیارد" },
+            { value: "3000000000", label: "تا ۳ میلیارد" },
+            { value: "5000000000", label: "تا ۵ میلیارد" },
+            { value: "10000000000", label: "تا ۱۰ میلیارد" },
+          ];
 
   function searchProperties() {
     const transaction = SERVICES.find((item) => item.title === deal)?.id;
@@ -142,6 +183,7 @@ function Hero() {
     if (transaction) params.set("transaction", transaction);
     if (type) params.set("type", type);
     if (neighborhood) params.set("neighborhood", neighborhood);
+    if (maxBudget) params.set("maxPrice", maxBudget);
     trackAnalyticsEvent("property_search");
     window.location.assign(`/properties${params.toString() ? `?${params.toString()}` : ""}`);
   }
@@ -164,13 +206,11 @@ function Hero() {
         <div className="hero-veil" />
       </div>
       <div className="hero-inner">
-        <BrandLogo size="hero" />
-        <p className="hero-kicker">{SITE.kicker}</p>
-        <h1>{SITE.nameFa}</h1>
-        <p className="english-name">{SITE.nameEn}</p>
+        <p className="hero-kicker">{SITE.nameFa}</p>
+        <h1>ملک مناسب خود را در اصفهان پیدا کنید</h1>
         <p className="slogan">
-          <strong>{SITE.sloganStrong}</strong>
-          <span>{SITE.sloganRest}</span>
+          <strong>خرید، فروش، رهن و اجاره</strong>
+          <span>با مشاوره مستقیم هیرمند</span>
         </p>
         <form className="hero-search" onSubmit={submit}>
           <label className="sr-only" htmlFor="hero-deal">
@@ -213,11 +253,30 @@ function Hero() {
               </option>
             ))}
           </select>
+          <label className="sr-only" htmlFor="hero-budget">
+            سقف بودجه
+          </label>
+          <select
+            id="hero-budget"
+            value={maxBudget}
+            onChange={(event) => setMaxBudget(event.target.value)}
+          >
+            <option value="">سقف بودجه</option>
+            {budgetOptions.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </select>
           <button type="submit" className="btn-gold search-submit">
             <Search size={16} />
             جستجوی فایل
           </button>
         </form>
+
+        <p className="hero-search-hint">
+          فیلترهای انتخابی از همان ابتدا روی فایل‌های منتشرشده هیرمند اعمال می‌شوند.
+        </p>
         {/* One primary action, one secondary, one contact affordance.
             The map shortcuts and the "services" anchor both duplicated
             links that already live in the header and in the sections below,
@@ -230,40 +289,10 @@ function Hero() {
             درخواست اختصاصی
           </Link>
         </div>
-        <div className="hero-intents" aria-label="شروع سریع جست‌وجو">
-          <button
-            type="button"
-            className="hero-intent"
-            onClick={() => {
-              setDeal("خرید");
-              setPropertyType("آپارتمان");
-              setNeighborhood("");
-              window.location.assign("/properties?transaction=buy&type=apartment");
-            }}
-          >
-            خرید آپارتمان
-          </button>
-          <button
-            type="button"
-            className="hero-intent"
-            onClick={() => window.location.assign("/properties?transaction=mortgage&type=apartment")}
-          >
-            رهن آپارتمان
-          </button>
-          <button
-            type="button"
-            className="hero-intent"
-            onClick={() => window.location.assign("/properties?transaction=rent&type=apartment")}
-          >
-            اجاره آپارتمان
-          </button>
-          <button
-            type="button"
-            className="hero-intent"
-            onClick={() => window.location.assign("/properties?transaction=buy&type=villa")}
-          >
-            خرید ویلا و باغ
-          </button>
+        <div className="hero-intents" aria-label="جستجوی سریع">
+          <button type="button" className="hero-intent" onClick={() => window.location.assign("/properties?transaction=buy&type=apartment")}>خرید آپارتمان</button>
+          <button type="button" className="hero-intent" onClick={() => window.location.assign("/properties?transaction=mortgage&type=apartment")}>رهن آپارتمان</button>
+          <button type="button" className="hero-intent" onClick={() => window.location.assign("/properties?transaction=buy&type=villa")}>خرید ویلا و باغ</button>
         </div>
       </div>
     </section>
@@ -273,10 +302,9 @@ function Hero() {
 function TrustStrip() {
   const consultants = useConsultants();
   const highlights = [
-    { value: `${NEIGHBORHOODS.length}+`, label: "محله روی نقشه" },
     { value: `${SERVICES.length}`, label: "مسیر اصلی معامله" },
     { value: `${consultants.length}`, label: "مشاور مستقیم" },
-    { value: "۳", label: "سرویس نقشه و مسیریابی" },
+    { value: `${NEIGHBORHOODS.length}+`, label: "محله و محدوده در اصفهان" },
   ] as const;
 
   return (
@@ -290,6 +318,56 @@ function TrustStrip() {
         ))}
       </div>
     </section>
+  );
+}
+
+function HomeDiscovery() {
+  return (
+    <Reveal as="section" className="section home-discovery" id="services">
+      <SectionHead
+        kicker="شروع جست‌وجو"
+        title="دنبال چه هستید؟"
+        text="مسیر معامله یا نوع ملک را انتخاب کنید و مستقیم به فایل‌های مرتبط بروید."
+      />
+      <div className="home-discovery-grid">
+        {SERVICES.map((item) => {
+          const Icon = SERVICE_ICONS[item.id];
+          return (
+            <a
+              key={item.id}
+              href={"/properties?transaction=" + encodeURIComponent(item.id)}
+              className="home-discovery-card"
+              aria-label={"جستجوی فایل برای " + item.title}
+            >
+              <span className="icon-box"><Icon size={20} strokeWidth={1.8} /></span>
+              <span>
+                <strong>{item.title}</strong>
+                <small>
+                  {item.id === "buy" ? "انتخاب و خرید" : item.id === "sell" ? "قیمت‌گذاری و فروش" : item.id === "mortgage" ? "رهن ملک" : "اجاره ملک"}
+                </small>
+              </span>
+              <span aria-hidden="true">↗</span>
+            </a>
+          );
+        })}
+      </div>
+      <div className="home-type-row" aria-label="انتخاب نوع ملک">
+        {PROPERTY_TYPES.map((item) => {
+          const Icon = TYPE_ICONS[item.id];
+          return (
+            <a
+              key={item.id}
+              href={"/properties?type=" + encodeURIComponent(item.id)}
+              className="home-type-chip"
+              aria-label={"جستجوی " + item.title}
+            >
+              <span className="icon-box sm"><Icon size={15} strokeWidth={1.8} /></span>
+              <span>{item.title}</span>
+            </a>
+          );
+        })}
+      </div>
+    </Reveal>
   );
 }
 
@@ -337,7 +415,11 @@ function TeamMessenger({ person }: { person: Consultant }) {
     { href: person.telegram, label: "تلگرام", icon: <TelegramIcon size={18} />, external: true },
     { href: person.eitaa, label: "ایتا", icon: <EitaaIcon size={18} />, external: true },
     { href: person.instagram, label: "اینستاگرام", icon: <InstagramIcon size={18} />, external: true },
-  ];
+    { href: person.rubika, label: "روبیکا", icon: <RubikaIcon size={18} />, external: true },
+    { href: person.bale, label: "بله", icon: <BaleIcon size={18} />, external: true },
+    { href: person.igap, label: "ایگپ", icon: <IGAPPIcon size={18} />, external: true },
+    { href: person.soroush, label: "سروش", icon: <SoroushIcon size={18} />, external: true },
+  ].filter((item) => item.href.trim());
 
   return (
     <div className="team-socials" role="group" aria-label={`شبکه‌های اجتماعی ${person.name}`}>
@@ -539,7 +621,11 @@ function Neighborhoods({ onPick }: { onPick: (name: string) => void }) {
       .filter((group) => group.items.length > 0);
   }, [query]);
 
-  const target = { lat: selected.lat, lng: selected.lng, label: selected.name };
+  const target: Neighborhood = {
+    ...selected,
+    address: selected.address || `${selected.name}، اصفهان`,
+    searchQuery: selected.searchQuery || `${selected.name}، اصفهان`,
+  };
   const links = mapLinks(target);
 
   return (
@@ -547,7 +633,7 @@ function Neighborhoods({ onPick }: { onPick: (name: string) => void }) {
       <SectionHead
         kicker="اصفهان"
         title="محله‌هایی که در آن‌ها فعالیم"
-        text={`بیش از ${NEIGHBORHOODS.length} محله و محدوده در اصفهان. هر ناحیه را باز کنید، محله را انتخاب کنید و مقصد همان نام را در Google Maps ببینید.`}
+        text={`بیش از ${NEIGHBORHOODS.length} محله و محدوده در اصفهان. هر محله را انتخاب کنید تا نشانی و مقصد آن در نشان، بلد و Google Maps بررسی شود؛ بدون ذخیره مختصات حدسی.`}
       />
       <div className="area-layout">
         <div className="area-groups">
@@ -607,11 +693,11 @@ function Neighborhoods({ onPick }: { onPick: (name: string) => void }) {
             </div>
             <div>
               <h3>{selected.name}</h3>
-              <p>Google Maps — مقصد بر اساس نام دقیق محله</p>
+              <p>نشان و بلد مرجع اصلی؛ Google Maps برای بررسی تکمیلی</p>
             </div>
           </div>
           <MapEmbed target={target} title={`نقشه ${selected.name} در اصفهان`} />
-          <MapAppButtons target={target} googleHref={links.google} googleOnly />
+          <MapAppButtons target={target} googleHref={links.google} />
           {selected.name !== OFFICE_PLACE.name ? (
             <button type="button" className="btn-gold area-request" onClick={() => onPick(selected.name)}>
               درخواست ملک در {selected.name}
@@ -769,7 +855,7 @@ function FAQ({ items }: { items: ReadonlyArray<{ q: string; a: string }> }) {
 }
 
 function Location() {
-  const office = { lat: SITE.lat, lng: SITE.lng, label: "دفتر هیرمند" };
+  const office = OFFICE_PLACE;
   return (
     <Reveal as="section" className="section" id="location">
       <SectionHead kicker="دفتر" title="موقعیت گروه مشاورین املاک هیرمند" />
@@ -825,7 +911,12 @@ export function SitePage({
     const hash = window.location.hash.replace("#", "");
     if (!hash) return;
     const timer = window.setTimeout(() => {
-      document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const target = document.getElementById(hash);
+      const disclosure = target?.closest("details.home-secondary") as HTMLDetailsElement | null;
+      if (disclosure) disclosure.open = true;
+      window.requestAnimationFrame(() => {
+        target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
     }, 80);
     return () => window.clearTimeout(timer);
   }, []);
@@ -850,18 +941,29 @@ export function SitePage({
         <Hero />
         <TrustStrip />
         <PropertyShowcase initialProperties={initialProperties} />
-        <SmartRecommendations />
-        <Services onPick={(title) => goInquiry({ deal: title })} />
-        <Properties onPick={(title) => goInquiry({ propertyType: title })} />
-        <About />
-        <Process />
-        <Neighborhoods onPick={(name) => goInquiry({ neighborhood: name })} />
-        <Team />
-        <TrackingCta />
+        <HomeDiscovery />
         <Inquiry draft={draft} />
-        <FAQ items={faqItems} />
-        <Contact />
-        <Location />
+        <details className="home-secondary">
+          <summary>
+            <span>
+              <strong>اطلاعات بیشتر درباره هیرمند</strong>
+              <small>محله‌ها، تیم، فرایند همکاری، ابزارها و راه‌های ارتباطی</small>
+            </span>
+            <span aria-hidden="true">⌄</span>
+          </summary>
+          <div className="home-secondary-body">
+            <About />
+            <Process />
+            <Neighborhoods onPick={(name) => goInquiry({ neighborhood: name })} />
+            <Team />
+            <SmartRecommendations />
+            <Tools />
+            <TrackingCta />
+            <FAQ items={faqItems} />
+            <Contact />
+            <Location />
+          </div>
+        </details>
       </main>
     </SiteChrome>
   );

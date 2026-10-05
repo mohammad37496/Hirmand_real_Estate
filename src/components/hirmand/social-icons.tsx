@@ -71,3 +71,71 @@ export function EitaaIcon({ size = 24, className }: IconProps) {
     </svg>
   );
 }
+
+
+export function RubikaIcon({ size = 24, className }: IconProps) {
+  return (
+    <svg {...svgProps(size, className)}>
+      <path
+        d="M7.15 3.7h9.7A3.45 3.45 0 0 1 20.3 7.15v6.7a3.45 3.45 0 0 1-3.45 3.45h-5.4l-3.35 3v-3H7.15A3.45 3.45 0 0 1 3.7 13.85v-6.7A3.45 3.45 0 0 1 7.15 3.7Z"
+        fill="currentColor"
+      />
+      <path
+        d="m8.1 8.05 2.15 5.4 1.85-3.4 1.82 3.4 2.02-5.4"
+        fill="none"
+        stroke="white"
+        strokeWidth="1.45"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function BaleIcon({ size = 24, className }: IconProps) {
+  return (
+    <svg {...svgProps(size, className)}>
+      <path
+        d="M6.5 4.1h11A3.4 3.4 0 0 1 20.9 7.5v6.1a3.4 3.4 0 0 1-3.4 3.4h-4.25l-4.1 3.05.48-3.05H6.5a3.4 3.4 0 0 1-3.4-3.4V7.5A3.4 3.4 0 0 1 6.5 4.1Z"
+        fill="currentColor"
+      />
+      <path
+        d="M8 12.65c.8-2.25 2.08-3.38 3.83-3.38 1.62 0 2.78.81 3.42 2.43-.66 1.66-1.81 2.49-3.45 2.49-1.67 0-2.94-.51-3.8-1.54Z"
+        fill="white"
+        opacity=".95"
+      />
+    </svg>
+  );
+}
+
+export function IGAPPIcon({ size = 24, className }: IconProps) {
+  return (
+    <svg {...svgProps(size, className)}>
+      <path
+        d="M5.95 4h12.1A3.95 3.95 0 0 1 22 7.95v7.6a3.95 3.95 0 0 1-3.95 3.95h-5.6L8.4 22v-2.5H5.95A3.95 3.95 0 0 1 2 15.55v-7.6A3.95 3.95 0 0 1 5.95 4Z"
+        fill="currentColor"
+      />
+      <circle cx="9" cy="11.9" r="1.2" fill="white" />
+      <circle cx="12.2" cy="11.9" r="1.2" fill="white" />
+      <circle cx="15.4" cy="11.9" r="1.2" fill="white" />
+    </svg>
+  );
+}
+
+export function SoroushIcon({ size = 24, className }: IconProps) {
+  return (
+    <svg {...svgProps(size, className)}>
+      <path
+        d="M12 3.35a8.65 8.65 0 0 0-8.65 8.65c0 1.75.52 3.38 1.42 4.74l-.92 3.91 3.98-.83A8.64 8.64 0 1 0 12 3.35Z"
+        fill="currentColor"
+      />
+      <path
+        d="M8.1 11.55c1.1-1.7 2.35-2.55 3.76-2.55 1.42 0 2.6.69 3.55 2.08M8.35 14.45c.99-.74 2.21-1.12 3.65-1.12 1.39 0 2.58.36 3.56 1.08"
+        fill="none"
+        stroke="white"
+        strokeWidth="1.45"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}

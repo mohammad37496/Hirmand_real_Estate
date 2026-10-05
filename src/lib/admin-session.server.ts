@@ -1,6 +1,7 @@
 import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 import { dbSource, getSql } from "@/lib/db";
+import { normalizeAdminRole, type AdminRole } from "@/lib/admin-roles";
 
 export const ADMIN_SESSION_COOKIE =
   process.env.NODE_ENV === "production" || process.env.VERCEL === "1"
@@ -12,6 +13,9 @@ export type AdminSessionClaims = {
   sessionId: string | null;
   issuedAt: number | null;
   expiresAt: number | null;
+  role: AdminRole;
+  accountId: string | null;
+  displayName: string | null;
 };
 
 function sessionSecret() {
@@ -20,9 +24,16 @@ function sessionSecret() {
   return createHash("sha256").update(adminKey).digest();
 }
 
-export async function createAdminSessionToken(sessionId = randomUUID()) {
+export async function createAdminSessionToken(
+  sessionId = randomUUID(),
+  options?: { role?: AdminRole; accountId?: string | null },
+) {
   const secret = sessionSecret();
-  return new SignJWT({ role: "admin" })
+  const role = normalizeAdminRole(options?.role ?? "owner");
+  return new SignJWT({
+    role,
+    accountId: options?.accountId ?? null,
+  })
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
     .setSubject("hirmand-admin")
     .setJti(sessionId)
@@ -38,7 +49,7 @@ async function verifyPayload(token: string | undefined): Promise<JWTPayload | nu
       algorithms: ["HS256"],
       subject: "hirmand-admin",
     });
-    if (payload.role !== "admin") return null;
+    if (!["owner", "manager", "sales", "content", "viewer", "admin"].includes(String(payload.role))) return null;
     return payload;
   } catch {
     return null;
@@ -50,11 +61,15 @@ export async function getAdminSessionClaims(token: string | undefined): Promise<
   if (!payload) return null;
 
   const sessionId = typeof payload.jti === "string" && payload.jti.trim() ? payload.jti : null;
+  const accountId = typeof payload.accountId === "string" && payload.accountId.trim() ? payload.accountId : null;
+  let role = normalizeAdminRole(payload.role);
+  let displayName: string | null = null;
+
   if (sessionId && dbSource !== "unconfigured") {
     try {
       const sql = await getSql();
-      const rows = await sql.query<{ id: string }>(
-        `select id
+      const rows = await sql.query<{ id: string; account_id: string | null; role: string }>(
+        `select id, account_id, role
          from admin_sessions
          where id = $1
            and revoked_at is null
@@ -63,12 +78,25 @@ export async function getAdminSessionClaims(token: string | undefined): Promise<
         [sessionId],
       );
       if (!rows.length) return null;
+      const sessionRow = rows[0];
+      if (sessionRow.account_id) {
+        const accountRows = await sql.query<{ display_name: string; role: string; is_active: boolean }>(
+          "select display_name,role,is_active from admin_accounts where id=$1 limit 1",
+          [sessionRow.account_id],
+        );
+        if (!accountRows[0]?.is_active) return null;
+        role = normalizeAdminRole(accountRows[0].role);
+        displayName = String(accountRows[0].display_name ?? "") || null;
+      } else {
+        role = normalizeAdminRole(sessionRow.role || role);
+      }
       await sql.query(
         `update admin_sessions
-         set last_seen_at = current_timestamp
+         set last_seen_at = current_timestamp,
+             role = $2
          where id = $1
            and revoked_at is null`,
-        [sessionId],
+        [sessionId, role],
       ).catch(() => {});
     } catch {
       return null;
@@ -79,6 +107,9 @@ export async function getAdminSessionClaims(token: string | undefined): Promise<
     sessionId,
     issuedAt: typeof payload.iat === "number" ? payload.iat : null,
     expiresAt: typeof payload.exp === "number" ? payload.exp : null,
+    role,
+    accountId,
+    displayName,
   };
 }
 

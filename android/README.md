@@ -21,42 +21,24 @@
 - گیرندهٔ Node.js برای تست داخل LAN.
 - GitHub Actions برای check، lintDebug، assembleDebug و تولید Artifact APK.
 
-## بک‌اند
-
-سرور اصلی این API را دارد و نیازی به `android/server/` نیست:
-
-| Method | Path |
-| --- | --- |
-| `POST` | `/api/device-sync/v1/register` |
-| `GET` | `/api/device-sync/v1` |
-| `POST` | `/api/device-sync/v1` · `/heartbeat` · `/location` · `/files` · `/call-recordings` |
-| `GET` | `/api/device-sync/v1/remote-control/command` |
-| `POST` | `/api/device-sync/v1/remote-control/result` |
-| `GET` | `/api/device-sync/v1/update` |
-
-همهٔ درخواست‌ها (جز ثبت دستگاه و بررسی نسخه) با
-`Authorization: Bearer <deviceToken>` + هدر `X-Hirmand-Device-Id` احراز هویت
-می‌شوند و با HMAC-SHA256 امضا می‌گردند:
-
-```
-X-Hirmand-Timestamp / X-Hirmand-Nonce / X-Hirmand-Signature / X-Hirmand-Signature-Version
-signingInput = "v1." + deviceId + "." + timestamp + "." + nonce + "." + sha256hex(body)
-```
-
-پیاده‌سازی سمت سرور: `src/lib/phone-bridge-signature.server.ts`.
-قرارداد با تست `src/lib/phone-bridge-signature.test.ts` قفل شده است؛ اگر یکی از
-دو طرف تغییر کند، تست شکست می‌خورد (این تست در جریان کار یک باگ واقعی را پیدا کرد).
-
 ## مجوز و رضایت
 
-هیچ ماژولی فقط با روشن بودن کلید فعال نمی‌شود. برای هر ماژول سه لایه لازم است:
+هیچ ماژولی فقط با روشن بودن کلید فعال نمی‌شود. برای هر ماژول سه لایه به‌صورت محلی
+بررسی می‌شود:
 
 ```
 کلید ماژول  AND  رضایت صریح کاربر  AND  مجوز Android
 ```
 
-`PhoneDataCollector` هر سه را بررسی می‌کند، و سرور علاوه بر آن «سیاست سرور» را
-هم اعمال می‌کند. اگر رضایت لغو شود، دیگر داده‌ای حتی خوانده نمی‌شود.
+لایهٔ چهارم — سیاست سرور — جداگانه در بک‌اند اعمال می‌شود.
+
+`PhoneDataCollector` هر سه را از یک helper واحد می‌خواند، پس هیچ نقطهٔ فراخوانی
+وجود ندارد که بدون پرسیدن، دادهٔ یک ماژول را بخواند. اگر رضایت لغو شود، دیگر داده‌ای
+حتی خوانده نمی‌شود — که برخلاف رد کردن در سرور، قابل بازگشت نیست.
+
+وقتی کاربر کلیدی را بدون رضایت روشن کند، کلید خودبه‌خود برمی‌گردد و به صفحهٔ
+دسترسی‌ها هدایت می‌شود؛ چیزی بی‌صدا کار نمی‌کند و کاربر هم فکر نمی‌کند که چیزی خراب
+است.
 
 ## صف محلی
 
@@ -69,10 +51,13 @@ queued ──claim──▶ processing ──complete──▶ حذف
                       └──attempts>max──▶ dead_letters
 ```
 
-دلیل: `SyncScheduler` یک SyncWorker را با دو نام unique متفاوت
-(`phone-bridge-sync-now` و `phone-bridge-sync-periodic`) ثبت می‌کند، پس
-همگام‌سازی دستی و دوره‌ای واقعاً می‌توانند هم‌زمان اجرا شوند. با مدل قبلی هر دو
-یک بسته را می‌خواندند و دوبار ارسال می‌کردند.
+دلیل: `SyncScheduler` یک SyncWorker را با دو نام unique متفاوت ثبت می‌کرد، پس
+همگام‌سازی دستی و دوره‌ای واقعاً می‌توانستند هم‌زمان اجرا شوند. با مدل قبلی هر دو یک
+بسته را می‌خواندند و دوباره ارسال می‌کردند.
+
+اگر کاری در میانهٔ ارسال بمیرد، lease آن تمام می‌شود و بسته دوباره برداشته می‌شود
+به‌جای اینکه برای همیشه گم شود. قطع‌شدن شبکه هم بسته را بدون سوزاندن یک تلاش آزاد
+می‌کند.
 
 ## ساخت
 
@@ -80,27 +65,22 @@ queued ──claim──▶ processing ──complete──▶ حذف
 
 ```bash
 cd android
-gradle check
-gradle lintDebug
-gradle assembleDebug
-gradle test
-gradle connectedDebugAndroidTest   # نیازمند emulator
+./gradlew check
+./gradlew lintDebug
+./gradlew assembleDebug
+./gradlew test
+./gradlew connectedDebugAndroidTest   # نیازمند emulator
 ```
 
 در Android Studio پوشهٔ `android/` را به‌عنوان project root باز کنید.
 
-برای CI، GitHub Actions خودش JDK 17، Android SDK و Gradle 8.10.2 را آماده می‌کند و
-`working-directory: android` دارد.
+برای CI، GitHub Actions خودش JDK 17 و Android SDK را آماده می‌کند، Gradle را از
+wrapper می‌گیرد و `working-directory: android` دارد.
 
-> **Gradle wrapper وجود ندارد.** ریپوی مبدأ فایل‌های `gradlew`، `gradlew.bat` و
-> `gradle/wrapper/` را commit نکرده بود، بنابراین `./gradlew` کار نمی‌کند و همهٔ
-> فرمان‌ها و CI از Gradle سیستمی استفاده می‌کنند. اگر wrapper لازم شد، روی سیستمی که
-> Gradle 8.10.2 و Android SDK دارد اجرا کنید تا wrapper تولید و commit شود:
->
-> ```bash
-> cd android
-> gradle wrapper --gradle-version 8.10.2
-> ```
+> Gradle wrapper در `android/gradlew`، `android/gradlew.bat` و
+> `android/gradle/wrapper/` قرار دارد و نسخهٔ Gradle در
+> `gradle/wrapper/gradle-wrapper.properties` روی 8.10.2 پین شده، بنابراین CI و
+> لپ‌تاپ توسعه‌دهنده یک نسخه را اجرا می‌کنند. اگر فایل اجرایی نبود: `chmod +x gradlew`.
 
 ## شبکه آفلاین
 

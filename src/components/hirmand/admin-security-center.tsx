@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Monitor, RefreshCw, ShieldAlert, ShieldCheck, Smartphone, LogOut } from "lucide-react";
 import { toast } from "sonner";
+import { AdminRoleManager } from "@/components/hirmand/admin-role-manager";
 import {
   listAdminSecuritySessions,
   purgeExpiredAdminSessions,
@@ -144,6 +145,8 @@ export function AdminSecurityCenter() {
           </div>
         )}
       </section>
+
+      <AdminRoleManager />
     </main>
   );
 }

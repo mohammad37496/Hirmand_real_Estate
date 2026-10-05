@@ -1,109 +1,97 @@
-import { createError, defineEventHandler, getHeader, setResponseHeader } from "h3";
-import { authenticateSignedRequest, computeEffectiveAccess, assertModuleAllowed, readSignedBody } from "@/lib/phone-bridge-auth.server";
-import { writePhoneBridgeAudit } from "@/lib/phone-bridge-events.server";
-import { msToIso, safeFileName, toEpochMs } from "@/lib/phone-bridge-payload.server";
-import { consumePhoneBridgeAttempt } from "@/lib/phone-bridge-rate-limit.server";
+import { createError, defineEventHandler, getHeader, readRawBody, setResponseHeader } from "h3";
+import { randomUUID } from "node:crypto";
+import { authenticateDevice } from "@/lib/phone-bridge-auth";
+import { requirePhoneBridgeSignedRequest } from "@/lib/phone-bridge-signature.server";
+import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
+import { getSql, dbSource } from "@/lib/db";
+import { recordPhoneBridgeEvent } from "@/lib/phone-bridge-events.server";
+import { createHash } from "node:crypto";
 
-const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
-const SHA256_HEX = /^[0-9a-f]{64}$/;
+const MAX_BYTES = 50 * 1024 * 1024;
+const allowedMime = new Set(["audio/mp4","audio/m4a","audio/aac","audio/3gpp","audio/amr","audio/wav","audio/x-wav","audio/ogg","audio/webm"]);
 
-/**
- * Call-recording upload (`POST /api/device-sync/v1/call-recordings`).
- *
- * Same integrity rules as `/files` (declared hash must match the bytes, declared
- * size must match the body), plus the `call_recording` consent + policy gate —
- * this is the most sensitive payload the app can send, so it gets its own module
- * rather than riding along with `selected_files`.
- */
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
+  const deviceId = String(getHeader(event, "x-hirmand-device-id") || "").trim();
+  if (!deviceId) throw createError({ statusCode: 400, statusMessage: "شناسه دستگاه ارسال نشده است." });
 
-  const auth = await authenticateSignedRequest(event);
+  await enforcePhoneBridgeRateLimit(event, "call-recording-upload", deviceId, {
+    windowMs: 10 * 60 * 1000,
+    maxHits: 20,
+    blockMs: 10 * 60 * 1000,
+  });
+  const raw = await readRawBody(event, false);
+  const bytes = raw ? Buffer.from(raw) : Buffer.alloc(0);
+  if (!bytes.length || bytes.length > MAX_BYTES) throw createError({ statusCode: 413, statusMessage: "اندازه فایل صوتی مجاز نیست." });
 
-  const limit = await consumePhoneBridgeAttempt("files", auth.device.id);
-  if (!limit.allowed) {
-    setResponseHeader(event, "retry-after", String(limit.retryAfterSeconds));
-    throw createError({ statusCode: 429, statusMessage: "تعداد ارسال ضبط تماس بیش از حد مجاز است." });
+  const auth = await authenticateDevice(event, deviceId);
+  if (!auth.ok) throw createError({ statusCode: auth.status, statusMessage: auth.message });
+  if (auth.mode === "device") await requirePhoneBridgeSignedRequest(event, deviceId, bytes);
+
+  if (dbSource === "unconfigured") throw createError({ statusCode: 503, statusMessage: "پایگاه داده آماده نیست." });
+
+  const mime = String(getHeader(event, "x-hirmand-file-mime") || getHeader(event, "content-type") || "").split(";")[0].toLowerCase();
+  if (!allowedMime.has(mime)) throw createError({ statusCode: 415, statusMessage: "فرمت فایل صوتی مجاز نیست." });
+
+  const sha256 = createHash("sha256").update(bytes).digest("hex");
+  const declaredSha = String(getHeader(event, "x-hirmand-file-sha256") || "");
+  if (declaredSha && declaredSha !== sha256) throw createError({ statusCode: 422, statusMessage: "هش فایل صحیح نیست." });
+
+  const started = String(getHeader(event, "x-hirmand-call-started-at") || "");
+  const ended = String(getHeader(event, "x-hirmand-call-ended-at") || "");
+  const direction = String(getHeader(event, "x-hirmand-call-direction") || "unknown");
+  const phoneNumber = String(getHeader(event, "x-hirmand-call-number") || "").slice(0, 80);
+  const contactName = String(getHeader(event, "x-hirmand-call-contact") || "").slice(0, 160);
+  const duration = Number(getHeader(event, "x-hirmand-call-duration") || 0);
+
+  if (!["incoming","outgoing","unknown"].includes(direction)) {
+    throw createError({ statusCode: 400, statusMessage: "جهت تماس نامعتبر است." });
   }
 
-  const access = await computeEffectiveAccess(auth.device, auth.sql);
-  assertModuleAllowed(access, "call_recording");
-
-  const bytes = Buffer.from(await readSignedBody(event));
-
-  const sha256 = (getHeader(event, "x-hirmand-file-sha256") ?? "").trim().toLowerCase();
-  const sizeHeader = (getHeader(event, "x-hirmand-file-size") ?? "").trim();
-  const mimeType = (getHeader(event, "x-hirmand-file-mime") ?? "audio/mp4").slice(0, 180);
-  const direction = (getHeader(event, "x-hirmand-call-direction") ?? "unknown").slice(0, 20);
-  const durationHeader = Number((getHeader(event, "x-hirmand-call-duration") ?? "0").trim());
-
-  if (!SHA256_HEX.test(sha256)) {
-    throw createError({ statusCode: 400, statusMessage: "شناسهٔ sha256 ضبط معتبر نیست." });
+  const sql = await getSql();
+  const existing = await sql.query<{ id: string; file_id: string }>(
+    `select id,file_id from phone_bridge_call_recordings where device_id=$1 and sha256=$2 limit 1`,
+    [deviceId, sha256],
+  );
+  if (existing[0]) {
+    return { ok: true, duplicate: true, recordingId: existing[0].id, fileId: existing[0].file_id };
   }
 
-  const declaredSize = Number(sizeHeader);
-  if (!Number.isInteger(declaredSize) || declaredSize < 1 || declaredSize > MAX_AUDIO_BYTES) {
-    throw createError({ statusCode: 400, statusMessage: "اندازهٔ ضبط معتبر نیست." });
-  }
-  if (bytes.length !== declaredSize) {
-    throw createError({ statusCode: 400, statusMessage: "اندازهٔ ضبط با محتوای ارسالی هم‌خوانی ندارد." });
-  }
+  const recordingId = randomUUID();
+  const fileId = randomUUID();
+  const extension = mime.includes("wav") ? "wav" : mime.includes("ogg") ? "ogg" : mime.includes("webm") ? "webm" : "m4a";
+  const fileName = `call-recording-${recordingId}.${extension}`;
 
-  const { createHash } = await import("node:crypto");
-  if (createHash("sha256").update(bytes).digest("hex") !== sha256) {
-    throw createError({ statusCode: 400, statusMessage: "محتوای ضبط با sha256 اعلام‌شده هم‌خوانی ندارد." });
-  }
-
-  const startedAtMs = toEpochMs(getHeader(event, "x-hirmand-call-started-at"));
-  const endedAtMs = toEpochMs(getHeader(event, "x-hirmand-call-ended-at"));
-  const durationSeconds =
-    Number.isFinite(durationHeader) && durationHeader > 0 ? Math.trunc(durationHeader) : null;
-  const name = safeFileName(`call-${sha256.slice(0, 12)}`);
-
-  const existing = await auth.sql.query<{ id: string }>(
-    "select id from phone_bridge_files where device_id = $1 and kind = 'call_recording' and sha256 = $2 limit 1",
-    [auth.device.id, sha256],
+  await sql.query(
+    `insert into phone_bridge_files
+      (id,device_id,name,mime_type,size_bytes,sha256,content)
+     values ($1,$2,$3,$4,$5,$6,$7)`,
+    [fileId, deviceId, fileName, mime, bytes.length, sha256, bytes],
   );
 
-  if (existing[0]) {
-    return { ok: true, stored: false, deduplicated: true, fileId: sha256, deviceId: auth.device.id };
-  }
-
-  await auth.sql.query(
-    `insert into phone_bridge_files
-       (id, device_id, file_id, name, mime_type, size_bytes, sha256, kind,
-        call_started_at, call_ended_at, call_direction, call_duration_seconds)
-     values ($1,$2,$3,$4,$5,$6,$7,'call_recording',$8::timestamptz,$9::timestamptz,$10,$11)
-     on conflict (device_id, kind, sha256) do nothing`,
+  await sql.query(
+    `insert into phone_bridge_call_recordings
+      (id,device_id,file_id,call_started_at,call_ended_at,direction,phone_number,contact_name,duration_seconds,mime_type,size_bytes,sha256)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
     [
-      crypto.randomUUID(),
-      auth.device.id,
-      `${auth.device.id}:${sha256}`,
-      name,
-      mimeType,
-      bytes.length,
-      sha256,
-      msToIso(startedAtMs),
-      msToIso(endedAtMs),
+      recordingId, deviceId, fileId,
+      started ? new Date(started) : new Date(),
+      ended ? new Date(ended) : null,
       direction,
-      durationSeconds,
+      phoneNumber || null,
+      contactName || null,
+      Number.isFinite(duration) ? Math.max(0, Math.min(Math.trunc(duration), 86400)) : null,
+      mime, bytes.length, sha256,
     ],
   );
 
-  await writePhoneBridgeAudit({
-    deviceId: auth.device.id,
-    action: "call_recording.upload",
-    module: "call_recording",
-    ip: auth.clientIp,
-    userAgent: auth.userAgent,
-    detail: { direction, durationSeconds, sizeBytes: bytes.length, sha256 },
+  await recordPhoneBridgeEvent({
+    deviceId,
+    eventType: "call_recording.uploaded",
+    severity: "info",
+    message: "فایل ضبط تماس با موفقیت دریافت شد.",
+    metadata: { recordingId, fileId, sizeBytes: bytes.length, mimeType: mime },
   });
 
-  return {
-    ok: true,
-    stored: true,
-    deduplicated: false,
-    fileId: sha256,
-    deviceId: auth.device.id,
-  };
+  return { ok: true, duplicate: false, recordingId, fileId };
 });

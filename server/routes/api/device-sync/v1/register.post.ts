@@ -1,85 +1,113 @@
-import { createError, defineEventHandler, getHeader, getRequestIP, readBody, setResponseHeader } from "h3";
-import { z } from "zod";
+import { createError, defineEventHandler, readBody, setResponseHeader, type H3Event } from "h3";
 import { dbSource, getSql } from "@/lib/db";
-import { enrollDevice } from "@/lib/phone-bridge-auth.server";
-import { writePhoneBridgeAudit } from "@/lib/phone-bridge-events.server";
-import { deviceInfoSchema } from "@/lib/phone-bridge-payload.server";
-import { consumePhoneBridgeAttempt } from "@/lib/phone-bridge-rate-limit.server";
+import { generateDeviceToken, hashToken, requireBootstrap } from "@/lib/phone-bridge-auth";
+import { recordPhoneBridgeEvent } from "@/lib/phone-bridge-events.server";
+import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
-const bodySchema = z.object({ device: deviceInfoSchema });
-
-function bearer(event: Parameters<typeof getHeader>[0]): string {
-  const raw = getHeader(event, "authorization") ?? "";
-  return /^Bearer\s+(.+)$/i.exec(raw.trim())?.[1]?.trim() ?? "";
+type Obj = Record<string, unknown>;
+function obj(value: unknown): Obj {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Obj : {};
+}
+function str(value: unknown, fallback = "", max = 240) {
+  return typeof value === "string" ? value.trim().slice(0, max) : fallback;
+}
+function int(value: unknown): number | null {
+  return typeof value === "number" && Number.isInteger(value) && Number.isSafeInteger(value) ? value : null;
 }
 
-/**
- * Enrollment — the one endpoint authenticated by the *bootstrap* credential.
- *
- * No HMAC here on purpose: the device does not have a device token yet, so there
- * is no key to sign with. The pairing token is single-use and is consumed in the
- * same statement that creates the device, so it cannot be replayed once spent.
- */
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event: H3Event) => {
   setResponseHeader(event, "cache-control", "no-store");
-
-  const pairingToken = bearer(event);
-  if (!pairingToken) {
-    throw createError({ statusCode: 401, statusMessage: "کلید ثبت دستگاه ارسال نشده است." });
+  await enforcePhoneBridgeRateLimit(event, "register", "bootstrap", {
+    windowMs: 15 * 60 * 1000,
+    maxHits: 5,
+    blockMs: 30 * 60 * 1000,
+  });
+  try {
+    requireBootstrap(event);
+  } catch (error) {
+    await recordPhoneBridgeEvent({
+      eventType: "security.bootstrap_failed",
+      severity: "error",
+      message: "تلاش ناموفق برای ثبت اولیهٔ Phone Bridge.",
+      metadata: {
+      route: "/api/device-sync/v1/register",
+      consentVersion,
+      consentScopesCount: consentScopes.length,
+    },
+    }).catch(() => undefined);
+    throw error;
   }
-
-  // Throttle by client IP, not by device: at this point no device exists yet.
-  const limit = await consumePhoneBridgeAttempt("register", getRequestIP(event, { xForwardedFor: true }) ?? "unknown");
-  if (!limit.allowed) {
-    setResponseHeader(event, "retry-after", String(limit.retryAfterSeconds));
-    throw createError({ statusCode: 429, statusMessage: "تلاش ثبت دستگاه بیش از حد مجاز بوده است." });
-  }
-
-  const body = await readBody(event).catch(() => null);
-  const parsed = bodySchema.safeParse(body);
-  if (!parsed.success || !parsed.data.device.id) {
-    throw createError({ statusCode: 422, statusMessage: "اطلاعات دستگاه معتبر نیست." });
-  }
-
   if (dbSource === "unconfigured") {
-    throw createError({
-      statusCode: 503,
-      statusMessage: "پایگاه دادهٔ Phone Bridge تنظیم نشده است.",
-    });
+    throw createError({ statusCode: 503, statusMessage: "پایگاه داده برای ثبت دستگاه در دسترس نیست." });
   }
 
-  const result = await enrollDevice({
-    sql: await getSql(),
-    pairingToken,
-    device: parsed.data.device,
-  });
+  const body = obj(await readBody(event).catch(() => null));
+  const device = obj(body.device);
+  const deviceId = str(device.id, "", 120);
+  if (!deviceId) throw createError({ statusCode: 400, statusMessage: "شناسهٔ نصب گوشی ارسال نشده است." });
+  const appVersionName = str(device.appVersionName, "unknown", 80);
+  const appVersionCode = Math.max(1, Math.min(int(device.appVersionCode) ?? 1, 1000000));
 
-  if (!result.ok) {
-    await writePhoneBridgeAudit({
-      deviceId: parsed.data.device.id,
-      actor: "device",
-      action: "device.register",
-      result: "denied",
-      ip: getRequestIP(event, { xForwardedFor: true }) ?? "",
-      userAgent: getHeader(event, "user-agent") ?? "",
-      detail: { reason: result.reason },
-    });
-    throw createError({
-      statusCode: 401,
-      statusMessage: "کلید ثبت دستگاه نامعتبر، منقضی یا مصرف‌شده است.",
-    });
-  }
+  const consent = obj(body.consent);
+  const consentVersion = Math.max(0, Math.min(int(consent.version) ?? 0, 100));
+  const consentAcceptedAtMs = int(consent.acceptedAt);
+  const consentAcceptedAt =
+    consentAcceptedAtMs !== null && consentAcceptedAtMs > 0 && consentAcceptedAtMs <= Date.now() + 10 * 60 * 1000
+      ? new Date(consentAcceptedAtMs).toISOString()
+      : null;
+  const consentScopes = Array.isArray(consent.scopes)
+    ? [...new Set(consent.scopes.filter((value): value is string => typeof value === "string").map(value => value.trim().slice(0, 80)).filter(Boolean))].slice(0, 32)
+    : [];
 
-  await writePhoneBridgeAudit({
-    deviceId: parsed.data.device.id,
-    actor: "device",
-    action: "device.register",
-    ip: getRequestIP(event, { xForwardedFor: true }) ?? "",
-    userAgent: getHeader(event, "user-agent") ?? "",
-    detail: { model: parsed.data.device.model, appVersion: parsed.data.device.appVersionName },
-  });
+  const token = generateDeviceToken();
+  const sql = await getSql();
+  await sql.query(
+    `insert into phone_bridge_devices
+      (id,name,manufacturer,model,android_version,sdk_int,app_version_name,app_version_code,token_hash,token_created_at,last_authenticated_at,enabled,consent_version,consent_accepted_at,consent_scopes)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,current_timestamp,current_timestamp,true,$10,$11,$12::jsonb)
+     on conflict (id) do update set
+       name=excluded.name,
+       manufacturer=excluded.manufacturer,
+       model=excluded.model,
+       android_version=excluded.android_version,
+       sdk_int=excluded.sdk_int,
+       app_version_name=excluded.app_version_name,
+       app_version_code=excluded.app_version_code,
+       token_hash=excluded.token_hash,
+       token_created_at=current_timestamp,
+       last_authenticated_at=current_timestamp,
+       enabled=true,
+       consent_version=case when excluded.consent_version > 0 then excluded.consent_version else phone_bridge_devices.consent_version end,
+       consent_accepted_at=case when excluded.consent_version > 0 then excluded.consent_accepted_at else phone_bridge_devices.consent_accepted_at end,
+       consent_scopes=case when excluded.consent_version > 0 then excluded.consent_scopes else phone_bridge_devices.consent_scopes end`,
+    [
+      deviceId,
+      str(device.name, "گوشی"),
+      str(device.manufacturer),
+      str(device.model),
+      str(device.androidVersion),
+      int(device.sdkInt),
+      appVersionName,
+      appVersionCode,
+      hashToken(token),
+      consentVersion,
+      consentAcceptedAt,
+      JSON.stringify(consentScopes),
+    ],
+  );
 
-  // The device token is returned exactly once. It is stored only as a sha256
-  // hash server-side, so a lost token means re-enrollment, never retrieval.
-  return { ok: true, deviceToken: result.deviceToken, deviceId: parsed.data.device.id };
+  await recordPhoneBridgeEvent({
+    deviceId,
+    eventType: "device.registered",
+    severity: "info",
+    message: "یک دستگاه Phone Bridge ثبت شد یا توکن آن بازتولید شد.",
+    metadata: { route: "/api/device-sync/v1/register" },
+  }).catch(() => undefined);
+
+  return {
+    ok: true,
+    deviceId,
+    deviceToken: token,
+    registeredAt: new Date().toISOString(),
+  };
 });

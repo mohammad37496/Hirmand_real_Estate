@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import { CalendarDays, RotateCcw, X } from "lucide-react";
 import { DayPicker, faIR } from "react-day-picker/persian";
 import "react-day-picker/style.css";
@@ -30,16 +31,62 @@ export function PersianDatePicker({
   disabled = false,
 }: PersianDatePickerProps) {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const [popoverStyle, setPopoverStyle] = useState<CSSProperties>({});
   const selectedDate = dateOnlyToLocalDate(value);
   const minDate = minValue ? dateOnlyToLocalDate(minValue) : undefined;
 
+  function positionPopover() {
+    const trigger = triggerRef.current;
+    const popover = popoverRef.current;
+    if (!trigger || !popover || typeof window === "undefined") return;
+
+    const triggerRect = trigger.getBoundingClientRect();
+    const viewportPadding = 12;
+    const preferredWidth = window.innerWidth <= 720 ? 390 : 370;
+    const width = Math.min(preferredWidth, window.innerWidth - viewportPadding * 2);
+
+    let left = triggerRect.right - width;
+    left = Math.max(viewportPadding, Math.min(left, window.innerWidth - width - viewportPadding));
+
+    let top = triggerRect.bottom + 9;
+    const popoverRect = popover.getBoundingClientRect();
+    if (
+      top + popoverRect.height > window.innerHeight - viewportPadding &&
+      triggerRect.top - popoverRect.height - 9 >= viewportPadding
+    ) {
+      top = triggerRect.top - popoverRect.height - 9;
+    }
+
+    setPopoverStyle({
+      position: "fixed",
+      top: String(Math.round(top)) + "px",
+      left: String(Math.round(left)) + "px",
+      width: String(Math.round(width)) + "px",
+    });
+  }
+
   useEffect(() => {
     if (!open) return;
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
+    const onViewportChange = () => positionPopover();
+
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", onViewportChange);
+    window.addEventListener("scroll", onViewportChange, true);
+
+    const frame = window.requestAnimationFrame(() => positionPopover());
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", onViewportChange);
+      window.removeEventListener("scroll", onViewportChange, true);
+      window.cancelAnimationFrame(frame);
+    };
   }, [open]);
 
   function selectDate(date: Date | undefined) {
@@ -51,6 +98,7 @@ export function PersianDatePicker({
   return (
     <div className="persian-date-picker">
       <button
+        ref={triggerRef}
         id={id}
         type="button"
         className={"persian-date-picker-trigger" + (value ? " has-value" : "")}
@@ -81,8 +129,15 @@ export function PersianDatePicker({
         </button>
       ) : null}
 
-      {open ? (
-        <div className="persian-date-picker-popover" role="dialog" aria-label="انتخاب تاریخ شمسی">
+      {open && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={popoverRef}
+              className="persian-date-picker-popover"
+              role="dialog"
+              aria-label="انتخاب تاریخ شمسی"
+              style={popoverStyle}
+            >
           <div className="persian-date-picker-head">
             <div>
               <span>{title}</span>
@@ -99,6 +154,11 @@ export function PersianDatePicker({
             </button>
           </div>
 
+          <div className="persian-date-picker-calendar-guide">
+            <span>ماه و سال را از بالا انتخاب کنید</span>
+            <b>سپس روز موردنظر را انتخاب کنید</b>
+          </div>
+
           <DayPicker
             mode="single"
             selected={selectedDate}
@@ -110,7 +170,7 @@ export function PersianDatePicker({
             captionLayout="dropdown"
             navLayout="after"
             reverseYears
-            showOutsideDays
+            showOutsideDays={false}
             disabled={minDate ? { before: minDate } : undefined}
           />
 
@@ -120,8 +180,10 @@ export function PersianDatePicker({
               حذف تاریخ انتخاب‌شده
             </button>
           ) : null}
-        </div>
-      ) : null}
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

@@ -125,8 +125,6 @@ export function homeHead(settings?: SiteSettings) {
       { name: "author", content: SITE.nameFa },
       { name: "geo.region", content: "IR-04" },
       { name: "geo.placename", content: "Isfahan" },
-      { name: "geo.position", content: `${SITE.lat};${SITE.lng}` },
-      { name: "ICBM", content: `${SITE.lat}, ${SITE.lng}` },
       { name: "language", content: "fa" },
       ...(settings?.googleSiteVerification?.trim()
         ? [{ name: "google-site-verification", content: settings.googleSiteVerification.trim() }]
@@ -353,11 +351,6 @@ export function enhancedOrganizationJsonLd(settings?: SiteSettings) {
           addressLocality: SITE.locality,
           addressRegion: "اصفهان",
           addressCountry: "IR",
-        },
-        geo: {
-          "@type": "GeoCoordinates",
-          latitude: SITE.lat,
-          longitude: SITE.lng,
         },
         hasMap: SITE.mapUrl,
         areaServed: [

@@ -2,6 +2,8 @@ import { createError, defineEventHandler, getCookie, readBody, setResponseHeader
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
+import { getAdminSessionClaims } from "@/lib/admin-session.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 
 type Status = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 type VisitStatus = "none" | "requested" | "confirmed" | "completed" | "cancelled";
@@ -35,7 +37,7 @@ const LIST_MAX_OFFSET = 100000;
 function parseListInput(body: Record<string, unknown>) {
   const status = typeof body.status === "string" ? body.status : "";
   const sortRaw = typeof body.sort === "string" ? body.sort : "newest";
-  const sort = ["newest", "oldest", "name", "follow_up"].includes(sortRaw)
+  const sort = ["newest", "oldest", "name", "follow_up", "priority"].includes(sortRaw)
     ? (sortRaw as "newest" | "oldest" | "name" | "follow_up")
     : "newest";
   const query = typeof body.query === "string" ? body.query.trim().slice(0, 80) : "";
@@ -94,6 +96,10 @@ export default defineEventHandler(async (event) => {
   }
 
   assertSameOrigin(event);
+  const claims = await getAdminSessionClaims(getCookie(event, ADMIN_SESSION_COOKIE));
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "lead.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "سطح دسترسی CRM برای این حساب فعال نیست." });
+  }
 
   if (dbSource === "unconfigured") return { leads: [], total: 0 };
   const sql = await getSql();
@@ -218,13 +224,10 @@ export default defineEventHandler(async (event) => {
     // `follow_up_at desc nulls last` surfaces the leads that need attention
     // first; everything else falls back to the most recent submissions.
     const orderBy =
-      sort === "oldest"
-        ? "created_at asc"
-        : sort === "name"
-          ? "name asc nulls last"
-          : sort === "follow_up"
-            ? "follow_up_at desc nulls last, created_at desc"
-            : "created_at desc";
+      sort === "oldest" ? "created_at asc" :
+      sort === "name" ? "name asc nulls last" :
+      sort === "follow_up" ? "follow_up_at asc nulls last, created_at desc" :
+      sort === "priority" ? "priority_score desc, created_at desc" : "created_at desc";
 
     params.push(limit, offset);
     const limitIndex = params.length - 1;
@@ -234,7 +237,7 @@ export default defineEventHandler(async (event) => {
       sql.query<Record<string, unknown>>(
         "select id,name,phone,people_count,job,deal,property_type,neighborhood,floor_preference,consultant,note,status,source, " +
           "acquisition_source,acquisition_medium,acquisition_campaign,acquisition_referrer,follow_up_at,last_contacted_at,property_id,visit_preferred_at,visit_requested_at,visit_status,lease_deadline, " +
-          "budget_deposit,budget_rent,budget_purchase,budget_sale,budget_deposit_min,budget_deposit_max,budget_rent_min,budget_rent_max,budget_purchase_min,budget_purchase_max,budget_sale_min,budget_sale_max,budget_equivalent,budget_bedrooms,budget_rate,requested_bedrooms,requested_amenities,matched_properties,match_count,callback_preferred_at,offer_amount,offer_conditions,created_at " +
+          "budget_deposit,budget_rent,budget_purchase,budget_sale,budget_deposit_min,budget_deposit_max,budget_rent_min,budget_rent_max,budget_purchase_min,budget_purchase_max,budget_sale_min,budget_sale_max,budget_equivalent,budget_bedrooms,budget_rate,requested_bedrooms,requested_amenities,matched_properties,match_count,callback_preferred_at,offer_amount,offer_conditions,created_at, " + "(case when status in ('closed','spam') then 0 else (case when status='new' then 28 when status='follow_up' then 22 when status='visited' then 18 when status='contract' then 10 else 14 end) + (case when follow_up_at is not null and follow_up_at <= current_timestamp then 28 when follow_up_at is not null and follow_up_at <= current_timestamp + interval '48 hours' then 16 else 0 end) + (case when visit_status='requested' then 22 when visit_status='confirmed' then 12 else 0 end) + (case when offer_amount is not null then 12 else 0 end) + (case when match_count > 0 then 7 else 0 end) + (case when created_at >= current_timestamp - interval '48 hours' then 5 else 0 end) end)" + " as priority_score " +
           `from leads where ${conditions.join(" and ")} order by ${orderBy} ` +
           `limit $${limitIndex} offset $${offsetIndex}`,
         params,
@@ -295,11 +298,25 @@ export default defineEventHandler(async (event) => {
         budgetEquivalent: row.budget_equivalent == null ? null : Number(row.budget_equivalent),
         budgetBedrooms: row.budget_bedrooms == null ? null : Number(row.budget_bedrooms),
         budgetRate: row.budget_rate == null ? null : Number(row.budget_rate),
+        priorityScore: Number(row.priority_score) || 0,
+        priority: (Number(row.priority_score) || 0) >= 70 ? "hot" : (Number(row.priority_score) || 0) >= 45 ? "warm" : "cold",
         matchCount: Number(row.match_count) || 0,
         matchedProperties: Array.isArray(row.matched_properties) ? row.matched_properties : [],
         createdAt: new Date(String(row.created_at)).toISOString(),
       })),
     };
+  }
+
+  if (body.action === "create_overdue_tasks") {
+    const overdue = await sql.query<Record<string, unknown>>("select id, name, deal, neighborhood from leads where status not in ('closed','spam') and follow_up_at is not null and follow_up_at <= current_timestamp order by follow_up_at asc limit 500");
+    let created = 0;
+    for (const row of overdue) {
+      const exists = await sql.query<{ id: string }>("select id from admin_tasks where entity_type='lead' and entity_id=$1 and status='open' limit 1",[String(row.id)]).catch(()=>[]);
+      if (exists.length) continue;
+      await sql.query("insert into admin_tasks(id,title,description,status,priority,due_at,assignee,entity_type,entity_id) values($1,$2,$3,'open','high',current_timestamp,'تیم هیرمند','lead',$4)",[crypto.randomUUID(),"پیگیری فوری لید: "+String(row.name||"مشتری"),"لید "+String(row.deal||"درخواست ملکی")+(row.neighborhood?" · "+String(row.neighborhood):"")+" از موعد پیگیری عبور کرده است.",String(row.id)]);
+      created++;
+    }
+    return { success:true, created };
   }
 
   if (!body.id) {

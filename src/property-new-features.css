@@ -416,3 +416,196 @@
   .property-document-request-success > div{min-width:calc(100% - 62px);}
   .property-document-request-success .btn-ghost{width:100%;justify-content:center;}
 }
+
+
+/* Real floor-plan presentation */
+.property-floor-plan.has-real-plan .property-new-feature-badge.is-real{
+  border-color:color-mix(in srgb,var(--gold) 45%,var(--line));
+  background:color-mix(in srgb,var(--gold) 10%,var(--card));
+  color:var(--navy-900);
+}
+.property-floor-plan-real{
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:var(--r-xl);
+  background:var(--card-2);
+}
+.property-floor-plan-real-image-button{
+  position:relative;
+  display:block;
+  width:100%;
+  padding:0;
+  border:0;
+  background:#f5f1e8;
+  cursor:zoom-in;
+  overflow:hidden;
+}
+.property-floor-plan-real-image-button img{
+  display:block;
+  width:100%;
+  height:min(620px,62vw);
+  min-height:280px;
+  object-fit:contain;
+  object-position:center;
+  background:
+    linear-gradient(rgba(11,26,43,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(11,26,43,.035) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+.property-floor-plan-real-overlay{
+  position:absolute;
+  inset-inline-start:16px;
+  inset-block-end:16px;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  min-height:40px;
+  padding:8px 12px;
+  border:1px solid rgba(255,255,255,.55);
+  border-radius:12px;
+  background:rgba(11,26,43,.78);
+  color:#fff;
+  font-size:.76rem;
+  font-weight:800;
+  box-shadow:0 8px 22px rgba(11,26,43,.15);
+  backdrop-filter:blur(8px);
+}
+.property-floor-plan-real-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:11px 13px;
+  border-top:1px solid var(--line);
+}
+.property-floor-plan-real-footer>span{
+  display:inline-flex;
+  align-items:flex-start;
+  gap:7px;
+  color:var(--muted);
+  font-size:.73rem;
+  line-height:1.7;
+}
+.property-floor-plan-real-footer>span svg{flex:0 0 auto;color:var(--gold)}
+.property-floor-plan-real-footer .btn-ghost{min-height:36px;flex:0 0 auto}
+
+.property-floor-plan-notice{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  margin-bottom:14px;
+  padding:10px 12px;
+  border:1px solid color-mix(in srgb,var(--gold) 28%,var(--line));
+  border-radius:12px;
+  background:color-mix(in srgb,var(--gold) 6%,var(--card));
+  color:var(--muted);
+  font-size:.76rem;
+  line-height:1.8;
+}
+.property-floor-plan-notice svg{flex:0 0 auto;margin-top:3px;color:var(--gold)}
+.property-floor-plan.is-schematic .property-floor-plan-canvas{
+  background:
+    linear-gradient(rgba(11,26,43,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(11,26,43,.025) 1px,transparent 1px),
+    var(--card-2);
+  background-size:22px 22px;
+}
+
+.property-floor-plan-lightbox{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto auto;
+  place-items:center;
+  gap:12px;
+  padding:22px;
+  background:rgba(8,16,27,.93);
+  backdrop-filter:blur(14px);
+}
+.property-floor-plan-lightbox-close{
+  position:absolute;
+  inset-inline-end:18px;
+  inset-block-start:18px;
+  width:44px;
+  height:44px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.2);
+  border-radius:12px;
+  background:rgba(255,255,255,.09);
+  color:#fff;
+  cursor:pointer;
+}
+.property-floor-plan-lightbox-stage{
+  width:min(1200px,94vw);
+  height:min(78vh,820px);
+  display:grid;
+  place-items:center;
+  overflow:auto;
+  overscroll-behavior:contain;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:18px;
+  background:#f5f1e8;
+  box-shadow:0 28px 80px rgba(0,0,0,.28);
+}
+.property-floor-plan-lightbox-stage img{
+  display:block;
+  max-width:90%;
+  max-height:90%;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  transition:transform .18s ease;
+  transform-origin:center;
+  will-change:transform;
+}
+.property-floor-plan-lightbox-controls{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:6px;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:14px;
+  background:rgba(255,255,255,.08);
+}
+.property-floor-plan-lightbox-controls button{
+  width:38px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:10px;
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  cursor:pointer;
+}
+.property-floor-plan-lightbox-controls button:disabled{opacity:.4;cursor:not-allowed}
+.property-floor-plan-lightbox-controls span{
+  min-width:56px;
+  text-align:center;
+  color:#fff;
+  font-size:.75rem;
+  font-weight:800;
+}
+.property-floor-plan-lightbox-note{
+  margin:0;
+  color:rgba(255,255,255,.62);
+  font-size:.68rem;
+  text-align:center;
+}
+@media(max-width:640px){
+  .property-floor-plan-real-image-button img{
+    height:72vw;
+    min-height:220px;
+  }
+  .property-floor-plan-real-footer{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .property-floor-plan-real-footer .btn-ghost{width:100%;justify-content:center}
+  .property-floor-plan-lightbox{padding:12px}
+  .property-floor-plan-lightbox-stage{width:96vw;height:76vh;border-radius:14px}
+  .property-floor-plan-lightbox-stage img{max-width:none;max-height:none;min-width:88%;min-height:88%;object-fit:contain}
+  .property-floor-plan-lightbox-close{inset-inline-end:10px;inset-block-start:10px}
+}

@@ -1,40 +1,49 @@
-import { defineEventHandler, getQuery, setResponseHeader } from "h3";
-import { optionalInt } from "@/lib/phone-bridge-payload.server";
+import { createError, defineEventHandler, getQuery, setResponseHeader } from "h3";
+import { dbSource, getSql } from "@/lib/db";
+import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
-/**
- * Update check (`GET /api/device-sync/v1/update?versionCode=N`).
- *
- * Unauthenticated on purpose: `MainActivity.checkForUpdate()` runs this from the
- * settings screen, potentially before the device has enrolled, and a stale or
- * revoked device must still be able to discover that it needs to update.
- *
- * It therefore reveals only the latest published version — no device data, no
- * inventory, nothing that identifies a handset.
- */
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
 
+  await enforcePhoneBridgeRateLimit(event, "update-check", "public", {
+    windowMs: 10 * 60 * 1000,
+    maxHits: 30,
+    blockMs: 10 * 60 * 1000,
+  });
+
+  if (dbSource === "unconfigured") {
+    throw createError({ statusCode: 503, statusMessage: "اطلاعات بروزرسانی Phone Bridge در دسترس نیست." });
+  }
+
   const query = getQuery(event);
-  const currentVersionCode = optionalInt(query.versionCode) ?? 0;
+  const currentVersionCode = Number(query.versionCode ?? 0);
+  if (!Number.isInteger(currentVersionCode) || currentVersionCode < 0 || currentVersionCode > 1000000) {
+    throw createError({ statusCode: 400, statusMessage: "versionCode نامعتبر است." });
+  }
 
-  const versionCode = optionalInt(process.env.PHONE_BRIDGE_LATEST_VERSION_CODE) ?? 0;
-  const versionName = process.env.PHONE_BRIDGE_LATEST_VERSION_NAME?.trim() ?? "";
-  const downloadUrl = process.env.PHONE_BRIDGE_DOWNLOAD_URL?.trim() ?? "";
-  const releaseNotes = process.env.PHONE_BRIDGE_RELEASE_NOTES?.trim() ?? "";
-  const mandatory = process.env.PHONE_BRIDGE_FORCE_UPDATE === "true";
+  const sql = await getSql();
+  const rows = await sql.query<Record<string, unknown>>(
+    `select version_name,version_code,download_url,release_notes,force_update,updated_at
+     from phone_bridge_release_settings where id=1 limit 1`,
+  );
+  const row = rows[0];
 
-  const updateAvailable = versionCode > currentVersionCode && downloadUrl !== "";
+  const latestVersionCode = Number(row?.version_code ?? 20);
+  const updateAvailable = latestVersionCode > currentVersionCode;
+  const forceUpdate = updateAvailable && Boolean(row?.force_update);
+  const downloadUrl = String(row?.download_url ?? "");
 
   return {
-    updateAvailable,
+    ok: true,
+    currentVersionCode,
     latest: {
-      versionName,
-      versionCode,
+      versionName: String(row?.version_name ?? "0.2.0"),
+      versionCode: latestVersionCode,
       downloadUrl,
-      releaseNotes,
-      // Only force the update dialog when there is somewhere to actually send
-      // the user; `MainActivity` ignores `forceUpdate` without a URL anyway.
-      forceUpdate: mandatory && updateAvailable,
+      releaseNotes: String(row?.release_notes ?? ""),
+      forceUpdate,
+      publishedAt: row?.updated_at ? new Date(String(row.updated_at)).toISOString() : null,
     },
+    updateAvailable,
   };
 });

@@ -3,7 +3,7 @@ package ir.hirmand.phonebridge.data
 import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import android.sqlite.SQLiteFullException
+import android.database.sqlite.SQLiteFullException
 import android.database.sqlite.SQLiteOpenHelper
 import java.security.MessageDigest
 
@@ -206,7 +206,7 @@ class LocalQueueDb(context: Context) : SQLiteOpenHelper(context, "phone_bridge_q
         readableDatabase.rawQuery(
             "SELECT id, payload, attempts, module, priority FROM queue " +
                 "WHERE id IN ($placeholders) AND state = 'processing' AND lease_expires_at = ?",
-            claimedIds.map { it.toString() } + leaseExpires.toString(),
+            (claimedIds.map { it.toString() } + leaseExpires.toString()).toTypedArray(),
         ).use { c ->
             val idIx = c.getColumnIndexOrThrow("id")
             val payloadIx = c.getColumnIndexOrThrow("payload")
@@ -280,8 +280,10 @@ class LocalQueueDb(context: Context) : SQLiteOpenHelper(context, "phone_bridge_q
                         put("next_attempt_at", System.currentTimeMillis() + backoffMillis(nextAttempts))
                         put("last_error", error.take(500))
                         put("state", "queued")
-                        put("claimed_at", null as Any?)
-                        put("lease_expires_at", null as Any?)
+                        // ContentValues has no generic put(String, Any?), so a null
+                        // has to go through putNull rather than a cast.
+                        putNull("claimed_at")
+                        putNull("lease_expires_at")
                     },
                     "id = ?",
                     arrayOf(id.toString()),
@@ -306,8 +308,8 @@ class LocalQueueDb(context: Context) : SQLiteOpenHelper(context, "phone_bridge_q
             "queue",
             ContentValues().apply {
                 put("state", "queued")
-                put("claimed_at", null as Any?)
-                put("lease_expires_at", null as Any?)
+                putNull("claimed_at")
+                putNull("lease_expires_at")
             },
             "id = ? AND state = 'processing'",
             arrayOf(id.toString()),

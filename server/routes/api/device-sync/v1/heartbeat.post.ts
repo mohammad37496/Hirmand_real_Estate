@@ -1,116 +1,159 @@
-import { createError, defineEventHandler, setResponseHeader } from "h3";
-import { authenticateSignedRequest, readSignedBody, computeEffectiveAccess } from "@/lib/phone-bridge-auth.server";
-import { writePhoneBridgeAudit } from "@/lib/phone-bridge-events.server";
-import { heartbeatSchema } from "@/lib/phone-bridge-payload.server";
-import { consumePhoneBridgeAttempt } from "@/lib/phone-bridge-rate-limit.server";
+import { createError, defineEventHandler, getHeader, readRawBody, setResponseHeader } from "h3";
+import { dbSource, getSql } from "@/lib/db";
+import { authenticateDevice } from "@/lib/phone-bridge-auth";
+import { requirePhoneBridgeSignedRequest } from "@/lib/phone-bridge-signature.server";
+import { recordPhoneBridgeEvent } from "@/lib/phone-bridge-events.server";
+import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.server";
 
-/**
- * Heartbeat (`POST /api/device-sync/v1/heartbeat`).
- *
- * This is the delta-mode optimization the app implements: when nothing the
- * device reports has changed, it sends only this small packet instead of a full
- * snapshot. The server answers `snapshotRequired` when it wants the full packet —
- * which is true whenever the client has no `last_sync_hash`, or the hash it
- * reports does not match what we last stored.
- *
- * Storing the health columns here is what makes the admin devices table show a
- * live battery / storage / RAM figure without waiting for a full sync.
- */
+type JsonObject = Record<string, unknown>;
+
+function asObject(value: unknown): JsonObject {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
+}
+
+function asString(value: unknown, fallback = "") {
+  return typeof value === "string" ? value.trim().slice(0, 500) : fallback;
+}
+
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
 
-  const auth = await authenticateSignedRequest(event);
-
-  const limit = await consumePhoneBridgeAttempt("heartbeat", auth.device.id);
-  if (!limit.allowed) {
-    setResponseHeader(event, "retry-after", String(limit.retryAfterSeconds));
-    throw createError({ statusCode: 429, statusMessage: "تعداد heartbeat بیش از حد مجاز است." });
+  if (dbSource === "unconfigured") {
+    throw createError({ statusCode: 503, statusMessage: "پایگاه داده برای Heartbeat در دسترس نیست." });
   }
 
-  const raw = await readSignedBody(event);
-  let json: unknown;
-  try {
-    json = JSON.parse(new TextDecoder().decode(raw));
-  } catch {
-    throw createError({ statusCode: 400, statusMessage: "محتوای heartbeat معتبر نیست." });
+  const deviceId = getHeader(event, "x-hirmand-device-id")?.trim().slice(0, 120) ?? "";
+  if (!deviceId) {
+    throw createError({ statusCode: 400, statusMessage: "شناسهٔ دستگاه ارسال نشده است." });
   }
 
-  const parsed = heartbeatSchema.safeParse(json);
-  if (!parsed.success) {
-    throw createError({ statusCode: 422, statusMessage: "ساختار heartbeat معتبر نیست." });
-  }
-
-  const stats = parsed.data.deviceStats;
-  const queue = parsed.data.queue;
-
-  await auth.sql.query(
-    `insert into phone_bridge_heartbeats
-       (device_id, snapshot_hash, battery_percent, battery_charging,
-        storage_available_bytes, storage_total_bytes,
-        ram_available_bytes, ram_total_bytes, queue_queued, queue_dead_letters)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-    [
-      auth.device.id,
-      parsed.data.snapshotHash,
-      stats.batteryPercent,
-      stats.batteryCharging,
-      stats.storageAvailableBytes,
-      stats.storageTotalBytes,
-      stats.ramAvailableBytes,
-      stats.ramTotalBytes,
-      queue.queued,
-      queue.deadLetters,
-    ],
-  );
-
-  await auth.sql.query(
-    `update phone_bridge_devices
-        set battery_percent = $2,
-            battery_charging = $3,
-            storage_available_bytes = $4,
-            storage_total_bytes = $5,
-            ram_available_bytes = $6,
-            ram_total_bytes = $7,
-            updated_at = current_timestamp
-      where id = $1`,
-    [
-      auth.device.id,
-      stats.batteryPercent,
-      stats.batteryCharging,
-      stats.storageAvailableBytes,
-      stats.storageTotalBytes,
-      stats.ramAvailableBytes,
-      stats.ramTotalBytes,
-    ],
-  );
-
-  // A device whose policy was tightened while it was offline needs the policy
-  // back, and the app shows it immediately — which is what makes "admin disables
-  // a module" visibly take effect on the handset.
-  const access = await computeEffectiveAccess(auth.device, auth.sql);
-
-  const snapshotRequired =
-    !auth.device.lastSnapshotHash || parsed.data.snapshotHash !== auth.device.lastSnapshotHash;
-
-  await writePhoneBridgeAudit({
-    deviceId: auth.device.id,
-    action: "device.heartbeat",
-    policy: access.effective.join(","),
-    ip: auth.clientIp,
-    userAgent: auth.userAgent,
-    detail: {
-      snapshotRequired,
-      queueQueued: queue.queued,
-      deadLetters: queue.deadLetters,
-    },
+  await enforcePhoneBridgeRateLimit(event, "heartbeat", deviceId, {
+    windowMs: 10 * 60 * 1000,
+    maxHits: 30,
+    blockMs: 10 * 60 * 1000,
   });
+  const raw = await readRawBody(event);
+  const rawBody = Buffer.isBuffer(raw) ? raw : Buffer.from(raw ?? "");
+
+  try {
+    const auth = await authenticateDevice(event, deviceId);
+    if (auth.mode === "device") {
+      await requirePhoneBridgeSignedRequest(event, deviceId, rawBody);
+    }
+  } catch (error) {
+    await recordPhoneBridgeEvent({
+      deviceId,
+      eventType: "security.auth_failed",
+      severity: "error",
+      message: "احراز هویت دستگاه برای Heartbeat ناموفق بود.",
+      metadata: { route: "/api/device-sync/v1/heartbeat" },
+    }).catch(() => undefined);
+    throw error;
+  }
+
+  const sql = await getSql();
+  const policyRows = await sql.query<{ policy_revision: number; last_snapshot_policy_revision: number; min_app_version_code: number }>(
+    `select policy_revision,last_snapshot_policy_revision,min_app_version_code from phone_bridge_devices where id=$1 limit 1`,
+    [deviceId],
+  );
+  const policyRevision = Number(policyRows[0]?.policy_revision ?? 1);
+  const appliedPolicyRevision = Number(policyRows[0]?.last_snapshot_policy_revision ?? 1);
+  const snapshotRequired = policyRevision !== appliedPolicyRevision;
+
+  const body = asObject(await (async () => {
+    try {
+      return JSON.parse(rawBody.toString("utf8"));
+    } catch {
+      return null;
+    }
+  })());
+  const device = asObject(body.device);
+  const appVersionCode = Number.isInteger(device.appVersionCode) ? Math.max(1, Math.min(device.appVersionCode, 1000000)) : 1;
+  const appVersionName = asString(device.appVersionName, "unknown");
+  const queue = asObject(body.queue);
+  const stats = asObject(body.deviceStats);
+  const snapshotHash = asString(body.snapshotHash).slice(0, 128);
+  const batteryPercent = typeof stats.batteryPercent === "number" && Number.isInteger(stats.batteryPercent)
+    ? Math.max(0, Math.min(100, stats.batteryPercent))
+    : null;
+  const batteryCharging = typeof stats.batteryCharging === "boolean" ? stats.batteryCharging : null;
+  const storageAvailableBytes = typeof stats.storageAvailableBytes === "number" && Number.isSafeInteger(stats.storageAvailableBytes)
+    ? Math.max(0, stats.storageAvailableBytes)
+    : null;
+  const storageTotalBytes = typeof stats.storageTotalBytes === "number" && Number.isSafeInteger(stats.storageTotalBytes)
+    ? Math.max(0, stats.storageTotalBytes)
+    : null;
+  const ramAvailableBytes = typeof stats.ramAvailableBytes === "number" && Number.isSafeInteger(stats.ramAvailableBytes)
+    ? Math.max(0, stats.ramAvailableBytes)
+    : null;
+  const ramTotalBytes = typeof stats.ramTotalBytes === "number" && Number.isSafeInteger(stats.ramTotalBytes)
+    ? Math.max(0, stats.ramTotalBytes)
+    : null;
+  const queued = Number.isInteger(queue.queued) && queue.queued >= 0 ? Math.min(queue.queued, 10000) : 0;
+  const deadLetters = Number.isInteger(queue.deadLetters) && queue.deadLetters >= 0 ? Math.min(queue.deadLetters, 10000) : 0;
+  const reportedAt = Number.isInteger(queue.reportedAt) ? new Date(queue.reportedAt) : new Date();
+  const healthReportAt = Number.isFinite(reportedAt.getTime()) ? reportedAt.toISOString() : new Date().toISOString();
+
+  await sql.query(
+    `insert into phone_bridge_health_history
+      (device_id,battery_percent,battery_charging,storage_available_bytes,storage_total_bytes,ram_available_bytes,ram_total_bytes,queued_packets,dead_letter_packets)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+    [
+      deviceId,
+      batteryPercent,
+      batteryCharging,
+      storageAvailableBytes,
+      storageTotalBytes,
+      ramAvailableBytes,
+      ramTotalBytes,
+      queued,
+      deadLetters,
+    ],
+  );
+
+  await sql.query(
+    `insert into phone_bridge_devices
+      (id,name,manufacturer,model,android_version,sdk_int,app_version_name,app_version_code,last_seen_at,last_queue_count,last_dead_letter_count,last_health_report_at,last_snapshot_hash)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,current_timestamp,$9,$10,$11,$12)
+     on conflict (id) do update set
+       name=excluded.name,
+       manufacturer=excluded.manufacturer,
+       model=excluded.model,
+       android_version=excluded.android_version,
+       sdk_int=excluded.sdk_int,
+       app_version_name=excluded.app_version_name,
+       app_version_code=excluded.app_version_code,
+       last_seen_at=current_timestamp,
+       last_queue_count=excluded.last_queue_count,
+       last_dead_letter_count=excluded.last_dead_letter_count,
+       last_health_report_at=excluded.last_health_report_at,
+       last_snapshot_hash=case when excluded.last_snapshot_hash <> '' then excluded.last_snapshot_hash else phone_bridge_devices.last_snapshot_hash end`,
+    [
+      deviceId,
+      asString(device.name, "گوشی"),
+      asString(device.manufacturer),
+      asString(device.model),
+      asString(device.androidVersion),
+      Number.isInteger(device.sdkInt) ? device.sdkInt : null,
+      appVersionName,
+      appVersionCode,
+      queued,
+      deadLetters,
+      healthReportAt,
+      snapshotHash,
+    ],
+  );
 
   return {
     ok: true,
+    deviceId,
+    snapshotHash: snapshotHash || null,
     snapshotRequired,
-    effectiveModules: access.effective,
-    // The app compares this against its own BuildConfig.VERSION_CODE and forces
-    // an upgrade when the operator has raised the floor.
-    minAppVersionCode: access.minAppVersionCode,
+    policyRevision,
+    appVersionName,
+    appVersionCode,
+    minAppVersionCode: Number(policyRows[0]?.min_app_version_code ?? 0),
+    updateRequired: snapshotRequired || (Number(policyRows[0]?.min_app_version_code ?? 0) > appVersionCode),
+    receivedAt: new Date().toISOString(),
   };
 });

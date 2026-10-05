@@ -6,6 +6,7 @@ import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
 import { nullableMoneyFieldSchema } from "@/lib/property-input-normalization";
+import { requireAdminPermission } from "@/lib/admin-role.server";
 import { decodeSlugCandidates, legacyIdFragments } from "@/lib/property-slug";
 import { calculateBudgetMatch, DEFAULT_MATCH_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
 import { MAX_PROPERTY_MEDIA, isAllowedMediaRef } from "@/lib/media";
@@ -94,6 +95,7 @@ export type Property = {
   createdAt: string;
   updatedAt: string;
   virtualTourUrl?: string;
+  floorPlanUrl?: string;
   latitude: number | null;
   longitude: number | null;
   priceDropPercent?: number | null;
@@ -298,6 +300,10 @@ export const propertyInputSchema = z.object({
     (value) => !value || /^https:\/\//i.test(value),
     { message: "لینک تور مجازی باید با https شروع شود." },
   ).default(""),
+  floorPlanUrl: z.string().trim().max(2048).refine(
+    (value) => !value || /^https:\/\//i.test(value) || isAllowedMediaRef(value),
+    { message: "نشانی پلان معتبر نیست." },
+  ).default(""),
 });
 
 const budgetMatchSchema = z
@@ -436,6 +442,8 @@ function mapProperty(row: Record<string, unknown>, options: { admin?: boolean } 
       typeof row.virtual_tour_url === "string" && /^https:\/\//i.test(row.virtual_tour_url.trim())
         ? row.virtual_tour_url.trim()
         : "",
+    floorPlanUrl:
+      typeof row.floor_plan_url === "string" ? row.floor_plan_url.trim() : "",
     latitude: isAdmin ? latitude : roundPublicCoordinate(latitude),
     longitude: isAdmin ? longitude : roundPublicCoordinate(longitude),
     priceDropPercent: numberOrNull(row.price_drop_percent),
@@ -450,7 +458,7 @@ const LIST_COLUMNS = `
   built_year, parking, elevator, storage, painted, wallpaper, convertible, cabinet_type, flooring_type, cooling_system,
   heating_system, wall_closet_type, other_amenities, price, deposit, rent,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
-  latitude, longitude, price_drop_percent, virtual_tour_url, floor_label, orientation,
+  latitude, longitude, price_drop_percent, virtual_tour_url, floor_plan_url, floor_label, orientation,
   owner_name, owner_phone, owner_info, internal_priority, internal_note,
   publish_at, unpublish_at, deleted_at, deleted_from_status,
   last_verified_at, last_verified_by,
@@ -501,7 +509,7 @@ const DETAIL_COLUMNS = `
   built_year, parking, elevator, storage, painted, wallpaper, convertible, cabinet_type, flooring_type, cooling_system,
   heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
   features, images, contact_name, contact_phone, published_at, created_at, updated_at,
-  latitude, longitude, price_drop_percent, virtual_tour_url, floor_label, orientation,
+  latitude, longitude, price_drop_percent, virtual_tour_url, floor_plan_url, floor_label, orientation,
   owner_name, owner_phone, owner_info, internal_priority, internal_note,
   publish_at, unpublish_at, deleted_at, deleted_from_status,
   last_verified_at, last_verified_by
@@ -1185,7 +1193,7 @@ export const countFilteredAdminProperties = createServerFn({ method: "POST" })
 export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
   .validator(adminBulkStatusSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     const sql = await getSql();
 
     const beforeRows = await sql.query<Record<string, unknown>>(
@@ -1304,7 +1312,7 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
 export const bulkSetPropertyFeatured = createServerFn({ method: "POST" })
   .validator(adminBulkFeaturedSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     const sql = await getSql();
 
     const beforeRows = await sql.query<Record<string, unknown>>(
@@ -1377,7 +1385,7 @@ export const bulkSetPropertyFeatured = createServerFn({ method: "POST" })
 export const bulkAssignPropertyConsultant = createServerFn({ method: "POST" })
   .validator(adminBulkConsultantSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     const sql = await getSql();
 
     const beforeRows = await sql.query<Record<string, unknown>>(
@@ -1454,7 +1462,7 @@ export const bulkAssignPropertyConsultant = createServerFn({ method: "POST" })
 export const bulkDeleteProperties = createServerFn({ method: "POST" })
   .validator(adminBulkSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     const sql = await getSql();
 
     const existingRows = await sql.query<Record<string, unknown>>(
@@ -1536,7 +1544,7 @@ export const listAdminTrashProperties = createServerFn({ method: "POST" })
 export const restoreDeletedProperty = createServerFn({ method: "POST" })
   .validator(idSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
       `update properties
@@ -1575,19 +1583,24 @@ export const restoreDeletedProperty = createServerFn({ method: "POST" })
 export const permanentlyDeleteProperty = createServerFn({ method: "POST" })
   .validator(idSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
-      `select images, title from properties where id = $1 and deleted_at is not null limit 1`,
+      `select images, floor_plan_url, title from properties where id = $1 and deleted_at is not null limit 1`,
       [data.id],
     );
     const existing = rows[0];
     if (!existing) return { success: false, deleted: 0 };
     await sql.query("delete from properties where id = $1 and deleted_at is not null", [data.id]);
-    const mediaUrls = Array.isArray(existing.images)
-      ? existing.images.filter((item): item is string => typeof item === "string")
-      : [];
-    await Promise.all(mediaUrls.map((url) => deleteStoredMedia(url)));
+    const mediaUrls = [
+      ...(Array.isArray(existing.images)
+        ? existing.images.filter((item): item is string => typeof item === "string")
+        : []),
+      ...(typeof existing.floor_plan_url === "string" && existing.floor_plan_url.trim()
+        ? [existing.floor_plan_url.trim()]
+        : []),
+    ];
+    await Promise.all(Array.from(new Set(mediaUrls)).map((url) => deleteStoredMedia(url)));
     await writeAdminAuditLog({
       action: "property.permanently_deleted",
       entityType: "property",
@@ -1634,7 +1647,7 @@ export const updatePropertySchedule = createServerFn({ method: "POST" })
     unpublishAt: z.string().datetime({ offset: true }).nullable().optional(),
   }))
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     const sql = await getSql();
     if (data.publishAt && data.unpublishAt && new Date(data.unpublishAt) <= new Date(data.publishAt)) {
       throw new Error("زمان پایان انتشار باید بعد از زمان شروع باشد.");
@@ -1707,8 +1720,14 @@ export const updatePropertySchedule = createServerFn({ method: "POST" })
 export const saveProperty = createServerFn({ method: "POST" })
   .validator(propertyInputSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    const claims = await requireAdminPermission("property.manage");
     const sql = await getSql();
+    if (data.status === "published") {
+      const role = String(claims?.role ?? "owner");
+      if (role !== "owner" && role !== "manager") {
+        throw new Error("این حساب اجازه انتشار نهایی ندارد؛ فایل را برای تأیید مدیر ارسال کنید.");
+      }
+    }
 
     const id = data.id ?? crypto.randomUUID();
     const existingRows = await sql.query<Record<string, unknown>>(
@@ -1764,7 +1783,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         heating_system, wall_closet_type, other_amenities, price, deposit, rent, description,
         features, images, contact_name, contact_phone, published_at, featured_until,
         latitude, longitude, virtual_tour_url, floor_label, painted, wallpaper, convertible, orientation,
-        owner_name, owner_phone, owner_info, availability_status, internal_priority, internal_note
+        owner_name, owner_phone, owner_info, availability_status, internal_priority, internal_note, floor_plan_url
       ) values (
         $1, $2, $3, $4, $5, $6, $7, 'اصفهان',
         $8, $9, $10::integer, $11::smallint, $12::smallint, $13::smallint, $14::smallint,
@@ -1772,7 +1791,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         $22::text, $23::text, $24::jsonb, $25::numeric, $26::numeric, $27::numeric, $28::text,
         $29::jsonb, $30::jsonb, $31::text, $32::text, $33::timestamptz, $34::timestamptz,
         $35::double precision, $36::double precision, $37::text, $38::text, $39::boolean, $40::boolean, $41::boolean, $42::text,
-        $43::text, $44::text, $45::text, $46::text, $47::text, $48::text
+        $43::text, $44::text, $45::text, $46::text, $47::text, $48::text, $49::text
       )
       on conflict (id) do update set
         slug = excluded.slug,
@@ -1816,6 +1835,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         availability_status = excluded.availability_status,
         internal_priority = excluded.internal_priority,
         internal_note = excluded.internal_note,
+        floor_plan_url = excluded.floor_plan_url,
         previous_price = properties.price,
         previous_deposit = properties.deposit,
         previous_rent = properties.rent,
@@ -1966,6 +1986,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         data.availabilityStatus,
         data.internalPriority,
         data.internalNote,
+        data.floorPlanUrl.trim(),
       ],
     );
 
@@ -1974,6 +1995,39 @@ export const saveProperty = createServerFn({ method: "POST" })
       [id],
     );
     if (!rows[0]) throw new Error("فایل ثبت نشد.");
+
+    if (existing) {
+      const asNumber = (value: unknown) => {
+        if (value == null || value === "") return null;
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+      };
+      const oldPrice = asNumber(existing.price);
+      const oldDeposit = asNumber(existing.deposit);
+      const oldRent = asNumber(existing.rent);
+      const newPrice = asNumber(rows[0].price);
+      const newDeposit = asNumber(rows[0].deposit);
+      const newRent = asNumber(rows[0].rent);
+      const changed = oldPrice !== newPrice || oldDeposit !== newDeposit || oldRent !== newRent;
+      if (changed) {
+        await sql.query(
+          `insert into admin_property_price_history (
+             property_id, price_before, price_after, deposit_before, deposit_after,
+             rent_before, rent_after, created_by
+           ) values ($1,$2,$3,$4,$5,$6,$7,$8)`,
+          [
+            id,
+            oldPrice,
+            newPrice,
+            oldDeposit,
+            newDeposit,
+            oldRent,
+            newRent,
+            String(claims?.displayName ?? "مدیریت"),
+          ],
+        );
+      }
+    }
 
     const action = existing ? "updated" : "created";
     await sql.query(
@@ -2076,6 +2130,7 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
         beforePrice: before.price,
         beforeDeposit: before.deposit,
         beforeRent: before.rent,
+        beforeState: row.before_state,
         beforeContactName: before.contactName,
         beforeContactPhone: before.contactPhone,
         afterTitle: after.title,
@@ -2100,7 +2155,7 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
 export const deleteProperty = createServerFn({ method: "POST" })
   .validator(idSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     const sql = await getSql();
     const existingRows = await sql.query<Record<string, unknown>>(
       `select ${DETAIL_COLUMNS} from properties where id = $1 limit 1`,

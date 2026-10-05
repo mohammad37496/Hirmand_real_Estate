@@ -82,6 +82,17 @@ object ConsentRegistry {
             permissions = emptyList(),
         ),
         ConsentModule(
+            id = "selected_files",
+            title = "فایل‌های انتخابی",
+            purpose = "ارسال فقط فایل‌هایی که خودت انتخاب می‌کنی.",
+            dataSent = "همان فایل‌هایی که با انتخابگر فایل اندروید انتخاب کرده‌ای. " +
+                "هیچ فایلی بدون انتخاب تو خوانده یا ارسال نمی‌شود.",
+            // Selecting a file through the Storage Access Framework is itself a
+            // per-file grant, and the app holds no standing permission to browse
+            // storage, so there is no runtime permission to request here.
+            permissions = emptyList(),
+        ),
+        ConsentModule(
             id = "call_recording",
             title = "ضبط تماس",
             purpose = "ضبط صدای تماس‌ها توسط یک سرویس پیش‌زمینه.",

@@ -10,12 +10,15 @@ import {
 } from "@/lib/admin-session.server";
 import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
 import { writeAdminAuditLog } from "@/lib/admin-audit-log.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 
 async function requireAdmin() {
   const token = getCookie(ADMIN_SESSION_COOKIE);
   if (!(await verifyAdminSessionToken(token))) throw new Error("نشست مدیریت معتبر نیست.");
   assertAdminServerFnOrigin();
-  return getAdminSessionClaims(token);
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "security.manage")) throw new Error("سطح دسترسی امنیت مدیران برای این حساب فعال نیست.");
+  return claims;
 }
 
 export type AdminSecuritySession = {

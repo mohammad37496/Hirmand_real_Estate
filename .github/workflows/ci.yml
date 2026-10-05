@@ -1,4 +1,6 @@
 name: CI
+# Homepage refactor verification trigger
+# Final homepage hierarchy pass verification
 
 on:
   push:

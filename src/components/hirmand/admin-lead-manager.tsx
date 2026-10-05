@@ -12,6 +12,7 @@ import {
   Tag,
   Trash2,
   UserRound,
+  Flame,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SITE } from "@/lib/site";
@@ -26,9 +27,13 @@ import { PROPERTY_OTHER_AMENITY_OPTIONS } from "@/lib/property-options";
 import { daysUntilDateOnly, formatPersianDate } from "@/lib/persian-date";
 import { AdminLeadDedupe } from "@/components/hirmand/admin-lead-dedupe";
 import { AdminLeadAssignmentBalancer } from "@/components/hirmand/admin-lead-assignment-balancer";
+import { AdminLeadMessageTemplates } from "@/components/hirmand/admin-lead-message-templates";
+import { AdminLead360 } from "@/components/hirmand/admin-lead-360";
+import { AdminLeadSegments } from "@/components/hirmand/admin-lead-segments";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 type VisitStatus = "none" | "requested" | "confirmed" | "completed" | "cancelled";
+type LeadPriority = "hot" | "warm" | "cold";
 type Lead = {
   id: string;
   name: string;
@@ -76,6 +81,8 @@ type Lead = {
   visitPreferredAt: string | null;
   visitRequestedAt: string | null;
   visitStatus: VisitStatus;
+  priorityScore: number;
+  priority: LeadPriority;
   matchedProperties: Array<{
     slug: string;
     title: string;
@@ -132,6 +139,10 @@ function formatBudgetRange(min: number | null, max: number | null, fallback: num
   return formatToman(lower ?? upper ?? 0) + " تا " + formatToman(upper ?? lower ?? 0);
 }
 
+function leadPriorityMeta(lead: Lead) {
+  return lead.priority === "hot" ? { label: "داغ", tone: "hot" } : lead.priority === "warm" ? { label: "مهم", tone: "warm" } : { label: "عادی", tone: "cold" };
+}
+
 function amenityLabel(value: string) {
   if (value === "parking") return "پارکینگ";
   if (value === "elevator") return "آسانسور";
@@ -149,7 +160,7 @@ export function AdminLeadManager() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | LeadStatus>("all");
-  const [sort, setSort] = useState<"newest" | "oldest" | "name" | "follow_up">("newest");
+  const [sort, setSort] = useState<"newest" | "oldest" | "name" | "follow_up" | "priority">("newest");
   const [page, setPage] = useState(1);
   const [exporting, setExporting] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -336,6 +347,7 @@ export function AdminLeadManager() {
 
   const filteredLeads = leads;
 
+
   function budgetWhatsappHref(lead: Lead) {
     const phone = lead.phone
       .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
@@ -379,6 +391,16 @@ export function AdminLeadManager() {
     );
   }
 
+  async function createOverdueTasks() {
+    try {
+      const response = await fetch("/api/leads-admin", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "create_overdue_tasks" }) });
+      const data = (await response.json().catch(() => null)) as { created?: number; statusMessage?: string } | null;
+      if (!response.ok) throw new Error(data?.statusMessage || "ساخت پیگیری خودکار انجام نشد.");
+      toast.success(data?.created ? data.created.toLocaleString("fa-IR") + " پیگیری خودکار ساخته شد." : "پیگیری خودکار جدیدی لازم نبود.");
+      await load();
+    } catch (error) { toast.error(adminErrorMessage(error, "ساخت پیگیری‌های خودکار انجام نشد.")); }
+  }
+
   async function exportCsv() {
     setExporting(true);
     try {
@@ -416,7 +438,19 @@ export function AdminLeadManager() {
 
   return (
     <div className="admin-lead-manager">
+      <AdminLead360 leads={leads} />
+      <AdminLeadSegments
+        query={query}
+        status={statusFilter}
+        sort={sort}
+        onApply={(value) => {
+          setQuery(value.query);
+          setStatusFilter(value.status as "all" | LeadStatus);
+          setSort(value.sort as typeof sort);
+        }}
+      />
       {confirmDialog}
+      <AdminLeadMessageTemplates leads={leads} />
       <AdminLeadAssignmentBalancer />
       <AdminLeadDedupe />
       <section className="admin-panel">
@@ -463,11 +497,13 @@ export function AdminLeadManager() {
               <option value="oldest">قدیمی‌ترین</option>
               <option value="name">نام مشتری</option>
               <option value="follow_up">نزدیک‌ترین پیگیری</option>
+              <option value="priority">بالاترین اولویت</option>
             </select>
             <button type="button" className="btn-ghost" onClick={() => void exportCsv()} disabled={exporting}>
               <Download size={16} />
               {exporting ? "در حال ساخت…" : "خروجی CSV"}
             </button>
+            <button type="button" className="btn-ghost" onClick={() => void createOverdueTasks()}><Clock3 size={16} /> ساخت پیگیری خودکار</button>
             <button type="button" className="btn-ghost" onClick={() => void load()} disabled={loading}>
               <RefreshCw size={16} className={loading ? "admin-spin" : undefined} />
               به‌روزرسانی
@@ -512,6 +548,7 @@ export function AdminLeadManager() {
                     {lead.source === "budget_match" ? (
                       <span className="admin-lead-budget-badge">بودجه‌یابی</span>
                     ) : null}
+                    {(() => { const p = leadPriorityMeta(lead); return <span className={"admin-lead-priority-badge is-" + p.tone}><Flame size={12} /> {p.label} · {lead.priorityScore.toLocaleString("fa-IR")}</span>; })()}
                     {lead.visitStatus !== "none" ? (
                       <span className="admin-lead-budget-badge">{VISIT_STATUS_LABEL[lead.visitStatus]}</span>
                     ) : null}

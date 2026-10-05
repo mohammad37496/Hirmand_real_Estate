@@ -917,7 +917,9 @@ function Gallery({
     <div className="property-gallery-wrap" role="region" aria-label={"گالری تصاویر " + title}>
       <div className="property-gallery">
         <div className="property-gallery-main">
-          {!isVideoUrl(current) || !isPermanentlyWatermarkedMediaUrl(current) ? <PropertyMediaWatermark /> : null}
+          {!isVideoUrl(current) || !isPermanentlyWatermarkedMediaUrl(current) ? (
+            <PropertyMediaWatermark subtle={current.startsWith("/images/fallback/")} />
+          ) : null}
           {isVideoUrl(current) ? (
             <VideoPlayer src={current} title={title} className="is-gallery" />
           ) : (
@@ -1574,9 +1576,6 @@ export function PropertyDetailView({
                   ) : null}
                 </div>
 
-                <PropertyMarketComparison property={property} />
-                <PropertyVerificationStamp property={property} />
-
                 <div className="property-primary-contact" aria-label="تماس سریع با مشاور">
                   <PropertyCallbackRequest propertyType={TYPE_LABEL[property.propertyType]} neighborhood={property.neighborhood} context={"فایل «" + property.title + "»"} />
                   <a
@@ -1759,23 +1758,11 @@ export function PropertyDetailView({
         </section>
 
         <nav className="property-detail-section-nav" aria-label="بخش‌های اصلی فایل">
-          <span className="property-detail-section-nav-label">پرش سریع</span>
+          <span className="property-detail-section-nav-label">بخش‌های اصلی</span>
+          <a href="#property-description-section">معرفی</a>
           <a href="#property-specs-section">مشخصات</a>
-          <a href="#property-description-section">توضیحات</a>
-          {priceHistory.length ? <a href="#property-price-history-section">تاریخچه قیمت</a> : null}
-          {(property.latitude != null && property.longitude != null) || property.neighborhood ? (
-            <a href="#property-location-section">موقعیت</a>
-          ) : null}
+          <a href="#property-location-section">موقعیت</a>
           <a href="#property-floor-plan">پلان</a>
-          <a href="#property-nearby-services">اطراف ملک</a>
-          {isClosedFile ? <a href="#property-back-in-market">بازگشت فایل</a> : null}
-          {(property.transactionType === "buy" || property.transactionType === "sell") && property.price ? <a href="#property-financing-request">تأمین مالی</a> : null}
-          <a href="#property-prep-budget">بازسازی</a>
-          <a href="#property-target-alert">هدف قیمت</a>
-          <a href="#property-verification-request">تأیید اطلاعات</a>
-          <a href="#property-expert-requests">خدمات تخصصی</a>
-          <a href="#property-questions">پرسش‌ها</a>
-          <a href="#property-open-house">اوپن‌هاوس</a>
           <a href="#property-tools-section">ابزارها</a>
         </nav>
 
@@ -1952,6 +1939,11 @@ export function PropertyDetailView({
               ) : null}
             </section>
 
+            <section className="property-detail-insight-grid" aria-label="اطلاعات تحلیلی فایل">
+              <PropertyVerificationStamp property={property} />
+              <PropertyMarketComparison property={property} />
+            </section>
+
             {priceHistory.length ? (
               <section id="property-price-history-section" className="property-price-history" aria-labelledby="property-price-history-title">
                 <div className="property-section-heading">
@@ -2122,7 +2114,99 @@ export function PropertyDetailView({
 
             <PropertyFloorPlan property={property} />
             <PropertyNearbyServices property={property} />
-            {isClosedFile ? (
+
+            <section
+              id="property-final-cta"
+              className={"property-final-cta" + (isClosedFile ? " property-final-cta-closed" : "")}
+              aria-label={canRequestViewing ? "درخواست بازدید و اطلاعات بیشتر" : "پیگیری وضعیت فایل و اطلاعات بیشتر"}
+            >
+              <div>
+                <span className="kicker">{canRequestViewing ? "قدم بعدی" : "وضعیت فایل"}</span>
+                <h2>
+                  {canRequestViewing
+                    ? "برای بازدید یا اطلاعات بیشتر با مشاور فایل در ارتباط باشید."
+                    : "این فایل در حال حاضر برای بازدید جدید در دسترس نیست."}
+                </h2>
+                <p>
+                  {canRequestViewing
+                    ? "برای هماهنگی بازدید، دریافت توضیحات تکمیلی یا بررسی شرایط معامله تماس بگیرید."
+                    : "برای پیگیری وضعیت این فایل یا پیدا کردن گزینه‌های مشابه با مشاور هیرمند در ارتباط باشید."}
+                </p>
+              </div>
+              <div className="property-final-cta-actions">
+                <a
+                  href={`tel:${property.contactPhone}`}
+                  onClick={() => trackAnalyticsEvent("call_click", property.slug)}
+                  className="btn-gold"
+                >
+                  <Phone size={17} aria-hidden="true" />
+                  تماس تلفنی
+                </a>
+                <a
+                  href={whatsappLink(property.contactPhone, property.title)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
+                  className="btn-ghost"
+                >
+                  <WhatsAppIcon size={17} aria-hidden="true" />
+                  واتساپ
+                </a>
+                {canRequestViewing ? (
+                  <PropertyViewingRequest
+                    property={{
+                      id: property.id,
+                      slug: property.slug,
+                      title: property.title,
+                      neighborhood: property.neighborhood,
+                      availabilityStatus: property.availabilityStatus,
+                    }}
+                  />
+                ) : (
+                  <a
+                    href={similarRequestHref(property)}
+                    className="btn-ghost property-final-cta-similar"
+                    onClick={() => trackAnalyticsEvent("inquiry_click", property.slug)}
+                  >
+                    <Sparkles size={17} aria-hidden="true" />
+                    پیدا کردن فایل مشابه
+                  </a>
+                )}
+              </div>
+            </section>
+
+
+        {related.length ? (
+          <section className="property-related" aria-labelledby="related-properties-title">
+            <div className="section-head">
+              <span className="kicker">پیشنهاد هیرمند</span>
+              <h2 id="related-properties-title">فایل‌های مشابه</h2>
+              <p>چند گزینه نزدیک به این فایل، بر اساس محله و نوع ملک.</p>
+            </div>
+            <div className="property-grid">
+              {related.slice(0, 3).map((item) => (
+                <PropertyCard key={item.id} property={item} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+            <details className="property-secondary-services">
+              <summary className="property-secondary-services-summary">
+                <span className="property-secondary-services-main">
+                  <span className="property-secondary-services-icon"><Sparkles size={17} aria-hidden="true" /></span>
+                  <span>
+                    <strong>خدمات و امکانات تکمیلی</strong>
+                    <small>بازدید، تأمین مالی، بررسی اطلاعات، مدارک و ارتباط با هیرمند</small>
+                  </span>
+                </span>
+                <span className="property-secondary-services-meta">
+                  <span>اختیاری</span>
+                  <ChevronDown size={18} aria-hidden="true" />
+                </span>
+              </summary>
+              <div className="property-secondary-services-content">
+{isClosedFile ? (
               <PropertyBackInMarketAlert
                 slug={property.slug}
                 title={property.title}
@@ -2141,7 +2225,13 @@ export function PropertyDetailView({
             <PropertyNeighborhoodInsight property={property} />
             <PropertyReport property={property} />
             <PropertyQuestions property={property} />
-            <PropertyOpenHouse property={property} />
+              <PropertyOpenHouse property={property} />
+              </div>
+            </details>
+
+
+
+
 
             <section id="property-tools-section" className="property-tool-center" aria-labelledby="property-tool-center-title">
               <header className="property-tool-center-head">
@@ -2300,67 +2390,6 @@ export function PropertyDetailView({
               </details>
             </section>
 
-            <section
-              id="property-final-cta"
-              className={"property-final-cta" + (isClosedFile ? " property-final-cta-closed" : "")}
-              aria-label={canRequestViewing ? "درخواست بازدید و اطلاعات بیشتر" : "پیگیری وضعیت فایل و اطلاعات بیشتر"}
-            >
-              <div>
-                <span className="kicker">{canRequestViewing ? "قدم بعدی" : "وضعیت فایل"}</span>
-                <h2>
-                  {canRequestViewing
-                    ? "برای بازدید یا اطلاعات بیشتر با مشاور فایل در ارتباط باشید."
-                    : "این فایل در حال حاضر برای بازدید جدید در دسترس نیست."}
-                </h2>
-                <p>
-                  {canRequestViewing
-                    ? "برای هماهنگی بازدید، دریافت توضیحات تکمیلی یا بررسی شرایط معامله تماس بگیرید."
-                    : "برای پیگیری وضعیت این فایل یا پیدا کردن گزینه‌های مشابه با مشاور هیرمند در ارتباط باشید."}
-                </p>
-              </div>
-              <div className="property-final-cta-actions">
-                <a
-                  href={`tel:${property.contactPhone}`}
-                  onClick={() => trackAnalyticsEvent("call_click", property.slug)}
-                  className="btn-gold"
-                >
-                  <Phone size={17} aria-hidden="true" />
-                  تماس تلفنی
-                </a>
-                <a
-                  href={whatsappLink(property.contactPhone, property.title)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => trackAnalyticsEvent("whatsapp_click", property.slug)}
-                  className="btn-ghost"
-                >
-                  <WhatsAppIcon size={17} aria-hidden="true" />
-                  واتساپ
-                </a>
-                {canRequestViewing ? (
-                  <PropertyViewingRequest
-                    property={{
-                      id: property.id,
-                      slug: property.slug,
-                      title: property.title,
-                      neighborhood: property.neighborhood,
-                      availabilityStatus: property.availabilityStatus,
-                    }}
-                  />
-                ) : (
-                  <a
-                    href={similarRequestHref(property)}
-                    className="btn-ghost property-final-cta-similar"
-                    onClick={() => trackAnalyticsEvent("inquiry_click", property.slug)}
-                  >
-                    <Sparkles size={17} aria-hidden="true" />
-                    پیدا کردن فایل مشابه
-                  </a>
-                )}
-              </div>
-            </section>
-
-
             <Link
               to="/properties"
               className="text-link"
@@ -2420,20 +2449,6 @@ export function PropertyDetailView({
           </button>
         </div>
 
-        {related.length ? (
-          <section className="property-related" aria-labelledby="related-properties-title">
-            <div className="section-head">
-              <span className="kicker">پیشنهاد هیرمند</span>
-              <h2 id="related-properties-title">فایل‌های مشابه</h2>
-              <p>چند گزینه نزدیک به این فایل، بر اساس محله و نوع ملک.</p>
-            </div>
-            <div className="property-grid">
-              {related.slice(0, 3).map((item) => (
-                <PropertyCard key={item.id} property={item} />
-              ))}
-            </div>
-          </section>
-        ) : null}
       </main>
     </SiteChrome>
   );

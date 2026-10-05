@@ -721,6 +721,61 @@ export const stubAdminApi = {
     });
   },
 
+  "**/api/admin-sales-funnel": async (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        days: 30,
+        statuses: [
+          { key: "new", label: "جدید", count: 18 },
+          { key: "contacted", label: "تماس گرفته شد", count: 41 },
+          { key: "follow_up", label: "پیگیری", count: 27 },
+          { key: "visited", label: "بازدید", count: 12 },
+          { key: "contract", label: "قرارداد", count: 9 },
+          { key: "closed", label: "بسته‌شده", count: 96 },
+          { key: "spam", label: "اسپم", count: 11 },
+        ],
+        sources: [{ source: "website", count: 52 }, { source: "اینستاگرام", count: 18 }],
+        aging: [
+          { key: "less_24h", count: 14 },
+          { key: "1_3d", count: 19 },
+          { key: "3_7d", count: 9 },
+          { key: "over_7d", count: 5 },
+        ],
+        conversions: { total: 214, contacted: 41, visited: 12, contract: 9, contactedRate: 19.2, visitRate: 5.6, contractRate: 4.2 },
+      }),
+    }),
+
+  "**/api/admin-management-report": async (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        days: 30,
+        properties: { created: 18, published: 12, draft: 4, archived: 2 },
+        leads: { created: 71, open: 45, contract: 9, closed: 17 },
+        deals: { created: 11, completed: 6, contracted: 3, volume: 18500000000, commission: 420000000 },
+        finance: { income: 1850000000, expense: 620000000, balance: 1230000000 },
+        topConsultants: [
+          { name: "آقای شیخ", deals: 4, volume: 9200000000 },
+          { name: "آقای مرادی", deals: 2, volume: 5100000000 },
+        ],
+      }),
+    }),
+
+  "**/api/admin-property-price-history": async (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        property: { id: "sample-one", title: "آپارتمان نمونه", price: 8500000000, deposit: null, rent: null, priceChangedAt: new Date().toISOString(), priceDropPercent: 5.3 },
+        history: [
+          { id: 1, priceBefore: 9000000000, priceAfter: 8500000000, depositBefore: null, depositAfter: null, rentBefore: null, rentAfter: null, pricePercent: -5.6, depositPercent: null, rentPercent: null, note: "", createdBy: "مدیریت", createdAt: new Date().toISOString() },
+        ],
+      }),
+    }),
+
   "**/api/admin/properties-export": async (route) =>
     route.fulfill({
       status: 200,

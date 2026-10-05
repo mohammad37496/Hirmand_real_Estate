@@ -1821,25 +1821,6 @@ body:has(.property-detail-page) .floating-call-menu {
 }
 
 /* --------------------------------------------------------------------------
-   Footer on this route
-   -------------------------------------------------------------------------- */
-
-body:has(.property-detail-page) .footer {
-  background:
-    linear-gradient(180deg, var(--hr-panel) 0%, var(--hr-panel-warm) 100%);
-  color: var(--hr-ink);
-  border-top: 1px solid var(--hr-border);
-}
-
-body:has(.property-detail-page) .footer a {
-  color: var(--hr-ink);
-}
-
-body:has(.property-detail-page) .footer a:hover {
-  color: var(--hr-brass);
-}
-
-/* --------------------------------------------------------------------------
    Tablet (≤1180px)
    -------------------------------------------------------------------------- */
 
