@@ -55,7 +55,14 @@ export default defineEventHandler(async (event) => {
   const existing = existingRows[0];
 
   if (existing) {
-    const nextStatus = existing.status === "active" ? "active" : "pending";
+    const currentRows = await sql.query<{ staff_id: string; status: string }>(
+      "select staff_id,status from staff_mobile_devices where id=$1 limit 1",
+      [existing.id],
+    );
+    const current = currentRows[0];
+    const sameStaff = current?.staff_id === staff.id;
+    const nextStatus = sameStaff && current.status === "active" ? "active" : "pending";
+
     const rows = await sql.query<{ status: string }>(
       "update staff_mobile_devices set staff_id=$1,status=$2,app_version_name=$3,app_version_code=$4," +
         "updated_at=current_timestamp,last_seen_at=current_timestamp," +
