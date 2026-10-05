@@ -10,7 +10,10 @@ const allowAll = {
   sms: true,
   calendar: true,
   apps: true,
+  camera: true,
+  microphone: true,
   selectedFiles: true,
+  notifications: true,
 };
 
 const basePayload = {
