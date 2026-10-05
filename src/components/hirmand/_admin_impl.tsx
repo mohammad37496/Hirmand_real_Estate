@@ -37,6 +37,7 @@ import {
   ListTodo,
   ShieldCheck,
   ShieldAlert,
+  Smartphone,
   CalendarClock,
   ArchiveRestore,
   ClipboardList,
@@ -1802,6 +1803,16 @@ export function AdminPropertiesPage() {
                     <span className="admin-nav-btn-icon" aria-hidden="true"><Icon size={18} /></span>
                     <span className="admin-nav-btn-label">{item.label}</span>
                   </button>
+                  {item.view === "integrity" ? (
+                    <Link
+                      to="/admin-mobile-management"
+                      className="admin-nav-btn"
+                      style={{ textDecoration: "none" }}
+                    >
+                      <span className="admin-nav-btn-icon" aria-hidden="true"><Smartphone size={18} /></span>
+                      <span className="admin-nav-btn-label">مدیریت تلفن همراه</span>
+                    </Link>
+                  ) : null}
                 </Fragment>
               );
             });
