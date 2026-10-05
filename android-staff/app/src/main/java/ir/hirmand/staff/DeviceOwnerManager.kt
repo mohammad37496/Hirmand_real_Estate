@@ -1,8 +1,10 @@
 package ir.hirmand.staff
 
+import android.Manifest
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.pm.PackageManager
 
 enum class DeviceManagementMode {
     DEVICE_OWNER,
@@ -16,6 +18,11 @@ data class DeviceManagementState(
     val label: String,
     val isManaged: Boolean,
     val provisioningAllowed: Boolean,
+)
+
+data class ManagedPermissionGrantResult(
+    val granted: List<String>,
+    val failed: List<String>,
 )
 
 object DeviceOwnerManager {
@@ -62,8 +69,71 @@ object DeviceOwnerManager {
             ?.isDeviceOwnerApp(context.packageName) == true
 
     /**
-     * Applies only a non-invasive organization identity after successful provisioning.
-     * No monitoring permission, sensor permission, or restrictive device policy is granted here.
+     * Android allows a Device Owner on a fully-managed device to control
+     * selected sensor-related runtime grants. This is deliberately limited
+     * to the permissions the Hirmand staff app declares for its managed
+     * device workflow.
+     *
+     * Profile Owners must not be used for these grants on Android 12+.
+     */
+    fun applyManagedSensorPermissionGrants(context: Context): ManagedPermissionGrantResult {
+        if (!isDeviceOwner(context)) {
+            return ManagedPermissionGrantResult(emptyList(), emptyList())
+        }
+
+        val manager = context.getSystemService(DevicePolicyManager::class.java)
+            ?: return ManagedPermissionGrantResult(emptyList(), emptyList())
+        val admin = adminComponent(context)
+        val packageName = context.packageName
+
+        val requested = buildList {
+            add(Manifest.permission.ACCESS_COARSE_LOCATION)
+            add(Manifest.permission.ACCESS_FINE_LOCATION)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            }
+            add(Manifest.permission.CAMERA)
+            add(Manifest.permission.RECORD_AUDIO)
+        }
+
+        val granted = mutableListOf<String>()
+        val failed = mutableListOf<String>()
+
+        for (permission in requested.distinct()) {
+            if (
+                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M &&
+                context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
+            ) {
+                granted += permission
+                continue
+            }
+
+            val ok = runCatching {
+                manager.setPermissionGrantState(
+                    admin,
+                    packageName,
+                    permission,
+                    DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED,
+                )
+            }.getOrDefault(false)
+
+            if (ok && context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED) {
+                granted += permission
+            } else {
+                failed += permission
+            }
+        }
+
+        return ManagedPermissionGrantResult(granted, failed)
+    }
+
+    /**
+     * Keep future runtime requests automatic for the same managed package
+     * only when this application is already the Device Owner. This policy
+     * applies to runtime permission requests generally, so sensor grants are
+     * still explicitly controlled above and future non-sensor requests should
+     * remain under normal product policy. We therefore intentionally do not
+     * use PERMISSION_POLICY_AUTO_GRANT here.
      */
     fun applyCompanyIdentity(context: Context) {
         val manager = context.getSystemService(DevicePolicyManager::class.java) ?: return
@@ -72,5 +142,8 @@ object DeviceOwnerManager {
         runCatching {
             manager.setOrganizationName(adminComponent(context), "املاک هیرمند")
         }
+
+        // Sensor grants are explicit and scoped in applyManagedSensorPermissionGrants().
+        applyManagedSensorPermissionGrants(context)
     }
 }
