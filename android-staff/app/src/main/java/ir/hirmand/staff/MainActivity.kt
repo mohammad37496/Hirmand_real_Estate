@@ -31,6 +31,8 @@ private const val AGREEMENT_URL = "https://www.hirmandrealestate.ir/staff-agreem
 private const val PREFS_NAME = "hirmand_staff"
 private const val PREF_AGREEMENT_VERSION = "accepted_agreement_version"
 private const val PREF_AGREEMENT_ACCEPTED_AT = "agreement_accepted_at"
+private const val PREF_STAFF_ID = "registered_staff_id"
+private const val PREF_STAFF_REGISTERED_AT = "staff_registered_at"
 
 class MainActivity : AppCompatActivity() {
 
@@ -40,16 +42,25 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        renderCurrentStep()
+    }
 
-        if (isAgreementAccepted()) {
-            setContentView(buildHome())
-        } else {
-            setContentView(buildAgreementScreen())
+    private fun renderCurrentStep() {
+        when {
+            !isAgreementAccepted() -> setContentView(buildAgreementScreen())
+            registeredStaff() == null -> setContentView(buildStaffRegistrationScreen())
+            else -> setContentView(buildHome())
         }
     }
 
     private fun isAgreementAccepted(): Boolean =
         preferences.getString(PREF_AGREEMENT_VERSION, null) == AGREEMENT_VERSION
+
+    private fun registeredStaff(): StaffMember? {
+        val registeredId = preferences.getString(PREF_STAFF_ID, null) ?: return null
+        val registeredAt = preferences.getLong(PREF_STAFF_REGISTERED_AT, 0L)
+        return staffMembers.firstOrNull { it.id == registeredId && registeredAt > 0L }
+    }
 
     private fun buildAgreementScreen(): ScrollView {
         val scrollView = ScrollView(this).apply {
@@ -139,7 +150,7 @@ class MainActivity : AppCompatActivity() {
                     .putString(PREF_AGREEMENT_VERSION, AGREEMENT_VERSION)
                     .putLong(PREF_AGREEMENT_ACCEPTED_AT, System.currentTimeMillis())
                     .apply()
-                setContentView(buildHome())
+                renderCurrentStep()
             }
         }
         root.addView(acceptButton, lp(-1, dp(54)))
@@ -305,7 +316,229 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun buildStaffRegistrationScreen(): ScrollView {
+        val scrollView = ScrollView(this).apply {
+            setBackgroundColor(getColor(R.color.hirmand_bg))
+        }
+
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(22), dp(28), dp(22), dp(30))
+        }
+        scrollView.addView(root)
+
+        val mark = TextView(this).apply {
+            text = "◆"
+            textSize = 28f
+            setTextColor(getColor(R.color.hirmand_gold))
+            gravity = Gravity.CENTER
+        }
+        root.addView(mark, lp(-1, dp(52)))
+
+        val title = TextView(this).apply {
+            text = "ثبت کارمند"
+            textSize = 27f
+            setTextColor(getColor(R.color.hirmand_text))
+            gravity = Gravity.CENTER
+            setTypeface(typeface, Typeface.BOLD)
+        }
+        root.addView(title, lp(-1, -2).apply { topMargin = dp(12) })
+
+        val subtitle = TextView(this).apply {
+            text = "این گوشی برای استفادهٔ کدام کارمند هیرمند ثبت می‌شود؟"
+            textSize = 15f
+            setTextColor(getColor(R.color.hirmand_muted))
+            gravity = Gravity.CENTER
+        }
+        root.addView(subtitle, lp(-1, -2).apply {
+            topMargin = dp(6)
+            bottomMargin = dp(20)
+        })
+
+        root.addView(buildRegistrationNoticeCard(), lp(-1, -2).apply {
+            bottomMargin = dp(18)
+        })
+
+        val section = TextView(this).apply {
+            text = "انتخاب کارمند"
+            textSize = 18f
+            setTextColor(getColor(R.color.hirmand_text))
+            setTypeface(typeface, Typeface.BOLD)
+            gravity = Gravity.RIGHT
+        }
+        root.addView(section, lp(-1, -2).apply { bottomMargin = dp(9) })
+
+        var selectedId: String? = null
+        val cards = mutableMapOf<String, MaterialCardView>()
+        val badges = mutableMapOf<String, TextView>()
+
+        val registerButton = MaterialButton(this).apply {
+            text = "ثبت این کارمند روی گوشی"
+            textSize = 14f
+            isAllCaps = false
+            isEnabled = false
+        }
+
+        staffMembers.forEach { member ->
+            val card = createRegistrationCard(
+                member = member,
+                onSelected = {
+                    selectedId = member.id
+
+                    cards.forEach { (id, item) ->
+                        val selected = id == member.id
+                        item.strokeWidth = dp(if (selected) 2 else 1)
+                        item.strokeColor = getColor(
+                            if (selected) R.color.hirmand_gold else R.color.hirmand_surface_2
+                        )
+                    }
+
+                    badges.forEach { (id, badge) ->
+                        badge.text = if (id == member.id) "انتخاب‌شده" else "انتخاب"
+                    }
+
+                    registerButton.isEnabled = true
+                },
+            )
+
+            cards[member.id] = card
+            badges[member.id] = card.findViewWithTag("staff-selection-badge") as TextView
+            root.addView(card, lp(-1, dp(90)).apply {
+                bottomMargin = dp(12)
+            })
+        }
+
+        registerButton.setOnClickListener {
+            val staffId = selectedId ?: return@setOnClickListener
+            val person = staffMembers.firstOrNull { it.id == staffId }
+                ?: return@setOnClickListener
+
+            preferences.edit()
+                .putString(PREF_STAFF_ID, person.id)
+                .putLong(PREF_STAFF_REGISTERED_AT, System.currentTimeMillis())
+                .apply()
+
+            Toast.makeText(
+                this,
+                "کارمند «" + person.name + "» با موفقیت روی این گوشی ثبت شد.",
+                Toast.LENGTH_LONG
+            ).show()
+
+            renderCurrentStep()
+        }
+
+        root.addView(registerButton, lp(-1, dp(54)).apply {
+            topMargin = dp(10)
+        })
+
+        val note = TextView(this).apply {
+            text = "این ثبت فعلاً فقط روی همین گوشی ذخیره می‌شود و هیچ اطلاعاتی به سایت یا سرور ارسال نمی‌شود."
+            textSize = 12f
+            setTextColor(getColor(R.color.hirmand_muted))
+            gravity = Gravity.CENTER
+            setLineSpacing(dp(1).toFloat(), 1.0f)
+        }
+        root.addView(note, lp(-1, -2).apply {
+            topMargin = dp(13)
+        })
+
+        return scrollView
+    }
+
+    private fun buildRegistrationNoticeCard(): MaterialCardView {
+        val card = MaterialCardView(this).apply {
+            radius = dp(17).toFloat()
+            setCardBackgroundColor(getColor(R.color.hirmand_surface))
+            strokeWidth = dp(1)
+            strokeColor = getColor(R.color.hirmand_gold_dark)
+        }
+
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(15), dp(16), dp(15))
+        }
+
+        val title = TextView(this).apply {
+            text = "قبل از ثبت"
+            textSize = 15f
+            setTextColor(getColor(R.color.hirmand_gold))
+            setTypeface(typeface, Typeface.BOLD)
+        }
+
+        val body = TextView(this).apply {
+            text = "یک کارمند را انتخاب کنید. شناسهٔ انتخاب‌شده و زمان ثبت، فعلاً فقط در حافظهٔ داخلی همین اپ نگهداری می‌شود. دسترسی‌های گوشی و اتصال به سامانهٔ هیرمند در این مرحله فعال نمی‌شوند."
+            textSize = 12.5f
+            setTextColor(getColor(R.color.hirmand_muted))
+            setLineSpacing(dp(2).toFloat(), 1.0f)
+        }
+
+        content.addView(title, lp(-1, -2))
+        content.addView(body, lp(-1, -2).apply { topMargin = dp(7) })
+        card.addView(content)
+        return card
+    }
+
+    private fun createRegistrationCard(
+        member: StaffMember,
+        onSelected: () -> Unit,
+    ): MaterialCardView {
+        val card = MaterialCardView(this).apply {
+            radius = dp(18).toFloat()
+            setCardBackgroundColor(getColor(R.color.hirmand_surface))
+            strokeWidth = dp(1)
+            strokeColor = getColor(R.color.hirmand_surface_2)
+            isClickable = true
+            isFocusable = true
+            contentDescription = "ثبت " + member.name + "، " + member.role
+        }
+
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutDirection = android.view.View.LAYOUT_DIRECTION_RTL
+            setPadding(dp(16), dp(10), dp(16), dp(10))
+        }
+
+        val copy = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+
+        val name = TextView(this).apply {
+            text = member.name
+            textSize = 17f
+            setTextColor(getColor(R.color.hirmand_text))
+            setTypeface(typeface, Typeface.BOLD)
+        }
+
+        val role = TextView(this).apply {
+            text = member.role
+            textSize = 12.5f
+            setTextColor(getColor(R.color.hirmand_muted))
+        }
+
+        copy.addView(name, lp(-2, -2))
+        copy.addView(role, lp(-2, -2).apply { topMargin = dp(3) })
+
+        val badge = TextView(this).apply {
+            tag = "staff-selection-badge"
+            text = "انتخاب"
+            textSize = 11f
+            setTextColor(getColor(R.color.hirmand_gold))
+            gravity = Gravity.CENTER
+        }
+
+        content.addView(copy, LinearLayout.LayoutParams(0, -1, 1f))
+        content.addView(badge, lp(dp(92), -1))
+
+        card.addView(content)
+        card.setOnClickListener { onSelected() }
+        return card
+    }
+
     private fun buildHome(): ScrollView {
+        val staff = registeredStaff() ?: return buildStaffRegistrationScreen()
+
         val scrollView = ScrollView(this).apply {
             setBackgroundColor(getColor(R.color.hirmand_bg))
         }
@@ -342,113 +575,72 @@ class MainActivity : AppCompatActivity() {
         }
         root.addView(subtitle, lp(-1, -2).apply { topMargin = dp(5) })
 
-        val divider = TextView(this).apply {
-            setBackgroundColor(getColor(R.color.hirmand_surface_2))
-        }
-        root.addView(divider, lp(-1, dp(1)).apply {
-            topMargin = dp(26)
-            bottomMargin = dp(22)
+        root.addView(buildRegisteredStaffCard(staff), lp(-1, -2).apply {
+            topMargin = dp(24)
+            bottomMargin = dp(16)
         })
 
-        val section = TextView(this).apply {
-            text = "انتخاب کارمند"
-            textSize = 18f
-            setTextColor(getColor(R.color.hirmand_text))
-            setTypeface(typeface, Typeface.BOLD)
-            gravity = Gravity.RIGHT
-        }
-        root.addView(section, lp(-1, -2))
-
-        val hint = TextView(this).apply {
-            text = "این انتخاب فقط روی همین گوشی ذخیره می‌شود و فعلاً هیچ اتصال اینترنتی یا زیرساختی فعال نیست."
-            textSize = 13f
-            setTextColor(getColor(R.color.hirmand_muted))
-            gravity = Gravity.RIGHT
-        }
-        root.addView(hint, lp(-1, -2).apply {
-            topMargin = dp(7)
-            bottomMargin = dp(14)
-        })
-
-        staffMembers.forEach { member ->
-            root.addView(
-                createMemberCard(member),
-                lp(-1, dp(86)).apply { bottomMargin = dp(12) },
-            )
-        }
-
-        val selectedId = preferences.getString("selected_staff_id", null)
-        val selectedMember = staffMembers.firstOrNull { it.id == selectedId }
         val status = TextView(this).apply {
-            text = selectedMember?.let { "کارمند انتخاب‌شده: ${it.name} — ${it.role}" }
-                ?: "هنوز کارمندی انتخاب نشده است."
-            textSize = 13f
+            text = "ثبت کارمند با موفقیت انجام شده است. قابلیت‌های مرحلهٔ بعد هنوز فعال نشده‌اند."
+            textSize = 12.5f
             setTextColor(getColor(R.color.hirmand_muted))
             gravity = Gravity.CENTER
         }
-        root.addView(status, lp(-1, -2).apply { topMargin = dp(10) })
+        root.addView(status, lp(-1, -2).apply { topMargin = dp(4) })
+
+        val changeButton = MaterialButton(this).apply {
+            text = "تغییر کارمند ثبت‌شده"
+            textSize = 13f
+            isAllCaps = false
+            setOnClickListener {
+                setContentView(buildStaffRegistrationScreen())
+            }
+        }
+        root.addView(changeButton, lp(-1, dp(50)).apply {
+            topMargin = dp(15)
+        })
 
         return scrollView
     }
 
-    private fun createMemberCard(member: StaffMember): MaterialCardView {
-        val selected = preferences.getString("selected_staff_id", null) == member.id
-
+    private fun buildRegisteredStaffCard(staff: StaffMember): MaterialCardView {
         val card = MaterialCardView(this).apply {
-            radius = dp(18).toFloat()
+            radius = dp(19).toFloat()
             setCardBackgroundColor(getColor(R.color.hirmand_surface))
-            strokeWidth = dp(if (selected) 2 else 1)
-            strokeColor = getColor(
-                if (selected) R.color.hirmand_gold else R.color.hirmand_surface_2,
-            )
-            isClickable = true
-            isFocusable = true
-            contentDescription = "${member.name}، ${member.role}"
+            strokeWidth = dp(2)
+            strokeColor = getColor(R.color.hirmand_gold)
         }
 
         val content = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(17), dp(17), dp(17), dp(17))
             layoutDirection = android.view.View.LAYOUT_DIRECTION_RTL
-            setPadding(dp(16), dp(10), dp(16), dp(10))
         }
 
-        val copy = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_VERTICAL
+        val label = TextView(this).apply {
+            text = "کارمند ثبت‌شده روی این گوشی"
+            textSize = 12f
+            setTextColor(getColor(R.color.hirmand_gold))
         }
 
         val name = TextView(this).apply {
-            text = member.name
-            textSize = 16f
+            text = staff.name
+            textSize = 21f
             setTextColor(getColor(R.color.hirmand_text))
             setTypeface(typeface, Typeface.BOLD)
         }
 
         val role = TextView(this).apply {
-            text = member.role
-            textSize = 12f
+            text = staff.role
+            textSize = 13f
             setTextColor(getColor(R.color.hirmand_muted))
         }
 
-        copy.addView(name, lp(-2, -2))
-        copy.addView(role, lp(-2, -2).apply { topMargin = dp(3) })
-
-        val badge = TextView(this).apply {
-            text = if (selected) "انتخاب‌شده" else "انتخاب"
-            textSize = 11f
-            setTextColor(getColor(R.color.hirmand_gold))
-            gravity = Gravity.CENTER
-        }
-
-        content.addView(copy, LinearLayout.LayoutParams(0, -1, 1f))
-        content.addView(badge, lp(dp(92), -1))
+        content.addView(label, lp(-1, -2))
+        content.addView(name, lp(-1, -2).apply { topMargin = dp(5) })
+        content.addView(role, lp(-1, -2).apply { topMargin = dp(3) })
 
         card.addView(content)
-        card.setOnClickListener {
-            preferences.edit().putString("selected_staff_id", member.id).apply()
-            recreate()
-        }
         return card
     }
 
