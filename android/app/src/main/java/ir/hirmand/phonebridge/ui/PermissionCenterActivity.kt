@@ -202,6 +202,10 @@ class PermissionCenterActivity : AppCompatActivity() {
 
     private fun grantModule(module: ConsentModule) {
         prefs.setConsentGranted(module.id, true)
+        // Consent alone does not switch a module on: effective access needs the
+        // switch too, and leaving it off here is what makes the new consent the
+        // thing that actually starts the module.
+        prefs.setModuleEnabled(module.id, true)
         val missing = ConsentRegistry.missingPermissions(this, module)
         if (missing.isEmpty()) {
             render()
@@ -215,6 +219,9 @@ class PermissionCenterActivity : AppCompatActivity() {
 
     private fun revokeModule(module: ConsentModule) {
         prefs.setConsentGranted(module.id, false)
+        // Switch off as well, so the module cannot look active in the dashboard
+        // after its consent is gone.
+        prefs.setModuleEnabled(module.id, false)
         if (module.id == "remote_control") disableRemoteAccess()
         render()
     }

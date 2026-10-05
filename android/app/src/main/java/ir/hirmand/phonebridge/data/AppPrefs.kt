@@ -319,12 +319,46 @@ class AppPrefs(context: Context) {
     fun grantedModuleIds(): Set<String> =
         ConsentRegistry.modules.filter { isConsentGranted(it.id) }.map { it.id }.toSet()
 
-    /** Drop every consent and every "already asked" flag. */
+    // --- Module switch <-> consent -------------------------------------
+    //
+    // The switch (`location`, `sms`, …) and the consent record are stored
+    // separately on purpose: consent is a fact the user agreed to, the switch is
+    // the current on/off position. Effective access needs both plus the Android
+    // permission, so the pair is read through one helper instead of being
+    // combined at every call site.
+
+    private fun switchKey(id: String) = id
+
+    /** True when the user has the module switched on. Says nothing about consent. */
+    fun isModuleEnabled(id: String): Boolean =
+        prefs.getBoolean(switchKey(id), false)
+
+    fun setModuleEnabled(id: String, enabled: Boolean) {
+        prefs.edit().putBoolean(switchKey(id), enabled).apply()
+    }
+
+    /**
+     * The device-side half of the effective-access rule:
+     * the module must be switched on AND explicitly consented to.
+     *
+     * The remaining two halves — the Android permission and the server policy —
+     * are checked by `PhoneDataCollector` and by the backend respectively.
+     */
+    fun isModuleAllowedLocally(id: String): Boolean = isModuleEnabled(id) && isConsentGranted(id)
+
+    /** Every module currently allowed locally, for display in the UI. */
+    fun locallyAllowedModuleIds(): Set<String> =
+        ConsentRegistry.modules.filter { isModuleAllowedLocally(it.id) }.map { it.id }.toSet()
+
+    /** Drop every consent and every "already asked" flag, and turn every module off. */
     fun revokeAllConsents() {
         val editor = prefs.edit()
         ConsentRegistry.modules.forEach {
             editor.remove(consentKey(it.id))
             editor.remove(requestedKey(it.id))
+            // The switch goes off with the consent: leaving it on would make the
+            // module look enabled in the UI while it can never actually run.
+            editor.putBoolean(switchKey(it.id), false)
         }
         editor.apply()
     }

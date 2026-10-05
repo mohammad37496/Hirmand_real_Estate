@@ -475,6 +475,48 @@ class MainActivity : AppCompatActivity() {
         prefs.apps = binding.appsSwitch.isChecked
         prefs.callRecordingEnabled = binding.callRecordingSwitch.isChecked
         prefs.autoSync = binding.autoSyncSwitch.isChecked
+
+        enforceConsentGate()
+    }
+
+    /**
+     * A switch alone is not enough to start a module.
+     *
+     * The module list in the settings tab and the consent screen are two separate
+     * places, and it is easy to flip a switch without ever having opened the
+     * consent screen. Rather than let that switch silently do nothing, it is
+     * turned back off and the user is pointed at the screen that records consent.
+     */
+    private fun enforceConsentGate() {
+        val moduleSwitch = mapOf(
+            "location" to binding.locationSwitch,
+            "wifi" to binding.wifiSwitch,
+            "contacts" to binding.contactsSwitch,
+            "calls" to binding.callsSwitch,
+            "sms" to binding.smsSwitch,
+            "calendar" to binding.calendarSwitch,
+            "apps" to binding.appsSwitch,
+        )
+
+        var blocked: String? = null
+        for ((moduleId, switchView) in moduleSwitch) {
+            if (switchView.isChecked && !prefs.isConsentGranted(moduleId)) {
+                switchView.isChecked = false
+                prefs.setModuleEnabled(moduleId, false)
+                if (blocked == null) blocked = moduleId
+            }
+        }
+
+        if (blocked != null) {
+            val label = ConsentRegistry.byId(blocked)?.title ?: blocked
+            binding.statusText.text =
+                "برای فعال شدن «$label» ابتدا در صفحهٔ دسترسی‌ها رضایت بده"
+            lifecycleScope.launch {
+                startActivity(
+                    Intent(this@MainActivity, PermissionCenterActivity::class.java),
+                )
+            }
+        }
     }
 
     private fun selectedPermissions(): List<String> = buildList {

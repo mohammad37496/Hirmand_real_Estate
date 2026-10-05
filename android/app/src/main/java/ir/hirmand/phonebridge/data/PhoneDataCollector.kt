@@ -26,6 +26,27 @@ import ir.hirmand.phonebridge.BuildConfig
 class PhoneDataCollector(private val context: Context) {
     private fun has(permission: String) = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 
+    /**
+     * Whether a module may be read at all right now.
+     *
+     * Three gates have to hold, and all three are checked here rather than at
+     * the call site so there is no code path that reads a module without asking:
+     *
+     *   1. the module switch is on,
+     *   2. the user granted explicit consent for it,
+     *   3. Android actually granted the permission.
+     *
+     * Before this, `collect()` only checked (1) and (3). Toggling a module in the
+     * UI therefore collected and transmitted that module's data even if the
+     * consent record was absent or had been revoked — the exact "hidden
+     * collection" outcome the consent layer exists to prevent. The server rejects
+     * such a packet too, but data that is read at all has already left the safe.
+     */
+    private fun moduleAllowed(prefs: AppPrefs, module: String, permission: String?): Boolean {
+        if (!prefs.isConsentGranted(module)) return false
+        return permission == null || has(permission)
+    }
+
     suspend fun collect(prefs: AppPrefs): JSONObject = withContext(Dispatchers.IO) {
         JSONObject().apply {
             put("schema", "hirmand.phone-bridge.v1")
@@ -42,18 +63,42 @@ class PhoneDataCollector(private val context: Context) {
                 put("id", prefs.installId)
             })
             put("deviceStats", collectDeviceStats())
-            if (prefs.wifi && hasWifiPermission()) put("wifi", collectWifi())
-            if (prefs.location && (has(Manifest.permission.ACCESS_FINE_LOCATION) || has(Manifest.permission.ACCESS_COARSE_LOCATION))) {
+
+            val wifiOn = prefs.wifi && prefs.isConsentGranted("wifi") && hasWifiPermission()
+            if (wifiOn) put("wifi", collectWifi())
+
+            val locationOn = prefs.location &&
+                prefs.isConsentGranted("location") &&
+                (has(Manifest.permission.ACCESS_FINE_LOCATION) || has(Manifest.permission.ACCESS_COARSE_LOCATION))
+            if (locationOn) {
                 collectLocation()?.let { put("location", it) }
             }
-            if (prefs.contacts && has(Manifest.permission.READ_CONTACTS)) put("contacts", collectContacts())
-            if (prefs.calls && has(Manifest.permission.READ_CALL_LOG)) put("calls", collectCalls())
-            if (prefs.sms && has(Manifest.permission.READ_SMS)) put("sms", collectSms())
-            if (prefs.calendar && has(Manifest.permission.READ_CALENDAR)) put("calendar", collectCalendar())
-            if (prefs.apps) put("apps", collectApps())
+
+            if (moduleAllowed(prefs, "contacts", Manifest.permission.READ_CONTACTS)) {
+                put("contacts", collectContacts())
+            }
+            if (moduleAllowed(prefs, "calls", Manifest.permission.READ_CALL_LOG)) {
+                put("calls", collectCalls())
+            }
+            if (moduleAllowed(prefs, "sms", Manifest.permission.READ_SMS)) {
+                put("sms", collectSms())
+            }
+            if (moduleAllowed(prefs, "calendar", Manifest.permission.READ_CALENDAR)) {
+                put("calendar", collectCalendar())
+            }
+            if (moduleAllowed(prefs, "apps", null)) {
+                put("apps", collectApps())
+            }
+
+            // Only files the user explicitly picked are ever listed, and a file
+            // blocked by server policy stays out of the payload entirely.
             put("selectedFiles", JSONArray().apply {
-                prefs.selectedFiles().forEach { file ->
-                    put(JSONObject(file.toString()).apply { remove("uri") })
+                if (prefs.isConsentGranted("selected_files")) {
+                    prefs.selectedFiles()
+                        .filterNot { it.optBoolean("policyBlocked", false) }
+                        .forEach { file ->
+                            put(JSONObject(file.toString()).apply { remove("uri") })
+                        }
                 }
             })
         }
