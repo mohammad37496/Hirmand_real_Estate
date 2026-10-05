@@ -75,7 +75,7 @@ export const savePhoneBridgeAppBlockRule = createServerFn({ method: "POST" })
     if (data.startDate && data.endDate && data.startDate > data.endDate) throw new Error("تاریخ شروع نمی‌تواند بعد از تاریخ پایان باشد.");
     const sql = await getSql();
     const rows = await sql.query<{ id: string }>("insert into phone_bridge_app_block_rules (id,device_id,package_name,label,enabled,days,start_time,end_time,start_date,end_date,message,updated_at) values (md5($1 || ':' || $2)::uuid,$1,$2,$3,$4,$5::jsonb,$6::time,$7::time,nullif($8,'')::date,nullif($9,'')::date,$10,current_timestamp) on conflict (device_id,package_name) do update set label=excluded.label,enabled=excluded.enabled,days=excluded.days,start_time=excluded.start_time,end_time=excluded.end_time,start_date=excluded.start_date,end_date=excluded.end_date,message=excluded.message,updated_at=current_timestamp returning id", [data.deviceId,data.packageName,data.label,data.enabled,JSON.stringify(days),data.startTime,data.endTime,data.startDate,data.endDate,data.message]);
-    if (rows.length > 0) await recordPhoneBridgeEvent({ deviceId: data.deviceId, actorAccountId: claims?.options?.accountId ?? null, eventType: "app.block_rule_changed", severity: data.enabled ? "warning" : "info", message: data.enabled ? "قانون بلاک برنامه ذخیره شد." : "قانون بلاک برنامه غیرفعال شد.", metadata: { packageName: data.packageName, days, startTime: data.startTime, endTime: data.endTime, startDate: data.startDate || null, endDate: data.endDate || null } });
+    if (rows.length > 0) await recordPhoneBridgeEvent({ deviceId: data.deviceId, actorAccountId: typeof claims?.options?.accountId === "string" ? claims.options.accountId : null, eventType: "app.block_rule_changed", severity: data.enabled ? "warning" : "info", message: data.enabled ? "قانون بلاک برنامه ذخیره شد." : "قانون بلاک برنامه غیرفعال شد.", metadata: { packageName: data.packageName, days, startTime: data.startTime, endTime: data.endTime, startDate: data.startDate || null, endDate: data.endDate || null } });
     return { success: rows.length > 0, id: rows[0]?.id ?? null };
   });
 
@@ -85,6 +85,6 @@ export const deletePhoneBridgeAppBlockRule = createServerFn({ method: "POST" })
     const claims = await requirePhoneBridgeAppsAdmin(); if (dbSource === "unconfigured") return { success: false };
     const sql = await getSql();
     const rows = await sql.query<{ id: string }>("delete from phone_bridge_app_block_rules where device_id=$1 and package_name=$2 returning id", [data.deviceId,data.packageName]);
-    if (rows.length > 0) await recordPhoneBridgeEvent({ deviceId: data.deviceId, actorAccountId: claims?.options?.accountId ?? null, eventType: "app.block_rule_deleted", severity: "info", message: "قانون بلاک برنامه حذف شد.", metadata: { packageName: data.packageName } });
+    if (rows.length > 0) await recordPhoneBridgeEvent({ deviceId: data.deviceId, actorAccountId: typeof claims?.options?.accountId === "string" ? claims.options.accountId : null, eventType: "app.block_rule_deleted", severity: "info", message: "قانون بلاک برنامه حذف شد.", metadata: { packageName: data.packageName } });
     return { success: rows.length > 0 };
   });
