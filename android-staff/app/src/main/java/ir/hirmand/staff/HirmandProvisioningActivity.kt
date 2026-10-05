@@ -3,7 +3,6 @@ package ir.hirmand.staff
 import android.app.Activity
 import android.app.admin.DevicePolicyManager
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
 import android.widget.LinearLayout
