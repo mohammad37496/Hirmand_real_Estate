@@ -54,6 +54,13 @@ jobs:
       - name: Tests
         run: npm test
 
+      # Applies every migration and then executes the Phone Bridge write
+      # statements against a real Postgres. This is the only check that can
+      # catch a parameter-typing or conflict-target regression, which is how
+      # this project has broken before.
+      - name: Phone Bridge schema and SQL
+        run: npm run test:phone-bridge:sql
+
       - name: Production build
         run: npm run build
         env:
