@@ -74,7 +74,7 @@ export function personChat(person: TeamMember, extra = "") {
 }
 
 export type MapTarget = {
-  label: string;
+  label?: string;
   address?: string;
   searchQuery?: string;
   lat?: number;
@@ -82,7 +82,7 @@ export type MapTarget = {
 };
 
 export function mapLinks(target: MapTarget = { label: SITE.shortName, address: SITE.address }) {
-  const query = (target.searchQuery || target.address || target.label).trim();
+  const query = (target.searchQuery || target.address || target.label || SITE.shortName).trim();
   const scopedQuery = query.includes("ایران") ? query : `${query}، اصفهان، ایران`;
   const q = encodeURIComponent(scopedQuery);
   const googleSearch = `https://www.google.com/maps/search/?api=1&query=${q}`;
@@ -195,8 +195,11 @@ export const PROPERTY_TYPES = [
 
 export type Neighborhood = {
   name: string;
-  lat: number;
-  lng: number;
+  address?: string;
+  searchQuery?: string;
+  lat?: number;
+  lng?: number;
+  label?: string;
 };
 
 export const NEIGHBORHOOD_GROUPS: { title: string; items: Neighborhood[] }[] = [
