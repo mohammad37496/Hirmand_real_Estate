@@ -198,7 +198,7 @@ export default defineEventHandler(async (event) => {
   if (contactItems.length > 0) {
     for (const item of contactItems) {
       const contact = asObject(item);
-      const contactId = asString(contact.contactId, 120);
+      const contactId = asString(contact.contactId, "").slice(0, 120);
       const name = asString(contact.name, "").slice(0, 180);
       const rawNumbers = Array.isArray(contact.numbers) ? contact.numbers : [];
       const legacyNumber = asString(contact.number, "").slice(0, 80);
