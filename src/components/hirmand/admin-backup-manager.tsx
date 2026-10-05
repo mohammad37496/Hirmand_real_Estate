@@ -6,7 +6,7 @@ type Verification = { verifiedAt: string; coreReady: boolean; tables: Array<{ ta
 type BackupHistoryItem = { id: number; kind: string; createdAt: string; tableCounts: Record<string, unknown> };
 const TABLE_LABEL: Record<string, string> = { properties: "فایل‌ها", leads: "لیدها", leadActivities: "فعالیت‌های CRM", financeTransactions: "امور مالی", consultants: "مشاوران", attendance: "حضور و غیاب" };
 function formatDate(value: string) { return new Date(value).toLocaleString("fa-IR", { dateStyle: "medium", timeStyle: "short" }); }
-function rowsCount(item: BackupHistoryItem) { return Object.values(item.tableCounts).reduce((sum, value) => sum + (Number(value) || 0), 0); }
+function rowsCount(item: BackupHistoryItem) { return Object.values(item.tableCounts).reduce((sum: number, value) => sum + (Number(value) || 0), 0); }
 
 export function AdminBackupManager() {
   const [busy, setBusy] = useState(false);
