@@ -51,6 +51,9 @@ export default defineEventHandler(async (event) => {
     maxHits: 40,
     blockMs: 10 * 60 * 1000,
   });
+
+  const raw = await readRawBody(event);
+  const content = Buffer.isBuffer(raw) ? raw : Buffer.from(raw ?? "");
   if (content.length === 0) {
     throw createError({ statusCode: 400, statusMessage: "محتوای فایل ارسال نشده است." });
   }
@@ -85,8 +88,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 413, statusMessage: "حجم فایل بیش از حد مجاز است." });
   }
 
-  const raw = await readRawBody(event);
-  const content = Buffer.isBuffer(raw) ? raw : Buffer.from(raw ?? "");
+  if (content.length !== declaredSize) {
+    throw createError({ statusCode: 400, statusMessage: "حجم واقعی فایل با مقدار اعلام‌شده یکسان نیست." });
+  }
   if (content.length !== declaredSize) {
     throw createError({ statusCode: 400, statusMessage: "حجم واقعی فایل با مقدار اعلام‌شده یکسان نیست." });
   }

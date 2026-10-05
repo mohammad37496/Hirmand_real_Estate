@@ -2,6 +2,78 @@ import { createHmac, createHash, randomBytes, timingSafeEqual } from "node:crypt
 import { createError, getHeader, type H3Event } from "h3";
 import { getSql } from "@/lib/db";
 
+export type { H3Event } from "h3";
+
+export function sha256Hex(body: Buffer | string): string {
+  const buffer = Buffer.isBuffer(body) ? body : Buffer.from(body, "utf8");
+  return createHash("sha256").update(buffer).digest("hex");
+}
+
+function sha256(body: Buffer) {
+  return createHash("sha256").update(body).digest("hex");
+}
+
+export function canonicalSigningInput(deviceId: string, timestamp: string, nonce: string, bodyHash: string) {
+  return `v1.${deviceId}.${timestamp}.${nonce}.${bodyHash}`;
+}
+
+export function verifySignature(input: { secret: string; deviceId: string; timestamp: string; nonce: string; signature: string; body: Uint8Array | Buffer | string }): boolean {
+  const bodyBuffer = Buffer.isBuffer(input.body) ? input.body : Buffer.from(input.body, "utf8");
+  const bodyHash = sha256(bodyBuffer);
+  const signingInput = canonicalSigningInput(input.deviceId, input.timestamp, input.nonce, bodyHash);
+  const expected = createHmac("sha256", input.secret).update(signingInput, "utf8").digest("hex");
+  return sameSignature(expected, input.signature);
+}
+
+export function checkSignatureFreshness(headers: { timestamp?: string; nonce?: string; signature?: string; version?: string }, options?: { now?: number }): { ok: boolean; reason?: string } {
+  const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
+  const now = options?.now ?? Date.now();
+  
+  if (!headers.timestamp || !headers.nonce || !headers.signature) {
+    return { ok: false, reason: "missing" };
+  }
+  
+  if (!/^\d{13}$/.test(headers.timestamp)) {
+    return { ok: false, reason: "malformed" };
+  }
+  
+  const timestampMs = Number(headers.timestamp);
+  if (!Number.isFinite(timestampMs)) {
+    return { ok: false, reason: "malformed" };
+  }
+  
+  if (Math.abs(now - timestampMs) > MAX_CLOCK_SKEW_MS) {
+    return { ok: false, reason: "stale" };
+  }
+  
+  if (!/^[a-f0-9]{64}$/.test(headers.signature)) {
+    return { ok: false, reason: "malformed" };
+  }
+  
+  if (headers.version && headers.version !== "1") {
+    return { ok: false, reason: "malformed" };
+  }
+  
+  return { ok: true };
+}
+
+export function rememberNonce(deviceId: string, nonce: string, options?: { now?: number }): boolean {
+  // In-memory nonce store for tests
+  const globalRef = globalThis as typeof globalThis & { __phoneBridgeNonces__?: Map<string, number> };
+  if (!globalRef.__phoneBridgeNonces__) {
+    globalRef.__phoneBridgeNonces__ = new Map();
+  }
+  const key = `${deviceId}:${nonce}`;
+  const now = options?.now ?? Date.now();
+  
+  if (globalRef.__phoneBridgeNonces__.has(key)) {
+    return false;
+  }
+  
+  globalRef.__phoneBridgeNonces__.set(key, now);
+  return true;
+}
+
 const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
 const NONCE_TTL_MS = 10 * 60 * 1000;
 

@@ -245,7 +245,7 @@ export type PhoneBridgeAlert = {
   title: string;
   message: string;
   createdAt: string;
-  acknowledgedAt: string | null;
+  acknowledgedAt?: string | null;
 };
 
 export const acknowledgePhoneBridgeAlert = createServerFn({ method: "POST" })

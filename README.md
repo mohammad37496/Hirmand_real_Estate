@@ -245,6 +245,66 @@ android/                   # پروژه مستقل Gradle (Phone Bridge)
 > استفاده می‌کند. اگر `./gradlew` لازم شد، یک‌بار روی سیستمی که Gradle و Android SDK
 > دارد اجرا کنید تا wrapper تولید و commit شود.
 
+## Phone Bridge (اندروید ↔ بک‌اند)
+
+سامانهٔ Phone Bridge یک پروژهٔ مستقل Gradle درون همین monorepo است، در `android/`،
+که با API همین سایت (`/api/device-sync/v1`) حرف می‌زند.
+
+```
+Android app ──HTTPS + HMAC──▶ /api/device-sync/v1/*  ──▶ PostgreSQL
+                                    ▲
+                                    └── admin panel (policy, consent, audit, commands)
+```
+
+مسیرهای API:
+
+| Method | Path | کار |
+| --- | --- | --- |
+| `POST` | `/api/device-sync/v1/register` | تبدیل کلید ثبت تک‌بارمصرف به توکن اختصاصی دستگاه |
+| `GET` | `/api/device-sync/v1` | بررسی اتصال و ماژول‌های مجاز (بدون HMAC) |
+| `POST` | `/api/device-sync/v1` | بستهٔ همگام‌سازی کامل |
+| `POST` | `/api/device-sync/v1/heartbeat` | ضربان سبک + آمار سلامت دستگاه |
+| `POST` | `/api/device-sync/v1/location` | ثبت نقطهٔ موقعیت (dedupe با `clientPointId`) |
+| `POST` | `/api/device-sync/v1/files` | ارسال فایل انتخاب‌شده |
+| `POST` | `/api/device-sync/v1/call-recordings` | ارسال ضبط تماس |
+| `GET` | `/api/device-sync/v1/remote-control/command` | تحویل فرمان (با claim اتمیک) |
+| `POST` | `/api/device-sync/v1/remote-control/result` | گزارش نتیجهٔ فرمان |
+| `GET` | `/api/device-sync/v1/update` | بررسی نسخهٔ جدید (عمومی) |
+| `POST` | `/api/admin-phone-bridge` | پنل مدیریت: دستگاه، سیاست، رضایت، فرمان، audit |
+
+قاعدهٔ بنیادی — **دسترسی مؤثر**:
+
+```
+Effective Access = رضایت کاربر AND مجوز Android AND سیاست سرور AND دستگاه فعال
+```
+
+هیچ‌یک از این چهار لایه قابل دور زدن نیست. سمت سرور فقط می‌تواند سه لایه را
+ببیند، پس **سیاست سرور هرگز جای رضایت کاربر را نمی‌گیرد**: `set_modules` در پنل
+فقط «مجاز بودن» را باز می‌کند و تا وقتی رضایت ثبت نشده باشد ماژول مؤثر نمی‌شود.
+
+### امضای درخواست
+
+هر درخواست با HMAC-SHA256 امضا می‌شود:
+
+```
+signingInput = "v1." + deviceId + "." + timestamp + "." + nonce + "." + sha256hex(body)
+signature    = HMAC-SHA256(secret = deviceToken, signingInput)
+```
+
+این رشته بخشی از قرارداد پروتکل است. `src/lib/phone-bridge-signature.test.ts`
+هر دو طرف را مقابل هم قفل می‌کند، بنابراین تغییر در Kotlin یا TypeScript در CI
+لو می‌رود.
+
+### تست
+
+```bash
+npm test                                   # شامل تست‌های قرارداد و رگرسیون Phone Bridge
+sh ./scripts/verify-phone-bridge.sh <url>  # بررسی قرارداد HTTP روی سرور در حال اجرا
+```
+
+> سرور توسعه عمداً `/api/*` را سرو نمی‌کند (به `vite.config.ts` نگاه کنید)،
+> پس برای تست API باید خروجی build‌شده یا یک استقرار واقعی را هدف بگیرید.
+
 ## توسعه
 
 قبل از push پیشنهاد می‌شود:
@@ -254,6 +314,15 @@ npm run typecheck
 npm run lint
 npm test
 npm run build
+```
+
+برای اندروید (جدا از خط لولهٔ وب):
+
+```bash
+cd android
+./gradlew check
+./gradlew lintDebug
+./gradlew assembleDebug
 ```
 
 ## لایسنس

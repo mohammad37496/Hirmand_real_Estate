@@ -134,6 +134,9 @@ export async function authenticateDevice(event: H3Event, deviceId: string) {
         scopes: row?.consent_scopes ?? [],
       });
       return {
+        ok: true,
+        status: "ok",
+        message: "",
         mode: "bootstrap" as const,
         deviceId,
         allowedModules: effectivePhoneBridgePolicy(normalizePhoneBridgePolicy(row?.allowed_modules), consent),
@@ -161,6 +164,9 @@ export async function authenticateDevice(event: H3Event, deviceId: string) {
     scopes: row.consent_scopes ?? [],
   });
   return {
+    ok: true,
+    status: "ok",
+    message: "",
     mode: "device" as const,
     deviceId,
     allowedModules: effectivePhoneBridgePolicy(normalizePhoneBridgePolicy(row.allowed_modules), consent),

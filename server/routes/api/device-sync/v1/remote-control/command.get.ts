@@ -86,7 +86,10 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  if (action === "list_apps" && modules.apps === false) { await sql.query("update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",[String(row.id),"ماژول برنامه‌ها برای این دستگاه غیرفعال است."]); return {ok:true,command:null}; }\n  if (action === "list_notifications" && modules.notifications === false) { await sql.query("update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",[String(row.id),"ماژول اعلان‌ها برای این دستگاه غیرفعال است."]); return {ok:true,command:null}; }\n\n  if (action === "record_audio") {
+  if (action === "list_apps" && modules.apps === false) { await sql.query("update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",[String(row.id),"ماژول برنامه‌ها برای این دستگاه غیرفعال است."]); return {ok:true,command:null}; }
+  if (action === "list_notifications" && modules.notifications === false) { await sql.query("update phone_bridge_remote_commands set status='failed',error_message=$2,completed_at=current_timestamp where id=$1 and status='running'",[String(row.id),"ماژول اعلان‌ها برای این دستگاه غیرفعال است."]); return {ok:true,command:null}; }
+
+  if (action === "record_audio") {
     const format = String(payload.audioFormat ?? "");
     const duration = Number(payload.durationSeconds ?? 0);
     if (!["wav","amr"].includes(format) || !Number.isInteger(duration) || duration < 60 || duration > 3600 || modules.microphone === false) {
