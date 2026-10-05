@@ -51,7 +51,7 @@ const MAX_CONTACTS = 200;
 const MAX_CALLS = 200;
 const MAX_SMS = 200;
 const MAX_CALENDAR = 200;
-const MAX_APPS = 1000;
+const MAX_APPS = 300;
 const MAX_FILES = 20;
 
 function asObject(value: unknown): JsonObject | null {
