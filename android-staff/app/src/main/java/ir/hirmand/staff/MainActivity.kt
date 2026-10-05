@@ -714,7 +714,7 @@ class MainActivity : AppCompatActivity() {
             ).show()
 
             syncRegisteredDevice(person) {
-                setContentView(buildHome())
+                renderPermissionCenter()
             }
         }
 
