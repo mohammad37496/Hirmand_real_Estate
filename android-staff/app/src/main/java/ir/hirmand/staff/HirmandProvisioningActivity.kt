@@ -12,10 +12,17 @@ import com.google.android.material.button.MaterialButton
 /**
  * Android Enterprise DPC provisioning entry point.
  *
- * Android 12+ uses GET_PROVISIONING_MODE and ADMIN_POLICY_COMPLIANCE
- * instead of launching ACTION_PROVISION_MANAGED_DEVICE directly.
+ * Android 12+ calls ACTION_GET_PROVISIONING_MODE before establishing the
+ * DPC as a Device Owner or Profile Owner. The requested mode is carried in
+ * admin extras when our app starts provisioning from the personal-device flow.
  */
 class HirmandProvisioningActivity : Activity() {
+
+    companion object {
+        const val EXTRA_HIRMAND_REQUESTED_MODE = "hirmand.requestedProvisioningMode"
+        const val MODE_FULLY_MANAGED = "fully_managed"
+        const val MODE_WORK_PROFILE = "managed_profile"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,17 +38,38 @@ class HirmandProvisioningActivity : Activity() {
     }
 
     private fun returnProvisioningMode() {
-        val result = Intent().apply {
-            putExtra(
-                DevicePolicyManager.EXTRA_PROVISIONING_MODE,
-                DevicePolicyManager.PROVISIONING_MODE_FULLY_MANAGED_DEVICE,
-            )
+        val requestedMode = intent
+            ?.getBundleExtra(DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE)
+            ?.getString(EXTRA_HIRMAND_REQUESTED_MODE)
 
-            // Do not opt out of sensor permission management.
-            // Because this app is the DPC for a fully-managed company device,
-            // Android may apply the Device Owner's explicit sensor grant policy
-            // during provisioning. The app still exposes the managed state in
-            // its own UI and does not use a blanket auto-grant policy.
+        val allowedModes = intent?.let {
+            @Suppress("DEPRECATION")
+            it.getIntegerArrayListExtra(
+                DevicePolicyManager.EXTRA_PROVISIONING_ALLOWED_PROVISIONING_MODES
+            )
+        }.orEmpty()
+
+        val fullyManagedAllowed =
+            allowedModes.contains(DevicePolicyManager.PROVISIONING_MODE_FULLY_MANAGED_DEVICE)
+        val workProfileAllowed =
+            allowedModes.contains(DevicePolicyManager.PROVISIONING_MODE_MANAGED_PROFILE)
+
+        val selectedMode = when (requestedMode) {
+            MODE_WORK_PROFILE when workProfileAllowed ->
+                DevicePolicyManager.PROVISIONING_MODE_MANAGED_PROFILE
+            MODE_FULLY_MANAGED when fullyManagedAllowed ->
+                DevicePolicyManager.PROVISIONING_MODE_FULLY_MANAGED_DEVICE
+            else -> when {
+                fullyManagedAllowed -> DevicePolicyManager.PROVISIONING_MODE_FULLY_MANAGED_DEVICE
+                workProfileAllowed -> DevicePolicyManager.PROVISIONING_MODE_MANAGED_PROFILE
+                else -> DevicePolicyManager.PROVISIONING_MODE_FULLY_MANAGED_DEVICE
+            }
+        }
+
+        val result = Intent().apply {
+            putExtra(DevicePolicyManager.EXTRA_PROVISIONING_MODE, selectedMode)
+            // Default remains false: on a fully-managed device the DPC may
+            // control sensor-related permission grants where Android permits it.
         }
 
         setResult(RESULT_OK, result)
@@ -49,6 +77,18 @@ class HirmandProvisioningActivity : Activity() {
     }
 
     private fun showCompliance() {
+        val state = DeviceOwnerManager.state(this)
+        val managedText = when (state.mode) {
+            DeviceManagementMode.DEVICE_OWNER ->
+                "این گوشی به‌عنوان Fully Managed / Device Owner ثبت شده است."
+            DeviceManagementMode.PROFILE_OWNER ->
+                "این گوشی یک Work Profile / Profile Owner دارد و داده‌های کاری در فضای مدیریت‌شده از بخش شخصی جدا می‌شوند."
+            DeviceManagementMode.LEGACY_DEVICE_ADMIN ->
+                "Device Admin قدیمی فعال است؛ برای مدیریت مدرن از Android Enterprise استفاده کنید."
+            DeviceManagementMode.UNMANAGED ->
+                "فرایند مدیریت سازمانی در حال تکمیل است."
+        }
+
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
@@ -64,7 +104,7 @@ class HirmandProvisioningActivity : Activity() {
         }, lp(-1, -2))
 
         root.addView(TextView(this).apply {
-            text = "این دستگاه به‌عنوان گوشی متعلق به شرکت، تحت مدیریت Fully Managed قرار می‌گیرد. سیاست‌های مدیریتی فقط از طریق Android Enterprise اعمال می‌شوند و دسترسی‌های حساس همچنان تابع مجوزهای رسمی Android هستند."
+            text = managedText + "\n\nسیاست‌های مدیریتی فقط از طریق Android Enterprise اعمال می‌شوند. دسترسی‌های حساس در گوشی شخصی همچنان در محدوده Work Profile و مجوزهای رسمی Android باقی می‌مانند."
             textSize = 14f
             gravity = Gravity.CENTER
             setTextColor(getColor(R.color.hirmand_muted))
