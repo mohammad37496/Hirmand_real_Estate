@@ -148,7 +148,7 @@ export const setPhoneBridgeLocationConfig = createServerFn({ method: "POST" })
     if (rows.length > 0) {
       await recordPhoneBridgeEvent({
         deviceId: data.deviceId,
-        actorAccountId: claims?.options?.accountId ?? null,
+        actorAccountId: typeof claims?.options?.accountId === "string" ? claims.options.accountId : null,
         eventType: "location.tracking_config_changed",
         severity: "warning",
         message: data.enabled
@@ -275,14 +275,14 @@ export const acknowledgePhoneBridgeAlert = createServerFn({ method: "POST" })
       [
         data.alertId,
         data.deviceId ?? null,
-        claims?.options?.accountId ?? null,
+        typeof claims?.options?.accountId === "string" ? claims.options.accountId : null,
         data.note ?? null,
       ],
     );
 
     await recordPhoneBridgeEvent({
       deviceId: data.deviceId ?? null,
-      actorAccountId: claims?.options?.accountId ?? null,
+      actorAccountId: typeof claims?.options?.accountId === "string" ? claims.options.accountId : null,
       eventType: "alert.acknowledged",
       severity: "info",
       message: "هشدار Phone Bridge توسط مدیر تأیید شد.",
@@ -700,7 +700,7 @@ export const setPhoneBridgeReleaseSettings = createServerFn({ method: "POST" })
 
     if (rows.length > 0) {
       await recordPhoneBridgeEvent({
-        actorAccountId: claims?.options?.accountId ?? null,
+        actorAccountId: typeof claims?.options?.accountId === "string" ? claims.options.accountId : null,
         eventType: "release.updated",
         severity: "warning",
         message: "اطلاعات انتشار نسخهٔ Phone Bridge تغییر کرد.",
@@ -734,7 +734,7 @@ export const setPhoneBridgeDeviceMinVersion = createServerFn({ method: "POST" })
     if (rows.length > 0) {
       await recordPhoneBridgeEvent({
         deviceId: data.deviceId,
-        actorAccountId: claims?.options?.accountId ?? null,
+        actorAccountId: typeof claims?.options?.accountId === "string" ? claims.options.accountId : null,
         eventType: "device.min_version_changed",
         severity: "warning",
         message: "حداقل نسخهٔ مجاز Phone Bridge تغییر کرد.",
@@ -760,7 +760,7 @@ export const getPhoneBridgeDevicePolicy = createServerFn({ method: "POST" })
 export const setPhoneBridgeDevicePolicy = createServerFn({ method: "POST" })
   .validator(z.object({
     deviceId: z.string().trim().min(1).max(120),
-    allowedModules: z.record(z.boolean()),
+    allowedModules: z.record(z.string(), z.boolean()),
   }))
   .handler(async ({ data }) => {
     const claims = await requirePhoneBridgeAdmin();
@@ -780,7 +780,7 @@ export const setPhoneBridgeDevicePolicy = createServerFn({ method: "POST" })
     if (rows.length > 0) {
       await recordPhoneBridgeEvent({
         deviceId: data.deviceId,
-        actorAccountId: claims?.options?.accountId ?? null,
+        actorAccountId: typeof claims?.options?.accountId === "string" ? claims.options.accountId : null,
         eventType: "device.policy_changed",
         severity: "warning",
         message: "سیاست دسترسی ماژول‌های Phone Bridge توسط مدیر تغییر کرد.",
@@ -1126,7 +1126,7 @@ export const getPhoneBridgeSync = createServerFn({ method: "POST" })
     if (!row) return null;
     await recordPhoneBridgeEvent({
       deviceId: String(row.device_id),
-      actorAccountId: claims?.options?.accountId ?? null,
+      actorAccountId: typeof claims?.options?.accountId === "string" ? claims.options.accountId : null,
       eventType: "data.sync_viewed",
       severity: "info",
       message: "جزئیات یک بستهٔ Phone Bridge توسط مدیر مشاهده شد.",
@@ -1180,7 +1180,7 @@ export const purgePhoneBridgeData = createServerFn({ method: "POST" })
       [data.olderThanDays],
     );
     await recordPhoneBridgeEvent({
-      actorAccountId: claims?.options?.accountId ?? null,
+      actorAccountId: typeof claims?.options?.accountId === "string" ? claims.options.accountId : null,
       eventType: "maintenance.purged",
       severity: "warning",
       message: "داده‌های قدیمی Phone Bridge پاک‌سازی شدند.",
@@ -1203,7 +1203,7 @@ export const setPhoneBridgeDeviceEnabled = createServerFn({ method: "POST" })
     if (rows.length > 0) {
       await recordPhoneBridgeEvent({
         deviceId: data.deviceId,
-        actorAccountId: claims?.options?.accountId ?? null,
+        actorAccountId: typeof claims?.options?.accountId === "string" ? claims.options.accountId : null,
         eventType: "device.enabled_changed",
         severity: data.enabled ? "info" : "warning",
         message: data.enabled ? "دستگاه توسط مدیر فعال شد." : "دستگاه توسط مدیر غیرفعال شد.",
@@ -1230,7 +1230,7 @@ export const rotatePhoneBridgeDeviceToken = createServerFn({ method: "POST" })
     if (rows.length > 0) {
       await recordPhoneBridgeEvent({
         deviceId: data.deviceId,
-        actorAccountId: claims?.options?.accountId ?? null,
+        actorAccountId: typeof claims?.options?.accountId === "string" ? claims.options.accountId : null,
         eventType: "security.token_rotated",
         severity: "warning",
         message: "توکن اختصاصی دستگاه توسط مدیر تعویض شد.",
