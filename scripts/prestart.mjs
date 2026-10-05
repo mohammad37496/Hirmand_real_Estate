@@ -12,7 +12,7 @@
  * Nitro owns HTTP binding, request handling, and shutdown. We just make sure it
  * sees the right port, a migrated database, and the right environment.
  */
-import { resolveDatabaseUrl, sanitizePostgresConnectionString } from "../resolve-database-url.mjs";
+import { resolveDatabaseUrl, sanitizePostgresConnectionString } from "./resolve-database-url.mjs";
 import { runMigrations } from "./prestart-migrate.mjs";
 
 const PORT = Number(process.env.PORT || process.env.NITRO_PORT || 3000);
