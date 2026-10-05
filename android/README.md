@@ -21,33 +21,66 @@
 - گیرندهٔ Node.js برای تست داخل LAN.
 - GitHub Actions برای check، lintDebug، assembleDebug و تولید Artifact APK.
 
+## مجوز و رضایت
+
+هیچ ماژولی فقط با روشن بودن کلید فعال نمی‌شود. برای هر ماژول سه لایه به‌صورت محلی
+بررسی می‌شود:
+
+```
+کلید ماژول  AND  رضایت صریح کاربر  AND  مجوز Android
+```
+
+لایهٔ چهارم — سیاست سرور — جداگانه در بک‌اند اعمال می‌شود.
+
+`PhoneDataCollector` هر سه را از یک helper واحد می‌خواند، پس هیچ نقطهٔ فراخوانی
+وجود ندارد که بدون پرسیدن، دادهٔ یک ماژول را بخواند. اگر رضایت لغو شود، دیگر داده‌ای
+حتی خوانده نمی‌شود — که برخلاف رد کردن در سرور، قابل بازگشت نیست.
+
+وقتی کاربر کلیدی را بدون رضایت روشن کند، کلید خودبه‌خود برمی‌گردد و به صفحهٔ
+دسترسی‌ها هدایت می‌شود؛ چیزی بی‌صدا کار نمی‌کند و کاربر هم فکر نمی‌کند که چیزی خراب
+است.
+
+## صف محلی
+
+صف SQLite بر پایهٔ **claim/lease** کار می‌کند، نه read-then-send:
+
+```
+queued ──claim──▶ processing ──complete──▶ حذف
+                      │
+                      ├──fail─────▶ queued (backoff پلکانی)
+                      └──attempts>max──▶ dead_letters
+```
+
+دلیل: `SyncScheduler` یک SyncWorker را با دو نام unique متفاوت ثبت می‌کرد، پس
+همگام‌سازی دستی و دوره‌ای واقعاً می‌توانستند هم‌زمان اجرا شوند. با مدل قبلی هر دو یک
+بسته را می‌خواندند و دوباره ارسال می‌کردند.
+
+اگر کاری در میانهٔ ارسال بمیرد، lease آن تمام می‌شود و بسته دوباره برداشته می‌شود
+به‌جای اینکه برای همیشه گم شود. قطع‌شدن شبکه هم بسته را بدون سوزاندن یک تلاش آزاد
+می‌کند.
+
 ## ساخت
 
 پروژه یک Gradle project مستقل است و از داخل پوشهٔ `android/` ساخته می‌شود.
 
 ```bash
 cd android
-gradle check
-gradle lintDebug
-gradle assembleDebug
-gradle test
-gradle connectedDebugAndroidTest   # نیازمند emulator
+./gradlew check
+./gradlew lintDebug
+./gradlew assembleDebug
+./gradlew test
+./gradlew connectedDebugAndroidTest   # نیازمند emulator
 ```
 
 در Android Studio پوشهٔ `android/` را به‌عنوان project root باز کنید.
 
-برای CI، GitHub Actions خودش JDK 17، Android SDK و Gradle 8.10.2 را آماده می‌کند و
-`working-directory: android` دارد.
+برای CI، GitHub Actions خودش JDK 17 و Android SDK را آماده می‌کند، Gradle را از
+wrapper می‌گیرد و `working-directory: android` دارد.
 
-> **Gradle wrapper وجود ندارد.** ریپوی مبدأ فایل‌های `gradlew`، `gradlew.bat` و
-> `gradle/wrapper/` را commit نکرده بود، بنابراین `./gradlew` کار نمی‌کند و همهٔ
-> فرمان‌ها و CI از Gradle سیستمی استفاده می‌کنند. اگر wrapper لازم شد، روی سیستمی که
-> Gradle 8.10.2 و Android SDK دارد اجرا کنید تا wrapper تولید و commit شود:
->
-> ```bash
-> cd android
-> gradle wrapper --gradle-version 8.10.2
-> ```
+> Gradle wrapper در `android/gradlew`، `android/gradlew.bat` و
+> `android/gradle/wrapper/` قرار دارد و نسخهٔ Gradle در
+> `gradle/wrapper/gradle-wrapper.properties` روی 8.10.2 پین شده، بنابراین CI و
+> لپ‌تاپ توسعه‌دهنده یک نسخه را اجرا می‌کنند. اگر فایل اجرایی نبود: `chmod +x gradlew`.
 
 ## شبکه آفلاین
 
