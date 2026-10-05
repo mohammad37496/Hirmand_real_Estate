@@ -53,7 +53,8 @@ object DeviceOwnerManager {
         }
 
         val provisioningAllowed = runCatching {
-            manager?.isProvisioningAllowed(packageName) == true
+            manager?.isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE) == true ||
+                manager?.isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE) == true
         }.getOrDefault(false)
 
         return DeviceManagementState(
