@@ -9,7 +9,11 @@ const MIGRATIONS_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "migr
 export async function runMigrations({ connectionString }) {
   const entries = await readdir(MIGRATIONS_DIR);
   const appliedRows = await (async () => {
-    const pool = new pg.Pool({ connectionString, max: 1 });
+    const pool = new pg.Pool({
+      connectionString,
+      max: 1,
+      connectionTimeoutMillis: Number(process.env.DB_MIGRATION_CONNECT_TIMEOUT_MS ?? 5000),
+    });
     const client = await pool.connect();
     try {
       await client.query(
@@ -29,7 +33,11 @@ export async function runMigrations({ connectionString }) {
     return;
   }
 
-  const pool = new pg.Pool({ connectionString, max: 1 });
+  const pool = new pg.Pool({
+    connectionString,
+    max: 1,
+    connectionTimeoutMillis: Number(process.env.DB_MIGRATION_CONNECT_TIMEOUT_MS ?? 5000),
+  });
   const client = await pool.connect();
 
   try {
