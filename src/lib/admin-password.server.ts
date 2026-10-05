@@ -1,7 +1,11 @@
 import { randomBytes, scrypt as nodeScrypt, timingSafeEqual } from "node:crypto";
-import { promisify } from "node:util";
-
-const scrypt = promisify(nodeScrypt);
+const scrypt = (password: string | Buffer, salt: string | Buffer, keylen: number, options: Parameters<typeof nodeScrypt>[3]) =>
+  new Promise<Buffer>((resolve, reject) => {
+    nodeScrypt(password, salt, keylen, options, (error, derived) => {
+      if (error) reject(error);
+      else resolve(derived as Buffer);
+    });
+  });
 const N = 16384;
 const R = 8;
 const P = 1;
