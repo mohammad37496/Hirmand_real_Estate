@@ -65,6 +65,9 @@ export type PhoneBridgeRemoteCommand = {
     uri?: string;
     rootUri?: string;
     entries?: number;
+    apps?: Array<Record<string, unknown>>;
+    notifications?: Array<Record<string, unknown>>;
+    audioFormat?: string;
   } | null;
   errorMessage: string | null;
   createdAt: string;
@@ -244,12 +247,12 @@ export const createPhoneBridgeRemoteCommand = createServerFn({ method: "POST" })
 
     await sql.query(
       "insert into phone_bridge_remote_commands (id,device_id,action,status,payload,requested_by,expires_at) values ($1,$2,$3,'queued',$4::jsonb,$5," + expiresSql + ")",
-      [id, data.deviceId, data.action, payload, claims?.options?.accountId ?? null],
+      [id, data.deviceId, data.action, payload, typeof claims?.options?.accountId === "string" ? claims.options.accountId : null],
     );
 
     await recordPhoneBridgeEvent({
       deviceId: data.deviceId,
-      actorAccountId: claims?.options?.accountId ?? null,
+      actorAccountId: typeof claims?.options?.accountId === "string" ? claims.options.accountId : null,
       eventType: "remote.command_requested",
       severity: "warning",
       message: data.action === "restore_data"
