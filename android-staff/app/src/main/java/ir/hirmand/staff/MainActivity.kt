@@ -11,6 +11,18 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AppCompatActivity
+import android.content.Intent
+import android.graphics.Typeface
+import android.net.Uri
+import android.os.Bundle
+import android.view.Gravity
+import android.widget.CheckBox
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import org.json.JSONArray
 import org.json.JSONObject
@@ -51,14 +63,79 @@ class MainActivity : AppCompatActivity() {
 
     private var availableStaffMembers: List<StaffMember> = emptyList()
     private var isRefreshingStaffDirectory = false
+    private var permissionCenterVisible = false
+    private var screenCaptureApprovedThisSession = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (!permissionCenterVisible) {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
+                    return
+                }
+
+                permissionCenterVisible = false
+                isEnabled = false
+                setContentView(buildHome())
+            }
+        })
+
         availableStaffMembers = readCachedStaffMembers().ifEmpty { fallbackStaffMembers }
         renderCurrentStep()
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (permissionCenterVisible) {
+            renderPermissionCenter()
+        }
+    }
+
+    private fun renderPermissionCenter() {
+        permissionCenterVisible = true
+        setContentView(
+            PermissionCenter(
+                activity = this,
+                screenCaptureApproved = { screenCaptureApprovedThisSession },
+                onRequestScreenCapture = {
+                    val projectionManager = getSystemService(android.media.projection.MediaProjectionManager::class.java)
+                    try {
+                        startActivityForResult(
+                            projectionManager.createScreenCaptureIntent(),
+                            SCREEN_CAPTURE_REQUEST_CODE
+                        )
+                    } catch {
+                        Toast.makeText(
+                            this,
+                            "امکان درخواست ضبط صفحه در این دستگاه وجود ندارد.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                },
+                onClose = {
+                    permissionCenterVisible = false
+                    setContentView(buildHome())
+                },
+            ).buildView()
+        )
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == SCREEN_CAPTURE_REQUEST_CODE) {
+            screenCaptureApprovedThisSession = resultCode == RESULT_OK && data != null
+            if (permissionCenterVisible) {
+                renderPermissionCenter()
+            }
+        }
+    }
+
     private fun renderCurrentStep() {
+        permissionCenterVisible = false
         when {
             !isAgreementAccepted() -> setContentView(buildAgreementScreen())
             registeredStaff() == null -> {
@@ -817,6 +894,17 @@ class MainActivity : AppCompatActivity() {
             gravity = Gravity.CENTER
         }
         root.addView(status, lp(-1, -2).apply { topMargin = dp(4) })
+
+        val permissionButton = MaterialButton(this).apply {
+            text = "مرکز دسترسی‌ها و آماده‌سازی تلفن"
+            textSize = 13f
+            isAllCaps = false
+            setOnClickListener { renderPermissionCenter() }
+        }
+        root.addView(permissionButton, lp(-1, dp(52)).apply {
+            topMargin = dp(16)
+            bottomMargin = dp(8)
+        })
 
         val changeButton = MaterialButton(this).apply {
             text = "تغییر کارمند ثبت‌شده"
