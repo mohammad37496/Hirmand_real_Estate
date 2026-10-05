@@ -45,6 +45,20 @@ jobs:
           --app="hirmand"
           --api-token="$LIARA_TOKEN"
           --build-location="germany"
+          --port="3000"
           --no-app-logs
           --message="Deploy ${GITHUB_SHA::7} from ${GITHUB_REF_NAME}"
           --debug
+
+
+      - name: Diagnose Liara runtime on failure
+        if: failure()
+        env:
+          LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
+        run: >-
+          liara app logs
+          --app="hirmand"
+          --api-token="$LIARA_TOKEN"
+          --timestamps
+          --last-lines
+          --since="30 minutes ago"
