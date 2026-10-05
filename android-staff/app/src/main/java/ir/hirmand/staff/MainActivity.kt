@@ -1,5 +1,6 @@
 package ir.hirmand.staff
 
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Typeface
@@ -37,7 +38,7 @@ private val fallbackStaffMembers = listOf(
     StaffMember("moradi", "آقای مرادی", "مشاور ارشد"),
 )
 
-private const val AGREEMENT_VERSION = "1.0"
+private const val AGREEMENT_VERSION = "1.1"
 private const val AGREEMENT_URL = "https://www.hirmandrealestate.ir/staff-agreement"
 private const val PREFS_NAME = "hirmand_staff"
 private const val PREF_AGREEMENT_VERSION = "accepted_agreement_version"
@@ -49,6 +50,7 @@ private const val PREF_STAFF_DIRECTORY_SYNCED_AT = "staff_directory_synced_at"
 private const val PREF_DEVICE_ID = "device_id"
 private const val PREF_DEVICE_STATUS = "device_registration_status"
 private const val SCREEN_CAPTURE_REQUEST_CODE = 9102
+private const val WORK_PROFILE_PROVISIONING_REQUEST_CODE = 9201
 
 class MainActivity : AppCompatActivity() {
 
@@ -102,6 +104,7 @@ class MainActivity : AppCompatActivity() {
             PermissionCenter(
                 activity = this,
                 screenCaptureApproved = { screenCaptureApprovedThisSession },
+                onStartWorkProfileProvisioning = { startWorkProfileProvisioning() },
                 onRequestScreenCapture = {
                     val projectionManager = getSystemService(android.media.projection.MediaProjectionManager::class.java)
                     try {
@@ -132,6 +135,61 @@ class MainActivity : AppCompatActivity() {
             if (permissionCenterVisible) {
                 renderPermissionCenter()
             }
+        }
+    }
+
+    private fun startWorkProfileProvisioning() {
+        val manager = getSystemService(android.app.admin.DevicePolicyManager::class.java)
+        if (manager == null) {
+            Toast.makeText(
+                this,
+                "Android Enterprise روی این دستگاه در دسترس نیست.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        val action = android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE
+        val allowed = runCatching {
+            manager.isProvisioningAllowed(action)
+        }.getOrDefault(false)
+
+        if (!allowed) {
+            Toast.makeText(
+                this,
+                "Android در وضعیت فعلی اجازه ساخت Work Profile را نمی‌دهد. ممکن است Work Profile دیگری وجود داشته باشد یا دستگاه تحت مدیریت دیگری باشد.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        val admin = ComponentName(this, HirmandDeviceAdminReceiver::class.java)
+        val extras = Bundle().apply {
+            putString(
+                HirmandProvisioningActivity.EXTRA_HIRMAND_REQUESTED_MODE,
+                HirmandProvisioningActivity.MODE_WORK_PROFILE
+            )
+        }
+
+        val intent = Intent(action).apply {
+            putExtra(
+                android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
+                admin
+            )
+            putExtra(
+                android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE,
+                extras
+            )
+        }
+
+        try {
+            startActivityForResult(intent, WORK_PROFILE_PROVISIONING_REQUEST_CODE)
+        } catch {
+            Toast.makeText(
+                this,
+                "شروع راه‌اندازی Work Profile روی این دستگاه ممکن نیست.",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
@@ -199,7 +257,7 @@ class MainActivity : AppCompatActivity() {
         root.addView(title, lp(-1, -2).apply { topMargin = dp(10) })
 
         val intro = TextView(this).apply {
-            text = "املاک هیرمند · استفاده از گوشی متعلق به بنگاه"
+            text = "املاک هیرمند · گوشی شرکتی یا Work Profile روی گوشی شخصی"
             textSize = 13f
             setTextColor(getColor(R.color.hirmand_muted))
             gravity = Gravity.CENTER
@@ -299,7 +357,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val body = TextView(this).apply {
-            text = "This company-owned phone may be configured and monitored for legitimate business and security purposes. The full agreement on the Hirmand website lists the sensitive permissions and information categories that may be requested."
+            text = "این برنامه هم روی گوشی متعلق به شرکت (Fully Managed) و هم روی گوشی شخصی کارمند با Work Profile قابل استفاده است. در حالت شخصی، مدیریت سازمانی به فضای کاری محدود می‌شود و داده‌های شخصی خارج از Work Profile برای اپ سازمانی در نظر گرفته نمی‌شوند."
             textSize = 12.5f
             setTextColor(getColor(R.color.hirmand_muted))
             setLineSpacing(dp(2).toFloat(), 1.0f)
@@ -899,7 +957,16 @@ class MainActivity : AppCompatActivity() {
         )
 
         val status = TextView(this).apply {
-            text = "ثبت کارمند با موفقیت انجام شده است. قابلیت‌های مرحلهٔ بعد هنوز فعال نشده‌اند."
+            text = when (DeviceOwnerManager.state(this).mode) {
+                DeviceManagementMode.DEVICE_OWNER ->
+                    "گوشی در حالت Fully Managed / Device Owner مدیریت می‌شود."
+                DeviceManagementMode.PROFILE_OWNER ->
+                    "گوشی از طریق Work Profile / Profile Owner برای محیط کاری مدیریت می‌شود."
+                DeviceManagementMode.LEGACY_DEVICE_ADMIN ->
+                    "Device Admin قدیمی فعال است؛ برای مدیریت مدرن Android Enterprise را استفاده کنید."
+                DeviceManagementMode.UNMANAGED ->
+                    "دستگاه هنوز در هیچ حالت مدیریت سازمانی ثبت نشده است."
+            }
             textSize = 12.5f
             setTextColor(getColor(R.color.hirmand_muted))
             gravity = Gravity.CENTER
