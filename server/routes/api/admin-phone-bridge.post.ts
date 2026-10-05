@@ -10,13 +10,12 @@ import {
 } from "@/lib/phone-bridge-auth.server";
 import { writePhoneBridgeAudit } from "@/lib/phone-bridge-events.server";
 import { effectiveAccessForDevice, MODULE_LABELS } from "@/lib/phone-bridge-policy.server";
-import { optionalInt, optionalIntField } from "@/lib/phone-bridge-payload.server";
 
 const moduleEnum = z.enum(PHONE_BRIDGE_MODULES);
 
 const actionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("list") }),
-  z.object({ action: z.literal("create_pairing_token"), label: z.string().trim().max(120).optional(), expiresInHours: optionalIntField }),
+  z.object({ action: z.literal("create_pairing_token"), label: z.string().trim().max(120).optional(), expiresInHours: z.number().int().min(1).max(24 * 30).optional().default(24) }),
   z.object({ action: z.literal("set_enabled"), deviceId: z.string().trim().min(1).max(120), enabled: z.boolean() }),
   z.object({
     action: z.literal("set_modules"),
@@ -49,10 +48,10 @@ const actionSchema = z.discriminatedUnion("action", [
       "restore_data",
     ]),
     payload: z.record(z.string(), z.unknown()).optional(),
-    expiresInMinutes: optionalIntField,
+    expiresInMinutes: z.number().int().min(1).max(24 * 60).optional().default(15),
   }),
-  z.object({ action: z.literal("audit"), deviceId: z.string().trim().max(120).optional(), limit: optionalIntField }),
-  z.object({ action: z.literal("purge"), days: optionalIntField }),
+  z.object({ action: z.literal("audit"), deviceId: z.string().trim().max(120).optional(), limit: z.number().int().min(1).max(500).optional().default(100) }),
+  z.object({ action: z.literal("purge"), days: z.number().int().min(1).max(3650).optional().default(30) }),
 ]);
 
 /**
