@@ -240,6 +240,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/staff-agreement': typeof StaffAgreementRoute
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
   '/favorites': typeof FavoritesRoute
@@ -342,6 +343,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-mobile-management'
     | '/admin-mobile-management/$employeeId'
+    | '/staff-agreement'
     | '/budget-match'
     | '/compare'
     | '/favorites'
