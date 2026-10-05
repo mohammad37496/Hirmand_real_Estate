@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
     maxHits: 20,
     blockMs: 10 * 60 * 1000,
   });
-  const raw = await readRawBody(event, false);
+  const raw = await readRawBody(event);
   const bytes = raw ? Buffer.from(raw) : Buffer.alloc(0);
   if (!bytes.length || bytes.length > MAX_BYTES) throw createError({ statusCode: 413, statusMessage: "اندازه فایل صوتی مجاز نیست." });
 
