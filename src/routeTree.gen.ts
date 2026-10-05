@@ -263,6 +263,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-mobile-management': typeof AdminMobileManagementRoute
+  '/admin-mobile-management/$employeeId': typeof AdminMobileManagementEmployeeIdRoute
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
   '/consultants': typeof ConsultantsRouteWithChildren
@@ -295,10 +297,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/admin-mobile-management'
-    | '/admin-mobile-management/$employeeId'
-    | '/admin-mobile-management'
-    | '/admin-mobile-management/$employeeId'
     | '/admin'
     | '/admin-mobile-management'
     | '/admin-mobile-management/$employeeId'
@@ -364,6 +362,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/admin-mobile-management'
+    | '/admin-mobile-management/$employeeId'
     | '/budget-match'
     | '/compare'
     | '/consultants'
