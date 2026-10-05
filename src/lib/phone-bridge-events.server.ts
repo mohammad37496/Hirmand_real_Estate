@@ -3,8 +3,7 @@ import { dbSource, getSql } from "@/lib/db";
 
 export type PhoneBridgeEventSeverity = "info" | "warning" | "error" | "critical";
 
-type EventMetadataValue = string | number | boolean | null;
-type EventMetadata = Record<string, EventMetadataValue>;
+export type PhoneBridgeEventActorId = { deviceId?: string | null; actorAccountId?: string | null; };
 
 export async function recordPhoneBridgeEvent(input: {
   deviceId?: string | null;
@@ -12,7 +11,7 @@ export async function recordPhoneBridgeEvent(input: {
   eventType: string;
   severity?: PhoneBridgeEventSeverity;
   message: string;
-  metadata?: EventMetadata;
+  metadata?: Record<string, unknown>;
 }) {
   if (dbSource === "unconfigured") return;
 
@@ -30,5 +29,46 @@ export async function recordPhoneBridgeEvent(input: {
       input.message.trim().slice(0, 500),
       JSON.stringify(input.metadata ?? {}),
     ],
+  );
+}
+
+export async function writePhoneBridgeAudit(input: {
+  deviceId: string;
+  action: string;
+  module: string;
+  result: string;
+  policy?: string;
+  ip?: string;
+  userAgent?: string;
+  detail?: Record<string, unknown>;
+}) {
+  await recordPhoneBridgeEvent({
+    deviceId: input.deviceId,
+    actorAccountId: undefined,
+    eventType: "audit",
+    severity: input.result === "denied" ? "warning" : "info",
+    message: `${input.action}::${input.module}::${input.result}`,
+    metadata: {
+      ...(input.policy ? { policy: input.policy } : {}),
+      ...(input.ip ? { ip: input.ip } : {}),
+      ...(input.userAgent ? { userAgent: input.userAgent } : {}),
+      ...(input.detail ? { detail: input.detail } : {}),
+    },
+  });
+}
+
+export async function storeSnapshot(input: {
+  deviceId: string;
+  snapshotHash: string;
+  modules: Record<string, boolean>;
+  sentAt: number;
+}) {
+  if (dbSource === "unconfigured") return;
+  const sql = await getSql();
+  await sql.query(
+    `insert into phone_bridge_device_snapshots
+      (device_id, snapshot_hash, modules, sent_at)
+     values ($1, $2, $3::jsonb, $4)`,
+    [input.deviceId, input.snapshotHash, JSON.stringify(input.modules), input.sentAt],
   );
 }

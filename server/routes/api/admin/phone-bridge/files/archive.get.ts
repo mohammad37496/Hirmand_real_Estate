@@ -1,4 +1,4 @@
-import { createError, defineEventHandler, getCookie, send, setResponseHeader, getQuery, type H3Event } from "h3";
+import { createError, defineEventHandler, getCookie, setResponseHeader, getQuery, type H3Event } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
@@ -85,5 +85,5 @@ export default defineEventHandler(async (event) => {
   setResponseHeader(event, "content-type", "application/zip");
   setResponseHeader(event, "content-disposition", "attachment; filename=" + encodeURIComponent("phone-bridge-media.zip"));
   setResponseHeader(event, "x-content-type-options", "nosniff");
-  return send(event, archive);
+  return archive;
 });

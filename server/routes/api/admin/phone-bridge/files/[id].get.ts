@@ -2,7 +2,6 @@ import {
   createError,
   defineEventHandler,
   getCookie,
-  send,
   setResponseHeader,
   getQuery,
   type H3Event,
@@ -62,5 +61,5 @@ export default defineEventHandler(async (event) => {
       : "attachment; filename=\"phone-bridge-file\"; filename*=UTF-8''" + encodeURIComponent(safeDownloadName(row.name)),
   );
   setResponseHeader(event, "x-content-type-options", "nosniff");
-  return send(event, row.content);
+  return row.content;
 });

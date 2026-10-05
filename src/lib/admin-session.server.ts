@@ -16,6 +16,7 @@ export type AdminSessionClaims = {
   role: AdminRole;
   accountId: string | null;
   displayName: string | null;
+  options?: Record<string, unknown> | null;
 };
 
 function sessionSecret() {

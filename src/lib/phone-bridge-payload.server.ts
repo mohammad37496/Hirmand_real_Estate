@@ -1,7 +1,41 @@
 import { createError } from "h3";
 import type { PhoneBridgeModulePolicy } from "@/lib/phone-bridge-auth";
 
+export type SyncModule = keyof PhoneBridgeModulePolicy;
+
+export type { PhoneBridgeModulePolicy } from "@/lib/phone-bridge-auth";
+
 type JsonObject = Record<string, unknown>;
+
+export function optionalInt(value: unknown): number | null {
+  return typeof value === "number" && Number.isInteger(value) && Number.isSafeInteger(value) ? value : null;
+}
+
+export function optionalIntField(value: unknown, defaultVal = 0): number {
+  const v = optionalInt(value);
+  return v === null ? defaultVal : v;
+}
+
+export function normalizeGrantedScopes(input: unknown): string[] {
+  if (!Array.isArray(input)) return [];
+  return input.filter((item): item is string => typeof item === "string").slice(0, 50);
+}
+
+export function stripDisallowedModules(
+  payload: Record<string, unknown>,
+  allowedModules: PhoneBridgeModulePolicy,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...payload };
+  for (const key of Object.keys(result)) {
+    if (key === "schema" || key === "device" || key === "sentAt" || key === "syncId" || key === "deviceStats" || key === "snapshotHash") continue;
+    if (!allowedModules[key as SyncModule]) {
+      delete result[key];
+    }
+  }
+  return result;
+}
+
+export const syncPacketSchema = "hirmand.phone-bridge.v1";
 
 const MAX_TEXT = 500;
 const MAX_CONTACTS = 1000;

@@ -3,7 +3,6 @@ import {
   defineEventHandler,
   getCookie,
   getQuery,
-  send,
   setResponseHeader,
   type H3Event,
 } from "h3";
@@ -62,5 +61,5 @@ export default defineEventHandler(async (event) => {
     "content-disposition",
     (download ? "attachment" : "inline") + '; filename="' + encodeURIComponent(row.name || "call-recording.m4a") + '"',
   );
-  return send(event, row.content);
+  return row.content;
 });
