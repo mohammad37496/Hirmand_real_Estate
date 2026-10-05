@@ -186,7 +186,7 @@ export async function handleChunkedUpload(
       throw httpError("شماره قطعه ارسالی نامعتبر است.");
     }
 
-    const raw = await readRawBody(event, false);
+    const raw = await readRawBody(event);
     const bytes = raw ? Buffer.from(raw) : Buffer.alloc(0);
     if (!bytes.length) throw httpError("قطعه ارسالی خالی بود.");
     if (bytes.length > maxChunkBytes) {
