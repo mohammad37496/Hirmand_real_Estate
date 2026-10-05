@@ -49,19 +49,19 @@ jobs:
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
+      # The wrapper pins the Gradle version in gradle/wrapper/gradle-wrapper.properties,
+      # so CI and a developer laptop run the exact same Gradle.
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-version: '8.10.2'
 
       - name: Gradle check
-        run: gradle --no-daemon check
+        run: ./gradlew --no-daemon check
 
       - name: Android lint
-        run: gradle --no-daemon lintDebug
+        run: ./gradlew --no-daemon lintDebug
 
       - name: Build debug APK
-        run: gradle --no-daemon assembleDebug
+        run: ./gradlew --no-daemon assembleDebug
 
       - name: Node receiver syntax check
         run: node --check server/device-sync.mjs
@@ -104,8 +104,6 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-version: '8.10.2'
 
       - name: Enable KVM
         run: |
@@ -125,7 +123,7 @@ jobs:
           disable-animations: true
           # The action runs its script from the workspace root and ignores the
           # job's working-directory, so the Gradle project is named explicitly.
-          script: cd android && gradle --no-daemon connectedDebugAndroidTest
+          script: cd android && ./gradlew --no-daemon connectedDebugAndroidTest
 
       - name: Upload instrumentation reports
         if: always()
