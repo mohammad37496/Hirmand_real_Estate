@@ -23,6 +23,8 @@ if (!Number.isFinite(PORT) || PORT < 1 || PORT > 65535) {
 }
 
 process.env.NITRO_PORT = String(PORT);
+process.env.NITRO_HOST ??= process.env.HOST ?? "0.0.0.0";
+process.env.HOST ??= "0.0.0.0";
 process.env.NODE_ENV ??= "production";
 
 console.log(`[prestart] NODE_ENV=${process.env.NODE_ENV}, binding port ${PORT}`);
