@@ -1,11 +1,7 @@
 package ir.hirmand.staff
 
-import android.app.AppOpsManager
-import android.app.usage.UsageStatsManager
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.SystemClock
-import android.provider.Settings
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
@@ -22,8 +18,6 @@ import java.util.concurrent.TimeUnit
 private const val STAFF_PREFS = "hirmand_staff"
 private const val PREF_DEVICE_TOKEN = "device_auth_token"
 private const val PREF_TELEMETRY_QUEUE = "telemetry_queue"
-private const val PREF_LOCATION_TRACKING_ENABLED = "location_tracking_enabled"
-private const val PREF_LOCATION_TRACKING_INITIALIZED = "location_tracking_initialized"
 
 object StaffTelemetryStore {
     fun token(context: Context): String =
@@ -33,22 +27,13 @@ object StaffTelemetryStore {
         prefs(context).edit().putString(PREF_DEVICE_TOKEN, token.trim()).apply()
     }
 
-    fun locationTrackingEnabled(context: Context): Boolean =
-        prefs(context).getBoolean(PREF_LOCATION_TRACKING_ENABLED, false)
-
-    fun setLocationTrackingEnabled(context: Context, enabled: Boolean) {
-        prefs(context).edit().putBoolean(PREF_LOCATION_TRACKING_ENABLED, enabled).apply()
-    }
-
-    fun locationTrackingInitialized(context: Context): Boolean =
-        prefs(context).getBoolean(PREF_LOCATION_TRACKING_INITIALIZED, false)
-
-    fun setLocationTrackingInitialized(context: Context, initialized: Boolean) {
-        prefs(context).edit().putBoolean(PREF_LOCATION_TRACKING_INITIALIZED, initialized).apply()
-    }
-
     @Synchronized
-    fun enqueue(context: Context, eventType: String, payload: JSONObject, observedAt: String = Instant.now().toString()) {
+    fun enqueue(
+        context: Context,
+        eventType: String,
+        payload: JSONObject,
+        observedAt: String = Instant.now().toString(),
+    ) {
         val items = readQueue(context)
         items.put(
             JSONObject()
@@ -58,23 +43,22 @@ object StaffTelemetryStore {
                 .put("observedAt", observedAt)
         )
 
-        val maxItems = 2000
-        while (items.length() > maxItems) {
+        while (items.length() > 500) {
             items.remove(0)
         }
-        prefs(context).edit().putString(PREF_TELEMETRY_QUEUE, items.toString()).apply()
+
+        prefs(context).edit()
+            .putString(PREF_TELEMETRY_QUEUE, items.toString())
+            .apply()
     }
 
     @Synchronized
-    fun takeBatch(context: Context, eventType: String?, limit: Int): JSONArray {
+    fun takeBatch(context: Context, limit: Int): JSONArray {
         val all = readQueue(context)
         val batch = JSONArray()
         for (i in 0 until all.length()) {
             if (batch.length() >= limit) break
-            val item = all.optJSONObject(i) ?: continue
-            if (eventType == null || item.optString("eventType") == eventType) {
-                batch.put(item)
-            }
+            all.optJSONObject(i)?.let(batch::put)
         }
         return batch
     }
@@ -82,9 +66,13 @@ object StaffTelemetryStore {
     @Synchronized
     fun removeBatch(context: Context, batch: JSONArray) {
         if (batch.length() == 0) return
+
         val ids = buildSet {
             for (i in 0 until batch.length()) {
-                batch.optJSONObject(i)?.optString("clientEventId")?.takeIf { it.isNotBlank() }?.let(::add)
+                batch.optJSONObject(i)
+                    ?.optString("clientEventId")
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let(::add)
             }
         }
         if (ids.isEmpty()) return
@@ -97,7 +85,10 @@ object StaffTelemetryStore {
                 remaining.put(item)
             }
         }
-        prefs(context).edit().putString(PREF_TELEMETRY_QUEUE, remaining.toString()).apply()
+
+        prefs(context).edit()
+            .putString(PREF_TELEMETRY_QUEUE, remaining.toString())
+            .apply()
     }
 
     fun queueSize(context: Context): Int = readQueue(context).length()
@@ -114,8 +105,6 @@ object StaffTelemetryStore {
 object StaffTelemetry {
     private val telemetryUrl: String
         get() = BuildConfig.STAFF_TELEMETRY_URL
-    private val locationUrl: String
-        get() = BuildConfig.STAFF_LOCATION_URL
 
     fun schedulePeriodicSync(context: Context) {
         val constraints = Constraints.Builder()
@@ -124,7 +113,7 @@ object StaffTelemetry {
 
         val request = PeriodicWorkRequestBuilder<StaffTelemetryWorker>(
             15,
-            TimeUnit.MINUTES
+            TimeUnit.MINUTES,
         )
             .setConstraints(constraints)
             .build()
@@ -132,7 +121,7 @@ object StaffTelemetry {
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             "hirmand-staff-telemetry",
             ExistingPeriodicWorkPolicy.KEEP,
-            request
+            request,
         )
     }
 
@@ -148,101 +137,9 @@ object StaffTelemetry {
         )
     }
 
-    fun enqueueUsageSnapshot(context: Context) {
-        if (!hasUsageAccess(context)) return
-
-        val usageManager = context.getSystemService(UsageStatsManager::class.java) ?: return
-        val end = System.currentTimeMillis()
-        val start = end - 24L * 60L * 60L * 1000L
-        val stats = usageManager.queryUsageStats(
-            UsageStatsManager.INTERVAL_DAILY,
-            start,
-            end
-        ).orEmpty()
-
-        val apps = JSONArray()
-        stats
-            .filter { it.totalTimeInForeground > 0L }
-            .sortedByDescending { it.totalTimeInForeground }
-            .take(20)
-            .forEach {
-                apps.put(
-                    JSONObject()
-                        .put("packageName", it.packageName)
-                        .put("foregroundMs", it.totalTimeInForeground)
-                )
-            }
-
-        StaffTelemetryStore.enqueue(
-            context,
-            "usage_snapshot",
-            JSONObject()
-                .put("windowStart", Instant.ofEpochMilli(start).toString())
-                .put("windowEnd", Instant.ofEpochMilli(end).toString())
-                .put("apps", apps)
-        )
-    }
-
     fun enqueuePermissionState(context: Context, states: JSONObject) {
-        StaffTelemetryStore.enqueue(
-            context,
-            "permission_state",
-            states,
-        )
+        StaffTelemetryStore.enqueue(context, "permission_state", states)
     }
-
-    fun enqueueLocation(
-        context: Context,
-        latitude: Double,
-        longitude: Double,
-        accuracyM: Float?,
-        altitudeM: Double?,
-        speedMps: Float?,
-        provider: String?,
-        observedAt: String = Instant.now().toString(),
-    ) {
-        StaffTelemetryStore.enqueue(
-            context,
-            "location",
-            JSONObject()
-                .put("latitude", latitude)
-                .put("longitude", longitude)
-                .put("accuracyM", accuracyM)
-                .put("altitudeM", altitudeM)
-                .put("speedMps", speedMps)
-                .put("provider", provider.orEmpty()),
-            observedAt,
-        )
-    }
-
-    fun hasUsageAccess(context: Context): Boolean {
-        val appOps = context.getSystemService(AppOpsManager::class.java) ?: return false
-        val mode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            appOps.unsafeCheckOpNoThrow(
-                AppOpsManager.OPSTR_GET_USAGE_STATS,
-                context.applicationInfo.uid,
-                context.packageName
-            )
-        } else {
-            @Suppress("DEPRECATION")
-            appOps.checkOpNoThrow(
-                AppOpsManager.OPSTR_GET_USAGE_STATS,
-                context.applicationInfo.uid,
-                context.packageName
-            )
-        }
-        return mode == AppOpsManager.MODE_ALLOWED
-    }
-
-    fun hasLocationPermission(context: Context): Boolean =
-        androidx.core.content.ContextCompat.checkSelfPermission(
-            context,
-            android.Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED ||
-            androidx.core.content.ContextCompat.checkSelfPermission(
-                context,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
 
     fun sendBatch(
         context: Context,
@@ -252,6 +149,12 @@ object StaffTelemetry {
     ): Boolean {
         val token = StaffTelemetryStore.token(context)
         if (token.isBlank() || batch.length() == 0) return false
+
+        val deviceId = context
+            .getSharedPreferences(STAFF_PREFS, Context.MODE_PRIVATE)
+            .getString("device_id", "")
+            .orEmpty()
+        if (deviceId.isBlank()) return false
 
         val body = JSONObject().put(fieldName, batch).toString()
         val connection = (URL(url).openConnection() as HttpURLConnection).apply {
@@ -263,12 +166,7 @@ object StaffTelemetry {
             setRequestProperty("Accept", "application/json")
             setRequestProperty("Content-Type", "application/json; charset=utf-8")
             setRequestProperty("Authorization", "Bearer " + token)
-            setRequestProperty(
-                "X-Hirmand-Device-Id",
-                context.getSharedPreferences(STAFF_PREFS, Context.MODE_PRIVATE)
-                    .getString("device_id", "")
-                    .orEmpty()
-            )
+            setRequestProperty("X-Hirmand-Device-Id", deviceId)
         }
 
         return try {
@@ -280,49 +178,13 @@ object StaffTelemetry {
     }
 
     fun flush(context: Context): Boolean {
-        var success = true
+        val batch = StaffTelemetryStore.takeBatch(context, 50)
+        if (batch.length() == 0) return true
 
-        val all = StaffTelemetryStore.takeBatch(context, null, 50)
-        val locationBatch = JSONArray()
-        val nonLocationBatch = JSONArray()
-
-        for (i in 0 until all.length()) {
-            val item = all.optJSONObject(i) ?: continue
-            if (item.optString("eventType") == "location") {
-                val payload = item.optJSONObject("payload") ?: continue
-                val point = JSONObject()
-                    .put("clientEventId", item.optString("clientEventId"))
-                    .put("latitude", payload.optDouble("latitude"))
-                    .put("longitude", payload.optDouble("longitude"))
-                    .put("provider", payload.optString("provider"))
-                    .put("observedAt", item.optString("observedAt"))
-                if (payload.has("accuracyM")) point.put("accuracyM", payload.optDouble("accuracyM"))
-                if (payload.has("altitudeM")) point.put("altitudeM", payload.optDouble("altitudeM"))
-                if (payload.has("speedMps")) point.put("speedMps", payload.optDouble("speedMps"))
-                locationBatch.put(point)
-            } else {
-                nonLocationBatch.put(item)
-            }
+        val ok = sendBatch(context, telemetryUrl, batch, "events")
+        if (ok) {
+            StaffTelemetryStore.removeBatch(context, batch)
         }
-
-        if (nonLocationBatch.length() > 0) {
-            val ok = sendBatch(context, telemetryUrl, nonLocationBatch, "events")
-            if (ok) {
-                StaffTelemetryStore.removeBatch(context, nonLocationBatch)
-            } else {
-                success = false
-            }
-        }
-
-        if (locationBatch.length() > 0) {
-            val ok = sendBatch(context, locationUrl, locationBatch, "points")
-            if (ok) {
-                StaffTelemetryStore.removeBatch(context, locationBatch)
-            } else {
-                success = false
-            }
-        }
-
-        return success
-
+        return ok
+    }
 }
