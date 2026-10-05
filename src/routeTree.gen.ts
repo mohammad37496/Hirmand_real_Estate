@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminMobileManagementRouteImport } from './routes/admin-mobile-management'
 import { Route as AdminMobileManagementEmployeeIdRouteImport } from './routes/admin-mobile-management.$employeeId'
+import { Route as StaffAgreementRouteImport } from './routes/staff-agreement'
 import { Route as BudgetMatchRouteImport } from './routes/budget-match'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ConsultantsRouteImport } from './routes/consultants'
@@ -59,6 +60,11 @@ const AdminMobileManagementRoute = AdminMobileManagementRouteImport.update({
 const AdminMobileManagementEmployeeIdRoute = AdminMobileManagementEmployeeIdRouteImport.update({
   id: '/admin-mobile-management/$employeeId',
   path: '/admin-mobile-management/$employeeId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffAgreementRoute = StaffAgreementRouteImport.update({
+  id: '/staff-agreement',
+  path: '/staff-agreement',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BudgetMatchRoute = BudgetMatchRouteImport.update({
@@ -202,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/admin-mobile-management': typeof AdminMobileManagementRoute
   '/admin-mobile-management/$employeeId': typeof AdminMobileManagementEmployeeIdRoute
+  '/staff-agreement': typeof StaffAgreementRoute
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
   '/consultants': typeof ConsultantsRouteWithChildren
@@ -265,6 +272,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/admin-mobile-management': typeof AdminMobileManagementRoute
   '/admin-mobile-management/$employeeId': typeof AdminMobileManagementEmployeeIdRoute
+  '/staff-agreement': typeof StaffAgreementRoute
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
   '/consultants': typeof ConsultantsRouteWithChildren
@@ -300,6 +308,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-mobile-management'
     | '/admin-mobile-management/$employeeId'
+    | '/staff-agreement'
     | '/budget-match'
     | '/compare'
     | '/consultants'
@@ -398,6 +407,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AdminMobileManagementRoute: typeof AdminMobileManagementRoute
   AdminMobileManagementEmployeeIdRoute: typeof AdminMobileManagementEmployeeIdRoute
+  StaffAgreementRoute: typeof StaffAgreementRoute
   BudgetMatchRoute: typeof BudgetMatchRoute
   CompareRoute: typeof CompareRoute
   ConsultantsRoute: typeof ConsultantsRouteWithChildren
@@ -451,6 +461,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-mobile-management/$employeeId'
       fullPath: '/admin-mobile-management/$employeeId'
       preLoaderRoute: typeof AdminMobileManagementEmployeeIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff-agreement': {
+      id: '/staff-agreement'
+      path: '/staff-agreement'
+      fullPath: '/staff-agreement'
+      preLoaderRoute: typeof StaffAgreementRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/budget-match': {
@@ -678,6 +695,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AdminMobileManagementRoute: AdminMobileManagementRoute,
   AdminMobileManagementEmployeeIdRoute: AdminMobileManagementEmployeeIdRoute,
+  StaffAgreementRoute: StaffAgreementRoute,
   BudgetMatchRoute: BudgetMatchRoute,
   CompareRoute: CompareRoute,
   ConsultantsRoute: ConsultantsRouteWithChildren,
