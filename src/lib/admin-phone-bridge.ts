@@ -169,7 +169,9 @@ export const PHONE_BRIDGE_MODULES = [
   "calendar",
   "apps",
   "camera",
+  "microphone",
   "selectedFiles",
+  "notifications",
 ] as const;
 
 export type PhoneBridgeModule = typeof PHONE_BRIDGE_MODULES[number];
@@ -184,7 +186,9 @@ const defaultPhoneBridgeModulePolicy: PhoneBridgeModulePolicy = {
   calendar: true,
   apps: true,
   camera: true,
+  microphone: true,
   selectedFiles: true,
+  notifications: true,
 };
 
 function normalizePhoneBridgePolicy(value: unknown): PhoneBridgeModulePolicy {
