@@ -2,6 +2,7 @@ package ir.hirmand.staff
 
 import android.Manifest
 import android.app.AppOpsManager
+import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -36,6 +37,7 @@ class PermissionCenter(
     private val activity: MainActivity,
     private val screenCaptureApproved: () -> Boolean,
     private val onRequestScreenCapture: () -> Unit,
+    private val onStartWorkProfileProvisioning: () -> Unit,
     private val onClose: () -> Unit,
 ) {
     private val context: Context = activity
@@ -161,8 +163,8 @@ class PermissionCenter(
 
         root.addView(
             buildPermissionCard(
-                title = "Company device management",
-                description = "Preferred mode for company-owned phones: Android Enterprise Fully Managed / Device Owner. Legacy Device Admin remains supported only for compatibility.",
+                title = "Company / personal device management",
+                description = "Company phone: Fully Managed / Device Owner. Personal phone: Android Work Profile / Profile Owner, keeping work management inside the managed profile.",
                 state = { deviceManagementState() },
                 onAction = { showDeviceManagementInstructions() },
             ),
@@ -541,41 +543,57 @@ class PermissionCenter(
 
     private fun showDeviceManagementInstructions() {
         val state = DeviceOwnerManager.state(context)
-        val message = when (state.mode) {
-            DeviceManagementMode.DEVICE_OWNER ->
-                "این گوشی همین حالا Fully Managed است و Hirmand به‌عنوان Device Owner ثبت شده. مدیریت سازمانی فعال است."
-            DeviceManagementMode.PROFILE_OWNER ->
-                "این گوشی در حالت Work Profile / Profile Owner است. برای گوشی کاملاً متعلق به شرکت، حالت پیشنهادی Fully Managed / Device Owner است."
-            DeviceManagementMode.LEGACY_DEVICE_ADMIN ->
-                "Device Admin قدیمی فعال است، اما این حالت جایگزین Fully Managed نیست. برای تبدیل به Device Owner باید دستگاه بدون مدیریت قبلی و معمولاً پس از بازنشانی کارخانه‌ای دوباره Provision شود."
-            DeviceManagementMode.UNMANAGED ->
-                "برای گوشی شرکتی، اپ را به‌عنوان DPC در زمان Provisioning به Device Owner تبدیل کنید. روی دستگاه توسعه می‌توانید از ADB استفاده کنید."
-        }
-
-        val provisioning = if (state.provisioningAllowed) {
-            "
-
-Android گزارش می‌دهد که در حال حاضر Provisioning برای این بسته مجاز است."
-        } else {
-            "
-
-Android در وضعیت فعلی Provisioning را برای این بسته مجاز اعلام نکرده است."
-        }
-
-        showInstructions(
-            title = "Company device management",
-            message = message + provisioning +
-                "\n\nبرای تست روی Release:\nadb shell dpm set-device-owner ir.hirmand.staff/.HirmandDeviceAdminReceiver" +
-                "\n\nبرای Debug:\nadb shell dpm set-device-owner ir.hirmand.staff.debug/.HirmandDeviceAdminReceiver" +
-                "\n\nقبل از اجرای دستور، گوشی را از حساب‌ها/Work Profile خالی و مطابق راهنمای Android برای دستگاه شرکتی آماده کنید. این دستور فقط Device Owner را ثبت می‌کند؛ دسترسی‌های حساس همچنان طبق سیاست و مجوزهای رسمی Android هستند.",
-            onGo = {
-                if (state.mode == DeviceManagementMode.LEGACY_DEVICE_ADMIN) {
-                    openDeviceAdminSettings()
-                } else {
-                    showDeviceOwnerTestCommand()
-                }
+        when (state.mode) {
+            DeviceManagementMode.DEVICE_OWNER -> {
+                showInstructions(
+                    title = "Fully Managed / Device Owner",
+                    message = "این گوشی با موفقیت در حالت Fully Managed مدیریت می‌شود. سیاست Auto-Grant مجوزهای سنسوریِ مجاز برای Device Owner در این حالت فعال است.",
+                    onGo = { showDeviceOwnerTestCommand() }
+                )
             }
-        )
+
+            DeviceManagementMode.PROFILE_OWNER -> {
+                showInstructions(
+                    title = "Work Profile",
+                    message = "این گوشی از طریق Work Profile مدیریت می‌شود. مدیریت سازمانی در فضای کاری محدود است و داده‌های شخصیِ پروفایل اصلی جزو فضای کاری نیستند. مجوزهای حساس داخل Work Profile باید مطابق کنترل‌های Android مدیریت شوند.",
+                    onGo = { onStartWorkProfileProvisioning() }
+                )
+            }
+
+            DeviceManagementMode.LEGACY_DEVICE_ADMIN -> {
+                MaterialAlertDialogBuilder(context)
+                    .setTitle("Legacy Device Admin")
+                    .setMessage(
+                        "Device Admin قدیمی فعال است. برای گوشی شخصی، Work Profile گزینه مناسب‌تری است؛ برای گوشی شرکتی، Fully Managed / Device Owner باید در فرایند Provisioning راه‌اندازی شود."
+                    )
+                    .setNegativeButton("لغو", null)
+                    .setNeutralButton("گوشی شخصی / Work Profile") { _, _ ->
+                        onStartWorkProfileProvisioning()
+                    }
+                    .setPositiveButton("راهنمای گوشی شرکتی") { _, _ ->
+                        showDeviceOwnerTestCommand()
+                    }
+                    .show()
+            }
+
+            DeviceManagementMode.UNMANAGED -> {
+                MaterialAlertDialogBuilder(context)
+                    .setTitle("انتخاب نوع گوشی")
+                    .setMessage(
+                        "نوع مدیریت را متناسب با مالکیت دستگاه انتخاب کنید:\n\n" +
+                            "گوشی شخصی کارمند → Work Profile / Profile Owner\n" +
+                            "گوشی متعلق به شرکت → Fully Managed / Device Owner"
+                    )
+                    .setNegativeButton("لغو", null)
+                    .setNeutralButton("گوشی شخصی") { _, _ ->
+                        onStartWorkProfileProvisioning()
+                    }
+                    .setPositiveButton("گوشی شرکتی") { _, _ ->
+                        showDeviceOwnerTestCommand()
+                    }
+                    .show()
+            }
+        }
     }
 
     private fun showDeviceOwnerTestCommand() {
