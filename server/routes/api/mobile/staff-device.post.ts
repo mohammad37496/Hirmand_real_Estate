@@ -1,6 +1,7 @@
 import { createError, defineEventHandler, readBody, setResponseHeader } from "h3";
 import { randomUUID } from "node:crypto";
 import { dbSource, getSql } from "@/lib/db";
+import { consumeStaffMobileRateLimit } from "@/lib/staff-mobile-rate-limit.server";
 import { generateStaffMobileToken, hashStaffMobileToken } from "@/lib/staff-mobile-auth.server";
 
 type Body = {
@@ -28,6 +29,16 @@ export default defineEventHandler(async (event) => {
 
   const body = (await readBody(event).catch(() => ({}))) as Body;
   const deviceId = cleanText(body.deviceId, 80);
+  const rate = deviceId
+    ? consumeStaffMobileRateLimit("device-register", deviceId, {
+        windowMs: 10 * 60 * 1000,
+        maxHits: 20,
+      })
+    : { allowed: true };
+
+  if (!rate.allowed) {
+    throw createError({ statusCode: 429, statusMessage: "تلاش‌های ثبت دستگاه بیش از حد مجاز است." });
+  }
   const staffId = cleanText(body.staffId, 80);
   const appVersionName = cleanText(body.appVersionName, 30);
   const rawVersionCode = Number(body.appVersionCode);
