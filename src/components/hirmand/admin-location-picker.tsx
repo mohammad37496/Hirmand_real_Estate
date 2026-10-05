@@ -117,8 +117,8 @@ export function AdminLocationPicker({
     return null;
   }, [neighborhood]);
 
-  const previewLatitude = latitude ?? suggested?.lat ?? SITE.lat;
-  const previewLongitude = longitude ?? suggested?.lng ?? SITE.lng;
+  const previewLatitude = latitude ?? suggested?.lat ?? 32.6546;
+  const previewLongitude = longitude ?? suggested?.lng ?? 51.6680;
   const hasCustomLocation = latitude != null && longitude != null;
 
   function setCoordinate(key: "latitude" | "longitude", raw: string) {
@@ -136,9 +136,9 @@ export function AdminLocationPicker({
 
   function useNeighborhoodCenter() {
     if (!suggested) return;
-    setLatitudeText(String(suggested.lat));
-    setLongitudeText(String(suggested.lng));
-    onChange({ latitude: suggested.lat, longitude: suggested.lng });
+    setLatitudeText(String(suggested.lat ?? 32.6546));
+    setLongitudeText(String(suggested.lng ?? 51.6680));
+    onChange({ latitude: suggested.lat ?? null, longitude: suggested.lng ?? null });
   }
 
   function clearLocation() {
@@ -216,11 +216,11 @@ export function AdminLocationPicker({
                 value={latitudeText}
                 onChange={(event) => setCoordinate("latitude", event.target.value)}
                 onBlur={() => commitCoordinate("latitude")}
-                placeholder={suggested ? String(suggested.lat) : String(SITE.lat)}
+                placeholder={suggested?.lat != null ? String(suggested.lat) : "32.6546"}
                 aria-label="عرض جغرافیایی موقعیت تقریبی"
                 aria-invalid={!latitudeValid}
               />
-              <small>{`مثال: ${suggested ? String(suggested.lat) : String(SITE.lat)}`}</small>
+              <small>{`مثال: ${suggested ? String(suggested.lat) : "32.6546"}`}</small>
               <span className={`admin-location-validation ${latitudeValid ? "is-ok" : "is-error"}`} aria-live="polite">
                 {latitudeValid ? "فرمت مختصات معتبر است" : "عدد واردشده برای عرض جغرافیایی معتبر نیست"}
               </span>
@@ -233,11 +233,11 @@ export function AdminLocationPicker({
                 value={longitudeText}
                 onChange={(event) => setCoordinate("longitude", event.target.value)}
                 onBlur={() => commitCoordinate("longitude")}
-                placeholder={suggested ? String(suggested.lng) : String(SITE.lng)}
+                placeholder={suggested?.lng != null ? String(suggested.lng) : "51.6680"}
                 aria-label="طول جغرافیایی موقعیت تقریبی"
                 aria-invalid={!longitudeValid}
               />
-              <small>{`مثال: ${suggested ? String(suggested.lng) : String(SITE.lng)}`}</small>
+              <small>{`مثال: ${suggested ? String(suggested.lng) : "51.6680"}`}</small>
               <span className={`admin-location-validation ${longitudeValid ? "is-ok" : "is-error"}`} aria-live="polite">
                 {longitudeValid ? "فرمت مختصات معتبر است" : "عدد واردشده برای طول جغرافیایی معتبر نیست"}
               </span>
