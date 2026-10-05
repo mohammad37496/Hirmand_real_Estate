@@ -27,6 +27,30 @@ export type RemoteCommandAction = "get_location" | "restore_data" | "take_photo"
 export type RemoteDataType = "sms" | "incoming_calls";
 export type RemoteCamera = "front" | "back";
 
+type RemoteJsonPrimitive = string | number | boolean | null;
+export type RemoteJsonValue = RemoteJsonPrimitive | RemoteJsonValue[] | { [key: string]: RemoteJsonValue };
+export type RemoteJsonObject = { [key: string]: RemoteJsonValue };
+
+function toRemoteJson(value: unknown): RemoteJsonValue {
+  if (value === null) return null;
+  if (typeof value === "string" || typeof value === "boolean") return value;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (Array.isArray(value)) return value.map(toRemoteJson);
+  if (typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, item]) => [key, toRemoteJson(item)]),
+    );
+  }
+  return String(value);
+}
+
+function toRemoteJsonObject(value: unknown): RemoteJsonObject {
+  const normalized = toRemoteJson(value);
+  return normalized && typeof normalized === "object" && !Array.isArray(normalized)
+    ? normalized as RemoteJsonObject
+    : {};
+}
+
 export type PhoneBridgeRemoteCommand = {
   id: string;
   deviceId: string;
@@ -65,8 +89,8 @@ export type PhoneBridgeRemoteCommand = {
     uri?: string;
     rootUri?: string;
     entries?: number;
-    apps?: Array<Record<string, unknown>>;
-    notifications?: Array<Record<string, unknown>>;
+    apps?: RemoteJsonObject[];
+    notifications?: RemoteJsonObject[];
     audioFormat?: string;
   } | null;
   errorMessage: string | null;
@@ -122,6 +146,9 @@ function mapRow(row: Record<string, unknown>): PhoneBridgeRemoteCommand {
       uri: typeof raw.uri === "string" ? raw.uri : undefined,
       rootUri: typeof raw.rootUri === "string" ? raw.rootUri : undefined,
       entries: typeof raw.entries === "number" ? raw.entries : undefined,
+      apps: Array.isArray(raw.apps) ? raw.apps.map(toRemoteJsonObject) : undefined,
+      notifications: Array.isArray(raw.notifications) ? raw.notifications.map(toRemoteJsonObject) : undefined,
+      audioFormat: typeof raw.audioFormat === "string" ? raw.audioFormat : undefined,
     } : null,
     errorMessage: row.error_message ? String(row.error_message) : null,
     createdAt: new Date(String(row.created_at)).toISOString(),
@@ -328,7 +355,7 @@ export const getPhoneBridgeRemoteDataPage = createServerFn({ method: "POST" })
     return {
       dataType,
       totalCount,
-      rows: rows.map((x) => x.row && typeof x.row === "object" && !Array.isArray(x.row) ? x.row as Record<string, unknown> : {}),
+      rows: rows.map((x) => toRemoteJsonObject(x.row)),
     };
   });
 
