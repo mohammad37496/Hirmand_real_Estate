@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   Activity,
@@ -287,6 +288,7 @@ export function AdminDashboard({
 
 
   function downloadDailyReport() {
+    if (!data) return;
     const rows: string[][] = [
       ["بخش", "شاخص", "مقدار"],
       ["فایل‌ها", "کل فایل‌ها", String(data.properties.total)],
