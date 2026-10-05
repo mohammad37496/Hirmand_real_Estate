@@ -33,7 +33,7 @@ export async function recordPhoneBridgeEvent(input: {
 }
 
 export async function writePhoneBridgeAudit(input: {
-  deviceId: string;
+  deviceId: string | null;
   action: string;
   module: string;
   result: string;
