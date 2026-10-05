@@ -8,7 +8,7 @@
 
 - namespace: `ir.hirmand.staff`
 - applicationId: `ir.hirmand.staff`
-- نسخه فعلی: `0.2.0`
+- نسخه فعلی: `0.4.0`
 - حداقل Android: API 26
 - target/compile: API 35
 - Java/Kotlin target: 17
@@ -64,3 +64,10 @@ workflow مستقل .github/workflows/android-staff-ci.yml روی تغییرات
 - assembleDebug
 
 در پایان، Debug APK به‌عنوان Artifact با نام hirmand-staff-debug-apk منتشر می‌شود.
+
+
+## همگام‌سازی سلامت اپ
+
+نسخهٔ 0.4.0 یک زیرساخت مستقل برای احراز هویت دستگاه، صف محلی رویدادها، همگام‌سازی دوره‌ای با WorkManager و ثبت وضعیت سلامت اپ اضافه می‌کند. این مسیر از زیرساخت Phone Bridge قدیمی جداست.
+
+داده‌های این نسخه به رویدادهای سلامت اپ و وضعیت مجوزها محدود شده‌اند؛ collector فعال برای محتوای اعلان‌ها، Accessibility events، فایل‌های شخصی یا موقعیت مکانی در این نسخه وجود ندارد.
