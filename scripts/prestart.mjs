@@ -31,7 +31,20 @@ const resolved = resolveDatabaseUrl();
 if (resolved.url) {
   const url = sanitizePostgresConnectionString(resolved.url);
   console.log(`[prestart] migrations via ${resolved.key}`);
-  await runMigrations({ connectionString: url });
+  try {
+    await Promise.race([
+      runMigrations({ connectionString: url }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("migration timeout")), 15_000)),
+    ]);
+  } catch (error) {
+    // Never keep the HTTP listener from booting because the database is slow or unavailable.
+    // Runtime requests will surface database errors normally, and the next deployment/start
+    // will retry migrations.
+    console.warn(
+      "[prestart] WARNING: database migrations were not completed before startup:",
+      error instanceof Error ? error.message : error,
+    );
+  }
 } else if (process.env.NODE_ENV === "production") {
   console.warn("[prestart] WARNING: DATABASE_URL is not set — skipping migrations.");
 }
