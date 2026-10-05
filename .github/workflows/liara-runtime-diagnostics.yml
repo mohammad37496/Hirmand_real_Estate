@@ -27,4 +27,4 @@ jobs:
           --api-token="$LIARA_TOKEN"
           --timestamps
           --last-lines
-          --since="2 hours ago"
+          --since="30 minutes ago"
