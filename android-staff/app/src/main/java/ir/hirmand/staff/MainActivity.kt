@@ -3,6 +3,7 @@ package ir.hirmand.staff
 import android.content.Context
 import android.content.Intent
 import android.graphics.Typeface
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
 import android.view.Gravity
@@ -13,6 +14,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -25,6 +27,11 @@ private data class StaffMember(
     val id: String,
     val name: String,
     val role: String,
+)
+
+private data class DeviceRegistrationResult(
+    val status: String,
+    val authToken: String?,
 )
 
 private val fallbackStaffMembers = listOf(
@@ -517,6 +524,48 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun startLocationTracking() {
+        if (!StaffTelemetry.hasLocationPermission(this)) {
+            Toast.makeText(this, "ابتدا مجوز Location را در مرکز دسترسی‌ها فعال کنید.", Toast.LENGTH_LONG).show()
+            renderPermissionCenter()
+            return
+        }
+
+        val locationManager = getSystemService(LocationManager::class.java)
+        val enabled = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            locationManager?.isLocationEnabled == true
+        } else {
+            locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER) == true ||
+                locationManager?.isProviderEnabled(LocationManager.NETWORK_PROVIDER) == true
+        }
+
+        if (!enabled) {
+            Toast.makeText(this, "ابتدا Location دستگاه را در تنظیمات Android روشن کنید.", Toast.LENGTH_LONG).show()
+            renderPermissionCenter()
+            return
+        }
+
+        if (StaffTelemetryStore.token(this).isBlank() ||
+            preferences.getString(PREF_DEVICE_STATUS, "") != "active"
+        ) {
+            Toast.makeText(this, "پایش موقعیت پس از تأیید دستگاه توسط مدیریت فعال می‌شود.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        StaffTelemetryStore.setLocationTrackingEnabled(this, true)
+        ContextCompat.startForegroundService(
+            this,
+            Intent(this, LocationTrackingService::class.java)
+        )
+        setContentView(buildHome())
+    }
+
+    private fun stopLocationTracking() {
+        StaffTelemetryStore.setLocationTrackingEnabled(this, false)
+        stopService(Intent(this, LocationTrackingService::class.java))
+        setContentView(buildHome())
+    }
+
     private fun syncRegisteredDevice(
         staffOverride: StaffMember? = registeredStaff(),
         onComplete: (() -> Unit)? = null,
@@ -528,16 +577,22 @@ class MainActivity : AppCompatActivity() {
         }
 
         Thread {
-            val status = runCatching {
+            val result = runCatching {
                 registerDeviceOnServer(staff)
             }.getOrNull()
 
-            if (status != null) {
-                preferences.edit().putString(PREF_DEVICE_STATUS, status).apply()
+            if (result != null) {
+                val editor = preferences.edit().putString(PREF_DEVICE_STATUS, result.status)
+                if (!result.authToken.isNullOrBlank()) {
+                    StaffTelemetryStore.saveToken(this, result.authToken)
+                }
+                editor.apply()
+                StaffTelemetry.schedulePeriodicSync(this)
+                StaffTelemetry.enqueueHeartbeat(this)
             }
 
             runOnUiThread {
-                if (status != null && staff.id == registeredStaff()?.id) {
+                if (result != null && staff.id == registeredStaff()?.id) {
                     setContentView(buildHome())
                 }
                 onComplete?.invoke()
@@ -545,7 +600,7 @@ class MainActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun registerDeviceOnServer(staff: StaffMember): String {
+    private fun registerDeviceOnServer(staff: StaffMember): DeviceRegistrationResult {
         val connection = (URL(BuildConfig.STAFF_DEVICE_REGISTER_URL).openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
             connectTimeout = 8_000
@@ -561,6 +616,7 @@ class MainActivity : AppCompatActivity() {
             .put("staffId", staff.id)
             .put("appVersionName", BuildConfig.VERSION_NAME)
             .put("appVersionCode", BuildConfig.VERSION_CODE)
+            .put("authTokenPresent", StaffTelemetryStore.token(this).isNotBlank())
 
         return try {
             connection.outputStream.bufferedWriter(Charsets.UTF_8).use { writer ->
@@ -568,13 +624,16 @@ class MainActivity : AppCompatActivity() {
             }
 
             val statusCode = connection.responseCode
-            if (statusCode !in 200..299) return "error"
+            if (statusCode !in 200..299) return DeviceRegistrationResult("error", null)
 
             val body = connection.inputStream.bufferedReader().use { it.readText() }
             val root = JSONObject(body)
-            if (!root.optBoolean("success", false)) return "error"
+            if (!root.optBoolean("success", false)) return DeviceRegistrationResult("error", null)
 
-            root.optString("status", "pending").ifBlank { "pending" }
+            DeviceRegistrationResult(
+                status = root.optString("status", "pending").ifBlank { "pending" },
+                authToken = root.optString("authToken", "").ifBlank { null },
+            )
         } finally {
             connection.disconnect()
         }
@@ -876,6 +935,11 @@ class MainActivity : AppCompatActivity() {
             lp(-1, -2).apply { bottomMargin = dp(16) },
         )
 
+        root.addView(
+            buildLocationTrackingCard(),
+            lp(-1, -2).apply { bottomMargin = dp(16) },
+        )
+
         val status = TextView(this).apply {
             text = "ثبت کارمند با موفقیت انجام شده است. قابلیت‌های مرحلهٔ بعد هنوز فعال نشده‌اند."
             textSize = 12.5f
@@ -908,6 +972,55 @@ class MainActivity : AppCompatActivity() {
         })
 
         return scrollView
+    }
+
+    private fun buildLocationTrackingCard(): MaterialCardView {
+        val enabled = StaffTelemetryStore.locationTrackingEnabled(this)
+        val card = MaterialCardView(this).apply {
+            radius = dp(18).toFloat()
+            setCardBackgroundColor(getColor(R.color.hirmand_surface))
+            strokeWidth = dp(1)
+            strokeColor = getColor(R.color.hirmand_gold_dark)
+        }
+
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(15), dp(16), dp(15))
+            layoutDirection = android.view.View.LAYOUT_DIRECTION_RTL
+        }
+
+        val title = TextView(this).apply {
+            text = "پایش موقعیت"
+            textSize = 15f
+            setTextColor(getColor(R.color.hirmand_gold))
+            setTypeface(typeface, Typeface.BOLD)
+        }
+
+        val status = TextView(this).apply {
+            text = if (enabled) {
+                "پایش موقعیت فعال است؛ Android یک اعلان دائمی برای سرویس نشان می‌دهد."
+            } else {
+                "پایش موقعیت در پس‌زمینه فعال نیست."
+            }
+            textSize = 12.5f
+            setTextColor(getColor(R.color.hirmand_muted))
+            setLineSpacing(dp(1).toFloat(), 1.0f)
+        }
+
+        val action = MaterialButton(this).apply {
+            text = if (enabled) "توقف پایش موقعیت" else "شروع پایش موقعیت"
+            textSize = 12.5f
+            isAllCaps = false
+            setOnClickListener {
+                if (enabled) stopLocationTracking() else startLocationTracking()
+            }
+        }
+
+        content.addView(title, lp(-1, -2))
+        content.addView(status, lp(-1, -2).apply { topMargin = dp(6) })
+        content.addView(action, lp(-1, dp(47)).apply { topMargin = dp(10) })
+        card.addView(content)
+        return card
     }
 
     private fun buildDeviceStatusCard(staff: StaffMember): MaterialCardView {
