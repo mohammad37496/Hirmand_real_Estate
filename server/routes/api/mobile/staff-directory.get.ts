@@ -55,11 +55,14 @@ export default defineEventHandler(async (event) => {
       }))
       .filter((item) => item.id.length >= 2 && item.name.length >= 2 && item.role.length >= 2);
 
-    const staff = dedupe(
-      databaseStaff.length > 0
-        ? databaseStaff
-        : bundledDirectory(),
-    );
+    const staff = dedupe([
+      ...databaseStaff,
+      ...bundledDirectory().filter(
+        (item) => !databaseStaff.some(
+          (databaseItem) => databaseItem.id.trim().toLowerCase() === item.id.trim().toLowerCase(),
+        ),
+      ),
+    ]);
 
     return {
       success: true,
