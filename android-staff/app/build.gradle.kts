@@ -18,6 +18,11 @@ android {
             "STAFF_DIRECTORY_URL",
             "\"https://www.hirmandrealestate.ir/api/mobile/staff-directory\""
         )
+        buildConfigField(
+            "String",
+            "STAFF_DEVICE_REGISTER_URL",
+            "\"https://www.hirmandrealestate.ir/api/mobile/staff-device\""
+        )
     }
 
     buildTypes {
