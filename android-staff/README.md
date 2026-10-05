@@ -72,9 +72,9 @@ workflow مستقل .github/workflows/android-staff-ci.yml روی تغییرات
 
 داده‌های این نسخه به رویدادهای سلامت اپ و وضعیت مجوزها محدود شده‌اند؛ collector فعال برای محتوای اعلان‌ها، Accessibility events، فایل‌های شخصی یا موقعیت مکانی در این نسخه وجود ندارد.
 
-## مدیریت سازمانی Fully Managed / Device Owner
+## مدیریت سازمانی Android Enterprise
 
-نسخهٔ فعلی DPC پایهٔ Android Enterprise برای گوشی‌های کاملاً متعلق به شرکت را نیز پیاده‌سازی می‌کند. در این حالت، همین اپ می‌تواند به‌عنوان **Device Policy Controller (DPC)** و **Device Owner** ثبت شود و وضعیت مدیریت سازمانی را داخل Permission Center نشان دهد.
+نسخهٔ فعلی DPC پایهٔ Android Enterprise را برای دو سناریو پیاده‌سازی می‌کند: **گوشی شرکتی → Fully Managed / Device Owner** و **گوشی شخصی → Work Profile / Profile Owner**. Permission Center وضعیت واقعی حالت مدیریت را نشان می‌دهد و مسیر شروع Work Profile را نیز در خود اپ دارد.
 
 ### چه چیزی اضافه شده است؟
 
@@ -85,6 +85,16 @@ workflow مستقل .github/workflows/android-staff-ci.yml روی تغییرات
 - Permission Center وضعیت `Device Owner / Profile Owner / Legacy Device Admin / Unmanaged` را نمایش می‌دهد.
 - در جریان Provisioning، کنترل خودکار grant کردن مجوزهای سنسوری کنار گذاشته شده و این مجوزها همچنان تابع مسیر رسمی Android هستند.
 - هیچ collector جدیدی برای موقعیت مکانی، محتوای اعلان، Accessibility events یا فایل‌های شخصی با فعال شدن Device Owner اجرا نمی‌شود.
+
+### گوشی شخصی: Work Profile / BYOD
+
+روی گوشی شخصی، از Permission Center گزینهٔ «گوشی شخصی» را انتخاب کنید. اپ از `ACTION_PROVISION_MANAGED_PROFILE` استفاده می‌کند و Android مراحل ایجاد Work Profile را نمایش می‌دهد. بعد از پایان Provisioning، نسخهٔ Hirmand داخل Work Profile به‌عنوان Profile Owner اجرا می‌شود.
+
+در حالت Work Profile، مدیریت سازمانی به فضای کاری محدود است و این اپ نباید آن را معادل Fully Managed کردن کل گوشی شخصی تلقی کند. مجوزهای حساس داخل Work Profile نیز تابع سیاست و کنترل‌های Android هستند و DPC پروفایل نمی‌تواند مجوزهای سنسوری محدودشده برای Profile Owner را مانند Device Owner به‌صورت خودکار Grant کند.
+
+### گوشی شرکتی: Fully Managed / Device Owner
+
+برای گوشی متعلق به شرکت، مسیر پیشنهادی همچنان Fully Managed / Device Owner است.
 
 ### راه‌اندازی آزمایشی با ADB
 
