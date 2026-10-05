@@ -4,72 +4,102 @@ import { getSql } from "@/lib/db";
 
 export type { H3Event } from "h3";
 
-export function sha256Hex(body: Buffer | string): string {
-  const buffer = Buffer.isBuffer(body) ? body : Buffer.from(body, "utf8");
+type HashableBody = Buffer | Uint8Array | string;
+
+export function sha256Hex(body: HashableBody): string {
+  const buffer = Buffer.isBuffer(body) ? body : Buffer.from(body);
   return createHash("sha256").update(buffer).digest("hex");
 }
 
-function sha256(body: Buffer) {
-  return createHash("sha256").update(body).digest("hex");
-}
-
-export function canonicalSigningInput(deviceId: string, timestamp: string, nonce: string, bodyHash: string) {
+export function canonicalSigningInput(
+  deviceId: string,
+  timestamp: string,
+  nonce: string,
+  bodyHash: string,
+) {
   return `v1.${deviceId}.${timestamp}.${nonce}.${bodyHash}`;
 }
 
-export function verifySignature(input: { secret: string; deviceId: string; timestamp: string; nonce: string; signature: string; body: Uint8Array | Buffer | string }): boolean {
-  const bodyBuffer = Buffer.isBuffer(input.body) ? input.body : Buffer.from(input.body, "utf8");
-  const bodyHash = sha256(bodyBuffer);
-  const signingInput = canonicalSigningInput(input.deviceId, input.timestamp, input.nonce, bodyHash);
-  const expected = createHmac("sha256", input.secret).update(signingInput, "utf8").digest("hex");
+export function verifySignature(input: {
+  secret: string;
+  deviceId: string;
+  timestamp: string;
+  nonce: string;
+  signature: string;
+  body: HashableBody;
+}): boolean {
+  const bodyHash = sha256Hex(input.body);
+  const signingInput = canonicalSigningInput(
+    input.deviceId,
+    input.timestamp,
+    input.nonce,
+    bodyHash,
+  );
+  const expected = createHmac("sha256", input.secret)
+    .update(signingInput, "utf8")
+    .digest("hex");
   return sameSignature(expected, input.signature);
 }
 
-export function checkSignatureFreshness(headers: { timestamp?: string; nonce?: string; signature?: string; version?: string }, options?: { now?: number }): { ok: boolean; reason?: string } {
+export function checkSignatureFreshness(
+  headers: {
+    timestamp?: string;
+    nonce?: string;
+    signature?: string;
+    version?: string;
+  },
+  options?: { now?: number },
+): { ok: boolean; reason?: string } {
   const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
   const now = options?.now ?? Date.now();
-  
+
   if (!headers.timestamp || !headers.nonce || !headers.signature) {
     return { ok: false, reason: "missing" };
   }
-  
+
   if (!/^\d{13}$/.test(headers.timestamp)) {
     return { ok: false, reason: "malformed" };
   }
-  
+
   const timestampMs = Number(headers.timestamp);
   if (!Number.isFinite(timestampMs)) {
     return { ok: false, reason: "malformed" };
   }
-  
+
   if (Math.abs(now - timestampMs) > MAX_CLOCK_SKEW_MS) {
     return { ok: false, reason: "stale" };
   }
-  
+
   if (!/^[a-f0-9]{64}$/.test(headers.signature)) {
     return { ok: false, reason: "malformed" };
   }
-  
+
   if (headers.version && headers.version !== "1") {
     return { ok: false, reason: "malformed" };
   }
-  
+
   return { ok: true };
 }
 
-export function rememberNonce(deviceId: string, nonce: string, options?: { now?: number }): boolean {
-  // In-memory nonce store for tests
-  const globalRef = globalThis as typeof globalThis & { __phoneBridgeNonces__?: Map<string, number> };
+export function rememberNonce(
+  deviceId: string,
+  nonce: string,
+  options?: { now?: number },
+): boolean {
+  // In-memory nonce store for tests.
+  const globalRef = globalThis as typeof globalThis & {
+    __phoneBridgeNonces__?: Map<string, number>;
+  };
   if (!globalRef.__phoneBridgeNonces__) {
     globalRef.__phoneBridgeNonces__ = new Map();
   }
   const key = `${deviceId}:${nonce}`;
   const now = options?.now ?? Date.now();
-  
+
   if (globalRef.__phoneBridgeNonces__.has(key)) {
     return false;
   }
-  
+
   globalRef.__phoneBridgeNonces__.set(key, now);
   return true;
 }
@@ -82,11 +112,13 @@ function bearer(event: H3Event) {
   return auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
 }
 
-function sha256(body: Buffer) {
-  return createHash("sha256").update(body).digest("hex");
-}
-
-function expectedSignature(secret: string, deviceId: string, timestamp: string, nonce: string, bodyHash: string) {
+function expectedSignature(
+  secret: string,
+  deviceId: string,
+  timestamp: string,
+  nonce: string,
+  bodyHash: string,
+) {
   return createHmac("sha256", secret)
     .update(`v1.${deviceId}.${timestamp}.${nonce}.${bodyHash}`, "utf8")
     .digest("hex");
@@ -102,15 +134,26 @@ export function generateRequestNonce() {
   return randomBytes(24).toString("base64url");
 }
 
-export function signRequest(secret: string, deviceId: string, timestamp: string, nonce: string, body: Buffer | string) {
-  const bodyBuffer = Buffer.isBuffer(body) ? body : Buffer.from(body, "utf8");
-  return expectedSignature(secret, deviceId, timestamp, nonce, sha256(bodyBuffer));
+export function signRequest(
+  secret: string,
+  deviceId: string,
+  timestamp: string,
+  nonce: string,
+  body: HashableBody,
+) {
+  return expectedSignature(
+    secret,
+    deviceId,
+    timestamp,
+    nonce,
+    sha256Hex(body),
+  );
 }
 
 export async function requirePhoneBridgeSignedRequest(
   event: H3Event,
   deviceId: string,
-  body: Buffer | string,
+  body: HashableBody,
 ) {
   const secret = bearer(event);
   const timestamp = getHeader(event, "x-hirmand-timestamp")?.trim() ?? "";
@@ -118,26 +161,49 @@ export async function requirePhoneBridgeSignedRequest(
   const signature = getHeader(event, "x-hirmand-signature")?.trim().toLowerCase() ?? "";
 
   const timestampMs = Number(timestamp);
-  if (!/^\\d{13}$/.test(timestamp) || !Number.isFinite(timestampMs)) {
-    throw createError({ statusCode: 401, statusMessage: "امضای درخواست Phone Bridge ناقص است." });
+  if (!/^\d{13}$/.test(timestamp) || !Number.isFinite(timestampMs)) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: "امضای درخواست Phone Bridge ناقص است.",
+    });
   }
   if (!nonce || nonce.length > 160 || !/^[A-Za-z0-9_-]+$/.test(nonce)) {
-    throw createError({ statusCode: 401, statusMessage: "شناسهٔ یکتای درخواست معتبر نیست." });
+    throw createError({
+      statusCode: 401,
+      statusMessage: "شناسهٔ یکتای درخواست معتبر نیست.",
+    });
   }
   if (!/^[a-f0-9]{64}$/.test(signature)) {
-    throw createError({ statusCode: 401, statusMessage: "امضای درخواست معتبر نیست." });
+    throw createError({
+      statusCode: 401,
+      statusMessage: "امضای درخواست معتبر نیست.",
+    });
   }
   if (Math.abs(Date.now() - timestampMs) > MAX_CLOCK_SKEW_MS) {
-    throw createError({ statusCode: 401, statusMessage: "زمان درخواست Phone Bridge منقضی یا نامعتبر است." });
+    throw createError({
+      statusCode: 401,
+      statusMessage: "زمان درخواست Phone Bridge منقضی یا نامعتبر است.",
+    });
   }
   if (!secret) {
-    throw createError({ statusCode: 401, statusMessage: "توکن Phone Bridge ارسال نشده است." });
+    throw createError({
+      statusCode: 401,
+      statusMessage: "توکن Phone Bridge ارسال نشده است.",
+    });
   }
 
-  const bodyBuffer = Buffer.isBuffer(body) ? body : Buffer.from(body, "utf8");
-  const expected = expectedSignature(secret, deviceId, timestamp, nonce, sha256(bodyBuffer));
+  const expected = expectedSignature(
+    secret,
+    deviceId,
+    timestamp,
+    nonce,
+    sha256Hex(body),
+  );
   if (!sameSignature(signature, expected)) {
-    throw createError({ statusCode: 401, statusMessage: "امضای درخواست Phone Bridge معتبر نیست." });
+    throw createError({
+      statusCode: 401,
+      statusMessage: "امضای درخواست Phone Bridge معتبر نیست.",
+    });
   }
 
   const sql = await getSql();
@@ -159,6 +225,9 @@ export async function requirePhoneBridgeSignedRequest(
   );
 
   if (inserted.length === 0) {
-    throw createError({ statusCode: 409, statusMessage: "درخواست Phone Bridge دوباره ارسال شده است." });
+    throw createError({
+      statusCode: 409,
+      statusMessage: "درخواست Phone Bridge دوباره ارسال شده است.",
+    });
   }
 }
