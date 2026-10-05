@@ -63,8 +63,7 @@ class MainActivity : AppCompatActivity() {
             override fun handleOnBackPressed() {
                 if (!permissionCenterVisible) {
                     isEnabled = false
-                    onBackPressedDispatcher.onBackPressed()
-                    isEnabled = true
+                    finish()
                     return
                 }
 
