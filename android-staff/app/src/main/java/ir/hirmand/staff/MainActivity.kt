@@ -12,6 +12,10 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import org.json.JSONArray
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 
@@ -21,7 +25,7 @@ private data class StaffMember(
     val role: String,
 )
 
-private val staffMembers = listOf(
+private val fallbackStaffMembers = listOf(
     StaffMember("sheikh", "آقای شیخ", "مدیر"),
     StaffMember("moradi", "آقای مرادی", "مشاور ارشد"),
 )
@@ -33,6 +37,8 @@ private const val PREF_AGREEMENT_VERSION = "accepted_agreement_version"
 private const val PREF_AGREEMENT_ACCEPTED_AT = "agreement_accepted_at"
 private const val PREF_STAFF_ID = "registered_staff_id"
 private const val PREF_STAFF_REGISTERED_AT = "staff_registered_at"
+private const val PREF_STAFF_DIRECTORY_JSON = "staff_directory_json"
+private const val PREF_STAFF_DIRECTORY_SYNCED_AT = "staff_directory_synced_at"
 
 class MainActivity : AppCompatActivity() {
 
@@ -40,15 +46,22 @@ class MainActivity : AppCompatActivity() {
         getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
+    private var availableStaffMembers: List<StaffMember> = emptyList()
+    private var isRefreshingStaffDirectory = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        availableStaffMembers = readCachedStaffMembers().ifEmpty { fallbackStaffMembers }
         renderCurrentStep()
     }
 
     private fun renderCurrentStep() {
         when {
             !isAgreementAccepted() -> setContentView(buildAgreementScreen())
-            registeredStaff() == null -> setContentView(buildStaffRegistrationScreen())
+            registeredStaff() == null -> {
+                setContentView(buildStaffRegistrationScreen())
+                refreshStaffDirectory()
+            }
             else -> setContentView(buildHome())
         }
     }
@@ -59,7 +72,9 @@ class MainActivity : AppCompatActivity() {
     private fun registeredStaff(): StaffMember? {
         val registeredId = preferences.getString(PREF_STAFF_ID, null) ?: return null
         val registeredAt = preferences.getLong(PREF_STAFF_REGISTERED_AT, 0L)
-        return staffMembers.firstOrNull { it.id == registeredId && registeredAt > 0L }
+        return (availableStaffMembers + fallbackStaffMembers)
+            .distinctBy { it.id }
+            .firstOrNull { it.id == registeredId && registeredAt > 0L }
     }
 
     private fun buildAgreementScreen(): ScrollView {
@@ -316,6 +331,111 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun refreshStaffDirectory() {
+        if (isRefreshingStaffDirectory) return
+        isRefreshingStaffDirectory = true
+
+        Thread {
+            val result = runCatching { fetchStaffDirectory() }.getOrNull()
+
+            runOnUiThread {
+                isRefreshingStaffDirectory = false
+
+                if (!result.isNullOrEmpty()) {
+                    availableStaffMembers = result
+                    saveCachedStaffMembers(result)
+                    setContentView(buildStaffRegistrationScreen())
+                } else if (availableStaffMembers.isEmpty()) {
+                    availableStaffMembers = fallbackStaffMembers
+                    setContentView(buildStaffRegistrationScreen())
+                }
+            }
+        }.start()
+    }
+
+    private fun fetchStaffDirectory(): List<StaffMember> {
+        val connection = (URL(BuildConfig.STAFF_DIRECTORY_URL).openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"
+            connectTimeout = 8_000
+            readTimeout = 12_000
+            useCaches = true
+            setRequestProperty("Accept", "application/json")
+        }
+
+        return try {
+            val statusCode = connection.responseCode
+            if (statusCode !in 200..299) return emptyList()
+
+            val body = connection.inputStream.bufferedReader().use { it.readText() }
+            val root = JSONObject(body)
+            if (!root.optBoolean("success", false)) return emptyList()
+
+            val staff = root.optJSONArray("staff") ?: JSONArray()
+            buildList {
+                for (index in 0 until staff.length()) {
+                    val item = staff.optJSONObject(index) ?: continue
+                    val id = item.optString("id").trim()
+                    val name = item.optString("name").trim()
+                    val role = item.optString("role").trim()
+                    if (id.length >= 2 && name.length >= 2 && role.length >= 2) {
+                        add(StaffMember(id, name, role))
+                    }
+                }
+            }.distinctBy { it.id }
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    private fun readCachedStaffMembers(): List<StaffMember> {
+        val raw = preferences.getString(PREF_STAFF_DIRECTORY_JSON, null) ?: return emptyList()
+
+        return runCatching {
+            val items = JSONArray(raw)
+            buildList {
+                for (index in 0 until items.length()) {
+                    val item = items.optJSONObject(index) ?: continue
+                    val id = item.optString("id").trim()
+                    val name = item.optString("name").trim()
+                    val role = item.optString("role").trim()
+                    if (id.length >= 2 && name.length >= 2 && role.length >= 2) {
+                        add(StaffMember(id, name, role))
+                    }
+                }
+            }.distinctBy { it.id }
+        }.getOrDefault(emptyList())
+    }
+
+    private fun saveCachedStaffMembers(staff: List<StaffMember>) {
+        val items = JSONArray()
+        staff.forEach { member ->
+            items.put(
+                JSONObject()
+                    .put("id", member.id)
+                    .put("name", member.name)
+                    .put("role", member.role)
+            )
+        }
+
+        preferences.edit()
+            .putString(PREF_STAFF_DIRECTORY_JSON, items.toString())
+            .putLong(PREF_STAFF_DIRECTORY_SYNCED_AT, System.currentTimeMillis())
+            .apply()
+    }
+
+    private fun cachedDirectoryTimeLabel(): String {
+        val syncedAt = preferences.getLong(PREF_STAFF_DIRECTORY_SYNCED_AT, 0L)
+        if (syncedAt <= 0L) return "هنوز با سامانه همگام نشده است."
+
+        val elapsed = System.currentTimeMillis() - syncedAt
+        return when {
+            elapsed < 60_000L -> "آخرین همگام‌سازی: همین حالا"
+            elapsed < 3_600_000L -> "آخرین همگام‌سازی: " + (elapsed / 60_000L) + " دقیقه پیش"
+            elapsed < 86_400_000L -> "آخرین همگام‌سازی: " + (elapsed / 3_600_000L) + " ساعت پیش"
+            else -> "آخرین همگام‌سازی: " + (elapsed / 86_400_000L) + " روز پیش"
+        }
+    }
+
     private fun buildStaffRegistrationScreen(): ScrollView {
         val scrollView = ScrollView(this).apply {
             setBackgroundColor(getColor(R.color.hirmand_bg))
@@ -379,7 +499,7 @@ class MainActivity : AppCompatActivity() {
             isEnabled = false
         }
 
-        staffMembers.forEach { member ->
+        availableStaffMembers.forEach { member ->
             val card = createRegistrationCard(
                 member = member,
                 onSelected = {
@@ -410,7 +530,9 @@ class MainActivity : AppCompatActivity() {
 
         registerButton.setOnClickListener {
             val staffId = selectedId ?: return@setOnClickListener
-            val person = staffMembers.firstOrNull { it.id == staffId }
+            val person = (availableStaffMembers + fallbackStaffMembers)
+                .distinctBy { it.id }
+                .firstOrNull { it.id == staffId }
                 ?: return@setOnClickListener
 
             preferences.edit()
@@ -432,7 +554,8 @@ class MainActivity : AppCompatActivity() {
         })
 
         val note = TextView(this).apply {
-            text = "این ثبت فعلاً فقط روی همین گوشی ذخیره می‌شود و هیچ اطلاعاتی به سایت یا سرور ارسال نمی‌شود."
+            text = "فهرست کارکنان از سامانه هیرمند دریافت می‌شود و در صورت قطع موقت اینترنت، آخرین فهرست موفق روی همین گوشی استفاده می‌شود.\n" +
+                cachedDirectoryTimeLabel()
             textSize = 12f
             setTextColor(getColor(R.color.hirmand_muted))
             gravity = Gravity.CENTER
@@ -440,6 +563,17 @@ class MainActivity : AppCompatActivity() {
         }
         root.addView(note, lp(-1, -2).apply {
             topMargin = dp(13)
+        })
+
+        val refreshButton = MaterialButton(this).apply {
+            text = if (isRefreshingStaffDirectory) "در حال به‌روزرسانی فهرست…" else "به‌روزرسانی فهرست کارکنان"
+            textSize = 12.5f
+            isAllCaps = false
+            isEnabled = !isRefreshingStaffDirectory
+            setOnClickListener { refreshStaffDirectory() }
+        }
+        root.addView(refreshButton, lp(-1, dp(48)).apply {
+            topMargin = dp(10)
         })
 
         return scrollView
