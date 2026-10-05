@@ -54,6 +54,7 @@ private const val PREF_STAFF_DIRECTORY_JSON = "staff_directory_json"
 private const val PREF_STAFF_DIRECTORY_SYNCED_AT = "staff_directory_synced_at"
 private const val PREF_DEVICE_ID = "device_id"
 private const val PREF_DEVICE_STATUS = "device_registration_status"
+private const val SCREEN_CAPTURE_REQUEST_CODE = 9102
 
 class MainActivity : AppCompatActivity() {
 
