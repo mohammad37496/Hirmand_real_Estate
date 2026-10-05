@@ -30,10 +30,8 @@ export default defineEventHandler(async (event: H3Event) => {
       severity: "error",
       message: "تلاش ناموفق برای ثبت اولیهٔ Phone Bridge.",
       metadata: {
-      route: "/api/device-sync/v1/register",
-      consentVersion,
-      consentScopesCount: consentScopes.length,
-    },
+        route: "/api/device-sync/v1/register",
+      },
     }).catch(() => undefined);
     throw error;
   }
