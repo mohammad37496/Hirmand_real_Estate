@@ -55,10 +55,20 @@ class HirmandProvisioningActivity : Activity() {
             allowedModes.contains(DevicePolicyManager.PROVISIONING_MODE_MANAGED_PROFILE)
 
         val selectedMode = when (requestedMode) {
-            MODE_WORK_PROFILE when workProfileAllowed ->
-                DevicePolicyManager.PROVISIONING_MODE_MANAGED_PROFILE
-            MODE_FULLY_MANAGED when fullyManagedAllowed ->
-                DevicePolicyManager.PROVISIONING_MODE_FULLY_MANAGED_DEVICE
+            MODE_WORK_PROFILE -> {
+                if (workProfileAllowed) {
+                    DevicePolicyManager.PROVISIONING_MODE_MANAGED_PROFILE
+                } else {
+                    DevicePolicyManager.PROVISIONING_MODE_FULLY_MANAGED_DEVICE
+                }
+            }
+            MODE_FULLY_MANAGED -> {
+                if (fullyManagedAllowed) {
+                    DevicePolicyManager.PROVISIONING_MODE_FULLY_MANAGED_DEVICE
+                } else {
+                    DevicePolicyManager.PROVISIONING_MODE_MANAGED_PROFILE
+                }
+            }
             else -> when {
                 fullyManagedAllowed -> DevicePolicyManager.PROVISIONING_MODE_FULLY_MANAGED_DEVICE
                 workProfileAllowed -> DevicePolicyManager.PROVISIONING_MODE_MANAGED_PROFILE
