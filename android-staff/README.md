@@ -34,3 +34,33 @@
 اپ آخرین فهرست موفق را در حافظهٔ داخلی نگه می‌دارد و در اجرای بعد ابتدا همان cache را نمایش می‌دهد؛ سپس در پس‌زمینه برای فهرست جدید تلاش می‌کند. اگر شبکه در دسترس نباشد، cache یا فهرست پایهٔ داخلی استفاده می‌شود.
 
 این API فقط اطلاعات لازم برای «انتخاب کارمند» را برمی‌گرداند و به Phone Bridge قدیمی، APIهای `device-sync`، دسترسی‌های حساس گوشی یا همگام‌سازی داده‌های دستگاه متصل نیست.
+
+
+## مرکز دسترسی‌ها
+
+پس از ثبت نخستین کارمند روی گوشی، اپ مستقیماً Permission Center را باز می‌کند. این صفحه وضعیت واقعی Android را برای این موارد نشان می‌دهد:
+
+1. Enable accessibility
+2. Activate all permissions (۹ دسته Runtime)
+3. Device administrator
+4. Enable access to notifications
+5. Screen capture permission
+6. Usage data
+7. Overlay on other apps
+8. Disable app notifications
+9. Activate location
+10. Do not optimize battery usage
+
+هر مورد با Switch وضعیت واقعی سیستم را نشان می‌دهد و GO کاربر را به صفحه یا فرایند رسمی Android می‌برد. اپ هیچ‌یک از دسترسی‌های سیستم را بدون تأیید کاربر فعال نمی‌کند.
+
+نکته مهم: مجوزهای SMS و Call Log روی Android/توزیع‌کننده‌های مختلف محدودیت‌های ویژه دارند و ممکن است صرفاً با درخواست runtime قابل اعطا نباشند. همچنین Screen Capture در Android 14+ برای هر جلسه نیازمند تأیید دوباره کاربر است. قابلیت‌های حساس نیز تا زمانی که سرویس مربوطه واقعاً پیاده‌سازی نشده، داده‌ای را جمع‌آوری یا به سامانه ارسال نمی‌کنند.
+
+## ساخت و بررسی CI
+
+workflow مستقل .github/workflows/android-staff-ci.yml روی تغییرات android-staff/** این موارد را اجرا می‌کند:
+
+- check
+- lintDebug
+- assembleDebug
+
+در پایان، Debug APK به‌عنوان Artifact با نام hirmand-staff-debug-apk منتشر می‌شود.
