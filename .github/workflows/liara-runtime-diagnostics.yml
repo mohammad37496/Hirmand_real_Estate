@@ -1,0 +1,27 @@
+name: Liara runtime diagnostics
+
+on:
+  push:
+    branches:
+      - "diagnostic/**"
+
+permissions:
+  contents: read
+
+jobs:
+  logs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Install Liara CLI
+        run: npm i -g @liara/cli@9
+      - name: Fetch latest app logs
+        env:
+          LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
+        run: >
+          liara app logs
+          --app="hirmand"
+          --api-token="$LIARA_TOKEN"
+          --timestamps
+          --last-lines
+          --since="2 hours ago"
