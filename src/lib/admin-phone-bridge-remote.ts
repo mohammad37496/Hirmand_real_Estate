@@ -329,7 +329,7 @@ export const listPhoneBridgeRemoteCommands = createServerFn({ method: "POST" })
     return rows.map(mapRow);
   });
 
-export const getPhoneBridgeRemoteDataPage = createServerFn({ method: "POST" })
+export const getPhoneBridgeRemoteDataPage = createServerFn({ method: "POST", strict: { output: false } })
   .validator(z.object({
     commandId: z.string().trim().min(1).max(120),
     page: z.number().int().min(0).max(199).default(0),
