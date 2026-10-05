@@ -15,7 +15,10 @@ import { enforcePhoneBridgeRateLimit } from "@/lib/phone-bridge-rate-limit.serve
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 function safeName(value: string) {
-  const normalized = value.replace(/[\\/\x00-\x1f]+/g, "-").trim().slice(-180);
+  const normalized = [...value].map((char) => {
+    const code = char.charCodeAt(0);
+    return code < 32 || char === "/" || char === "\\" ? "-" : char;
+  }).join("").trim().slice(-180);
   return normalized || "file";
 }
 
