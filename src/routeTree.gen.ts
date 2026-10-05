@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AdminMobileManagementRouteImport } from './routes/admin-mobile-management'
+import { Route as AdminMobileManagementEmployeeIdRouteImport } from './routes/admin-mobile-management.$employeeId'
 import { Route as BudgetMatchRouteImport } from './routes/budget-match'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ConsultantsRouteImport } from './routes/consultants'
@@ -47,6 +49,16 @@ const IndexRoute = IndexRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminMobileManagementRoute = AdminMobileManagementRouteImport.update({
+  id: '/admin-mobile-management',
+  path: '/admin-mobile-management',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminMobileManagementEmployeeIdRoute = AdminMobileManagementEmployeeIdRouteImport.update({
+  id: '/admin-mobile-management/$employeeId',
+  path: '/admin-mobile-management/$employeeId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BudgetMatchRoute = BudgetMatchRouteImport.update({
@@ -188,6 +200,8 @@ const VSlugIdRoute = VSlugIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-mobile-management': typeof AdminMobileManagementRoute
+  '/admin-mobile-management/$employeeId': typeof AdminMobileManagementEmployeeIdRoute
   '/budget-match': typeof BudgetMatchRoute
   '/compare': typeof CompareRoute
   '/consultants': typeof ConsultantsRouteWithChildren
@@ -281,7 +295,13 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin-mobile-management'
+    | '/admin-mobile-management/$employeeId'
+    | '/admin-mobile-management'
+    | '/admin-mobile-management/$employeeId'
     | '/admin'
+    | '/admin-mobile-management'
+    | '/admin-mobile-management/$employeeId'
     | '/budget-match'
     | '/compare'
     | '/consultants'
@@ -313,6 +333,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/admin-mobile-management'
+    | '/admin-mobile-management/$employeeId'
     | '/budget-match'
     | '/compare'
     | '/favorites'
@@ -374,6 +396,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AdminMobileManagementRoute: typeof AdminMobileManagementRoute
+  AdminMobileManagementEmployeeIdRoute: typeof AdminMobileManagementEmployeeIdRoute
   BudgetMatchRoute: typeof BudgetMatchRoute
   CompareRoute: typeof CompareRoute
   ConsultantsRoute: typeof ConsultantsRouteWithChildren
@@ -413,6 +437,20 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-mobile-management': {
+      id: '/admin-mobile-management'
+      path: '/admin-mobile-management'
+      fullPath: '/admin-mobile-management'
+      preLoaderRoute: typeof AdminMobileManagementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-mobile-management/$employeeId': {
+      id: '/admin-mobile-management/$employeeId'
+      path: '/admin-mobile-management/$employeeId'
+      fullPath: '/admin-mobile-management/$employeeId'
+      preLoaderRoute: typeof AdminMobileManagementEmployeeIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/budget-match': {
@@ -638,6 +676,8 @@ const PropertiesRouteWithChildren = PropertiesRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AdminMobileManagementRoute: AdminMobileManagementRoute,
+  AdminMobileManagementEmployeeIdRoute: AdminMobileManagementEmployeeIdRoute,
   BudgetMatchRoute: BudgetMatchRoute,
   CompareRoute: CompareRoute,
   ConsultantsRoute: ConsultantsRouteWithChildren,
