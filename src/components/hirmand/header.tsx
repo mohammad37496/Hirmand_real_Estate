@@ -325,9 +325,9 @@ export function Header() {
           <Link to="/" hash="inquiry" className="mobile-menu-inquiry" onClick={(event) => { if (onHome) scrollToId(event, "inquiry", closeMenu); else closeMenu(); }}>
             <BriefcaseBusiness size={17} aria-hidden="true" /> <span>درخواست ملک</span>
           </Link>
-          <Link to="/#contact" className="mobile-menu-inquiry" onClick={closeMenu}>
+          <a href="/#contact" className="mobile-menu-inquiry" onClick={closeMenu}>
             <Phone size={17} aria-hidden="true" /> <span>تماس با هیرمند</span>
-          </Link>
+          </a>
           <Link to="/tracking" className="mobile-menu-inquiry" onClick={closeMenu}>
             <Handshake size={17} aria-hidden="true" /> <span>باشگاه همکاران</span>
           </Link>
