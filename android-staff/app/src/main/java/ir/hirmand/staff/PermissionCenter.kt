@@ -148,7 +148,7 @@ class PermissionCenter(
         root.addView(
             buildPermissionCard(
                 title = "Activate all permissions",
-                description = "Activate the permissions necessary for the proper functioning of the application. Android may show fewer system dialogs depending on the device and Android version.",
+                description = "Activate the permissions necessary for the proper functioning of the application. Requests: Calendar, Camera, Contacts, Location, Microphone, Phone calls, Call logs, SMS, and Photos/media/files. Android may show fewer system dialogs depending on the device and version.",
                 state = { allRuntimePermissionsState() },
                 onAction = { requestAllRuntimePermissions() },
             ),
