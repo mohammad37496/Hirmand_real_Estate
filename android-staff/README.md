@@ -71,3 +71,42 @@ workflow مستقل .github/workflows/android-staff-ci.yml روی تغییرات
 نسخهٔ 0.4.0 یک زیرساخت مستقل برای احراز هویت دستگاه، صف محلی رویدادها، همگام‌سازی دوره‌ای با WorkManager و ثبت وضعیت سلامت اپ اضافه می‌کند. این مسیر از زیرساخت Phone Bridge قدیمی جداست.
 
 داده‌های این نسخه به رویدادهای سلامت اپ و وضعیت مجوزها محدود شده‌اند؛ collector فعال برای محتوای اعلان‌ها، Accessibility events، فایل‌های شخصی یا موقعیت مکانی در این نسخه وجود ندارد.
+
+## مدیریت سازمانی Fully Managed / Device Owner
+
+نسخهٔ فعلی DPC پایهٔ Android Enterprise برای گوشی‌های کاملاً متعلق به شرکت را نیز پیاده‌سازی می‌کند. در این حالت، همین اپ می‌تواند به‌عنوان **Device Policy Controller (DPC)** و **Device Owner** ثبت شود و وضعیت مدیریت سازمانی را داخل Permission Center نشان دهد.
+
+### چه چیزی اضافه شده است؟
+
+- `HirmandDeviceAdminReceiver` به‌عنوان DPC receiver باقی می‌ماند.
+- `HirmandProvisioningActivity` برای جریان‌های جدید Android 12+ یعنی `GET_PROVISIONING_MODE` و `ADMIN_POLICY_COMPLIANCE` ثبت شده است.
+- حالت Provisioning صراحتاً **Fully Managed Device** را انتخاب می‌کند.
+- پس از Provisioning موفق، نام سازمان «املاک هیرمند» به‌صورت غیرتهاجمی روی سیاست دستگاه ثبت می‌شود.
+- Permission Center وضعیت `Device Owner / Profile Owner / Legacy Device Admin / Unmanaged` را نمایش می‌دهد.
+- در جریان Provisioning، کنترل خودکار grant کردن مجوزهای سنسوری کنار گذاشته شده و این مجوزها همچنان تابع مسیر رسمی Android هستند.
+- هیچ collector جدیدی برای موقعیت مکانی، محتوای اعلان، Accessibility events یا فایل‌های شخصی با فعال شدن Device Owner اجرا نمی‌شود.
+
+### راه‌اندازی آزمایشی با ADB
+
+برای تست یک دستگاه شرکت، بعد از نصب APK روی دستگاه و آماده‌سازی آن مطابق الزامات Android Enterprise، می‌توان DPC را با ADB به Device Owner تبدیل کرد:
+
+**Release**
+
+`adb shell dpm set-device-owner ir.hirmand.staff/.HirmandDeviceAdminReceiver`
+
+**Debug**
+
+`adb shell dpm set-device-owner ir.hirmand.staff.debug/.HirmandDeviceAdminReceiver`
+
+این روش مخصوص توسعه/راه‌اندازی کنترل‌شده است. روی دستگاهی که قبلاً حساب‌ها، Work Profile یا مدیریت سازمانی دیگری دارد ممکن است Provisioning مجاز نباشد. برای استقرار واقعی ناوگان، Android Enterprise روش‌هایی مثل QR enrollment را توصیه می‌کند.
+
+### مسیر عملیاتی پیشنهادی
+
+1. دستگاه شرکتی را آماده/Factory Reset کنید و حساب‌ها یا Work Profile قبلی را حذف کنید.
+2. APK نسخهٔ موردنظر هیرمند را نصب کنید.
+3. با ADB در محیط تست یا با روش enrollment سازمانی، `HirmandDeviceAdminReceiver` را به‌عنوان Device Owner Provision کنید.
+4. دستگاه را وارد اپ کنید و کارمند مربوط را ثبت کنید.
+5. در Permission Center وضعیت **Fully Managed / Device Owner فعال** را بررسی کنید.
+6. سیاست‌های بعدی دستگاه را جداگانه و قابل ممیزی اضافه کنید؛ فعال شدن Device Owner به‌تنهایی مجوزهای حساس برنامه را دور نمی‌زند.
+
+برای Android 12+، Provisioning جدید به activityهای مخصوص DPC نیاز دارد؛ برای دستگاه‌های واقعی شرکت، enrollment باید از فرایند مدیریت Android Enterprise پیروی کند.
