@@ -11,13 +11,36 @@ export function sha256Hex(body: HashableBody): string {
   return createHash("sha256").update(buffer).digest("hex");
 }
 
+export type CanonicalSigningInput = {
+  deviceId: string;
+  timestamp: string;
+  nonce: string;
+  bodyHash: string;
+};
+
+export function canonicalSigningInput(input: CanonicalSigningInput): string;
 export function canonicalSigningInput(
   deviceId: string,
   timestamp: string,
   nonce: string,
   bodyHash: string,
+): string;
+export function canonicalSigningInput(
+  inputOrDeviceId: CanonicalSigningInput | string,
+  timestamp?: string,
+  nonce?: string,
+  bodyHash?: string,
 ) {
-  return `v1.${deviceId}.${timestamp}.${nonce}.${bodyHash}`;
+  const input =
+    typeof inputOrDeviceId === "string"
+      ? {
+          deviceId: inputOrDeviceId,
+          timestamp: timestamp ?? "",
+          nonce: nonce ?? "",
+          bodyHash: bodyHash ?? "",
+        }
+      : inputOrDeviceId;
+  return `v1.${input.deviceId}.${input.timestamp}.${input.nonce}.${input.bodyHash}`;
 }
 
 export function verifySignature(input: {
