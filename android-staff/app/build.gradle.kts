@@ -11,8 +11,13 @@ android {
         applicationId = "ir.hirmand.staff"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
+        buildConfigField(
+            "String",
+            "STAFF_DIRECTORY_URL",
+            "\"https://www.hirmandrealestate.ir/api/mobile/staff-directory\""
+        )
     }
 
     buildTypes {
@@ -28,6 +33,7 @@ android {
     buildFeatures {
         buildConfig = true
     }
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
