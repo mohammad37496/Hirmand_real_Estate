@@ -27,7 +27,11 @@ async function requirePhoneBridgeAdmin(event: H3Event) {
 }
 
 function safeDownloadName(value: string) {
-  return value.replace(/[\\/\x00-\x1f]+/g, "-").trim().slice(-180) || "file";
+  const sanitized = [...value].map((char) => {
+    const code = char.charCodeAt(0);
+    return code < 32 || char === "/" || char === "\\" ? "-" : char;
+  }).join("");
+  return sanitized.trim().slice(-180) || "file";
 }
 
 export default defineEventHandler(async (event) => {
