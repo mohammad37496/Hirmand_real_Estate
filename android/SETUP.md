@@ -23,10 +23,13 @@ Android lint، assembleDebug و Node syntax check می‌شود و APK به‌ع
 می‌شود. به‌خاطر path filtering، تغییرات عادی سایت این CI را اجرا نمی‌کنند.
 
 workflow با `working-directory: android` اجرا می‌شود، پس فرمان‌ها
-(`gradle --no-daemon check`, `lintDebug`, `assembleDebug`) از ریشهٔ پروژهٔ Gradle
+(`./gradlew --no-daemon check`, `lintDebug`, `assembleDebug`) از ریشهٔ پروژهٔ Gradle
 اجرا می‌شوند و Artifactها با پیشوند `android/` جمع می‌شوند.
 
-> این پروژه Gradle wrapper ندارد؛ CI از Gradle سیستمی استفاده می‌کند.
+> پروژه Gradle wrapper دارد (`android/gradlew`، `android/gradlew.bat`،
+> `android/gradle/wrapper/`). نسخهٔ Gradle در
+> `gradle/wrapper/gradle-wrapper.properties` پین شده، بنابراین CI و لپ‌تاپ توسعه‌دهنده
+> دقیقاً یک نسخه را اجرا می‌کنند. اگر فایل اجرایی نبود: `chmod +x gradlew`.
 
 Tagهایی مثل v0.1.0 نیز workflow انتشار را اجرا می‌کنند و APK و AAB امضاشده را در
 GitHub Release قرار می‌دهند (به چهار Secret پایین نیاز دارد).
