@@ -9,7 +9,7 @@ create table if not exists phone_bridge_health_history (
   storage_available_bytes bigint,
   storage_total_bytes bigint,
   ram_available_bytes bigint,
-  ram_total_bytes,
+  ram_total_bytes bigint,
   queued_packets integer not null default 0,
   dead_letter_packets integer not null default 0,
   source text not null default 'heartbeat'
