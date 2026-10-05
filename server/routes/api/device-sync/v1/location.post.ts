@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 503, statusMessage: "پایگاه داده برای دریافت موقعیت آماده نیست." });
   }
 
-  const raw = await readRawBody(event, false);
+  const raw = await readRawBody(event);
   const body = raw ? Buffer.from(raw) : Buffer.alloc(0);
   if (!body.length || body.length > MAX_BODY_BYTES) {
     throw createError({ statusCode: 413, statusMessage: "بدنهٔ موقعیت معتبر نیست." });
