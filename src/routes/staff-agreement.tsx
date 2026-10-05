@@ -4,7 +4,7 @@ import { SiteChrome } from "@/components/hirmand/site-chrome";
 import { SITE } from "@/lib/site";
 import "@/staff-agreement.css";
 
-export const STAFF_AGREEMENT_VERSION = "1.0";
+export const STAFF_AGREEMENT_VERSION = "1.1";
 
 export const Route = createFileRoute("/staff-agreement")({
   component: StaffAgreementPage,
@@ -26,22 +26,23 @@ const sections = [
     title: "Purpose of This Agreement",
     paragraphs: [
       "This Agreement establishes the rules, responsibilities, permissions, security requirements, data-access practices, and monitoring conditions applicable to employees and authorized personnel who use a mobile device owned, provided, controlled, or designated by Hirmand Real Estate.",
-      "The purpose of this Agreement is to ensure that every employee understands clearly and in advance: that the mobile device belongs to Hirmand Real Estate or is designated as a company business device; that the device is provided primarily for legitimate business and operational purposes; which categories of device information and functions the Hirmand Real Estate application may access; why such access may be required; which information may be processed, stored, transmitted, synchronized, or made available to authorized company personnel; what the employee is agreeing to when accepting this Agreement; and how permissions may be granted, denied, revoked, or changed under Android and within the application.",
+      "The purpose of this Agreement is to ensure that every employee understands clearly and in advance whether the phone is company-owned and fully managed, or personally owned and used through an Android Work Profile; which categories of device information and functions the Hirmand Real Estate application may access; why such access may be required; which information may be processed, stored, transmitted, synchronized, or made available to authorized company personnel; what the employee is agreeing to when accepting this Agreement; and how permissions may be granted, denied, revoked, or changed under Android and within the application.",
       "This Agreement is intended to provide clear notice and informed consent. It does not authorize the application to bypass Android security mechanisms, obtain permissions without system approval, or access information that Android or the application's technical controls prohibit.",
     ],
   },
   {
     number: 2,
-    title: "Company Ownership of the Device",
+    title: "Device Ownership and Management Mode",
     paragraphs: [
-      "The mobile device used with the application is a company-owned or company-controlled device intended for use by authorized Hirmand Real Estate personnel.",
+      "The Hirmand employee application supports two Android Enterprise deployment modes. On a company-owned phone, Hirmand may enroll the device as Fully Managed / Device Owner. On a personally owned phone, Hirmand may use an Android Work Profile / Profile Owner so that the managed workspace remains separated from the personal profile.",
+      "The selected deployment mode determines the technical scope of device management and which Android policies are available.",
     ],
     bullets: [
-      "The device is primarily a business asset.",
-      "The company may configure, maintain, secure, update, inspect, reset, restrict, or replace the device when reasonably required for business, security, maintenance, compliance, or operational purposes.",
-      "The employee must not intentionally disable or circumvent company security controls.",
-      "The employee must immediately report loss, theft, unauthorized access, suspicious activity, or suspected compromise of the device.",
-      "The employee understands that company-device usage may be subject to operational monitoring and security controls described in this Agreement.",
+      "Company-owned phone: the device may be Fully Managed and subject to organization-wide device policies appropriate for company operations.",
+      "Personally owned phone: the company-managed workspace is the Work Profile; personal-profile data remains outside that managed workspace.",
+      "The employee must not intentionally disable or circumvent the applicable Android Enterprise management controls.",
+      "The employee must immediately report loss, theft, unauthorized access, suspicious activity, or suspected compromise.",
+      "The employee understands that the technical scope of monitoring and management depends on the deployment mode and the Android policies actually enabled.",
     ],
   },
   {
@@ -236,9 +237,11 @@ const sections = [
   },
   {
     number: 15,
-    title: "No Personal Privacy Guarantee on Company Device",
+    title: "Privacy Expectations by Device Mode",
     paragraphs: [
-      "The employee understands that a company-owned device is not equivalent to a personally owned private device and should not be treated as such. Nevertheless, company ownership does not authorize the application or any employee to access unrelated information without a legitimate business purpose and applicable technical authorization.",
+      "On a company-owned Fully Managed device, the employee should not expect the same privacy boundaries as on a personally owned phone because the organization may apply device-wide management policies supported by Android Enterprise.",
+      "On a personally owned phone using Work Profile, the Hirmand-managed workspace is separated from the personal profile. Company administration should operate within the managed profile and the policies Android makes available to the Profile Owner; it is not equivalent to making the personal phone a company-owned Fully Managed device.",
+      "In either mode, company policy and applicable technical controls should limit access to legitimate business purposes.",
     ],
   },
   {
@@ -271,7 +274,7 @@ function StaffAgreementPage() {
               <h1>Employee Mobile Device Use, Monitoring & Consent Agreement</h1>
               <p>
                 Official agreement for employees using a company-owned Hirmand Real Estate mobile device
-                and the <strong>املاک هیرمند</strong> employee application.
+                or a personally owned device with an Android Work Profile, together with the <strong>املاک هیرمند</strong> employee application.
               </p>
             </div>
           </header>
