@@ -70,8 +70,8 @@ export function areaHead(area: AreaInfo | null, slug: string) {
       { name: "robots", content: "index, follow, max-image-preview:large" },
       { name: "geo.region", content: "IR-04" },
       { name: "geo.placename", content: area.name },
-      { name: "geo.position", content: `${area.lat};${area.lng}` },
-      { name: "ICBM", content: `${area.lat}, ${area.lng}` },
+      ...(area.lat != null && area.lng != null ? [{ name: "geo.position", content: `${area.lat};${area.lng}` }] : []),
+      ...(area.lat != null && area.lng != null ? [{ name: "ICBM", content: `${area.lat}, ${area.lng}` }] : []),
       ...socialMeta({ title, description, url }),
     ],
     links: [
