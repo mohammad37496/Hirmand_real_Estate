@@ -38,15 +38,11 @@ class HirmandProvisioningActivity : Activity() {
                 DevicePolicyManager.PROVISIONING_MODE_FULLY_MANAGED_DEVICE,
             )
 
-            // Keep sensor-related permission grants under the normal Android
-            // runtime/system permission flow rather than silently granting them
-            // just because this app is the DPC.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                putExtra(
-                    DevicePolicyManager.EXTRA_PROVISIONING_SENSORS_PERMISSION_GRANT_OPT_OUT,
-                    true,
-                )
-            }
+            // Do not opt out of sensor permission management.
+            // Because this app is the DPC for a fully-managed company device,
+            // Android may apply the Device Owner's explicit sensor grant policy
+            // during provisioning. The app still exposes the managed state in
+            // its own UI and does not use a blanket auto-grant policy.
         }
 
         setResult(RESULT_OK, result)
