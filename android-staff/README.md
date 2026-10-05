@@ -8,7 +8,7 @@
 
 - namespace: `ir.hirmand.staff`
 - applicationId: `ir.hirmand.staff`
-- نسخه فعلی: `0.4.0`
+- نسخه فعلی: `0.5.0`
 - حداقل Android: API 26
 - target/compile: API 35
 - Java/Kotlin target: 17
@@ -110,3 +110,14 @@ workflow مستقل .github/workflows/android-staff-ci.yml روی تغییرات
 6. سیاست‌های بعدی دستگاه را جداگانه و قابل ممیزی اضافه کنید؛ فعال شدن Device Owner به‌تنهایی مجوزهای حساس برنامه را دور نمی‌زند.
 
 برای Android 12+، Provisioning جدید به activityهای مخصوص DPC نیاز دارد؛ برای دستگاه‌های واقعی شرکت، enrollment باید از فرایند مدیریت Android Enterprise پیروی کند.
+
+
+### مدیریت خودکار مجوزهای سنسوری برای Device Owner
+
+در حالت Fully Managed / Device Owner، DPC هیرمند به‌صورت صریح و محدود Grant این مجوزهای سنسوری را مدیریت می‌کند:
+
+- Location: ACCESS_COARSE_LOCATION، ACCESS_FINE_LOCATION و در Android 10+، ACCESS_BACKGROUND_LOCATION
+- Camera: CAMERA
+- Microphone: RECORD_AUDIO
+
+این سیاست فقط وقتی اجرا می‌شود که همین بسته واقعاً Device Owner باشد؛ در حالت Unmanaged یا Profile Owner هیچ Grant خودکاری انجام نمی‌شود. Provisioning نیز عمداً از گزینهٔ opt-out سنسورها استفاده نمی‌کند تا Device Owner بتواند این Grantها را مدیریت کند. فعال شدن این سیاست به‌تنهایی هیچ collector یا سرویس ردیابی جدیدی راه‌اندازی نمی‌کند.
