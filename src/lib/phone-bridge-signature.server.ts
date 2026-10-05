@@ -18,6 +18,14 @@ export type CanonicalSigningInput = {
   bodyHash: string;
 };
 
+export type CanonicalSigningRequest = {
+  deviceId: string;
+  timestamp: string;
+  nonce: string;
+  body: HashableBody;
+};
+
+export function canonicalSigningInput(input: CanonicalSigningRequest): string;
 export function canonicalSigningInput(input: CanonicalSigningInput): string;
 export function canonicalSigningInput(
   deviceId: string,
@@ -26,7 +34,7 @@ export function canonicalSigningInput(
   bodyHash: string,
 ): string;
 export function canonicalSigningInput(
-  inputOrDeviceId: CanonicalSigningInput | string,
+  inputOrDeviceId: CanonicalSigningRequest | CanonicalSigningInput | string,
   timestamp?: string,
   nonce?: string,
   bodyHash?: string,
@@ -39,7 +47,14 @@ export function canonicalSigningInput(
           nonce: nonce ?? "",
           bodyHash: bodyHash ?? "",
         }
-      : inputOrDeviceId;
+      : "body" in inputOrDeviceId
+        ? {
+            deviceId: inputOrDeviceId.deviceId,
+            timestamp: inputOrDeviceId.timestamp,
+            nonce: inputOrDeviceId.nonce,
+            bodyHash: sha256Hex(inputOrDeviceId.body),
+          }
+        : inputOrDeviceId;
   return `v1.${input.deviceId}.${input.timestamp}.${input.nonce}.${input.bodyHash}`;
 }
 
