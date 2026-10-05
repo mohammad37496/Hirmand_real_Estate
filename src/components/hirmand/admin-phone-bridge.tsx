@@ -22,6 +22,8 @@ import {
   listPhoneBridgeCallRecordings,
   listPhoneBridgeSmsMessages,
   exportPhoneBridgeSms,
+  exportPhoneBridgeEvents,
+  setPhoneBridgeDevicePolicy,
   type PhoneBridgeReleaseSettings,
   type PhoneBridgeCallRecording,
   type PhoneBridgeSmsMessage,
