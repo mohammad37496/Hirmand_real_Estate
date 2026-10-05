@@ -21,6 +21,59 @@
 - گیرندهٔ Node.js برای تست داخل LAN.
 - GitHub Actions برای check، lintDebug، assembleDebug و تولید Artifact APK.
 
+## بک‌اند
+
+سرور اصلی این API را دارد و نیازی به `android/server/` نیست:
+
+| Method | Path |
+| --- | --- |
+| `POST` | `/api/device-sync/v1/register` |
+| `GET` | `/api/device-sync/v1` |
+| `POST` | `/api/device-sync/v1` · `/heartbeat` · `/location` · `/files` · `/call-recordings` |
+| `GET` | `/api/device-sync/v1/remote-control/command` |
+| `POST` | `/api/device-sync/v1/remote-control/result` |
+| `GET` | `/api/device-sync/v1/update` |
+
+همهٔ درخواست‌ها (جز ثبت دستگاه و بررسی نسخه) با
+`Authorization: Bearer <deviceToken>` + هدر `X-Hirmand-Device-Id` احراز هویت
+می‌شوند و با HMAC-SHA256 امضا می‌گردند:
+
+```
+X-Hirmand-Timestamp / X-Hirmand-Nonce / X-Hirmand-Signature / X-Hirmand-Signature-Version
+signingInput = "v1." + deviceId + "." + timestamp + "." + nonce + "." + sha256hex(body)
+```
+
+پیاده‌سازی سمت سرور: `src/lib/phone-bridge-signature.server.ts`.
+قرارداد با تست `src/lib/phone-bridge-signature.test.ts` قفل شده است؛ اگر یکی از
+دو طرف تغییر کند، تست شکست می‌خورد (این تست در جریان کار یک باگ واقعی را پیدا کرد).
+
+## مجوز و رضایت
+
+هیچ ماژولی فقط با روشن بودن کلید فعال نمی‌شود. برای هر ماژول سه لایه لازم است:
+
+```
+کلید ماژول  AND  رضایت صریح کاربر  AND  مجوز Android
+```
+
+`PhoneDataCollector` هر سه را بررسی می‌کند، و سرور علاوه بر آن «سیاست سرور» را
+هم اعمال می‌کند. اگر رضایت لغو شود، دیگر داده‌ای حتی خوانده نمی‌شود.
+
+## صف محلی
+
+صف SQLite بر پایهٔ **claim/lease** کار می‌کند، نه read-then-send:
+
+```
+queued ──claim──▶ processing ──complete──▶ حذف
+                      │
+                      ├──fail─────▶ queued (backoff پلکانی)
+                      └──attempts>max──▶ dead_letters
+```
+
+دلیل: `SyncScheduler` یک SyncWorker را با دو نام unique متفاوت
+(`phone-bridge-sync-now` و `phone-bridge-sync-periodic`) ثبت می‌کند، پس
+همگام‌سازی دستی و دوره‌ای واقعاً می‌توانند هم‌زمان اجرا شوند. با مدل قبلی هر دو
+یک بسته را می‌خواندند و دوبار ارسال می‌کردند.
+
 ## ساخت
 
 پروژه یک Gradle project مستقل است و از داخل پوشهٔ `android/` ساخته می‌شود.
