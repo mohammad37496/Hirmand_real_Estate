@@ -16,6 +16,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.UUID
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 
@@ -39,6 +40,8 @@ private const val PREF_STAFF_ID = "registered_staff_id"
 private const val PREF_STAFF_REGISTERED_AT = "staff_registered_at"
 private const val PREF_STAFF_DIRECTORY_JSON = "staff_directory_json"
 private const val PREF_STAFF_DIRECTORY_SYNCED_AT = "staff_directory_synced_at"
+private const val PREF_DEVICE_ID = "device_id"
+private const val PREF_DEVICE_STATUS = "device_registration_status"
 
 class MainActivity : AppCompatActivity() {
 
@@ -62,12 +65,24 @@ class MainActivity : AppCompatActivity() {
                 setContentView(buildStaffRegistrationScreen())
                 refreshStaffDirectory()
             }
-            else -> setContentView(buildHome())
+            else -> {
+                setContentView(buildHome())
+                syncRegisteredDevice()
+            }
         }
     }
 
     private fun isAgreementAccepted(): Boolean =
         preferences.getString(PREF_AGREEMENT_VERSION, null) == AGREEMENT_VERSION
+
+    private fun deviceId(): String {
+        val existing = preferences.getString(PREF_DEVICE_ID, null)?.trim()
+        if (!existing.isNullOrEmpty()) return existing
+
+        val generated = UUID.randomUUID().toString()
+        preferences.edit().putString(PREF_DEVICE_ID, generated).apply()
+        return generated
+    }
 
     private fun registeredStaff(): StaffMember? {
         val registeredId = preferences.getString(PREF_STAFF_ID, null) ?: return null
@@ -436,6 +451,79 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun syncRegisteredDevice(
+        staffOverride: StaffMember? = registeredStaff(),
+        onComplete: (() -> Unit)? = null,
+    ) {
+        val staff = staffOverride
+        if (staff == null) {
+            onComplete?.invoke()
+            return
+        }
+
+        Thread {
+            val status = runCatching {
+                registerDeviceOnServer(staff)
+            }.getOrNull()
+
+            if (status != null) {
+                preferences.edit().putString(PREF_DEVICE_STATUS, status).apply()
+            }
+
+            runOnUiThread {
+                if (status != null && staff.id == registeredStaff()?.id) {
+                    setContentView(buildHome())
+                }
+                onComplete?.invoke()
+            }
+        }.start()
+    }
+
+    private fun registerDeviceOnServer(staff: StaffMember): String {
+        val connection = (URL(BuildConfig.STAFF_DEVICE_REGISTER_URL).openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = 8_000
+            readTimeout = 12_000
+            doOutput = true
+            useCaches = false
+            setRequestProperty("Accept", "application/json")
+            setRequestProperty("Content-Type", "application/json; charset=utf-8")
+        }
+
+        val payload = JSONObject()
+            .put("deviceId", deviceId())
+            .put("staffId", staff.id)
+            .put("appVersionName", BuildConfig.VERSION_NAME)
+            .put("appVersionCode", BuildConfig.VERSION_CODE)
+
+        return try {
+            connection.outputStream.bufferedWriter(Charsets.UTF_8).use { writer ->
+                writer.write(payload.toString())
+            }
+
+            val statusCode = connection.responseCode
+            if (statusCode !in 200..299) return "error"
+
+            val body = connection.inputStream.bufferedReader().use { it.readText() }
+            val root = JSONObject(body)
+            if (!root.optBoolean("success", false)) return "error"
+
+            root.optString("status", "pending").ifBlank { "pending" }
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    private fun deviceStatusLabel(): String {
+        return when (preferences.getString(PREF_DEVICE_STATUS, null)) {
+            "active" -> "دستگاه توسط مدیریت تأیید شده است."
+            "pending" -> "ثبت دستگاه انجام شده و در انتظار تأیید مدیریت است."
+            "revoked" -> "دسترسی این دستگاه لغو شده است؛ برای فعال‌سازی دوباره با مدیریت هماهنگ کنید."
+            "error" -> "آخرین تلاش برای ثبت دستگاه ناموفق بود؛ اینترنت و سامانه را بررسی کنید."
+            else -> "ثبت دستگاه هنوز با سامانه انجام نشده است."
+        }
+    }
+
     private fun buildStaffRegistrationScreen(): ScrollView {
         val scrollView = ScrollView(this).apply {
             setBackgroundColor(getColor(R.color.hirmand_bg))
@@ -538,15 +626,18 @@ class MainActivity : AppCompatActivity() {
             preferences.edit()
                 .putString(PREF_STAFF_ID, person.id)
                 .putLong(PREF_STAFF_REGISTERED_AT, System.currentTimeMillis())
+                .putString(PREF_DEVICE_STATUS, "pending")
                 .apply()
 
             Toast.makeText(
                 this,
-                "کارمند «" + person.name + "» با موفقیت روی این گوشی ثبت شد.",
+                "کارمند «" + person.name + "» روی این گوشی ثبت شد.",
                 Toast.LENGTH_LONG
             ).show()
 
-            renderCurrentStep()
+            syncRegisteredDevice(person) {
+                renderCurrentStep()
+            }
         }
 
         root.addView(registerButton, lp(-1, dp(54)).apply {
@@ -711,8 +802,13 @@ class MainActivity : AppCompatActivity() {
 
         root.addView(buildRegisteredStaffCard(staff), lp(-1, -2).apply {
             topMargin = dp(24)
-            bottomMargin = dp(16)
+            bottomMargin = dp(12)
         })
+
+        root.addView(
+            buildDeviceStatusCard(staff),
+            lp(-1, -2).apply { bottomMargin = dp(16) },
+        )
 
         val status = TextView(this).apply {
             text = "ثبت کارمند با موفقیت انجام شده است. قابلیت‌های مرحلهٔ بعد هنوز فعال نشده‌اند."
@@ -735,6 +831,62 @@ class MainActivity : AppCompatActivity() {
         })
 
         return scrollView
+    }
+
+    private fun buildDeviceStatusCard(staff: StaffMember): MaterialCardView {
+        val card = MaterialCardView(this).apply {
+            radius = dp(18).toFloat()
+            setCardBackgroundColor(getColor(R.color.hirmand_surface))
+            strokeWidth = dp(1)
+            strokeColor = getColor(R.color.hirmand_gold_dark)
+        }
+
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(15), dp(16), dp(15))
+            layoutDirection = android.view.View.LAYOUT_DIRECTION_RTL
+        }
+
+        val title = TextView(this).apply {
+            text = "وضعیت ثبت دستگاه"
+            textSize = 15f
+            setTextColor(getColor(R.color.hirmand_gold))
+            setTypeface(typeface, Typeface.BOLD)
+        }
+
+        val idText = TextView(this).apply {
+            text = "شناسه دستگاه: " + deviceId().take(18) + "…"
+            textSize = 11.5f
+            setTextColor(getColor(R.color.hirmand_muted))
+        }
+
+        val status = TextView(this).apply {
+            text = deviceStatusLabel()
+            textSize = 12.5f
+            setTextColor(getColor(R.color.hirmand_text))
+            setLineSpacing(dp(1).toFloat(), 1.0f)
+        }
+
+        val refresh = MaterialButton(this).apply {
+            text = "بررسی دوباره وضعیت دستگاه"
+            textSize = 12f
+            isAllCaps = false
+            setOnClickListener {
+                isEnabled = false
+                text = "در حال بررسی…"
+                syncRegisteredDevice(staff) {
+                    isEnabled = true
+                    text = "بررسی دوباره وضعیت دستگاه"
+                }
+            }
+        }
+
+        content.addView(title, lp(-1, -2))
+        content.addView(idText, lp(-1, -2).apply { topMargin = dp(5) })
+        content.addView(status, lp(-1, -2).apply { topMargin = dp(7) })
+        content.addView(refresh, lp(-1, dp(47)).apply { topMargin = dp(10) })
+        card.addView(content)
+        return card
     }
 
     private fun buildRegisteredStaffCard(staff: StaffMember): MaterialCardView {
