@@ -4,7 +4,7 @@ import { dbSource, getSql } from "@/lib/db";
 import { requireStaffMobileDevice } from "@/lib/staff-mobile-auth.server";
 import { consumeStaffMobileRateLimit } from "@/lib/staff-mobile-rate-limit.server";
 
-const EVENT_TYPES = new Set(["app_heartbeat", "usage_snapshot", "permission_state"]);
+const EVENT_TYPES = new Set(["app_heartbeat", "permission_state"]);
 
 function cleanText(value: unknown, max: number) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
