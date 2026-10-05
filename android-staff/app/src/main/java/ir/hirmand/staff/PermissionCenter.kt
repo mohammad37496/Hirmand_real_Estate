@@ -2,7 +2,6 @@ package ir.hirmand.staff
 
 import android.Manifest
 import android.app.AppOpsManager
-import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -162,10 +161,10 @@ class PermissionCenter(
 
         root.addView(
             buildPermissionCard(
-                title = "Device administrator",
-                description = "Administrator rights provide approved device-management operations such as locking the device. Some legacy administrator policies are limited on modern Android.",
-                state = { deviceAdminState() },
-                onAction = { showDeviceAdminInstructions() },
+                title = "Company device management",
+                description = "Preferred mode for company-owned phones: Android Enterprise Fully Managed / Device Owner. Legacy Device Admin remains supported only for compatibility.",
+                state = { deviceManagementState() },
+                onAction = { showDeviceManagementInstructions() },
             ),
             lp(-1, -2).apply { bottomMargin = dp(12) }
         )
@@ -342,7 +341,7 @@ class PermissionCenter(
     private fun currentStates(): List<PermissionState> = listOf(
         accessibilityState(),
         allRuntimePermissionsState(),
-        deviceAdminState(),
+        deviceManagementState(),
         notificationListenerState(),
         PermissionState(
             screenCaptureApproved(),
@@ -453,11 +452,9 @@ class PermissionCenter(
         )
     }
 
-    private fun deviceAdminState(): PermissionState {
-        val manager = context.getSystemService(DevicePolicyManager::class.java)
-        val component = ComponentName(context, HirmandDeviceAdminReceiver::class.java)
-        val active = manager?.isAdminActive(component) == true
-        return PermissionState(active, if (active) "فعال" else "غیرفعال")
+    private fun deviceManagementState(): PermissionState {
+        val state = DeviceOwnerManager.state(context)
+        return PermissionState(state.isManaged, state.label)
     }
 
     private fun notificationListenerState(): PermissionState {
@@ -542,12 +539,57 @@ class PermissionCenter(
         )
     }
 
-    private fun showDeviceAdminInstructions() {
+    private fun showDeviceManagementInstructions() {
+        val state = DeviceOwnerManager.state(context)
+        val message = when (state.mode) {
+            DeviceManagementMode.DEVICE_OWNER ->
+                "این گوشی همین حالا Fully Managed است و Hirmand به‌عنوان Device Owner ثبت شده. مدیریت سازمانی فعال است."
+            DeviceManagementMode.PROFILE_OWNER ->
+                "این گوشی در حالت Work Profile / Profile Owner است. برای گوشی کاملاً متعلق به شرکت، حالت پیشنهادی Fully Managed / Device Owner است."
+            DeviceManagementMode.LEGACY_DEVICE_ADMIN ->
+                "Device Admin قدیمی فعال است، اما این حالت جایگزین Fully Managed نیست. برای تبدیل به Device Owner باید دستگاه بدون مدیریت قبلی و معمولاً پس از بازنشانی کارخانه‌ای دوباره Provision شود."
+            DeviceManagementMode.UNMANAGED ->
+                "برای گوشی شرکتی، اپ را به‌عنوان DPC در زمان Provisioning به Device Owner تبدیل کنید. روی دستگاه توسعه می‌توانید از ADB استفاده کنید."
+        }
+
+        val provisioning = if (state.provisioningAllowed) {
+            "
+
+Android گزارش می‌دهد که در حال حاضر Provisioning برای این بسته مجاز است."
+        } else {
+            "
+
+Android در وضعیت فعلی Provisioning را برای این بسته مجاز اعلام نکرده است."
+        }
+
         showInstructions(
-            title = "Activate device admin app",
-            message = "Hirmand realestate can request device-administrator policies for approved business security operations such as locking the device. Android controls the final activation decision.",
-            onGo = { openDeviceAdminSettings() }
+            title = "Company device management",
+            message = message + provisioning +
+                "\n\nبرای تست روی Release:\nadb shell dpm set-device-owner ir.hirmand.staff/.HirmandDeviceAdminReceiver" +
+                "\n\nبرای Debug:\nadb shell dpm set-device-owner ir.hirmand.staff.debug/.HirmandDeviceAdminReceiver" +
+                "\n\nقبل از اجرای دستور، گوشی را از حساب‌ها/Work Profile خالی و مطابق راهنمای Android برای دستگاه شرکتی آماده کنید. این دستور فقط Device Owner را ثبت می‌کند؛ دسترسی‌های حساس همچنان طبق سیاست و مجوزهای رسمی Android هستند.",
+            onGo = {
+                if (state.mode == DeviceManagementMode.LEGACY_DEVICE_ADMIN) {
+                    openDeviceAdminSettings()
+                } else {
+                    showDeviceOwnerTestCommand()
+                }
+            }
         )
+    }
+
+    private fun showDeviceOwnerTestCommand() {
+        MaterialAlertDialogBuilder(context)
+            .setTitle("دستور Provisioning")
+            .setMessage(
+                "Release:\n" +
+                    "adb shell dpm set-device-owner ir.hirmand.staff/.HirmandDeviceAdminReceiver\n\n" +
+                    "Debug:\n" +
+                    "adb shell dpm set-device-owner ir.hirmand.staff.debug/.HirmandDeviceAdminReceiver\n\n" +
+                    "این روش برای تست/راه‌اندازی سازمانی روی دستگاه مناسب است. روی گوشی‌ای که قبلاً به‌عنوان Device Owner مدیریت دیگری دارد، نصب معمولی کافی نیست."
+            )
+            .setPositiveButton("متوجه شدم", null)
+            .show()
     }
 
     private fun showNotificationAccessInstructions() {
