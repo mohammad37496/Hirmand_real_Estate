@@ -282,38 +282,34 @@ object StaffTelemetry {
     fun flush(context: Context): Boolean {
         var success = true
 
-        repeat(4) {
-            val batch = StaffTelemetryStore.takeBatch(context, "telemetry", 50)
-            // "telemetry" is not an event type; this branch is intentionally unused.
-            if (batch.length() > 0) break
-        }
-
-        val eventBatch = JSONArray()
         val all = StaffTelemetryStore.takeBatch(context, null, 50)
         val locationBatch = JSONArray()
+        val nonLocationBatch = JSONArray()
+
         for (i in 0 until all.length()) {
             val item = all.optJSONObject(i) ?: continue
             if (item.optString("eventType") == "location") {
+                val payload = item.optJSONObject("payload") ?: continue
                 locationBatch.put(
                     JSONObject()
                         .put("clientEventId", item.optString("clientEventId"))
-                        .put("latitude", item.optJSONObject("payload")?.optDouble("latitude"))
-                        .put("longitude", item.optJSONObject("payload")?.optDouble("longitude"))
-                        .put("accuracyM", item.optJSONObject("payload")?.optDouble("accuracyM"))
-                        .put("altitudeM", item.optJSONObject("payload")?.optDouble("altitudeM"))
-                        .put("speedMps", item.optJSONObject("payload")?.optDouble("speedMps"))
-                        .put("provider", item.optJSONObject("payload")?.optString("provider").orEmpty())
+                        .put("latitude", payload.optDouble("latitude"))
+                        .put("longitude", payload.optDouble("longitude"))
+                        .put("accuracyM", payload.optDouble("accuracyM"))
+                        .put("altitudeM", payload.optDouble("altitudeM"))
+                        .put("speedMps", payload.optDouble("speedMps"))
+                        .put("provider", payload.optString("provider"))
                         .put("observedAt", item.optString("observedAt"))
                 )
             } else {
-                eventBatch.put(item)
+                nonLocationBatch.put(item)
             }
         }
 
-        if (eventBatch.length() > 0) {
-            val ok = sendBatch(context, TELEMETRY_URL, eventBatch, "events")
+        if (nonLocationBatch.length() > 0) {
+            val ok = sendBatch(context, TELEMETRY_URL, nonLocationBatch, "events")
             if (ok) {
-                StaffTelemetryStore.removeBatch(context, eventBatch)
+                StaffTelemetryStore.removeBatch(context, nonLocationBatch)
             } else {
                 success = false
             }
@@ -322,12 +318,12 @@ object StaffTelemetry {
         if (locationBatch.length() > 0) {
             val ok = sendBatch(context, LOCATION_URL, locationBatch, "points")
             if (ok) {
-                StaffTelemetryStore.removeBatch(context, all)
+                StaffTelemetryStore.removeBatch(context, locationBatch)
             } else {
                 success = false
             }
         }
 
         return success
-    }
+
 }
