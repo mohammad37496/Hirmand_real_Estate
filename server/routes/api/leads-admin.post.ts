@@ -38,7 +38,7 @@ function parseListInput(body: Record<string, unknown>) {
   const status = typeof body.status === "string" ? body.status : "";
   const sortRaw = typeof body.sort === "string" ? body.sort : "newest";
   const sort = ["newest", "oldest", "name", "follow_up", "priority"].includes(sortRaw)
-    ? (sortRaw as "newest" | "oldest" | "name" | "follow_up")
+    ? (sortRaw as "newest" | "oldest" | "name" | "follow_up" | "priority")
     : "newest";
   const query = typeof body.query === "string" ? body.query.trim().slice(0, 80) : "";
   const limit = Math.min(100, Math.max(1, Number(body.limit) || LIST_LIMIT));
@@ -72,7 +72,7 @@ function csvDate(value: unknown) {
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
   const body = (await readBody(event)) as {
-    action?: "list" | "status" | "visit_status" | "delete" | "export" | "note" | "follow_up" | "activity" | "activities";
+    action?: "list" | "status" | "visit_status" | "delete" | "export" | "note" | "follow_up" | "activity" | "activities" | "create_overdue_tasks";
     id?: string;
     status?: Status;
     query?: string;
