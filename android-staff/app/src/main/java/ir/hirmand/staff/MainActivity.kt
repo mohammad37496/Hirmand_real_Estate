@@ -636,7 +636,7 @@ class MainActivity : AppCompatActivity() {
             ).show()
 
             syncRegisteredDevice(person) {
-                renderCurrentStep()
+                setContentView(buildHome())
             }
         }
 
