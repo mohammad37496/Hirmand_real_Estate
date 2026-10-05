@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { sanitizePhoneBridgePayload } from "./phone-bridge-payload.server";
+import { sanitizePhoneBridgePayload } from "./phone-bridge-payload.server.ts";
 
 const allowAll = {
   location: true,

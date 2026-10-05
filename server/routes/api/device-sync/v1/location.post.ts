@@ -46,7 +46,6 @@ export default defineEventHandler(async (event) => {
   });
 
   const auth = await authenticateDevice(event, deviceId);
-  if (!auth.ok) throw createError({ statusCode: auth.status, statusMessage: auth.message });
   if (auth.mode === "device") await requirePhoneBridgeSignedRequest(event, deviceId, body);
 
   const sql = await getSql();

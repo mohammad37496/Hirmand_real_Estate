@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import pg from "pg";
 import { pendingMigrations } from "../scripts/migration-plan.mjs";
+import { resolveMigrationDatabaseUrl, sanitizePostgresConnectionString } from "./resolve-database-url.mjs";
 
 const MIGRATIONS_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "migrations");
 
@@ -72,5 +73,22 @@ export async function runMigrations({ connectionString }) {
   } finally {
     client.release();
     await pool.end();
+  }
+}
+
+
+if (process.argv[1] && new URL(import.meta.url).pathname === process.argv[1]) {
+  const resolved = resolveMigrationDatabaseUrl();
+  if (!resolved.url) {
+    console.error("[migrate] DATABASE_URL is not configured.");
+    process.exit(1);
+  }
+  const connectionString = sanitizePostgresConnectionString(resolved.url);
+  console.log(`[migrate] using ${resolved.key}`);
+  try {
+    await runMigrations({ connectionString });
+  } catch (error) {
+    console.error("[migrate] migration run failed:", error instanceof Error ? error.message : error);
+    process.exit(1);
   }
 }

@@ -11,7 +11,6 @@ export default defineEventHandler(async (event) => {
   if (!deviceId) throw createError({ statusCode: 400, statusMessage: "شناسه دستگاه ارسال نشده است." });
   await enforcePhoneBridgeRateLimit(event, "app-block-config", deviceId, { windowMs: 10 * 60 * 1000, maxHits: 60, blockMs: 10 * 60 * 1000 });
   const auth = await authenticateDevice(event, deviceId);
-  if (!auth.ok) throw createError({ statusCode: auth.status, statusMessage: auth.message });
   if (auth.mode === "device") await requirePhoneBridgeSignedRequest(event, deviceId, Buffer.alloc(0));
   const sql = await getSql();
   const deviceRows = await sql.query<{ enabled: boolean; allowed_modules: unknown }>("select enabled,allowed_modules from phone_bridge_devices where id=$1 limit 1", [deviceId]);

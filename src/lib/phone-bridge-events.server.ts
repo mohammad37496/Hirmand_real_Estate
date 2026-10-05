@@ -34,6 +34,7 @@ export async function recordPhoneBridgeEvent(input: {
 
 export async function writePhoneBridgeAudit(input: {
   deviceId: string | null;
+  actorAccountId?: string | null;
   action: string;
   module: string;
   result: string;
@@ -44,7 +45,7 @@ export async function writePhoneBridgeAudit(input: {
 }) {
   await recordPhoneBridgeEvent({
     deviceId: input.deviceId,
-    actorAccountId: undefined,
+    actorAccountId: input.actorAccountId ?? null,
     eventType: "audit",
     severity: input.result === "denied" ? "warning" : "info",
     message: `${input.action}::${input.module}::${input.result}`,

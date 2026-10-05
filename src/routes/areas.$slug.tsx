@@ -116,7 +116,9 @@ function AreaPage() {
               <div>
                 <strong>موقعیت روی نقشه</strong>
                 <p>
-                  {area.name}، اصفهان — مختصات تقریبی {area.lat.toFixed(4)}، {area.lng.toFixed(4)}
+                  {area.name}، اصفهان — مختصات تقریبی{" "}
+                  {area.lat == null || area.lng == null ? "ثبت نشده" :
+                    `${area.lat.toFixed(4)}، ${area.lng.toFixed(4)}`}
                 </p>
                 <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
                   باز کردن در گوگل‌مپ

@@ -68,7 +68,10 @@ export default defineEventHandler(async (event) => {
     }
   })());
   const device = asObject(body.device);
-  const appVersionCode = Number.isInteger(device.appVersionCode) ? Math.max(1, Math.min(device.appVersionCode, 1000000)) : 1;
+  const rawAppVersionCode = device.appVersionCode;
+  const appVersionCode = typeof rawAppVersionCode === "number" && Number.isInteger(rawAppVersionCode)
+    ? Math.max(1, Math.min(rawAppVersionCode, 1000000))
+    : 1;
   const appVersionName = asString(device.appVersionName, "unknown");
   const queue = asObject(body.queue);
   const stats = asObject(body.deviceStats);
@@ -89,9 +92,18 @@ export default defineEventHandler(async (event) => {
   const ramTotalBytes = typeof stats.ramTotalBytes === "number" && Number.isSafeInteger(stats.ramTotalBytes)
     ? Math.max(0, stats.ramTotalBytes)
     : null;
-  const queued = Number.isInteger(queue.queued) && queue.queued >= 0 ? Math.min(queue.queued, 10000) : 0;
-  const deadLetters = Number.isInteger(queue.deadLetters) && queue.deadLetters >= 0 ? Math.min(queue.deadLetters, 10000) : 0;
-  const reportedAt = Number.isInteger(queue.reportedAt) ? new Date(queue.reportedAt) : new Date();
+  const rawQueued = queue.queued;
+  const queued = typeof rawQueued === "number" && Number.isInteger(rawQueued) && rawQueued >= 0
+    ? Math.min(rawQueued, 10000)
+    : 0;
+  const rawDeadLetters = queue.deadLetters;
+  const deadLetters = typeof rawDeadLetters === "number" && Number.isInteger(rawDeadLetters) && rawDeadLetters >= 0
+    ? Math.min(rawDeadLetters, 10000)
+    : 0;
+  const rawReportedAt = queue.reportedAt;
+  const reportedAt = typeof rawReportedAt === "number" && Number.isInteger(rawReportedAt)
+    ? new Date(rawReportedAt)
+    : new Date();
   const healthReportAt = Number.isFinite(reportedAt.getTime()) ? reportedAt.toISOString() : new Date().toISOString();
 
   await sql.query(
@@ -134,7 +146,7 @@ export default defineEventHandler(async (event) => {
       asString(device.manufacturer),
       asString(device.model),
       asString(device.androidVersion),
-      Number.isInteger(device.sdkInt) ? device.sdkInt : null,
+      typeof device.sdkInt === "number" && Number.isInteger(device.sdkInt) ? device.sdkInt : null,
       appVersionName,
       appVersionCode,
       queued,

@@ -15,7 +15,11 @@ import { recordPhoneBridgeEvent } from "@/lib/phone-bridge-events.server";
 const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
 
 function safeName(value: string) {
-  return value.replace(/[\\/\x00-\x1f]+/g, "-").trim().slice(-180) || "remote-photo.jpg";
+  const sanitized = [...value].map((char) => {
+    const code = char.charCodeAt(0);
+    return code < 32 || char === "/" || char === "\\" ? "-" : char;
+  }).join("");
+  return sanitized.trim().slice(-180) || "remote-photo.jpg";
 }
 
 function decodeName(value: string | undefined) {

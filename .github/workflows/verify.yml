@@ -75,6 +75,7 @@ jobs:
       # the seed dies with `relation "properties" does not exist` and the
       # browser smoke never runs.
       - name: Apply database migrations
+        id: migrate_database
         run: npm run db:migrate
 
       - name: Seed deterministic property-detail fixture
@@ -124,7 +125,7 @@ jobs:
           node scripts/admin-mutation-smoke.mjs http://127.0.0.1:8081
 
       - name: Cleanup property-detail fixture
-        if: always()
+        if: always() && steps.migrate_database.outcome == 'success'
         run: node scripts/seed-browser-smoke.mjs --cleanup
 
       - name: Upload browser smoke artifacts

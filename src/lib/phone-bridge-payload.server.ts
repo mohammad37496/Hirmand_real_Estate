@@ -4,7 +4,15 @@ import type { PhoneBridgeModulePolicy } from "@/lib/phone-bridge-auth";
 export type SyncModule = keyof PhoneBridgeModulePolicy;
 
 export type { PhoneBridgeModulePolicy } from "@/lib/phone-bridge-auth";
-export { normalizePhoneBridgePolicy } from "@/lib/phone-bridge-auth";
+
+export function normalizePhoneBridgePolicy(value: unknown): PhoneBridgeModulePolicy {
+  const raw = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  const modules = [
+    "location", "wifi", "contacts", "calls", "sms", "calendar",
+    "apps", "camera", "microphone", "selectedFiles", "notifications",
+  ] as const;
+  return Object.fromEntries(modules.map((module) => [module, raw[module] !== false])) as PhoneBridgeModulePolicy;
+}
 
 type JsonObject = Record<string, unknown>;
 
@@ -39,11 +47,11 @@ export function stripDisallowedModules(
 export const syncPacketSchema = "hirmand.phone-bridge.v1";
 
 const MAX_TEXT = 500;
-const MAX_CONTACTS = 1000;
+const MAX_CONTACTS = 200;
 const MAX_CALLS = 200;
 const MAX_SMS = 200;
 const MAX_CALENDAR = 200;
-const MAX_APPS = 1000;
+const MAX_APPS = 300;
 const MAX_FILES = 20;
 
 function asObject(value: unknown): JsonObject | null {
