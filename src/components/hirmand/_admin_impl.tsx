@@ -41,6 +41,7 @@ import {
   ArchiveRestore,
   ClipboardList,
   Settings,
+  Smartphone,
   HardDrive,
   Route as RouteIcon,
   Target,
@@ -1781,7 +1782,11 @@ export function AdminPropertiesPage() {
 
           {(() => {
             let previousSection = "";
-            return visibleNavItems.map((item) => {
+            const lastOverviewIndex = visibleNavItems.reduce(
+              (lastIndex, navItem, index) => (navItem.section === "نمای کلی" ? index : lastIndex),
+              -1,
+            );
+            return visibleNavItems.map((item, index) => {
               const Icon = item.icon;
               const active = view === item.view;
               const showSection = item.section !== previousSection;
@@ -1802,6 +1807,16 @@ export function AdminPropertiesPage() {
                     <span className="admin-nav-btn-icon" aria-hidden="true"><Icon size={18} /></span>
                     <span className="admin-nav-btn-label">{item.label}</span>
                   </button>
+                  {index === lastOverviewIndex ? (
+                    <Link
+                      to="/admin-phone-bridge"
+                      className="admin-nav-btn admin-nav-link"
+                      aria-label="مدیریت اتصال گوشی"
+                    >
+                      <span className="admin-nav-btn-icon" aria-hidden="true"><Smartphone size={18} /></span>
+                      <span className="admin-nav-btn-label">مدیریت اتصال گوشی</span>
+                    </Link>
+                  ) : null}
                 </Fragment>
               );
             });

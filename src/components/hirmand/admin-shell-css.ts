@@ -8,6 +8,7 @@ export const ADMIN_CSS = `
 .admin-sidebar-nav{padding:14px 10px;display:flex;flex-direction:column;gap:4px;flex:1}
 .admin-nav-btn{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:12px;border:0;background:transparent;color:rgb(247 245 239 / .68);font:inherit;font-size:.9rem;font-weight:500;cursor:pointer;text-align:right;transition:background .15s,color .15s}
 .admin-nav-btn:hover{background:rgba(255,255,255,.04);color:#f7f5ef}
+.admin-nav-link{text-decoration:none}
 .admin-nav-btn.is-active{background:rgba(247,245,239,.12);color:#f7f5ef}
 .admin-nav-btn svg{flex-shrink:0;opacity:.85}
 .admin-sidebar-foot{padding:14px 10px 18px;border-top:1px solid rgba(244,239,230,.08);display:flex;flex-direction:column;gap:4px}

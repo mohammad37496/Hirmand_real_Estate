@@ -1,16 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { SITE } from "@/lib/site";
 import { AdminPropertiesPage } from "@/components/hirmand/admin-properties-page";
-import "@/admin-phone-bridge.css";
 
 function AdminPage() {
   return (
     <>
       <AdminPropertiesPage />
-      <Link to="/admin-phone-bridge" className="pb-admin-shortcut">
-        <span aria-hidden="true">▣</span>
-        مدیریت اتصال گوشی
-      </Link>
     </>
   );
 }
