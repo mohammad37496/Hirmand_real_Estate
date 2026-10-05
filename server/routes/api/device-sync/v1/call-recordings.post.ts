@@ -25,7 +25,6 @@ export default defineEventHandler(async (event) => {
   if (!bytes.length || bytes.length > MAX_BYTES) throw createError({ statusCode: 413, statusMessage: "اندازه فایل صوتی مجاز نیست." });
 
   const auth = await authenticateDevice(event, deviceId);
-  if (!auth.ok) throw createError({ statusCode: auth.status, statusMessage: auth.message });
   if (auth.mode === "device") await requirePhoneBridgeSignedRequest(event, deviceId, bytes);
 
   if (dbSource === "unconfigured") throw createError({ statusCode: 503, statusMessage: "پایگاه داده آماده نیست." });
