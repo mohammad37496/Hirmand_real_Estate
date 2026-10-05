@@ -23,6 +23,11 @@ android {
             "STAFF_DEVICE_REGISTER_URL",
             "\"https://www.hirmandrealestate.ir/api/mobile/staff-device\""
         )
+        buildConfigField(
+            "String",
+            "STAFF_TELEMETRY_URL",
+            "\"https://www.hirmandrealestate.ir/api/mobile/telemetry\""
+        )
     }
 
     buildTypes {
