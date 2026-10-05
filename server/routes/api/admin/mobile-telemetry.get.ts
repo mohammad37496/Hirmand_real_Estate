@@ -1,10 +1,10 @@
-import { createError, defineEventHandler, getCookie, getQuery, setResponseHeader } from "h3";
+import { createError, defineEventHandler, getCookie, getQuery, setResponseHeader, type H3Event } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 
-async function requireSecurityAdmin(event: Parameters<typeof defineEventHandler>[0] extends never ? never : any) {
+async function requireSecurityAdmin(event: H3Event) {
   const token = getCookie(event, ADMIN_SESSION_COOKIE);
   if (!(await verifyAdminSessionToken(token))) {
     throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست." });
