@@ -1,7 +1,11 @@
 import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import {
+  ADMIN_SESSION_COOKIE,
+  getAdminSessionClaims,
+  verifyAdminSessionToken,
+} from "@/lib/admin-session.server";
 import { assertSameOrigin, clientFingerprint, consumeAdminAttempt } from "@/lib/admin-rate-limit.server";
 import {
   PHONE_BRIDGE_MODULES,
@@ -9,6 +13,7 @@ import {
   type PhoneBridgeModule,
 } from "@/lib/phone-bridge-auth.server";
 import { writePhoneBridgeAudit } from "@/lib/phone-bridge-events.server";
+import { optionalInt } from "@/lib/phone-bridge-payload.server";
 import { effectiveAccessForDevice, MODULE_LABELS } from "@/lib/phone-bridge-policy.server";
 
 const moduleEnum = z.enum(PHONE_BRIDGE_MODULES);
@@ -75,9 +80,12 @@ export default defineEventHandler(async (event) => {
   }
   const input = parsedActionSchema.data;
 
-  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
+  const adminToken = getCookie(event, ADMIN_SESSION_COOKIE);
+  if (!await verifyAdminSessionToken(adminToken)) {
     throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست." });
   }
+  const adminClaims = await getAdminSessionClaims(adminToken);
+  const actorAccountId = typeof adminClaims?.options?.accountId === "string" ? adminClaims.options.accountId : null;
   if (input.action !== "list" && input.action !== "audit") {
     assertSameOrigin(event);
     const throttle = await consumeAdminAttempt(`phone-bridge:${clientFingerprint(event)}`);
@@ -91,7 +99,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const sql = await getSql();
-  const actor = "admin";
+  const actor = actorAccountId ?? "admin";
 
   const audit = (entry: {
     deviceId?: string | null;
@@ -103,7 +111,7 @@ export default defineEventHandler(async (event) => {
   }) =>
     writePhoneBridgeAudit({
       deviceId: entry.deviceId ?? null,
-      actor,
+      actorAccountId,
       action: entry.action,
       module: entry.module ?? "",
       result: entry.result ?? "ok",
