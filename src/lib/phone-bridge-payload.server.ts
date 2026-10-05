@@ -4,6 +4,7 @@ import type { PhoneBridgeModulePolicy } from "@/lib/phone-bridge-auth";
 export type SyncModule = keyof PhoneBridgeModulePolicy;
 
 export type { PhoneBridgeModulePolicy } from "@/lib/phone-bridge-auth";
+export { normalizePhoneBridgePolicy } from "@/lib/phone-bridge-auth";
 
 type JsonObject = Record<string, unknown>;
 
