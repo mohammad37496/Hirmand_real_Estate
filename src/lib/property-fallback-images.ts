@@ -13,7 +13,7 @@ export const PROPERTY_FALLBACK_IMAGES: FallbackMap = {
   apartment: [
     "/images/fallback/apartment-01.jpg",
     "/images/fallback/apartment-02.jpg",
-    "/images/fallback/apartment-03.jpg",
+    "/og.jpg",
     "/images/fallback/apartment-04.jpg",
     "/images/fallback/apartment-05.jpg",
     "/images/fallback/apartment-06.jpg",

@@ -38,12 +38,12 @@ try {
       .getByRole("button", { name: "فایل جدید" })
       .click();
 
-    const form = page.locator("form.admin-form-wrap");
+    const form = page.locator("form.admin-form-wrap:visible").first();
     await form.waitFor({ state: "visible", timeout: 10000 });
     // Filling before React hydrates mutates the DOM without updating component
     // state, so the save would submit empty values. Wait for hydration first.
     await page.waitForLoadState("networkidle", { timeout: 30000 }).catch(() => undefined);
-    await form.getByLabel("عنوان").fill(title);
+    await form.locator("#section-basics input").first().fill(title);
     await form.getByLabel("محله").fill("مرکز شهر");
     // The form carries both a "توضیحات" field and an "اطلاعات و توضیحات صاحب فایل"
     // field. Label matching is substring-based by default, so this one has to be
