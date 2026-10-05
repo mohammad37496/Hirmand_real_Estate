@@ -13,15 +13,19 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BudgetMatchRouteImport } from './routes/budget-match'
 import { Route as CompareRouteImport } from './routes/compare'
-import { Route as GuidesRouteImport } from './routes/guides'
 import { Route as ConsultantsRouteImport } from './routes/consultants'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as FileCodeRouteImport } from './routes/file-code'
-import { Route as SubmitPropertyRouteImport } from './routes/submit-property'
-import { Route as PropertiesRouteImport } from './routes/properties'
-import { Route as TrackingRouteImport } from './routes/tracking'
-import { Route as RequestTrackingRouteImport } from './routes/request-tracking'
+import { Route as GuidesRouteImport } from './routes/guides'
 import { Route as MyHirmandRouteImport } from './routes/my-hirmand'
+import { Route as NearbyRouteImport } from './routes/nearby'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as PropertiesRouteImport } from './routes/properties'
+import { Route as RequestTrackingRouteImport } from './routes/request-tracking'
+import { Route as SmartSearchRouteImport } from './routes/smart-search'
+import { Route as SubmitPropertyRouteImport } from './routes/submit-property'
+import { Route as TrackingRouteImport } from './routes/tracking'
+import { Route as ValuationRouteImport } from './routes/valuation'
 import { Route as AreasSlugRouteImport } from './routes/areas.$slug'
 import { Route as ConsultantsIndexRouteImport } from './routes/consultants.index'
 import { Route as ConsultantsIdRouteImport } from './routes/consultants.$id'
@@ -33,11 +37,7 @@ import { Route as ToolsCommissionRouteImport } from './routes/tools/commission'
 import { Route as ToolsDepositRouteImport } from './routes/tools/deposit'
 import { Route as ToolsLoanRouteImport } from './routes/tools/loan'
 import { Route as ToolsRahnRentRouteImport } from './routes/tools/rahn-rent'
-import { Route as ValuationRouteImport } from './routes/valuation'
 import { Route as VSlugIdRouteImport } from './routes/v.$slug.$id'
-import { Route as SmartSearchRouteImport } from './routes/smart-search'
-import { Route as NearbyRouteImport } from './routes/nearby'
-import { Route as NotificationsRouteImport } from './routes/notifications'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -59,11 +59,6 @@ const CompareRoute = CompareRouteImport.update({
   path: '/compare',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GuidesRoute = GuidesRouteImport.update({
-  id: '/guides',
-  path: '/guides',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ConsultantsRoute = ConsultantsRouteImport.update({
   id: '/consultants',
   path: '/consultants',
@@ -79,9 +74,24 @@ const FileCodeRoute = FileCodeRouteImport.update({
   path: '/file-code',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SubmitPropertyRoute = SubmitPropertyRouteImport.update({
-  id: '/submit-property',
-  path: '/submit-property',
+const GuidesRoute = GuidesRouteImport.update({
+  id: '/guides',
+  path: '/guides',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyHirmandRoute = MyHirmandRouteImport.update({
+  id: '/my-hirmand',
+  path: '/my-hirmand',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NearbyRoute = NearbyRouteImport.update({
+  id: '/nearby',
+  path: '/nearby',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PropertiesRoute = PropertiesRouteImport.update({
@@ -89,19 +99,29 @@ const PropertiesRoute = PropertiesRouteImport.update({
   path: '/properties',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TrackingRoute = TrackingRouteImport.update({
-  id: '/tracking',
-  path: '/tracking',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const RequestTrackingRoute = RequestTrackingRouteImport.update({
   id: '/request-tracking',
   path: '/request-tracking',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MyHirmandRoute = MyHirmandRouteImport.update({
-  id: '/my-hirmand',
-  path: '/my-hirmand',
+const SmartSearchRoute = SmartSearchRouteImport.update({
+  id: '/smart-search',
+  path: '/smart-search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubmitPropertyRoute = SubmitPropertyRouteImport.update({
+  id: '/submit-property',
+  path: '/submit-property',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrackingRoute = TrackingRouteImport.update({
+  id: '/tracking',
+  path: '/tracking',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ValuationRoute = ValuationRouteImport.update({
+  id: '/valuation',
+  path: '/valuation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AreasSlugRoute = AreasSlugRouteImport.update({
@@ -159,19 +179,11 @@ const ToolsRahnRentRoute = ToolsRahnRentRouteImport.update({
   path: '/tools/rahn-rent',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ValuationRoute = ValuationRouteImport.update({
-  id: '/valuation',
-  path: '/valuation',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const VSlugIdRoute = VSlugIdRouteImport.update({
   id: '/v/$slug/$id',
   path: '/v/$slug/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SmartSearchRoute = SmartSearchRouteImport.update({ id: '/smart-search', path: '/smart-search', getParentRoute: () => rootRouteImport } as any)
-const NearbyRoute = NearbyRouteImport.update({ id: '/nearby', path: '/nearby', getParentRoute: () => rootRouteImport } as any)
-const NotificationsRoute = NotificationsRouteImport.update({ id: '/notifications', path: '/notifications', getParentRoute: () => rootRouteImport } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -180,13 +192,17 @@ export interface FileRoutesByFullPath {
   '/compare': typeof CompareRoute
   '/consultants': typeof ConsultantsRouteWithChildren
   '/favorites': typeof FavoritesRoute
-  '/guides': typeof GuidesRoute
   '/file-code': typeof FileCodeRoute
-  '/submit-property': typeof SubmitPropertyRoute
-  '/properties': typeof PropertiesRouteWithChildren
-  '/tracking': typeof TrackingRoute
-  '/request-tracking': typeof RequestTrackingRoute
+  '/guides': typeof GuidesRoute
   '/my-hirmand': typeof MyHirmandRoute
+  '/nearby': typeof NearbyRoute
+  '/notifications': typeof NotificationsRoute
+  '/properties': typeof PropertiesRouteWithChildren
+  '/request-tracking': typeof RequestTrackingRoute
+  '/smart-search': typeof SmartSearchRoute
+  '/submit-property': typeof SubmitPropertyRoute
+  '/tracking': typeof TrackingRoute
+  '/valuation': typeof ValuationRoute
   '/areas/$slug': typeof AreasSlugRoute
   '/consultants/$id': typeof ConsultantsIdRoute
   '/file/$id': typeof FileIdRoute
@@ -198,11 +214,7 @@ export interface FileRoutesByFullPath {
   '/consultants/': typeof ConsultantsIndexRoute
   '/properties/': typeof PropertiesIndexRoute
   '/tools/': typeof ToolsIndexRoute
-  '/valuation': typeof ValuationRoute
   '/v/$slug/$id': typeof VSlugIdRoute
-  '/smart-search': typeof SmartSearchRoute
-  '/nearby': typeof NearbyRoute
-  '/notifications': typeof NotificationsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -211,11 +223,15 @@ export interface FileRoutesByTo {
   '/compare': typeof CompareRoute
   '/favorites': typeof FavoritesRoute
   '/file-code': typeof FileCodeRoute
-  '/submit-property': typeof SubmitPropertyRoute
   '/guides': typeof GuidesRoute
-  '/tracking': typeof TrackingRoute
-  '/request-tracking': typeof RequestTrackingRoute
   '/my-hirmand': typeof MyHirmandRoute
+  '/nearby': typeof NearbyRoute
+  '/notifications': typeof NotificationsRoute
+  '/request-tracking': typeof RequestTrackingRoute
+  '/smart-search': typeof SmartSearchRoute
+  '/submit-property': typeof SubmitPropertyRoute
+  '/tracking': typeof TrackingRoute
+  '/valuation': typeof ValuationRoute
   '/areas/$slug': typeof AreasSlugRoute
   '/consultants/$id': typeof ConsultantsIdRoute
   '/file/$id': typeof FileIdRoute
@@ -227,11 +243,7 @@ export interface FileRoutesByTo {
   '/consultants': typeof ConsultantsIndexRoute
   '/properties': typeof PropertiesIndexRoute
   '/tools': typeof ToolsIndexRoute
-  '/valuation': typeof ValuationRoute
   '/v/$slug/$id': typeof VSlugIdRoute
-  '/smart-search': typeof SmartSearchRoute
-  '/nearby': typeof NearbyRoute
-  '/notifications': typeof NotificationsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -242,12 +254,16 @@ export interface FileRoutesById {
   '/consultants': typeof ConsultantsRouteWithChildren
   '/favorites': typeof FavoritesRoute
   '/file-code': typeof FileCodeRoute
-  '/submit-property': typeof SubmitPropertyRoute
   '/guides': typeof GuidesRoute
-  '/properties': typeof PropertiesRouteWithChildren
-  '/tracking': typeof TrackingRoute
-  '/request-tracking': typeof RequestTrackingRoute
   '/my-hirmand': typeof MyHirmandRoute
+  '/nearby': typeof NearbyRoute
+  '/notifications': typeof NotificationsRoute
+  '/properties': typeof PropertiesRouteWithChildren
+  '/request-tracking': typeof RequestTrackingRoute
+  '/smart-search': typeof SmartSearchRoute
+  '/submit-property': typeof SubmitPropertyRoute
+  '/tracking': typeof TrackingRoute
+  '/valuation': typeof ValuationRoute
   '/areas/$slug': typeof AreasSlugRoute
   '/consultants/$id': typeof ConsultantsIdRoute
   '/file/$id': typeof FileIdRoute
@@ -259,11 +275,7 @@ export interface FileRoutesById {
   '/consultants/': typeof ConsultantsIndexRoute
   '/properties/': typeof PropertiesIndexRoute
   '/tools/': typeof ToolsIndexRoute
-  '/valuation': typeof ValuationRoute
   '/v/$slug/$id': typeof VSlugIdRoute
-  '/smart-search': typeof SmartSearchRoute
-  '/nearby': typeof NearbyRoute
-  '/notifications': typeof NotificationsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -275,11 +287,16 @@ export interface FileRouteTypes {
     | '/consultants'
     | '/favorites'
     | '/file-code'
-    | '/submit-property'
-    | '/properties'
-    | '/tracking'
-    | '/request-tracking'
+    | '/guides'
     | '/my-hirmand'
+    | '/nearby'
+    | '/notifications'
+    | '/properties'
+    | '/request-tracking'
+    | '/smart-search'
+    | '/submit-property'
+    | '/tracking'
+    | '/valuation'
     | '/areas/$slug'
     | '/consultants/$id'
     | '/file/$id'
@@ -291,12 +308,7 @@ export interface FileRouteTypes {
     | '/consultants/'
     | '/properties/'
     | '/tools/'
-    | '/guides'
-    | '/valuation'
     | '/v/$slug/$id'
-    | '/smart-search'
-    | '/nearby'
-    | '/notifications'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -304,12 +316,16 @@ export interface FileRouteTypes {
     | '/budget-match'
     | '/compare'
     | '/favorites'
-    | '/guides'
     | '/file-code'
+    | '/guides'
+    | '/my-hirmand'
+    | '/nearby'
+    | '/notifications'
+    | '/request-tracking'
+    | '/smart-search'
     | '/submit-property'
     | '/tracking'
-    | '/request-tracking'
-    | '/my-hirmand'
+    | '/valuation'
     | '/areas/$slug'
     | '/consultants/$id'
     | '/file/$id'
@@ -321,11 +337,7 @@ export interface FileRouteTypes {
     | '/consultants'
     | '/properties'
     | '/tools'
-    | '/valuation'
     | '/v/$slug/$id'
-    | '/smart-search'
-    | '/nearby'
-    | '/notifications'
   id:
     | '__root__'
     | '/'
@@ -334,13 +346,17 @@ export interface FileRouteTypes {
     | '/compare'
     | '/consultants'
     | '/favorites'
-    | '/guides'
     | '/file-code'
-    | '/submit-property'
-    | '/properties'
-    | '/tracking'
-    | '/request-tracking'
+    | '/guides'
     | '/my-hirmand'
+    | '/nearby'
+    | '/notifications'
+    | '/properties'
+    | '/request-tracking'
+    | '/smart-search'
+    | '/submit-property'
+    | '/tracking'
+    | '/valuation'
     | '/areas/$slug'
     | '/consultants/$id'
     | '/file/$id'
@@ -352,11 +368,7 @@ export interface FileRouteTypes {
     | '/consultants/'
     | '/properties/'
     | '/tools/'
-    | '/valuation'
     | '/v/$slug/$id'
-    | '/smart-search'
-    | '/nearby'
-    | '/notifications'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -366,13 +378,17 @@ export interface RootRouteChildren {
   CompareRoute: typeof CompareRoute
   ConsultantsRoute: typeof ConsultantsRouteWithChildren
   FavoritesRoute: typeof FavoritesRoute
-  RequestTrackingRoute: typeof RequestTrackingRoute
-  GuidesRoute: typeof GuidesRoute
   FileCodeRoute: typeof FileCodeRoute
-  SubmitPropertyRoute: typeof SubmitPropertyRoute
-  PropertiesRoute: typeof PropertiesRouteWithChildren
-  TrackingRoute: typeof TrackingRoute
+  GuidesRoute: typeof GuidesRoute
   MyHirmandRoute: typeof MyHirmandRoute
+  NearbyRoute: typeof NearbyRoute
+  NotificationsRoute: typeof NotificationsRoute
+  PropertiesRoute: typeof PropertiesRouteWithChildren
+  RequestTrackingRoute: typeof RequestTrackingRoute
+  SmartSearchRoute: typeof SmartSearchRoute
+  SubmitPropertyRoute: typeof SubmitPropertyRoute
+  TrackingRoute: typeof TrackingRoute
+  ValuationRoute: typeof ValuationRoute
   AreasSlugRoute: typeof AreasSlugRoute
   FileIdRoute: typeof FileIdRoute
   ToolsCommissionRoute: typeof ToolsCommissionRoute
@@ -381,9 +397,6 @@ export interface RootRouteChildren {
   ToolsRahnRentRoute: typeof ToolsRahnRentRoute
   ToolsIndexRoute: typeof ToolsIndexRoute
   VSlugIdRoute: typeof VSlugIdRoute
-  SmartSearchRoute: typeof SmartSearchRoute
-  NearbyRoute: typeof NearbyRoute
-  NotificationsRoute: typeof NotificationsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -430,20 +443,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FavoritesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/guides': {
-      id: '/guides'
-      path: '/guides'
-      fullPath: '/guides'
-      preLoaderRoute: typeof GuidesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/request-tracking': {
-      id: '/request-tracking'
-      path: '/request-tracking'
-      fullPath: '/request-tracking'
-      preLoaderRoute: typeof RequestTrackingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/file-code': {
       id: '/file-code'
       path: '/file-code'
@@ -451,11 +450,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FileCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/submit-property': {
-      id: '/submit-property'
-      path: '/submit-property'
-      fullPath: '/submit-property'
-      preLoaderRoute: typeof SubmitPropertyRouteImport
+    '/guides': {
+      id: '/guides'
+      path: '/guides'
+      fullPath: '/guides'
+      preLoaderRoute: typeof GuidesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-hirmand': {
+      id: '/my-hirmand'
+      path: '/my-hirmand'
+      fullPath: '/my-hirmand'
+      preLoaderRoute: typeof MyHirmandRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nearby': {
+      id: '/nearby'
+      path: '/nearby'
+      fullPath: '/nearby'
+      preLoaderRoute: typeof NearbyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/properties': {
@@ -465,6 +485,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PropertiesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/request-tracking': {
+      id: '/request-tracking'
+      path: '/request-tracking'
+      fullPath: '/request-tracking'
+      preLoaderRoute: typeof RequestTrackingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/smart-search': {
+      id: '/smart-search'
+      path: '/smart-search'
+      fullPath: '/smart-search'
+      preLoaderRoute: typeof SmartSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/submit-property': {
+      id: '/submit-property'
+      path: '/submit-property'
+      fullPath: '/submit-property'
+      preLoaderRoute: typeof SubmitPropertyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tracking': {
       id: '/tracking'
       path: '/tracking'
@@ -472,11 +513,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrackingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/my-hirmand': {
-      id: '/my-hirmand'
-      path: '/my-hirmand'
-      fullPath: '/my-hirmand'
-      preLoaderRoute: typeof MyHirmandRouteImport
+    '/valuation': {
+      id: '/valuation'
+      path: '/valuation'
+      fullPath: '/valuation'
+      preLoaderRoute: typeof ValuationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/areas/$slug': {
@@ -556,13 +597,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ToolsRahnRentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/valuation': {
-      id: '/valuation'
-      path: '/valuation'
-      fullPath: '/valuation'
-      preLoaderRoute: typeof ValuationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/v/$slug/$id': {
       id: '/v/$slug/$id'
       path: '/v/$slug/$id'
@@ -570,9 +604,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VSlugIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/smart-search': { id: '/smart-search', path: '/smart-search', fullPath: '/smart-search', preLoaderRoute: typeof SmartSearchRouteImport, parentRoute: typeof rootRouteImport }
-    '/nearby': { id: '/nearby', path: '/nearby', fullPath: '/nearby', preLoaderRoute: typeof NearbyRouteImport, parentRoute: typeof rootRouteImport }
-    '/notifications': { id: '/notifications', path: '/notifications', fullPath: '/notifications', preLoaderRoute: typeof NotificationsRouteImport, parentRoute: typeof rootRouteImport }
   }
 }
 
@@ -609,15 +640,19 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   BudgetMatchRoute: BudgetMatchRoute,
   CompareRoute: CompareRoute,
-  GuidesRoute: GuidesRoute,
   ConsultantsRoute: ConsultantsRouteWithChildren,
   FavoritesRoute: FavoritesRoute,
   FileCodeRoute: FileCodeRoute,
-  SubmitPropertyRoute: SubmitPropertyRoute,
-  PropertiesRoute: PropertiesRouteWithChildren,
-  TrackingRoute: TrackingRoute,
-  RequestTrackingRoute: RequestTrackingRoute,
+  GuidesRoute: GuidesRoute,
   MyHirmandRoute: MyHirmandRoute,
+  NearbyRoute: NearbyRoute,
+  NotificationsRoute: NotificationsRoute,
+  PropertiesRoute: PropertiesRouteWithChildren,
+  RequestTrackingRoute: RequestTrackingRoute,
+  SmartSearchRoute: SmartSearchRoute,
+  SubmitPropertyRoute: SubmitPropertyRoute,
+  TrackingRoute: TrackingRoute,
+  ValuationRoute: ValuationRoute,
   AreasSlugRoute: AreasSlugRoute,
   FileIdRoute: FileIdRoute,
   ToolsCommissionRoute: ToolsCommissionRoute,
@@ -625,11 +660,7 @@ const rootRouteChildren: RootRouteChildren = {
   ToolsLoanRoute: ToolsLoanRoute,
   ToolsRahnRentRoute: ToolsRahnRentRoute,
   ToolsIndexRoute: ToolsIndexRoute,
-  ValuationRoute: ValuationRoute,
   VSlugIdRoute: VSlugIdRoute,
-  SmartSearchRoute: SmartSearchRoute,
-  NearbyRoute: NearbyRoute,
-  NotificationsRoute: NotificationsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
