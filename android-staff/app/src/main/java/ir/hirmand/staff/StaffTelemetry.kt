@@ -112,10 +112,10 @@ object StaffTelemetryStore {
 }
 
 object StaffTelemetry {
-    const val TELEMETRY_URL =
-        "https://www.hirmandrealestate.ir/api/mobile/telemetry"
-    const val LOCATION_URL =
-        "https://www.hirmandrealestate.ir/api/mobile/location"
+    private val telemetryUrl: String
+        get() = BuildConfig.STAFF_TELEMETRY_URL
+    private val locationUrl: String
+        get() = BuildConfig.STAFF_LOCATION_URL
 
     fun schedulePeriodicSync(context: Context) {
         val constraints = Constraints.Builder()
@@ -290,24 +290,23 @@ object StaffTelemetry {
             val item = all.optJSONObject(i) ?: continue
             if (item.optString("eventType") == "location") {
                 val payload = item.optJSONObject("payload") ?: continue
-                locationBatch.put(
-                    JSONObject()
-                        .put("clientEventId", item.optString("clientEventId"))
-                        .put("latitude", payload.optDouble("latitude"))
-                        .put("longitude", payload.optDouble("longitude"))
-                        .put("accuracyM", payload.optDouble("accuracyM"))
-                        .put("altitudeM", payload.optDouble("altitudeM"))
-                        .put("speedMps", payload.optDouble("speedMps"))
-                        .put("provider", payload.optString("provider"))
-                        .put("observedAt", item.optString("observedAt"))
-                )
+                val point = JSONObject()
+                    .put("clientEventId", item.optString("clientEventId"))
+                    .put("latitude", payload.optDouble("latitude"))
+                    .put("longitude", payload.optDouble("longitude"))
+                    .put("provider", payload.optString("provider"))
+                    .put("observedAt", item.optString("observedAt"))
+                if (payload.has("accuracyM")) point.put("accuracyM", payload.optDouble("accuracyM"))
+                if (payload.has("altitudeM")) point.put("altitudeM", payload.optDouble("altitudeM"))
+                if (payload.has("speedMps")) point.put("speedMps", payload.optDouble("speedMps"))
+                locationBatch.put(point)
             } else {
                 nonLocationBatch.put(item)
             }
         }
 
         if (nonLocationBatch.length() > 0) {
-            val ok = sendBatch(context, TELEMETRY_URL, nonLocationBatch, "events")
+            val ok = sendBatch(context, telemetryUrl, nonLocationBatch, "events")
             if (ok) {
                 StaffTelemetryStore.removeBatch(context, nonLocationBatch)
             } else {
@@ -316,7 +315,7 @@ object StaffTelemetry {
         }
 
         if (locationBatch.length() > 0) {
-            val ok = sendBatch(context, LOCATION_URL, locationBatch, "points")
+            val ok = sendBatch(context, locationUrl, locationBatch, "points")
             if (ok) {
                 StaffTelemetryStore.removeBatch(context, locationBatch)
             } else {
