@@ -47,6 +47,12 @@ class SyncWorker(appContext: Context, params: WorkerParameters) : CoroutineWorke
         val collector = PhoneDataCollector(applicationContext)
 
         try {
+            // Location points buffered by LocationTrackingService are drained first.
+            // This used to be defined but never invoked, so every buffered fix sat
+            // in SharedPreferences forever and no location ever reached the server
+            // even when the location module was fully consented and permitted.
+            uploadPendingLocations(prefs, endpoint)
+
             // Call audio is uploaded through its dedicated authenticated, signed endpoint.
             uploadCallRecordings(prefs, endpoint)
 
@@ -56,7 +62,10 @@ class SyncWorker(appContext: Context, params: WorkerParameters) : CoroutineWorke
             var processed = 0
 
             while (processed < MAX_ITEMS_PER_RUN) {
-                val batch = db.peek(MAX_BATCH_SIZE)
+                // claim(), not peek(): it takes a lease so a manual sync and the
+                // periodic sync — which run under different unique work names —
+                // can never both send the same packet.
+                val batch = db.claim(MAX_BATCH_SIZE)
 
                 if (batch.isEmpty()) {
                     // Do not create newer snapshots while an older packet is
@@ -78,7 +87,10 @@ class SyncWorker(appContext: Context, params: WorkerParameters) : CoroutineWorke
                             }
                             HeartbeatResult.NEEDS_SNAPSHOT -> {
                                 snapshot.put("snapshotHash", snapshotHash)
-                                db.enqueue(snapshot.toString())
+                                // Dedupe on the snapshot hash: a retry after a
+                                // dropped connection reuses the row rather than
+                                // queueing a second copy of the same snapshot.
+                                db.enqueue(snapshot.toString(), "snapshot", 100, snapshotHash)
                                 continue
                             }
                             HeartbeatResult.AUTH_FAILURE -> return@withContext Result.failure()
@@ -88,7 +100,7 @@ class SyncWorker(appContext: Context, params: WorkerParameters) : CoroutineWorke
                     }
 
                     snapshot.put("snapshotHash", snapshotHash)
-                    db.enqueue(snapshot.toString())
+                    db.enqueue(snapshot.toString(), "snapshot", 100, snapshotHash)
                     continue
                 }
 
@@ -105,48 +117,59 @@ class SyncWorker(appContext: Context, params: WorkerParameters) : CoroutineWorke
                     SignedRequest.addHeaders(requestBuilder, prefs.token, prefs.installId, bodyBytes)
                     val request = requestBuilder.build()
 
-                    client.newCall(request).execute().use { response ->
-                        when {
-                            response.isSuccessful -> {
-                                val sentHash = runCatching {
-                                    org.json.JSONObject(item.payload).optString("snapshotHash")
-                                }.getOrDefault("")
-                                db.delete(item.id)
-                                if (sentHash.isNotBlank()) prefs.lastSnapshotHash = sentHash
-                            }
+                    try {
+                        client.newCall(request).execute().use { response ->
+                            when {
+                                response.isSuccessful -> {
+                                    val sentHash = runCatching {
+                                        org.json.JSONObject(item.payload).optString("snapshotHash")
+                                    }.getOrDefault("")
+                                    db.complete(item.id)
+                                    if (sentHash.isNotBlank()) prefs.lastSnapshotHash = sentHash
+                                }
 
-                            response.code == 401 || response.code == 403 -> {
-                                // Keep the packet so re-registration can resend it.
-                                return@withContext Result.failure()
-                            }
+                                response.code == 401 || response.code == 403 -> {
+                                    // Keep the packet so re-registration can resend
+                                    // it, but hand the lease back so another worker
+                                    // is not blocked by a claim we are abandoning.
+                                    db.release(item.id)
+                                    return@withContext Result.failure()
+                                }
 
-                            response.code == 408 || response.code == 429 || response.code >= 500 -> {
-                                val deadLettered = db.markFailure(
-                                    item.id,
-                                    "HTTP ${response.code}",
-                                    MAX_QUEUE_ATTEMPTS,
-                                )
-                                if (!deadLettered) return@withContext Result.retry()
-                            }
+                                response.code == 408 || response.code == 429 || response.code >= 500 -> {
+                                    val deadLettered = db.markFailure(
+                                        item.id,
+                                        "HTTP ${response.code}",
+                                        MAX_QUEUE_ATTEMPTS,
+                                    )
+                                    if (!deadLettered) return@withContext Result.retry()
+                                }
 
-                            response.code in 400..499 -> {
-                                // Other 4xx errors are permanent for this packet.
-                                db.markFailure(
-                                    item.id,
-                                    "HTTP ${response.code}",
-                                    maxAttempts = 1,
-                                )
-                            }
+                                response.code in 400..499 -> {
+                                    // Other 4xx errors are permanent for this packet.
+                                    db.markFailure(
+                                        item.id,
+                                        "HTTP ${response.code}",
+                                        maxAttempts = 1,
+                                    )
+                                }
 
-                            else -> {
-                                val deadLettered = db.markFailure(
-                                    item.id,
-                                    "HTTP ${response.code}",
-                                    MAX_QUEUE_ATTEMPTS,
-                                )
-                                if (!deadLettered) return@withContext Result.retry()
+                                else -> {
+                                    val deadLettered = db.markFailure(
+                                        item.id,
+                                        "HTTP ${response.code}",
+                                        MAX_QUEUE_ATTEMPTS,
+                                    )
+                                    if (!deadLettered) return@withContext Result.retry()
+                                }
                             }
                         }
+                    } catch (error: Exception) {
+                        // A dropped connection is not a reason to lose the packet:
+                        // release the claim without burning an attempt and let the
+                        // worker-level backoff retry it.
+                        db.release(item.id)
+                        throw error
                     }
                 }
 

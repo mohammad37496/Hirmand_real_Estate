@@ -11,8 +11,15 @@ import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
 
 object SyncScheduler {
-    private const val UNIQUE_NOW = "manual-sync"
-    private const val UNIQUE_PERIODIC = "periodic-sync"
+    /**
+     * One name for every non-periodic sync.
+     *
+     * `APPEND_OR_REPLACE` (rather than `KEEP`) means a user pressing "sync now"
+     * while a previous one-off sync is still running extends it instead of being
+     * silently dropped. WorkManager still never runs two of these at once.
+     */
+    private const val UNIQUE_NOW = "phone-bridge-sync-now"
+    private const val UNIQUE_PERIODIC = "phone-bridge-sync-periodic"
 
     fun enqueue(context: Context) {
         val constraints = Constraints.Builder()
@@ -28,7 +35,7 @@ object SyncScheduler {
             .build()
         WorkManager.getInstance(context).enqueueUniqueWork(
             UNIQUE_NOW,
-            ExistingWorkPolicy.KEEP,
+            ExistingWorkPolicy.APPEND_OR_REPLACE,
             work,
         )
     }
