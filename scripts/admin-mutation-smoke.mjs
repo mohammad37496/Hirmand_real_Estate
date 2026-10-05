@@ -38,7 +38,7 @@ try {
       .getByRole("button", { name: "فایل جدید" })
       .click();
 
-    const form = page.locator("form.admin-form-wrap");
+    const form = page.locator("form.admin-form-wrap:visible").first();
     await form.waitFor({ state: "visible", timeout: 10000 });
     // Filling before React hydrates mutates the DOM without updating component
     // state, so the save would submit empty values. Wait for hydration first.
