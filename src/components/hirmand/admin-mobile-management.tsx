@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   Ban,
@@ -201,7 +201,7 @@ function DeviceRegistryPanel() {
   const [error, setError] = useState("");
   const [busyDeviceId, setBusyDeviceId] = useState("");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -211,11 +211,11 @@ function DeviceRegistryPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const changeStatus = async (deviceId: string, nextAction: "approve" | "revoke") => {
     setBusyDeviceId(deviceId);
