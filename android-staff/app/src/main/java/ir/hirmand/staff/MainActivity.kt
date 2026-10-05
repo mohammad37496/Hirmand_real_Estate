@@ -274,30 +274,31 @@ class MainActivity : AppCompatActivity() {
             "Purpose of This Agreement",
             listOf(
                 "This Agreement establishes the rules, responsibilities, permissions, security requirements, data-access practices, and monitoring conditions applicable to employees and authorized personnel who use a mobile device owned, provided, controlled, or designated by Hirmand Real Estate.",
-                "The purpose of this Agreement is to ensure that every employee understands clearly and in advance: that the mobile device belongs to Hirmand Real Estate or is designated as a company business device; that the device is provided primarily for legitimate business and operational purposes; which categories of device information and functions the Hirmand Real Estate application may access; why such access may be required; which information may be processed, stored, transmitted, synchronized, or made available to authorized company personnel; what the employee is agreeing to when accepting this Agreement; and how permissions may be granted, denied, revoked, or changed under Android and within the application.",
+                "The purpose of this Agreement is to ensure that every employee understands clearly and in advance whether the phone is company-owned and fully managed, or personally owned and used through an Android Work Profile; which categories of device information and functions the Hirmand Real Estate application may access; why such access may be required; which information may be processed, stored, transmitted, synchronized, or made available to authorized company personnel; what the employee is agreeing to when accepting this Agreement; and how permissions may be granted, denied, revoked, or changed under Android and within the application.",
                 "This Agreement is intended to provide clear notice and informed consent. It does not authorize the application to bypass Android security mechanisms, obtain permissions without system approval, or access information that Android or the application's technical controls prohibit."
             )
         ), lp(-1, -2).apply { bottomMargin = dp(14) })
 
         root.addView(buildContractSection(
             "2",
-            "Company Ownership of the Device",
+            "Device Ownership and Management Mode",
             listOf(
-                "The mobile device used with the application is a company-owned or company-controlled device intended for use by authorized Hirmand Real Estate personnel."
+                "The Hirmand employee application supports two Android Enterprise deployment modes. On a company-owned phone, Hirmand may enroll the device as Fully Managed / Device Owner. On a personally owned phone, Hirmand may use an Android Work Profile / Profile Owner so that the managed workspace remains separated from the personal profile.",
+                "The selected deployment mode determines the technical scope of device management and which Android policies are available."
             ),
             listOf(
-                "The device is primarily a business asset.",
-                "The company may configure, maintain, secure, update, inspect, reset, restrict, or replace the device when reasonably required for business, security, maintenance, compliance, or operational purposes.",
-                "The employee must not intentionally disable or circumvent company security controls.",
-                "The employee must immediately report loss, theft, unauthorized access, suspicious activity, or suspected compromise of the device.",
-                "The employee understands that company-device usage may be subject to operational monitoring and security controls described in this Agreement."
+                "Company-owned phone: the device may be Fully Managed and subject to organization-wide device policies appropriate for company operations.",
+                "Personally owned phone: the company-managed workspace is the Work Profile; personal-profile data remains outside that managed workspace.",
+                "The employee must not intentionally disable or circumvent the applicable Android Enterprise management controls.",
+                "The employee must immediately report loss, theft, unauthorized access, suspicious activity, or suspected compromise.",
+                "The employee understands that the technical scope of monitoring and management depends on the deployment mode and the Android policies actually enabled."
             )
         ), lp(-1, -2).apply { bottomMargin = dp(14) })
 
         root.addView(buildFullAgreementLinkCard(), lp(-1, -2).apply { bottomMargin = dp(16) })
 
         val signedCheck = CheckBox(this).apply {
-            text = "I have read, understood, and voluntarily acknowledge and accept the Hirmand Real Estate Employee Mobile Device Use, Monitoring & Consent Agreement, including the disclosed sensitive permissions, device-access categories, monitoring conditions, data-processing purposes, and responsibilities."
+            text = "I have read, understood, and voluntarily acknowledge and accept the Hirmand Real Estate Employee Mobile Device Use, Monitoring & Consent Agreement, including the disclosed deployment modes, sensitive permissions, device-access categories, monitoring conditions, data-processing purposes, and responsibilities."
             textSize = 13f
             setTextColor(getColor(R.color.hirmand_text))
             gravity = Gravity.TOP
