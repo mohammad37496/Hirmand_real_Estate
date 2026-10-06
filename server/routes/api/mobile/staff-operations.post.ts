@@ -1,4 +1,4 @@
-import { createError, defineEventHandler, getQuery, readBody, setResponseHeader } from "h3";
+import { createError, defineEventHandler, readBody, setResponseHeader } from "h3";
 import { randomUUID } from "node:crypto";
 import { dbSource, getSql } from "@/lib/db";
 import { requireStaffMobileDevice } from "@/lib/staff-mobile-auth.server";
