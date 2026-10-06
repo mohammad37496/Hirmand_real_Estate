@@ -38,8 +38,6 @@ android {
             "STAFF_CALL_RECORDING_URL",
             "\"https://www.hirmandrealestate.ir/api/mobile/staff-call-recordings\""
         )
-    }
-
         buildConfigField(
             "String",
             "STAFF_OPERATIONS_URL",
@@ -50,6 +48,8 @@ android {
             "STAFF_PROPERTY_CAPTURE_URL",
             "\"https://www.hirmandrealestate.ir/api/mobile/staff-property-captures\""
         )
+
+    }
 
     buildTypes {
         release {
