@@ -292,8 +292,16 @@ class StaffOperationsActivity:AppCompatActivity(){
             }else if(contact.propertyId!=null){
                 c.addView(txt("یک ملک اصلی به پرونده متصل است.",11f),lp(-1,-2))
             }
-            val count=data.interactions.count{it.contactId==contact.id}
-            c.addView(txt("تعداد تعامل ثبت‌شده: "+count.toLocaleFa(),11f),lp(-1,-2).apply{topMargin=dp(5)})
+            val contactInteractions=data.interactions.filter{it.contactId==contact.id}
+            c.addView(txt("تعداد تعامل ثبت‌شده: "+contactInteractions.size.toLocaleFa(),11f),lp(-1,-2).apply{topMargin=dp(5)})
+            for(interaction in contactInteractions.take(2)){
+                c.addView(txt(
+                    (if(interaction.kind=="call")"تماس" else if(interaction.kind=="meeting")"بازدید/جلسه" else "یادداشت")+
+                    " · "+(interaction.note.ifBlank{"بدون شرح"})+
+                    " · "+dateText(interaction.createdAt),
+                    10.5f
+                ),lp(-1,-2))
+            }
             if(contact.phone.isNotBlank())c.addView(button("تماس با مشتری"){startActivity(Intent(Intent.ACTION_DIAL,Uri.parse("tel:"+Uri.encode(contact.phone))))},lp(-1,dp(43)).apply{topMargin=dp(7)})
             c.addView(button("ثبت نتیجه تماس / تعیین پیگیری"){showNoteDialog(contact)},lp(-1,dp(43)).apply{topMargin=dp(7)})
             root.addView(c,lp(-1,-2).apply{bottomMargin=dp(8)})
