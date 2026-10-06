@@ -1,4 +1,4 @@
-import { createError, defineEventHandler, getHeader, setResponseHeader } from "h3";
+import { createError, defineEventHandler, setResponseHeader } from "h3";
 import { dbSource, getSql } from "@/lib/db";
 import { requireStaffMobileDevice } from "@/lib/staff-mobile-auth.server";
 
