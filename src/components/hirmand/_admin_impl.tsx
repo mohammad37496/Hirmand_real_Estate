@@ -1804,15 +1804,14 @@ export function AdminPropertiesPage() {
                     <span className="admin-nav-btn-label">{item.label}</span>
                   </button>
                   {item.view === "integrity" ? (
-                    <Link
-                      to="/admin-mobile-management"
-                      search={{}}
+                    <a
+                      href="/admin-mobile-management"
                       className="admin-nav-btn"
                       style={{ textDecoration: "none" }}
                     >
                       <span className="admin-nav-btn-icon" aria-hidden="true"><Smartphone size={18} /></span>
                       <span className="admin-nav-btn-label">مدیریت تلفن همراه</span>
-                    </Link>
+                    </a>
                   ) : null}
                 </Fragment>
               );
