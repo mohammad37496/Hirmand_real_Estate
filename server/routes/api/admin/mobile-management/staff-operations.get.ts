@@ -4,6 +4,7 @@ import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } 
 import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 import { runStaffFollowUpAutomation } from "@/lib/staff-automation.server";
+import { recalculateActiveLeadScores } from "@/lib/lead-scoring.server";
 
 async function requireSecurityAdmin(event:H3Event){
   const token=getCookie(event,ADMIN_SESSION_COOKIE);
@@ -30,6 +31,7 @@ export default defineEventHandler(async(event)=>{
 
   const sql=await getSql();
   const automation=await runStaffFollowUpAutomation(sql).catch(()=>({created:0,overdue:0}));
+  await recalculateActiveLeadScores(sql,500).catch(()=>({updated:0}));
 
   const [staff,devices,tasks,visits,contacts,interactions,attendance,captures,health,performance,daily,leads,properties,calls,recordings,pipelineRows,analyticsRows]=await Promise.all([
     sql.query<Record<string,unknown>>("select id,name,role from consultants where is_active=true order by sort_order asc,name asc"),
