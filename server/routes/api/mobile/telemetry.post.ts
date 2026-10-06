@@ -46,6 +46,7 @@ export default defineEventHandler(async (event) => {
   let accepted = 0;
   let rejected = 0;
   const acceptedTypes: string[] = [];
+  let latestHeartbeatPayload: Record<string, unknown> | null = null;
 
   for (const item of events) {
     if (!item || typeof item !== "object") {
@@ -89,9 +90,15 @@ export default defineEventHandler(async (event) => {
     if (rows.length) {
       accepted++;
       acceptedTypes.push(eventType);
+      if (eventType === "app_heartbeat") {
+        latestHeartbeatPayload = payload as Record<string, unknown>;
+      }
     } else {
       // A duplicate event is already persisted and is therefore safe to count as accepted.
       accepted++;
+      if (eventType === "app_heartbeat") {
+        latestHeartbeatPayload = payload as Record<string, unknown>;
+      }
     }
   }
 
@@ -106,6 +113,30 @@ export default defineEventHandler(async (event) => {
     "update staff_mobile_devices set last_seen_at=current_timestamp where id=$1",
     [device.id],
   );
+
+  if (latestHeartbeatPayload) {
+    const modeRaw = cleanText(latestHeartbeatPayload.managementMode, 32);
+    const managementMode = new Set([
+      "device_owner",
+      "profile_owner",
+      "legacy_device_admin",
+      "unmanaged",
+    ]).has(modeRaw)
+      ? modeRaw
+      : "unknown";
+    const manufacturer = cleanText(latestHeartbeatPayload.manufacturer, 80);
+    const model = cleanText(latestHeartbeatPayload.model, 120);
+    const androidVersion = cleanText(latestHeartbeatPayload.androidVersion, 40);
+    const rawSdk = Number(latestHeartbeatPayload.sdkInt);
+    const sdkInt = Number.isInteger(rawSdk) && rawSdk >= 0 && rawSdk <= 100 ? rawSdk : null;
+
+    await sql.query(
+      "update staff_mobile_devices set " +
+        "management_mode=$1,manufacturer=$2,model=$3,android_version=$4,sdk_int=$5,last_sync_at=current_timestamp " +
+        "where id=$6",
+      [managementMode, manufacturer, model, androidVersion, sdkInt, device.id],
+    );
+  }
 
   return {
     success: true,
