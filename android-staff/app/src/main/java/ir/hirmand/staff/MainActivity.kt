@@ -611,6 +611,8 @@ class MainActivity : AppCompatActivity() {
                 editor.apply()
                 StaffTelemetry.schedulePeriodicSync(this)
                 StaffTelemetry.enqueueHeartbeat(this)
+                StaffCallSync.schedulePeriodicSync(this)
+                StaffCallSync.enqueue(this)
             }
 
             runOnUiThread {
