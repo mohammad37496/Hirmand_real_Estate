@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminMobileManagementRouteImport } from './routes/admin-mobile-management'
 import { Route as AdminMobileManagementCallsRouteImport } from './routes/admin-mobile-management.calls'
+import { Route as AdminMobileManagementOperationsRouteImport } from './routes/admin-mobile-management.operations'
 import { Route as AdminMobileManagementEmployeeIdRouteImport } from './routes/admin-mobile-management.$employeeId'
 import { Route as StaffAgreementRouteImport } from './routes/staff-agreement'
 import { Route as BudgetMatchRouteImport } from './routes/budget-match'
@@ -61,6 +62,11 @@ const AdminMobileManagementRoute = AdminMobileManagementRouteImport.update({
 const AdminMobileManagementCallsRoute = AdminMobileManagementCallsRouteImport.update({
   id: '/admin-mobile-management/calls',
   path: '/admin-mobile-management/calls',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminMobileManagementOperationsRoute = AdminMobileManagementOperationsRouteImport.update({
+  id: '/admin-mobile-management/operations',
+  path: '/admin-mobile-management/operations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminMobileManagementEmployeeIdRoute = AdminMobileManagementEmployeeIdRouteImport.update({
@@ -214,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/admin-mobile-management': typeof AdminMobileManagementRoute
   '/admin-mobile-management/calls': typeof AdminMobileManagementCallsRoute
+  '/admin-mobile-management/operations': typeof AdminMobileManagementOperationsRoute
   '/admin-mobile-management/$employeeId': typeof AdminMobileManagementEmployeeIdRoute
   '/staff-agreement': typeof StaffAgreementRoute
   '/budget-match': typeof BudgetMatchRoute
@@ -318,6 +325,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-mobile-management'
     | '/admin-mobile-management/calls'
+    | '/admin-mobile-management/operations'
     | '/admin-mobile-management/$employeeId'
     | '/staff-agreement'
     | '/budget-match'
@@ -353,6 +361,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-mobile-management'
     | '/admin-mobile-management/calls'
+    | '/admin-mobile-management/operations'
     | '/admin-mobile-management/$employeeId'
     | '/staff-agreement'
     | '/budget-match'
@@ -386,6 +395,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-mobile-management'
     | '/admin-mobile-management/calls'
+    | '/admin-mobile-management/operations'
     | '/admin-mobile-management/$employeeId'
     | '/budget-match'
     | '/compare'
@@ -476,6 +486,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-mobile-management/calls'
       fullPath: '/admin-mobile-management/calls'
       preLoaderRoute: typeof AdminMobileManagementCallsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-mobile-management/operations': {
+      id: '/admin-mobile-management/operations'
+      path: '/admin-mobile-management/operations'
+      fullPath: '/admin-mobile-management/operations'
+      preLoaderRoute: typeof AdminMobileManagementOperationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin-mobile-management/$employeeId': {
