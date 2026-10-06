@@ -6,6 +6,7 @@ import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 import { writeAdminAuditLog } from "@/lib/admin-audit-log.server";
 import { runStaffFollowUpAutomation } from "@/lib/staff-automation.server";
+import { recalculateActiveLeadScores, recalculateLeadScore } from "@/lib/lead-scoring.server";
 
 async function requireSecurityAdmin(event:H3Event){
   const token=getCookie(event,ADMIN_SESSION_COOKIE);
@@ -128,8 +129,30 @@ export default defineEventHandler(async(event)=>{
 
   if(action==="generate_followups"){
     const result=await runStaffFollowUpAutomation(sql,{limitPerStaff:50});
+    await recalculateActiveLeadScores(sql,500).catch(()=>({updated:0}));
     await writeAdminAuditLog({action:"staff_mobile_automation.followups",entityType:"staff_mobile_automation",entityId:"followups",entityTitle:"Follow-up automation",actor,metadata:result});
     return{success:true,...result};
+  }
+
+  if(action==="refresh_lead_scores"){
+    const result=await recalculateActiveLeadScores(sql,2000);
+    await writeAdminAuditLog({action:"staff_mobile_lead_scores.refreshed",entityType:"staff_mobile_lead_score",entityId:"active",entityTitle:"امتیازدهی لیدها",actor,metadata:result});
+    return{success:true,...result};
+  }
+
+  if(action==="lead_status"){
+    const id=s(body.id,120),status=s(body.status,30);
+    const allowed=new Set(["new","contacted","follow_up","visited","contract","closed","spam"]);
+    if(!id||!allowed.has(status))throw createError({statusCode:400,statusMessage:"وضعیت لید نامعتبر است."});
+    const rows=await sql.query<{id:string}>(
+      "update leads set status=$1,follow_up_at=case when $1 in('new','contacted','follow_up','visited') then coalesce(follow_up_at,current_timestamp+case when $1='new' then interval '24 hours' when $1='visited' then interval '72 hours' else interval '48 hours' end) else null end,last_contacted_at=case when $1='contacted' then current_timestamp else last_contacted_at end,updated_at=current_timestamp where id=$2 returning id",
+      [status,id],
+    );
+    if(!rows[0])throw createError({statusCode:404,statusMessage:"لید پیدا نشد."});
+    await sql.query("insert into lead_activities(lead_id,activity_type,title,note,metadata) values($1,'status',$2,$3,$4::jsonb)",[id,"وضعیت Pipeline تغییر کرد","وضعیت جدید: "+status,JSON.stringify({source:"staff_operations_admin",status})]).catch(()=>{});
+    const score=await recalculateLeadScore(sql,id);
+    await writeAdminAuditLog({action:"staff_mobile_lead.status_changed",entityType:"lead",entityId:id,entityTitle:"Pipeline",actor,metadata:{status,score}});
+    return{success:true,score};
   }
 
   if(action==="generate_daily_reports"){
