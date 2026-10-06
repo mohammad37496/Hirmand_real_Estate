@@ -431,6 +431,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AdminMobileManagementRoute: typeof AdminMobileManagementRoute
   AdminMobileManagementCallsRoute: typeof AdminMobileManagementCallsRoute
+  AdminMobileManagementOperationsRoute: typeof AdminMobileManagementOperationsRoute
   AdminMobileManagementEmployeeIdRoute: typeof AdminMobileManagementEmployeeIdRoute
   StaffAgreementRoute: typeof StaffAgreementRoute
   BudgetMatchRoute: typeof BudgetMatchRoute
@@ -733,6 +734,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AdminMobileManagementRoute: AdminMobileManagementRoute,
+  AdminMobileManagementCallsRoute: AdminMobileManagementCallsRoute,
+  AdminMobileManagementOperationsRoute: AdminMobileManagementOperationsRoute,
   AdminMobileManagementEmployeeIdRoute: AdminMobileManagementEmployeeIdRoute,
   StaffAgreementRoute: StaffAgreementRoute,
   BudgetMatchRoute: BudgetMatchRoute,
