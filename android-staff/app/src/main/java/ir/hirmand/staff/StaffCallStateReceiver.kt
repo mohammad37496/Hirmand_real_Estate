@@ -56,6 +56,7 @@ class StaffCallStateReceiver : BroadcastReceiver() {
             }
 
             TelephonyManager.EXTRA_STATE_IDLE -> {
+                context.stopService(Intent(context, StaffCallRecordingService::class.java))
                 if (
                     ContextCompat.checkSelfPermission(
                         context,
