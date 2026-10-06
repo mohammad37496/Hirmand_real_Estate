@@ -2106,3 +2106,239 @@
     justify-self: start;
   }
 }
+
+/* Hirmand first-party staff call center */
+.hirmand-staff-call-entry {
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 18px;
+  margin: 16px 0;
+  border: 1px solid var(--admin-mobile-border);
+  border-radius: 18px;
+  background: var(--admin-mobile-surface);
+  box-shadow: var(--admin-mobile-shadow);
+}
+
+.hirmand-staff-call-entry-icon,
+.hirmand-staff-call-note-icon,
+.hirmand-staff-recording-icon,
+.hirmand-staff-call-direction {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  background: rgba(190,156,83,.12);
+  color: var(--admin-mobile-accent);
+}
+
+.hirmand-staff-call-entry-copy {
+  min-width: 0;
+}
+
+.hirmand-staff-call-entry-copy h2 {
+  margin: 3px 0 5px;
+  font-size: 18px;
+}
+
+.hirmand-staff-call-entry-copy p,
+.hirmand-staff-call-note p {
+  margin: 0;
+  color: var(--admin-mobile-muted);
+  line-height: 1.8;
+  font-size: 13px;
+}
+
+.hirmand-staff-call-entry .admin-mobile-primary-action {
+  white-space: nowrap;
+}
+
+.hirmand-staff-call-note {
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 16px;
+  margin: 12px 0 16px;
+  border: 1px solid rgba(190,156,83,.22);
+  border-radius: 18px;
+  background: var(--admin-mobile-surface);
+}
+
+.hirmand-staff-call-note strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.hirmand-staff-call-filters {
+  display: grid;
+  grid-template-columns: minmax(0,1.6fr) minmax(150px,.7fr) minmax(150px,.7fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.hirmand-staff-call-filters .admin-mobile-search {
+  min-width: 0;
+}
+
+.hirmand-staff-call-list,
+.hirmand-staff-recording-list {
+  display: grid;
+  gap: 10px;
+}
+
+.hirmand-staff-call-row,
+.hirmand-staff-recording-row {
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr) auto;
+  gap: 13px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--admin-mobile-border);
+  border-radius: 15px;
+  background: rgba(255,255,255,.018);
+}
+
+.hirmand-staff-call-main,
+.hirmand-staff-recording-main {
+  min-width: 0;
+}
+
+.hirmand-staff-call-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.hirmand-staff-call-title strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.hirmand-staff-call-title > span {
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  color: var(--admin-mobile-muted);
+}
+
+.hirmand-staff-call-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 7px;
+  color: var(--admin-mobile-muted);
+  font-size: 11.5px;
+}
+
+.hirmand-staff-call-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hirmand-staff-call-number {
+  display: block;
+  margin-top: 6px;
+  color: var(--admin-mobile-text);
+  opacity: .8;
+}
+
+.hirmand-staff-call-direction.is-success {
+  background: rgba(80,170,105,.13);
+  color: #69c47d;
+}
+
+.hirmand-staff-call-direction.is-warning {
+  background: rgba(210,160,50,.13);
+  color: #d8af52;
+}
+
+.hirmand-staff-call-direction.is-danger {
+  background: rgba(200,80,80,.13);
+  color: #e08282;
+}
+
+.hirmand-staff-call-direction.is-neutral {
+  background: rgba(255,255,255,.06);
+  color: var(--admin-mobile-muted);
+}
+
+.hirmand-staff-recording-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.hirmand-staff-audio-player {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--admin-mobile-border);
+}
+
+.hirmand-staff-audio-player audio {
+  display: block;
+  width: 100%;
+  min-height: 40px;
+}
+
+@media (max-width: 820px) {
+  .hirmand-staff-call-entry {
+    grid-template-columns: auto minmax(0,1fr);
+  }
+
+  .hirmand-staff-call-entry > .admin-mobile-primary-action {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hirmand-staff-call-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .hirmand-staff-recording-row {
+    grid-template-columns: auto minmax(0,1fr);
+    align-items: start;
+  }
+
+  .hirmand-staff-recording-actions {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 560px) {
+  .hirmand-staff-call-entry,
+  .hirmand-staff-call-row,
+  .hirmand-staff-recording-row {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .hirmand-staff-call-row {
+    grid-template-columns: auto minmax(0,1fr);
+    align-items: start;
+  }
+
+  .hirmand-staff-call-direction {
+    width: 40px;
+    height: 40px;
+  }
+
+  .hirmand-staff-call-meta {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+}
