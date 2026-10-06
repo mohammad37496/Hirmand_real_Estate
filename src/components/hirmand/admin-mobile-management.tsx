@@ -1202,6 +1202,11 @@ export function AdminMobileManagementPage() {
                 مشاهده تماس‌ها
                 <ChevronLeft size={16} />
               </a>
+              <a className="admin-mobile-secondary-action" href="/admin-mobile-management/operations">
+                <ClipboardList size={15} />
+                مرکز عملیات کارکنان
+                <ChevronLeft size={15} />
+              </a>
             </section>
 
             <SecurityCenter alerts={summary.alerts} />
