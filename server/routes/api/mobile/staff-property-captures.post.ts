@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
 
   const device = await requireStaffMobileDevice(event);
   const rate = consumeStaffMobileRateLimit("staff-capture-upload", device.device_id, {
-    windowMs: 10*60*1000, maxHits: 40, blockMs: 10*60*1000,
+    windowMs: 10*60*1000, maxHits: 40,
   });
   if (!rate.allowed) throw createError({ statusCode: 429, statusMessage: "تعداد بارگذاری تصاویر بیش از حد مجاز است." });
 
