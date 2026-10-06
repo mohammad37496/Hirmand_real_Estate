@@ -21,6 +21,16 @@ data class StaffLinkedPropertyItem(
     val propertyType:String,
 )
 
+data class StaffRecommendedPropertyItem(
+    val id:String,
+    val title:String,
+    val slug:String,
+    val score:Int,
+    val neighborhood:String,
+    val areaM2:Int?,
+    val bedrooms:Int?,
+)
+
 data class StaffTaskItem(
     val id:String,val title:String,val description:String,val status:String,val priority:String,
     val propertyId:String?,val customerId:String?,val dueAt:String?,
@@ -28,11 +38,13 @@ data class StaffTaskItem(
 data class StaffVisitItem(
     val id:String,val propertyId:String?,val title:String,val address:String,val targetLat:Double?,val targetLng:Double?,
     val radiusM:Double,val scheduledAt:String?,val status:String,val arrivedAt:String?,val leftAt:String?,
+    val outcome:String="pending",val customerInterestScore:Int?=null,val customerFeedback:String="",val nextFollowUpAt:String?=null,
+    val checklist:List<JSONObject> = emptyList(),val checklistCompletedAt:String?=null,
 )
 data class StaffCrmContactItem(
     val id:String,val name:String,val phone:String,val type:String,val notes:String,val leadId:String?,
-    val leadStatus:String?,val leadDeal:String?,val propertyId:String?,val nextFollowUpAt:String?,
-    val linkedProperties:List<StaffLinkedPropertyItem>,
+    val leadStatus:String?,val leadDeal:String?,val leadScore:Int,val leadScoreBand:String,val propertyId:String?,val nextFollowUpAt:String?,
+    val linkedProperties:List<StaffLinkedPropertyItem>,val recommendedProperties:List<StaffRecommendedPropertyItem>,
 )
 data class StaffCrmInteractionItem(
     val id:String,val contactId:String,val kind:String,val note:String,val createdAt:String?,
@@ -141,7 +153,9 @@ object StaffOperations {
             visits+=StaffVisitItem(
                 o.optString("id"),o.optStringOrNull("propertyId"),o.optString("title"),o.optString("address"),
                 o.optNullableDouble("targetLat"),o.optNullableDouble("targetLng"),o.optDouble("radiusM",120.0),
-                o.optStringOrNull("scheduledAt"),o.optString("status"),o.optStringOrNull("arrivedAt"),o.optStringOrNull("leftAt")
+                o.optStringOrNull("scheduledAt"),o.optString("status"),o.optStringOrNull("arrivedAt"),o.optStringOrNull("leftAt"),
+                o.optString("outcome","pending"),o.optNullableInt("customerInterestScore"),o.optString("customerFeedback"),o.optStringOrNull("nextFollowUpAt"),
+                parseChecklist(o.optJSONArray("checklist")),o.optStringOrNull("checklistCompletedAt")
             )
         }
 
@@ -158,10 +172,20 @@ object StaffOperations {
                     p.optNullableInt("areaM2"),p.optNullableInt("bedrooms"),p.optString("transactionType"),p.optString("propertyType")
                 )
             }
+            val recommendations=mutableListOf<StaffRecommendedPropertyItem>()
+            val ra=o.optJSONArray("recommendedProperties")?:JSONArray()
+            for(j in 0 until ra.length()){
+                val p=ra.optJSONObject(j)?:continue
+                recommendations+=StaffRecommendedPropertyItem(
+                    p.optString("id"),p.optString("title"),p.optString("slug"),p.optInt("score"),
+                    p.optString("neighborhood"),p.optNullableInt("areaM2"),p.optNullableInt("bedrooms")
+                )
+            }
             contacts+=StaffCrmContactItem(
                 o.optString("id"),o.optString("name"),o.optString("phone"),o.optString("type"),o.optString("notes"),
                 o.optStringOrNull("leadId"),o.optStringOrNull("leadStatus"),o.optStringOrNull("leadDeal"),
-                o.optStringOrNull("propertyId"),o.optStringOrNull("nextFollowUpAt"),linked,
+                o.optInt("leadScore"),o.optString("leadScoreBand","cold"),
+                o.optStringOrNull("propertyId"),o.optStringOrNull("nextFollowUpAt"),linked,recommendations,
             )
         }
 
@@ -470,5 +494,7 @@ private fun JSONObject.optStringOrNull(key:String):String?=
 private fun JSONObject.optNullableDouble(key:String):Double?=
     if(isNull(key))null else optDouble(key).takeIf{!it.isNaN()}
 
+private fun parseChecklist(array:JSONArray?):List<JSONObject>=if(array==null) emptyList() else (0 until array.length()).mapNotNull{array.optJSONObject(it)}
+    
 private fun JSONObject.optNullableInt(key:String):Int?=
     if(isNull(key))null else optInt(key).takeIf{it!=0||opt(key)!=null}
