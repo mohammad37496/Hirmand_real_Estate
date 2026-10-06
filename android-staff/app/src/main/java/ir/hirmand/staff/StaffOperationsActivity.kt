@@ -239,7 +239,21 @@ class StaffOperationsActivity:AppCompatActivity(){
         for(v in data.visits.filter{it.status!="completed"}.take(20)){
             val c=card()
             c.addView(txt(v.title,15f,true),lp(-1,-2))
-            c.addView(txt((v.address.ifBlank{"بدون آدرس"})+"\n"+(if(v.targetLat!=null)"geofence فعال · شعاع "+v.radiusM.toInt()+" متر" else "geofence تعریف نشده")+" · "+dateText(v.scheduledAt),12f),lp(-1,-2))
+            c.addView(txt(
+                (v.address.ifBlank{"بدون آدرس"})+"\n"+
+                (if(v.targetLat!=null)"geofence فعال · شعاع "+v.radiusM.toInt()+" متر" else "geofence تعریف نشده")+
+                " · "+dateText(v.scheduledAt),
+                12f
+            ),lp(-1,-2))
+            if(v.propertyId!=null)c.addView(txt("این بازدید به یک فایل ملکی متصل است.",11f),lp(-1,-2).apply{topMargin=dp(4)})
+            if(v.outcome!="pending"||v.customerFeedback.isNotBlank()||v.customerInterestScore!=null){
+                c.addView(txt(
+                    "نتیجه: "+visitOutcomeLabel(v.outcome)+
+                    (v.customerInterestScore?.let{" · علاقه مشتری "+it.toString()+"٪"}?:"")+
+                    (if(v.customerFeedback.isNotBlank())"\n"+v.customerFeedback else ""),
+                    11.5f
+                ),lp(-1,-2).apply{topMargin=dp(5)})
+            }
             val start=button(if(v.status=="planned")"شروع بازدید" else "پایان بازدید"){
                 if(v.status=="planned"){
                     getSharedPreferences("hirmand_staff",MODE_PRIVATE).edit()
@@ -258,10 +272,11 @@ class StaffOperationsActivity:AppCompatActivity(){
                     }.start()
                 }else{
                     stopLocationService()
-                    Thread{StaffOperations.visitStatus(this,v.id,"completed");runOnUiThread{refresh()}}.start()
+                    Thread{StaffOperations.visitStatus(this,v.id,"completed");runOnUiThread{showVisitFeedbackDialog(v)}}.start()
                 }
             }
             c.addView(start,lp(-1,dp(43)).apply{topMargin=dp(7)})
+            c.addView(button("نتیجه و چک‌لیست بازدید"){showVisitFeedbackDialog(v)},lp(-1,dp(43)).apply{topMargin=dp(7)})
             c.addView(button("افزودن به تقویم"){addCalendar(v)},lp(-1,dp(43)).apply{topMargin=dp(7)})
             c.addView(button("ثبت تصویر ملک"){
                 val labels=arrayOf("نمای بیرونی","پذیرایی","آشپزخانه","اتاق خواب","پارکینگ/انباری","مدارک","سایر")
@@ -281,7 +296,7 @@ class StaffOperationsActivity:AppCompatActivity(){
             c.addView(txt(contact.name,15f,true),lp(-1,-2))
             c.addView(txt(
                 (contact.phone.ifBlank{"بدون شماره"})+" · "+contact.type+
-                (if(contact.leadId!=null)"\nلید: "+(contact.leadDeal?:contact.leadStatus?:"متصل") else "\nبدون لید متصل"),
+                (if(contact.leadId!=null)"\nلید: "+(contact.leadDeal?:contact.leadStatus?:"متصل")+" · امتیاز "+contact.leadScore.toLocaleFa()+"/۱۰۰" else "\nبدون لید متصل"),
                 12f
             ),lp(-1,-2).apply{topMargin=dp(3)})
             if(contact.linkedProperties.isNotEmpty()){
@@ -292,8 +307,19 @@ class StaffOperationsActivity:AppCompatActivity(){
             }else if(contact.propertyId!=null){
                 c.addView(txt("یک ملک اصلی به پرونده متصل است.",11f),lp(-1,-2))
             }
+            if(contact.recommendedProperties.isNotEmpty()){
+                c.addView(txt("پیشنهاد هوشمند ملک:",11.5f,true),lp(-1,-2).apply{topMargin=dp(6)})
+                for(p in contact.recommendedProperties.take(3)){
+                    c.addView(
+                        txt("★ "+p.title+" · تطابق "+p.score.toLocaleFa()+"٪"+(if(p.neighborhood.isNotBlank())" · "+p.neighborhood else "")+
+                            (p.areaM2?.let{" · "+it.toLocaleFa()+" متر"}?:""),
+                            11f),
+                        lp(-1,-2)
+                    )
+                }
+            }
             val contactInteractions=data.interactions.filter{it.contactId==contact.id}
-            c.addView(txt("تعداد تعامل ثبت‌شده: "+contactInteractions.size.toLocaleFa(),11f),lp(-1,-2).apply{topMargin=dp(5)})
+            c.addView(txt("تعداد تعامل: "+contactInteractions.size.toLocaleFa(),11f),lp(-1,-2).apply{topMargin=dp(5)})
             for(interaction in contactInteractions.take(2)){
                 c.addView(txt(
                     (if(interaction.kind=="call")"تماس" else if(interaction.kind=="meeting")"بازدید/جلسه" else "یادداشت")+
@@ -319,6 +345,53 @@ class StaffOperationsActivity:AppCompatActivity(){
         root.addView(health,lp(-1,-2).apply{bottomMargin=dp(8)})
 
         setContentView(scroll)
+    }
+
+    private fun showVisitFeedbackDialog(visit:StaffVisitItem){
+        val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(12),dp(4),dp(12),0)}
+        val feedback=EditText(this).apply{hint="نظر مشتری و نتیجه بازدید";minLines=3;gravity=Gravity.TOP}
+        val interest=SeekBar(this).apply{max=100;progress=50}
+        val interestLabel=TextView(this).apply{text="علاقه مشتری: ۵۰٪";textSize=12f}
+        interest.setOnSeekBarChangeListener(object:SeekBar.OnSeekBarChangeListener{
+            override fun onProgressChanged(seekBar:SeekBar?,progress:Int,fromUser:Boolean){interestLabel.text="علاقه مشتری: "+progress.toString().toLocaleFa()+"٪"}
+            override fun onStartTrackingTouch(seekBar:SeekBar?){}
+            override fun onStopTrackingTouch(seekBar:SeekBar?){}
+        })
+        val outcome=Spinner(this)
+        outcome.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,arrayOf("علاقه‌مند","مذاکره","بازدید دوم","عدم علاقه","سایر"))
+        val keys=arrayOf("property_condition","price_accepted","customer_interested","photos_complete")
+        val labels=arrayOf("وضعیت ملک بررسی شد","قیمت بررسی شد","علاقه مشتری مشخص شد","تصاویر لازم ثبت شد")
+        val checks=Array(keys.size){CheckBox(this).also{it.text=labels[it.hashCode().let{abs->kotlin.math.abs(abs)%labels.size}]}}
+        box.addView(feedback,LinearLayout.LayoutParams(-1,dp(110)))
+        box.addView(interestLabel,LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(8)})
+        box.addView(interest,LinearLayout.LayoutParams(-1,-2))
+        box.addView(outcome,LinearLayout.LayoutParams(-1,dp(48)).apply{topMargin=dp(6)})
+        val checklistBox=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL}
+        for(index in labels.indices){
+            val cb=CheckBox(this).apply{text=labels[index]}
+            checks[index]=cb
+            checklistBox.addView(cb)
+        }
+        box.addView(checklistBox)
+        val schedule=TextView(this).apply{text="بدون پیگیری بعدی";textSize=12f;setTextColor(getColor(R.color.hirmand_muted));setPadding(0,dp(6),0,dp(6))}
+        var followUpMillis:Long?=null
+        schedule.setOnClickListener{
+            chooseFollowUpDate{ms->followUpMillis=ms;schedule.text="پیگیری بعدی: "+java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT,java.text.DateFormat.SHORT).format(java.util.Date(ms))}
+        }
+        box.addView(schedule)
+        val dialog=android.app.AlertDialog.Builder(this).setTitle("نتیجه بازدید · "+visit.title).setView(box).setNegativeButton("انصراف",null).setPositiveButton("ذخیره",null).create()
+        dialog.setOnShowListener{
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener{
+                val outcomeCode=when(outcome.selectedItemPosition){0->"interested";1->"negotiation";2->"second_visit";3->"not_interested";else->"other"}
+                val checklist=JSONArray()
+                for(index in labels.indices)checklist.put(JSONObject().put("key",keys[index]).put("label",labels[index]).put("done",checks[index].isChecked))
+                Thread{
+                    StaffOperations.visitFeedback(this,visit.id,outcomeCode,interest.progress,feedback.text?.toString().orEmpty(),followUpMillis?.let{java.time.Instant.ofEpochMilli(it).toString()},checklist)
+                    runOnUiThread{dialog.dismiss();refresh()}
+                }.start()
+            }
+        }
+        dialog.show()
     }
 
     private fun showNoteDialog(contact:StaffCrmContactItem){
@@ -361,6 +434,8 @@ class StaffOperationsActivity:AppCompatActivity(){
             },cal.get(Calendar.HOUR_OF_DAY),cal.get(Calendar.MINUTE),true).show()
         },cal.get(Calendar.YEAR),cal.get(Calendar.MONTH),cal.get(Calendar.DAY_OF_MONTH)).show()
     }
+
+    private fun visitOutcomeLabel(v:String):String=when(v){"interested"->"علاقه‌مند","negotiation"->"مذاکره","second_visit"->"بازدید دوم","not_interested"->"عدم علاقه","other"->"سایر","pending"->"ثبت نشده",else->v}
 
     private fun addCalendar(v:StaffVisitItem){
         val intent=Intent(Intent.ACTION_INSERT).setData(CalendarContract.Events.CONTENT_URI)
