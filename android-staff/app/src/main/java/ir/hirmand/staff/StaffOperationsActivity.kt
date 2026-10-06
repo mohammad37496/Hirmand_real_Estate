@@ -361,7 +361,6 @@ class StaffOperationsActivity:AppCompatActivity(){
         outcome.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,arrayOf("علاقه‌مند","مذاکره","بازدید دوم","عدم علاقه","سایر"))
         val keys=arrayOf("property_condition","price_accepted","customer_interested","photos_complete")
         val labels=arrayOf("وضعیت ملک بررسی شد","قیمت بررسی شد","علاقه مشتری مشخص شد","تصاویر لازم ثبت شد")
-        val checks=Array(keys.size){CheckBox(this).also{it.text=labels[it.hashCode().let{abs->kotlin.math.abs(abs)%labels.size}]}}
         box.addView(feedback,LinearLayout.LayoutParams(-1,dp(110)))
         box.addView(interestLabel,LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(8)})
         box.addView(interest,LinearLayout.LayoutParams(-1,-2))
