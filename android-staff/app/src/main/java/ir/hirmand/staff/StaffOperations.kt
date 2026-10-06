@@ -74,6 +74,8 @@ object StaffOperations {
         val p=JSONObject().put("action",if(start)"attendance_start" else "attendance_stop");if(lat!=null)p.put("latitude",lat);if(lng!=null)p.put("longitude",lng);return post(context,p)
     }
     fun logInteraction(context:Context,contactId:String,kind:String,note:String)=post(context,JSONObject().put("action","crm_interaction").put("contactId",contactId).put("kind",kind).put("note",note))
+    fun createCrmContact(context:Context,name:String,phone:String,type:String="customer"):Boolean =
+        post(context,JSONObject().put("action","crm_create_contact").put("name",name).put("phone",phone).put("type",type))
     fun sendHealth(context:Context)=post(context,JSONObject().put("action","health").put("observedAt",Instant.now().toString()).put("payload",StaffHealth.snapshot(context)))
     fun sendLocations(context:Context,locations:JSONArray)=post(context,JSONObject().put("action","locations").put("items",locations))
 
