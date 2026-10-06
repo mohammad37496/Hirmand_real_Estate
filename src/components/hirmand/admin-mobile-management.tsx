@@ -384,6 +384,7 @@ function DeviceCard({
             <Link
               to="/admin-mobile-management/$employeeId"
               params={{ employeeId: device.staffId }}
+              search={{}}
               className="admin-mobile-device-person"
             >
               {device.staffName || device.staffId}
@@ -410,7 +411,7 @@ function DeviceCard({
           </div>
         </div>
         <div className="admin-mobile-fleet-side">
-          <Link to="/admin-mobile-management/$employeeId" params={{ employeeId: device.staffId }} className="admin-mobile-secondary-action">
+          <Link to="/admin-mobile-management/$employeeId" params={{ employeeId: device.staffId }} search={{}} className="admin-mobile-secondary-action">
             جزئیات
             <ChevronLeft size={15} />
           </Link>
@@ -695,7 +696,6 @@ function auditActionLabel(action: string) {
 
 function ConfirmAction({
   device,
-  action,
   busy,
   onClose,
   onConfirm,
@@ -731,6 +731,7 @@ function EmployeeCard({ person, deviceCount }: { person: StaffDirectoryItem; dev
     <Link
       to="/admin-mobile-management/$employeeId"
       params={{ employeeId: person.id }}
+      search={{}}
       className="admin-mobile-employee-card"
     >
       <div className="admin-mobile-avatar" aria-hidden="true"><UserRound size={22} /></div>
@@ -779,7 +780,7 @@ function useFleetData(authenticated: boolean) {
 
 export function AdminMobileManagementPage() {
   const auth = useAdminAccess();
-  const { summary, staff, loading, staffLoading, error, load, setSummary } = useFleetData(auth === "authenticated");
+  const { summary, staff, loading, staffLoading, error, load } = useFleetData(auth === "authenticated");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [presenceFilter, setPresenceFilter] = useState("all");
@@ -1090,7 +1091,7 @@ export function AdminMobileEmployeePage({ employeeId }: { employeeId: string }) 
   }
 
   if (!person) {
-    return <main className="admin-mobile-page"><div className="admin-mobile-shell admin-mobile-centered"><section className="admin-mobile-panel admin-mobile-empty-card"><span className="admin-mobile-kicker">کارمند</span><h1>کارمند پیدا نشد</h1><p>{error || "کارمند انتخاب‌شده در فهرست فعال هیرمند وجود ندارد."}</p><Link to="/admin-mobile-management" className="admin-mobile-primary-action"><ArrowRight size={17} /> بازگشت</Link></section></div></main>;
+    return <main className="admin-mobile-page"><div className="admin-mobile-shell admin-mobile-centered"><section className="admin-mobile-panel admin-mobile-empty-card"><span className="admin-mobile-kicker">کارمند</span><h1>کارمند پیدا نشد</h1><p>{error || "کارمند انتخاب‌شده در فهرست فعال هیرمند وجود ندارد."}</p><Link to="/admin-mobile-management" search={{}} className="admin-mobile-primary-action"><ArrowRight size={17} /> بازگشت</Link></section></div></main>;
   }
 
   const onlineCount = personDevices.filter((device) => device.presence === "online").length;
@@ -1102,7 +1103,7 @@ export function AdminMobileEmployeePage({ employeeId }: { employeeId: string }) 
     <main className="admin-mobile-page">
       <div className="admin-mobile-shell">
         <div className="admin-mobile-breadcrumbs">
-          <Link to="/admin-mobile-management">مدیریت تلفن همراه</Link>
+          <Link to="/admin-mobile-management" search={{}}>مدیریت تلفن همراه</Link>
           <ChevronLeft size={14} aria-hidden="true" />
           <span>{person.name}</span>
         </div>
@@ -1111,7 +1112,7 @@ export function AdminMobileEmployeePage({ employeeId }: { employeeId: string }) 
           eyebrow={person.role}
           title={person.name}
           description="پروفایل مدیریتی کارمند؛ وضعیت دستگاه، permissions، activity و قابلیت‌های واقعی Android Enterprise را مشاهده کنید."
-          action={<Link to="/admin-mobile-management" className="admin-mobile-secondary-action"><ArrowRight size={16} /> بازگشت به ناوگان</Link>}
+          action={<Link to="/admin-mobile-management" search={{}} className="admin-mobile-secondary-action"><ArrowRight size={16} /> بازگشت به ناوگان</Link>}
         />
 
         <section className="admin-mobile-person-banner">
@@ -1209,13 +1210,13 @@ export function AdminMobileEmployeePage({ employeeId }: { employeeId: string }) 
               <Smartphone size={28} />
               <strong>هنوز دستگاهی برای این کارمند ثبت نشده است.</strong>
               <span>از مرکز Fleet یک enrollment جدید شروع کنید؛ ثبت دستگاه پس از اجرای اپ انجام می‌شود.</span>
-              <Link to="/admin-mobile-management" className="admin-mobile-primary-action">بازگشت به مرکز ناوگان</Link>
+              <Link to="/admin-mobile-management" search={{}} className="admin-mobile-primary-action">بازگشت به مرکز ناوگان</Link>
             </div>
           </section>
         )}
 
         <div className="admin-mobile-footer-links">
-          <Link to="/admin-mobile-management" className="admin-mobile-secondary-action"><ArrowRight size={16} /> بازگشت به ناوگان</Link>
+          <Link to="/admin-mobile-management" search={{}} className="admin-mobile-secondary-action"><ArrowRight size={16} /> بازگشت به ناوگان</Link>
           <Link to="/admin" className="admin-mobile-secondary-action">پنل مدیریت</Link>
         </div>
       </div>
@@ -1404,7 +1405,7 @@ function SecurityTab({ device }: { device: MobileDevice }) {
 }
 
 function ReportsTab({ devices }: { devices: MobileDevice[] }) {
-  const statuses = [
+  const statuses: Array<[string, number]> = [
     ["فعال", devices.filter((device) => device.status === "active").length],
     ["در انتظار", devices.filter((device) => device.status === "pending").length],
     ["لغوشده", devices.filter((device) => device.status === "revoked").length],
@@ -1422,7 +1423,7 @@ function ReportsTab({ devices }: { devices: MobileDevice[] }) {
   );
 }
 
-function SummaryStat({ label, value, detail, icon }: { label: string; value: string; detail: string; icon: React.ReactNode }) {
+function SummaryStat({ label, value, detail, icon }: { label: string; value: string; detail: string; icon: ReactNode }) {
   return <div className="admin-mobile-summary-stat"><div>{icon}</div><span>{label}</span><strong>{value}</strong><small>{detail}</small></div>;
 }
 
