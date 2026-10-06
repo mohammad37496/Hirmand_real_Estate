@@ -326,7 +326,8 @@ class PermissionCenter(
         copy.addView(description, lp(-1, -2).apply { topMargin = dp(5) })
         copy.addView(status, lp(-1, -2).apply { topMargin = dp(6) })
 
-        val toggle = MaterialSwitch(context).apply {
+        lateinit var recordingToggle: MaterialSwitch
+        recordingToggle = MaterialSwitch(context).apply {
             isChecked = StaffCallSettings.isRecordingEnabled(context)
             isFocusable = true
             contentDescription = "ضبط تماس هیرمند"
@@ -343,7 +344,7 @@ class PermissionCenter(
                         )
                         .setNegativeButton("لغو") { _, _ ->
                             StaffCallSettings.setRecordingEnabled(context, false)
-                            toggle.isChecked = false
+                            recordingToggle.isChecked = false
                             refreshStatus()
                         }
                         .setPositiveButton("فعال‌سازی مجوزها") { _, _ ->
@@ -363,7 +364,7 @@ class PermissionCenter(
         }
 
         header.addView(copy, LinearLayout.LayoutParams(0, -2, 1f))
-        header.addView(toggle, lp(dp(64), dp(48)))
+        header.addView(recordingToggle, lp(dp(64), dp(48)))
         content.addView(header)
 
         val note = TextView(context).apply {
