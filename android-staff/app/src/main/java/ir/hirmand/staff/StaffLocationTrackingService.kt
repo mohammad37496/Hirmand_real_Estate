@@ -72,6 +72,11 @@ class StaffLocationTrackingService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        if (!canTrack()) {
+            stopSelf()
+            return
+        }
+
         createNotificationChannel()
         val notification = buildNotification()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
