@@ -42,7 +42,6 @@ export default defineEventHandler(async (event) => {
   const rate = consumeStaffMobileRateLimit("staff-call-recording-upload", device.device_id, {
     windowMs: 10 * 60 * 1000,
     maxHits: 20,
-    blockMs: 10 * 60 * 1000,
   });
   if (!rate.allowed) {
     throw createError({ statusCode: 429, statusMessage: "تعداد ارسال فایل ضبط تماس بیش از حد مجاز است." });
