@@ -12,6 +12,7 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
 import android.os.IBinder
+import android.content.pm.ServiceInfo
 import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationCompat
 import org.json.JSONArray
@@ -31,7 +32,17 @@ class StaffLocationService:Service(){
     override fun onCreate(){
         super.onCreate()
         createChannel()
-        startForeground(4310,notification())
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(
+                    4310,
+                    notification(),
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
+                )
+            } else {
+                startForeground(4310, notification())
+            }
+        }.onFailure { stopSelf() }
         val prefs=getSharedPreferences("hirmand_staff",MODE_PRIVATE)
         activeVisitId=prefs.getString("active_visit_id",null)
         targetLat=prefs.getString("active_visit_lat",null)?.toDoubleOrNull()
