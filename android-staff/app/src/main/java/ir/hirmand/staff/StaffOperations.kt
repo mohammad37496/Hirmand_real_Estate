@@ -378,6 +378,20 @@ object StaffOperations {
         return post(context,p)
     }
 
+    fun visitFeedback(
+        context:Context,id:String,outcome:String,interest:Int,feedback:String,followUpAt:String?,checklist:JSONArray
+    ):Boolean{
+        val p=JSONObject()
+            .put("action","visit_feedback")
+            .put("id",id)
+            .put("outcome",outcome)
+            .put("customerInterestScore",interest.coerceIn(0,100))
+            .put("feedback",feedback)
+            .put("checklist",checklist)
+        if(!followUpAt.isNullOrBlank())p.put("nextFollowUpAt",followUpAt)
+        return post(context,p)
+    }
+
     fun attendance(context:Context,start:Boolean,lat:Double?=null,lng:Double?=null):Boolean{
         val p=JSONObject().put("action",if(start)"attendance_start" else "attendance_stop")
         if(lat!=null)p.put("latitude",lat)
