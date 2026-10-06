@@ -18,9 +18,9 @@ function s(v:unknown,max=240){return typeof v==="string"?v.trim().slice(0,max):"
 export default defineEventHandler(async(event)=>{
   setResponseHeader(event,"cache-control","private, no-store");
   await requireSecurityAdmin(event);
-  if(dbSource==="unconfigured") return {success:true,staff:[],devices:[],tasks:[],visits:[],contacts:[],attendance:[],captures:[],health:[],stats:{}};
+  if(dbSource==="unconfigured") return {success:true,staff:[],devices:[],tasks:[],visits:[],contacts:[],attendance:[],captures:[],health:[],performance:[],stats:{}};
   const sql=await getSql();
-  const [staff,devices,tasks,visits,contacts,attendance,captures,health,calls,recordings]=await Promise.all([
+  const [staff,devices,tasks,visits,contacts,attendance,captures,health,performance,calls,recordings]=await Promise.all([
     sql.query<Record<string,unknown>>("select id,name,role from consultants where is_active=true order by sort_order asc,name asc"),
     sql.query<Record<string,unknown>>("select d.id,d.device_id,d.staff_id,coalesce(c.name,'کارمند ناشناس') as staff_name,d.status,d.model,d.manufacturer,d.android_version,d.management_mode,d.last_seen_at,d.last_sync_at,d.lost_mode,d.lost_message from staff_mobile_devices d left join consultants c on c.id=d.staff_id order by c.sort_order asc nulls last,c.name asc,d.updated_at desc"),
     sql.query<Record<string,unknown>>("select t.id,t.staff_id,coalesce(c.name,'کارمند ناشناس') staff_name,t.title,t.description,t.status,t.priority,t.property_id,t.customer_id,t.due_at,t.created_at,t.updated_at from staff_mobile_tasks t left join consultants c on c.id=t.staff_id where t.status<>'cancelled' order by t.due_at asc nulls last,t.created_at desc limit 300"),
@@ -29,6 +29,7 @@ export default defineEventHandler(async(event)=>{
     sql.query<Record<string,unknown>>("select a.id,a.staff_id,coalesce(c.name,'کارمند ناشناس') staff_name,a.device_id,a.work_date,a.started_at,a.ended_at from staff_mobile_attendance a left join consultants c on c.id=a.staff_id order by a.work_date desc,a.started_at desc nulls last limit 200"),
     sql.query<Record<string,unknown>>("select x.id,x.staff_id,coalesce(c.name,'کارمند ناشناس') staff_name,x.device_id,x.property_id,x.visit_id,x.category,x.caption,x.created_at,f.name file_name,f.mime_type,f.size_bytes from staff_mobile_property_captures x left join consultants c on c.id=x.staff_id join staff_mobile_files f on f.id=x.file_id order by x.created_at desc limit 200"),
     sql.query<Record<string,unknown>>("select h.device_id,h.staff_id,h.payload,h.observed_at,h.received_at from staff_mobile_health h order by h.observed_at desc"),
+    sql.query<Record<string,unknown>>("select c.id,c.name,c.role,coalesce((select count(*) from staff_mobile_tasks t where t.staff_id=c.id and t.status='done' and t.completed_at>=current_timestamp-interval '30 days'),0)::int as tasks_done,coalesce((select count(*) from staff_mobile_visits v where v.staff_id=c.id and v.status='completed' and v.left_at>=current_timestamp-interval '30 days'),0)::int as visits_done,coalesce((select count(*) from staff_mobile_calls cl where cl.staff_id=c.id and cl.occurred_at>=current_timestamp-interval '30 days'),0)::int as calls_done,coalesce((select count(*) from staff_mobile_attendance a where a.staff_id=c.id and a.started_at>=current_timestamp-interval '30 days'),0)::int as attendance_days from consultants c where c.is_active=true order by c.sort_order asc,c.name asc"),
     sql.query<{count:number}[]>("select count(*)::int count from staff_mobile_calls where occurred_at>=current_timestamp-interval '1 day'"),
     sql.query<{count:number}[]>("select count(*)::int count from staff_mobile_call_recordings where created_at>=current_timestamp-interval '1 day'"),
   ]);
@@ -44,6 +45,7 @@ export default defineEventHandler(async(event)=>{
     attendance:attendance.map(r=>({id:String(r.id),staffId:String(r.staff_id),staffName:String(r.staff_name??""),deviceId:String(r.device_id),workDate:String(r.work_date??""),startedAt:mapDate(r.started_at),endedAt:mapDate(r.ended_at)})),
     captures:captures.map(r=>({id:String(r.id),staffId:String(r.staff_id),staffName:String(r.staff_name??""),deviceId:String(r.device_id),propertyId:r.property_id?String(r.property_id):null,visitId:r.visit_id?String(r.visit_id):null,category:String(r.category??"general"),caption:String(r.caption??""),createdAt:mapDate(r.created_at),fileName:String(r.file_name??""),mimeType:String(r.mime_type??""),sizeBytes:Number(r.size_bytes??0),streamUrl:"/api/admin/mobile-management/staff-property-captures/"+encodeURIComponent(String(r.id))})),
     health:health.map(r=>({deviceId:String(r.device_id),staffId:String(r.staff_id),payload:r.payload,observedAt:mapDate(r.observed_at),receivedAt:mapDate(r.received_at)})),
+    performance:performance.map(r=>({staffId:String(r.id),staffName:String(r.name??""),role:String(r.role??""),tasksDone:Number(r.tasks_done)||0,visitsDone:Number(r.visits_done)||0,callsDone:Number(r.calls_done)||0,attendanceDays:Number(r.attendance_days)||0})),
     stats:{calls24h:Number(calls[0]?.[0]?.count)||0,recordings24h:Number(recordings[0]?.[0]?.count)||0},
   };
 });
