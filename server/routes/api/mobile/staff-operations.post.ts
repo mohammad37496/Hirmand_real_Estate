@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { dbSource, getSql } from "@/lib/db";
 import { requireStaffMobileDevice } from "@/lib/staff-mobile-auth.server";
 import { consumeStaffMobileRateLimit } from "@/lib/staff-mobile-rate-limit.server";
+import { recalculateLeadScore } from "@/lib/lead-scoring.server";
 
 const TASK_STATUSES = new Set(["open", "in_progress", "done"]);
 const VISIT_STATUSES = new Set(["planned", "arrived", "completed"]);
@@ -169,6 +170,7 @@ export default defineEventHandler(async (event) => {
     );
 
     if (contact.lead_id) {
+      await recalculateLeadScore(sql, String(contact.lead_id)).catch(() => null);
       const activityType = kind === "calendar" ? "note" : kind;
       await sql.query(
         "insert into lead_activities(lead_id,activity_type,title,note,metadata) values($1,$2,$3,$4,$5::jsonb)",
@@ -184,6 +186,38 @@ export default defineEventHandler(async (event) => {
     }
     await touchDevice();
     return { success: true, clientEventId };
+  }
+
+  if (action === "visit_feedback") {
+    const id=clean(body.id,120);
+    const outcomeRaw=clean(body.outcome,40);
+    const outcomes=new Set(["interested","negotiation","not_interested","second_visit","other"]);
+    const outcome=outcomes.has(outcomeRaw)?outcomeRaw:"other";
+    const interest=Number(body.customerInterestScore);
+    const interestScore=Number.isFinite(interest)?Math.max(0,Math.min(100,Math.round(interest))):null;
+    const feedback=clean(body.feedback,1500);
+    const followUpAt=body.nextFollowUpAt==null||body.nextFollowUpAt===""?null:iso(body.nextFollowUpAt);
+    const checklist=Array.isArray(body.checklist)?body.checklist.slice(0,20).map(item=>{
+      if(!item||typeof item!=="object")return null;
+      const x=item as Record<string,unknown>;
+      return {key:clean(x.key,80),label:clean(x.label,160),done:Boolean(x.done)};
+    }).filter(Boolean):[];
+    if(!id)throw createError({statusCode:400,statusMessage:"شناسه بازدید نامعتبر است."});
+    const rows=await sql.query<{property_id:string|null;title:string}>(
+      "update staff_mobile_visits set outcome=$1,customer_interest_score=$2,customer_feedback=$3,next_follow_up_at=$4,checklist=$5::jsonb,checklist_completed_at=case when $6=true then current_timestamp else checklist_completed_at end,updated_at=current_timestamp where id=$7 and staff_id=$8 returning property_id,title",
+      [outcome,interestScore,feedback,followUpAt,JSON.stringify(checklist),checklist.length>0&&checklist.every((item)=>Boolean((item as {done:boolean}).done)),id,device.staff_id],
+    );
+    if(!rows[0])throw createError({statusCode:404,statusMessage:"بازدید پیدا نشد."});
+    if(followUpAt){
+      await sql.query(
+        "insert into staff_mobile_tasks(id,staff_id,device_id,title,description,status,priority,property_id,due_at,automation_key) values($1,$2,$3,$4,$5,'open','high',$6,$7,$8) on conflict(automation_key) do update set due_at=excluded.due_at,updated_at=current_timestamp where staff_mobile_tasks.status in ('open','in_progress')",
+        [randomUUID(),device.staff_id,device.device_id,"پیگیری بعد از بازدید · "+String(rows[0].title),
+          feedback||"پیگیری نتیجه بازدید ملک.",rows[0].property_id?String(rows[0].property_id):null,followUpAt,
+          "visit-followup:"+id],
+      );
+    }
+    await touchDevice();
+    return {success:true,clientEventId};
   }
 
   if (action === "calendar_logged") {
