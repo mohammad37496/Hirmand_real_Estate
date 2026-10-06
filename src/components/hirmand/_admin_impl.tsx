@@ -1806,6 +1806,7 @@ export function AdminPropertiesPage() {
                   {item.view === "integrity" ? (
                     <Link
                       to="/admin-mobile-management"
+                      search={{}}
                       className="admin-nav-btn"
                       style={{ textDecoration: "none" }}
                     >
