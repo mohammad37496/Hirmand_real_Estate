@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { dbSource, getSql } from "@/lib/db";
 import { consumeStaffMobileRateLimit } from "@/lib/staff-mobile-rate-limit.server";
 import { generateStaffMobileToken, hashStaffMobileToken } from "@/lib/staff-mobile-auth.server";
+import { writeAdminAuditLog } from "@/lib/admin-audit-log.server";
 
 type Body = {
   deviceId?: unknown;
@@ -114,6 +115,21 @@ export default defineEventHandler(async (event) => {
       [staff.id, nextStatus, appVersionName, appVersionCode, managementMode, manufacturer, model, androidVersion, sdkInt, issuedToken ? hashStaffMobileToken(issuedToken) : null, existing.id],
     );
 
+    await writeAdminAuditLog({
+      action: "staff_mobile_device.enrollment",
+      entityType: "staff_mobile_device",
+      entityId: deviceId,
+      entityTitle: staff.name,
+      actor: "staff-mobile-app",
+      metadata: {
+        staffId: staff.id,
+        status: rows[0]?.status ?? nextStatus,
+        managementMode,
+        manufacturer,
+        model,
+      },
+    });
+
     return {
       success: true,
       deviceId,
@@ -133,6 +149,21 @@ export default defineEventHandler(async (event) => {
       "values ($1,$2,$3,'pending',$4,$5,$6,$7,$8,$9,$10,current_timestamp,current_timestamp,$11,current_timestamp)",
     [id, deviceId, staff.id, appVersionName, appVersionCode, managementMode, manufacturer, model, androidVersion, sdkInt, hashStaffMobileToken(issuedToken)],
   );
+
+  await writeAdminAuditLog({
+    action: "staff_mobile_device.enrollment",
+    entityType: "staff_mobile_device",
+    entityId: deviceId,
+    entityTitle: staff.name,
+    actor: "staff-mobile-app",
+    metadata: {
+      staffId: staff.id,
+      status: "pending",
+      managementMode,
+      manufacturer,
+      model,
+    },
+  });
 
   return {
     success: true,
