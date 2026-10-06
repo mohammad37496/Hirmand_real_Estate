@@ -202,10 +202,17 @@ export default defineEventHandler(async (event) => {
       const lead = await sql.query("select id from leads where id=$1 limit 1", [leadId]);
       if (!lead[0]) throw createError({ statusCode: 404, statusMessage: "لید انتخاب‌شده پیدا نشد." });
     }
+    let leadPropertyIdForContact="";
+    if(leadId){
+      const lead=await sql.query<{id:string;property_id:string|null}>("select id,property_id from leads where id=$1 limit 1",[leadId]);
+      if(!lead[0])throw createError({statusCode:404,statusMessage:"لید انتخاب‌شده پیدا نشد."});
+      leadPropertyIdForContact=lead[0].property_id?String(lead[0].property_id):"";
+    }
     const propertyIds = Array.isArray(body.propertyIds)
       ? body.propertyIds.map((value) => clean(value, 160)).filter(Boolean).slice(0, 20)
       : [];
     if (clean(body.propertyId,160)) propertyIds.unshift(clean(body.propertyId,160));
+    if (leadPropertyIdForContact) propertyIds.unshift(leadPropertyIdForContact);
     const uniquePropertyIds = [...new Set(propertyIds)];
     if (uniquePropertyIds.length) {
       const rows = await sql.query<{id:string}>("select id from properties where id = any($1::text[])", [uniquePropertyIds]);
