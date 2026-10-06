@@ -2117,8 +2117,8 @@
   margin: 16px 0;
   border: 1px solid var(--admin-mobile-border);
   border-radius: 18px;
-  background: var(--admin-mobile-surface);
-  box-shadow: var(--admin-mobile-shadow);
+  background: var(--admin-mobile-panel);
+  box-shadow: none;
 }
 
 .hirmand-staff-call-entry-icon,
@@ -2165,7 +2165,7 @@
   margin: 12px 0 16px;
   border: 1px solid rgba(190,156,83,.22);
   border-radius: 18px;
-  background: var(--admin-mobile-surface);
+  background: var(--admin-mobile-panel);
 }
 
 .hirmand-staff-call-note strong {
