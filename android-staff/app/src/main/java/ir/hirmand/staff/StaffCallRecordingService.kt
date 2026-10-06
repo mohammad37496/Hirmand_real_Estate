@@ -213,7 +213,11 @@ class StaffCallRecordingService : Service() {
             .build()
 
     override fun onDestroy() {
-        recorder?.runCatching { stop(); release() }
+        if (recorder != null) {
+            runCatching { stopRecording() }
+        } else {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        }
         recorder = null
         super.onDestroy()
     }
