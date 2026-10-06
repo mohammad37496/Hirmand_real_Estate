@@ -469,6 +469,7 @@ function AlertPanel({ alerts }: { alerts: DeviceAlert[] }) {
               <Link
                 to="/admin-mobile-management/$employeeId"
                 params={{ employeeId: alert.staffId }}
+                search={{}}
                 className="admin-mobile-alert-link"
               >
                 مشاهده
