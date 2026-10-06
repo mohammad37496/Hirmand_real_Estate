@@ -1,6 +1,7 @@
 package ir.hirmand.staff
 
 import android.content.Context
+import android.os.Build
 import android.os.SystemClock
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -132,6 +133,11 @@ object StaffTelemetry {
             JSONObject()
                 .put("appVersionName", BuildConfig.VERSION_NAME)
                 .put("appVersionCode", BuildConfig.VERSION_CODE)
+                .put("manufacturer", Build.MANUFACTURER.take(80))
+                .put("model", Build.MODEL.take(120))
+                .put("androidVersion", Build.VERSION.RELEASE.orEmpty().take(40))
+                .put("sdkInt", Build.VERSION.SDK_INT)
+                .put("managementMode", DeviceOwnerManager.state(context).mode.name.lowercase())
                 .put("queueSize", StaffTelemetryStore.queueSize(context))
                 .put("elapsedRealtimeMs", SystemClock.elapsedRealtime()),
         )
