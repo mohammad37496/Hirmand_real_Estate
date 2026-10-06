@@ -711,7 +711,7 @@ function PolicyCenter({ policy }: { policy: SummaryResponse["policy"] }) {
               <strong>{item.label}</strong>
               <span>{item.value}</span>
             </div>
-            <em>{item.label === "Location Policy" ? "غیرفعال" : item.label === "App Policy" ? "مشاهده‌ای" : "مبنای واقعی"}</em>
+            <em>{item.label === "Location Policy" ? "فعال و مشروط به مجوز" : item.label === "App Policy" ? "مشاهده‌ای" : "مبنای واقعی"}</em>
           </article>
         ))}
       </div>
