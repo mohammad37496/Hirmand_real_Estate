@@ -638,6 +638,11 @@ class MainActivity : AppCompatActivity() {
             .put("staffId", staff.id)
             .put("appVersionName", BuildConfig.VERSION_NAME)
             .put("appVersionCode", BuildConfig.VERSION_CODE)
+            .put("managementMode", DeviceOwnerManager.state(this).mode.name.lowercase())
+            .put("manufacturer", android.os.Build.MANUFACTURER.take(80))
+            .put("model", android.os.Build.MODEL.take(120))
+            .put("androidVersion", android.os.Build.VERSION.RELEASE.orEmpty().take(40))
+            .put("sdkInt", android.os.Build.VERSION.SDK_INT)
             .put("authTokenPresent", StaffTelemetryStore.token(this).isNotBlank())
 
         return try {
