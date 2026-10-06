@@ -279,6 +279,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/admin-mobile-management': typeof AdminMobileManagementRoute
+  '/admin-mobile-management/calls': typeof AdminMobileManagementCallsRoute
   '/admin-mobile-management/$employeeId': typeof AdminMobileManagementEmployeeIdRoute
   '/staff-agreement': typeof StaffAgreementRoute
   '/budget-match': typeof BudgetMatchRoute
@@ -416,6 +417,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AdminMobileManagementRoute: typeof AdminMobileManagementRoute
+  AdminMobileManagementCallsRoute: typeof AdminMobileManagementCallsRoute
   AdminMobileManagementEmployeeIdRoute: typeof AdminMobileManagementEmployeeIdRoute
   StaffAgreementRoute: typeof StaffAgreementRoute
   BudgetMatchRoute: typeof BudgetMatchRoute
