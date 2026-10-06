@@ -2371,7 +2371,7 @@
 }
 
 .admin-mobile-live-location-map-empty strong {
-  color: var(--admin-mobile-fg);
+  color: var(--admin-mobile-text);
   font-size: .8rem;
 }
 
