@@ -4,7 +4,7 @@ import { dbSource, getSql } from "@/lib/db";
 import { requireStaffMobileDevice } from "@/lib/staff-mobile-auth.server";
 import { consumeStaffMobileRateLimit } from "@/lib/staff-mobile-rate-limit.server";
 
-const EVENT_TYPES = new Set(["app_heartbeat", "permission_state"]);
+const EVENT_TYPES = new Set(["app_heartbeat", "permission_state", "location"]);
 
 function cleanText(value: unknown, max: number) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
@@ -75,6 +75,51 @@ export default defineEventHandler(async (event) => {
     const payloadJson = JSON.stringify(payload);
     if (payloadJson.length > 20_000) {
       rejected++;
+      continue;
+    }
+
+    if (eventType === "location") {
+      const location = payload as Record<string, unknown>;
+      const latitude = Number(location.latitude);
+      const longitude = Number(location.longitude);
+      const accuracyM = location.accuracyM == null ? null : Number(location.accuracyM);
+      const altitudeM = location.altitudeM == null ? null : Number(location.altitudeM);
+      const speedMps = location.speedMps == null ? null : Number(location.speedMps);
+      const provider = cleanText(location.provider, 40);
+
+      if (
+        !Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+        !Number.isFinite(longitude) || longitude < -180 || longitude > 180 ||
+        (accuracyM != null && (!Number.isFinite(accuracyM) || accuracyM < 0 || accuracyM > 100000)) ||
+        (altitudeM != null && !Number.isFinite(altitudeM)) ||
+        (speedMps != null && (!Number.isFinite(speedMps) || speedMps < 0 || speedMps > 1000))
+      ) {
+        rejected++;
+        continue;
+      }
+
+      const rows = await sql.query<{ id: string }>(
+        "insert into staff_mobile_locations " +
+          "(id,device_id,staff_id,client_event_id,latitude,longitude,accuracy_m,altitude_m,speed_mps,provider,observed_at) " +
+          "values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) " +
+          "on conflict (device_id,client_event_id) do nothing returning id",
+        [
+          randomUUID(),
+          device.device_id,
+          device.staff_id,
+          clientEventId,
+          latitude,
+          longitude,
+          accuracyM,
+          altitudeM,
+          speedMps,
+          provider,
+          observedAt,
+        ],
+      );
+
+      accepted++;
+      if (rows.length) acceptedTypes.push(eventType);
       continue;
     }
 

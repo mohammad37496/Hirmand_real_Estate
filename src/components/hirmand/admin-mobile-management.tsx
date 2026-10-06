@@ -152,6 +152,46 @@ type TelemetryResponse = {
   }>;
 };
 
+
+type LiveStaffLocation = {
+  deviceId: string;
+  employee: string;
+  deviceName: string;
+  manufacturer: string;
+  model: string;
+  enabled: boolean;
+  trackingEnabled: boolean;
+  locationPolicyAllowed: boolean;
+  consented: boolean;
+  staffId: string | null;
+  staffName: string | null;
+  staffRole: string | null;
+  lastSeenAt: string | null;
+  latestLocationAt: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  accuracyMeters: number | null;
+  altitudeMeters: number | null;
+  speedMps: number | null;
+  bearingDegrees: number | null;
+  provider: string | null;
+  observedAt: string | null;
+  receivedAt: string | null;
+};
+
+type LiveLocationsResponse = {
+  success: boolean;
+  generatedAt: string;
+  refreshIntervalSeconds: number;
+  locations: LiveStaffLocation[];
+  counts: {
+    devices: number;
+    withLocation: number;
+    trackingEnabled: number;
+    consented: number;
+  };
+};
+
 const FALLBACK_STAFF: StaffDirectoryItem[] = TEAM.map((person) => ({
   id: person.id,
   name: person.name,
@@ -204,6 +244,19 @@ async function fetchSummary(): Promise<SummaryResponse> {
   return data;
 }
 
+
+async function fetchLiveLocations(): Promise<LiveLocationsResponse> {
+  const response = await fetch("/api/admin/mobile-management/live-locations", {
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+  const data = (await response.json().catch(() => null)) as LiveLocationsResponse | null;
+  if (!response.ok || !data?.success || !Array.isArray(data.locations)) {
+    throw new Error("دریافت موقعیت کارکنان انجام نشد.");
+  }
+  return data;
+}
+
 async function fetchTelemetry(deviceId: string): Promise<TelemetryResponse> {
   const params = new URLSearchParams({ deviceId, limit: "80" });
   const response = await fetch("/api/admin/mobile-telemetry?" + params.toString(), {
@@ -226,6 +279,28 @@ function formatDateTime(value: string | null) {
     timeStyle: "short",
     timeZone: "Asia/Tehran",
   }).format(date);
+}
+
+
+function openStreetMapEmbedUrl(latitude: number, longitude: number) {
+  const delta = 0.008;
+  const bbox = [
+    longitude - delta,
+    latitude - delta,
+    longitude + delta,
+    latitude + delta,
+  ].join(",");
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${latitude}%2C${longitude}`;
+}
+
+function formatLocationAge(value: string | null) {
+  if (!value) return "بدون موقعیت";
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return "زمان نامشخص";
+  const age = Math.max(0, Date.now() - timestamp);
+  if (age < 60_000) return "همین الان";
+  if (age < 60 * 60_000) return `${Math.floor(age / 60_000).toLocaleString("fa-IR")} دقیقه پیش`;
+  return formatRelativeAge(value);
 }
 
 function statusTone(value: string) {
@@ -636,7 +711,7 @@ function PolicyCenter({ policy }: { policy: SummaryResponse["policy"] }) {
               <strong>{item.label}</strong>
               <span>{item.value}</span>
             </div>
-            <em>{item.label === "Location Policy" ? "غیرفعال" : item.label === "App Policy" ? "مشاهده‌ای" : "مبنای واقعی"}</em>
+            <em>{item.label === "Location Policy" ? "فعال و مشروط به مجوز" : item.label === "App Policy" ? "مشاهده‌ای" : "مبنای واقعی"}</em>
           </article>
         ))}
       </div>
@@ -1043,9 +1118,253 @@ function useFleetData(authenticated: boolean) {
   return { summary, staff, loading, staffLoading, error, load };
 }
 
+
+function useLiveLocations(authenticated: boolean) {
+  const [data, setData] = useState<LiveLocationsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    setError("");
+    try {
+      setData(await fetchLiveLocations());
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "دریافت موقعیت کارکنان ناموفق بود.");
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!authenticated) return;
+    void load();
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void load(true);
+    }, 15_000);
+    return () => window.clearInterval(timer);
+  }, [authenticated, load]);
+
+  return {
+    locations: data?.locations ?? [],
+    counts: data?.counts ?? { devices: 0, withLocation: 0, trackingEnabled: 0, consented: 0 },
+    generatedAt: data?.generatedAt ?? null,
+    loading,
+    error,
+    load,
+  };
+}
+
+function liveLocationTone(location: LiveStaffLocation) {
+  if (!location.enabled) return "danger";
+  if (!location.consented) return "muted";
+  if (!location.trackingEnabled || !location.locationPolicyAllowed) return "warning";
+  if (location.latitude == null || location.longitude == null || !location.observedAt) return "muted";
+  const age = Date.now() - Date.parse(location.observedAt);
+  if (Number.isFinite(age) && age <= 20 * 60_000) return "success";
+  if (Number.isFinite(age) && age <= 90 * 60_000) return "warning";
+  return "danger";
+}
+
+function liveLocationStatusLabel(location: LiveStaffLocation) {
+  if (!location.enabled) return "دستگاه غیرفعال";
+  if (!location.consented) return "رضایت موقعیت ثبت نشده";
+  if (!location.trackingEnabled) return "ردیابی خاموش";
+  if (!location.locationPolicyAllowed) return "دسترسی موقعیت بسته است";
+  if (location.latitude == null || location.longitude == null) return "موقعیت دریافت نشده";
+  const age = location.observedAt ? Date.now() - Date.parse(location.observedAt) : Number.POSITIVE_INFINITY;
+  if (Number.isFinite(age) && age <= 20 * 60_000) return "موقعیت تازه";
+  if (Number.isFinite(age) && age <= 90 * 60_000) return "موقعیت قدیمی";
+  return "موقعیت خیلی قدیمی";
+}
+
+function LiveStaffLocationCenter({
+  locations,
+  counts,
+  generatedAt,
+  loading,
+  error,
+  onRefresh,
+}: {
+  locations: LiveStaffLocation[];
+  counts: LiveLocationsResponse["counts"];
+  generatedAt: string | null;
+  loading: boolean;
+  error: string;
+  onRefresh: () => void;
+}) {
+  const [selectedDeviceId, setSelectedDeviceId] = useState("");
+
+  const usableLocations = useMemo(
+    () => locations.filter((item) => item.latitude != null && item.longitude != null),
+    [locations],
+  );
+
+  useEffect(() => {
+    if (selectedDeviceId && usableLocations.some((item) => item.deviceId === selectedDeviceId)) return;
+    setSelectedDeviceId(usableLocations[0]?.deviceId ?? "");
+  }, [selectedDeviceId, usableLocations]);
+
+  const selected =
+    usableLocations.find((item) => item.deviceId === selectedDeviceId) ??
+    usableLocations[0] ??
+    null;
+
+  const selectedMapUrl =
+    selected && selected.latitude != null && selected.longitude != null
+      ? openStreetMapEmbedUrl(selected.latitude, selected.longitude)
+      : null;
+
+  return (
+    <section className="admin-mobile-panel admin-mobile-live-location-panel">
+      <div className="admin-mobile-section-head admin-mobile-section-head-tight">
+        <div>
+          <span className="admin-mobile-section-kicker">Live Staff Location</span>
+          <h2>موقعیت لحظه‌ای کارکنان</h2>
+          <p className="admin-mobile-section-description">
+            آخرین موقعیت ثبت‌شده از گوشی کارکنان، فقط در صورت فعال بودن رضایت موقعیت و
+            سیاست مجاز دستگاه نمایش داده می‌شود.
+          </p>
+        </div>
+        <div className="admin-mobile-live-location-head-actions">
+          <span className="admin-mobile-live-location-pulse"><i /> بروزرسانی خودکار هر ۱۵ ثانیه</span>
+          <button type="button" className="admin-mobile-icon-button" onClick={onRefresh} disabled={loading}>
+            <RefreshCw size={15} className={loading ? "admin-mobile-spin" : undefined} />
+            بروزرسانی
+          </button>
+        </div>
+      </div>
+
+      {error ? (
+        <div className="admin-mobile-error">
+          <AlertTriangle size={17} />
+          <span>{error}</span>
+        </div>
+      ) : null}
+
+      <div className="admin-mobile-live-location-stats">
+        <div><span>دستگاه‌ها</span><strong>{counts.devices.toLocaleString("fa-IR")}</strong></div>
+        <div><span>دارای مختصات</span><strong>{counts.withLocation.toLocaleString("fa-IR")}</strong></div>
+        <div><span>ردیابی روشن</span><strong>{counts.trackingEnabled.toLocaleString("fa-IR")}</strong></div>
+        <div><span>رضایت موقعیت</span><strong>{counts.consented.toLocaleString("fa-IR")}</strong></div>
+        <div><span>آخرین دریافت پنل</span><strong>{formatRelativeAge(generatedAt)}</strong></div>
+      </div>
+
+      {loading && !locations.length ? (
+        <div className="admin-mobile-live-location-loading">در حال دریافت موقعیت کارکنان…</div>
+      ) : (
+        <div className="admin-mobile-live-location-layout">
+          <div className="admin-mobile-live-location-list">
+            {locations.length ? (
+              locations.map((location) => {
+                const displayName =
+                  location.staffName || location.employee || location.deviceName || "کارمند بدون نام";
+                const model = [location.manufacturer, location.model].filter(Boolean).join(" ");
+                const tone = liveLocationTone(location);
+                const isSelected = selected?.deviceId === location.deviceId;
+                const canSelect = location.latitude != null && location.longitude != null;
+                return (
+                  <button
+                    key={location.deviceId}
+                    type="button"
+                    className={"admin-mobile-live-location-item" + (isSelected ? " is-selected" : "")}
+                    onClick={() => canSelect && setSelectedDeviceId(location.deviceId)}
+                    disabled={!canSelect}
+                    aria-label={"نمایش موقعیت " + displayName}
+                  >
+                    <span className={"admin-mobile-live-location-marker is-" + tone}>
+                      <MapPin size={17} />
+                    </span>
+                    <span className="admin-mobile-live-location-copy">
+                      <strong>{displayName}</strong>
+                      <small>{location.staffRole || model || "دستگاه هیرمند"}</small>
+                      <em>{liveLocationStatusLabel(location)}</em>
+                    </span>
+                    <span className="admin-mobile-live-location-age">
+                      {formatLocationAge(location.observedAt)}
+                    </span>
+                  </button>
+                );
+              })
+            ) : (
+              <div className="admin-mobile-empty-state">
+                <MapPin size={22} />
+                <strong>هنوز موقعیت قابل نمایش ثبت نشده است.</strong>
+                <span>
+                  برای نمایش مختصات، گوشی باید ردیابی موقعیت را با رضایت فعال کارمند ارسال کند.
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="admin-mobile-live-location-map">
+            {selectedMapUrl && selected ? (
+              <>
+                <iframe
+                  title={"موقعیت " + (selected.staffName || selected.employee || selected.deviceName || "کارمند")}
+                  src={selectedMapUrl}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+                <div className="admin-mobile-live-location-map-overlay">
+                  <div>
+                    <strong>{selected.staffName || selected.employee || selected.deviceName || "کارمند"}</strong>
+                    <span>
+                      <bdi dir="ltr">
+                        {selected.latitude?.toFixed(6)}, {selected.longitude?.toFixed(6)}
+                      </bdi>
+                    </span>
+                    <small>
+                      {selected.provider || "GPS"} · {formatDateTime(selected.observedAt)}
+                      {selected.accuracyMeters != null
+                        ? " · دقت " + selected.accuracyMeters.toLocaleString("fa-IR") + " متر"
+                        : ""}
+                    </small>
+                  </div>
+                  <a
+                    href={
+                      "https://www.google.com/maps?q=" +
+                      encodeURIComponent(String(selected.latitude) + "," + String(selected.longitude))
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                    className="admin-mobile-secondary-action"
+                  >
+                    مشاهده در نقشه
+                  </a>
+                </div>
+              </>
+            ) : (
+              <div className="admin-mobile-live-location-map-empty">
+                <MapPin size={28} />
+                <strong>یک کارمند دارای موقعیت را انتخاب کنید.</strong>
+                <span>موقعیت‌هایی که مختصات ندارند روی نقشه نمایش داده نمی‌شوند.</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="admin-mobile-mini-note">
+        <Info size={14} />
+        «لحظه‌ای» در اینجا یعنی آخرین نقطه‌ای که گوشی واقعاً ارسال کرده است؛ فاصلهٔ
+        ارسال از تنظیمات ردیابی همان گوشی پیروی می‌کند.
+      </div>
+    </section>
+  );
+}
+
 export function AdminMobileManagementPage() {
   const auth = useAdminAccess();
   const { summary, staff, loading, staffLoading, error, load } = useFleetData(auth === "authenticated");
+  const {
+    locations: liveLocations,
+    counts: liveLocationCounts,
+    generatedAt: liveLocationsGeneratedAt,
+    loading: liveLocationsLoading,
+    error: liveLocationsError,
+    load: loadLiveLocations,
+  } = useLiveLocations(auth === "authenticated");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [presenceFilter, setPresenceFilter] = useState("all");
@@ -1165,6 +1484,15 @@ export function AdminMobileManagementPage() {
           <KpiCard label="Fully Managed" value={counts.deviceOwner} icon={<Laptop size={19} />} meta="Device Owner" />
           <KpiCard label="Work Profile" value={counts.profileOwner} icon={<ShieldCheck size={19} />} meta="Profile Owner" />
         </section>
+
+        <LiveStaffLocationCenter
+          locations={liveLocations}
+          counts={liveLocationCounts}
+          generatedAt={liveLocationsGeneratedAt}
+          loading={liveLocationsLoading}
+          error={liveLocationsError}
+          onRefresh={() => void loadLiveLocations()}
+        />
 
         {loading && !summary ? (
           <section className="admin-mobile-panel">
