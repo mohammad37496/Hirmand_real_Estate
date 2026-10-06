@@ -3,95 +3,353 @@ package ir.hirmand.staff
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileInputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.Instant
 import java.util.UUID
 
-data class StaffTaskItem(val id:String,val title:String,val description:String,val status:String,val priority:String,val propertyId:String?,val dueAt:String?)
-data class StaffVisitItem(val id:String,val propertyId:String?,val title:String,val address:String,val targetLat:Double?,val targetLng:Double?,val radiusM:Double,val scheduledAt:String?,val status:String,val arrivedAt:String?,val leftAt:String?)
-data class StaffCrmContactItem(val id:String,val name:String,val phone:String,val type:String,val notes:String,val propertyId:String?,val nextFollowUpAt:String?)
+data class StaffLinkedPropertyItem(
+    val id:String,
+    val title:String,
+    val slug:String,
+    val neighborhood:String,
+    val areaM2:Int?,
+    val bedrooms:Int?,
+    val transactionType:String,
+    val propertyType:String,
+)
+
+data class StaffTaskItem(
+    val id:String,val title:String,val description:String,val status:String,val priority:String,
+    val propertyId:String?,val customerId:String?,val dueAt:String?,
+)
+data class StaffVisitItem(
+    val id:String,val propertyId:String?,val title:String,val address:String,val targetLat:Double?,val targetLng:Double?,
+    val radiusM:Double,val scheduledAt:String?,val status:String,val arrivedAt:String?,val leftAt:String?,
+)
+data class StaffCrmContactItem(
+    val id:String,val name:String,val phone:String,val type:String,val notes:String,val leadId:String?,
+    val leadStatus:String?,val leadDeal:String?,val propertyId:String?,val nextFollowUpAt:String?,
+    val linkedProperties:List<StaffLinkedPropertyItem>,
+)
+data class StaffCrmInteractionItem(
+    val id:String,val contactId:String,val kind:String,val note:String,val createdAt:String?,
+)
 data class StaffAttendanceItem(val id:String,val workDate:String,val startedAt:String?,val endedAt:String?)
+data class StaffFollowUpItem(
+    val id:String,val name:String,val phone:String,val type:String,val leadId:String?,val propertyId:String?,
+    val propertyTitle:String?,val leadStatus:String?,val nextFollowUpAt:String?,
+)
+data class StaffDailySummary(
+    val tasksToday:Int,val tasksDoneToday:Int,val overdueTasks:Int,val visitsToday:Int,val visitsDoneToday:Int,
+    val callsToday:Int,val followUpsDue:Int,val followUpsNext7:Int,val capturesToday:Int,
+)
+data class StaffPerformanceSummary(
+    val score:Int,val tasksDone:Int,val visitsDone:Int,val callsDone:Int,val attendanceDays:Int,val interactions:Int,
+)
 data class StaffOperationsSnapshot(
-    val tasks:List<StaffTaskItem>,val visits:List<StaffVisitItem>,val contacts:List<StaffCrmContactItem>,
-    val attendance:StaffAttendanceItem?,val lostMode:Boolean,val lostMessage:String,
+    val tasks:List<StaffTaskItem>,
+    val visits:List<StaffVisitItem>,
+    val contacts:List<StaffCrmContactItem>,
+    val interactions:List<StaffCrmInteractionItem>,
+    val attendance:StaffAttendanceItem?,
+    val lostMode:Boolean,
+    val lostMessage:String,
     val captures:Int,
+    val followUps:List<StaffFollowUpItem>,
+    val daily:StaffDailySummary,
+    val performance:StaffPerformanceSummary,
+    val staffName:String="",
+    val staffRole:String="",
+    val offline:Boolean=false,
+    val lastServerSyncAt:String?=null,
+    val pendingSyncCount:Int=0,
 )
 
 object StaffOperations {
     private const val PREFS="hirmand_staff"
     private const val DEVICE_ID="device_id"
     private const val ENDPOINT=BuildConfig.STAFF_OPERATIONS_URL
-    private val clientTimeout=15_000
+    private const val CAPTURE_ENDPOINT=BuildConfig.STAFF_PROPERTY_CAPTURE_URL
+    private const val CLIENT_TIMEOUT=15_000
 
     private fun deviceId(context:Context)=context.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString(DEVICE_ID,"").orEmpty()
     private fun token(context:Context)=StaffTelemetryStore.token(context)
+    private fun newEventId()=UUID.randomUUID().toString()
 
-    fun sync(context:Context):StaffOperationsSnapshot?{
-        val id=deviceId(context); val auth=token(context)
-        if(id.isBlank()||auth.isBlank())return null
+    private fun getOnline(context:Context):Pair<Int,String?>{
+        val id=deviceId(context);val auth=token(context)
+        if(id.isBlank()||auth.isBlank())return -1 to null
         val connection=(URL(ENDPOINT).openConnection() as HttpURLConnection).apply{
-            requestMethod="GET";connectTimeout=clientTimeout;readTimeout=clientTimeout;useCaches=false
-            setRequestProperty("Accept","application/json");setRequestProperty("Authorization","Bearer "+auth);setRequestProperty("X-Hirmand-Device-Id",id)
+            requestMethod="GET";connectTimeout=CLIENT_TIMEOUT;readTimeout=CLIENT_TIMEOUT;useCaches=false
+            setRequestProperty("Accept","application/json")
+            setRequestProperty("Authorization","Bearer "+auth)
+            setRequestProperty("X-Hirmand-Device-Id",id)
         }
         return try{
-            if(connection.responseCode !in 200..299)return null
-            parse(connection.inputStream.bufferedReader().use{it.readText()})
-        }finally{connection.disconnect()}
+            val code=connection.responseCode
+            val body=runCatching{(if(code in 200..299)connection.inputStream else connection.errorStream)?.bufferedReader()?.use{it.readText()}}.getOrNull()
+            code to body
+        }catch(_:Throwable){-1 to null}finally{connection.disconnect()}
     }
 
-    private fun parse(text:String):StaffOperationsSnapshot{
+    fun sync(context:Context):StaffOperationsSnapshot?{
+        val id=deviceId(context);val auth=token(context)
+        if(id.isBlank()||auth.isBlank())return null
+        val store=StaffOfflineStore.get(context)
+        store.prune()
+        flushQueue(context,store)
+        flushCaptureQueue(context,store)
+
+        val (code,text)=getOnline(context)
+        if(code in 200..299 && !text.isNullOrBlank()){
+            store.cacheSnapshot(text!!)
+            return parse(text,offline=false,lastServerSyncAt=Instant.now().toString(),pendingSyncCount=store.pendingCount())
+        }
+
+        val (cached,cachedAt)=store.cachedSnapshot()
+        if(!cached.isNullOrBlank()){
+            val snapshot=parse(
+                cached,
+                offline=true,
+                lastServerSyncAt=cachedAt?.let{Instant.ofEpochMilli(it).toString()},
+                pendingSyncCount=store.pendingCount(),
+            )
+            return snapshot
+        }
+        return null
+    }
+
+    private fun parse(text:String,offline:Boolean,lastServerSyncAt:String?,pendingSyncCount:Int):StaffOperationsSnapshot{
         val root=JSONObject(text)
-        val tasks=mutableListOf<StaffTaskItem>(); val ta=root.optJSONArray("tasks")?:JSONArray()
-        for(i in 0 until ta.length()){val o=ta.getJSONObject(i);tasks+=StaffTaskItem(o.optString("id"),o.optString("title"),o.optString("description"),o.optString("status"),o.optString("priority"),o.optStringOrNull("propertyId"),o.optStringOrNull("dueAt"))}
-        val visits=mutableListOf<StaffVisitItem>();val va=root.optJSONArray("visits")?:JSONArray()
-        for(i in 0 until va.length()){val o=va.getJSONObject(i);visits+=StaffVisitItem(o.optString("id"),o.optStringOrNull("propertyId"),o.optString("title"),o.optString("address"),if(o.isNull("targetLat"))null else o.optDouble("targetLat"),if(o.isNull("targetLng"))null else o.optDouble("targetLng"),o.optDouble("radiusM",120.0),o.optStringOrNull("scheduledAt"),o.optString("status"),o.optStringOrNull("arrivedAt"),o.optStringOrNull("leftAt"))}
-        val contacts=mutableListOf<StaffCrmContactItem>();val ca=root.optJSONArray("contacts")?:JSONArray()
-        for(i in 0 until ca.length()){val o=ca.getJSONObject(i);contacts+=StaffCrmContactItem(o.optString("id"),o.optString("name"),o.optString("phone"),o.optString("type"),o.optString("notes"),o.optStringOrNull("propertyId"),o.optStringOrNull("nextFollowUpAt"))}
-        val a=root.optJSONObject("attendance")?.let{o->StaffAttendanceItem(o.optString("id"),o.optString("workDate"),o.optStringOrNull("startedAt"),o.optStringOrNull("endedAt"))}
-        return StaffOperationsSnapshot(tasks,visits,contacts,a,root.optBoolean("lostMode"),root.optString("lostMessage"),root.optJSONArray("captures")?.length()?:0)
+        val tasks=mutableListOf<StaffTaskItem>()
+        val ta=root.optJSONArray("tasks")?:JSONArray()
+        for(i in 0 until ta.length()){
+            val o=ta.getJSONObject(i)
+            tasks+=StaffTaskItem(
+                o.optString("id"),o.optString("title"),o.optString("description"),o.optString("status"),
+                o.optString("priority"),o.optStringOrNull("propertyId"),o.optStringOrNull("customerId"),o.optStringOrNull("dueAt")
+            )
+        }
+
+        val visits=mutableListOf<StaffVisitItem>()
+        val va=root.optJSONArray("visits")?:JSONArray()
+        for(i in 0 until va.length()){
+            val o=va.getJSONObject(i)
+            visits+=StaffVisitItem(
+                o.optString("id"),o.optStringOrNull("propertyId"),o.optString("title"),o.optString("address"),
+                o.optNullableDouble("targetLat"),o.optNullableDouble("targetLng"),o.optDouble("radiusM",120.0),
+                o.optStringOrNull("scheduledAt"),o.optString("status"),o.optStringOrNull("arrivedAt"),o.optStringOrNull("leftAt")
+            )
+        }
+
+        val contacts=mutableListOf<StaffCrmContactItem>()
+        val ca=root.optJSONArray("contacts")?:JSONArray()
+        for(i in 0 until ca.length()){
+            val o=ca.getJSONObject(i)
+            val linked=mutableListOf<StaffLinkedPropertyItem>()
+            val pa=o.optJSONArray("linkedProperties")?:JSONArray()
+            for(j in 0 until pa.length()){
+                val p=pa.optJSONObject(j) ?: continue
+                linked+=StaffLinkedPropertyItem(
+                    p.optString("id"),p.optString("title"),p.optString("slug"),p.optString("neighborhood"),
+                    p.optNullableInt("areaM2"),p.optNullableInt("bedrooms"),p.optString("transactionType"),p.optString("propertyType")
+                )
+            }
+            contacts+=StaffCrmContactItem(
+                o.optString("id"),o.optString("name"),o.optString("phone"),o.optString("type"),o.optString("notes"),
+                o.optStringOrNull("leadId"),o.optStringOrNull("leadStatus"),o.optStringOrNull("leadDeal"),
+                o.optStringOrNull("propertyId"),o.optStringOrNull("nextFollowUpAt"),linked,
+            )
+        }
+
+        val interactions=mutableListOf<StaffCrmInteractionItem>()
+        val ia=root.optJSONArray("interactions")?:JSONArray()
+        for(i in 0 until ia.length()){
+            val o=ia.getJSONObject(i)
+            interactions+=StaffCrmInteractionItem(o.optString("id"),o.optString("contactId"),o.optString("kind"),o.optString("note"),o.optStringOrNull("createdAt"))
+        }
+
+        val attendance=root.optJSONObject("attendance")?.let{o->
+            StaffAttendanceItem(o.optString("id"),o.optString("workDate"),o.optStringOrNull("startedAt"),o.optStringOrNull("endedAt"))
+        }
+
+        val followUps=mutableListOf<StaffFollowUpItem>()
+        val fu=root.optJSONArray("followUps")?:JSONArray()
+        for(i in 0 until fu.length()){
+            val o=fu.getJSONObject(i)
+            followUps+=StaffFollowUpItem(
+                o.optString("id"),o.optString("name"),o.optString("phone"),o.optString("type"),
+                o.optStringOrNull("leadId"),o.optStringOrNull("propertyId"),o.optStringOrNull("propertyTitle"),
+                o.optStringOrNull("leadStatus"),o.optStringOrNull("nextFollowUpAt")
+            )
+        }
+
+        val dailyObj=root.optJSONObject("daily")?:JSONObject()
+        val daily=StaffDailySummary(
+            dailyObj.optInt("tasksToday"),dailyObj.optInt("tasksDoneToday"),dailyObj.optInt("overdueTasks"),
+            dailyObj.optInt("visitsToday"),dailyObj.optInt("visitsDoneToday"),dailyObj.optInt("callsToday"),
+            dailyObj.optInt("followUpsDue"),dailyObj.optInt("followUpsNext7"),dailyObj.optInt("capturesToday")
+        )
+
+        val perfObj=root.optJSONObject("performance")?:JSONObject()
+        val performance=StaffPerformanceSummary(
+            perfObj.optInt("score"),perfObj.optInt("tasksDone"),perfObj.optInt("visitsDone"),
+            perfObj.optInt("callsDone"),perfObj.optInt("attendanceDays"),perfObj.optInt("interactions")
+        )
+        val staff=root.optJSONObject("staff")
+
+        return StaffOperationsSnapshot(
+            tasks=tasks,visits=visits,contacts=contacts,interactions=interactions,attendance=attendance,
+            lostMode=root.optBoolean("lostMode"),lostMessage=root.optString("lostMessage"),
+            captures=root.optJSONArray("captures")?.length()?:0,followUps=followUps,daily=daily,performance=performance,
+            staffName=staff?.optString("name").orEmpty(),staffRole=staff?.optString("role").orEmpty(),
+            offline=offline,lastServerSyncAt=lastServerSyncAt,pendingSyncCount=pendingSyncCount,
+        )
     }
 
-    private fun JSONObject.optStringOrNull(key:String):String?=if(isNull(key))null else optString(key).ifBlank{null}
+    private fun flushQueue(context:Context,store:StaffOfflineStore){
+        for(item in store.dueQueue(12)){
+            val payload=runCatching{JSONObject(item.payload)}.getOrNull()
+            if(payload==null){store.remove(item.eventId);continue}
+            payload.put("clientEventId",item.eventId)
+            when(val code=postOnline(context,payload)){
+                in 200..299 -> store.remove(item.eventId)
+                in 400..499 -> store.remove(item.eventId)
+                else -> store.markFailed(item.eventId,item.retries)
+            }
+        }
+    }
 
-    fun post(context:Context,payload:JSONObject):Boolean{
-        val id=deviceId(context);val auth=token(context);if(id.isBlank()||auth.isBlank())return false
-        val c=(URL(ENDPOINT).openConnection() as HttpURLConnection).apply{
-            requestMethod="POST";connectTimeout=clientTimeout;readTimeout=clientTimeout;doOutput=true;useCaches=false
+    private fun flushCaptureQueue(context:Context,store:StaffOfflineStore){
+        for(item in store.dueCaptures(4)){
+            val file=File(item.filePath)
+            if(!file.exists()){store.removeCapture(item.eventId);continue}
+            val code=uploadCaptureOnline(context,file.readBytes(),item.propertyId,item.visitId,item.category,item.eventId)
+            when(code){
+                in 200..299 -> {store.removeCapture(item.eventId);runCatching{file.delete()}}
+                in 400..499 -> {store.removeCapture(item.eventId);runCatching{file.delete()}}
+                else -> store.markCaptureFailed(item.eventId,item.retries)
+            }
+        }
+    }
+
+    private fun postOnline(context:Context,payload:JSONObject):Int{
+        val id=deviceId(context);val auth=token(context)
+        if(id.isBlank()||auth.isBlank())return -1
+        val eventId=payload.optString("clientEventId").ifBlank{newEventId().also{payload.put("clientEventId",it)}}
+        val connection=(URL(ENDPOINT).openConnection() as HttpURLConnection).apply{
+            requestMethod="POST";connectTimeout=CLIENT_TIMEOUT;readTimeout=CLIENT_TIMEOUT;doOutput=true;useCaches=false
             setRequestProperty("Accept","application/json");setRequestProperty("Content-Type","application/json; charset=utf-8")
             setRequestProperty("Authorization","Bearer "+auth);setRequestProperty("X-Hirmand-Device-Id",id)
+            setRequestProperty("X-Hirmand-Client-Event-Id",eventId)
         }
-        return try{c.outputStream.bufferedWriter(Charsets.UTF_8).use{it.write(payload.toString())};c.responseCode in 200..299}finally{c.disconnect()}
+        return try{
+            connection.outputStream.bufferedWriter(Charsets.UTF_8).use{it.write(payload.toString())}
+            connection.responseCode
+        }catch(_:Throwable){-1}finally{connection.disconnect()}
+    }
+
+    fun post(context:Context,payload:JSONObject):Boolean{
+        val store=StaffOfflineStore.get(context)
+        val prepared=JSONObject(payload.toString())
+        val eventId=prepared.optString("clientEventId").ifBlank{newEventId().also{prepared.put("clientEventId",it)}}
+        val code=postOnline(context,prepared)
+        if(code in 200..299)return true
+        if(code in 400..499)return false
+        store.enqueue(eventId,prepared.toString())
+        return true
     }
 
     fun taskDone(context:Context,id:String)=post(context,JSONObject().put("action","task_status").put("id",id).put("status","done"))
     fun taskStart(context:Context,id:String)=post(context,JSONObject().put("action","task_status").put("id",id).put("status","in_progress"))
+
     fun visitStatus(context:Context,id:String,status:String,lat:Double?=null,lng:Double?=null):Boolean{
-        val p=JSONObject().put("action","visit_status").put("id",id).put("status",status);if(lat!=null)p.put("latitude",lat);if(lng!=null)p.put("longitude",lng);return post(context,p)
+        val p=JSONObject().put("action","visit_status").put("id",id).put("status",status)
+        if(lat!=null)p.put("latitude",lat)
+        if(lng!=null)p.put("longitude",lng)
+        return post(context,p)
     }
+
     fun attendance(context:Context,start:Boolean,lat:Double?=null,lng:Double?=null):Boolean{
-        val p=JSONObject().put("action",if(start)"attendance_start" else "attendance_stop");if(lat!=null)p.put("latitude",lat);if(lng!=null)p.put("longitude",lng);return post(context,p)
+        val p=JSONObject().put("action",if(start)"attendance_start" else "attendance_stop")
+        if(lat!=null)p.put("latitude",lat)
+        if(lng!=null)p.put("longitude",lng)
+        return post(context,p)
     }
-    fun logInteraction(context:Context,contactId:String,kind:String,note:String)=post(context,JSONObject().put("action","crm_interaction").put("contactId",contactId).put("kind",kind).put("note",note))
-    fun createCrmContact(context:Context,name:String,phone:String,type:String="customer"):Boolean =
-        post(context,JSONObject().put("action","crm_create_contact").put("name",name).put("phone",phone).put("type",type))
-    fun sendHealth(context:Context)=post(context,JSONObject().put("action","health").put("observedAt",Instant.now().toString()).put("payload",StaffHealth.snapshot(context)))
-    fun sendLocations(context:Context,locations:JSONArray)=post(context,JSONObject().put("action","locations").put("items",locations))
+
+    fun logInteraction(context:Context,contactId:String,kind:String,note:String,followUpAt:String?=null):Boolean{
+        val p=JSONObject().put("action","crm_interaction").put("contactId",contactId).put("kind",kind).put("note",note)
+        if(!followUpAt.isNullOrBlank())p.put("followUpAt",followUpAt)
+        return post(context,p)
+    }
+
+    fun createCrmContact(
+        context:Context,name:String,phone:String,type:String="customer",leadId:String?=null,
+        propertyIds:List<String> = emptyList(),followUpAt:String?=null
+    ):Boolean{
+        val entityId=newEventId()
+        val p=JSONObject().put("action","crm_create_contact").put("entityId",entityId).put("name",name).put("phone",phone).put("type",type)
+        if(!leadId.isNullOrBlank())p.put("leadId",leadId)
+        if(propertyIds.isNotEmpty())p.put("propertyIds",JSONArray(propertyIds))
+        if(!followUpAt.isNullOrBlank())p.put("nextFollowUpAt",followUpAt)
+        return post(context,p)
+    }
+
+    fun linkCrmContact(context:Context,contactId:String,leadId:String?,propertyIds:List<String>,replaceProperties:Boolean=false):Boolean{
+        val p=JSONObject().put("action","crm_link").put("contactId",contactId).put("replaceProperties",replaceProperties)
+        if(!leadId.isNullOrBlank())p.put("leadId",leadId)
+        p.put("propertyIds",JSONArray(propertyIds))
+        return post(context,p)
+    }
+
+    fun sendHealth(context:Context):Boolean=
+        post(context,JSONObject().put("action","health").put("observedAt",Instant.now().toString()).put("payload",StaffHealth.snapshot(context)))
+
+    fun sendLocations(context:Context,locations:JSONArray):Boolean=
+        post(context,JSONObject().put("action","locations").put("items",locations))
 
     fun uploadCapture(context:Context,jpeg:ByteArray,propertyId:String?,visitId:String?,category:String):Boolean{
-        val id=deviceId(context);val auth=token(context);if(id.isBlank()||auth.isBlank()||jpeg.isEmpty())return false
-        val c=(URL(BuildConfig.STAFF_PROPERTY_CAPTURE_URL).openConnection() as HttpURLConnection).apply{
-            requestMethod="POST";connectTimeout=clientTimeout;readTimeout=clientTimeout;doOutput=true;useCaches=false
-            setRequestProperty("Authorization","Bearer "+auth);setRequestProperty("X-Hirmand-Device-Id",id)
-            setRequestProperty("X-Hirmand-File-Mime","image/jpeg");setRequestProperty("X-Hirmand-Capture-Category",category)
+        if(jpeg.isEmpty())return false
+        val eventId=newEventId()
+        val code=uploadCaptureOnline(context,jpeg,propertyId,visitId,category,eventId)
+        if(code in 200..299)return true
+        if(code in 400..499)return false
+
+        val dir=File(context.filesDir,"offline-captures").apply{mkdirs()}
+        val file=File(dir,eventId+".jpg")
+        return runCatching{
+            file.writeBytes(jpeg)
+            StaffOfflineStore.get(context).enqueueCapture(eventId,file.absolutePath,propertyId,visitId,category)
+            true
+        }.getOrDefault(false)
+    }
+
+    private fun uploadCaptureOnline(
+        context:Context,jpeg:ByteArray,propertyId:String?,visitId:String?,category:String,eventId:String
+    ):Int{
+        val id=deviceId(context);val auth=token(context)
+        if(id.isBlank()||auth.isBlank())return -1
+        val c=(URL(CAPTURE_ENDPOINT).openConnection() as HttpURLConnection).apply{
+            requestMethod="POST";connectTimeout=CLIENT_TIMEOUT;readTimeout=CLIENT_TIMEOUT;doOutput=true;useCaches=false
+            setRequestProperty("Authorization","Bearer "+auth)
+            setRequestProperty("X-Hirmand-Device-Id",id)
+            setRequestProperty("X-Hirmand-Client-Event-Id",eventId)
+            setRequestProperty("X-Hirmand-File-Mime","image/jpeg")
+            setRequestProperty("X-Hirmand-Capture-Category",category)
             if(!propertyId.isNullOrBlank())setRequestProperty("X-Hirmand-Property-Id",propertyId)
             if(!visitId.isNullOrBlank())setRequestProperty("X-Hirmand-Visit-Id",visitId)
             setRequestProperty("Content-Type","image/jpeg")
         }
-        return try{c.outputStream.use{it.write(jpeg)};c.responseCode in 200..299}finally{c.disconnect()}
+        return try{
+            c.outputStream.use{it.write(jpeg)}
+            c.responseCode
+        }catch(_:Throwable){-1}finally{c.disconnect()}
     }
 
+    fun pendingSyncCount(context:Context)=StaffOfflineStore.get(context).pendingCount()
     fun schedule(context:Context)=StaffOperationsWorker.schedule(context)
 }
 
@@ -104,7 +362,11 @@ object StaffHealth {
         val stat=android.os.StatFs(context.filesDir.absolutePath)
         val connectivity=context.getSystemService(android.net.ConnectivityManager::class.java)
         val network=connectivity?.activeNetwork?.let{n->connectivity.getNetworkCapabilities(n)?.let{cap->
-            JSONObject().put("connected",true).put("transport",when{cap.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI)->"wifi";cap.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR)->"cellular";else->"other"})
+            JSONObject().put("connected",true).put("transport",when{
+                cap.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI)->"wifi"
+                cap.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR)->"cellular"
+                else->"other"
+            })
         }}?:JSONObject().put("connected",false)
         return JSONObject()
             .put("appVersionName",BuildConfig.VERSION_NAME)
@@ -118,5 +380,14 @@ object StaffHealth {
             .put("storageAvailableBytes",stat.availableBytes)
             .put("network",network)
             .put("permissions",StaffPermissionTelemetry.snapshot(context))
-        }
     }
+}
+
+private fun JSONObject.optStringOrNull(key:String):String?=
+    if(isNull(key))null else optString(key).ifBlank{null}
+
+private fun JSONObject.optNullableDouble(key:String):Double?=
+    if(isNull(key))null else optDouble(key).takeIf{!it.isNaN()}
+
+private fun JSONObject.optNullableInt(key:String):Int?=
+    if(isNull(key))null else optInt(key).takeIf{it!=0||opt(key)!=null}
