@@ -1166,6 +1166,24 @@ export function AdminMobileManagementPage() {
           <KpiCard label="Work Profile" value={counts.profileOwner} icon={<ShieldCheck size={19} />} meta="Profile Owner" />
         </section>
 
+        <section className="admin-mobile-panel admin-mobile-call-center-entry">
+          <div className="admin-mobile-call-center-entry-icon" aria-hidden="true">
+            <PhoneCall size={21} />
+          </div>
+          <div className="admin-mobile-call-center-entry-copy">
+            <span className="admin-mobile-section-kicker">Call Center</span>
+            <h2>تماس‌ها</h2>
+            <p>
+              مشاهدهٔ تاریخچهٔ تماس‌های دریافتی و گرفته‌شده و پخش یا دانلود فایل‌های ضبط‌شدهٔ
+              واقعیِ ارسال‌شده از گوشی‌های سازمانی.
+            </p>
+          </div>
+          <Link to="/admin-mobile-management/calls" className="admin-mobile-primary-action">
+            ورود به تماس‌ها
+            <ChevronLeft size={16} />
+          </Link>
+        </section>
+
         {loading && !summary ? (
           <section className="admin-mobile-panel">
             <div className="admin-mobile-loading-grid">
