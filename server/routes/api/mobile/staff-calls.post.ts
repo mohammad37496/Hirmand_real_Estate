@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { dbSource, getSql } from "@/lib/db";
 import { requireStaffMobileDevice } from "@/lib/staff-mobile-auth.server";
 import { consumeStaffMobileRateLimit } from "@/lib/staff-mobile-rate-limit.server";
+import { recalculateLeadScore } from "@/lib/lead-scoring.server";
 
 type CallItem = {
   sourceId?: unknown;
@@ -141,6 +142,7 @@ const inserted = await sql.query(
             [contact.id,device.staff_id],
           );
           if(contact.lead_id){
+            await recalculateLeadScore(sql,String(contact.lead_id)).catch(()=>null);
             await sql.query(
               "insert into lead_activities(lead_id,activity_type,title,note,metadata) values($1,'call',$2,$3,$4::jsonb)",
               [contact.lead_id,directionLabel,"تماس خودکار از اپ کارکنان · "+contact.name,JSON.stringify({source:"staff_mobile_call_sync",direction,durationSeconds:duration})],
