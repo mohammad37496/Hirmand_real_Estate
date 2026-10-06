@@ -4,6 +4,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
@@ -94,6 +95,11 @@
             android:exported="false"
             android:foregroundServiceType="microphone" />
 
+        <service
+            android:name=".StaffLocationService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
         <receiver
             android:name=".StaffCallStateReceiver"
             android:exported="true">
@@ -101,6 +107,10 @@
                 <action android:name="android.intent.action.PHONE_STATE" />
             </intent-filter>
         </receiver>
+
+        <activity
+            android:name=".StaffOperationsActivity"
+            android:exported="false" />
 
         <activity
             android:name=".MainActivity"
