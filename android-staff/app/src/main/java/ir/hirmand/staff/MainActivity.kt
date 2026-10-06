@@ -142,6 +142,8 @@ class MainActivity : AppCompatActivity() {
                 onClose = {
                     permissionCenterVisible = false
                     setContentView(buildHome())
+                    StaffTelemetry.enqueuePermissionState(this, StaffPermissionTelemetry.snapshot(this))
+                    startLocationTrackingIfAllowed()
                 },
             ).buildView()
         )
