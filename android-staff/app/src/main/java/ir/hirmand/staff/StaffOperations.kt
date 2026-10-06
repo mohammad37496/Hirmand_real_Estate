@@ -260,7 +260,88 @@ object StaffOperations {
         if(code in 200..299)return true
         if(code in 400..499)return false
         store.enqueue(eventId,prepared.toString())
+        applyOptimisticMutation(store,prepared)
         return true
+    }
+
+    private fun applyOptimisticMutation(store:StaffOfflineStore,payload:JSONObject){
+        val cached=store.cachedSnapshot().first ?: return
+        runCatching{
+            val root=JSONObject(cached)
+            when(payload.optString("action")){
+                "task_status" -> {
+                    val items=root.optJSONArray("tasks")?:JSONArray()
+                    for(i in 0 until items.length()){
+                        val item=items.optJSONObject(i)?:continue
+                        if(item.optString("id")==payload.optString("id")){
+                            item.put("status",payload.optString("status"))
+                            if(payload.optString("status")=="done")item.put("completedAt",Instant.now().toString())
+                            break
+                        }
+                    }
+                }
+                "visit_status" -> {
+                    val items=root.optJSONArray("visits")?:JSONArray()
+                    for(i in 0 until items.length()){
+                        val item=items.optJSONObject(i)?:continue
+                        if(item.optString("id")==payload.optString("id")){
+                            item.put("status",payload.optString("status"))
+                            if(payload.optString("status")=="arrived")item.put("arrivedAt",Instant.now().toString())
+                            if(payload.optString("status")=="completed")item.put("leftAt",Instant.now().toString())
+                            break
+                        }
+                    }
+                }
+                "attendance_start","attendance_stop" -> {
+                    val a=root.optJSONObject("attendance")?:JSONObject().also{root.put("attendance",it)}
+                    if(payload.optString("action")=="attendance_start"){
+                        a.put("id",a.optString("id").ifBlank{newEventId()})
+                        a.put("startedAt",Instant.now().toString())
+                        a.put("endedAt",JSONObject.NULL)
+                    }else{
+                        a.put("endedAt",Instant.now().toString())
+                    }
+                }
+                "crm_create_contact" -> {
+                    val items=root.optJSONArray("contacts")?:JSONArray().also{root.put("contacts",it)}
+                    val c=JSONObject()
+                        .put("id",payload.optString("entityId"))
+                        .put("name",payload.optString("name"))
+                        .put("phone",payload.optString("phone"))
+                        .put("type",payload.optString("type","customer"))
+                        .put("notes","ثبت آفلاین؛ بعد از اتصال اینترنت همگام می‌شود.")
+                        .put("leadId",payload.optStringOrNull("leadId"))
+                        .put("leadStatus",JSONObject.NULL)
+                        .put("leadDeal",JSONObject.NULL)
+                        .put("propertyId",JSONObject.NULL)
+                        .put("nextFollowUpAt",payload.optStringOrNull("nextFollowUpAt"))
+                        .put("linkedProperties",JSONArray())
+                    items.put(c)
+                }
+                "crm_interaction" -> {
+                    val items=root.optJSONArray("interactions")?:JSONArray().also{root.put("interactions",it)}
+                    items.put(
+                        JSONObject()
+                            .put("id",payload.optString("clientEventId"))
+                            .put("contactId",payload.optString("contactId"))
+                            .put("kind",payload.optString("kind","note"))
+                            .put("note",payload.optString("note"))
+                            .put("createdAt",Instant.now().toString())
+                    )
+                    if(payload.has("followUpAt")){
+                        val contacts=root.optJSONArray("contacts")?:JSONArray()
+                        for(i in 0 until contacts.length()){
+                            val c=contacts.optJSONObject(i)?:continue
+                            if(c.optString("id")==payload.optString("contactId")){
+                                c.put("nextFollowUpAt",payload.opt("followUpAt")?:JSONObject.NULL)
+                                break
+                            }
+                        }
+                    }
+                }
+            }
+            store.cacheSnapshot(root.toString())
+        }.getOrNull()
     }
 
     fun taskDone(context:Context,id:String)=post(context,JSONObject().put("action","task_status").put("id",id).put("status","done"))
