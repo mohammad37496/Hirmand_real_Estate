@@ -10,6 +10,11 @@ type Body = {
   appVersionName?: unknown;
   appVersionCode?: unknown;
   authTokenPresent?: unknown;
+  managementMode?: unknown;
+  manufacturer?: unknown;
+  model?: unknown;
+  androidVersion?: unknown;
+  sdkInt?: unknown;
 };
 
 function cleanText(value: unknown, max: number) {
@@ -44,6 +49,20 @@ export default defineEventHandler(async (event) => {
   const rawVersionCode = Number(body.appVersionCode);
   const appVersionCode = Number.isInteger(rawVersionCode) && rawVersionCode >= 0 ? rawVersionCode : 0;
   const authTokenPresent = body.authTokenPresent === true;
+  const managementModeRaw = cleanText(body.managementMode, 32);
+  const managementMode = new Set([
+    "device_owner",
+    "profile_owner",
+    "legacy_device_admin",
+    "unmanaged",
+  ]).has(managementModeRaw)
+    ? managementModeRaw
+    : "unknown";
+  const manufacturer = cleanText(body.manufacturer, 80);
+  const model = cleanText(body.model, 120);
+  const androidVersion = cleanText(body.androidVersion, 40);
+  const rawSdk = Number(body.sdkInt);
+  const sdkInt = Number.isInteger(rawSdk) && rawSdk >= 0 && rawSdk <= 100 ? rawSdk : null;
 
   if (!isUuid(deviceId)) {
     throw createError({ statusCode: 400, statusMessage: "شناسه دستگاه نامعتبر است." });
@@ -87,11 +106,12 @@ export default defineEventHandler(async (event) => {
 
     const rows = await sql.query<{ status: string }>(
       "update staff_mobile_devices set staff_id=$1,status=$2,app_version_name=$3,app_version_code=$4," +
-        "auth_token_hash=coalesce($5,auth_token_hash),auth_token_created_at=case when $5 is not null then current_timestamp else auth_token_created_at end," +
-        "updated_at=current_timestamp,last_seen_at=current_timestamp," +
+        "management_mode=$5,manufacturer=$6,model=$7,android_version=$8,sdk_int=$9," +
+        "auth_token_hash=coalesce($10,auth_token_hash),auth_token_created_at=case when $10 is not null then current_timestamp else auth_token_created_at end," +
+        "updated_at=current_timestamp,last_seen_at=current_timestamp,last_sync_at=current_timestamp," +
         "approved_at=case when $2='active' then approved_at else null end," +
-        "revoked_at=null where id=$6 returning status",
-      [staff.id, nextStatus, appVersionName, appVersionCode, issuedToken ? hashStaffMobileToken(issuedToken) : null, existing.id],
+        "revoked_at=null where id=$11 returning status",
+      [staff.id, nextStatus, appVersionName, appVersionCode, managementMode, manufacturer, model, androidVersion, sdkInt, issuedToken ? hashStaffMobileToken(issuedToken) : null, existing.id],
     );
 
     return {
@@ -109,9 +129,9 @@ export default defineEventHandler(async (event) => {
 
   await sql.query(
     "insert into staff_mobile_devices " +
-      "(id,device_id,staff_id,status,app_version_name,app_version_code,last_seen_at,auth_token_hash,auth_token_created_at) " +
-      "values ($1,$2,$3,'pending',$4,$5,current_timestamp,$6,current_timestamp)",
-    [id, deviceId, staff.id, appVersionName, appVersionCode, hashStaffMobileToken(issuedToken)],
+      "(id,device_id,staff_id,status,app_version_name,app_version_code,management_mode,manufacturer,model,android_version,sdk_int,last_seen_at,last_sync_at,auth_token_hash,auth_token_created_at) " +
+      "values ($1,$2,$3,'pending',$4,$5,$6,$7,$8,$9,$10,current_timestamp,current_timestamp,$11,current_timestamp)",
+    [id, deviceId, staff.id, appVersionName, appVersionCode, managementMode, manufacturer, model, androidVersion, sdkInt, hashStaffMobileToken(issuedToken)],
   );
 
   return {
