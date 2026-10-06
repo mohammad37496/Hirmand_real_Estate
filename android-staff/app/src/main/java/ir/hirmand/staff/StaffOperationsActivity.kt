@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.CalendarContract
+import android.provider.ContactsContract
 import android.view.Gravity
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,6 +27,19 @@ class StaffOperationsActivity:AppCompatActivity(){
     private var snapshot:StaffOperationsSnapshot?=null
     private var currentVisitId:String?=null
     private var currentPropertyId:String?=null
+    private var currentCaptureCategory:String="general"
+
+    private val contactPickerLauncher=registerForActivityResult(ActivityResultContracts.PickContact()){uri->
+        if(uri==null)return@registerForActivityResult
+        val projection=arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,ContactsContract.CommonDataKinds.Phone.NUMBER)
+        contentResolver.query(uri,projection,null,null,null)?.use{cursor->
+            if(cursor.moveToFirst()){
+                val name=cursor.getString(0).orEmpty()
+                val phone=cursor.getString(1).orEmpty()
+                Thread{val ok=StaffOperations.createCrmContact(this,name,phone);runOnUiThread{Toast.makeText(this,if(ok)"مخاطب به CRM هیرمند اضافه شد." else "افزودن مخاطب ناموفق بود.",Toast.LENGTH_LONG).show();if(ok)refresh()}}.start()
+            }
+        }
+    }
 
     private val cameraLauncher=registerForActivityResult(ActivityResultContracts.StartActivityForResult()){r->
         if(r.resultCode!=Activity.RESULT_OK)return@registerForActivityResult
@@ -33,7 +47,7 @@ class StaffOperationsActivity:AppCompatActivity(){
         val out=ByteArrayOutputStream();bitmap.compress(Bitmap.CompressFormat.JPEG,82,out)
         val visitId=currentVisitId;val propertyId=currentPropertyId
         Thread{
-            val ok=StaffOperations.uploadCapture(this,out.toByteArray(),propertyId,visitId,"property")
+            val ok=StaffOperations.uploadCapture(this,out.toByteArray(),propertyId,visitId,currentCaptureCategory)
             runOnUiThread{Toast.makeText(this,if(ok)"تصویر برای فایل هیرمند ارسال شد." else "ارسال تصویر ناموفق بود.",Toast.LENGTH_LONG).show();if(ok)refresh()}
         }.start()
     }
@@ -102,7 +116,14 @@ class StaffOperationsActivity:AppCompatActivity(){
                 if(v.status=="planned"){
                     getSharedPreferences("hirmand_staff",MODE_PRIVATE).edit().putString("active_visit_id",v.id).putString("active_visit_lat",v.targetLat?.toString()).putString("active_visit_lng",v.targetLng?.toString()).putFloat("active_visit_radius",v.radiusM.toFloat()).apply()
                     currentVisitId=v.id;currentPropertyId=v.propertyId;startLocationService()
-                    Thread{StaffOperations.visitStatus(this,v.id,"arrived");runOnUiThread{refresh()}}.start()
+                    Thread{
+                        val immediatelyArrived=v.targetLat==null || v.targetLng==null
+                        if(immediatelyArrived) StaffOperations.visitStatus(this,v.id,"arrived")
+                        runOnUiThread{
+                            Toast.makeText(this,if(immediatelyArrived)"بازدید شروع شد." else "geofence بازدید فعال شد؛ با رسیدن به محدوده، ورود خودکار ثبت می‌شود.",Toast.LENGTH_LONG).show()
+                            refresh()
+                        }
+                    }.start()
                 }else{
                     stopLocationService();Thread{StaffOperations.visitStatus(this,v.id,"completed");runOnUiThread{refresh()}}.start()
                 }
@@ -110,12 +131,20 @@ class StaffOperationsActivity:AppCompatActivity(){
             c.addView(start,lp(-1,dp(43)).apply{topMargin=dp(7)})
             val cal=button("افزودن بازدید به تقویم"){addCalendar(v)}
             c.addView(cal,lp(-1,dp(43)).apply{topMargin=dp(7)})
-            val photo=button("ثبت تصویر ملک"){currentVisitId=v.id;currentPropertyId=v.propertyId;cameraLauncher.launch(Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE))}
+            val photo=button("ثبت تصویر ملک"){
+                val labels=arrayOf("نمای بیرونی","پذیرایی","آشپزخانه","اتاق خواب","پارکینگ/انباری","مدارک","سایر")
+                android.app.AlertDialog.Builder(this).setTitle("دسته تصویر را انتخاب کنید").setItems(labels){_,which->
+                    currentCaptureCategory=labels[which]
+                    currentVisitId=v.id;currentPropertyId=v.propertyId
+                    cameraLauncher.launch(Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE))
+                }.show()
+            }
             c.addView(photo,lp(-1,dp(43)).apply{topMargin=dp(7)})
             root.addView(c,lp(-1,-2).apply{bottomMargin=dp(9)})
         }
 
         section(root,"CRM مشتریان")
+        root.addView(button("افزودن مخاطب از دفترچه تلفن"){contactPickerLauncher.launch(ContactsContract.CommonDataKinds.Phone.CONTENT_URI)},lp(-1,dp(43)).apply{bottomMargin=dp(9)})
         for(contact in data.contacts.take(40)){
             val c=card();c.addView(txt(contact.name,15f,true),lp(-1,-2));c.addView(txt((contact.phone.ifBlank{"بدون شماره"})+" · "+contact.type+"\\nپیگیری: "+dateText(contact.nextFollowUpAt),12f),lp(-1,-2))
             if(contact.phone.isNotBlank())c.addView(button("تماس با مشتری"){startActivity(Intent(Intent.ACTION_DIAL,Uri.parse("tel:"+Uri.encode(contact.phone))))},lp(-1,dp(43)).apply{topMargin=dp(7)})
