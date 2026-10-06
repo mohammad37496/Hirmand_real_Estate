@@ -137,7 +137,7 @@ class StaffOperationsActivity:AppCompatActivity(){
             .putExtra(CalendarContract.Events.DESCRIPTION,(v.address+"\\n"+(v.propertyId?:"")))
         v.scheduledAt?.let{runCatching{Instant.parse(it).toEpochMilli()}.getOrNull()?.let{ms->intent.putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME,ms).putExtra(CalendarContract.EXTRA_EVENT_END_TIME,ms+3600000L)}}
         startActivity(intent)
-        Thread{StaffOperations.logInteraction(this,v.id,"calendar","افزودن بازدید به تقویم")}.start()
+        Thread{StaffOperations.post(this,JSONObject().put("action","calendar_logged").put("visitId",v.id))}.start()
     }
     private fun section(root:LinearLayout,label:String){root.addView(txt(label,18f,true),lp(-1,-2).apply{topMargin=dp(8);bottomMargin=dp(8)})}
     private fun card()=MaterialCardView(this).apply{radius=dp(17).toFloat();setCardBackgroundColor(getColor(R.color.hirmand_surface));strokeWidth=dp(1);strokeColor=getColor(R.color.hirmand_surface_2);setContentPadding(dp(14),dp(13),dp(14),dp(13))}
