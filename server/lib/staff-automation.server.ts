@@ -115,10 +115,40 @@ export async function runStaffFollowUpAutomation(sql: SqlLike, options?: { staff
       }
     }
 
+    const [dailyTasks,dailyVisits,dailyCalls,dailyInteractions] = await Promise.all([
+      sql.query<{count:number}[]>(
+        "select count(*)::int count from staff_mobile_tasks where staff_id=$1 and status='done' and completed_at>=((current_timestamp at time zone 'Asia/Tehran')::date at time zone 'Asia/Tehran') and completed_at<(((current_timestamp at time zone 'Asia/Tehran')::date+1) at time zone 'Asia/Tehran')",
+        [String(staff.id)],
+      ),
+      sql.query<{count:number}[]>(
+        "select count(*)::int count from staff_mobile_visits where staff_id=$1 and status='completed' and left_at>=((current_timestamp at time zone 'Asia/Tehran')::date at time zone 'Asia/Tehran') and left_at<(((current_timestamp at time zone 'Asia/Tehran')::date+1) at time zone 'Asia/Tehran')",
+        [String(staff.id)],
+      ),
+      sql.query<{count:number}[]>(
+        "select count(*)::int count from staff_mobile_calls where staff_id=$1 and occurred_at>=((current_timestamp at time zone 'Asia/Tehran')::date at time zone 'Asia/Tehran') and occurred_at<(((current_timestamp at time zone 'Asia/Tehran')::date+1) at time zone 'Asia/Tehran')",
+        [String(staff.id)],
+      ),
+      sql.query<{count:number}[]>(
+        "select count(*)::int count from staff_mobile_crm_interactions where staff_id=$1 and created_at>=((current_timestamp at time zone 'Asia/Tehran')::date at time zone 'Asia/Tehran') and created_at<(((current_timestamp at time zone 'Asia/Tehran')::date+1) at time zone 'Asia/Tehran')",
+        [String(staff.id)],
+      ),
+    ]);
+    const summary={
+      generatedBy:"follow-up-automation",
+      generatedAt:new Date().toISOString(),
+      tasksDoneToday:Number(dailyTasks[0]?.count)||0,
+      visitsDoneToday:Number(dailyVisits[0]?.count)||0,
+      callsToday:Number(dailyCalls[0]?.count)||0,
+      interactionsToday:Number(dailyInteractions[0]?.count)||0,
+      followUpsDue:leadRows.filter(lead=>{
+        const value=lead.follow_up_at?new Date(String(lead.follow_up_at)).getTime():NaN;
+        return Number.isFinite(value)&&value<=Date.now();
+      }).length,
+    };
     await sql.query(
       "insert into staff_mobile_daily_reports(id,staff_id,report_date,summary) values($1,$2,(current_timestamp at time zone 'Asia/Tehran')::date,$3::jsonb) " +
-      "on conflict(staff_id,report_date) do update set summary=excluded.summary,updated_at=current_timestamp",
-      [randomUUID(), String(staff.id), JSON.stringify({ generatedBy: "follow-up-automation" })],
+      "on conflict(staff_id,report_date) do update set summary=excluded.summary,generated_at=current_timestamp,updated_at=current_timestamp",
+      [randomUUID(),String(staff.id),JSON.stringify(summary)],
     );
   }
 
