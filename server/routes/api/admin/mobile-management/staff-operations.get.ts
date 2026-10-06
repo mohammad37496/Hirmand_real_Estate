@@ -42,7 +42,7 @@ export default defineEventHandler(async(event)=>{
       "coalesce(json_agg(distinct jsonb_build_object('id',p.id,'title',p.title,'slug',p.slug,'neighborhood',p.neighborhood,'areaM2',p.area_m2,'bedrooms',p.bedrooms,'transactionType',p.transaction_type,'propertyType',p.property_type)) filter(where p.id is not null),'[]'::json) as linked_properties "+
       "from staff_mobile_crm_contacts c left join consultants u on u.id=c.staff_id left join leads l on l.id=c.lead_id "+
       "left join staff_mobile_crm_contact_properties cp on cp.contact_id=c.id left join properties p on p.id=cp.property_id "+
-      "group by c.id,u.name,l.status,l.deal,l.follow_up_at,l.neighborhood order by c.next_follow_up_at asc nulls last,c.updated_at desc limit 400"
+      "group by c.id,u.name,l.status,l.deal,l.follow_up_at,l.neighborhood,l.lead_score,l.lead_score_band,l.matched_properties order by c.next_follow_up_at asc nulls last,c.updated_at desc limit 400"
     ),
     sql.query<Record<string,unknown>>("select id,contact_id,staff_id,kind,note,created_at from staff_mobile_crm_interactions order by created_at desc limit 600"),
     sql.query<Record<string,unknown>>("select a.id,a.staff_id,coalesce(c.name,'کارمند ناشناس') staff_name,a.device_id,a.work_date,a.started_at,a.ended_at from staff_mobile_attendance a left join consultants c on c.id=a.staff_id order by a.work_date desc,a.started_at desc nulls last limit 400"),
