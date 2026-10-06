@@ -144,7 +144,7 @@ class StaffOperationsActivity:AppCompatActivity(){
         }
 
         section(root,"CRM مشتریان")
-        root.addView(button("افزودن مخاطب از دفترچه تلفن"){contactPickerLauncher.launch(ContactsContract.CommonDataKinds.Phone.CONTENT_URI)},lp(-1,dp(43)).apply{bottomMargin=dp(9)})
+        root.addView(button("افزودن مخاطب از دفترچه تلفن"){contactPickerLauncher.launch(null)},lp(-1,dp(43)).apply{bottomMargin=dp(9)})
         for(contact in data.contacts.take(40)){
             val c=card();c.addView(txt(contact.name,15f,true),lp(-1,-2));c.addView(txt((contact.phone.ifBlank{"بدون شماره"})+" · "+contact.type+"\\nپیگیری: "+dateText(contact.nextFollowUpAt),12f),lp(-1,-2))
             if(contact.phone.isNotBlank())c.addView(button("تماس با مشتری"){startActivity(Intent(Intent.ACTION_DIAL,Uri.parse("tel:"+Uri.encode(contact.phone))))},lp(-1,dp(43)).apply{topMargin=dp(7)})
