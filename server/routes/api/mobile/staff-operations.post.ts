@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
   const eventRows = await sql.query<{ event_id: string }>(
     "insert into staff_mobile_sync_events(event_id,device_id,staff_id,action,payload) values($1,$2,$3,$4,$5::jsonb) " +
     "on conflict(event_id) do nothing returning event_id",
-    [clientEventId, device.device_id, device.staff_id, action || "unknown", JSON.stringify(body).slice(0, 60000)],
+    [clientEventId, device.device_id, device.staff_id, action || "unknown", JSON.stringify(body)],
   );
   if (!eventRows.length) return { success: true, deduplicated: true, clientEventId };
 
