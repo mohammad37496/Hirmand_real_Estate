@@ -71,7 +71,7 @@ export default defineEventHandler(async (event) => {
       "left join staff_mobile_crm_contact_properties cp on cp.contact_id=c.id " +
       "left join properties p on p.id=cp.property_id " +
       "where c.staff_id=$1 " +
-      "group by c.id,l.name,l.status,l.deal,l.follow_up_at " +
+      "group by c.id,l.name,l.status,l.deal,l.follow_up_at,l.lead_score,l.lead_score_band,l.matched_properties " +
       "order by c.next_follow_up_at asc nulls last,c.updated_at desc limit 120",
       [device.staff_id],
     ),
