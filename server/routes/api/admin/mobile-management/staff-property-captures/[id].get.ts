@@ -20,7 +20,7 @@ export default defineEventHandler(async(event)=>{
   if(!rows[0]) throw createError({statusCode:404,statusMessage:"تصویر پیدا نشد."});
   setResponseHeader(event,"cache-control","private, no-store");
   setResponseHeader(event,"content-type",rows[0].mime_type);
-  const download=String(event.node.req.url??"").includes("download=1");
+  const download=String(event.node?.req?.url??"").includes("download=1");
   if(download) setResponseHeader(event,"content-disposition",`attachment; filename="${rows[0].name}"`);
   else setResponseHeader(event,"content-disposition","inline");
   await writeAdminAuditLog({action:download?"staff_mobile_capture.downloaded":"staff_mobile_capture.viewed",entityType:"staff_mobile_property_capture",entityId:id,actor:claims?.accountId?String(claims.accountId):normalizeAdminRole(claims?.role),metadata:{staffId:rows[0].staff_id}});
