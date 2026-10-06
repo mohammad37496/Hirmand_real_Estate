@@ -992,6 +992,19 @@ class MainActivity : AppCompatActivity() {
             bottomMargin = dp(8)
         })
 
+        val operationsButton = MaterialButton(this).apply {
+            text = "مرکز عملیات کارکنان"
+            textSize = 13f
+            isAllCaps = false
+            setOnClickListener {
+                startActivity(Intent(this@MainActivity, StaffOperationsActivity::class.java))
+            }
+        }
+        root.addView(operationsButton, lp(-1, dp(52)).apply {
+            topMargin = dp(8)
+            bottomMargin = dp(8)
+        })
+
         val changeButton = MaterialButton(this).apply {
             text = "تغییر کارمند ثبت‌شده"
             textSize = 13f
