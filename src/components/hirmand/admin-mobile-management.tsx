@@ -381,14 +381,12 @@ function DeviceCard({
         </div>
         <div className="admin-mobile-fleet-copy">
           <div className="admin-mobile-fleet-top">
-            <Link
-              to="/admin-mobile-management/$employeeId"
-              params={{ employeeId: device.staffId }}
-              search={{}}
+            <a
+              href={`/admin-mobile-management/${encodeURIComponent(device.staffId)}`}
               className="admin-mobile-device-person"
             >
               {device.staffName || device.staffId}
-            </Link>
+            </a>
             <span className={"admin-mobile-badge admin-mobile-badge-" + statusTone(device.status)}>
               {device.status === "active" ? <CheckCircle2 size={13} /> : device.status === "pending" ? <Clock3 size={13} /> : <Ban size={13} />}
               {deviceStatusLabel(device.status)}
@@ -411,10 +409,10 @@ function DeviceCard({
           </div>
         </div>
         <div className="admin-mobile-fleet-side">
-          <Link to="/admin-mobile-management/$employeeId" params={{ employeeId: device.staffId }} search={{}} className="admin-mobile-secondary-action">
+          <a href={`/admin-mobile-management/${encodeURIComponent(device.staffId)}`} className="admin-mobile-secondary-action">
             جزئیات
             <ChevronLeft size={15} />
-          </Link>
+          </a>
           {!compact && (
             <div className="admin-mobile-fleet-status-actions">
               {device.status !== "active" ? (
@@ -466,14 +464,12 @@ function AlertPanel({ alerts }: { alerts: DeviceAlert[] }) {
                 <strong>{alert.title}</strong>
                 <span>{alert.description}</span>
               </div>
-              <Link
-                to="/admin-mobile-management/$employeeId"
-                params={{ employeeId: alert.staffId }}
-                search={{}}
+              <a
+                href={`/admin-mobile-management/${encodeURIComponent(alert.staffId)}`}
                 className="admin-mobile-alert-link"
               >
                 مشاهده
-              </Link>
+              </a>
             </article>
           ))}
         </div>
@@ -729,10 +725,8 @@ function ConfirmAction({
 
 function EmployeeCard({ person, deviceCount }: { person: StaffDirectoryItem; deviceCount: number }) {
   return (
-    <Link
-      to="/admin-mobile-management/$employeeId"
-      params={{ employeeId: person.id }}
-      search={{}}
+    <a
+      href={`/admin-mobile-management/${encodeURIComponent(person.id)}`}
       className="admin-mobile-employee-card"
     >
       <div className="admin-mobile-avatar" aria-hidden="true"><UserRound size={22} /></div>
@@ -742,7 +736,7 @@ function EmployeeCard({ person, deviceCount }: { person: StaffDirectoryItem; dev
         <span>{deviceCount.toLocaleString("fa-IR")} دستگاه · <bdi dir="ltr">{person.id}</bdi></span>
       </div>
       <ChevronLeft size={18} className="admin-mobile-card-arrow" aria-hidden="true" />
-    </Link>
+    </a>
   );
 }
 
@@ -1092,7 +1086,7 @@ export function AdminMobileEmployeePage({ employeeId }: { employeeId: string }) 
   }
 
   if (!person) {
-    return <main className="admin-mobile-page"><div className="admin-mobile-shell admin-mobile-centered"><section className="admin-mobile-panel admin-mobile-empty-card"><span className="admin-mobile-kicker">کارمند</span><h1>کارمند پیدا نشد</h1><p>{error || "کارمند انتخاب‌شده در فهرست فعال هیرمند وجود ندارد."}</p><Link to="/admin-mobile-management" search={{}} className="admin-mobile-primary-action"><ArrowRight size={17} /> بازگشت</Link></section></div></main>;
+    return <main className="admin-mobile-page"><div className="admin-mobile-shell admin-mobile-centered"><section className="admin-mobile-panel admin-mobile-empty-card"><span className="admin-mobile-kicker">کارمند</span><h1>کارمند پیدا نشد</h1><p>{error || "کارمند انتخاب‌شده در فهرست فعال هیرمند وجود ندارد."}</p><a href="/admin-mobile-management" className="admin-mobile-primary-action"><ArrowRight size={17} /> بازگشت</Link></section></div></main>;
   }
 
   const onlineCount = personDevices.filter((device) => device.presence === "online").length;
@@ -1104,7 +1098,7 @@ export function AdminMobileEmployeePage({ employeeId }: { employeeId: string }) 
     <main className="admin-mobile-page">
       <div className="admin-mobile-shell">
         <div className="admin-mobile-breadcrumbs">
-          <Link to="/admin-mobile-management" search={{}}>مدیریت تلفن همراه</Link>
+          <a href="/admin-mobile-management">مدیریت تلفن همراه</Link>
           <ChevronLeft size={14} aria-hidden="true" />
           <span>{person.name}</span>
         </div>
@@ -1113,7 +1107,7 @@ export function AdminMobileEmployeePage({ employeeId }: { employeeId: string }) 
           eyebrow={person.role}
           title={person.name}
           description="پروفایل مدیریتی کارمند؛ وضعیت دستگاه، permissions، activity و قابلیت‌های واقعی Android Enterprise را مشاهده کنید."
-          action={<Link to="/admin-mobile-management" search={{}} className="admin-mobile-secondary-action"><ArrowRight size={16} /> بازگشت به ناوگان</Link>}
+          action={<Link to="/admin-mobile-management" className="admin-mobile-secondary-action"><ArrowRight size={16} /> بازگشت به ناوگان</Link>}
         />
 
         <section className="admin-mobile-person-banner">
@@ -1211,13 +1205,13 @@ export function AdminMobileEmployeePage({ employeeId }: { employeeId: string }) 
               <Smartphone size={28} />
               <strong>هنوز دستگاهی برای این کارمند ثبت نشده است.</strong>
               <span>از مرکز Fleet یک enrollment جدید شروع کنید؛ ثبت دستگاه پس از اجرای اپ انجام می‌شود.</span>
-              <Link to="/admin-mobile-management" search={{}} className="admin-mobile-primary-action">بازگشت به مرکز ناوگان</Link>
+              <Link to="/admin-mobile-management" className="admin-mobile-primary-action">بازگشت به مرکز ناوگان</Link>
             </div>
           </section>
         )}
 
         <div className="admin-mobile-footer-links">
-          <Link to="/admin-mobile-management" search={{}} className="admin-mobile-secondary-action"><ArrowRight size={16} /> بازگشت به ناوگان</Link>
+          <Link to="/admin-mobile-management" className="admin-mobile-secondary-action"><ArrowRight size={16} /> بازگشت به ناوگان</Link>
           <Link to="/admin" className="admin-mobile-secondary-action">پنل مدیریت</Link>
         </div>
       </div>
