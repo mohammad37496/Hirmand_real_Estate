@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import test from "node:test";
 import {
   getMobilePresence,
   managementModeLabel,
@@ -6,37 +7,36 @@ import {
   permissionHealthFromPayload,
 } from "@/lib/mobile-management";
 
-describe("mobile-management helpers", () => {
-  const now = Date.parse("2026-10-06T00:00:00.000Z");
+const now = Date.parse("2026-10-06T00:00:00.000Z");
 
-  it("keeps presence thresholds consistent", () => {
-    expect(getMobilePresence(new Date(now - 4 * 60 * 1000).toISOString(), now)).toBe("online");
-    expect(getMobilePresence(new Date(now - 30 * 60 * 1000).toISOString(), now)).toBe("stale");
-    expect(getMobilePresence(new Date(now - 2 * 60 * 60 * 1000).toISOString(), now)).toBe("offline");
-    expect(getMobilePresence(null, now)).toBe("unknown");
-  });
+test("mobile-management presence thresholds stay consistent", () => {
+  assert.equal(getMobilePresence(new Date(now - 4 * 60 * 1000).toISOString(), now), "online");
+  assert.equal(getMobilePresence(new Date(now - 30 * 60 * 1000).toISOString(), now), "stale");
+  assert.equal(getMobilePresence(new Date(now - 2 * 60 * 60 * 1000).toISOString(), now), "offline");
+  assert.equal(getMobilePresence(null, now), "unknown");
+});
 
-  it("normalizes management modes without trusting unknown values", () => {
-    expect(parseManagementMode("device_owner")).toBe("device_owner");
-    expect(parseManagementMode("profile_owner")).toBe("profile_owner");
-    expect(parseManagementMode("not-real")).toBe("unknown");
-    expect(managementModeLabel("device_owner")).toBe("مدیریت کامل سازمانی");
-  });
+test("mobile-management normalizes management modes", () => {
+  assert.equal(parseManagementMode("device_owner"), "device_owner");
+  assert.equal(parseManagementMode("profile_owner"), "profile_owner");
+  assert.equal(parseManagementMode("not-real"), "unknown");
+  assert.equal(managementModeLabel("device_owner"), "مدیریت کامل سازمانی");
+});
 
-  it("maps permission telemetry to explicit health states", () => {
-    expect(
-      permissionHealthFromPayload({
-        location: true,
-        camera: false,
-        microphone: "unknown",
-      }),
-    ).toEqual([
+test("mobile-management maps permission telemetry", () => {
+  assert.deepEqual(
+    permissionHealthFromPayload({
+      location: true,
+      camera: false,
+      microphone: "unknown",
+    }),
+    [
       { key: "location", label: "موقعیت مکانی", status: "granted" },
       { key: "camera", label: "دوربین", status: "denied" },
       { key: "microphone", label: "میکروفون", status: "unknown" },
       { key: "notifications", label: "اعلان‌ها", status: "unknown" },
       { key: "accessibility", label: "دسترسی دسترس‌پذیری", status: "unknown" },
       { key: "usageAccess", label: "دسترسی مصرف برنامه", status: "unknown" },
-    ]);
-  });
+    ],
+  );
 });
