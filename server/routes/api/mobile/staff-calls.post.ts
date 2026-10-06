@@ -40,6 +40,13 @@ function durationSeconds(value: unknown): number {
   return Number.isFinite(raw) ? Math.max(0, Math.min(Math.trunc(raw), 86400)) : 0;
 }
 
+function normalizePhone(value: string): string {
+  return value
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[^0-9]/g, "")
+    .replace(/^98/, "0");
+}
+
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
 
@@ -87,7 +94,7 @@ export default defineEventHandler(async (event) => {
     const direction = callDirection(item.type);
     const duration = durationSeconds(item.durationSeconds);
 
-    await sql.query(
+const inserted = await sql.query(
       `insert into staff_mobile_calls
         (id,device_id,staff_id,source_call_id,phone_number,contact_name,direction,occurred_at,duration_seconds)
        values ($1,$2,$3,$4,$5,$6,$7,$8,$9)
@@ -98,7 +105,8 @@ export default defineEventHandler(async (event) => {
          contact_name=excluded.contact_name,
          direction=excluded.direction,
          occurred_at=excluded.occurred_at,
-         duration_seconds=excluded.duration_seconds`,
+         duration_seconds=excluded.duration_seconds
+       returning id`,
       [
         randomUUID(),
         device.device_id,
@@ -111,6 +119,49 @@ export default defineEventHandler(async (event) => {
         duration,
       ],
     );
+
+    if (inserted.length && number) {
+      const normalized = normalizePhone(number);
+      if (normalized) {
+        const contacts = await sql.query<{ id:string; lead_id:string|null; name:string }>(
+          "select id,lead_id,name from staff_mobile_crm_contacts where staff_id=$1 and regexp_replace(phone,'[^0-9]','','g')=any($2::text[]) order by updated_at desc limit 1",
+          [
+            device.staff_id,
+            [normalized, normalized.replace(/^0/, "98"), "98"+normalized.replace(/^0/, "")],
+          ],
+        );
+        const contact = contacts[0];
+        if (contact) {
+          const interactionId = randomUUID();
+          const directionLabel = direction === "outgoing" ? "تماس خروجی" : direction === "incoming" ? "تماس ورودی" : direction === "missed" ? "تماس بی‌پاسخ" : "ثبت تماس";
+          await sql.query(
+            "insert into staff_mobile_crm_interactions(id,contact_id,staff_id,kind,note) values($1,$2,$3,'call',$4)",
+            [
+              interactionId,
+              contact.id,
+              device.staff_id,
+              directionLabel+" · "+duration+" ثانیه · "+occurredAt,
+            ],
+          );
+          await sql.query(
+            "update staff_mobile_crm_contacts set updated_at=current_timestamp where id=$1 and staff_id=$2",
+            [contact.id,device.staff_id],
+          );
+          if(contact.lead_id){
+            await sql.query(
+              "insert into lead_activities(lead_id,activity_type,title,note,metadata) values($1,'call',$2,$3,$4::jsonb)",
+              [contact.lead_id,directionLabel,"تماس خودکار از اپ کارکنان · "+contact.name,JSON.stringify({source:"staff_mobile_call_sync",direction,durationSeconds:duration})],
+            ).catch(()=>{});
+            if(direction==="outgoing"||direction==="incoming"){
+              await sql.query(
+                "update leads set last_contacted_at=greatest(coalesce(last_contacted_at,to_timestamp(0)),to_timestamp($1)),status=case when status='new' then 'contacted' else status end,updated_at=current_timestamp where id=$2",
+                [new Date(occurredAt).toISOString(),contact.lead_id],
+              ).catch(()=>{});
+            }
+          }
+        }
+      }
+    }
 
     accepted++;
   }
