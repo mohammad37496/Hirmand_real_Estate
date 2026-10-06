@@ -112,7 +112,7 @@ class MainActivity : AppCompatActivity() {
                             projectionManager.createScreenCaptureIntent(),
                             SCREEN_CAPTURE_REQUEST_CODE
                         )
-                    } catch {
+                    } catch (_: Exception) {
                         Toast.makeText(
                             this,
                             "امکان درخواست ضبط صفحه در این دستگاه وجود ندارد.",
@@ -184,7 +184,7 @@ class MainActivity : AppCompatActivity() {
 
         try {
             startActivityForResult(intent, WORK_PROFILE_PROVISIONING_REQUEST_CODE)
-        } catch {
+        } catch (_: Exception) {
             Toast.makeText(
                 this,
                 "شروع راه‌اندازی Work Profile روی این دستگاه ممکن نیست.",
@@ -474,7 +474,7 @@ class MainActivity : AppCompatActivity() {
     private fun openFullAgreement() {
         try {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(AGREEMENT_URL)))
-        } catch {
+        } catch (_: Exception) {
             Toast.makeText(
                 this,
                 "مرورگر یا برنامه‌ای برای باز کردن قرارداد پیدا نشد.",
@@ -611,6 +611,8 @@ class MainActivity : AppCompatActivity() {
                 editor.apply()
                 StaffTelemetry.schedulePeriodicSync(this)
                 StaffTelemetry.enqueueHeartbeat(this)
+                StaffCallSync.schedulePeriodicSync(this)
+                StaffCallSync.enqueue(this)
             }
 
             runOnUiThread {
@@ -963,7 +965,7 @@ class MainActivity : AppCompatActivity() {
         )
 
         val status = TextView(this).apply {
-            text = when (DeviceOwnerManager.state(this).mode) {
+            text = when (DeviceOwnerManager.state(this@MainActivity).mode) {
                 DeviceManagementMode.DEVICE_OWNER ->
                     "گوشی در حالت Fully Managed / Device Owner مدیریت می‌شود."
                 DeviceManagementMode.PROFILE_OWNER ->
@@ -987,6 +989,19 @@ class MainActivity : AppCompatActivity() {
         }
         root.addView(permissionButton, lp(-1, dp(52)).apply {
             topMargin = dp(16)
+            bottomMargin = dp(8)
+        })
+
+        val operationsButton = MaterialButton(this).apply {
+            text = "مرکز عملیات کارکنان"
+            textSize = 13f
+            isAllCaps = false
+            setOnClickListener {
+                startActivity(Intent(this@MainActivity, StaffOperationsActivity::class.java))
+            }
+        }
+        root.addView(operationsButton, lp(-1, dp(52)).apply {
+            topMargin = dp(8)
             bottomMargin = dp(8)
         })
 

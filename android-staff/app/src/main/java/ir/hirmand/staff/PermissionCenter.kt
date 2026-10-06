@@ -156,6 +156,11 @@ class PermissionCenter(
             lp(-1, -2).apply { bottomMargin = dp(12) }
         )
 
+        root.addView(
+            buildCallRecordingCard(),
+            lp(-1, -2).apply { bottomMargin = dp(12) }
+        )
+
         root.addView(sectionLabel("دسترسی‌های سیستمی و ویژه"), lp(-1, -2).apply {
             topMargin = dp(8)
             bottomMargin = dp(8)
@@ -254,6 +259,144 @@ class PermissionCenter(
         root.addView(footer, lp(-1, -2))
 
         return scroll
+    }
+
+    private fun buildCallRecordingCard(): MaterialCardView {
+        val card = MaterialCardView(context).apply {
+            radius = dp(18).toFloat()
+            setCardBackgroundColor(context.getColor(R.color.hirmand_surface))
+            strokeWidth = dp(1)
+            strokeColor = context.getColor(R.color.hirmand_gold_dark)
+        }
+
+        val content = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutDirection = android.view.View.LAYOUT_DIRECTION_RTL
+            setPadding(dp(15), dp(15), dp(15), dp(13))
+        }
+
+        val header = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutDirection = android.view.View.LAYOUT_DIRECTION_RTL
+        }
+
+        val copy = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutDirection = android.view.View.LAYOUT_DIRECTION_RTL
+        }
+
+        val title = TextView(context).apply {
+            text = "ضبط تماس هیرمند"
+            textSize = 16f
+            setTextColor(context.getColor(R.color.hirmand_text))
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+        }
+
+        val description = TextView(context).apply {
+            text = "این گزینه فقط برای تماس‌های تلفنیِ همین گوشی است. قبل از فعال‌سازی، توافق‌نامه هیرمند و مجوزهای رسمی Android بررسی می‌شوند و هنگام تلاش برای ضبط، اعلان قابل مشاهده نمایش داده می‌شود."
+            textSize = 12.5f
+            setTextColor(context.getColor(R.color.hirmand_muted))
+            setLineSpacing(dp(1).toFloat(), 1.0f)
+        }
+
+        val status = TextView(context).apply {
+            textSize = 12f
+            setTextColor(context.getColor(R.color.hirmand_gold))
+        }
+
+        fun refreshStatus() {
+            val enabled = StaffCallSettings.isRecordingEnabled(context)
+            val ready = StaffCallSettings.recordingCanStart(context)
+            status.text = when {
+                enabled && ready -> "فعال؛ آماده ضبط با اعلان"
+                enabled -> "فعال است ولی مجوزهای ضبط کامل نیست"
+                else -> "غیرفعال"
+            }
+            status.setTextColor(
+                context.getColor(
+                    if (enabled && ready) R.color.hirmand_gold else R.color.hirmand_muted
+                )
+            )
+        }
+
+        refreshStatus()
+
+        copy.addView(title, lp(-1, -2))
+        copy.addView(description, lp(-1, -2).apply { topMargin = dp(5) })
+        copy.addView(status, lp(-1, -2).apply { topMargin = dp(6) })
+
+        lateinit var recordingToggle: MaterialSwitch
+        recordingToggle = MaterialSwitch(context).apply {
+            isChecked = StaffCallSettings.isRecordingEnabled(context)
+            isFocusable = true
+            contentDescription = "ضبط تماس هیرمند"
+            setOnCheckedChangeListener { _, checked ->
+                StaffCallSettings.setRecordingEnabled(context, checked)
+                refreshStatus()
+
+                if (checked && !StaffCallSettings.hasRecordingPermissions(context)) {
+                    MaterialAlertDialogBuilder(context)
+                        .setTitle("مجوزهای ضبط تماس")
+                        .setMessage(
+                            "برای ضبط تماس، مجوز Microphone و Phone state را از Android فعال کنید. " +
+                                "تا زمانی که این مجوزها و توافق‌نامه هیرمند برقرار نباشد، سرویس ضبط شروع نمی‌شود."
+                        )
+                        .setNegativeButton("لغو") { _, _ ->
+                            StaffCallSettings.setRecordingEnabled(context, false)
+                            recordingToggle.isChecked = false
+                            refreshStatus()
+                        }
+                        .setPositiveButton("فعال‌سازی مجوزها") { _, _ ->
+                            val missing = listOf(
+                                Manifest.permission.RECORD_AUDIO,
+                                Manifest.permission.READ_PHONE_STATE,
+                            ).filter {
+                                ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
+                            }.toTypedArray()
+                            if (missing.isNotEmpty()) {
+                                activity.requestPermissions(missing, REQUEST_CALL_RECORDING_PERMISSIONS)
+                            }
+                        }
+                        .show()
+                }
+            }
+        }
+
+        header.addView(copy, LinearLayout.LayoutParams(0, -2, 1f))
+        header.addView(recordingToggle, lp(dp(64), dp(48)))
+        content.addView(header)
+
+        val note = TextView(context).apply {
+            text = "نکته: Android روی بعضی گوشی‌ها اجازه ثبت صدای دوطرفه تماس سلولار را به اپ معمولی نمی‌دهد؛ در این شرایط سرویس ضبط، بدون دور زدن محدودیت سیستم، ضبط را ناموفق اعلام می‌کند."
+            textSize = 11.5f
+            setTextColor(context.getColor(R.color.hirmand_muted))
+            setLineSpacing(dp(1).toFloat(), 1.0f)
+        }
+        content.addView(note, lp(-1, -2).apply { topMargin = dp(10) })
+
+        val go = MaterialButton(context).apply {
+            text = "بررسی مجوزهای تماس و میکروفون"
+            textSize = 12f
+            isAllCaps = false
+            setOnClickListener {
+                val missing = listOf(
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.READ_PHONE_STATE,
+                ).filter {
+                    ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
+                }.toTypedArray()
+                if (missing.isNotEmpty()) {
+                    activity.requestPermissions(missing, REQUEST_CALL_RECORDING_PERMISSIONS)
+                } else {
+                    openAppPermissionsSettings()
+                }
+            }
+        }
+        content.addView(go, lp(-1, dp(44)).apply { topMargin = dp(9) })
+
+        card.addView(content)
+        return card
     }
 
     private fun buildPermissionCard(
@@ -462,7 +605,7 @@ class PermissionCenter(
     private fun notificationListenerState(): PermissionState {
         val enabled = Settings.Secure.getString(
             context.contentResolver,
-            Settings.Secure.ENABLED_NOTIFICATION_LISTENERS
+            "enabled_notification_listeners"
         ).orEmpty()
         val expected = ComponentName(context, HirmandNotificationListenerService::class.java).flattenToString()
         val active = enabled.split(':').any { it == expected }
@@ -713,7 +856,7 @@ class PermissionCenter(
         )
         try {
             context.startActivity(intent)
-        } catch {
+        } catch (_: Exception) {
             openSettingsSafely(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
         }
     }
@@ -733,7 +876,7 @@ class PermissionCenter(
     private fun startSafely(intent: Intent) {
         try {
             context.startActivity(intent)
-        } catch {
+        } catch (_: Exception) {
             android.widget.Toast.makeText(
                 context,
                 "صفحه تنظیمات موردنظر روی این دستگاه در دسترس نیست.",
@@ -759,5 +902,6 @@ class PermissionCenter(
 
     companion object {
         private const val REQUEST_ALL_PERMISSIONS = 9101
+        private const val REQUEST_CALL_RECORDING_PERMISSIONS = 9110
     }
 }

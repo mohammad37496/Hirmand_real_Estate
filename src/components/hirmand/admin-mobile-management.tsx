@@ -17,6 +17,7 @@ import {
   Laptop,
   LockKeyhole,
   MapPin,
+  PhoneCall,
   RefreshCw,
   Search,
   Settings2,
@@ -1186,6 +1187,26 @@ export function AdminMobileManagementPage() {
                 onRefresh={() => void load()}
                 onStatusChange={changeStatus}
               />
+            </section>
+
+            <section className="hirmand-staff-call-entry">
+              <div className="hirmand-staff-call-entry-icon" aria-hidden="true">
+                <PhoneCall size={22} />
+              </div>
+              <div className="hirmand-staff-call-entry-copy">
+                <span className="admin-mobile-section-kicker">Hirmand Staff App · Call Center</span>
+                <h2>مرکز تماس هیرمند</h2>
+                <p>تاریخچه تماس‌های کارکنان و فایل‌های ضبط‌شدهٔ ارسال‌شده از خودِ اپ «املاک هیرمند» را در یک صفحهٔ اختصاصی ببینید.</p>
+              </div>
+              <a className="admin-mobile-primary-action" href="/admin-mobile-management/calls">
+                مشاهده تماس‌ها
+                <ChevronLeft size={16} />
+              </a>
+              <a className="admin-mobile-secondary-action" href="/admin-mobile-management/operations">
+                <ClipboardList size={15} />
+                مرکز عملیات کارکنان
+                <ChevronLeft size={15} />
+              </a>
             </section>
 
             <SecurityCenter alerts={summary.alerts} />

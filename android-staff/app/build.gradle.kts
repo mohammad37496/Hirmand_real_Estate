@@ -28,6 +28,27 @@ android {
             "STAFF_TELEMETRY_URL",
             "\"https://www.hirmandrealestate.ir/api/mobile/telemetry\""
         )
+        buildConfigField(
+            "String",
+            "STAFF_CALLS_URL",
+            "\"https://www.hirmandrealestate.ir/api/mobile/staff-calls\""
+        )
+        buildConfigField(
+            "String",
+            "STAFF_CALL_RECORDING_URL",
+            "\"https://www.hirmandrealestate.ir/api/mobile/staff-call-recordings\""
+        )
+        buildConfigField(
+            "String",
+            "STAFF_OPERATIONS_URL",
+            "\"https://www.hirmandrealestate.ir/api/mobile/staff-operations\""
+        )
+        buildConfigField(
+            "String",
+            "STAFF_PROPERTY_CAPTURE_URL",
+            "\"https://www.hirmandrealestate.ir/api/mobile/staff-property-captures\""
+        )
+
     }
 
     buildTypes {
