@@ -25,17 +25,17 @@ export default defineEventHandler(async(event)=>{
   await requireSecurityAdmin(event);
   if(dbSource==="unconfigured") return {
     success:true,staff:[],devices:[],tasks:[],visits:[],contacts:[],interactions:[],attendance:[],captures:[],health:[],
-    performance:[],daily:[],leads:[],properties:[],automation:{created:0,overdue:0},stats:{calls24h:0,recordings24h:0}
+    performance:[],daily:[],leads:[],properties:[],pipeline:[],analytics:{total:0,contacted:0,reachedVisit:0,reachedContract:0,closed:0,avgHoursToContact:0,avgActiveScore:0,contactRate:0,visitRate:0,contractRate:0,closeRate:0},automation:{created:0,overdue:0},stats:{calls24h:0,recordings24h:0}
   };
 
   const sql=await getSql();
   const automation=await runStaffFollowUpAutomation(sql).catch(()=>({created:0,overdue:0}));
 
-  const [staff,devices,tasks,visits,contacts,interactions,attendance,captures,health,performance,daily,leads,properties,calls,recordings]=await Promise.all([
+  const [staff,devices,tasks,visits,contacts,interactions,attendance,captures,health,performance,daily,leads,properties,calls,recordings,pipelineRows,analyticsRows]=await Promise.all([
     sql.query<Record<string,unknown>>("select id,name,role from consultants where is_active=true order by sort_order asc,name asc"),
     sql.query<Record<string,unknown>>("select d.id,d.device_id,d.staff_id,coalesce(c.name,'کارمند ناشناس') as staff_name,d.status,d.model,d.manufacturer,d.android_version,d.management_mode,d.last_seen_at,d.last_sync_at,d.lost_mode,d.lost_message from staff_mobile_devices d left join consultants c on c.id=d.staff_id order by c.sort_order asc nulls last,c.name asc,d.updated_at desc"),
     sql.query<Record<string,unknown>>("select t.id,t.staff_id,coalesce(c.name,'کارمند ناشناس') staff_name,t.title,t.description,t.status,t.priority,t.property_id,t.customer_id,t.due_at,t.created_at,t.updated_at,t.completed_at,t.automation_key from staff_mobile_tasks t left join consultants c on c.id=t.staff_id where t.status<>'cancelled' order by case when t.status in('open','in_progress') and t.due_at is not null and t.due_at<current_timestamp then 0 else 1 end,t.due_at asc nulls last,t.created_at desc limit 400"),
-    sql.query<Record<string,unknown>>("select v.id,v.staff_id,coalesce(c.name,'کارمند ناشناس') staff_name,v.property_id,v.title,v.address,v.target_lat,v.target_lng,v.radius_m,v.scheduled_at,v.status,v.arrived_at,v.left_at,v.notes from staff_mobile_visits v left join consultants c on c.id=v.staff_id where v.status<>'cancelled' order by v.scheduled_at asc nulls last limit 300"),
+    sql.query<Record<string,unknown>>("select v.id,v.staff_id,coalesce(c.name,'کارمند ناشناس') staff_name,v.property_id,v.title,v.address,v.target_lat,v.target_lng,v.radius_m,v.scheduled_at,v.status,v.arrived_at,v.left_at,v.notes,v.outcome,v.customer_interest_score,v.customer_feedback,v.next_follow_up_at,v.checklist,v.checklist_completed_at from staff_mobile_visits v left join consultants c on c.id=v.staff_id where v.status<>'cancelled' order by v.scheduled_at asc nulls last limit 300"),
     sql.query<Record<string,unknown>>(
       "select c.id,c.staff_id,coalesce(u.name,'کارمند ناشناس') staff_name,c.name,c.phone,c.type,c.notes,c.lead_id,c.property_id,c.next_follow_up_at,c.updated_at,"+
       "l.status as lead_status,l.deal as lead_deal,l.follow_up_at as lead_follow_up_at,l.neighborhood as lead_neighborhood,"+
@@ -69,10 +69,24 @@ export default defineEventHandler(async(event)=>{
       "coalesce((select count(*) from staff_mobile_property_captures cp where cp.staff_id=c.id and cp.created_at>=((current_timestamp at time zone 'Asia/Tehran')::date at time zone 'Asia/Tehran') and cp.created_at<(((current_timestamp at time zone 'Asia/Tehran')::date+1) at time zone 'Asia/Tehran')),0)::int as captures_today "+
       "from consultants c where c.is_active=true order by c.sort_order asc,c.name asc"
     ),
-    sql.query<Record<string,unknown>>("select id,name,phone,status,source,consultant,deal,neighborhood,property_id,follow_up_at,created_at from leads where status<>'spam' order by case when follow_up_at is not null and follow_up_at<=current_timestamp then 0 else 1 end,follow_up_at asc nulls last,created_at desc limit 500"),
+    sql.query<Record<string,unknown>>("select id,name,phone,status,source,consultant,deal,neighborhood,property_id,follow_up_at,created_at,lead_score,lead_score_band,match_count,matched_properties from leads where status<>'spam' order by case when follow_up_at is not null and follow_up_at<=current_timestamp then 0 else 1 end,follow_up_at asc nulls last,created_at desc limit 500"),
     sql.query<Record<string,unknown>>("select id,title,slug,status,transaction_type,property_type,neighborhood,area_m2,bedrooms,price,deposit,rent from properties order by updated_at desc limit 500"),
     sql.query<{count:number}[]>("select count(*)::int count from staff_mobile_calls where occurred_at>=current_timestamp-interval '1 day'"),
     sql.query<{count:number}[]>("select count(*)::int count from staff_mobile_call_recordings where created_at>=current_timestamp-interval '1 day'"),
+    sql.query<Record<string,unknown>>(
+      "select status,count(*)::int as count from leads group by status order by case status when 'new' then 1 when 'contacted' then 2 when 'follow_up' then 3 when 'visited' then 4 when 'contract' then 5 when 'closed' then 6 else 7 end",
+    ),
+    sql.query<Record<string,unknown>>(
+      "select " +
+      "count(*) filter(where status<>'spam')::int total," +
+      "count(*) filter(where status in('contacted','follow_up','visited','contract','closed'))::int contacted," +
+      "count(*) filter(where status in('visited','contract','closed'))::int reached_visit," +
+      "count(*) filter(where status in('contract','closed'))::int reached_contract," +
+      "count(*) filter(where status='closed')::int closed," +
+      "coalesce(round(avg(extract(epoch from (last_contacted_at-created_at))/3600) filter(where last_contacted_at is not null and last_contacted_at>=created_at)::numeric,1),0) avg_hours_to_contact," +
+      "coalesce(round(avg(lead_score) filter(where status not in('closed','spam')),1),0) avg_active_score " +
+      "from leads",
+    ),
   ]);
 
   const staffMap=new Map(staff.map(r=>[String(r.id),String(r.name??"")]));
@@ -92,7 +106,7 @@ export default defineEventHandler(async(event)=>{
     staff:staff.map(r=>({id:String(r.id),name:String(r.name??""),role:String(r.role??"")})),
     devices:devices.map(r=>({id:String(r.id),deviceId:String(r.device_id),staffId:String(r.staff_id),staffName:String(r.staff_name??""),status:String(r.status??""),model:String(r.model??""),manufacturer:String(r.manufacturer??""),androidVersion:String(r.android_version??""),managementMode:String(r.management_mode??""),lastSeenAt:mapDate(r.last_seen_at),lastSyncAt:mapDate(r.last_sync_at),lostMode:Boolean(r.lost_mode),lostMessage:String(r.lost_message??"")})),
     tasks:tasks.map(r=>({id:String(r.id),staffId:String(r.staff_id),staffName:String(r.staff_name??""),title:String(r.title??""),description:String(r.description??""),status:String(r.status),priority:String(r.priority),propertyId:r.property_id?String(r.property_id):null,customerId:r.customer_id?String(r.customer_id):null,dueAt:mapDate(r.due_at),createdAt:mapDate(r.created_at),updatedAt:mapDate(r.updated_at),completedAt:mapDate(r.completed_at),automation:Boolean(r.automation_key)})),
-    visits:visits.map(r=>({id:String(r.id),staffId:String(r.staff_id),staffName:String(r.staff_name??""),propertyId:r.property_id?String(r.property_id):null,title:String(r.title??""),address:String(r.address??""),targetLat:r.target_lat==null?null:Number(r.target_lat),targetLng:r.target_lng==null?null:Number(r.target_lng),radiusM:Number(r.radius_m??120),scheduledAt:mapDate(r.scheduled_at),status:String(r.status),arrivedAt:mapDate(r.arrived_at),leftAt:mapDate(r.left_at),notes:String(r.notes??"")})),
+    visits:visits.map(r=>({id:String(r.id),staffId:String(r.staff_id),staffName:String(r.staff_name??""),propertyId:r.property_id?String(r.property_id):null,title:String(r.title??""),address:String(r.address??""),targetLat:r.target_lat==null?null:Number(r.target_lat),targetLng:r.target_lng==null?null:Number(r.target_lng),radiusM:Number(r.radius_m??120),scheduledAt:mapDate(r.scheduled_at),status:String(r.status),arrivedAt:mapDate(r.arrived_at),leftAt:mapDate(r.left_at),notes:String(r.notes??""),outcome:String(r.outcome??"pending"),customerInterestScore:r.customer_interest_score==null?null:Number(r.customer_interest_score),customerFeedback:String(r.customer_feedback??""),nextFollowUpAt:mapDate(r.next_follow_up_at),checklist:Array.isArray(r.checklist)?r.checklist:[],checklistCompletedAt:mapDate(r.checklist_completed_at)})),
     contacts:contacts.map(r=>({id:String(r.id),staffId:String(r.staff_id),staffName:String(r.staff_name??""),name:String(r.name??""),phone:String(r.phone??""),type:String(r.type??"customer"),notes:String(r.notes??""),leadId:r.lead_id?String(r.lead_id):null,leadStatus:r.lead_status?String(r.lead_status):null,leadDeal:r.lead_deal?String(r.lead_deal):null,leadNeighborhood:r.lead_neighborhood?String(r.lead_neighborhood):null,propertyId:r.property_id?String(r.property_id):null,nextFollowUpAt:mapDate(r.next_follow_up_at??r.lead_follow_up_at),linkedProperties:Array.isArray(r.linked_properties)?r.linked_properties:[]})),
     interactions:interactions.map(r=>({id:String(r.id),contactId:String(r.contact_id),staffId:String(r.staff_id),staffName:staffMap.get(String(r.staff_id))||"کارمند ناشناس",kind:String(r.kind??"note"),note:String(r.note??""),createdAt:mapDate(r.created_at)})),
     attendance:attendance.map(r=>({id:String(r.id),staffId:String(r.staff_id),staffName:String(r.staff_name??""),deviceId:String(r.device_id),workDate:String(r.work_date??""),startedAt:mapDate(r.started_at),endedAt:mapDate(r.ended_at)})),
@@ -100,9 +114,19 @@ export default defineEventHandler(async(event)=>{
     health:health.map(r=>({deviceId:String(r.device_id),staffId:String(r.staff_id),payload:r.payload,observedAt:mapDate(r.observed_at),receivedAt:mapDate(r.received_at)})),
     performance:performanceOut,
     daily:daily.map(r=>({staffId:String(r.id),staffName:String(r.name??""),role:String(r.role??""),tasksToday:Number(r.tasks_today)||0,tasksDoneToday:Number(r.tasks_done_today)||0,visitsToday:Number(r.visits_today)||0,visitsDoneToday:Number(r.visits_done_today)||0,callsToday:Number(r.calls_today)||0,followUpsDue:Number(r.followups_due)||0,capturesToday:Number(r.captures_today)||0})),
-    leads:leads.map(r=>({id:String(r.id),name:String(r.name??""),phone:String(r.phone??""),status:String(r.status??"new"),source:String(r.source??""),consultant:String(r.consultant??""),deal:String(r.deal??""),neighborhood:String(r.neighborhood??""),propertyId:r.property_id?String(r.property_id):null,followUpAt:mapDate(r.follow_up_at),createdAt:mapDate(r.created_at)})),
+    leads:leads.map(r=>({id:String(r.id),name:String(r.name??""),phone:String(r.phone??""),status:String(r.status??"new"),source:String(r.source??""),consultant:String(r.consultant??""),deal:String(r.deal??""),neighborhood:String(r.neighborhood??""),propertyId:r.property_id?String(r.property_id):null,followUpAt:mapDate(r.follow_up_at),createdAt:mapDate(r.created_at),leadScore:Number(r.lead_score)||0,leadScoreBand:String(r.lead_score_band??"cold"),matchCount:Number(r.match_count)||0,matchedProperties:Array.isArray(r.matched_properties)?r.matched_properties:[]})),
     properties:properties.map(r=>({id:String(r.id),title:String(r.title??""),slug:String(r.slug??""),status:String(r.status??""),transactionType:String(r.transaction_type??""),propertyType:String(r.property_type??""),neighborhood:String(r.neighborhood??""),areaM2:r.area_m2==null?null:Number(r.area_m2),bedrooms:r.bedrooms==null?null:Number(r.bedrooms),price:r.price==null?null:Number(r.price),deposit:r.deposit==null?null:Number(r.deposit),rent:r.rent==null?null:Number(r.rent)})),
     automation:{created:Number(automation.created)||0,overdue:Number(automation.overdue)||0},
+    pipeline:pipelineRows.map(r=>({status:String(r.status),count:Number(r.count)||0})),
+    analytics:(()=>{const a=analyticsRows[0]??{};return {
+      total:Number(a.total)||0,contacted:Number(a.contacted)||0,reachedVisit:Number(a.reached_visit)||0,
+      reachedContract:Number(a.reached_contract)||0,closed:Number(a.closed)||0,avgHoursToContact:Number(a.avg_hours_to_contact)||0,
+      avgActiveScore:Number(a.avg_active_score)||0,
+      contactRate:Number(a.total)?Math.round((Number(a.contacted)||0)/Number(a.total)*100):0,
+      visitRate:Number(a.total)?Math.round((Number(a.reached_visit)||0)/Number(a.total)*100):0,
+      contractRate:Number(a.total)?Math.round((Number(a.reached_contract)||0)/Number(a.total)*100):0,
+      closeRate:Number(a.total)?Math.round((Number(a.closed)||0)/Number(a.total)*100):0,
+    }})(),
     stats:{calls24h:Number(calls[0]?.[0]?.count)||0,recordings24h:Number(recordings[0]?.[0]?.count)||0},
   };
 });
