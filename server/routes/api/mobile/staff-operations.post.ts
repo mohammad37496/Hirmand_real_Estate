@@ -143,5 +143,19 @@ export default defineEventHandler(async (event) => {
 
   if (action === "calendar_logged") return { success: true };
 
+  if (action === "crm_create_contact") {
+    const name = clean(body.name, 180);
+    const phone = clean(body.phone, 80);
+    if (!name) throw createError({ statusCode: 400, statusMessage: "نام مخاطب الزامی است." });
+    const typeRaw = clean(body.type, 30);
+    const type = new Set(["owner","buyer","tenant","builder","partner","customer","other"]).has(typeRaw) ? typeRaw : "customer";
+    const id = randomUUID();
+    await sql.query(
+      "insert into staff_mobile_crm_contacts(id,staff_id,name,phone,type,notes,property_id,next_follow_up_at) values($1,$2,$3,$4,$5,$6,$7,$8)",
+      [id, device.staff_id, name, phone, type, clean(body.notes, 1200), clean(body.propertyId, 160) || null, iso(body.nextFollowUpAt)],
+    );
+    return { success: true, id };
+  }
+
   throw createError({ statusCode: 400, statusMessage: "عملیات هیرمند شناخته نشد." });
 });
