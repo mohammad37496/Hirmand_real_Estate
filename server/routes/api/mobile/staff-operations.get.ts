@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
       [device.staff_id],
     ),
     sql.query<Record<string, unknown>>(
-      "select id,property_id,title,address,target_lat,target_lng,radius_m,scheduled_at,status,arrived_at,left_at,notes " +
+      "select id,property_id,title,address,target_lat,target_lng,radius_m,scheduled_at,status,arrived_at,left_at,notes,outcome,customer_interest_score,customer_feedback,next_follow_up_at,checklist,checklist_completed_at " +
       "from staff_mobile_visits where staff_id=$1 and status<>'cancelled' and " +
       "(scheduled_at is null or scheduled_at >= current_timestamp - interval '7 days') " +
       "order by scheduled_at asc nulls last limit 60",
@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
     ),
     sql.query<Record<string, unknown>>(
       "select c.id,c.name,c.phone,c.type,c.notes,c.lead_id,c.property_id,c.next_follow_up_at,c.updated_at," +
-      "l.name as lead_name,l.status as lead_status,l.deal as lead_deal,l.follow_up_at as lead_follow_up_at," +
+      "l.name as lead_name,l.status as lead_status,l.deal as lead_deal,l.follow_up_at as lead_follow_up_at,l.lead_score,l.lead_score_band,l.matched_properties," +
       "coalesce(json_agg(distinct jsonb_build_object(" +
       "'id',p.id,'title',p.title,'slug',p.slug,'neighborhood',p.neighborhood,'areaM2',p.area_m2," +
       "'bedrooms',p.bedrooms,'transactionType',p.transaction_type,'propertyType',p.property_type" +
@@ -178,12 +178,21 @@ export default defineEventHandler(async (event) => {
       targetLng: row.target_lng == null ? null : Number(row.target_lng), radiusM: Number(row.radius_m ?? 120),
       scheduledAt: serializeDate(row.scheduled_at), status: String(row.status), arrivedAt: serializeDate(row.arrived_at),
       leftAt: serializeDate(row.left_at), notes: String(row.notes ?? ""),
+      outcome: String(row.outcome ?? "pending"),
+      customerInterestScore: row.customer_interest_score == null ? null : Number(row.customer_interest_score),
+      customerFeedback: String(row.customer_feedback ?? ""),
+      nextFollowUpAt: serializeDate(row.next_follow_up_at),
+      checklist: Array.isArray(row.checklist) ? row.checklist : [],
+      checklistCompletedAt: serializeDate(row.checklist_completed_at),
     })),
     contacts: contactRows.map((row) => ({
       id: String(row.id), name: String(row.name ?? ""), phone: String(row.phone ?? ""), type: String(row.type ?? "customer"),
       notes: String(row.notes ?? ""), leadId: row.lead_id ? String(row.lead_id) : null,
       leadStatus: row.lead_status ? String(row.lead_status) : null,
       leadDeal: row.lead_deal ? String(row.lead_deal) : null,
+      leadScore: row.lead_score == null ? 0 : Number(row.lead_score),
+      leadScoreBand: String(row.lead_score_band ?? "cold"),
+      recommendedProperties: Array.isArray(row.matched_properties) ? row.matched_properties.slice(0, 6) : [],
       propertyId: row.property_id ? String(row.property_id) : null,
       nextFollowUpAt: serializeDate(row.next_follow_up_at ?? row.lead_follow_up_at),
       linkedProperties: Array.isArray(row.linked_properties) ? row.linked_properties : [],
