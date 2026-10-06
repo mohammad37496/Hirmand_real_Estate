@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminMobileManagementRouteImport } from './routes/admin-mobile-management'
+import { Route as AdminMobileManagementCallsRouteImport } from './routes/admin-mobile-management.calls'
 import { Route as AdminMobileManagementEmployeeIdRouteImport } from './routes/admin-mobile-management.$employeeId'
 import { Route as StaffAgreementRouteImport } from './routes/staff-agreement'
 import { Route as BudgetMatchRouteImport } from './routes/budget-match'
@@ -55,6 +56,11 @@ const AdminRoute = AdminRouteImport.update({
 const AdminMobileManagementRoute = AdminMobileManagementRouteImport.update({
   id: '/admin-mobile-management',
   path: '/admin-mobile-management',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminMobileManagementCallsRoute = AdminMobileManagementCallsRouteImport.update({
+  id: '/admin-mobile-management/calls',
+  path: '/admin-mobile-management/calls',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminMobileManagementEmployeeIdRoute = AdminMobileManagementEmployeeIdRouteImport.update({
@@ -207,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/admin-mobile-management': typeof AdminMobileManagementRoute
+  '/admin-mobile-management/calls': typeof AdminMobileManagementCallsRoute
   '/admin-mobile-management/$employeeId': typeof AdminMobileManagementEmployeeIdRoute
   '/staff-agreement': typeof StaffAgreementRoute
   '/budget-match': typeof BudgetMatchRoute
@@ -308,6 +315,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/admin-mobile-management'
+    | '/admin-mobile-management/calls'
     | '/admin-mobile-management/$employeeId'
     | '/staff-agreement'
     | '/budget-match'
@@ -456,6 +464,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-mobile-management'
       fullPath: '/admin-mobile-management'
       preLoaderRoute: typeof AdminMobileManagementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-mobile-management/calls': {
+      id: '/admin-mobile-management/calls'
+      path: '/admin-mobile-management/calls'
+      fullPath: '/admin-mobile-management/calls'
+      preLoaderRoute: typeof AdminMobileManagementCallsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin-mobile-management/$employeeId': {
