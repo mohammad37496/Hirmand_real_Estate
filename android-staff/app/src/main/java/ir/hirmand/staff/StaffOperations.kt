@@ -120,4 +120,3 @@ object StaffHealth {
             .put("permissions",StaffPermissionTelemetry.snapshot(context))
         }
     }
-}
