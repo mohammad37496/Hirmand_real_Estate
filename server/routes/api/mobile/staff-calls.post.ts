@@ -98,14 +98,7 @@ const inserted = await sql.query(
       `insert into staff_mobile_calls
         (id,device_id,staff_id,source_call_id,phone_number,contact_name,direction,occurred_at,duration_seconds)
        values ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-       on conflict (device_id,source_call_id)
-       do update set
-         staff_id=excluded.staff_id,
-         phone_number=excluded.phone_number,
-         contact_name=excluded.contact_name,
-         direction=excluded.direction,
-         occurred_at=excluded.occurred_at,
-         duration_seconds=excluded.duration_seconds
+       on conflict (device_id,source_call_id) do nothing
        returning id`,
       [
         randomUUID(),
@@ -155,7 +148,7 @@ const inserted = await sql.query(
             if(direction==="outgoing"||direction==="incoming"){
               await sql.query(
                 "update leads set last_contacted_at=greatest(coalesce(last_contacted_at,to_timestamp(0)),to_timestamp($1)),status=case when status='new' then 'contacted' else status end,updated_at=current_timestamp where id=$2",
-                [new Date(occurredAt).toISOString(),contact.lead_id],
+                [Math.floor(new Date(occurredAt).getTime()/1000),contact.lead_id],
               ).catch(()=>{});
             }
           }
