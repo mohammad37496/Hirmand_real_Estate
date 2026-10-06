@@ -1086,7 +1086,7 @@ export function AdminMobileEmployeePage({ employeeId }: { employeeId: string }) 
   }
 
   if (!person) {
-    return <main className="admin-mobile-page"><div className="admin-mobile-shell admin-mobile-centered"><section className="admin-mobile-panel admin-mobile-empty-card"><span className="admin-mobile-kicker">کارمند</span><h1>کارمند پیدا نشد</h1><p>{error || "کارمند انتخاب‌شده در فهرست فعال هیرمند وجود ندارد."}</p><a href="/admin-mobile-management" className="admin-mobile-primary-action"><ArrowRight size={17} /> بازگشت</Link></section></div></main>;
+    return <main className="admin-mobile-page"><div className="admin-mobile-shell admin-mobile-centered"><section className="admin-mobile-panel admin-mobile-empty-card"><span className="admin-mobile-kicker">کارمند</span><h1>کارمند پیدا نشد</h1><p>{error || "کارمند انتخاب‌شده در فهرست فعال هیرمند وجود ندارد."}</p><a href="/admin-mobile-management" className="admin-mobile-primary-action"><ArrowRight size={17} /> بازگشت</a></section></div></main>;
   }
 
   const onlineCount = personDevices.filter((device) => device.presence === "online").length;
@@ -1098,7 +1098,7 @@ export function AdminMobileEmployeePage({ employeeId }: { employeeId: string }) 
     <main className="admin-mobile-page">
       <div className="admin-mobile-shell">
         <div className="admin-mobile-breadcrumbs">
-          <a href="/admin-mobile-management">مدیریت تلفن همراه</Link>
+          <a href="/admin-mobile-management">مدیریت تلفن همراه</a>
           <ChevronLeft size={14} aria-hidden="true" />
           <span>{person.name}</span>
         </div>
@@ -1107,7 +1107,7 @@ export function AdminMobileEmployeePage({ employeeId }: { employeeId: string }) 
           eyebrow={person.role}
           title={person.name}
           description="پروفایل مدیریتی کارمند؛ وضعیت دستگاه، permissions، activity و قابلیت‌های واقعی Android Enterprise را مشاهده کنید."
-          action={<Link to="/admin-mobile-management" className="admin-mobile-secondary-action"><ArrowRight size={16} /> بازگشت به ناوگان</Link>}
+          action={<a href="/admin-mobile-management" className="admin-mobile-secondary-action"><ArrowRight size={16} /> بازگشت به ناوگان</a>}
         />
 
         <section className="admin-mobile-person-banner">
@@ -1205,13 +1205,13 @@ export function AdminMobileEmployeePage({ employeeId }: { employeeId: string }) 
               <Smartphone size={28} />
               <strong>هنوز دستگاهی برای این کارمند ثبت نشده است.</strong>
               <span>از مرکز Fleet یک enrollment جدید شروع کنید؛ ثبت دستگاه پس از اجرای اپ انجام می‌شود.</span>
-              <Link to="/admin-mobile-management" className="admin-mobile-primary-action">بازگشت به مرکز ناوگان</Link>
+              <a href="/admin-mobile-management" className="admin-mobile-primary-action">بازگشت به مرکز ناوگان</a>
             </div>
           </section>
         )}
 
         <div className="admin-mobile-footer-links">
-          <Link to="/admin-mobile-management" className="admin-mobile-secondary-action"><ArrowRight size={16} /> بازگشت به ناوگان</Link>
+          <a href="/admin-mobile-management" className="admin-mobile-secondary-action"><ArrowRight size={16} /> بازگشت به ناوگان</a>
           <Link to="/admin" className="admin-mobile-secondary-action">پنل مدیریت</Link>
         </div>
       </div>
