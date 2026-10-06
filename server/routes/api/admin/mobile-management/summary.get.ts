@@ -261,7 +261,7 @@ export default defineEventHandler(async (event) => {
       appPolicy: "نسخه و هویت اپ از registration و heartbeat واقعی خوانده می‌شود؛ enforcement نسخه در این پنل فعال نیست.",
       syncPolicy: "heartbeat دوره‌ای اپ و last_seen_at سرور مبنای سلامت sync هستند.",
       retentionPolicy: "قوانین نگهداری در migration تعریف شده و پاک‌سازی دستی endpoint موجود را استفاده می‌کند.",
-      locationPolicy: "collector موقعیت در این نسخه فعال نیست؛ وجود قابلیت schema به معنی tracking فعال نیست.",
+      locationPolicy: "موقعیت از permission واقعی اپ و رکوردهای staff_mobile_locations خوانده می‌شود؛ فقط دستگاه فعال و دارای مجوز معتبر قابل نمایش است.",
     },
   };
 });
