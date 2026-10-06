@@ -40,6 +40,17 @@ android {
         )
     }
 
+        buildConfigField(
+            "String",
+            "STAFF_OPERATIONS_URL",
+            ""https://www.hirmandrealestate.ir/api/mobile/staff-operations""
+        )
+        buildConfigField(
+            "String",
+            "STAFF_PROPERTY_CAPTURE_URL",
+            ""https://www.hirmandrealestate.ir/api/mobile/staff-property-captures""
+        )
+
     buildTypes {
         release {
             isMinifyEnabled = false
