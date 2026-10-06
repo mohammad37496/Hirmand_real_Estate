@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
         grantResults: IntArray,
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 7201) {
+        if (requestCode == 9101) {
             StaffTelemetry.enqueuePermissionState(this, StaffPermissionTelemetry.snapshot(this))
             startLocationTrackingIfAllowed()
             if (permissionCenterVisible) renderPermissionCenter()
