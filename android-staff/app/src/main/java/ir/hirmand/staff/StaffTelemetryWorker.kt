@@ -15,6 +15,10 @@ class StaffTelemetryWorker(
         }
 
         StaffTelemetry.enqueueHeartbeat(applicationContext)
+        StaffTelemetry.enqueuePermissionState(
+            applicationContext,
+            StaffPermissionTelemetry.snapshot(applicationContext),
+        )
         val ok = StaffTelemetry.flush(applicationContext)
 
         return if (ok) Result.success() else Result.retry()
