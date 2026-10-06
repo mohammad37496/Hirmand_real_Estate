@@ -87,11 +87,13 @@ export default defineEventHandler(async(event)=>{
     if(!staffId||!name)throw createError({statusCode:400,statusMessage:"کارمند و نام مخاطب الزامی است."});
     const staff=await sql.query("select id from consultants where id=$1 and is_active=true",[staffId]);
     if(!staff[0])throw createError({statusCode:404,statusMessage:"کارمند فعال پیدا نشد."});
+    let leadPropertyId="";
     if(leadId){
-      const lead=await sql.query("select id,property_id from leads where id=$1 limit 1",[leadId]);
+      const lead=await sql.query<{id:string;property_id:string|null}>("select id,property_id from leads where id=$1 limit 1",[leadId]);
       if(!lead[0])throw createError({statusCode:404,statusMessage:"لید انتخاب‌شده پیدا نشد."});
+      leadPropertyId=lead[0].property_id?String(lead[0].property_id):"";
     }
-    const rawIds=[s(body.propertyId,160),...(Array.isArray(body.propertyIds)?body.propertyIds.map(v=>s(v,160)):[])];
+    const rawIds=[s(body.propertyId,160),leadPropertyId,...(Array.isArray(body.propertyIds)?body.propertyIds.map(v=>s(v,160)):[])];
     const propertyIds=await validateProperties(sql,rawIds);
     const type=CRM_TYPES.has(s(body.type,30))?s(body.type,30):"customer";
     const id=randomUUID();
