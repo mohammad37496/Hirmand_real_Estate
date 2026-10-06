@@ -444,6 +444,10 @@ function DeviceCard({
 }
 
 function AlertPanel({ alerts }: { alerts: DeviceAlert[] }) {
+  const critical = alerts.filter((alert) => alert.severity === "critical");
+  const warning = alerts.filter((alert) => alert.severity === "warning");
+  const info = alerts.filter((alert) => alert.severity === "info");
+
   return (
     <section className="admin-mobile-panel admin-mobile-alert-panel">
       <div className="admin-mobile-section-head">
@@ -453,6 +457,16 @@ function AlertPanel({ alerts }: { alerts: DeviceAlert[] }) {
         </div>
         <span className="admin-mobile-count">{alerts.length.toLocaleString("fa-IR")} مورد</span>
       </div>
+
+      <div className="admin-mobile-alert-summary">
+        <span className="is-critical"><ShieldAlert size={15} /> {critical.length.toLocaleString("fa-IR")} بحرانی</span>
+        <span className="is-warning"><AlertTriangle size={15} /> {warning.length.toLocaleString("fa-IR")} هشدار</span>
+        <span className="is-info"><Info size={15} /> {info.length.toLocaleString("fa-IR")} اطلاعات</span>
+        <span className={critical.length ? "is-danger-state" : "is-safe-state"}>
+          {critical.length ? "اقدام فوری لازم است" : "بحرانی ثبت نشده"}
+        </span>
+      </div>
+
       {alerts.length ? (
         <div className="admin-mobile-alert-list">
           {alerts.slice(0, 10).map((alert) => (
@@ -465,7 +479,7 @@ function AlertPanel({ alerts }: { alerts: DeviceAlert[] }) {
                 <span>{alert.description}</span>
               </div>
               <a
-                href={`/admin-mobile-management/${encodeURIComponent(alert.staffId)}`}
+                href={"/admin-mobile-management/" + encodeURIComponent(alert.staffId)}
                 className="admin-mobile-alert-link"
               >
                 مشاهده
@@ -483,7 +497,6 @@ function AlertPanel({ alerts }: { alerts: DeviceAlert[] }) {
     </section>
   );
 }
-
 function EnrollmentWizard({
   open,
   onClose,
@@ -634,6 +647,263 @@ function PolicyCenter({ policy }: { policy: SummaryResponse["policy"] }) {
     </section>
   );
 }
+
+
+function SecurityCenter({
+  alerts,
+}: {
+  alerts: DeviceAlert[];
+}) {
+  const critical = alerts.filter((alert) => alert.severity === "critical");
+  const warning = alerts.filter((alert) => alert.severity === "warning");
+  const info = alerts.filter((alert) => alert.severity === "info");
+  const visible = [...critical, ...warning, ...info].slice(0, 8);
+
+  return (
+    <section className="admin-mobile-panel admin-mobile-security-center">
+      <div className="admin-mobile-section-head">
+        <div>
+          <span className="admin-mobile-section-kicker">Security & Alerts</span>
+          <h2>مرکز امنیت و هشدار</h2>
+        </div>
+        <span className="admin-mobile-count">{alerts.length.toLocaleString("fa-IR")} رخداد قابل توجه</span>
+      </div>
+
+      <div className="admin-mobile-security-metrics">
+        <div className="is-critical"><ShieldAlert size={16} /><strong>{critical.length.toLocaleString("fa-IR")}</strong><span>بحرانی</span></div>
+        <div className="is-warning"><AlertTriangle size={16} /><strong>{warning.length.toLocaleString("fa-IR")}</strong><span>هشدار</span></div>
+        <div className="is-info"><Info size={16} /><strong>{info.length.toLocaleString("fa-IR")}</strong><span>اطلاعات</span></div>
+        <div className="is-safe"><ShieldCheck size={16} /><strong>{critical.length === 0 ? "ایمن" : "نیازمند اقدام"}</strong><span>وضعیت فعلی</span></div>
+      </div>
+
+      {visible.length ? (
+        <div className="admin-mobile-security-list">
+          {visible.map((alert) => (
+            <article key={alert.id} className={"admin-mobile-security-row is-" + alert.severity}>
+              <div className="admin-mobile-alert-icon" aria-hidden="true">
+                {alert.severity === "critical" ? <ShieldAlert size={16} /> : alert.severity === "warning" ? <AlertTriangle size={16} /> : <Info size={16} />}
+              </div>
+              <div>
+                <strong>{alert.title}</strong>
+                <span>{alert.description}</span>
+              </div>
+              <a href={"/admin-mobile-management/" + encodeURIComponent(alert.staffId)} className="admin-mobile-alert-link">
+                جزئیات
+              </a>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="admin-mobile-empty-state">
+          <CheckCircle2 size={22} />
+          <strong>رخداد امنیتی باز وجود ندارد.</strong>
+          <span>این وضعیت فقط از device status، presence، management mode و permission telemetry واقعی محاسبه می‌شود.</span>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function DeviceHealthCenter({ devices }: { devices: MobileDevice[] }) {
+  const healthy = devices.filter((device) =>
+    device.status === "active" &&
+    device.presence === "online" &&
+    device.managementMode !== "unknown" &&
+    device.permissions.length > 0 &&
+    device.permissions.every((permission) => permission.status === "granted") &&
+    device.alerts.every((alert) => alert.severity === "info")
+  );
+  const blocked = devices.filter((device) => device.status !== "active");
+  const attention = devices.length - healthy.length - blocked.length;
+  const missingTelemetry = devices.filter((device) => device.status === "active" && device.permissions.length === 0).length;
+  const deniedPermissions = devices.reduce(
+    (sum, device) => sum + device.permissions.filter((permission) => permission.status === "denied").length,
+    0,
+  );
+  const offline = devices.filter((device) => device.presence === "offline").length;
+  const stale = devices.filter((device) => device.presence === "stale").length;
+
+  const versions = Array.from(
+    devices.reduce((map, device) => {
+      const key = device.appVersionName ? device.appVersionName + (device.appVersionCode ? " · " + device.appVersionCode : "") : "نسخه نامشخص";
+      map.set(key, (map.get(key) ?? 0) + 1);
+      return map;
+    }, new Map<string, number>()),
+  ).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  const healthRows = devices
+    .map((device) => {
+      const issues = device.alerts.filter((alert) => alert.severity !== "info").length +
+        (device.permissions.some((permission) => permission.status === "denied") ? 1 : 0) +
+        (device.managementMode === "unknown" ? 1 : 0);
+      const score = device.status !== "active" ? 0 : Math.max(15, 100 - issues * 18 - (device.presence === "online" ? 0 : device.presence === "stale" ? 20 : 45));
+      return { device, score, issues };
+    })
+    .sort((a, b) => a.score - b.score || b.issues - a.issues)
+    .slice(0, 5);
+
+  return (
+    <section className="admin-mobile-panel admin-mobile-health-center">
+      <div className="admin-mobile-section-head">
+        <div>
+          <span className="admin-mobile-section-kicker">Device & App Health</span>
+          <h2>مرکز سلامت دستگاه و اپ</h2>
+        </div>
+        <span className="admin-mobile-count">{devices.length.toLocaleString("fa-IR")} دستگاه تحلیل شد</span>
+      </div>
+
+      <div className="admin-mobile-health-overview">
+        <div className="is-healthy"><CheckCircle2 size={17} /><strong>{healthy.length.toLocaleString("fa-IR")}</strong><span>سالم</span></div>
+        <div className="is-warning"><AlertTriangle size={17} /><strong>{Math.max(0, attention).toLocaleString("fa-IR")}</strong><span>نیازمند توجه</span></div>
+        <div className="is-blocked"><Ban size={17} /><strong>{blocked.length.toLocaleString("fa-IR")}</strong><span>غیرفعال/انتظار</span></div>
+      </div>
+
+      <div className="admin-mobile-health-grid">
+        <div className="admin-mobile-health-stack">
+          <div className="admin-mobile-health-stack-head">
+            <strong>شاخص‌های واقعی</strong>
+            <span>بر پایه آخرین داده دریافت‌شده</span>
+          </div>
+          <div className="admin-mobile-health-detail-row"><span>آفلاین</span><strong>{offline.toLocaleString("fa-IR")}</strong></div>
+          <div className="admin-mobile-health-detail-row"><span>Stale</span><strong>{stale.toLocaleString("fa-IR")}</strong></div>
+          <div className="admin-mobile-health-detail-row"><span>Permission ردشده</span><strong>{deniedPermissions.toLocaleString("fa-IR")}</strong></div>
+          <div className="admin-mobile-health-detail-row"><span>بدون telemetry مجوز</span><strong>{missingTelemetry.toLocaleString("fa-IR")}</strong></div>
+        </div>
+
+        <div className="admin-mobile-health-stack">
+          <div className="admin-mobile-health-stack-head">
+            <strong>توزیع نسخه اپ</strong>
+            <span>از registration / heartbeat</span>
+          </div>
+          {versions.length ? versions.map(([version, count]) => (
+            <div className="admin-mobile-health-version-row" key={version}>
+              <span>{version}</span>
+              <strong>{count.toLocaleString("fa-IR")}</strong>
+            </div>
+          )) : <div className="admin-mobile-empty-state">هنوز نسخه‌ای گزارش نشده است.</div>}
+        </div>
+      </div>
+
+      <div className="admin-mobile-health-risk-list">
+        <div className="admin-mobile-health-stack-head">
+          <strong>دستگاه‌های با پایین‌ترین سلامت</strong>
+          <span>برای بررسی سریع مدیر</span>
+        </div>
+        {healthRows.length ? healthRows.map(({ device, score }) => (
+          <a key={device.id} href={"/admin-mobile-management/" + encodeURIComponent(device.staffId)} className="admin-mobile-health-device-row">
+            <span className="admin-mobile-health-device-name">
+              <strong>{device.staffName || device.staffId}</strong>
+              <small><bdi dir="ltr">{device.deviceId}</bdi> · {device.presenceLabel}</small>
+            </span>
+            <span className={"admin-mobile-health-score " + (score >= 80 ? "is-good" : score >= 45 ? "is-warning" : "is-danger")}>
+              {score.toLocaleString("fa-IR")}٪
+            </span>
+            <ChevronLeft size={15} />
+          </a>
+        )) : <div className="admin-mobile-empty-state">دستگاهی برای تحلیل وجود ندارد.</div>}
+      </div>
+    </section>
+  );
+}
+
+function CommandCenter({
+  devices,
+  busyDeviceId,
+  onRefresh,
+  onStatusChange,
+}: {
+  devices: MobileDevice[];
+  busyDeviceId: string;
+  onRefresh: () => void;
+  onStatusChange: (device: MobileDevice, action: "approve" | "revoke") => void;
+}) {
+  const [selectedDeviceId, setSelectedDeviceId] = useState("");
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (!selectedDeviceId || !devices.some((device) => device.deviceId === selectedDeviceId)) {
+      setSelectedDeviceId(devices[0]?.deviceId ?? "");
+    }
+  }, [devices, selectedDeviceId]);
+
+  const selected = devices.find((device) => device.deviceId === selectedDeviceId) ?? null;
+
+  function runRefresh() {
+    setMessage("داده ناوگان تازه‌سازی شد.");
+    onRefresh();
+  }
+
+  return (
+    <section className="admin-mobile-panel admin-mobile-command-center">
+      <div className="admin-mobile-section-head">
+        <div>
+          <span className="admin-mobile-section-kicker">Command Center</span>
+          <h2>مرکز عملیات دستگاه</h2>
+        </div>
+        <span className="admin-mobile-count">عملیات مجاز فعلی</span>
+      </div>
+
+      <div className="admin-mobile-command-select-wrap">
+        <label className="admin-mobile-command-select">
+          <Smartphone size={16} />
+          <span>دستگاه هدف</span>
+          <select value={selectedDeviceId} onChange={(event) => { setSelectedDeviceId(event.target.value); setMessage(""); }} disabled={!devices.length}>
+            {devices.length ? devices.map((device) => (
+              <option value={device.deviceId} key={device.deviceId}>
+                {device.staffName || device.staffId} · {device.model || "دستگاه"} · {device.deviceId.slice(0, 12)}
+              </option>
+            )) : <option value="">دستگاهی ثبت نشده است</option>}
+          </select>
+        </label>
+      </div>
+
+      {selected ? (
+        <div className="admin-mobile-command-target">
+          <div>
+            <strong>{selected.staffName || selected.staffId}</strong>
+            <span><bdi dir="ltr">{selected.deviceId}</bdi> · {selected.presenceLabel} · {selected.managementModeLabel}</span>
+          </div>
+          <a href={"/admin-mobile-management/" + encodeURIComponent(selected.staffId)} className="admin-mobile-secondary-action">
+            جزئیات
+            <ChevronLeft size={15} />
+          </a>
+        </div>
+      ) : null}
+
+      <div className="admin-mobile-command-grid">
+        <button type="button" className="admin-mobile-command-button is-primary" onClick={runRefresh} disabled={busyDeviceId !== ""}>
+          <RefreshCw size={17} />
+          <span><strong>Refresh Fleet</strong><small>خواندن مجدد وضعیت واقعی</small></span>
+        </button>
+
+        {selected && selected.status !== "active" ? (
+          <button type="button" className="admin-mobile-command-button is-success" onClick={() => onStatusChange(selected, "approve")} disabled={busyDeviceId === selected.deviceId}>
+            <CheckCircle2 size={17} />
+            <span><strong>Approve Device</strong><small>فعال‌سازی دسترسی مدیریتی</small></span>
+          </button>
+        ) : null}
+
+        {selected && selected.status !== "revoked" ? (
+          <button type="button" className="admin-mobile-command-button is-danger" onClick={() => onStatusChange(selected, "revoke")} disabled={busyDeviceId === selected.deviceId}>
+            <Ban size={17} />
+            <span><strong>Revoke Device</strong><small>لغو دسترسی و ثبت Audit</small></span>
+          </button>
+        ) : null}
+      </div>
+
+      <div className="admin-mobile-command-future">
+        <Info size={16} />
+        <div>
+          <strong>فرمان‌های DPC از راه دور هنوز فعال نشده‌اند.</strong>
+          <span>قابلیت‌هایی مثل Lock / Sync Now / Policy Refresh فقط زمانی فعال می‌شوند که command transport و اجرای واقعی آن‌ها در Android Agent اضافه شود؛ این پنل آن‌ها را شبیه‌سازی نمی‌کند.</span>
+        </div>
+      </div>
+
+      {message ? <div className="admin-mobile-command-message"><CheckCircle2 size={14} /> {message}</div> : null}
+    </section>
+  );
+}
+
 
 function AuditMiniPanel() {
   const [items, setItems] = useState<Array<Awaited<ReturnType<typeof listAdminAuditLog>>[number]>>([]);
@@ -907,6 +1177,18 @@ export function AdminMobileManagementPage() {
         {summary ? (
           <>
             <AlertPanel alerts={summary.alerts} />
+
+            <section className="admin-mobile-two-column admin-mobile-feature-row">
+              <DeviceHealthCenter devices={summary.devices} />
+              <CommandCenter
+                devices={summary.devices}
+                busyDeviceId={busyDeviceId}
+                onRefresh={() => void load()}
+                onStatusChange={changeStatus}
+              />
+            </section>
+
+            <SecurityCenter alerts={summary.alerts} />
 
             <section className="admin-mobile-panel">
               <div className="admin-mobile-section-head admin-mobile-section-head-tight">
