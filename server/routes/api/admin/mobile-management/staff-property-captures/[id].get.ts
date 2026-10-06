@@ -14,7 +14,7 @@ export default defineEventHandler(async(event)=>{
   if(dbSource==="unconfigured") throw createError({statusCode:503,statusMessage:"پایگاه داده آماده نیست."});
   const id=String(getRouterParam(event,"id")??"");
   const sql=await getSql();
-  const rows=await sql.query<{name:string;mime_type:string;content:Buffer;staff_id:string}[]>(
+  const rows=await sql.query<{name:string;mime_type:string;content:Buffer;staff_id:string}>(
     "select f.name,f.mime_type,f.content,c.staff_id from staff_mobile_property_captures c join staff_mobile_files f on f.id=c.file_id where c.id=$1 limit 1",[id]
   );
   if(!rows[0]) throw createError({statusCode:404,statusMessage:"تصویر پیدا نشد."});
