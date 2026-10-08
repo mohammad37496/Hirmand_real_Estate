@@ -141,6 +141,31 @@
   border-color: var(--navy-700) !important;
 }
 
+/* Specification-filter readability guard.
+   mobile-device-fixes.css intentionally uses aggressive overflow wrapping for
+   small-screen hardening, but that rule also reaches desktop and can split
+   Latin labels such as MDF into one character per line. Restore normal
+   browser word wrapping only inside this filter's controls. */
+.pf-page .pf-spec-option {
+  min-width: 0 !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  writing-mode: horizontal-tb !important;
+  direction: rtl !important;
+}
+
+.pf-page .pf-spec-option > span {
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+  display: block !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  writing-mode: horizontal-tb !important;
+  line-height: 1.65 !important;
+}
+
 /* Finance / tools */
 .tools-eyebrow,
 .tools-switch-arrow,
@@ -2532,23 +2557,6 @@
     font-size: .76rem !important;
     font-weight: 700 !important;
     line-height: 1.8 !important;
-  }
-
-  /* Keep short Latin labels such as MDF on one horizontal line.
-     The spec option is a flex row; without this guard, generic wrapping
-     rules can shrink the label to a single character per line. */
-  .pf-page .pf-spec-option > span:last-child {
-    min-width: 0 !important;
-    flex: 1 1 auto !important;
-    display: block !important;
-    direction: rtl !important;
-    writing-mode: horizontal-tb !important;
-    white-space: nowrap !important;
-    word-break: normal !important;
-    overflow-wrap: normal !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    line-height: 1.6 !important;
   }
 
   .pf-page .pf-spec-option:hover {
