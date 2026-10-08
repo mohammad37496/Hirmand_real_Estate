@@ -2534,6 +2534,23 @@
     line-height: 1.8 !important;
   }
 
+  /* Keep short Latin labels such as MDF on one horizontal line.
+     The spec option is a flex row; without this guard, generic wrapping
+     rules can shrink the label to a single character per line. */
+  .pf-page .pf-spec-option > span:last-child {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    display: block !important;
+    direction: rtl !important;
+    writing-mode: horizontal-tb !important;
+    white-space: nowrap !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.6 !important;
+  }
+
   .pf-page .pf-spec-option:hover {
     color: #173149 !important;
   }
