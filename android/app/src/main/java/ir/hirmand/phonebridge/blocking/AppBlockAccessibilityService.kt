@@ -57,6 +57,9 @@ class AppBlockAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         prefs = AppPrefs(applicationContext)
+        if (!prefs.isModuleAllowedLocally("app_blocking")) {
+            prefs.appBlockingEnabled = false
+        }
         mainHandler.post(ticker)
         mainHandler.post { refreshPolicy() }
         mainHandler.postDelayed(policyRefresh, 60_000L)
@@ -83,7 +86,10 @@ class AppBlockAccessibilityService : AccessibilityService() {
     }
 
     private fun evaluatePackage(packageName: String) {
-        if (!::prefs.isInitialized || !prefs.appBlockingEnabled || packageName == applicationContext.packageName) {
+        if (!::prefs.isInitialized ||
+            !prefs.isModuleAllowedLocally("app_blocking") ||
+            !prefs.appBlockingEnabled ||
+            packageName == applicationContext.packageName) {
             removeOverlay()
             return
         }
@@ -101,7 +107,7 @@ class AppBlockAccessibilityService : AccessibilityService() {
     }
 
     private fun refreshPolicy() {
-        if (!::prefs.isInitialized || !prefs.appBlockingEnabled) {
+        if (!::prefs.isInitialized || !prefs.isModuleAllowedLocally("app_blocking") || !prefs.appBlockingEnabled) {
             rules = emptyList()
             removeOverlay()
             return
