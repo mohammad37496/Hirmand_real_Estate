@@ -25,6 +25,7 @@ import com.google.android.material.materialswitch.MaterialSwitch
 
 private data class RuntimePermissionGroup(
     val title: String,
+    val description: String,
     val permissions: List<String>,
 )
 
@@ -146,15 +147,31 @@ class PermissionCenter(
             lp(-1, -2).apply { bottomMargin = dp(12) }
         )
 
-        root.addView(
-            buildPermissionCard(
-                title = "Activate all permissions",
-                description = "Activate the permissions necessary for the proper functioning of the application. Requests: Calendar, Camera, Contacts, Location, Microphone, Phone calls, Call logs, SMS, and Photos/media/files. Android may show fewer system dialogs depending on the device and version.",
-                state = { allRuntimePermissionsState() },
-                onAction = { requestAllRuntimePermissions() },
-            ),
-            lp(-1, -2).apply { bottomMargin = dp(12) }
-        )
+        // Ask for each sensitive category only after its purpose is explained.
+        // A single "enable everything" button pressures employees to over-grant.
+        runtimePermissionGroups().forEach { group ->
+            root.addView(
+                buildPermissionCard(
+                    title = group.title,
+                    description = group.description,
+                    state = { runtimePermissionGroupState(group) },
+                    onAction = { requestRuntimePermissionGroup(group) },
+                ),
+                lp(-1, -2).apply { bottomMargin = dp(12) }
+            )
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            root.addView(
+                buildPermissionCard(
+                    title = "موقعیت مکانی در پس‌زمینه",
+                    description = "این دسترسی می‌تواند موقعیت را وقتی برنامه در صفحه نیست هم در دسترس قرار دهد. فقط اگر وظیفهٔ کاری مشخصی به آن نیاز دارد فعالش کنید؛ انتخاب نهایی با خود کاربر و تنظیمات اندروید است.",
+                    state = { backgroundLocationState() },
+                    onAction = { requestBackgroundLocation() },
+                ),
+                lp(-1, -2).apply { bottomMargin = dp(12) }
+            )
+        }
 
         root.addView(sectionLabel("دسترسی‌های سیستمی و ویژه"), lp(-1, -2).apply {
             topMargin = dp(8)
@@ -340,21 +357,23 @@ class PermissionCenter(
         return card
     }
 
-    private fun currentStates(): List<PermissionState> = listOf(
-        accessibilityState(),
-        allRuntimePermissionsState(),
-        deviceManagementState(),
-        notificationListenerState(),
-        PermissionState(
-            screenCaptureApproved(),
-            if (screenCaptureApproved()) "تأیید شده برای جلسه جاری" else "نیازمند تأیید سیستم"
-        ),
-        usageAccessState(),
-        overlayState(),
-        appNotificationsDisabledState(),
-        locationState(),
-        batteryOptimizationState(),
-    )
+    private fun currentStates(): List<PermissionState> =
+        listOf(accessibilityState()) +
+            runtimePermissionGroups().map { runtimePermissionGroupState(it) } +
+            buildList {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) add(backgroundLocationState())
+                add(deviceManagementState())
+                add(notificationListenerState())
+                add(PermissionState(
+                    screenCaptureApproved(),
+                    if (screenCaptureApproved()) "تأیید شده برای جلسه جاری" else "نیازمند تأیید سیستم"
+                ))
+                add(usageAccessState())
+                add(overlayState())
+                add(appNotificationsDisabledState())
+                add(locationState())
+                add(batteryOptimizationState())
+            }
 
     private fun accessibilityState(): PermissionState {
         val enabled = Settings.Secure.getString(
@@ -366,66 +385,69 @@ class PermissionCenter(
         return PermissionState(active, if (active) "فعال" else "غیرفعال")
     }
 
-    private fun allRuntimePermissionsState(): PermissionState {
-        val groups = runtimePermissionGroups()
-        val granted = groups.count { isGroupGranted(it) }
-        return PermissionState(
-            granted == groups.size,
-            "$granted / " + groups.size + " دسته فعال است"
+    private fun runtimePermissionGroupState(group: RuntimePermissionGroup): PermissionState =
+        PermissionState(
+            isGroupGranted(group),
+            if (isGroupGranted(group)) "مجوزهای این بخش فعال است" else "برای این بخش مجوز لازم است",
         )
-    }
 
     private fun runtimePermissionGroups(): List<RuntimePermissionGroup> =
         listOf(
             RuntimePermissionGroup(
-                "Calendar",
-                listOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR)
+                title = "تقویم",
+                description = "برای مشاهده یا مدیریت رویدادهای کاری، فقط در صورت نیاز واقعی. داده‌های تقویم شخصی حساس‌اند.",
+                permissions = listOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR),
             ),
             RuntimePermissionGroup(
-                "Camera",
-                listOf(Manifest.permission.CAMERA)
+                title = "دوربین",
+                description = "برای عکس ملک یا مدرک در زمانی که خودتان قابلیت مربوط را اجرا می‌کنید؛ این مجوز به معنی اجازهٔ عکاسی پنهانی نیست.",
+                permissions = listOf(Manifest.permission.CAMERA),
             ),
             RuntimePermissionGroup(
-                "Contacts",
-                listOf(Manifest.permission.READ_CONTACTS)
+                title = "مخاطبین",
+                description = "برای گردش‌کارهای مشخص ارتباط با مالک، متقاضی یا همکار. نام و شمارهٔ افراد دیگر نیز دادهٔ شخصی محسوب می‌شوند.",
+                permissions = listOf(Manifest.permission.READ_CONTACTS),
             ),
             RuntimePermissionGroup(
-                "Location",
-                listOf(
+                title = "موقعیت مکانی",
+                description = "برای قابلیت مشخص کاری مانند ثبت حضور یا مکان دستگاه. موقعیت دقیق فقط با انتخاب و تأیید شما فعال می‌شود.",
+                permissions = listOf(
                     Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                ),
             ),
             RuntimePermissionGroup(
-                "Microphone",
-                listOf(Manifest.permission.RECORD_AUDIO)
+                title = "میکروفون",
+                description = "فقط برای قابلیت صوتی‌ای که خودتان آغاز می‌کنید. ضبط تماس یا صدای محیط باید جداگانه و آشکار فعال شود.",
+                permissions = listOf(Manifest.permission.RECORD_AUDIO),
             ),
             RuntimePermissionGroup(
-                "Phone calls",
-                listOf(
-                    Manifest.permission.CALL_PHONE,
-                    Manifest.permission.READ_PHONE_STATE
-                )
+                title = "تلفن",
+                description = "برای وضعیت تلفن یا آغاز تماس کاری در صورت نیاز. این دسترسی به تنهایی اجازهٔ شنود تماس نمی‌دهد.",
+                permissions = listOf(Manifest.permission.CALL_PHONE, Manifest.permission.READ_PHONE_STATE),
             ),
             RuntimePermissionGroup(
-                "Call logs",
-                listOf(Manifest.permission.READ_CALL_LOG)
+                title = "گزارش تماس‌ها",
+                description = "می‌تواند شماره، زمان، مدت و جهت تماس‌ها را آشکار کند؛ فقط با نیاز کاری روشن فعالش کنید. اندروید ممکن است این دسترسی را محدود کند.",
+                permissions = listOf(Manifest.permission.READ_CALL_LOG),
             ),
             RuntimePermissionGroup(
-                "SMS",
-                listOf(Manifest.permission.READ_SMS, Manifest.permission.SEND_SMS)
+                title = "پیامک",
+                description = "پیامک‌ها ممکن است حاوی رمز یک‌بارمصرف و اطلاعات خصوصی باشند. فعال‌سازی فقط با نیاز مشخص انجام شود؛ اندروید ممکن است آن را محدود کند.",
+                permissions = listOf(Manifest.permission.READ_SMS, Manifest.permission.SEND_SMS),
             ),
             RuntimePermissionGroup(
-                "Photos / media / files",
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                title = "عکس، رسانه و فایل",
+                description = "در نسخه‌های جدید فقط انواع رسانهٔ انتخاب‌شده درخواست می‌شوند؛ فایل‌های کاری مشخص را ترجیحاً با انتخابگر رسمی اندروید انتخاب کنید.",
+                permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     listOf(
                         Manifest.permission.READ_MEDIA_IMAGES,
                         Manifest.permission.READ_MEDIA_VIDEO,
-                        Manifest.permission.READ_MEDIA_AUDIO
+                        Manifest.permission.READ_MEDIA_AUDIO,
                     )
                 } else {
                     listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-                }
+                },
             ),
         )
 
@@ -434,12 +456,8 @@ class PermissionCenter(
             ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
 
-    private fun requestAllRuntimePermissions() {
-        val permissions = runtimePermissionGroups()
-            .flatMap { it.permissions }
-            .distinct()
-
-        val missing = permissions.filter {
+    private fun requestRuntimePermissionGroup(group: RuntimePermissionGroup) {
+        val missing = group.permissions.filter {
             ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
         }
 
@@ -448,9 +466,32 @@ class PermissionCenter(
             return
         }
 
-        activity.requestPermissions(
-            missing.toTypedArray(),
-            REQUEST_ALL_PERMISSIONS
+        activity.requestPermissions(missing.toTypedArray(), REQUEST_GROUP_PERMISSION)
+    }
+
+    private fun backgroundLocationState(): PermissionState {
+        val active = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+        ) == PackageManager.PERMISSION_GRANTED
+        return PermissionState(active, if (active) "موقعیت پس‌زمینه فعال است" else "غیرفعال؛ نیازمند انتخاب در تنظیمات")
+    }
+
+    private fun requestBackgroundLocation() {
+        val foregroundLocation = runtimePermissionGroups().first { it.title == "موقعیت مکانی" }
+        if (!isGroupGranted(foregroundLocation)) {
+            showInstructions(
+                title = "ابتدا موقعیت مکانی",
+                message = "برای درخواست پس‌زمینه، ابتدا مجوز موقعیت هنگام استفاده از برنامه را به‌صورت جداگانه تأیید کنید.",
+                onGo = { requestRuntimePermissionGroup(foregroundLocation) },
+            )
+            return
+        }
+
+        showInstructions(
+            title = "موقعیت در پس‌زمینه",
+            message = "این مجوز دسترسی مکان را هنگامی که برنامه باز نیست ممکن می‌کند. فقط برای وظیفه‌ای که واقعاً به ردیابی پس‌زمینه نیاز دارد ادامه دهید؛ در صفحهٔ اندروید می‌توانید آن را رد کنید.",
+            onGo = { openAppPermissionsSettings() },
         )
     }
 
@@ -535,8 +576,8 @@ class PermissionCenter(
 
     private fun showAccessibilityInstructions() {
         showInstructions(
-            title = "Enable accessibility",
-            message = "1) Search section 'Services'\n2) Select 'Security Service'\n3) Enable it.",
+            title = "دسترسی‌پذیری",
+            message = "این یک دسترسی ویژه است و می‌تواند محتوای صفحه را در اختیار سرویس قرار دهد. در نسخهٔ فعلی، سرویس هیرمند رویدادهای صفحه را جمع‌آوری یا ارسال نمی‌کند. فقط برای قابلیت مشخصی که فعال و توضیح داده شده ادامه دهید.",
             onGo = { openAccessibilitySettings() }
         )
     }
@@ -612,8 +653,8 @@ class PermissionCenter(
 
     private fun showNotificationAccessInstructions() {
         showInstructions(
-            title = "Enable access to notifications",
-            message = "1) Open Notification access.\n2) Select 'Hirmand realestate'.\n3) Enable notification access.",
+            title = "دسترسی اعلان‌ها",
+            message = "این دسترسی می‌تواند محتوای اعلان‌های برنامه‌های دیگر را ببیند. در نسخهٔ فعلی، سرویس هیرمند محتوای اعلان‌ها را جمع‌آوری یا ارسال نمی‌کند. فقط اگر قابلیت کاری مشخصی به آن نیاز دارد ادامه دهید.",
             onGo = { openNotificationAccessSettings() }
         )
     }
@@ -758,6 +799,6 @@ class PermissionCenter(
         (value * context.resources.displayMetrics.density).toInt()
 
     companion object {
-        private const val REQUEST_ALL_PERMISSIONS = 9101
+        private const val REQUEST_GROUP_PERMISSION = 9101
     }
 }
