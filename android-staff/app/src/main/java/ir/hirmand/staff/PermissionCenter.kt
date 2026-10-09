@@ -24,6 +24,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.materialswitch.MaterialSwitch
 
 private data class RuntimePermissionGroup(
+    val id: String,
     val title: String,
     val description: String,
     val permissions: List<String>,
@@ -40,8 +41,53 @@ class PermissionCenter(
     private val onRequestScreenCapture: () -> Unit,
     private val onStartWorkProfileProvisioning: () -> Unit,
     private val onClose: () -> Unit,
+    private val onRefresh: () -> Unit,
 ) {
     private val context: Context = activity
+    private val staffPreferences by lazy {
+        context.getSharedPreferences("hirmand_staff", Context.MODE_PRIVATE)
+    }
+
+    /** Consent is tied to the accepted agreement version so a new contract needs fresh consent. */
+    private fun scopeConsentKey(id: String): String {
+        val version = staffPreferences.getString("accepted_agreement_version", "unknown")
+            .orEmpty().ifBlank { "unknown" }
+        return "permission_scope_consent_${version}_${id}"
+    }
+
+    private fun hasScopeConsent(id: String): Boolean =
+        staffPreferences.getBoolean(scopeConsentKey(id), false)
+
+    private fun recordScopeConsent(id: String) {
+        val key = scopeConsentKey(id)
+        staffPreferences.edit()
+            .putBoolean(key, true)
+            .putLong(key + "_accepted_at", System.currentTimeMillis())
+            .apply()
+    }
+
+    private fun clearScopeConsent(id: String) {
+        val key = scopeConsentKey(id)
+        staffPreferences.edit().remove(key).remove(key + "_accepted_at").apply()
+    }
+
+    private fun refreshLater() {
+        activity.window.decorView.post { onRefresh() }
+    }
+
+    private fun revokeScopeConsent(
+        id: String,
+        title: String,
+        openSettings: () -> Unit = { openAppPermissionsSettings() },
+    ) {
+        clearScopeConsent(id)
+        refreshLater()
+        showInstructions(
+            title = "لغو رضایت: $title",
+            message = "رضایت این بخش در برنامه لغو شد و برنامه نباید از آن استفاده کند. برای بازبینی مجوز سیستم Android هم می‌توانید تنظیمات مربوط را باز کنید.",
+            onGo = openSettings,
+        )
+    }
 
     fun buildView(): ScrollView {
         val scroll = ScrollView(context).apply {
@@ -156,6 +202,9 @@ class PermissionCenter(
                     description = group.description,
                     state = { runtimePermissionGroupState(group) },
                     onAction = { requestRuntimePermissionGroup(group) },
+                    onRevoke = if (hasScopeConsent(group.id)) {
+                        { revokeScopeConsent(group.id, group.title) }
+                    } else null,
                 ),
                 lp(-1, -2).apply { bottomMargin = dp(12) }
             )
@@ -168,6 +217,9 @@ class PermissionCenter(
                     description = "این دسترسی می‌تواند موقعیت را وقتی برنامه در صفحه نیست هم در دسترس قرار دهد. فقط اگر وظیفهٔ کاری مشخصی به آن نیاز دارد فعالش کنید؛ انتخاب نهایی با خود کاربر و تنظیمات اندروید است.",
                     state = { backgroundLocationState() },
                     onAction = { requestBackgroundLocation() },
+                    onRevoke = if (hasScopeConsent("background_location")) {
+                        { revokeScopeConsent("background_location", "موقعیت مکانی در پس‌زمینه") }
+                    } else null,
                 ),
                 lp(-1, -2).apply { bottomMargin = dp(12) }
             )
@@ -278,6 +330,7 @@ class PermissionCenter(
         description: String,
         state: () -> PermissionState,
         onAction: () -> Unit,
+        onRevoke: (() -> Unit)? = null,
     ): MaterialCardView {
         val initial = state()
         val card = MaterialCardView(context).apply {
@@ -331,27 +384,44 @@ class PermissionCenter(
         copy.addView(descView, lp(-1, -2).apply { topMargin = dp(5) })
         copy.addView(statusView, lp(-1, -2).apply { topMargin = dp(6) })
 
+        // A read-only status indicator; decisions are made through the labelled
+        // action buttons and not by pretending this switch toggles system access.
         val toggle = MaterialSwitch(context).apply {
             isChecked = initial.active
-            isFocusable = true
+            isFocusable = false
+            isEnabled = false
             contentDescription = title
-            setOnClickListener {
-                isChecked = state().active
-                onAction()
-            }
         }
 
         header.addView(copy, LinearLayout.LayoutParams(0, -2, 1f))
         header.addView(toggle, lp(dp(64), dp(48)))
         content.addView(header)
 
+        val actions = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutDirection = android.view.View.LAYOUT_DIRECTION_RTL
+        }
         val go = MaterialButton(context).apply {
-            text = "GO"
+            text = "تأیید / مدیریت"
             textSize = 12f
-            isAllCaps = true
+            isAllCaps = false
             setOnClickListener { onAction() }
         }
-        content.addView(go, lp(-1, dp(44)).apply { topMargin = dp(10) })
+        if (onRevoke == null) {
+            actions.addView(go, lp(-1, dp(44)))
+        } else {
+            actions.addView(go, LinearLayout.LayoutParams(0, dp(44), 1f))
+            val revoke = MaterialButton(context).apply {
+                text = "لغو رضایت"
+                textSize = 12f
+                isAllCaps = false
+                setOnClickListener { onRevoke() }
+            }
+            actions.addView(revoke, LinearLayout.LayoutParams(0, dp(44), 1f).apply {
+                marginStart = dp(8)
+            })
+        }
+        content.addView(actions, lp(-1, dp(44)).apply { topMargin = dp(10) })
 
         card.addView(content)
         return card
@@ -394,21 +464,25 @@ class PermissionCenter(
     private fun runtimePermissionGroups(): List<RuntimePermissionGroup> =
         listOf(
             RuntimePermissionGroup(
+                id = "calendar",
                 title = "تقویم",
                 description = "برای مشاهده یا مدیریت رویدادهای کاری، فقط در صورت نیاز واقعی. داده‌های تقویم شخصی حساس‌اند.",
                 permissions = listOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR),
             ),
             RuntimePermissionGroup(
+                id = "camera",
                 title = "دوربین",
                 description = "برای عکس ملک یا مدرک در زمانی که خودتان قابلیت مربوط را اجرا می‌کنید؛ این مجوز به معنی اجازهٔ عکاسی پنهانی نیست.",
                 permissions = listOf(Manifest.permission.CAMERA),
             ),
             RuntimePermissionGroup(
+                id = "contacts",
                 title = "مخاطبین",
                 description = "برای گردش‌کارهای مشخص ارتباط با مالک، متقاضی یا همکار. نام و شمارهٔ افراد دیگر نیز دادهٔ شخصی محسوب می‌شوند.",
                 permissions = listOf(Manifest.permission.READ_CONTACTS),
             ),
             RuntimePermissionGroup(
+                id = "location",
                 title = "موقعیت مکانی",
                 description = "برای قابلیت مشخص کاری مانند ثبت حضور یا مکان دستگاه. موقعیت دقیق فقط با انتخاب و تأیید شما فعال می‌شود.",
                 permissions = listOf(
@@ -417,26 +491,31 @@ class PermissionCenter(
                 ),
             ),
             RuntimePermissionGroup(
+                id = "microphone",
                 title = "میکروفون",
                 description = "فقط برای قابلیت صوتی‌ای که خودتان آغاز می‌کنید. ضبط تماس یا صدای محیط باید جداگانه و آشکار فعال شود.",
                 permissions = listOf(Manifest.permission.RECORD_AUDIO),
             ),
             RuntimePermissionGroup(
+                id = "phone",
                 title = "تلفن",
                 description = "برای وضعیت تلفن یا آغاز تماس کاری در صورت نیاز. این دسترسی به تنهایی اجازهٔ شنود تماس نمی‌دهد.",
                 permissions = listOf(Manifest.permission.CALL_PHONE, Manifest.permission.READ_PHONE_STATE),
             ),
             RuntimePermissionGroup(
+                id = "call_log",
                 title = "گزارش تماس‌ها",
                 description = "می‌تواند شماره، زمان، مدت و جهت تماس‌ها را آشکار کند؛ فقط با نیاز کاری روشن فعالش کنید. اندروید ممکن است این دسترسی را محدود کند.",
                 permissions = listOf(Manifest.permission.READ_CALL_LOG),
             ),
             RuntimePermissionGroup(
+                id = "sms",
                 title = "پیامک",
                 description = "پیامک‌ها ممکن است حاوی رمز یک‌بارمصرف و اطلاعات خصوصی باشند. فعال‌سازی فقط با نیاز مشخص انجام شود؛ اندروید ممکن است آن را محدود کند.",
                 permissions = listOf(Manifest.permission.READ_SMS, Manifest.permission.SEND_SMS),
             ),
             RuntimePermissionGroup(
+                id = "media",
                 title = "عکس، رسانه و فایل",
                 description = "در نسخه‌های جدید فقط انواع رسانهٔ انتخاب‌شده درخواست می‌شوند؛ فایل‌های کاری مشخص را ترجیحاً با انتخابگر رسمی اندروید انتخاب کنید.",
                 permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -452,7 +531,8 @@ class PermissionCenter(
         ) + if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             listOf(
                 RuntimePermissionGroup(
-                    title = "اعلان‌های برنامه",
+                    id = "notifications",
+                title = "اعلان‌های برنامه",
                     description = "برای نمایش وضعیت همگام‌سازی و هشدارهای کاری. این مجوز اعلان‌ها را از برنامه‌های دیگر نمی‌خواند.",
                     permissions = listOf(Manifest.permission.POST_NOTIFICATIONS),
                 ),
