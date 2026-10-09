@@ -112,14 +112,23 @@ try {
 
   const viewports = {};
   for (const vp of VIEWPORTS) {
-    const errors = { consoleErrors: [], pageErrors: [] };
+    const errors = { consoleErrors: [], pageErrors: [], httpErrors: [] };
     const page = await browser.newPage({
       viewport: { width: vp.width, height: vp.height },
     });
     page.on("console", (msg) => {
-      if (msg.type() === "error") errors.consoleErrors.push(msg.text());
+      if (msg.type() !== "error") return;
+      const message = msg.text();
+      // Chromium omits the failed URL from this generic message. Capture the
+      // matching HTTP response below so a broken lazy asset can be identified.
+      if (/Failed to load resource/i.test(message)) return;
+      errors.consoleErrors.push(message);
     });
     page.on("pageerror", (err) => errors.pageErrors.push(String(err?.message || err)));
+    page.on("response", (response) => {
+      if (response.status() < 400) return;
+      errors.httpErrors.push("HTTP " + response.status() + ": " + response.url());
+    });
     // `domcontentloaded`, not `networkidle`: Vite keeps an HMR websocket open, so
     // networkidle never settles and would burn the whole timeout.
     const resp = await page.goto(url, { waitUntil: "domcontentloaded", timeout: timeoutMs });
@@ -159,7 +168,8 @@ try {
       bodyTextHash: normalizedBodyTextHash(bodyText),
       bodyTextPrefix: bodyTextPrefix(bodyText),
       horizontalOverflow,
-      consoleErrors: errors.consoleErrors,
+      consoleErrors: [...errors.consoleErrors, ...errors.httpErrors],
+      httpErrors: errors.httpErrors,
       pageErrors: errors.pageErrors,
       screenshot: vp.screenshot,
     };
