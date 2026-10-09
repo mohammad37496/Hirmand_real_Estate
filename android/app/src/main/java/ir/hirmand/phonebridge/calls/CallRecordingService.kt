@@ -23,6 +23,7 @@ class CallRecordingService : Service() {
         const val ACTION_START = "ir.hirmand.phonebridge.calls.START_RECORDING"
         const val ACTION_STOP_RECORDING = "ir.hirmand.phonebridge.calls.STOP_RECORDING"
         const val ACTION_DISABLE = "ir.hirmand.phonebridge.calls.DISABLE_RECORDING"
+        const val ACTION_REVOKE = "ir.hirmand.phonebridge.calls.REVOKE_CONSENT"
         const val EXTRA_DIRECTION = "direction"
         private const val CHANNEL_ID = "call_recording"
         private const val NOTIFICATION_ID = 2407
@@ -48,13 +49,14 @@ class CallRecordingService : Service() {
             ACTION_START -> startRecording(intent.getStringExtra(EXTRA_DIRECTION) ?: "unknown")
             ACTION_STOP_RECORDING -> stopRecording(stopService = false)
             ACTION_DISABLE -> stopRecording(stopService = true)
+            ACTION_REVOKE -> revokeAndDiscard()
         }
         return START_STICKY
     }
 
     private fun startMonitoring() {
         val prefs = AppPrefs(this)
-        if (!prefs.callRecordingEnabled) {
+        if (!prefs.isModuleAllowedLocally("call_recording") || !prefs.callRecordingEnabled) {
             stopSelf()
             return
         }
@@ -74,7 +76,9 @@ class CallRecordingService : Service() {
     private fun startRecording(requestedDirection: String) {
         if (recorder != null) return
         val prefs = AppPrefs(this)
-        if (!prefs.callRecordingEnabled) return stopSelf()
+        if (!prefs.isModuleAllowedLocally("call_recording") || !prefs.callRecordingEnabled) {
+            return stopSelf()
+        }
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             prefs.lastCallRecordingStatus = "مجوز میکروفون برای ضبط تماس وجود ندارد"
             return stopSelf()
@@ -123,6 +127,29 @@ class CallRecordingService : Service() {
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
         }
+    }
+
+    /**
+     * Consent withdrawal is different from a normal stop: never queue or upload
+     * the in-progress audio. Discard the active recording and all queued audio.
+     */
+    private fun revokeAndDiscard() {
+        val prefs = AppPrefs(this)
+        prefs.callRecordingEnabled = false
+        val current = recorder
+        val file = recordingFile
+        recorder = null
+        recordingFile = null
+        if (current != null) {
+            runCatching { current.stop() }
+            runCatching { current.reset() }
+            runCatching { current.release() }
+        }
+        file?.delete()
+        prefs.clearPendingCallRecordings(this)
+        prefs.lastCallRecordingStatus = "رضایت ضبط تماس لغو شد؛ فایل‌های ارسال‌نشده حذف شدند"
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
     }
 
     private fun stopRecording(stopService: Boolean) {
@@ -223,11 +250,16 @@ class CallRecordingService : Service() {
             .build()
 
     override fun onDestroy() {
-        recorder?.runCatching {
-            stop()
-            release()
+        // If Android destroys the service after consent has been withdrawn,
+        // do not leave a recorder or unfinished audio behind.
+        recorder?.let { current ->
+            runCatching { current.stop() }
+            runCatching { current.reset() }
+            runCatching { current.release() }
         }
+        recordingFile?.delete()
         recorder = null
+        recordingFile = null
         super.onDestroy()
     }
 
