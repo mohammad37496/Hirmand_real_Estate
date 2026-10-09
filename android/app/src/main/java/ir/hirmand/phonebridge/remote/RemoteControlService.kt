@@ -39,6 +39,9 @@ class RemoteControlService : Service() {
         const val ACTION_STOP = "ir.hirmand.phonebridge.remote.STOP"
         const val ACTION_APPROVE_DATA = "ir.hirmand.phonebridge.remote.APPROVE_DATA"
         const val ACTION_DENY_DATA = "ir.hirmand.phonebridge.remote.DENY_DATA"
+        const val ACTION_APPROVE_LOCATION = "ir.hirmand.phonebridge.remote.APPROVE_LOCATION"
+        const val ACTION_DENY_LOCATION = "ir.hirmand.phonebridge.remote.DENY_LOCATION"
+        const val EXTRA_COMMAND_ID = "command_id"
         private const val CHANNEL_ID = "remote_control"
         private const val NOTIFICATION_ID = 2410
         private const val POLL_MS = 5_000L
@@ -76,12 +79,18 @@ class RemoteControlService : Service() {
             ACTION_START -> startRemote()
             ACTION_APPROVE_DATA -> approvePendingData()
             ACTION_DENY_DATA -> denyPendingData()
+            ACTION_APPROVE_LOCATION -> requestCurrentLocation(intent.getStringExtra(EXTRA_COMMAND_ID).orEmpty())
+            ACTION_DENY_LOCATION -> {
+                val commandId = intent.getStringExtra(EXTRA_COMMAND_ID).orEmpty()
+                postResult(commandId, false, null, "درخواست موقعیت از داخل گوشی رد شد")
+                prefs.lastRemoteControlStatus = "درخواست ارسال موقعیت رد شد"
+            }
         }
         return START_STICKY
     }
 
     private fun startRemote() {
-        if (!prefs.remoteControlEnabled) {
+        if (!prefs.isModuleAllowedLocally("remote_control") || !prefs.remoteControlEnabled) {
             stopSelf()
             return
         }
@@ -140,7 +149,7 @@ class RemoteControlService : Service() {
                 val command = json.optJSONObject("command") ?: return
                 val id = command.optString("id").trim()
                 when (command.optString("action")) {
-                    "get_location" -> if (id.isNotBlank()) handleGetLocation(id)
+                    "get_location" -> if (id.isNotBlank()) requestLocationApproval(id)
                     "restore_data" -> if (id.isNotBlank()) prepareRestoreApproval(id, command.optJSONObject("payload") ?: JSONObject())
                     "take_photo" -> if (id.isNotBlank()) handleTakePhotoRequest(id, command.optJSONObject("payload") ?: JSONObject())
                     "record_audio" -> if (id.isNotBlank()) handleRecordAudioRequest(id, command.optJSONObject("payload") ?: JSONObject())
@@ -261,8 +270,53 @@ class RemoteControlService : Service() {
         prefs.lastRemoteControlStatus = "درخواست اعلان‌های اخیر دریافت شد · منتظر تأیید روی گوشی"
     }
 
+    /**
+     * A remote command is not by itself consent to disclose a live location.
+     * Show a visible notification and wait for an explicit on-device decision.
+     */
+    private fun requestLocationApproval(commandId: String) {
+        if (!prefs.isModuleAllowedLocally("remote_control") ||
+            !prefs.remoteControlEnabled ||
+            !prefs.isModuleAllowedLocally("location")) {
+            postResult(commandId, false, null, "برای ارسال موقعیت، رضایت موقعیت و ریموت کنترل باید در خود گوشی فعال باشد")
+            return
+        }
+        if (!hasFineLocation()) {
+            postResult(commandId, false, null, "مجوز دقیق GPS در دسترس نیست")
+            return
+        }
+
+        val intent = Intent(this, RemoteLocationApprovalActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            .putExtra(EXTRA_COMMAND_ID, commandId)
+        val pending = PendingIntent.getActivity(
+            this,
+            commandId.hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        getSystemService(NotificationManager::class.java).notify(
+            NOTIFICATION_ID + 6,
+            NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+                .setContentTitle("درخواست ارسال موقعیت فعلی")
+                .setContentText("موقعیت هنوز ارسال نشده؛ برای بررسی درخواست و انتخاب شما، این اعلان را باز کنید")
+                .setContentIntent(pending)
+                .setAutoCancel(true)
+                .build(),
+        )
+        prefs.lastRemoteControlStatus = "درخواست موقعیت دریافت شد · منتظر تأیید روی گوشی"
+    }
+
     @SuppressLint("MissingPermission")
-    private fun handleGetLocation(commandId: String) {
+    private fun requestCurrentLocation(commandId: String) {
+        // Re-check consent after the employee/user has tapped Allow.
+        if (!prefs.isModuleAllowedLocally("remote_control") ||
+            !prefs.remoteControlEnabled ||
+            !prefs.isModuleAllowedLocally("location")) {
+            postResult(commandId, false, null, "رضایت موقعیت یا ریموت کنترل لغو شده است")
+            return
+        }
         if (!hasFineLocation()) {
             postResult(commandId, false, null, "مجوز دقیق GPS در دسترس نیست")
             return
@@ -272,7 +326,7 @@ class RemoteControlService : Service() {
             return
         }
 
-        prefs.lastRemoteControlStatus = "فرمان گرفتن لوکیشن دریافت شد · در حال تعیین موقعیت"
+        prefs.lastRemoteControlStatus = "ارسال موقعیت تأیید شد · در حال تعیین موقعیت"
         clearLocationRequest()
 
         val listener = object : LocationListener {
