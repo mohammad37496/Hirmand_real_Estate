@@ -43,7 +43,10 @@ class PhoneDataCollector(private val context: Context) {
      * such a packet too, but data that is read at all has already left the safe.
      */
     private fun moduleAllowed(prefs: AppPrefs, module: String, permission: String?): Boolean {
-        if (!prefs.isConsentGranted(module)) return false
+        // The switch, the user's explicit consent, and the Android grant are
+        // independent gates. Do not collect a module just because consent was
+        // granted at an earlier time while its current switch is off.
+        if (!prefs.isModuleAllowedLocally(module)) return false
         return permission == null || has(permission)
     }
 
