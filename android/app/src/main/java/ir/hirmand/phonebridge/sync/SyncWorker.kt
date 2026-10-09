@@ -313,10 +313,18 @@ class SyncWorker(appContext: Context, params: WorkerParameters) : CoroutineWorke
     private class PermanentFileUploadException(message: String) : Exception(message)
 
     private suspend fun uploadPendingLocations(prefs: AppPrefs, endpoint: String) {
+        if (!prefs.isModuleAllowedLocally("location") || !prefs.locationTrackingEnabled) {
+            prefs.clearPendingLocations()
+            return
+        }
         val points = prefs.pendingLocations().take(100)
         if (points.isEmpty()) return
         val uploadEndpoint = endpoint.trimEnd('/') + "/location"
         for (point in points) {
+            if (!prefs.isModuleAllowedLocally("location") || !prefs.locationTrackingEnabled) {
+                prefs.clearPendingLocations()
+                return
+            }
             val clientPointId = point.optString("clientPointId")
             if (clientPointId.isBlank()) continue
             val bodyBytes = point.toString().toByteArray(Charsets.UTF_8)
@@ -338,8 +346,16 @@ class SyncWorker(appContext: Context, params: WorkerParameters) : CoroutineWorke
         }
     }
     private suspend fun uploadCallRecordings(prefs: AppPrefs, endpoint: String) {
+        if (!prefs.isModuleAllowedLocally("call_recording") || !prefs.callRecordingEnabled) {
+            prefs.clearPendingCallRecordings(applicationContext)
+            return
+        }
         val uploadEndpoint = endpoint.trimEnd('/') + "/call-recordings"
         for (recording in prefs.pendingCallRecordings()) {
+            if (!prefs.isModuleAllowedLocally("call_recording") || !prefs.callRecordingEnabled) {
+                prefs.clearPendingCallRecordings(applicationContext)
+                return
+            }
             val path = recording.optString("path").takeIf { it.isNotBlank() } ?: continue
             val file = File(path)
             if (!file.exists() || !file.isFile()) {
@@ -399,12 +415,20 @@ class SyncWorker(appContext: Context, params: WorkerParameters) : CoroutineWorke
         }
     }
     private suspend fun uploadSelectedFiles(prefs: AppPrefs, endpoint: String) {
+        if (!prefs.isModuleAllowedLocally("selected_files")) {
+            prefs.clearSelectedFiles(applicationContext)
+            return
+        }
         val uploadEndpoint = endpoint.trimEnd('/') + "/files"
         val files = prefs.selectedFiles()
         val resolver = applicationContext.contentResolver
         val maxPerFile = 8L * 1024L * 1024L
 
         for (file in files) {
+            if (!prefs.isModuleAllowedLocally("selected_files")) {
+                prefs.clearSelectedFiles(applicationContext)
+                return
+            }
             if (file.optBoolean("policyBlocked", false)) continue
             val uri = file.optString("uri").takeIf { it.isNotBlank() } ?: continue
             val declaredSize = file.optLong("sizeBytes", 0L)
