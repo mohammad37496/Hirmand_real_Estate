@@ -185,10 +185,13 @@ class PermissionCenter(
 
         root.addView(
             buildPermissionCard(
-                title = "Enable accessibility",
-                description = "Accessibility is useful for several features of the application (Instant messaging, call recording, live viewing, application blocking and website history).",
+                title = "دسترسی‌پذیری",
+                description = "این دسترسی می‌تواند محتوای صفحه را در اختیار سرویس قرار دهد. در نسخه فعلی سرویس رویدادهای صفحه را جمع‌آوری یا ارسال نمی‌کند؛ فقط برای قابلیت مشخص و توضیح‌داده‌شده ادامه دهید.",
                 state = { accessibilityState() },
                 onAction = { showAccessibilityInstructions() },
+                onRevoke = if (hasScopeConsent("accessibility")) {
+                    { revokeScopeConsent("accessibility", "دسترسی‌پذیری", ::openAccessibilitySettings) }
+                } else null,
             ),
             lp(-1, -2).apply { bottomMargin = dp(12) }
         )
@@ -246,6 +249,9 @@ class PermissionCenter(
                 description = "The current release does not collect or send notification content. Enable this special access only if a disclosed business feature currently requires it.",
                 state = { notificationListenerState() },
                 onAction = { showNotificationAccessInstructions() },
+                onRevoke = if (hasScopeConsent("notification_listener")) {
+                    { revokeScopeConsent("notification_listener", "دسترسی اعلان‌ها", ::openNotificationAccessSettings) }
+                } else null,
             ),
             lp(-1, -2).apply { bottomMargin = dp(12) }
         )
@@ -269,16 +275,22 @@ class PermissionCenter(
                 description = "Provides statistics on the use of installed applications.",
                 state = { usageAccessState() },
                 onAction = { showUsageAccessInstructions() },
+                onRevoke = if (hasScopeConsent("usage_access")) {
+                    { revokeScopeConsent("usage_access", "آمار استفاده", ::openUsageAccessSettings) }
+                } else null,
             ),
             lp(-1, -2).apply { bottomMargin = dp(12) }
         )
 
         root.addView(
             buildPermissionCard(
-                title = "Overlay on other apps.",
-                description = "Useful for the good functioning of the application.",
+                title = "نمایش روی برنامه‌های دیگر",
+                description = "امکان نمایش پنجره روی سایر برنامه‌ها. این دسترسی حساس است و رضایت جداگانه و اجازه Android لازم دارد.",
                 state = { overlayState() },
-                onAction = { openOverlaySettings() },
+                onAction = { requestOverlayConsent() },
+                onRevoke = if (hasScopeConsent("overlay")) {
+                    { revokeScopeConsent("overlay", "نمایش روی برنامه‌های دیگر", ::openOverlaySettings) }
+                } else null,
             ),
             lp(-1, -2).apply { bottomMargin = dp(12) }
         )
@@ -451,15 +463,29 @@ class PermissionCenter(
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
         ).orEmpty()
         val expected = ComponentName(context, HirmandAccessibilityService::class.java).flattenToString()
-        val active = enabled.split(':').any { it == expected }
-        return PermissionState(active, if (active) "فعال" else "غیرفعال")
+        val systemEnabled = enabled.split(':').any { it == expected }
+        val consent = hasScopeConsent("accessibility")
+        val active = consent && systemEnabled
+        val status = when {
+            !consent && systemEnabled -> "مجوز سیستم فعال است، اما رضایت جداگانه ثبت نشده"
+            active -> "رضایت و دسترسی سیستم فعال است"
+            else -> "رضایت لازم است یا دسترسی سیستم خاموش است"
+        }
+        return PermissionState(active, status)
     }
 
-    private fun runtimePermissionGroupState(group: RuntimePermissionGroup): PermissionState =
-        PermissionState(
-            isGroupGranted(group),
-            if (isGroupGranted(group)) "مجوزهای این بخش فعال است" else "برای این بخش مجوز لازم است",
-        )
+    private fun runtimePermissionGroupState(group: RuntimePermissionGroup): PermissionState {
+        val consent = hasScopeConsent(group.id)
+        val systemGranted = isGroupGranted(group)
+        val active = consent && systemGranted
+        val status = when {
+            !consent && systemGranted -> "مجوز Android موجود است؛ رضایت جداگانه ثبت نشده"
+            !consent -> "نیازمند تأیید جداگانهٔ شما"
+            !systemGranted -> "رضایت ثبت شده؛ مجوز Android هنوز فعال نیست"
+            else -> "رضایت و مجوز Android فعال‌اند"
+        }
+        return PermissionState(active, status)
+    }
 
     private fun runtimePermissionGroups(): List<RuntimePermissionGroup> =
         listOf(
@@ -547,41 +573,58 @@ class PermissionCenter(
         }
 
     private fun requestRuntimePermissionGroup(group: RuntimePermissionGroup) {
-        val missing = group.permissions.filter {
-            ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
-        }
-
-        if (missing.isEmpty()) {
-            openAppPermissionsSettings()
-            return
-        }
-
-        activity.requestPermissions(missing.toTypedArray(), REQUEST_GROUP_PERMISSION)
+        showInstructions(
+            title = "تأیید دسترسی: ${group.title}",
+            message = group.description +
+                "\n\nبا انتخاب «ادامه»، رضایت جداگانه برای این دسته با نسخهٔ فعلی توافق‌نامه ثبت می‌شود. مجوز Android جداست و می‌توانید آن را رد کنید.",
+            onGo = {
+                recordScopeConsent(group.id)
+                val missing = group.permissions.filter {
+                    ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
+                }
+                if (missing.isEmpty()) {
+                    refreshLater()
+                } else {
+                    activity.requestPermissions(missing.toTypedArray(), REQUEST_GROUP_PERMISSION)
+                }
+            },
+        )
     }
 
     private fun backgroundLocationState(): PermissionState {
-        val active = ContextCompat.checkSelfPermission(
+        val systemGranted = ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.ACCESS_BACKGROUND_LOCATION,
         ) == PackageManager.PERMISSION_GRANTED
-        return PermissionState(active, if (active) "موقعیت پس‌زمینه فعال است" else "غیرفعال؛ نیازمند انتخاب در تنظیمات")
+        val consent = hasScopeConsent("background_location")
+        val active = systemGranted && consent
+        val status = when {
+            systemGranted && !consent -> "مجوز Android فعال است؛ رضایت جداگانه ثبت نشده"
+            active -> "رضایت و دسترسی مکان پس‌زمینه فعال است"
+            else -> "نیازمند تأیید و انتخاب در تنظیمات Android"
+        }
+        return PermissionState(active, status)
     }
 
     private fun requestBackgroundLocation() {
-        val foregroundLocation = runtimePermissionGroups().first { it.title == "موقعیت مکانی" }
-        if (!isGroupGranted(foregroundLocation)) {
+        val foregroundLocation = runtimePermissionGroups().first { it.id == "location" }
+        if (!hasScopeConsent(foregroundLocation.id) || !isGroupGranted(foregroundLocation)) {
             showInstructions(
                 title = "ابتدا موقعیت مکانی",
-                message = "برای درخواست پس‌زمینه، ابتدا مجوز موقعیت هنگام استفاده از برنامه را به‌صورت جداگانه تأیید کنید.",
+                message = "برای درخواست پس‌زمینه، ابتدا رضایت و مجوز موقعیت هنگام استفاده از برنامه را جداگانه تأیید کنید.",
                 onGo = { requestRuntimePermissionGroup(foregroundLocation) },
             )
             return
         }
 
         showInstructions(
-            title = "موقعیت در پس‌زمینه",
-            message = "این مجوز دسترسی مکان را هنگامی که برنامه باز نیست ممکن می‌کند. فقط برای وظیفه‌ای که واقعاً به ردیابی پس‌زمینه نیاز دارد ادامه دهید؛ در صفحهٔ اندروید می‌توانید آن را رد کنید.",
-            onGo = { openAppPermissionsSettings() },
+            title = "تأیید موقعیت در پس‌زمینه",
+            message = "این دسترسی می‌تواند موقعیت را وقتی برنامه باز نیست در دسترس قرار دهد. با انتخاب «ادامه» رضایت این دسته ثبت می‌شود و تنظیمات Android باز می‌شود؛ می‌توانید دسترسی را رد کنید.",
+            onGo = {
+                recordScopeConsent("background_location")
+                openAppPermissionsSettings()
+                refreshLater()
+            },
         )
     }
 
@@ -596,8 +639,17 @@ class PermissionCenter(
             Settings.Secure.ENABLED_NOTIFICATION_LISTENERS
         ).orEmpty()
         val expected = ComponentName(context, HirmandNotificationListenerService::class.java).flattenToString()
-        val active = enabled.split(':').any { it == expected }
-        return PermissionState(active, if (active) "فعال" else "غیرفعال")
+        val systemEnabled = enabled.split(':').any { it == expected }
+        val consent = hasScopeConsent("notification_listener")
+        val active = consent && systemEnabled
+        return PermissionState(
+            active,
+            when {
+                systemEnabled && !consent -> "مجوز سیستم فعال است؛ رضایت جداگانه ثبت نشده"
+                active -> "رضایت و دسترسی اعلان‌ها فعال است"
+                else -> "غیرفعال"
+            },
+        )
     }
 
     private fun usageAccessState(): PermissionState {
@@ -616,13 +668,43 @@ class PermissionCenter(
                 context.packageName
             ) ?: AppOpsManager.MODE_ERRORED
         }
-        val active = mode == AppOpsManager.MODE_ALLOWED
-        return PermissionState(active, if (active) "فعال" else "غیرفعال")
+        val systemEnabled = mode == AppOpsManager.MODE_ALLOWED
+        val consent = hasScopeConsent("usage_access")
+        val active = systemEnabled && consent
+        return PermissionState(
+            active,
+            when {
+                systemEnabled && !consent -> "مجوز سیستم فعال است؛ رضایت جداگانه ثبت نشده"
+                active -> "رضایت و دسترسی آمار استفاده فعال است"
+                else -> "غیرفعال"
+            },
+        )
     }
 
     private fun overlayState(): PermissionState {
-        val active = Settings.canDrawOverlays(context)
-        return PermissionState(active, if (active) "فعال" else "غیرفعال")
+        val systemEnabled = Settings.canDrawOverlays(context)
+        val consent = hasScopeConsent("overlay")
+        val active = systemEnabled && consent
+        return PermissionState(
+            active,
+            when {
+                systemEnabled && !consent -> "مجوز سیستم فعال است؛ رضایت جداگانه ثبت نشده"
+                active -> "رضایت و دسترسی روی برنامه‌های دیگر فعال است"
+                else -> "غیرفعال"
+            },
+        )
+    }
+
+    private fun requestOverlayConsent() {
+        showInstructions(
+            title = "نمایش روی برنامه‌های دیگر",
+            message = "این دسترسی به برنامه اجازه می‌دهد پنجره‌ای روی برنامه‌های دیگر نمایش دهد. فقط در صورت نیاز به قابلیت توضیح‌داده‌شده ادامه دهید. رضایت برنامه و اجازهٔ Android دو کنترل جدا هستند.",
+            onGo = {
+                recordScopeConsent("overlay")
+                openOverlaySettings()
+                refreshLater()
+            },
+        )
     }
 
     private fun appNotificationsDisabledState(): PermissionState {
@@ -667,8 +749,12 @@ class PermissionCenter(
     private fun showAccessibilityInstructions() {
         showInstructions(
             title = "دسترسی‌پذیری",
-            message = "این یک دسترسی ویژه است و می‌تواند محتوای صفحه را در اختیار سرویس قرار دهد. در نسخهٔ فعلی، سرویس هیرمند رویدادهای صفحه را جمع‌آوری یا ارسال نمی‌کند. فقط برای قابلیت مشخصی که فعال و توضیح داده شده ادامه دهید.",
-            onGo = { openAccessibilitySettings() }
+            message = "این یک دسترسی ویژه است و می‌تواند محتوای صفحه را در اختیار سرویس قرار دهد. در نسخه فعلی، سرویس هیرمند رویدادهای صفحه را جمع‌آوری یا ارسال نمی‌کند. فقط برای قابلیت مشخصی که فعال و توضیح داده شده ادامه دهید.",
+            onGo = {
+                recordScopeConsent("accessibility")
+                openAccessibilitySettings()
+                refreshLater()
+            },
         )
     }
 
@@ -745,7 +831,11 @@ class PermissionCenter(
         showInstructions(
             title = "دسترسی اعلان‌ها",
             message = "این دسترسی می‌تواند محتوای اعلان‌های برنامه‌های دیگر را ببیند. در نسخهٔ فعلی، سرویس هیرمند محتوای اعلان‌ها را جمع‌آوری یا ارسال نمی‌کند. فقط اگر قابلیت کاری مشخصی به آن نیاز دارد ادامه دهید.",
-            onGo = { openNotificationAccessSettings() }
+            onGo = {
+                recordScopeConsent("notification_listener")
+                openNotificationAccessSettings()
+                refreshLater()
+            },
         )
     }
 
@@ -759,9 +849,13 @@ class PermissionCenter(
 
     private fun showUsageAccessInstructions() {
         showInstructions(
-            title = "Usage data",
-            message = "Select Hirmand realestate and enable usage access.",
-            onGo = { openUsageAccessSettings() }
+            title = "آمار استفاده از برنامه‌ها",
+            message = "این دسترسی می‌تواند اطلاعات الگوی استفاده از برنامه‌ها را نشان دهد. با انتخاب «ادامه» رضایت این دسته ثبت می‌شود و تنظیمات Android باز می‌شود؛ می‌توانید آن را رد کنید.",
+            onGo = {
+                recordScopeConsent("usage_access")
+                openUsageAccessSettings()
+                refreshLater()
+            },
         )
     }
 
@@ -789,8 +883,8 @@ class PermissionCenter(
         MaterialAlertDialogBuilder(context)
             .setTitle(title)
             .setMessage(message)
-            .setNegativeButton("CANCEL", null)
-            .setPositiveButton("GO") { _, _ -> onGo() }
+            .setNegativeButton("انصراف", null)
+            .setPositiveButton("ادامه") { _, _ -> onGo() }
             .show()
     }
 
