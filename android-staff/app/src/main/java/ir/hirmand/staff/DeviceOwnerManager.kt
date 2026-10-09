@@ -18,7 +18,7 @@ data class DeviceManagementState(
     val provisioningAllowed: Boolean,
 )
 
-remove grant resultobject DeviceOwnerManager {
+object DeviceOwnerManager {
     fun adminComponent(context: Context): ComponentName =
         ComponentName(context, HirmandDeviceAdminReceiver::class.java)
 
@@ -70,5 +70,5 @@ remove grant resultobject DeviceOwnerManager {
             manager.setOrganizationName(adminComponent(context), "املاک هیرمند")
         }
 
-remove auto grant invocation    }
+    }
 }
