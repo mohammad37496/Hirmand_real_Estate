@@ -66,13 +66,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // On fully-managed company devices, reconcile the explicit sensor
-        // permission grants each time the app starts. This is a Device Owner
-        // operation; unmanaged/profile-owned devices remain untouched.
-        runCatching {
-            DeviceOwnerManager.applyManagedSensorPermissionGrants(this)
-        }
-
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (!permissionCenterVisible) {
