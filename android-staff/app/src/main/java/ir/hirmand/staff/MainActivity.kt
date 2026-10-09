@@ -117,6 +117,9 @@ class MainActivity : AppCompatActivity() {
                     permissionCenterVisible = false
                     setContentView(buildHome())
                 },
+                onRefresh = {
+                    if (permissionCenterVisible) renderPermissionCenter()
+                },
             ).buildView()
         )
     }
