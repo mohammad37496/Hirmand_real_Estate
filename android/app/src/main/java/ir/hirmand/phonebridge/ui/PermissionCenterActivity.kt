@@ -178,9 +178,21 @@ class PermissionCenterActivity : AppCompatActivity() {
         })
 
         when {
-            module.needsSpecialAccess -> card.addView(action(if (isAccessibilityEnabled()) "باز کردن تنظیمات سرویس برنامه‌ها" else "فعال‌کردن در تنظیمات") {
-                openAccessibilitySettings()
-            })
+            module.needsSpecialAccess && !consentGiven -> {
+                card.addView(action("با توضیح بالا موافقم؛ تنظیمات سرویس برنامه‌ها را باز کن") {
+                    prefs.setConsentGranted(module.id, true)
+                    prefs.setModuleEnabled(module.id, true)
+                    render()
+                    openAccessibilitySettings()
+                })
+            }
+
+            module.needsSpecialAccess && consentGiven -> {
+                card.addView(action(if (isAccessibilityEnabled()) "باز کردن تنظیمات سرویس برنامه‌ها" else "فعال‌کردن در تنظیمات") {
+                    openAccessibilitySettings()
+                })
+                card.addView(action("لغو رضایت این بخش") { revokeModule(module) })
+            }
 
             consentGiven -> {
                 card.addView(action("لغو رضایت این بخش") { revokeModule(module) })
