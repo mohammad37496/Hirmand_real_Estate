@@ -215,6 +215,13 @@ class MainActivity : AppCompatActivity() {
 
         binding.locationTrackingSwitch.setOnCheckedChangeListener { _, checked ->
             prefs.locationTrackingEnabled = checked
+            if (checked && !prefs.isModuleAllowedLocally("location")) {
+                binding.locationTrackingSwitch.isChecked = false
+                prefs.locationTrackingEnabled = false
+                binding.statusText.text = "ابتدا رضایت و مجوز موقعیت را در مرکز دسترسی‌ها فعال کن"
+                startActivity(Intent(this, PermissionCenterActivity::class.java))
+                return@setOnCheckedChangeListener
+            }
             if (checked) {
                 val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
                 val coarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -231,6 +238,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.appBlockingSwitch.setOnCheckedChangeListener { _, checked ->
+            if (checked && !prefs.isModuleAllowedLocally("app_blocking")) {
+                binding.appBlockingSwitch.isChecked = false
+                prefs.appBlockingEnabled = false
+                binding.statusText.text = "برای بلاک برنامه‌ها ابتدا رضایت خودت را در مرکز دسترسی‌ها ثبت کن"
+                startActivity(Intent(this, PermissionCenterActivity::class.java))
+                return@setOnCheckedChangeListener
+            }
             prefs.appBlockingEnabled = checked
             if (checked) {
                 refreshAppBlockingStatus()
@@ -250,6 +264,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.remoteControlSwitch.setOnCheckedChangeListener { _, checked ->
+            if (checked && !prefs.isModuleAllowedLocally("remote_control")) {
+                binding.remoteControlSwitch.isChecked = false
+                prefs.remoteControlEnabled = false
+                binding.statusText.text = "برای ریموت کنترل ابتدا رضایت و دسترسی‌های لازم را در مرکز دسترسی‌ها فعال کن"
+                startActivity(Intent(this, PermissionCenterActivity::class.java))
+                return@setOnCheckedChangeListener
+            }
             prefs.remoteControlEnabled = checked
             if (checked) {
                 val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -271,6 +292,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.callRecordingSwitch.setOnCheckedChangeListener { _, checked ->
+            if (checked && !prefs.isModuleAllowedLocally("call_recording")) {
+                binding.callRecordingSwitch.isChecked = false
+                prefs.callRecordingEnabled = false
+                binding.statusText.text = "برای ضبط تماس ابتدا رضایت و مجوزهای لازم را در مرکز دسترسی‌ها فعال کن"
+                startActivity(Intent(this, PermissionCenterActivity::class.java))
+                return@setOnCheckedChangeListener
+            }
             prefs.callRecordingEnabled = checked
             if (checked) {
                 binding.statusText.text = "ضبط تماس فعال شد؛ مجوزها و سرویس آماده‌باش بررسی می‌شوند"
