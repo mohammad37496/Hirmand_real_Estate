@@ -135,6 +135,11 @@ class AppPrefs(context: Context) {
         prefs.edit().putString("pending_locations", a.toString()).apply()
     }
 
+    /** Remove location fixes waiting to be uploaded after location consent is revoked. */
+    fun clearPendingLocations() {
+        prefs.edit().putString("pending_locations", "[]").apply()
+    }
+
     var wifi: Boolean
         get() = prefs.getBoolean("wifi", false)
         set(value) = prefs.edit().putBoolean("wifi", value).apply()
@@ -184,6 +189,21 @@ class AppPrefs(context: Context) {
             .filterNot { it.optString("path") == path }
             .forEach { a.put(it) }
         prefs.edit().putString("pending_call_recordings", a.toString()).apply()
+    }
+
+    /**
+     * Delete all queued call-audio files when the user withdraws recording consent.
+     * The directory is app-private and dedicated to recordings, so this cannot
+     * delete arbitrary paths loaded from preferences.
+     */
+    fun clearPendingCallRecordings(context: Context) {
+        runCatching {
+            java.io.File(context.filesDir, "call-recordings")
+                .listFiles()
+                ?.filter { it.isFile }
+                ?.forEach { it.delete() }
+        }
+        prefs.edit().remove("pending_call_recordings").apply()
     }
 
     fun updatePendingCallRecording(path: String, update: JSONObject) {
@@ -278,6 +298,22 @@ class AppPrefs(context: Context) {
 
     fun clearSelectedFiles() {
         setSelectedFiles(emptyList())
+    }
+
+    /** Release document-picker URI grants as well as forgetting selected files. */
+    fun clearSelectedFiles(context: Context) {
+        selectedFiles().forEach { file ->
+            val rawUri = file.optString("uri").trim()
+            if (rawUri.isNotEmpty()) {
+                runCatching {
+                    context.contentResolver.releasePersistableUriPermission(
+                        android.net.Uri.parse(rawUri),
+                        android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                    )
+                }
+            }
+        }
+        clearSelectedFiles()
     }
 
     /** Set when the user cancels remote access from inside the app. */
