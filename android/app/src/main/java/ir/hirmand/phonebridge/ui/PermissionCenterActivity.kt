@@ -16,6 +16,8 @@ import ir.hirmand.phonebridge.blocking.AppBlockAccessibilityService
 import ir.hirmand.phonebridge.data.AppPrefs
 import ir.hirmand.phonebridge.data.ConsentModule
 import ir.hirmand.phonebridge.data.ConsentRegistry
+import ir.hirmand.phonebridge.data.LocalQueueDb
+import ir.hirmand.phonebridge.sync.SyncScheduler
 
 /**
  * The one place a user grants, reviews, or revokes every permission this app
@@ -140,7 +142,12 @@ class PermissionCenterActivity : AppCompatActivity() {
 
         val consentGiven = prefs.isConsentGranted(module.id)
         val missing = ConsentRegistry.missingPermissions(this, module)
-        val blocked = missing.any { ConsentRegistry.isPermanentlyDenied(this, it) }
+        // Android returns shouldShowRequestPermissionRationale=false both after
+        // permanent denial and before the first request. Consult our request
+        // history first so a fresh install never shows the wrong instructions.
+        val blocked = prefs.isPermissionRequested(module.id) &&
+            missing.isNotEmpty() &&
+            missing.all { ConsentRegistry.isPermanentlyDenied(this, it) }
         // wifi/apps request no runtime permission, so "granted" would be a lie for them.
         val needsNoPermission = ConsentRegistry.applicablePermissions(module).isEmpty()
 
@@ -218,12 +225,51 @@ class PermissionCenterActivity : AppCompatActivity() {
     }
 
     private fun revokeModule(module: ConsentModule) {
+        // Stop the source first, then erase device-local copies that have not
+        // yet been uploaded. Revoking one module must also stop its worker path.
         prefs.setConsentGranted(module.id, false)
-        // Switch off as well, so the module cannot look active in the dashboard
-        // after its consent is gone.
         prefs.setModuleEnabled(module.id, false)
-        if (module.id == "remote_control") disableRemoteAccess()
+
+        when (module.id) {
+            "location" -> {
+                prefs.location = false
+                prefs.locationTrackingEnabled = false
+                prefs.clearPendingLocations()
+                runCatching {
+                    startService(Intent(this, ir.hirmand.phonebridge.location.LocationTrackingService::class.java)
+                        .setAction(ir.hirmand.phonebridge.location.LocationTrackingService.ACTION_STOP))
+                }
+            }
+            "call_recording" -> {
+                prefs.callRecordingEnabled = false
+                prefs.clearPendingCallRecordings(this)
+                runCatching {
+                    startService(Intent(this, ir.hirmand.phonebridge.calls.CallRecordingService::class.java)
+                        .setAction(ir.hirmand.phonebridge.calls.CallRecordingService.ACTION_REVOKE))
+                }
+            }
+            "selected_files" -> prefs.clearSelectedFiles(this)
+            "app_blocking" -> prefs.appBlockingEnabled = false
+            "remote_control" -> disableRemoteAccess()
+        }
+
+        clearQueuedSyncData()
         render()
+    }
+
+    /**
+     * Snapshot payloads may contain fields from several consented modules.
+     * Discard all not-yet-uploaded snapshots/dead letters after any withdrawal,
+     * rather than trying to surgically edit an opaque serialized payload.
+     */
+    private fun clearQueuedSyncData() {
+        runCatching { SyncScheduler.cancelNow(this) }
+        runCatching {
+            LocalQueueDb(this).apply {
+                clear()
+                clearDeadLetters()
+            }
+        }
     }
 
     private fun confirmRevokeAll() {
@@ -250,8 +296,11 @@ class PermissionCenterActivity : AppCompatActivity() {
         prefs.callRecordingEnabled = false
         prefs.locationTrackingEnabled = false
         prefs.clearPendingRemoteData()
-        prefs.clearSelectedFiles()
+        prefs.clearSelectedFiles(this)
+        prefs.clearPendingLocations()
+        prefs.clearPendingCallRecordings(this)
         prefs.token = ""
+        clearQueuedSyncData()
         prefs.remoteAccessCancelled = true
         prefs.lastRemoteControlStatus = "دسترسی ریموت از داخل برنامه لغو شد"
 
@@ -264,7 +313,7 @@ class PermissionCenterActivity : AppCompatActivity() {
         runCatching {
             startService(
                 Intent(this, ir.hirmand.phonebridge.calls.CallRecordingService::class.java)
-                    .setAction(ir.hirmand.phonebridge.calls.CallRecordingService.ACTION_DISABLE)
+                    .setAction(ir.hirmand.phonebridge.calls.CallRecordingService.ACTION_REVOKE)
             )
         }
         runCatching {
