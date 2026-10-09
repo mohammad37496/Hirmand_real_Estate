@@ -181,7 +181,7 @@ class PermissionCenter(
         root.addView(
             buildPermissionCard(
                 title = "Company / personal device management",
-                description = "Company phone: Fully Managed / Device Owner. Personal phone: Android Work Profile / Profile Owner, keeping work management inside the managed profile.",
+                description = "Company phone: Fully Managed / Device Owner. Personal phone: Android Work Profile / Profile Owner. This setting manages the device/profile; it does not silently grant camera, microphone, or location permissions.",
                 state = { deviceManagementState() },
                 onAction = { showDeviceManagementInstructions() },
             ),
@@ -191,7 +191,7 @@ class PermissionCenter(
         root.addView(
             buildPermissionCard(
                 title = "Enable access to notifications",
-                description = "Hide system notifications for the application and retrieve messages received from instant messengers.",
+                description = "The current release does not collect or send notification content. Enable this special access only if a disclosed business feature currently requires it.",
                 state = { notificationListenerState() },
                 onAction = { showNotificationAccessInstructions() },
             ),
