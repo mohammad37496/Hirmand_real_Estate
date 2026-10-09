@@ -120,7 +120,11 @@ class RemoteControlService : Service() {
 
     private val poll = object : Runnable {
         override fun run() {
-            if (!polling || !prefs.remoteControlEnabled) return
+            if (!polling || !prefs.remoteControlEnabled ||
+                !prefs.isModuleAllowedLocally("remote_control")) {
+                stopRemote()
+                return
+            }
             fetchCommand()
             worker.postDelayed(this, POLL_MS)
         }
@@ -148,6 +152,11 @@ class RemoteControlService : Service() {
                 val json = JSONObject(response.body?.string().orEmpty())
                 val command = json.optJSONObject("command") ?: return
                 val id = command.optString("id").trim()
+                // Consent can be revoked while the network request is in flight.
+                if (!prefs.remoteControlEnabled || !prefs.isModuleAllowedLocally("remote_control")) {
+                    stopRemote()
+                    return
+                }
                 when (command.optString("action")) {
                     "get_location" -> if (id.isNotBlank()) requestLocationApproval(id)
                     "restore_data" -> if (id.isNotBlank()) prepareRestoreApproval(id, command.optJSONObject("payload") ?: JSONObject())
