@@ -47,7 +47,7 @@ async function ensureSeeded(){
     ...DEFAULT_GUIDES.map((item,index)=>({id:item.id,kind:"guide",category:item.category,title:item.title,summary:item.summary,body:{points:item.points},sortOrder:index*10})),
     ...DEFAULT_FAQS.map((item,index)=>({id:item.id,kind:"faq",category:item.category,title:item.question,summary:"",body:{answer:item.answer},sortOrder:index*10})),
   ];
-  const values=items.map((_,i)=>`(${i*7+1},${i*7+2},${i*7+3},${i*7+4},${i*7+5},${i*7+6},${i*7+7},true)`).join(",");
+  const values=items.map((_,i)=>{const offset=i*7;return `(${offset+1},${offset+2},${offset+3},${offset+4},${offset+5},${offset+6}::jsonb,${offset+7},true)`;}).join(",");
   const params:unknown[]=[];
   for(const item of items) params.push(item.id,item.kind,item.category,item.title,item.summary,JSON.stringify(item.body),item.sortOrder);
   await sql.query(
