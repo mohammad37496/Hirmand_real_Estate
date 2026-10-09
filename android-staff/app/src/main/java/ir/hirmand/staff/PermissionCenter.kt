@@ -449,7 +449,17 @@ class PermissionCenter(
                     listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
                 },
             ),
-        )
+        ) + if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            listOf(
+                RuntimePermissionGroup(
+                    title = "اعلان‌های برنامه",
+                    description = "برای نمایش وضعیت همگام‌سازی و هشدارهای کاری. این مجوز اعلان‌ها را از برنامه‌های دیگر نمی‌خواند.",
+                    permissions = listOf(Manifest.permission.POST_NOTIFICATIONS),
+                ),
+            )
+        } else {
+            emptyList()
+        }
 
     private fun isGroupGranted(group: RuntimePermissionGroup): Boolean =
         group.permissions.all {
@@ -588,7 +598,7 @@ class PermissionCenter(
             DeviceManagementMode.DEVICE_OWNER -> {
                 showInstructions(
                     title = "Fully Managed / Device Owner",
-                    message = "این گوشی با موفقیت در حالت Fully Managed مدیریت می‌شود. سیاست Auto-Grant مجوزهای سنسوریِ مجاز برای Device Owner در این حالت فعال است.",
+                    message = "این گوشی در حالت Fully Managed مدیریت می‌شود. مجوز دوربین، میکروفون و موقعیت در مرکز دسترسی‌ها جداگانه توضیح داده و از کاربر درخواست می‌شود؛ این اپ آن‌ها را خودکار فعال نمی‌کند.",
                     onGo = { showDeviceOwnerTestCommand() }
                 )
             }
