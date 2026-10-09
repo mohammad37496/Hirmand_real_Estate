@@ -54,6 +54,10 @@ object SyncScheduler {
         )
     }
 
+    fun cancelNow(context: Context) {
+        WorkManager.getInstance(context).cancelUniqueWork(UNIQUE_NOW)
+    }
+
     fun cancelPeriodic(context: Context) {
         WorkManager.getInstance(context).cancelUniqueWork(UNIQUE_PERIODIC)
     }
