@@ -242,7 +242,6 @@ class PermissionCenterActivity : AppCompatActivity() {
             }
             "call_recording" -> {
                 prefs.callRecordingEnabled = false
-                prefs.clearPendingCallRecordings(this)
                 runCatching {
                     startService(Intent(this, ir.hirmand.phonebridge.calls.CallRecordingService::class.java)
                         .setAction(ir.hirmand.phonebridge.calls.CallRecordingService.ACTION_REVOKE))
@@ -298,7 +297,6 @@ class PermissionCenterActivity : AppCompatActivity() {
         prefs.clearPendingRemoteData()
         prefs.clearSelectedFiles(this)
         prefs.clearPendingLocations()
-        prefs.clearPendingCallRecordings(this)
         prefs.token = ""
         clearQueuedSyncData()
         prefs.remoteAccessCancelled = true
