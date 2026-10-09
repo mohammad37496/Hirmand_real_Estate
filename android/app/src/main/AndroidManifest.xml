@@ -76,6 +76,10 @@
             android:exported="false"
             android:screenOrientation="portrait" />
         <activity
+            android:name=".remote.RemoteLocationApprovalActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
             android:name=".remote.RemoteFileManagerActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
