@@ -74,7 +74,11 @@ class LocationTrackingService : Service() {
     }
 
     private fun startTracking() {
-        if (!prefs.locationTrackingEnabled) { stopSelf(); return }
+        if (!prefs.isModuleAllowedLocally("location") || !prefs.locationTrackingEnabled) {
+            if (!prefs.isModuleAllowedLocally("location")) prefs.clearPendingLocations()
+            stopTracking(true)
+            return
+        }
         if (!hasLocationPermission()) {
             prefs.lastLocationStatus = "مجوز GPS برای ردیابی موقعیت صادر نشده است"
             stopSelf()
@@ -133,6 +137,13 @@ class LocationTrackingService : Service() {
     }
 
     private fun uploadOrQueue(location: Location) {
+        // Consent can be withdrawn while the service or a GPS callback is queued.
+        // Re-check immediately before persisting or transmitting any fix.
+        if (!prefs.isModuleAllowedLocally("location") || !prefs.locationTrackingEnabled) {
+            if (!prefs.isModuleAllowedLocally("location")) prefs.clearPendingLocations()
+            stopTracking(true)
+            return
+        }
         val point = JSONObject()
             .put("clientPointId", UUID.randomUUID().toString())
             .put("deviceId", prefs.installId)
@@ -180,7 +191,11 @@ class LocationTrackingService : Service() {
     }
 
     private fun refreshRemoteConfig(): Boolean? {
-        if (!prefs.locationTrackingEnabled || prefs.endpoint.isBlank() || prefs.token.isBlank()) return false
+        if (!prefs.isModuleAllowedLocally("location") || !prefs.locationTrackingEnabled ||
+            prefs.endpoint.isBlank() || prefs.token.isBlank()) {
+            if (!prefs.isModuleAllowedLocally("location")) prefs.clearPendingLocations()
+            return false
+        }
         return runCatching {
             val emptyBody = ByteArray(0)
             val url = prefs.endpoint.trimEnd('/') + "/location-config?deviceId=" +
