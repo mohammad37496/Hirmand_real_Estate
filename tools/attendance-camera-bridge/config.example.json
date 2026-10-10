@@ -1,0 +1,27 @@
+{
+  "site_url": "https://www.hirmandrealestate.ir",
+  "template_file": "data/staff_faces.enc",
+  "key_file": "data/template.key",
+  "outbox_file": "data/outbox.sqlite3",
+  "match_threshold": 0.50,
+  "minimum_face_detection_score": 0.65,
+  "frame_interval_seconds": 0.25,
+  "http_timeout_seconds": 12,
+  "crossing_cooldown_seconds": 12,
+  "cameras": [
+    {
+      "id": "entrance_cam_1",
+      "rtsp_url_env": "HIRMAND_XVR_CH1_RTSP",
+      "enabled": false,
+      "line": { "x1": 0.50, "y1": 0.12, "x2": 0.50, "y2": 0.88 },
+      "entry_when": "negative_to_positive"
+    },
+    {
+      "id": "entrance_cam_2",
+      "rtsp_url_env": "HIRMAND_XVR_CH2_RTSP",
+      "enabled": false,
+      "line": { "x1": 0.50, "y1": 0.12, "x2": 0.50, "y2": 0.88 },
+      "entry_when": "negative_to_positive"
+    }
+  ]
+}

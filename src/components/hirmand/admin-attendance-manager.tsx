@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
+  AlertTriangle,
   CalendarDays,
+  Camera,
   Clock3,
   Download,
   Printer,
@@ -27,9 +29,43 @@ import { PersianDatePicker } from "./persian-date-picker";
 
 type StaffOption = Pick<Consultant, "id" | "name" | "role">;
 type ReportRange = "day" | "week" | "month";
+type CameraBridgeEvent = {
+  eventId: string;
+  consultantId: string;
+  consultantName: string;
+  direction: "entry" | "exit";
+  occurredAt: string;
+  cameraId: string;
+  matchScore: number;
+  status: "received" | "applied" | "duplicate" | "needs_review";
+  resultNote: string;
+};
+type CameraBridgeResponse = {
+  configured: boolean;
+  needsReviewCount: number;
+  events: CameraBridgeEvent[];
+};
 
 const ATTENDANCE_CSS = `
 .admin-attendance-manager{display:grid;gap:18px}
+.admin-attendance-camera{display:grid;gap:12px;padding:16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--el-1)}
+.admin-attendance-camera-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.admin-attendance-camera-title{display:flex;align-items:flex-start;gap:10px;min-width:0}
+.admin-attendance-camera-icon{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border-radius:11px;background:var(--brass-100);color:var(--brass-700)}
+.admin-attendance-camera-title h3{margin:0;color:var(--navy-900);font-size:.95rem}
+.admin-attendance-camera-title p{margin:4px 0 0;color:var(--muted);font-size:.74rem;line-height:1.8}
+.admin-attendance-camera-status{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border:1px solid var(--line);border-radius:999px;background:var(--card-2);font-size:.72rem;font-weight:800;color:var(--muted)}
+.admin-attendance-camera-status.is-ready{border-color:var(--brass-300);background:var(--brass-100);color:var(--brass-800)}
+.admin-attendance-camera-status.is-warning{border-color:var(--line-2);color:var(--danger)}
+.admin-attendance-camera-note{margin:0;color:var(--subtle);font-size:.72rem;line-height:1.9}
+.admin-attendance-camera-events{display:grid;gap:7px}
+.admin-attendance-camera-event{display:grid;grid-template-columns:minmax(130px,.8fr) minmax(120px,.7fr) minmax(0,1.5fr) auto;gap:10px;align-items:center;padding:10px 12px;background:var(--card-2);border:1px solid var(--line);border-radius:11px}
+.admin-attendance-camera-event strong{font-size:.76rem;color:var(--navy-900)}
+.admin-attendance-camera-event small{font-size:.68rem;color:var(--muted);line-height:1.7}
+.admin-attendance-camera-event-status{font-size:.69rem;font-weight:800;color:var(--brass-700);white-space:nowrap}
+.admin-attendance-camera-empty{padding:12px;border:1px dashed var(--line-2);border-radius:11px;color:var(--subtle);font-size:.74rem}
+@media(max-width:700px){.admin-attendance-camera-event{grid-template-columns:1fr 1fr}.admin-attendance-camera-head{align-items:stretch}.admin-attendance-camera-event-status{white-space:normal}}
+@media(max-width:460px){.admin-attendance-camera-event{grid-template-columns:1fr}.admin-attendance-camera-title p{font-size:.72rem}}
 .admin-attendance-hero{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(4,minmax(115px,.55fr));gap:12px;align-items:stretch}
 .admin-attendance-hero-main{padding:20px;background:linear-gradient(135deg,var(--card),var(--card-2));border:1px solid var(--line);border-top:4px solid var(--brass-500);border-radius:var(--r-lg);box-shadow:var(--el-1)}
 .admin-attendance-hero-main h2{margin:4px 0 4px;color:var(--navy-900);font-size:1.2rem}
@@ -205,17 +241,24 @@ function fallbackStaff(): StaffOption[] {
   return TEAM.map((item) => ({ id: item.id, name: item.name, role: item.role }));
 }
 
-function durationMinutes(session: AttendanceSession) {
-  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(session.clockIn) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(session.clockOut)) {
-    return 0;
-  }
+function durationMinutes(session: AttendanceSession, workDate?: string) {
+  const validIn = /^([01]\d|2[0-3]):[0-5]\d$/.test(session.clockIn);
+  const validOut = /^([01]\d|2[0-3]):[0-5]\d$/.test(session.clockOut);
+  if (!validIn) return 0;
   const [ih, im] = session.clockIn.split(":").map(Number);
+  if (!session.clockOut && workDate === tehranToday()) {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Tehran", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+    }).format(new Date()).split(":").map(Number);
+    return Math.max(0, parts[0] * 60 + parts[1] - (ih * 60 + im));
+  }
+  if (!validOut) return 0;
   const [oh, om] = session.clockOut.split(":").map(Number);
   return Math.max(0, oh * 60 + om - (ih * 60 + im));
 }
 
-function totalMinutes(sessions: AttendanceSession[]) {
-  return sessions.reduce((sum, session) => sum + durationMinutes(session), 0);
+function totalMinutes(sessions: AttendanceSession[], workDate?: string) {
+  return sessions.reduce((sum, session) => sum + durationMinutes(session, workDate), 0);
 }
 
 function formatDuration(minutes: number) {
@@ -245,6 +288,21 @@ function csvEscape(value: string | number) {
   return `"${String(value).replace(/"/g, '""')}"`;
 }
 
+function cameraStatusLabel(status: CameraBridgeEvent["status"]) {
+  if (status === "applied") return "ثبت شد";
+  if (status === "duplicate") return "تکراری";
+  if (status === "received") return "در انتظار پردازش";
+  return "نیازمند بررسی";
+}
+function cameraDirectionLabel(direction: CameraBridgeEvent["direction"]) {
+  return direction === "entry" ? "ورود" : "خروج";
+}
+function cameraEventTime(value: string) {
+  return new Date(value).toLocaleString("fa-IR", {
+    timeZone: "Asia/Tehran", dateStyle: "short", timeStyle: "short",
+  });
+}
+
 function selectedRangeTitle(mode: ReportRange, anchor: string) {
   if (mode === "week") return `هفته منتهی به ${formatPersianDate(anchor)}`;
   if (mode === "month") return `گزارش ماه ${formatPersianDate(anchor)}`;
@@ -261,6 +319,11 @@ export function AdminAttendanceManager() {
   const [staffFilter, setStaffFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [cameraEvents, setCameraEvents] = useState<CameraBridgeEvent[]>([]);
+  const [cameraConfigured, setCameraConfigured] = useState<boolean | null>(null);
+  const [cameraReviewCount, setCameraReviewCount] = useState(0);
+  const [cameraLoading, setCameraLoading] = useState(false);
+  const [cameraError, setCameraError] = useState("");
 
   const selectedStaff = useMemo(
     () => staff.find((item) => item.id === form.staffId) ?? null,
@@ -279,7 +342,7 @@ export function AdminAttendanceManager() {
 
   const reportStats = useMemo(() => {
     const uniqueStaff = new Set(filteredRecords.map((record) => record.consultantId));
-    const minutes = filteredRecords.reduce((sum, record) => sum + totalMinutes(record.sessions), 0);
+    const minutes = filteredRecords.reduce((sum, record) => sum + totalMinutes(record.sessions, record.workDate), 0);
     const sessions = filteredRecords.reduce((sum, record) => sum + record.sessions.length, 0);
     const activeDays = new Set(filteredRecords.map((record) => record.workDate)).size;
     return {
@@ -297,7 +360,7 @@ export function AdminAttendanceManager() {
       const existing = map.get(record.consultantId);
       if (existing) {
         existing.records += 1;
-        existing.minutes += totalMinutes(record.sessions);
+        existing.minutes += totalMinutes(record.sessions, record.workDate);
         existing.days += 1;
       } else {
         const person = staff.find((item) => item.id === record.consultantId);
@@ -305,7 +368,7 @@ export function AdminAttendanceManager() {
           name: record.consultantName,
           role: person?.role ?? "عضو بنگاه",
           records: 1,
-          minutes: totalMinutes(record.sessions),
+          minutes: totalMinutes(record.sessions, record.workDate),
           days: 1,
         });
       }
@@ -314,6 +377,27 @@ export function AdminAttendanceManager() {
   }, [filteredRecords, staff]);
 
   const peakMinutes = Math.max(1, ...staffBreakdown.map((item) => item.minutes));
+
+  async function refreshCameraEvents() {
+    setCameraLoading(true);
+    setCameraError("");
+    try {
+      const response = await fetch("/api/attendance-camera-events", {
+        method: "GET",
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error("دریافت رویدادهای دوربین انجام نشد.");
+      const result = await response.json() as CameraBridgeResponse;
+      setCameraConfigured(Boolean(result.configured));
+      setCameraReviewCount(Number(result.needsReviewCount) || 0);
+      setCameraEvents(Array.isArray(result.events) ? result.events : []);
+    } catch (error) {
+      setCameraError(error instanceof Error ? error.message : "وضعیت پل دوربین دریافت نشد.");
+    } finally {
+      setCameraLoading(false);
+    }
+  }
 
   async function refresh(mode = rangeMode, anchor = anchorDate, filter = staffFilter) {
     setLoading(true);
@@ -345,6 +429,7 @@ export function AdminAttendanceManager() {
         setForm(emptyForm(fallbackStaff()[0]?.id ?? ""));
       }
       await refresh("day", tehranToday(), "all");
+      await refreshCameraEvents();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -465,7 +550,7 @@ export function AdminAttendanceManager() {
           (index + 1).toLocaleString("fa-IR"),
           session.clockIn,
           session.clockOut,
-          formatDuration(totalMinutes(record.sessions)),
+          formatDuration(totalMinutes(record.sessions, record.workDate)),
           record.note,
         ]);
       });
@@ -529,6 +614,55 @@ export function AdminAttendanceManager() {
           <span>میانگین برای هر نفر</span>
         </div>
       </div>
+
+      <section className="admin-attendance-camera" aria-label="وضعیت ثبت خودکار دوربین">
+        <div className="admin-attendance-camera-head">
+          <div className="admin-attendance-camera-title">
+            <span className="admin-attendance-camera-icon"><Camera size={19} /></span>
+            <div>
+              <h3>ثبت خودکار ورود و خروج با دوربین</h3>
+              <p>رویدادهای دریافتی از پل محلی دفتر در همین گزارش حضور و غیاب ثبت می‌شوند.</p>
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span className={"admin-attendance-camera-status " + (cameraConfigured ? "is-ready" : cameraConfigured === false ? "is-warning" : "")}>
+              {cameraConfigured === null ? "در حال بررسی تنظیمات" : cameraConfigured ? "کلید سرور تنظیم شده" : "نیاز به تنظیم کلید"}
+            </span>
+            <button type="button" className="admin-icon-btn" onClick={() => void refreshCameraEvents()} disabled={cameraLoading} title="تازه‌سازی رویدادهای دوربین" aria-label="تازه‌سازی رویدادهای دوربین">
+              <RefreshCw size={15} className={cameraLoading ? "admin-spin" : ""} />
+            </button>
+          </div>
+        </div>
+        {cameraConfigured === false ? (
+          <p className="admin-attendance-camera-note">برای فعال‌سازی، متغیر سروری ATTENDANCE_CAMERA_SHARED_SECRET را در تنظیمات محیطی Liara تعریف کنید و همان کلید را فقط روی رایانهٔ محلی دفتر قرار دهید. این وضعیت به‌تنهایی اتصال دوربین را تأیید نمی‌کند.</p>
+        ) : (
+          <p className="admin-attendance-camera-note">تصویر و الگوهای چهره باید روی رایانهٔ داخل دفتر پردازش شوند؛ سرور سایت فقط رویداد و شناسهٔ کارمند را دریافت می‌کند. رویدادهای نامطمئن قبل از اصلاح دستی، ساعت حضور را تغییر نمی‌دهند.</p>
+        )}
+        {cameraError ? <p className="admin-attendance-camera-note">{cameraError}</p> : null}
+        {cameraReviewCount > 0 ? (
+          <p className="admin-attendance-camera-note"><AlertTriangle size={14} style={{ display: "inline", verticalAlign: "middle" }} /> {cameraReviewCount.toLocaleString("fa-IR")} رویداد در انتظار بررسی یا پردازش است.</p>
+        ) : null}
+        {cameraEvents.length === 0 ? (
+          <div className="admin-attendance-camera-empty">هنوز رویدادی از پل دوربین دریافت نشده است.</div>
+        ) : (
+          <div className="admin-attendance-camera-events">
+            {cameraEvents.slice(0, 8).map((item) => (
+              <article className="admin-attendance-camera-event" key={item.eventId}>
+                <div>
+                  <strong>{item.consultantName}</strong>
+                  <div><small>{cameraDirectionLabel(item.direction)} · {cameraEventTime(item.occurredAt)}</small></div>
+                </div>
+                <div>
+                  <small>دوربین: {item.cameraId}</small>
+                  <div><small>امتیاز تطبیق: {Number(item.matchScore).toFixed(2)}</small></div>
+                </div>
+                <small>{item.resultNote || "بدون توضیح"}</small>
+                <span className="admin-attendance-camera-event-status">{cameraStatusLabel(item.status)}</span>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
 
       <div className="admin-attendance-layout">
         <form className="admin-panel admin-attendance-form" onSubmit={submit}>
@@ -611,7 +745,7 @@ export function AdminAttendanceManager() {
 
             <div className="admin-attendance-total admin-attendance-span">
               <span>مجموع حضور این فرم</span>
-              <strong>{formatDuration(totalMinutes(form.sessions))}</strong>
+              <strong>{formatDuration(totalMinutes(form.sessions, form.workDate))}</strong>
             </div>
 
             <label className="field admin-attendance-span">
@@ -695,7 +829,7 @@ export function AdminAttendanceManager() {
               >
                 <CalendarDays size={16} />
               </button>
-              <button type="button" className="admin-icon-btn" onClick={() => void refresh()} title="تازه‌سازی" aria-label="تازه‌سازی">
+              <button type="button" className="admin-icon-btn" onClick={() => { void refresh(); void refreshCameraEvents(); }} title="تازه‌سازی" aria-label="تازه‌سازی">
                 <RefreshCw size={16} className={loading ? "admin-spin" : ""} />
               </button>
               <button type="button" className="admin-icon-btn admin-attendance-print" onClick={exportCsv} title="خروجی CSV" aria-label="خروجی CSV">
@@ -738,7 +872,7 @@ export function AdminAttendanceManager() {
                         {record.sessions.map((session, index) => (
                           <span className="admin-attendance-pill" key={index}>
                             <Clock3 size={12} /> نوبت {(index + 1).toLocaleString("fa-IR")}:{" "}
-                            <b dir="ltr">{session.clockIn} تا {session.clockOut}</b>
+                            {session.clockOut ? <b dir="ltr">{session.clockIn} تا {session.clockOut}</b> : <b>در حال حضور</b>}
                           </span>
                         ))}
                       </div>
@@ -746,7 +880,7 @@ export function AdminAttendanceManager() {
                     </div>
                     <div className="admin-attendance-record-actions">
                       <strong className="admin-attendance-record-total" title="مجموع حضور">
-                        {formatDuration(totalMinutes(record.sessions))}
+                        {formatDuration(totalMinutes(record.sessions, record.workDate))}
                       </strong>
                       <button type="button" className="admin-icon-btn" onClick={() => edit(record)} title="ویرایش" aria-label="ویرایش">
                         <Pencil size={15} />
