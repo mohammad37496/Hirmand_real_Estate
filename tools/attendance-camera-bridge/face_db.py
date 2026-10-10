@@ -12,11 +12,32 @@ import numpy as np
 from cryptography.fernet import Fernet
 
 
-def build_face_model():
-    # InsightFace downloads its model weights on the first run if they are not cached.
+def build_face_model(config: dict[str, Any]):
+    # Public InsightFace model weights are research-only by default. Require an
+    # explicit operator attestation for a separately licensed commercial model,
+    # then require a preinstalled local model directory to prevent auto-download.
+    if config.get("face_model_license_confirmed") is not True:
+        raise RuntimeError(
+            "Face matching is disabled until you have a model with appropriate commercial-use rights. "
+            "Public InsightFace pretrained weights are non-commercial research only unless separately licensed. "
+            "Set face_model_license_confirmed=true only after confirming the applicable model license."
+        )
+
+    model_name = str(config.get("face_model_name", "")).strip()
+    if not model_name or not all(ch.isalnum() or ch in "._-" for ch in model_name) or model_name.startswith("."):
+        raise RuntimeError("Set face_model_name to the directory name of your licensed local face model.")
+
+    model_root = Path(os.path.expanduser(str(config.get("face_model_root", "~/.insightface"))))
+    model_dir = model_root / "models" / model_name
+    if not model_dir.is_dir() or not list(model_dir.glob("*.onnx")):
+        raise RuntimeError(
+            f"Licensed model files were not found in {model_dir}. Install a compatible licensed model locally; "
+            "the bridge will not auto-download public pretrained weights."
+        )
+
     from insightface.app import FaceAnalysis
 
-    app = FaceAnalysis(name="buffalo_l", providers=["CPUExecutionProvider"])
+    app = FaceAnalysis(name=model_name, root=str(model_root), providers=["CPUExecutionProvider"])
     app.prepare(ctx_id=-1, det_size=(640, 640))
     return app
 

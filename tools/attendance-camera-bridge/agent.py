@@ -322,7 +322,7 @@ def main() -> int:
     templates = vault.get("employees", {})
     if not templates:
         raise SystemExit("No staff templates enrolled. Run enroll.py first.")
-    model = build_face_model()
+    model = build_face_model(config)
     outbox = LocalOutbox(relative_path(config, "outbox_file", "data/outbox.sqlite3"))
     stop = threading.Event()
     sender = threading.Thread(target=request_sender, args=(config, outbox, stop), name="attendance-api-sender", daemon=True)

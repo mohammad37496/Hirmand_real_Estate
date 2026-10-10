@@ -1,5 +1,8 @@
 {
   "site_url": "https://www.hirmandrealestate.ir",
+  "face_model_name": "hirmand_licensed",
+  "face_model_root": "~/.insightface",
+  "face_model_license_confirmed": false,
   "template_file": "data/staff_faces.enc",
   "key_file": "data/template.key",
   "outbox_file": "data/outbox.sqlite3",

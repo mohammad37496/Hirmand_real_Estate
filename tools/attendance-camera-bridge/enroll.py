@@ -33,7 +33,7 @@ def main() -> int:
 
     if not args.employee_id or not args.name or len(args.images) < 3:
         parser.error("Provide --employee-id, --name and at least three --images, or use --list-staff.")
-    model = build_face_model()
+    model = build_face_model(config)
     enroll_employee(model, config, args.employee_id.strip(), args.name.strip(), args.images)
     print("Encrypted local face template saved. Source photos were not copied by this tool.")
     return 0
