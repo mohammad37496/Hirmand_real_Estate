@@ -32,7 +32,7 @@ function localDateTime(date: Date) {
     timeZone: "Asia/Tehran", year: "numeric", month: "2-digit", day: "2-digit",
   }).formatToParts(date);
   const value = (key: string) => dateParts.find((part) => part.type === key)?.value ?? "";
-  const workDate = `${{value("year")}-${{value("month")}-${{value("day")}`;
+  const workDate = value("year") + "-" + value("month") + "-" + value("day");
   const clock = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Tehran", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
   }).format(date);
