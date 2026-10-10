@@ -434,6 +434,17 @@ export function AdminAttendanceManager() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Keep the attendance table and camera event queue current while this panel is open.
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      void refresh(rangeMode, anchorDate, staffFilter);
+      void refreshCameraEvents();
+    }, 15_000);
+    return () => window.clearInterval(intervalId);
+    // These callbacks intentionally use the current report controls captured by this effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rangeMode, anchorDate, staffFilter]);
+
   function updateForm<K extends keyof ReturnType<typeof emptyForm>>(key: K, value: ReturnType<typeof emptyForm>[K]) {
     setForm((current) => ({ ...current, [key]: value }));
   }
