@@ -37,7 +37,7 @@ type CameraBridgeEvent = {
   occurredAt: string;
   cameraId: string;
   matchScore: number;
-  status: "received" | "applied" | "duplicate" | "needs_review";
+  status: "received" | "applied" | "duplicate" | "needs_review" | "reviewed";
   resultNote: string;
 };
 type CameraBridgeResponse = {
@@ -292,6 +292,7 @@ function cameraStatusLabel(status: CameraBridgeEvent["status"]) {
   if (status === "applied") return "ثبت شد";
   if (status === "duplicate") return "تکراری";
   if (status === "received") return "در انتظار پردازش";
+  if (status === "reviewed") return "بررسی شد";
   return "نیازمند بررسی";
 }
 function cameraDirectionLabel(direction: CameraBridgeEvent["direction"]) {
@@ -399,8 +400,27 @@ export function AdminAttendanceManager() {
     }
   }
 
-  async function refresh(mode = rangeMode, anchor = anchorDate, filter = staffFilter) {
-    setLoading(true);
+  async function markCameraEventReviewed(item: CameraBridgeEvent) {
+    try {
+      const response = await fetch("/api/attendance-camera-events", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: "mark_reviewed", eventId: item.eventId }),
+      });
+      const result = await response.json().catch(() => ({})) as { ok?: boolean; message?: string; statusMessage?: string };
+      if (!response.ok || !result.ok) {
+        throw new Error(result.statusMessage || result.message || "ثبت بررسی رویداد انجام نشد.");
+      }
+      toast.success("رویداد به‌عنوان بررسی‌شده علامت خورد؛ اصلاح ساعت‌ها را جداگانه کنترل کنید.");
+      await refreshCameraEvents();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "ثبت بررسی رویداد انجام نشد.");
+    }
+  }
+
+  async function refresh(mode = rangeMode, anchor = anchorDate, filter = staffFilter, silent = false) {
+    if (!silent) setLoading(true);
     try {
       const range = rangeFor(mode, anchor);
       const items = await listAttendance({ data: range });
@@ -408,7 +428,7 @@ export function AdminAttendanceManager() {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "دریافت گزارش حضور انجام نشد.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
@@ -437,7 +457,7 @@ export function AdminAttendanceManager() {
   // Keep the attendance table and camera event queue current while this panel is open.
   useEffect(() => {
     const intervalId = window.setInterval(() => {
-      void refresh(rangeMode, anchorDate, staffFilter);
+      void refresh(rangeMode, anchorDate, staffFilter, true);
       void refreshCameraEvents();
     }, 15_000);
     return () => window.clearInterval(intervalId);
@@ -668,7 +688,14 @@ export function AdminAttendanceManager() {
                   <div><small>امتیاز تطبیق: {Number(item.matchScore).toFixed(2)}</small></div>
                 </div>
                 <small>{item.resultNote || "بدون توضیح"}</small>
-                <span className="admin-attendance-camera-event-status">{cameraStatusLabel(item.status)}</span>
+                <div style={{ display: "grid", justifyItems: "start", gap: 6 }}>
+                  <span className="admin-attendance-camera-event-status">{cameraStatusLabel(item.status)}</span>
+                  {item.status === "needs_review" || item.status === "received" ? (
+                    <button type="button" className="btn-ghost" style={{ minHeight: 30, padding: "4px 8px", fontSize: ".68rem" }} onClick={() => void markCameraEventReviewed(item)}>
+                      بررسی شد
+                    </button>
+                  ) : null}
+                </div>
               </article>
             ))}
           </div>

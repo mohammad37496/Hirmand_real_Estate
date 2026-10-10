@@ -16,7 +16,7 @@ create table if not exists staff_attendance_camera_events (
   camera_id text not null,
   match_score numeric(6,5) not null check (match_score >= 0 and match_score <= 1),
   status text not null default 'received'
-    check (status in ('received', 'applied', 'duplicate', 'needs_review')),
+    check (status in ('received', 'applied', 'duplicate', 'needs_review', 'reviewed')),
   result_note text not null default '',
   created_at timestamptz not null default current_timestamp,
   processed_at timestamptz
