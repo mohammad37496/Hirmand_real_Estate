@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { extractDivarMediaUrls } from "./divar-media-utils.ts";
+import { findDivarCoordinates } from "./divar-coordinate-utils.ts";
 import { isDivarRemoteHost, mediaSourceCandidates } from "./media.ts";
 import type { DivarFile } from "./divar.ts";
 import {
@@ -8,6 +9,7 @@ import {
   divarCompleteness,
   divarFilesToCsv,
   divarGalleryHealth,
+  syncRunBadge,
   divarNeighborhoodOptions,
   divarPriceValue,
   filterDivarFiles,
@@ -45,6 +47,40 @@ test("extractDivarMediaUrls does not mistake a normal Divar listing URL for an i
   });
 
   assert.deepEqual(urls, ["https://divar.ir/images/sample.jpg"]);
+});
+
+test("Divar coordinates support scaled E7 keys and underscore-separated variants", () => {
+  assert.deepEqual(
+    findDivarCoordinates({
+      map: { latitude_e7: 326123456, longitude_e7: 516123456 },
+    }),
+    { latitude: 32.6123456, longitude: 51.6123456 },
+  );
+  assert.deepEqual(
+    findDivarCoordinates({ latitude: 32.7, longitude: 51.6 }),
+    { latitude: 32.7, longitude: 51.6 },
+  );
+});
+
+test("partial Divar syncs are not labelled fully successful", () => {
+  assert.deepEqual(
+    syncRunBadge({
+      id: "run-1",
+      status: "completed",
+      requestedLimit: 24,
+      inspected: 18,
+      accepted: 10,
+      newlyVisible: 9,
+      rejected: 5,
+      requests: 25,
+      detailFailures: 2,
+      durationMs: 1200,
+      error: "2 detail failures",
+      startedAt: "2026-10-11T10:00:00.000Z",
+      finishedAt: "2026-10-11T10:00:01.200Z",
+    }),
+    { className: "partial", label: "ناقص" },
+  );
 });
 
 test("Divar media hosts require a first-party HTTPS host", () => {

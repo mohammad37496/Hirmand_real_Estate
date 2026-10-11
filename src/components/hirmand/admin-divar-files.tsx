@@ -63,7 +63,8 @@ import { DIVAR_CSS, DivarGallery } from "@/components/hirmand/divar-admin-ui";
 type Tab = "accepted" | "imported" | "rejected";
 
 const TAB_LIMIT_STEP = 24;
-const TAB_LIMIT_MAX = 100;
+const TAB_LIMIT_MAX = 20_000;
+const LIST_PAGE_MAX = 100;
 const EMPTY_LISTS: Record<Tab, DivarFile[]> = { accepted: [], imported: [], rejected: [] };
 const EMPTY_STATS: DivarStats = {
   accepted: 0,
@@ -96,8 +97,12 @@ export function AdminDivarFiles() {
   const [syncing, setSyncing] = useState(false);
   /** How many ads the next crawl should pull from Divar. */
   const [crawlLimit, setCrawlLimit] = useState(24);
-  /** How many rows per status the list shows; grows with "نمایش بیشتر". */
-  const [pageSize, setPageSize] = useState(TAB_LIMIT_STEP);
+  /** How many rows per status have been loaded, fetched in server-safe pages. */
+  const [loadedCounts, setLoadedCounts] = useState<Record<Tab, number>>({
+    accepted: TAB_LIMIT_STEP,
+    imported: TAB_LIMIT_STEP,
+    rejected: TAB_LIMIT_STEP,
+  });
   const [filters, setFilters] = useState<DivarFilters>(EMPTY_DIVAR_FILTERS);
   const [sortBy, setSortBy] = useState<DivarSortKey>("newest");
   const [selection, setSelection] = useState<string[]>([]);
@@ -111,10 +116,23 @@ export function AdminDivarFiles() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      const fetchRows = async (status: Tab, requestedCount: number) => {
+        const rows: DivarFile[] = [];
+        while (rows.length < requestedCount && rows.length < TAB_LIMIT_MAX) {
+          const limit = Math.min(LIST_PAGE_MAX, requestedCount - rows.length);
+          const page = await listDivarFiles({
+            data: { status, limit, offset: rows.length },
+          });
+          rows.push(...page);
+          if (page.length < limit) break;
+        }
+        return rows;
+      };
+
       const [acceptedRows, importedRows, rejectedRows, nextStats] = await Promise.all([
-        listDivarFiles({ data: { status: "accepted", limit: pageSize, offset: 0 } }),
-        listDivarFiles({ data: { status: "imported", limit: pageSize, offset: 0 } }),
-        listDivarFiles({ data: { status: "rejected", limit: pageSize, offset: 0 } }),
+        fetchRows("accepted", loadedCounts.accepted),
+        fetchRows("imported", loadedCounts.imported),
+        fetchRows("rejected", loadedCounts.rejected),
         getDivarStats({ data: {} }),
       ]);
       setLists({ accepted: acceptedRows, imported: importedRows, rejected: rejectedRows });
@@ -128,7 +146,7 @@ export function AdminDivarFiles() {
     } finally {
       setLoading(false);
     }
-  }, [pageSize]);
+  }, [loadedCounts]);
 
   useEffect(() => {
     void load();
@@ -146,9 +164,15 @@ export function AdminDivarFiles() {
       if (result.inspected === 0) {
         toast.info("دیوار در این بررسی آگهی تازه‌ای برنگرداند.");
       } else {
-        toast.success(
-          `${fa(result.inspected)} آگهی بررسی شد؛ ${fa(result.visible)} فایل شخصی آماده انتشار و ${fa(result.rejected)} مورد مشاور/آژانس کنار گذاشته شد (${formatDuration(result.durationMs)}).`,
-        );
+        const summary =
+          `${fa(result.inspected)} آگهی بررسی شد؛ ${fa(result.visible)} فایل شخصی آماده انتشار و ${fa(result.rejected)} مورد مشاور/آژانس کنار گذاشته شد (${formatDuration(result.durationMs)}).`;
+        if (result.detailFailures > 0) {
+          toast.warning(
+            `${summary} دریافت جزئیات ${fa(result.detailFailures)} آگهی ناموفق بود؛ گزارش اجرا را ببینید و دوباره بررسی کنید.`,
+          );
+        } else {
+          toast.success(summary);
+        }
       }
       await load();
       setTab("accepted");
@@ -448,8 +472,16 @@ export function AdminDivarFiles() {
         : "فعلاً فایل ردشده‌ای در سابقه فیلتر وجود ندارد.";
 
   const lastRun = stats.syncRuns.find((run) => run.finishedAt);
-  const atPageLimit = pageSize >= TAB_LIMIT_MAX;
-  const canLoadMore = !atPageLimit && sourceVisible.length >= pageSize;
+  const atPageLimit = loadedCounts[tab] >= TAB_LIMIT_MAX;
+  const canLoadMore = !atPageLimit && sourceVisible.length >= loadedCounts[tab];
+
+  function loadMore() {
+    if (!canLoadMore || loading) return;
+    setLoadedCounts((prev) => ({
+      ...prev,
+      [tab]: Math.min(TAB_LIMIT_MAX, prev[tab] + TAB_LIMIT_STEP),
+    }));
+  }
 
   function exportCsv() {
     if (!visible.length) {
@@ -604,7 +636,11 @@ export function AdminDivarFiles() {
                 return (
                   <div
                     className={
-                      run.status === "failed" ? "divar-history-row is-failed" : "divar-history-row"
+                      run.status === "failed"
+                        ? "divar-history-row is-failed"
+                        : run.detailFailures > 0
+                          ? "divar-history-row is-partial"
+                          : "divar-history-row"
                     }
                     key={run.id}
                   >
@@ -616,6 +652,9 @@ export function AdminDivarFiles() {
                       <strong>
                         {fa(run.inspected)} آگهی بررسی شد · {fa(run.newlyVisible)} آماده ·{" "}
                         {fa(run.rejected)} رد شد
+                        {run.detailFailures > 0
+                          ? ` · جزئیات ${fa(run.detailFailures)} آگهی ناموفق`
+                          : ""}
                       </strong>
                       <p>
                         هدف {fa(run.requestedLimit)} فایل · {fa(run.requests)} درخواست به دیوار ·
@@ -909,13 +948,20 @@ export function AdminDivarFiles() {
                 : "فایل‌های شخصی در اینجا می‌آیند؛ فایل‌های مشاور/آژانس از فهرست حذف می‌شوند."}
             </p>
             {hasFilters ? (
-              <button
-                type="button"
-                className="btn-ghost"
-                onClick={() => setFilters(EMPTY_DIVAR_FILTERS)}
-              >
-                <RotateCcw size={16} /> پاک کردن فیلترها
-              </button>
+              <>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => setFilters(EMPTY_DIVAR_FILTERS)}
+                >
+                  <RotateCcw size={16} /> پاک کردن فیلترها
+                </button>
+                {canLoadMore ? (
+                  <button type="button" className="btn-ghost" onClick={loadMore}>
+                    <Download size={15} /> جستجو در آگهی‌های بعدی
+                  </button>
+                ) : null}
+              </>
             ) : (
               <button
                 type="button"
@@ -1266,7 +1312,7 @@ export function AdminDivarFiles() {
               <button
                 type="button"
                 className="btn-ghost"
-                onClick={() => setPageSize((size) => Math.min(TAB_LIMIT_MAX, size + TAB_LIMIT_STEP))}
+                onClick={loadMore}
               >
                 <Download size={15} /> نمایش بیشتر
               </button>
@@ -1274,9 +1320,9 @@ export function AdminDivarFiles() {
             <small>
               {fa(visible.length)} مورد نمایش‌داده‌شده
               {atPageLimit
-                ? " · سقف نمایش ۱۰۰ مورد در هر تب است؛ برای دیدن بقیه از جستجو و فیلترها استفاده کنید."
+                ? " · سقف پیمایش ۲۰٬۰۰۰ مورد در هر تب است."
                 : canLoadMore
-                  ? " · احتمال وجود موارد بیشتر در پایگاه داده هست."
+                  ? " · برای دیدن موارد بعدی «نمایش بیشتر» را بزنید."
                   : " · همه موارد بارگذاری شده است."}
             </small>
           </div>

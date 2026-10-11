@@ -6,8 +6,10 @@ import { dbSource, getSql, type Sql } from "@/lib/db";
 import { storeMedia } from "@/lib/media-store.server";
 import { detectRasterImageType, isAllowedDivarImageUrl, isDivarRemoteHost } from "@/lib/media";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
 import { isMoneyText, normalizeMoneyText } from "@/lib/property-input-normalization";
 import { extractDivarMediaUrls } from "./divar-media-utils";
+import { findDivarCoordinates } from "./divar-coordinate-utils";
 import { DIVAR_MAX_PUBLISHED_IMAGES } from "./divar-status";
 
 export const DIVAR_API = "https://api.divar.ir/v8";
@@ -89,6 +91,7 @@ export type DivarSyncRun = {
   newlyVisible: number;
   rejected: number;
   requests: number;
+  detailFailures: number;
   durationMs: number | null;
   error: string | null;
   startedAt: string;
@@ -111,6 +114,7 @@ export type DivarSyncSummary = {
   rejected: number;
   inspected: number;
   requests: number;
+  detailFailures: number;
   syncedAt: string;
   durationMs: number;
 };
@@ -149,7 +153,10 @@ function requireAdminSync() {
  * the TanStack Start import-protection plugin rejects that at build time.
  */
 async function requireAdmin() {
-  if (await verifyAdminSessionToken(requireAdminSync())) return;
+  if (await verifyAdminSessionToken(requireAdminSync())) {
+    assertAdminServerFnOrigin();
+    return;
+  }
   throw new Error("نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.");
 }
 
@@ -195,59 +202,6 @@ function isDivarSourceUrl(value: string): boolean {
   return isDivarRemoteHost(value);
 }
 
-
-function normalizeCoordinate(value: unknown, max: number): number | null {
-  if (typeof value !== "number" && typeof value !== "string") return null;
-  const raw = String(value).replace(/,/g, "").trim();
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed)) return null;
-  const normalized = Math.abs(parsed) > max ? parsed / 1_000_000 : parsed;
-  return Number.isFinite(normalized) && Math.abs(normalized) <= max ? normalized : null;
-}
-
-function findDivarCoordinates(value: unknown, depth = 0): { latitude: number; longitude: number } | null {
-  if (depth > 12 || value == null) return null;
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const found = findDivarCoordinates(item, depth + 1);
-      if (found) return found;
-    }
-    return null;
-  }
-  if (typeof value !== "object") return null;
-
-  const obj = value as Record<string, unknown>;
-  const keyMap = new Map(
-    Object.entries(obj).map(([key, item]) => [normalizeDivarText(key).replace(/\s+/g, ""), item]),
-  );
-
-  const latitude =
-    normalizeCoordinate(keyMap.get("latitude"), 90) ??
-    normalizeCoordinate(keyMap.get("lat"), 90) ??
-    normalizeCoordinate(keyMap.get("latitudee7"), 90) ??
-    normalizeCoordinate(keyMap.get("late7"), 90);
-  const longitude =
-    normalizeCoordinate(keyMap.get("longitude"), 180) ??
-    normalizeCoordinate(keyMap.get("lng"), 180) ??
-    normalizeCoordinate(keyMap.get("lon"), 180) ??
-    normalizeCoordinate(keyMap.get("long"), 180) ??
-    normalizeCoordinate(keyMap.get("longitudee7"), 180) ??
-    normalizeCoordinate(keyMap.get("lnge7"), 180);
-
-  if (latitude != null && longitude != null) return { latitude, longitude };
-
-  const preferredEntries = Object.entries(obj).sort(([a], [b]) => {
-    const score = (key: string) =>
-      /location|map|geo|coordinate|coordinates|موقعیت|نقشه/i.test(key) ? 0 : 1;
-    return score(a) - score(b);
-  });
-
-  for (const [, item] of preferredEntries) {
-    const found = findDivarCoordinates(item, depth + 1);
-    if (found) return found;
-  }
-  return null;
-}
 
 function firstStringByKey(value: unknown, pattern: RegExp, depth = 0): string | null {
   if (depth > 10) return null;
@@ -954,6 +908,7 @@ function mapSyncRun(row: Record<string, unknown>): DivarSyncRun {
     newlyVisible: Number(row.newly_visible) || 0,
     rejected: Number(row.rejected) || 0,
     requests: Number(row.requests) || 0,
+    detailFailures: Number(row.detail_failures) || 0,
     durationMs: row.duration_ms == null ? null : Number(row.duration_ms),
     error: row.error == null ? null : String(row.error),
     startedAt: new Date(String(row.started_at)).toISOString(),
@@ -1133,7 +1088,14 @@ async function finishDivarSyncRun(
   durationMs: number,
   error?: unknown,
 ) {
-  const message = error == null ? null : error instanceof Error ? error.message : String(error);
+  const message =
+    error == null
+      ? summary?.detailFailures
+        ? `${summary.detailFailures} درخواست جزئیات آگهی ناموفق بود.`
+        : null
+      : error instanceof Error
+        ? error.message
+        : String(error);
   await sql.query(
     `update divar_sync_runs
         set status = $2,
@@ -1142,8 +1104,9 @@ async function finishDivarSyncRun(
             newly_visible = $5,
             rejected = $6,
             requests = $7,
-            duration_ms = $8,
-            error = $9,
+            detail_failures = $8,
+            duration_ms = $9,
+            error = $10,
             finished_at = current_timestamp
       where id = $1`,
     [
@@ -1154,6 +1117,7 @@ async function finishDivarSyncRun(
       summary?.visible ?? 0,
       summary?.rejected ?? 0,
       summary?.requests ?? 0,
+      summary?.detailFailures ?? 0,
       Math.max(0, Math.round(durationMs)),
       message ? message.slice(0, 500) : null,
     ],
@@ -1165,12 +1129,14 @@ async function runDivarSync(
   sql: Sql,
   data: { limit: number },
 ): Promise<Omit<DivarSyncSummary, "durationMs">> {
+    let requests = 0;
+    let detailFailures = 0;
     const cityId = await resolveIsfahanCityId();
+    requests += 1;
     const target = data.limit;
     const seenTokens = new Set<string>();
     const acceptedRows: ParsedListing[] = [];
     let rejected = 0;
-    let requests = 0;
 
     for (const category of CATEGORIES) {
       let cursor: unknown = undefined;
@@ -1206,6 +1172,7 @@ async function runDivarSync(
         const pending = candidates.filter((row) => !preRejected.some((r) => r.token === row.token));
         for (let offset = 0; offset < pending.length && acceptedRows.length < target; offset += DETAIL_BATCH) {
           const batch = pending.slice(offset, offset + DETAIL_BATCH);
+          requests += batch.length;
           const results = await Promise.all(
             batch.map(async (row) => {
               try {
@@ -1213,21 +1180,25 @@ async function runDivarSync(
                   `${DIVAR_API}/posts-v2/web/${encodeURIComponent(row.token)}`,
                 );
                 const reason = getDivarAgencyReason(detail);
-                if (reason) return { row, reason, parsed: null };
+                if (reason) return { row, reason, parsed: null, failed: false as const };
                 return {
                   row,
                   reason: null,
                   parsed: parseDivarListing(detail, row.webInfo, row.category, row.token),
+                  failed: false as const,
                 };
               } catch (error) {
                 console.warn("[divar] detail failed", row.token, error);
-                return null;
+                return { row, failed: true as const };
               }
             }),
           );
 
           for (const result of results) {
-            if (!result) continue;
+            if (result.failed) {
+              detailFailures += 1;
+              continue;
+            }
             if (result.reason) {
               rejected += 1;
               await upsertRejectedDivarFile(sql, {
@@ -1353,6 +1324,7 @@ async function runDivarSync(
       rejected,
       inspected: seenTokens.size,
       requests,
+      detailFailures,
       syncedAt: new Date().toISOString(),
     };
 }

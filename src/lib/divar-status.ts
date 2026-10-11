@@ -410,6 +410,7 @@ export function transactionLabel(file: DivarFile) {
 export function syncRunBadge(run: DivarSyncRun) {
   if (run.status === "failed") return { className: "failed", label: "ناموفق" };
   if (run.status === "running") return { className: "running", label: "در حال اجرا" };
+  if (run.detailFailures > 0) return { className: "partial", label: "ناقص" };
   return { className: "completed", label: "موفق" };
 }
 

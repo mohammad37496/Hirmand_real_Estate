@@ -47,6 +47,9 @@ export const DIVAR_CSS = `
 .divar-history-badge.completed{background:rgba(24,122,88,.13);color:#17603f}
 .divar-history-badge.failed{background:rgba(190,70,70,.13);color:#8f3232}
 .divar-history-badge.running{background:rgba(60,80,140,.12);color:#2f3d63}
+.divar-history-badge.partial{background:rgba(180,112,22,.14);color:#80500d}
+.divar-history-row.is-partial{border-color:#ead8bd;background:#fffaf2}
+.divar-thumb-fallback{display:grid;place-items:center;width:100%;height:100%;min-height:36px;color:#7b8794;background:#edf1f4}
 .divar-toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid rgb(0 0 0 / .08)}
 .divar-tabs{display:flex;gap:6px;flex-wrap:wrap}
 .divar-tab{display:inline-flex;align-items:center;gap:6px;border:1px solid rgb(0 0 0 / .12);background:#fff;color:#111315;border-radius:12px;padding:10px 14px;cursor:pointer;font:inherit;font-size:.82rem;transition:border-color .15s,background .15s,color .15s}
@@ -212,11 +215,13 @@ export function DivarGallery({
 }) {
   const [active, setActive] = useState(0);
   const [broken, setBroken] = useState<Record<number, boolean>>({});
+  const [brokenThumbs, setBrokenThumbs] = useState<Record<number, boolean>>({});
   const list = images.slice(0, 8);
 
   useEffect(() => {
     setActive(0);
     setBroken({});
+    setBrokenThumbs({});
   }, [images]);
 
   const primary = list[Math.min(active, Math.max(list.length - 1, 0))] ?? "";
@@ -269,7 +274,18 @@ export function DivarGallery({
               aria-label={`تصویر ${imageIndex + 1}`}
               title={`تصویر ${imageIndex + 1}`}
             >
-              <DivarImage src={image} />
+              {brokenThumbs[imageIndex] ? (
+                <span className="divar-thumb-fallback" aria-label="تصویر بارگذاری نشد">
+                  <ImageIcon size={14} />
+                </span>
+              ) : (
+                <DivarImage
+                  src={image}
+                  onFailed={() =>
+                    setBrokenThumbs((prev) => ({ ...prev, [imageIndex]: true }))
+                  }
+                />
+              )}
             </button>
           ))}
           {extra > 0 ? <span className="divar-gallery-more">+{fa(extra)}</span> : null}
