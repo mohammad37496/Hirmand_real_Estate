@@ -6,6 +6,7 @@ import {
   getAdminSessionClaims,
   verifyAdminSessionToken,
 } from "@/lib/admin-session.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import { assertSameOrigin, clientFingerprint, consumeAdminAttempt } from "@/lib/admin-rate-limit.server";
 import {
   PHONE_BRIDGE_MODULES,
@@ -31,12 +32,6 @@ const actionSchema = z.discriminatedUnion("action", [
     action: z.literal("set_min_version"),
     deviceId: z.string().trim().min(1).max(120),
     minAppVersionCode: z.number().int().min(0).nullable(),
-  }),
-  z.object({
-    action: z.literal("record_consent"),
-    deviceId: z.string().trim().min(1).max(120),
-    scopes: z.array(moduleEnum).max(PHONE_BRIDGE_MODULES.length),
-    policyVersion: z.string().trim().max(40).optional(),
   }),
   z.object({ action: z.literal("revoke_consent"), deviceId: z.string().trim().min(1).max(120) }),
   z.object({ action: z.literal("revoke_token"), deviceId: z.string().trim().min(1).max(120) }),
@@ -85,6 +80,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست." });
   }
   const adminClaims = await getAdminSessionClaims(adminToken);
+  if (!hasAdminPermission(normalizeAdminRole(adminClaims?.role), "security.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "دسترسی مدیریت و فرمان‌های Phone Bridge برای این حساب فعال نیست." });
+  }
   const actorAccountId = typeof adminClaims?.options?.accountId === "string" ? adminClaims.options.accountId : null;
   if (input.action !== "list" && input.action !== "audit") {
     assertSameOrigin(event);
@@ -276,30 +274,6 @@ export default defineEventHandler(async (event) => {
         deviceId: input.deviceId,
         action: "policy.set_min_version",
         detail: { minAppVersionCode: input.minAppVersionCode },
-      });
-      return { ok: true };
-    }
-
-    case "record_consent": {
-      const scopes: Record<string, boolean> = {};
-      for (const module of PHONE_BRIDGE_MODULES) scopes[module] = false;
-      for (const scope of input.scopes) scopes[scope] = true;
-
-      await sql.query(
-        "update phone_bridge_consents set revoked_at = current_timestamp where device_id = $1 and revoked_at is null",
-        [input.deviceId],
-      );
-      await sql.query(
-        `insert into phone_bridge_consents
-           (id, device_id, scopes, policy_version, source, audit_id)
-         values ($1, $2, $3::jsonb, $4, 'admin', $1)`,
-        [crypto.randomUUID(), input.deviceId, JSON.stringify(scopes), input.policyVersion ?? ""],
-      );
-
-      await audit({
-        deviceId: input.deviceId,
-        action: "consent.record",
-        detail: { scopes: input.scopes },
       });
       return { ok: true };
     }

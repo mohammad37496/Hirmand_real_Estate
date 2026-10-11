@@ -1,8 +1,9 @@
 import { createError, defineEventHandler, getCookie, getHeader, readBody, setResponseHeader, type H3Event } from "h3";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import { clearPropertyReadCache } from "@/lib/property-read-cache.server";
 
 const bodySchema = z.object({
@@ -123,14 +124,23 @@ function moneyNumber(value: unknown) {
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
   assertSameOrigin(event);
-  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
+  const token = getCookie(event, ADMIN_SESSION_COOKIE);
+  if (!await verifyAdminSessionToken(token)) {
     throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست." });
+  }
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "property.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "دسترسی بررسی کیفیت فایل‌های ملک برای این حساب فعال نیست." });
   }
   if (dbSource === "unconfigured") {
     return { success: true, media: { checked: 0, issues: [] }, priceAnomalies: [], verificationDue: [] };
   }
 
-  const body = bodySchema.parse(await readBody(event).catch(() => ({})));
+  const parsedBody = bodySchema.safeParse(await readBody(event).catch(() => ({})));
+  if (!parsedBody.success) {
+    throw createError({ statusCode: 422, statusMessage: parsedBody.error.issues[0]?.message || "درخواست بررسی کیفیت فایل معتبر نیست." });
+  }
+  const body = parsedBody.data;
   const sql = await getSql();
 
   if (body.action === "verify") {
