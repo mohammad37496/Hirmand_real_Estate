@@ -10,11 +10,13 @@ export function AdminOperationsCenter({
   onOpenMatching,
   onOpenProperties,
   onOpenFinance,
+  showFinance = true,
 }:{
   onOpenLeads:()=>void;
   onOpenMatching:()=>void;
   onOpenProperties:()=>void;
   onOpenFinance:()=>void;
+  showFinance?: boolean;
 }){
  const [data,setData]=useState<Ops|null>(null);
  const [error,setError]=useState("");
@@ -41,7 +43,7 @@ export function AdminOperationsCenter({
    <button type="button" onClick={onOpenLeads} data-tone={data.dueCount?"red":"green"}><AlertCircle size={18}/><span><small>پیگیری سررسیدشده</small><strong>{data.dueCount.toLocaleString("fa-IR")}</strong></span><ArrowLeft size={14}/></button>
    <button type="button" onClick={onOpenLeads}><CalendarClock size={18}/><span><small>پیگیری ۷ روز آینده</small><strong>{data.next7Count.toLocaleString("fa-IR")}</strong></span><ArrowLeft size={14}/></button>
    <button type="button" onClick={onOpenProperties} data-tone={data.staleProperties?"amber":"green"}><Sparkles size={18}/><span><small>فایل قدیمی‌تر از ۳۰ روز</small><strong>{data.staleProperties.toLocaleString("fa-IR")}</strong></span><ArrowLeft size={14}/></button>
-   <button type="button" onClick={onOpenFinance}><WalletCards size={18}/><span><small>مانده دفتر</small><strong>{formatToman(Math.abs(data.finance.balance))}{data.finance.balance<0?" · بدهکار":""}</strong></span><ArrowLeft size={14}/></button>
+   {showFinance ? <button type="button" onClick={onOpenFinance}><WalletCards size={18}/><span><small>مانده دفتر</small><strong>{formatToman(Math.abs(data.finance.balance))}{data.finance.balance<0?" · بدهکار":""}</strong></span><ArrowLeft size={14}/></button> : null}
   </div>
   <div className="admin-ops-grid">
    <div><div className="admin-ops-section-title"><strong>اقدامات فوری</strong><button className="text-link" type="button" onClick={onOpenLeads}>مشاهده همه</button></div>
@@ -52,7 +54,7 @@ export function AdminOperationsCenter({
       <button type="button" onClick={onOpenMatching}><strong>مچ کردن</strong><small>درخواست‌های جدید را با فایل‌ها پیدا کن</small></button>
       <button type="button" onClick={onOpenLeads}><strong>CRM</strong><small>وضعیت و زمان پیگیری مشتریان</small></button>
       <button type="button" onClick={onOpenProperties}><strong>فایل‌های قدیمی</strong><small>فایل‌های منتشرشده را برای به‌روزرسانی بررسی کن</small></button>
-      <button type="button" onClick={onOpenFinance}><strong>حسابداری</strong><small>درآمد، هزینه و مانده دفتر</small></button>
+      {showFinance ? <button type="button" onClick={onOpenFinance}><strong>حسابداری</strong><small>درآمد، هزینه و مانده دفتر</small></button> : null}
     </div>
    </div>
   </div></>:null}

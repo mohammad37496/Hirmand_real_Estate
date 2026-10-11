@@ -138,7 +138,7 @@ import {
   PROPERTY_WALL_CLOSET_OPTIONS,
 } from "@/lib/property-options";
 import { getPublishReadiness } from "@/lib/property-publish-readiness";
-import { ADMIN_ROLE_LABELS, type AdminRole } from "@/lib/admin-roles";
+import { ADMIN_ROLE_LABELS, hasAdminPermission, type AdminRole } from "@/lib/admin-roles";
 import { requestPropertyPublication } from "@/lib/admin-publication";
 
 type PublishStatus = "draft" | "published" | "archived";
@@ -613,11 +613,18 @@ export function AdminPropertiesPage() {
       return navItems.filter((item) => allowed.has(item.view));
     }
     if (adminRole === "content") {
-      const allowed = new Set<ViewMode>(["dashboard", "managementReport", "productivity", "list", "form", "music", "watermark", "mediaHealth", "contentStudio"]);
+      const allowed = new Set<ViewMode>(["dashboard", "managementReport", "list", "form", "music", "watermark", "mediaHealth", "contentStudio"]);
       return navItems.filter((item) => allowed.has(item.view));
     }
     return navItems.filter((item) => item.view === "dashboard" || item.view === "managementReport");
   }, [navItems, adminRole]);
+
+  const canManageProperties = hasAdminPermission(adminRole, "property.manage");
+  const canManageLeads = hasAdminPermission(adminRole, "lead.manage");
+  const canPublishProperties = hasAdminPermission(adminRole, "property.publish");
+  const canManageFinance = hasAdminPermission(adminRole, "finance.manage");
+  const canManageContent = hasAdminPermission(adminRole, "content.manage");
+  const canManageTeam = adminRole === "owner" || adminRole === "manager";
 
   const [changeHistory, setChangeHistory] = useState<Array<{
     id: number;
@@ -710,6 +717,13 @@ export function AdminPropertiesPage() {
   }
 
   function navigateTo(nextView: ViewMode) {
+    const allowed = nextView === "form"
+      ? canManageProperties
+      : visibleNavItems.some((item) => item.view === nextView);
+    if (!allowed) {
+      toast.error("دسترسی این بخش برای نقش فعلی فعال نیست.");
+      return;
+    }
     if (view === "form" && nextView !== "form" && formDirty) {
       void (async () => {
         const leave = await confirm({
@@ -1120,6 +1134,14 @@ export function AdminPropertiesPage() {
   }
 
   async function bulkSetStatus(status: PublishStatus) {
+    if (!canManageProperties) {
+      toast.error("دسترسی تغییر وضعیت فایل برای این حساب فعال نیست.");
+      return;
+    }
+    if (status === "published" && !canPublishProperties) {
+      toast.error("انتشار نهایی فایل فقط برای مدیران مجاز است.");
+      return;
+    }
     const ids = Array.from(new Set(selectedIds));
     if (!ids.length || bulkBusy) return;
     const selected = properties.filter((item) => ids.includes(item.id));
@@ -1147,6 +1169,10 @@ export function AdminPropertiesPage() {
   }
 
   async function bulkSetFeatured(featured: boolean) {
+    if (!canManageProperties) {
+      toast.error("دسترسی مدیریت فایل‌های ویژه برای این حساب فعال نیست.");
+      return;
+    }
     const ids = Array.from(new Set(selectedIds));
     if (!ids.length || bulkBusy) return;
     const selected = properties.filter((item) => ids.includes(item.id));
@@ -1174,6 +1200,10 @@ export function AdminPropertiesPage() {
   }
 
   async function bulkAssignConsultant(member: { name: string; phone: string }) {
+    if (!canManageProperties) {
+      toast.error("دسترسی تخصیص فایل به مشاور برای این حساب فعال نیست.");
+      return;
+    }
     const ids = Array.from(new Set(selectedIds));
     if (!ids.length || bulkBusy) return;
     const selected = properties.filter((item) => ids.includes(item.id));
@@ -1202,6 +1232,10 @@ export function AdminPropertiesPage() {
   }
 
   async function bulkDelete() {
+    if (!canManageProperties) {
+      toast.error("دسترسی انتقال فایل به سطل بازیابی برای این حساب فعال نیست.");
+      return;
+    }
     const ids = Array.from(new Set(selectedIds));
     if (!ids.length || bulkBusy) return;
 
@@ -1493,6 +1527,10 @@ export function AdminPropertiesPage() {
     });
 
   function startNew() {
+    if (!canManageProperties) {
+      toast.error("دسترسی ایجاد فایل ملک برای این حساب فعال نیست.");
+      return;
+    }
     void (async () => {
       if (view === "form" && formDirty && !(await submitGuardReady("فایل جدید را باز می‌کنید."))) return;
       clearDraft(draftKeyRef.current);
@@ -1509,6 +1547,10 @@ export function AdminPropertiesPage() {
   }
 
   function editProperty(property: Property) {
+    if (!canManageProperties) {
+      toast.error("دسترسی ویرایش فایل ملک برای این حساب فعال نیست.");
+      return;
+    }
     void (async () => {
       if (view === "form" && formDirty && !(await submitGuardReady("فایل دیگری را ویرایش می‌کنید."))) return;
       clearDraft(draftKeyRef.current);
@@ -1521,6 +1563,10 @@ export function AdminPropertiesPage() {
   }
 
   function duplicateProperty(property: Property) {
+    if (!canManageProperties) {
+      toast.error("دسترسی کپی فایل ملک برای این حساب فعال نیست.");
+      return;
+    }
     void (async () => {
       if (view === "form" && formDirty && !(await submitGuardReady("فایل را با یک کپی جدید جایگزین می‌کنید."))) return;
       clearDraft(draftKeyRef.current);
@@ -1542,6 +1588,14 @@ export function AdminPropertiesPage() {
   }
 
   async function quickSetStatus(property: Property, status: PublishStatus) {
+    if (!canManageProperties) {
+      toast.error("دسترسی تغییر وضعیت فایل برای این حساب فعال نیست.");
+      return;
+    }
+    if (status === "published" && !canPublishProperties) {
+      toast.error("انتشار نهایی فایل فقط برای مدیران مجاز است.");
+      return;
+    }
     if (status === "archived") {
       const ok = await confirm({
         title: "بایگانی فایل",
@@ -1758,17 +1812,19 @@ export function AdminPropertiesPage() {
             <span className="admin-nav-intro-line" aria-hidden="true" />
           </div>
 
-          <button
-            type="button"
-            className={"admin-nav-btn admin-nav-btn-create" + (view === "form" && !form.id ? " is-active" : "")}
-            onClick={startNew}
-          >
-            <span className="admin-nav-btn-icon" aria-hidden="true"><Plus size={18} /></span>
-            <span className="admin-nav-btn-label">فایل جدید</span>
-            <span className="admin-nav-btn-meta">+ افزودن</span>
-          </button>
+          {canManageProperties ? (
+            <button
+              type="button"
+              className={"admin-nav-btn admin-nav-btn-create" + (view === "form" && !form.id ? " is-active" : "")}
+              onClick={startNew}
+            >
+              <span className="admin-nav-btn-icon" aria-hidden="true"><Plus size={18} /></span>
+              <span className="admin-nav-btn-label">فایل جدید</span>
+              <span className="admin-nav-btn-meta">+ افزودن</span>
+            </button>
+          ) : null}
 
-          {form.id ? (
+          {canManageProperties && form.id ? (
             <button
               type="button"
               className={"admin-nav-btn admin-nav-btn-context" + (view === "form" ? " is-active" : "")}
@@ -2020,10 +2076,12 @@ export function AdminPropertiesPage() {
               onRefresh={() => void refresh()}
             />
             {view === "dashboard" || view === "list" ? (
-              <button type="button" className="btn-gold" onClick={startNew}>
-                <Plus size={16} />
-                فایل جدید
-              </button>
+              canManageProperties ? (
+                <button type="button" className="btn-gold" onClick={startNew}>
+                  <Plus size={16} />
+                  فایل جدید
+                </button>
+              ) : null
             ) : (
               <button type="button" className="btn-ghost" onClick={() => navigateTo(view === "form" ? "list" : "dashboard")}>
                 <X size={16} />
@@ -2038,14 +2096,18 @@ export function AdminPropertiesPage() {
             <>
               <AdminKpiHistory />
               <AdminSalesFunnel />
-              <AdminPublicationQueue />
-              <AdminOperationsCenter
-                onOpenLeads={() => navigateTo("leads")}
-                onOpenMatching={() => navigateTo("matching")}
-                onOpenProperties={() => navigateTo("list")}
-                onOpenFinance={() => navigateTo("finance")}
-              />
+              {canPublishProperties ? <AdminPublicationQueue /> : null}
+              {canManageLeads ? (
+                <AdminOperationsCenter
+                  onOpenLeads={() => navigateTo("leads")}
+                  onOpenMatching={() => navigateTo("matching")}
+                  onOpenProperties={() => navigateTo("list")}
+                  onOpenFinance={() => navigateTo("finance")}
+                  showFinance={canManageFinance}
+                />
+              ) : null}
               <AdminDashboard
+                role={adminRole}
                 onOpenProperties={() => navigateTo("list")}
                 onOpenLeads={() => navigateTo("leads")}
                 onOpenProductivity={() => navigateTo("productivity")}
