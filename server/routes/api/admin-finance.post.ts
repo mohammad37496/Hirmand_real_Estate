@@ -18,14 +18,36 @@ async function requireAdmin(event:H3Event){
   }
 }
 
-function parseAmount(value:unknown){
-  const n = Number(
-    String(value ?? "")
-      .replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
-      .replace(/[٬،,]/g, "")
-      .replaceAll(" ", ""),
+function parseAmount(value: unknown) {
+  const normalized = String(value ?? "")
+    .trim()
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+    .replace(/[\s٬،,]/g, "");
+  if (!normalized || !/^\d+$/.test(normalized)) return null;
+  const amount = Number(normalized);
+  return Number.isSafeInteger(amount) && amount >= 0 ? amount : null;
+}
+
+function tehranCalendarDateNow() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tehran",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const dateParts = Object.fromEntries(
+    parts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value]),
   );
-  return Number.isSafeInteger(n)&&n>=0?n:null;
+  return `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+}
+
+function isValidCalendarDate(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  if (year < 1900 || month < 1 || month > 12 || day < 1) return false;
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return day <= daysInMonth;
 }
 
 export default defineEventHandler(async(event)=>{
@@ -45,7 +67,12 @@ export default defineEventHandler(async(event)=>{
     note?:string;
     limit?:number;
   };
-  if(dbSource==="unconfigured") return {transactions:[],summary:{income:0,expense:0,balance:0}};
+  if (dbSource === "unconfigured") {
+    if ((body.action ?? "list") === "list") {
+      return { transactions: [], summary: { income: 0, expense: 0, balance: 0 } };
+    }
+    throw createError({ statusCode: 503, statusMessage: "پایگاه داده مالی تنظیم نشده است؛ تغییرات ثبت نشد." });
+  }
   const sql=await getSql();
 
   if((body.action??"list")==="list"){
@@ -71,8 +98,10 @@ export default defineEventHandler(async(event)=>{
     const amount=parseAmount(body.amount);
     const title=String(body.title??"").trim().slice(0,180);
     if(!title||amount==null||amount<0) throw createError({statusCode:400,statusMessage:"عنوان و مبلغ تراکنش را کامل کنید."});
-    const date=body.transactionDate?String(body.transactionDate):new Date().toISOString().slice(0,10);
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw createError({statusCode:400,statusMessage:"تاریخ نامعتبر است."});
+    const date = body.transactionDate ? String(body.transactionDate) : tehranCalendarDateNow();
+    if (!isValidCalendarDate(date)) {
+      throw createError({ statusCode: 400, statusMessage: "تاریخ معتبر نیست؛ سال، ماه و روز را بررسی کنید." });
+    }
     const row=(await sql.query<Record<string,unknown>>(
       `insert into finance_transactions(kind,title,amount,transaction_date,property_id,lead_id,consultant,category,note)
        values($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id`,
