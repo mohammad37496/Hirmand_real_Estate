@@ -132,6 +132,9 @@ test("agency filter catches affiliation in seller metadata even when description
       description: "مشاور املاک تماس نگیرد",
     }),
   );
+  // The personal-owner exception must not erase a business name in the same
+  // text when the seller appends a no-call request.
+  assert.ok(getDivarAgencyReason({ description: "آژانس املاک هیرمند مشاور املاک تماس نگیرد" }));
 });
 
 test("Divar media hosts require a first-party HTTPS host", () => {
