@@ -54,22 +54,24 @@ export const PROPERTY_FALLBACK_IMAGES: FallbackMap = {
 
 const PROPERTY_FALLBACK_REMOTE_IMAGES: Partial<FallbackMap> = {
   apartment: [
-    "https://images.pexels.com/photos/6588599/pexels-photo-6588599.jpeg?auto=compress&dpr=1&h=750&w=1260",
-    "https://images.pexels.com/photos/11296221/pexels-photo-11296221.jpeg?auto=compress&dpr=1&h=750&w=1260",
-    "https://images.pexels.com/photos/8146326/pexels-photo-8146326.jpeg?auto=compress&dpr=1&h=750&w=1260",
-    "https://images.pexels.com/photos/10117724/pexels-photo-10117724.jpeg?auto=compress&dpr=1&h=750&w=1260",
-    "https://images.pexels.com/photos/6527029/pexels-photo-6527029.jpeg?auto=compress&dpr=1&h=750&w=1260",
-    "https://images.pexels.com/photos/7031209/pexels-photo-7031209.jpeg?auto=compress&dpr=1&h=750&w=1260",
+    "https://images.pexels.com/photos/7546596/pexels-photo-7546596.jpeg?auto=compress&dpr=1&h=750&w=1260",
+    "https://images.pexels.com/photos/7173672/pexels-photo-7173672.jpeg?auto=compress&dpr=1&h=750&w=1260",
+    "https://images.pexels.com/photos/8142052/pexels-photo-8142052.jpeg?auto=compress&dpr=1&h=750&w=1260",
+    "https://images.pexels.com/photos/6636258/pexels-photo-6636258.jpeg?auto=compress&dpr=1&h=750&w=1260",
+    "https://images.pexels.com/photos/6447393/pexels-photo-6447393.jpeg?auto=compress&dpr=1&h=750&w=1260",
+    "https://images.pexels.com/photos/7534559/pexels-photo-7534559.jpeg?auto=compress&dpr=1&h=750&w=1260",
   ],
 };
 
 const PEXELS_FALLBACK_PATHS = new Set([
+  "/photos/7546596/pexels-photo-7546596.jpeg",
+  "/photos/7173672/pexels-photo-7173672.jpeg",
+  "/photos/8142052/pexels-photo-8142052.jpeg",
+  "/photos/6636258/pexels-photo-6636258.jpeg",
+  "/photos/6447393/pexels-photo-6447393.jpeg",
+  "/photos/7534559/pexels-photo-7534559.jpeg",
   "/photos/6588599/pexels-photo-6588599.jpeg",
   "/photos/11296221/pexels-photo-11296221.jpeg",
-  "/photos/8146326/pexels-photo-8146326.jpeg",
-  "/photos/10117724/pexels-photo-10117724.jpeg",
-  "/photos/6527029/pexels-photo-6527029.jpeg",
-  "/photos/7031209/pexels-photo-7031209.jpeg",
   "/photos/6312353/pexels-photo-6312353.jpeg",
   "/photos/6527027/pexels-photo-6527027.jpeg",
   "/photos/6934188/pexels-photo-6934188.jpeg",
