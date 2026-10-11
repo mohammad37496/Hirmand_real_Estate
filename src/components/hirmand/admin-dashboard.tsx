@@ -32,6 +32,7 @@ import { AdminVisitFeedback } from "@/components/hirmand/admin-visit-feedback";
 import { AdminPropertyReports } from "@/components/hirmand/admin-property-reports";
 import { AdminPropertyQualityCenter } from "@/components/hirmand/admin-property-quality-center";
 import { fa, faBytes } from "@/components/hirmand/admin-ui-utils";
+import { hasAdminPermission, type AdminRole } from "@/lib/admin-roles";
 import { AdminSmartAlerts } from "@/components/hirmand/admin-smart-alerts";
 import { AdminNotificationCenter } from "@/components/hirmand/admin-notification-center";
 
@@ -192,6 +193,7 @@ function formatDay(value: string) {
 }
 
 export function AdminDashboard({
+  role,
   onOpenProperties,
   onOpenLeads,
   onOpenProductivity,
@@ -202,6 +204,7 @@ export function AdminDashboard({
   onOpenAttendance,
   onOpenMusic,
 }: {
+  role: AdminRole;
   onOpenProperties: () => void;
   onOpenLeads: () => void;
   onOpenProductivity: () => void;
@@ -212,6 +215,12 @@ export function AdminDashboard({
   onOpenAttendance: () => void;
   onOpenMusic: () => void;
 }) {
+  const canManageProperties = hasAdminPermission(role, "property.manage");
+  const canManageLeads = hasAdminPermission(role, "lead.manage");
+  const canManageContent = hasAdminPermission(role, "content.manage");
+  const canManageTeam = role === "owner" || role === "manager";
+  const canManageDeals = hasAdminPermission(role, "deal.manage");
+  const canUseDivar = role === "owner" || role === "manager" || role === "sales";
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -364,34 +373,48 @@ export function AdminDashboard({
   return (
     <div className="admin-dashboard">
       <style>{`.admin-funnel-row{display:flex;flex-direction:column}`}</style>
-      <AdminSmartAlerts followUpsDue={data.followUps.due} leadSlaOverdue={data.leadSla.overdue} newLeadsOver4Hours={data.leadSla.newOver4Hours} propertiesWithoutImages={data.properties.withoutImages} incompleteProperties={data.properties.incomplete} onOpenLeads={onOpenLeads} onOpenProperties={onOpenProperties} />
-      <AdminNotificationCenter />
+      {canManageLeads || canManageProperties ? (
+        <AdminSmartAlerts
+          followUpsDue={data.followUps.due}
+          leadSlaOverdue={data.leadSla.overdue}
+          newLeadsOver4Hours={data.leadSla.newOver4Hours}
+          propertiesWithoutImages={data.properties.withoutImages}
+          incompleteProperties={data.properties.incomplete}
+          onOpenLeads={canManageLeads ? onOpenLeads : undefined}
+          onOpenProperties={canManageProperties ? onOpenProperties : undefined}
+        />
+      ) : null}
+      {canManageLeads ? <AdminNotificationCenter /> : null}
       {loadError ? (
         <div style={{ marginBottom: 16 }}>
           <AdminErrorBanner message={loadError} onRetry={() => void load()} />
         </div>
       ) : null}
       <div className="admin-dashboard-stats">
-        <button type="button" className="admin-dashboard-stat" data-tone="red" onClick={onOpenLeads}>
-          <span className="admin-dashboard-stat-icon"><Phone size={19} /></span>
-          <span>
-            <small>پیگیری‌های سررسیدشده</small>
-            <strong>{data.followUps.due.toLocaleString("fa-IR")}</strong>
-          </span>
-          <ArrowLeft size={16} />
-        </button>
-        <div className="admin-dashboard-stat" data-tone="green">
-          <span className="admin-dashboard-stat-icon"><RefreshCw size={19} /></span>
-          <span>
-            <small>پیگیری در ۷ روز آینده</small>
-            <strong>{data.followUps.next7.toLocaleString("fa-IR")}</strong>
-          </span>
-        </div>
+        {canManageLeads ? (
+          <>
+            <button type="button" className="admin-dashboard-stat" data-tone="red" onClick={onOpenLeads}>
+              <span className="admin-dashboard-stat-icon"><Phone size={19} /></span>
+              <span>
+                <small>پیگیری‌های سررسیدشده</small>
+                <strong>{data.followUps.due.toLocaleString("fa-IR")}</strong>
+              </span>
+              <ArrowLeft size={16} />
+            </button>
+            <div className="admin-dashboard-stat" data-tone="green">
+              <span className="admin-dashboard-stat-icon"><RefreshCw size={19} /></span>
+              <span>
+                <small>پیگیری در ۷ روز آینده</small>
+                <strong>{data.followUps.next7.toLocaleString("fa-IR")}</strong>
+              </span>
+            </div>
+          </>
+        ) : null}
         {stats.map(({ label, value, icon: Icon, tone }) => {
           const action = label.includes("درخواست") || label.includes("لید")
-            ? onOpenLeads
+            ? (canManageLeads ? onOpenLeads : undefined)
             : label.includes("فایل")
-              ? onOpenProperties
+              ? (canManageProperties ? onOpenProperties : undefined)
               : undefined;
 
           return (
@@ -414,10 +437,10 @@ export function AdminDashboard({
         })}
       </div>
 
-      <AdminAgenda onOpenLeads={onOpenLeads} />
+      {canManageLeads ? <AdminAgenda onOpenLeads={onOpenLeads} /> : null}
 
-      <AdminCustomerPropertySubmissions />
-      <AdminPropertyQualityCenter />
+      {canManageProperties ? <AdminCustomerPropertySubmissions /> : null}
+      {canManageProperties ? <AdminPropertyQualityCenter /> : null}
 
       <section className="admin-dashboard-health" aria-label="سلامت کتابخانه فایل‌ها و تیم">
         <button type="button" className="admin-dashboard-stat" data-tone="red" onClick={onOpenProperties}>
@@ -436,7 +459,7 @@ export function AdminDashboard({
           </span>
           <ArrowLeft size={16} />
         </button>
-        <button type="button" className="admin-dashboard-stat" data-tone="blue" onClick={onOpenConsultants}>
+        <button type="button" className="admin-dashboard-stat" data-tone="blue" onClick={onOpenConsultants} disabled={!canManageTeam}>
           <span className="admin-dashboard-stat-icon"><UsersRound size={19} /></span>
           <span>
             <small>مشاور فعال</small>
@@ -449,7 +472,7 @@ export function AdminDashboard({
           </span>
           <ArrowLeft size={16} />
         </button>
-        <button type="button" className="admin-dashboard-stat" data-tone="green" onClick={onOpenConsultants}>
+        <button type="button" className="admin-dashboard-stat" data-tone="green" onClick={onOpenConsultants} disabled={!canManageTeam}>
           <span className="admin-dashboard-stat-icon"><UserRound size={19} /></span>
           <span>
             <small>مشاور دارای فایل / لید</small>
@@ -459,7 +482,7 @@ export function AdminDashboard({
           </span>
           <ArrowLeft size={16} />
         </button>
-        <button type="button" className="admin-dashboard-stat" data-tone="amber" onClick={onOpenMusic}>
+        <button type="button" className="admin-dashboard-stat" data-tone="amber" onClick={onOpenMusic} disabled={!canManageContent}>
           <span className="admin-dashboard-stat-icon"><Music2 size={19} /></span>
           <span>
             <small>کتابخانه موسیقی</small>
@@ -490,41 +513,55 @@ export function AdminDashboard({
           <span className="admin-dashboard-summary">دسترسی یک‌مرحله‌ای به بخش‌های اصلی پنل</span>
         </div>
         <div className="admin-dashboard-quick-grid">
-          <button type="button" className="admin-dashboard-quick-card is-primary" onClick={onCreateProperty}>
-            <span className="admin-dashboard-quick-icon"><Plus size={18} /></span>
-            <span><strong>ثبت فایل جدید</strong><small>ایجاد و انتشار فایل جدید</small></span>
-            <ArrowLeft size={15} />
-          </button>
-          <button type="button" className="admin-dashboard-quick-card" onClick={onOpenLeads}>
-            <span className="admin-dashboard-quick-icon"><UsersRound size={18} /></span>
-            <span><strong>پیگیری مشتریان</strong><small>مشاهده لیدها و وضعیت پیگیری</small></span>
-            <ArrowLeft size={15} />
-          </button>
-          <button type="button" className="admin-dashboard-quick-card" onClick={onOpenDivar}>
-            <span className="admin-dashboard-quick-icon"><Globe2 size={18} /></span>
-            <span><strong>فایل‌های دیوار</strong><small>بررسی و ورود فایل‌های جدید</small></span>
-            <ArrowLeft size={15} />
-          </button>
-          <button type="button" className="admin-dashboard-quick-card" onClick={onOpenConsultants}>
-            <span className="admin-dashboard-quick-icon"><UserRound size={18} /></span>
-            <span><strong>مدیریت مشاوران</strong><small>اعضا، تماس و حساب‌های فعال</small></span>
-            <ArrowLeft size={15} />
-          </button>
-          <button type="button" className="admin-dashboard-quick-card" onClick={onOpenPartners}>
-            <span className="admin-dashboard-quick-icon"><UsersRound size={18} /></span>
-            <span><strong>باشگاه همکاران</strong><small>قراردادها، مهرها و کدهای رهگیری</small></span>
-            <ArrowLeft size={15} />
-          </button>
-          <button type="button" className="admin-dashboard-quick-card" onClick={onOpenAttendance}>
-            <span className="admin-dashboard-quick-icon"><Clock3 size={18} /></span>
-            <span><strong>حضور و غیاب</strong><small>ثبت ساعت و گزارش عملکرد اعضا</small></span>
-            <ArrowLeft size={15} />
-          </button>
-          <button type="button" className="admin-dashboard-quick-card" onClick={onOpenMusic}>
-            <span className="admin-dashboard-quick-icon"><Music2 size={18} /></span>
-            <span><strong>موسیقی سایت</strong><small>مدیریت آهنگ‌ها و وضعیت پخش</small></span>
-            <ArrowLeft size={15} />
-          </button>
+          {canManageProperties ? (
+            <button type="button" className="admin-dashboard-quick-card is-primary" onClick={onCreateProperty}>
+              <span className="admin-dashboard-quick-icon"><Plus size={18} /></span>
+              <span><strong>ثبت فایل جدید</strong><small>ایجاد و انتشار فایل جدید</small></span>
+              <ArrowLeft size={15} />
+            </button>
+          ) : null}
+          {canManageLeads ? (
+            <button type="button" className="admin-dashboard-quick-card" onClick={onOpenLeads}>
+              <span className="admin-dashboard-quick-icon"><UsersRound size={18} /></span>
+              <span><strong>پیگیری مشتریان</strong><small>مشاهده لیدها و وضعیت پیگیری</small></span>
+              <ArrowLeft size={15} />
+            </button>
+          ) : null}
+          {canUseDivar ? (
+            <button type="button" className="admin-dashboard-quick-card" onClick={onOpenDivar}>
+              <span className="admin-dashboard-quick-icon"><Globe2 size={18} /></span>
+              <span><strong>فایل‌های دیوار</strong><small>بررسی و ورود فایل‌های جدید</small></span>
+              <ArrowLeft size={15} />
+            </button>
+          ) : null}
+          {canManageTeam ? (
+            <button type="button" className="admin-dashboard-quick-card" onClick={onOpenConsultants}>
+              <span className="admin-dashboard-quick-icon"><UserRound size={18} /></span>
+              <span><strong>مدیریت مشاوران</strong><small>اعضا، تماس و حساب‌های فعال</small></span>
+              <ArrowLeft size={15} />
+            </button>
+          ) : null}
+          {canManageTeam ? (
+            <button type="button" className="admin-dashboard-quick-card" onClick={onOpenPartners}>
+              <span className="admin-dashboard-quick-icon"><UsersRound size={18} /></span>
+              <span><strong>باشگاه همکاران</strong><small>قراردادها، مهرها و کدهای رهگیری</small></span>
+              <ArrowLeft size={15} />
+            </button>
+          ) : null}
+          {canManageTeam ? (
+            <button type="button" className="admin-dashboard-quick-card" onClick={onOpenAttendance}>
+              <span className="admin-dashboard-quick-icon"><Clock3 size={18} /></span>
+              <span><strong>حضور و غیاب</strong><small>ثبت ساعت و گزارش عملکرد اعضا</small></span>
+              <ArrowLeft size={15} />
+            </button>
+          ) : null}
+          {canManageContent ? (
+            <button type="button" className="admin-dashboard-quick-card" onClick={onOpenMusic}>
+              <span className="admin-dashboard-quick-icon"><Music2 size={18} /></span>
+              <span><strong>موسیقی سایت</strong><small>مدیریت آهنگ‌ها و وضعیت پخش</small></span>
+              <ArrowLeft size={15} />
+            </button>
+          ) : null}
         </div>
       </section>
 
@@ -541,7 +578,7 @@ export function AdminDashboard({
               </span>
               <button type="button" className="btn-ghost" onClick={downloadDailyReport}><Download size={15} /> گزارش مدیریتی CSV</button>
               <button type="button" className="btn-ghost" onClick={() => void load()}>بروزرسانی</button>
-              <button type="button" className="btn-ghost" onClick={onOpenLeads}>مشاهده همه</button>
+              {canManageLeads ? <button type="button" className="btn-ghost" onClick={onOpenLeads}>مشاهده همه</button> : null}
             </div>
           </div>
           <div className="admin-funnel">
@@ -821,7 +858,7 @@ export function AdminDashboard({
         </section>
       </div>
 
-      <AdminActionCenter onOpenProperties={onOpenProperties} onOpenLeads={onOpenLeads} onOpenProductivity={onOpenProductivity} />
+      {canManageLeads ? <AdminActionCenter onOpenProperties={onOpenProperties} onOpenLeads={onOpenLeads} onOpenProductivity={onOpenProductivity} /> : null}
 
       <AdminCampaignLinkBuilder />
 
@@ -829,13 +866,13 @@ export function AdminDashboard({
 
       <AdminNeighborhoodDemandRadar />
 
-      <AdminPropertyReports />
+      {canManageProperties ? <AdminPropertyReports /> : null}
 
-      <AdminVisitFeedback />
+      {canManageLeads ? <AdminVisitFeedback /> : null}
 
-      <div style={{ marginTop: 18 }}><AdminPropertyLifecyclePanel /></div>
+      {canManageProperties ? <div style={{ marginTop: 18 }}><AdminPropertyLifecyclePanel /></div> : null}
 
-      <AdminSalesControlCenter onOpenLeads={onOpenLeads} onOpenProperties={onOpenProperties} />
+      {canManageDeals ? <AdminSalesControlCenter onOpenLeads={onOpenLeads} onOpenProperties={onOpenProperties} /> : null}
 
       <div className="admin-dashboard-grid">
         <section className="admin-panel">
@@ -897,7 +934,7 @@ export function AdminDashboard({
             <span className="kicker">پیگیری</span>
             <h2>آخرین درخواست‌ها</h2>
           </div>
-          <button type="button" className="btn-ghost" onClick={onOpenLeads}>مدیریت CRM</button>
+          {canManageLeads ? <button type="button" className="btn-ghost" onClick={onOpenLeads}>مدیریت CRM</button> : null}
         </div>
         {data.recentLeads.length === 0 ? (
           <div className="admin-empty">
