@@ -682,8 +682,8 @@ function ResilientImage({
   const [failed, setFailed] = useState(false);
   const [legacyMode, setLegacyMode] = useState(false);
   const current = candidates[Math.min(attempt, Math.max(0, candidates.length - 1))] ?? fallback;
-  const sourceLegacyFallback = src.startsWith("/images/fallback/")
-    ? src.replace(/\.(?:jpe?g|webp|avif)$/i, ".svg")
+  const sourceLegacyFallback = current.startsWith("/images/fallback/")
+    ? current.replace(/\.(?:jpe?g|webp|avif)$/i, ".svg")
     : "";
   const fallbackLegacyImage =
     sourceLegacyFallback ||
