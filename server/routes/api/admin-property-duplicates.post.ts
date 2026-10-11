@@ -1,8 +1,9 @@
 import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 
 const schema = z.object({
   id: z.string().trim().max(120).optional(),
@@ -24,10 +25,15 @@ function comparablePrice(input: z.infer<typeof schema>) {
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
-  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
+  const token = getCookie(event, ADMIN_SESSION_COOKIE);
+  if (!await verifyAdminSessionToken(token)) {
     throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست." });
   }
   assertSameOrigin(event);
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "property.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "دسترسی بررسی فایل‌های مشابه برای این حساب فعال نیست." });
+  }
 
   if (dbSource === "unconfigured") return { matches: [] };
 

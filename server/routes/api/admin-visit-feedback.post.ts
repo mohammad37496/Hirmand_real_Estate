@@ -1,14 +1,20 @@
 import { defineEventHandler, getCookie, readBody, setResponseHeader, createError } from "h3";
 import { dbSource, getSql } from "@/lib/db";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
-  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
+  const token = getCookie(event, ADMIN_SESSION_COOKIE);
+  if (!await verifyAdminSessionToken(token)) {
     throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست." });
   }
   assertSameOrigin(event);
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "lead.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "دسترسی مشاهده بازخورد مشتریان برای این حساب فعال نیست." });
+  }
   if (dbSource === "unconfigured") return { total: 0, average: 0, interested: 0, recent: [] };
 
   await readBody(event).catch(() => ({}));

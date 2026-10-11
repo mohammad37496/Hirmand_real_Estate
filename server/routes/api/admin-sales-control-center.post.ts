@@ -1,7 +1,8 @@
 import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
 import { dbSource, getSql } from "@/lib/db";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 
 const ALLOWED_DAYS = new Set([7, 30, 90]);
 
@@ -9,11 +10,16 @@ export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
   assertSameOrigin(event);
 
-  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
+  const token = getCookie(event, ADMIN_SESSION_COOKIE);
+  if (!await verifyAdminSessionToken(token)) {
     throw createError({
       statusCode: 401,
       statusMessage: "نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.",
     });
+  }
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "deal.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "دسترسی مرکز کنترل فروش برای این حساب فعال نیست." });
   }
 
   const body = (await readBody(event).catch(() => ({}))) as { days?: unknown };

@@ -1,12 +1,18 @@
 import { createError, defineEventHandler, getCookie, setResponseHeader } from "h3";
 import { dbSource, getSql } from "@/lib/db";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
   assertSameOrigin(event);
-  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست. دوباره وارد پنل شوید." });
+  const token = getCookie(event, ADMIN_SESSION_COOKIE);
+  if (!await verifyAdminSessionToken(token)) throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست. دوباره وارد پنل شوید." });
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "lead.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "دسترسی مدیریت پیگیری مشتریان برای این حساب فعال نیست." });
+  }
   if (dbSource === "unconfigured") return { overdueFollowUps: [], upcomingVisits: [], upcomingCallbacks: [] };
   const sql = await getSql();
   const [followUps, visits, callbacks] = await Promise.all([

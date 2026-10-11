@@ -1,19 +1,27 @@
 import { createError, defineEventHandler, getCookie, setResponseHeader } from "h3";
 import { dbSource, getSql } from "@/lib/db";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 
 type LeadStatus = "new" | "contacted" | "follow_up" | "visited" | "contract" | "closed" | "spam";
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
   assertSameOrigin(event);
-  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
+  const token = getCookie(event, ADMIN_SESSION_COOKIE);
+  if (!await verifyAdminSessionToken(token)) {
     throw createError({
       statusCode: 401,
       statusMessage: "نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.",
     });
   }
+  const claims = await getAdminSessionClaims(token);
+  const role = normalizeAdminRole(claims?.role);
+  if (!hasAdminPermission(role, "reports.view")) {
+    throw createError({ statusCode: 403, statusMessage: "دسترسی گزارش برای این حساب فعال نیست." });
+  }
+  const canViewLeadDetails = hasAdminPermission(role, "lead.manage");
 
   if (dbSource === "unconfigured") {
     return {
@@ -417,7 +425,7 @@ export default defineEventHandler(async (event) => {
     consultantPerformance: (consultantPerformance as Array<Record<string, unknown>>).map((row) => ({
       id: String(row.id ?? ""),
       name: String(row.name ?? ""),
-      phone: String(row.phone ?? ""),
+      phone: canViewLeadDetails ? String(row.phone ?? "") : "",
       active: Boolean(row.is_active),
       files: Number(row.files) || 0,
       leads: Number(row.leads) || 0,
@@ -426,7 +434,7 @@ export default defineEventHandler(async (event) => {
       calls: Number(row.calls) || 0,
       whatsapp: Number(row.whatsapp) || 0,
     })),
-    recentLeads: recentLeads.map((row) => ({
+    recentLeads: canViewLeadDetails ? recentLeads.map((row) => ({
       id: String(row.id),
       name: String(row.name),
       phone: String(row.phone),
@@ -434,6 +442,6 @@ export default defineEventHandler(async (event) => {
       neighborhood: String(row.neighborhood ?? ""),
       status: String(row.status) as LeadStatus,
       createdAt: new Date(String(row.created_at)).toISOString(),
-    })),
+    })) : [],
   };
 });
