@@ -1,10 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie, setResponseHeader } from "@tanstack/react-start/server";
+import { setResponseHeader } from "@tanstack/react-start/server";
 import { cachedPropertyRead, clearPropertyReadCache } from "@/lib/property-read-cache.server";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
-import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
 import { nullableMoneyFieldSchema } from "@/lib/property-input-normalization";
 import { requireAdminPermission } from "@/lib/admin-role.server";
 import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
@@ -327,18 +325,6 @@ const adminKeySchema = z.object({});
 const idSchema = z.object({
   id: z.string().min(1),
 });
-
-async function requireAdmin() {
-  const session = getCookie(ADMIN_SESSION_COOKIE);
-  if (await verifyAdminSessionToken(session)) {
-    // Cookie plus origin: hiding the UI is never the control, so every
-    // mutation re-checks that the request came from the panel itself.
-    assertAdminServerFnOrigin();
-    return;
-  }
-
-  throw new Error("نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.");
-}
 
 function slugify(value: string): string {
   const normalized = value

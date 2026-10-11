@@ -964,7 +964,7 @@ export function AdminPropertiesPage() {
   }
 
   async function refresh() {
-    if (!unlocked) return;
+    if (!unlocked || !canManageProperties) return;
     const requestId = ++propertyRequestId.current;
     setLoadingList(true);
     setListError(null);
@@ -1277,7 +1277,7 @@ export function AdminPropertiesPage() {
   }
 
   useEffect(() => {
-    if (!unlocked) return;
+    if (!unlocked || !canManageProperties) return;
 
     const timer = window.setTimeout(() => {
       const requestId = ++propertyRequestId.current;
@@ -1311,6 +1311,7 @@ export function AdminPropertiesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     unlocked,
+    canManageProperties,
     query,
     page,
     pageSize,
