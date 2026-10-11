@@ -8,8 +8,10 @@ import {
 import { dbSource, getSql } from "@/lib/db";
 import {
   ADMIN_SESSION_COOKIE,
+  getAdminSessionClaims,
   verifyAdminSessionToken,
 } from "@/lib/admin-session.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import { deleteStoredMedia } from "@/lib/media-store.server";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 import {
@@ -47,6 +49,11 @@ export default defineEventHandler(async (event) => {
   }
 
   assertSameOrigin(event);
+  const token = getCookie(event, ADMIN_SESSION_COOKIE);
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "content.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "دسترسی مدیریت موسیقی برای این حساب فعال نیست." });
+  }
 
   if (dbSource === "unconfigured") {
     if (body.action === "list") return { tracks: [] };

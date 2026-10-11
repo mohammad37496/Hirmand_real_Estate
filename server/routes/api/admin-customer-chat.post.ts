@@ -1,8 +1,9 @@
-import { createError, defineEventHandler, getCookie, readBody } from "h3";
+import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 
 const schema = z.object({
   code: z.string().trim().toUpperCase().regex(/^HIR-[A-Z0-9]{2}-[A-F0-9]{12}$/),
@@ -11,10 +12,16 @@ const schema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
-  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
+  setResponseHeader(event, "cache-control", "no-store");
+  const token = getCookie(event, ADMIN_SESSION_COOKIE);
+  if (!await verifyAdminSessionToken(token)) {
     throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست." });
   }
   assertSameOrigin(event);
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "lead.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "دسترسی پاسخ‌گویی به مشتریان برای این حساب فعال نیست." });
+  }
 
   const body = schema.safeParse(await readBody(event).catch(() => null));
   if (!body.success) {

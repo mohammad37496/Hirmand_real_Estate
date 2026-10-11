@@ -64,8 +64,9 @@ export function normalizeAdminRole(value: unknown): AdminRole {
     case "viewer":
       return value;
     case "admin":
-    default:
       return "owner";
+    default:
+      return "viewer";
   }
 }
 

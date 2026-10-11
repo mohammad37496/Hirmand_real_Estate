@@ -1,8 +1,9 @@
 import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 
 const schema = z.object({
   action: z.enum(["get", "update"]),
@@ -38,11 +39,20 @@ function mapRow(row: Record<string, unknown> | undefined) {
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
   assertSameOrigin(event);
-  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
+  const token = getCookie(event, ADMIN_SESSION_COOKIE);
+  if (!await verifyAdminSessionToken(token)) {
     throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست." });
   }
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "content.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "دسترسی تنظیم واترمارک برای این حساب فعال نیست." });
+  }
 
-  const body = schema.parse(await readBody(event).catch(() => ({})));
+  const parsedBody = schema.safeParse(await readBody(event).catch(() => ({})));
+  if (!parsedBody.success) {
+    throw createError({ statusCode: 422, statusMessage: parsedBody.error.issues[0]?.message || "تنظیمات واترمارک معتبر نیست." });
+  }
+  const body = parsedBody.data;
   if (dbSource === "unconfigured") return { success: true, settings: DEFAULTS };
 
   const sql = await getSql();

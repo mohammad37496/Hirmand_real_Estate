@@ -14,6 +14,7 @@ import {
   assertServerFnSameOrigin,
 } from "./admin-rate-limit.server.ts";
 import { contentMatchesDeclaredType, sniffMediaBytes } from "./file-signature.server.ts";
+import { hasAdminPermission, normalizeAdminRole } from "./admin-roles.ts";
 
 /* ------------------------------------------------------------------ */
 /* helpers                                                             */
@@ -46,6 +47,27 @@ const sniffMime = (bytes: Uint8Array): string | null => {
   const result = sniffMediaBytes(bytes);
   return result.ok ? result.mime : null;
 };
+
+/* ------------------------------------------------------------------ */
+/* role normalization and least privilege                              */
+/* ------------------------------------------------------------------ */
+
+test("unknown or malformed admin roles fail closed as viewer", () => {
+  assert.equal(normalizeAdminRole(null), "viewer");
+  assert.equal(normalizeAdminRole(undefined), "viewer");
+  assert.equal(normalizeAdminRole("unexpected-role"), "viewer");
+  assert.equal(normalizeAdminRole("admin"), "owner");
+});
+
+test("viewer role cannot inherit mutation or sensitive-data permissions", () => {
+  const role = normalizeAdminRole("viewer");
+  assert.equal(hasAdminPermission(role, "reports.view"), true);
+  assert.equal(hasAdminPermission(role, "property.manage"), false);
+  assert.equal(hasAdminPermission(role, "lead.manage"), false);
+  assert.equal(hasAdminPermission(role, "finance.manage"), false);
+  assert.equal(hasAdminPermission(role, "content.manage"), false);
+  assert.equal(hasAdminPermission(role, "security.manage"), false);
+});
 
 /* ------------------------------------------------------------------ */
 /* magic-byte sniffing                                                 */
