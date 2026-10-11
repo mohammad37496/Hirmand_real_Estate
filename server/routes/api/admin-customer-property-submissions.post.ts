@@ -1,6 +1,7 @@
 import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
 import { dbSource, getSql } from "@/lib/db";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 import { TEAM } from "@/lib/site";
 import { isAllowedMediaRef, isVideoUrl } from "@/lib/media";
@@ -34,10 +35,15 @@ async function logReviewEvent(sql: Awaited<ReturnType<typeof getSql>>, submissio
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
-  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
+  const token = getCookie(event, ADMIN_SESSION_COOKIE);
+  if (!await verifyAdminSessionToken(token)) {
     throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست. دوباره وارد پنل شوید." });
   }
   assertSameOrigin(event);
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "property.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "دسترسی بررسی و انتشار فایل‌های ارسالی مشتریان برای این حساب فعال نیست." });
+  }
   if (dbSource === "unconfigured") return { submissions: [], total: 0, counts: { pending: 0, approved: 0, rejected: 0 } };
 
   const body = (await readBody(event)) as {

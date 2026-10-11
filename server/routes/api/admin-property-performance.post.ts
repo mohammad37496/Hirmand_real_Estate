@@ -1,5 +1,6 @@
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import { dbSource, getSql } from "@/lib/db";
 import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
 
@@ -67,11 +68,16 @@ function qualityScore(input: {
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
 
-  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
+  const token = getCookie(event, ADMIN_SESSION_COOKIE);
+  if (!await verifyAdminSessionToken(token)) {
     throw createError({ statusCode: 401, statusMessage: "نیاز به ورود مدیریت دارید." });
   }
 
   await assertSameOrigin(event);
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "reports.view")) {
+    throw createError({ statusCode: 403, statusMessage: "دسترسی گزارش عملکرد فایل برای این حساب فعال نیست." });
+  }
 
   const body = (await readBody(event).catch(() => ({}))) as { propertyId?: unknown };
   const propertyId = typeof body.propertyId === "string" ? body.propertyId.trim().slice(0, 120) : "";

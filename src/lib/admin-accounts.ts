@@ -133,6 +133,10 @@ export const resetAdminAccountPassword = createServerFn({ method: "POST" })
       [data.id, passwordHash],
     );
     if (!rows[0]) throw new Error("حساب مدیر پیدا نشد.");
+    await sql.query(
+      "update admin_sessions set revoked_at=current_timestamp where account_id=$1 and revoked_at is null",
+      [data.id],
+    );
     await writeAdminAuditLog({
       action: "admin_account_password_reset",
       entityType: "admin_account",

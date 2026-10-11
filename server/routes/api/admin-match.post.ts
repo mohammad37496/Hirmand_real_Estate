@@ -1,6 +1,7 @@
 import { createError, defineEventHandler, getCookie, readBody, setResponseHeader, type H3Event } from "h3";
 import { dbSource, getSql } from "@/lib/db";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 import { DEFAULT_MATCH_RAHN_RATE } from "@/lib/budget-matching";
 
@@ -191,10 +192,15 @@ function serializeProperty(row: Record<string, unknown>, score: number, reasons:
 }
 
 async function requireAdmin(event: H3Event) {
-  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
+  const token = getCookie(event, ADMIN_SESSION_COOKIE);
+  if (!await verifyAdminSessionToken(token)) {
     throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست. دوباره وارد پنل شوید." });
   }
   assertSameOrigin(event);
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "lead.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "دسترسی مچ کردن فایل‌ها برای مشتریان برای این حساب فعال نیست." });
+  }
 }
 
 function mapLead(row: Record<string, unknown>) {

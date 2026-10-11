@@ -24,6 +24,9 @@ export default defineEventHandler(async event => {
   const sql = await getSql();
   const body = (await readBody(event).catch(() => ({}))) as Record<string, unknown>;
   const action = clean(body.action, 30) || "list";
+  if (action !== "list" && !hasAdminPermission(normalizeAdminRole(claims?.role), "deal.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "تنظیم اهداف فروش فقط برای مدیران فروش مجاز است." });
+  }
   const selectedMonth = month(body.month) || new Date().toISOString().slice(0, 7) + "-01";
 
   if (action === "list") {
