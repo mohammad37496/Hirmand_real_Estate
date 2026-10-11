@@ -12,16 +12,21 @@ async function requireReportAccess(event: H3Event) {
   if (!hasAdminPermission(normalizeAdminRole(claims?.role), "reports.view")) {
     throw createError({ statusCode: 403, statusMessage: "دسترسی گزارش برای این حساب فعال نیست." });
   }
+  return claims;
 }
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
-  await requireReportAccess(event);
+  const claims = await requireReportAccess(event);
+  const role = normalizeAdminRole(claims?.role);
   if (dbSource === "unconfigured") return { scannedAt: new Date().toISOString(), summary: { critical: 0, warning: 0, info: 0, open: 0 }, findings: [] };
   const body = (await readBody(event).catch(() => ({}))) as { action?: "scan" | "resolve"; findingId?: number };
   const sql = await getSql();
 
   if (body.action === "resolve") {
+    if (!hasAdminPermission(role, "settings.manage")) {
+      throw createError({ statusCode: 403, statusMessage: "فقط مدیران می‌توانند یافته‌های سلامت داده را تعیین‌تکلیف کنند." });
+    }
     if (!Number.isInteger(body.findingId) || Number(body.findingId) <= 0) throw createError({ statusCode: 400, statusMessage: "شناسه یافته نامعتبر است." });
     await sql.query("update admin_data_health_findings set resolved_at=current_timestamp where id=$1", [body.findingId]);
     return { success: true };
