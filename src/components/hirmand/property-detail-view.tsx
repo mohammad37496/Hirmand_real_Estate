@@ -923,7 +923,7 @@ function Gallery({
       <div className="property-gallery">
         <div className="property-gallery-main">
           {!isVideoUrl(current) || !isPermanentlyWatermarkedMediaUrl(current) ? (
-            <PropertyMediaWatermark subtle={current.startsWith("/images/fallback/")} />
+            <PropertyMediaWatermark subtle={isPropertyFallbackImage(current) || current.startsWith("/images/fallback/")} />
           ) : null}
           {isVideoUrl(current) ? (
             <VideoPlayer src={current} title={title} className="is-gallery" />
@@ -955,7 +955,7 @@ function Gallery({
           </button>
 
           <div className="property-gallery-overlays">
-            {current.startsWith("/images/fallback/") ? (
+            {isPropertyFallbackImage(current) || current.startsWith("/images/fallback/") ? (
               <span className="property-gallery-sample-label">تصویر نمونه</span>
             ) : null}
             {featured ? <span className="property-gallery-featured">فایل ویژه</span> : null}
