@@ -61,9 +61,9 @@ const actionSchema = z.discriminatedUnion("action", [
  * checked, so this route inherits the admin panel's CSRF protection.
  *
  * The important rule encoded here: **setting a module ON is not consent.**
- * `set_modules` widens server policy only. A module becomes effective only once
- * `record_consent` has captured the user's decision on the device — the panel can
- * never switch on collection for a phone whose owner has not agreed.
+ * `set_modules` widens server policy only. A module becomes effective only after
+ * the device records the user's own consent; an administrator cannot manufacture
+ * consent on behalf of a phone owner.
  */
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
@@ -83,9 +83,9 @@ export default defineEventHandler(async (event) => {
   if (!hasAdminPermission(normalizeAdminRole(adminClaims?.role), "security.manage")) {
     throw createError({ statusCode: 403, statusMessage: "دسترسی مدیریت و فرمان‌های Phone Bridge برای این حساب فعال نیست." });
   }
+  assertSameOrigin(event);
   const actorAccountId = typeof adminClaims?.options?.accountId === "string" ? adminClaims.options.accountId : null;
   if (input.action !== "list" && input.action !== "audit") {
-    assertSameOrigin(event);
     const throttle = await consumeAdminAttempt(`phone-bridge:${clientFingerprint(event)}`);
     if (!throttle.allowed) {
       throw createError({ statusCode: 429, statusMessage: "تعداد درخواست‌ها بیش از حد مجاز است." });
