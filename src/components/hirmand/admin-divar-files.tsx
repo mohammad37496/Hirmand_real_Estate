@@ -158,6 +158,7 @@ export function AdminDivarFiles() {
   }, [tab]);
 
   async function sync() {
+    if (syncing || bulk || loading) return;
     setSyncing(true);
     try {
       const result = await syncDivarFiles({ data: { limit: crawlLimit } });
@@ -250,6 +251,7 @@ export function AdminDivarFiles() {
   }
 
   async function publish(file: DivarFile, options: { repair?: boolean } = {}) {
+    if (syncing || bulk || loading) return;
     const ok = await publishOne(file, options);
     if (!ok) return;
     await load();
@@ -257,6 +259,7 @@ export function AdminDivarFiles() {
   }
 
   async function approve(file: DivarFile, force = false) {
+    if (syncing || bulk || loading) return;
     setBusyId(file.id);
     setBusyStage(force ? "تأیید دستی و بازخوانی آگهی…" : "بررسی دوباره آگهی…");
     try {
@@ -287,6 +290,7 @@ export function AdminDivarFiles() {
   }
 
   async function revoke(file: DivarFile) {
+    if (syncing || bulk || loading) return;
     if (!window.confirm(`تأیید دستی «${file.title}» لغو شود و فایل به فهرست ردشده‌ها بازگردد؟`)) {
       return;
     }
@@ -307,7 +311,7 @@ export function AdminDivarFiles() {
   }
 
   async function removeFiles(ids: string[], confirmMessage: string) {
-    if (!ids.length) return;
+    if (!ids.length || syncing || bulk || loading) return;
     if (!window.confirm(confirmMessage)) return;
     try {
       const result = await deleteDivarFiles({ data: { ids } });
@@ -326,6 +330,7 @@ export function AdminDivarFiles() {
 
   /** Every bulk run walks the selection and reports one summary at the end. */
   async function bulkPublish() {
+    if (syncing || bulk || loading) return;
     const targets = visible.filter((file) => selection.includes(file.id));
     if (!targets.length) return;
     if (
@@ -361,6 +366,7 @@ export function AdminDivarFiles() {
   }
 
   async function bulkRepair() {
+    if (syncing || bulk || loading) return;
     const targets = visible.filter((file) => selection.includes(file.id));
     if (!targets.length) return;
     cancelBulk.current = false;
@@ -385,6 +391,7 @@ export function AdminDivarFiles() {
   }
 
   async function bulkApprove() {
+    if (syncing || bulk || loading) return;
     const targets = visible.filter((file) => selection.includes(file.id));
     if (!targets.length) return;
     if (
@@ -476,7 +483,7 @@ export function AdminDivarFiles() {
   const canLoadMore = !atPageLimit && sourceVisible.length >= loadedCounts[tab];
 
   function loadMore() {
-    if (!canLoadMore || loading) return;
+    if (!canLoadMore || loading || syncing || bulk) return;
     setLoadedCounts((prev) => ({
       ...prev,
       [tab]: Math.min(TAB_LIMIT_MAX, prev[tab] + TAB_LIMIT_STEP),
@@ -522,7 +529,7 @@ export function AdminDivarFiles() {
             <select
               value={crawlLimit}
               onChange={(event) => setCrawlLimit(Number(event.target.value))}
-              disabled={syncing}
+              disabled={syncing || Boolean(bulk) || loading}
               aria-label="تعداد فایل در هر بررسی دیوار"
             >
               <option value={12}>۱۲ فایل</option>
@@ -535,13 +542,13 @@ export function AdminDivarFiles() {
             type="button"
             className="btn-ghost"
             onClick={() => void load()}
-            disabled={loading || syncing}
+            disabled={loading || syncing || Boolean(bulk)}
             title="فقط فهرست و آمار فعلی را تازه کن"
           >
             <RefreshCw size={16} className={loading ? "admin-spin" : ""} />
             تازه‌سازی
           </button>
-          <button type="button" className="btn-gold" onClick={() => void sync()} disabled={syncing}>
+          <button type="button" className="btn-gold" onClick={() => void sync()} disabled={syncing || Boolean(bulk) || loading}>
             {syncing ? <Loader2 size={16} className="admin-spin" /> : <RefreshCw size={16} />}
             {syncing ? "در حال بررسی دیوار…" : "دریافت فایل‌های دیوار"}
           </button>
@@ -898,17 +905,17 @@ export function AdminDivarFiles() {
             </strong>
             <div className="divar-bulk-actions">
               {tab === "accepted" ? (
-                <button type="button" className="btn-gold" onClick={() => void bulkPublish()}>
+                <button type="button" className="btn-gold" onClick={() => void bulkPublish()} disabled={syncing || loading || Boolean(bulk)}>
                   <UploadCloud size={15} /> انتشار گروهی
                 </button>
               ) : null}
               {tab === "imported" ? (
-                <button type="button" className="btn-gold" onClick={() => void bulkRepair()}>
+                <button type="button" className="btn-gold" onClick={() => void bulkRepair()} disabled={syncing || loading || Boolean(bulk)}>
                   <RefreshCw size={15} /> تکمیل تصاویر گروهی
                 </button>
               ) : null}
               {tab === "rejected" ? (
-                <button type="button" className="btn-gold" onClick={() => void bulkApprove()}>
+                <button type="button" className="btn-gold" onClick={() => void bulkApprove()} disabled={syncing || loading || Boolean(bulk)}>
                   <ShieldCheck size={15} /> تأیید دستی گروهی
                 </button>
               ) : null}
@@ -916,6 +923,7 @@ export function AdminDivarFiles() {
                 <button
                   type="button"
                   className="btn-ghost"
+                  disabled={syncing || loading || Boolean(bulk)}
                   onClick={() =>
                     void removeFiles(
                       selection,
@@ -926,7 +934,7 @@ export function AdminDivarFiles() {
                   <Trash2 size={15} /> حذف
                 </button>
               ) : null}
-              <button type="button" className="btn-ghost" onClick={() => setSelection([])}>
+              <button type="button" className="btn-ghost" disabled={syncing || loading || Boolean(bulk)} onClick={() => setSelection([])}>
                 <X size={15} /> لغو انتخاب
               </button>
             </div>
@@ -967,7 +975,7 @@ export function AdminDivarFiles() {
                 type="button"
                 className="btn-gold"
                 onClick={() => void sync()}
-                disabled={syncing}
+                disabled={syncing || Boolean(bulk) || loading}
               >
                 <RefreshCw size={16} />
                 {syncing ? "در حال بررسی…" : "بررسی دوباره"}
@@ -991,6 +999,7 @@ export function AdminDivarFiles() {
                   <button
                     type="button"
                     className={selected ? "divar-select is-on" : "divar-select"}
+                    disabled={syncing || Boolean(bulk)}
                     onClick={() =>
                       setSelection((prev) =>
                         prev.includes(file.id)
@@ -1191,7 +1200,7 @@ export function AdminDivarFiles() {
                         <button
                           type="button"
                           className="btn-gold"
-                          disabled={busy}
+                          disabled={busy || syncing || Boolean(bulk)}
                           onClick={() => void approve(file)}
                         >
                           {busy ? (
@@ -1205,7 +1214,7 @@ export function AdminDivarFiles() {
                         <button
                           type="button"
                           className="btn-gold"
-                          disabled={busy}
+                          disabled={busy || syncing || Boolean(bulk)}
                           onClick={() => void publish(file)}
                         >
                           {busy ? (
@@ -1219,7 +1228,7 @@ export function AdminDivarFiles() {
                         <button
                           type="button"
                           className="btn-gold"
-                          disabled={busy}
+                          disabled={busy || syncing || Boolean(bulk)}
                           onClick={() => void publish(file, { repair: true })}
                         >
                           {busy ? (
@@ -1253,7 +1262,7 @@ export function AdminDivarFiles() {
                         <button
                           type="button"
                           className="btn-ghost"
-                          disabled={busy}
+                          disabled={busy || syncing || Boolean(bulk)}
                           onClick={() => void revoke(file)}
                         >
                           <RotateCcw size={15} /> لغو تأیید دستی
@@ -1264,7 +1273,7 @@ export function AdminDivarFiles() {
                         <button
                           type="button"
                           className="btn-ghost"
-                          disabled={busy}
+                          disabled={busy || syncing || Boolean(bulk)}
                           onClick={() =>
                             void removeFiles([file.id], `حذف «${file.title}» از فهرست دیوار؟`)
                           }
