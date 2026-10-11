@@ -5,7 +5,7 @@ import {
   managementModeLabel,
   parseManagementMode,
   permissionHealthFromPayload,
-} from "@/lib/mobile-management";
+} from "./mobile-management.ts";
 
 const now = Date.parse("2026-10-06T00:00:00.000Z");
 
