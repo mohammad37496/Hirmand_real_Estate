@@ -138,7 +138,7 @@ import {
   PROPERTY_WALL_CLOSET_OPTIONS,
 } from "@/lib/property-options";
 import { getPublishReadiness } from "@/lib/property-publish-readiness";
-import { ADMIN_ROLE_LABELS, hasAdminPermission, type AdminRole } from "@/lib/admin-roles";
+import { ADMIN_ROLE_LABELS, hasAdminPermission, normalizeAdminRole, type AdminRole } from "@/lib/admin-roles";
 import { requestPropertyPublication } from "@/lib/admin-publication";
 
 type PublishStatus = "draft" | "published" | "archived";
@@ -822,19 +822,27 @@ export function AdminPropertiesPage() {
           | null;
 
         if (!data?.authenticated || cancelled) return;
-        setAdminRole(data.role ?? "owner");
+        const role = normalizeAdminRole(data.role);
+        setAdminRole(role);
 
-        const [rows, totals, filteredCount] = await Promise.all([
-          listAdminProperties({ data: { limit: 50, offset: 0 } }),
-          countAdminProperties({ data: {} }),
-          countFilteredAdminProperties({ data: { limit: 50, offset: 0 } }),
-        ]);
-
-        if (cancelled) return;
-        setProperties(rows);
+        if (hasAdminPermission(role, "property.manage")) {
+          const [rows, totals, filteredCount] = await Promise.all([
+            listAdminProperties({ data: { limit: 50, offset: 0 } }),
+            countAdminProperties({ data: {} }),
+            countFilteredAdminProperties({ data: { limit: 50, offset: 0 } }),
+          ]);
+          if (cancelled) return;
+          setProperties(rows);
           setFilteredTotal(filteredCount);
-        setPropertyHasMore(rows.length < filteredCount);
-        setServerStats(totals);
+          setPropertyHasMore(rows.length < filteredCount);
+          setServerStats(totals);
+        } else {
+          setProperties([]);
+          setFilteredTotal(0);
+          setPropertyHasMore(false);
+          setServerStats(null);
+        }
+        if (cancelled) return;
         setUnlocked(true);
       } catch {
         // No valid session: show the login screen.
@@ -1020,12 +1028,18 @@ export function AdminPropertiesPage() {
         );
       }
 
-      const filterData = currentListFilters(0, 50);
-      const [rows, totals, filteredCount] = await Promise.all([
-        listAdminProperties({ data: filterData }),
-        countAdminProperties({ data: {} }),
-        countFilteredAdminProperties({ data: filterData }),
-      ]);
+      const role = normalizeAdminRole(sessionData.role);
+      let rows: Property[] = [];
+      let totals: Awaited<ReturnType<typeof countAdminProperties>> | null = null;
+      let filteredCount = 0;
+      if (hasAdminPermission(role, "property.manage")) {
+        const filterData = currentListFilters(0, 50);
+        [rows, totals, filteredCount] = await Promise.all([
+          listAdminProperties({ data: filterData }),
+          countAdminProperties({ data: {} }),
+          countFilteredAdminProperties({ data: filterData }),
+        ]);
+      }
 
       setKeyInput("");
       setPasswordInput("");
@@ -1033,7 +1047,7 @@ export function AdminPropertiesPage() {
       setFilteredTotal(filteredCount);
       setPropertyHasMore(rows.length < filteredCount);
       setServerStats(totals);
-      setAdminRole(sessionData?.role ?? "owner");
+      setAdminRole(role);
       setUnlocked(true);
 
       if (showToast) toast.success("ورود به پنل مدیریت موفق بود.");

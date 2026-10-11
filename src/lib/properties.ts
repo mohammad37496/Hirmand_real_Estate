@@ -7,6 +7,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-sessi
 import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
 import { nullableMoneyFieldSchema } from "@/lib/property-input-normalization";
 import { requireAdminPermission } from "@/lib/admin-role.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import { decodeSlugCandidates, legacyIdFragments } from "@/lib/property-slug";
 import { calculateBudgetMatch, DEFAULT_MATCH_RAHN_RATE, type BudgetInput, type BudgetMatchDetails } from "@/lib/budget-matching";
 import { MAX_PROPERTY_MEDIA, isAllowedMediaRef } from "@/lib/media";
@@ -1127,7 +1128,7 @@ const ADMIN_SORT_CLAUSE = `
 export const listAdminProperties = createServerFn({ method: "POST" })
   .validator(adminListSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     if (dbSource === "unconfigured") return [];
     const sql = await getSql();
     const filters = adminFilterParams(data);
@@ -1145,7 +1146,7 @@ export const listAdminProperties = createServerFn({ method: "POST" })
 export const countAdminProperties = createServerFn({ method: "POST" })
   .validator(adminKeySchema)
   .handler(async () => {
-    await requireAdmin();
+    await requireAdminPermission("reports.view");
     if (dbSource === "unconfigured") {
       return { total: 0, published: 0, draft: 0, archived: 0, featured: 0 };
     }
@@ -1178,7 +1179,7 @@ export const countAdminProperties = createServerFn({ method: "POST" })
 export const countFilteredAdminProperties = createServerFn({ method: "POST" })
   .validator(adminListSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     if (dbSource === "unconfigured") return 0;
     const sql = await getSql();
     const rows = await sql.query<{ count: number }>(
@@ -1194,6 +1195,9 @@ export const bulkUpdatePropertyStatus = createServerFn({ method: "POST" })
   .validator(adminBulkStatusSchema)
   .handler(async ({ data }) => {
     await requireAdminPermission("property.manage");
+    if (data.status === "published") {
+      await requireAdminPermission("property.publish");
+    }
     const sql = await getSql();
 
     const beforeRows = await sql.query<Record<string, unknown>>(
@@ -1527,7 +1531,7 @@ export const bulkDeleteProperties = createServerFn({ method: "POST" })
 export const listAdminTrashProperties = createServerFn({ method: "POST" })
   .validator(z.object({ limit: z.number().int().min(1).max(200).optional().default(100) }))
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     if (dbSource === "unconfigured") return [];
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
@@ -1544,11 +1548,13 @@ export const listAdminTrashProperties = createServerFn({ method: "POST" })
 export const restoreDeletedProperty = createServerFn({ method: "POST" })
   .validator(idSchema)
   .handler(async ({ data }) => {
-    await requireAdminPermission("property.manage");
+    const claims = await requireAdminPermission("property.manage");
+    const canPublish = hasAdminPermission(normalizeAdminRole(claims?.role), "property.publish");
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
       `update properties
        set status = case
+         when deleted_from_status = 'published' and $2::boolean = false then 'draft'
          when deleted_from_status in ('draft','published','archived') then deleted_from_status
          else 'draft'
        end,
@@ -1557,7 +1563,7 @@ export const restoreDeletedProperty = createServerFn({ method: "POST" })
        updated_at = current_timestamp
        where id = $1 and deleted_at is not null
        returning id, title, status`,
-      [data.id],
+      [data.id, canPublish],
     );
     if (!rows[0]) return { success: false, restored: 0 };
     await sql.query(
@@ -1614,7 +1620,7 @@ export const permanentlyDeleteProperty = createServerFn({ method: "POST" })
 export const listAdminPropertySchedules = createServerFn({ method: "POST" })
   .validator(z.object({ limit: z.number().int().min(1).max(200).optional().default(100) }))
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     if (dbSource === "unconfigured") return [];
     const sql = await getSql();
     const rows = await sql.query<Record<string, unknown>>(
@@ -1647,7 +1653,10 @@ export const updatePropertySchedule = createServerFn({ method: "POST" })
     unpublishAt: z.string().datetime({ offset: true }).nullable().optional(),
   }))
   .handler(async ({ data }) => {
-    await requireAdminPermission("property.manage");
+    const claims = await requireAdminPermission("property.manage");
+    if (data.publishAt && !hasAdminPermission(normalizeAdminRole(claims?.role), "property.publish")) {
+      throw new Error("تنظیم زمان انتشار نهایی فقط برای مدیران مجاز است.");
+    }
     const sql = await getSql();
     if (data.publishAt && data.unpublishAt && new Date(data.unpublishAt) <= new Date(data.publishAt)) {
       throw new Error("زمان پایان انتشار باید بعد از زمان شروع باشد.");
@@ -2058,7 +2067,7 @@ export const listPropertyChangeHistory = createServerFn({ method: "POST" })
     limit: z.number().int().min(1).max(30).optional().default(12),
   }))
   .handler(async ({ data }) => {
-    await requireAdmin();
+    await requireAdminPermission("property.manage");
     if (dbSource === "unconfigured") return [];
     const sql = await getSql();
     const rows = await sql.query<{
