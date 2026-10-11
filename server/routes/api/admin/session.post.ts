@@ -13,7 +13,6 @@ import {
   createAdminSessionToken,
   getAdminSessionClaims,
   isAdminKeyValid,
-  verifyAdminSessionToken,
 } from "@/lib/admin-session.server";
 import { verifyAdminPassword } from "@/lib/admin-password.server";
 import { normalizeAdminRole } from "@/lib/admin-roles";
@@ -61,8 +60,16 @@ export default defineEventHandler(async (event) => {
     return { success: true };
   }
 
-  const existing = await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE));
-  if (existing) return { success: true, authenticated: true };
+  const existingClaims = await getAdminSessionClaims(getCookie(event, ADMIN_SESSION_COOKIE));
+  if (existingClaims) {
+    return {
+      success: true,
+      authenticated: true,
+      role: existingClaims.role,
+      accountId: existingClaims.accountId,
+      displayName: existingClaims.displayName,
+    };
+  }
 
   // The key is shared by every operator, so guessing is the only attack. Count
   // every submitted key — valid or not — and lock the caller out once the
