@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { createWriteStream, existsSync, mkdirSync, renameSync, statSync } from "node:fs";
+import { createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, statSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
@@ -29,7 +29,8 @@ function hasRasterMagic(bytes) {
 
 function isUsableFile(output) {
   try {
-    return statSync(output).size > 1024;
+    if (statSync(output).size <= 1024) return false;
+    return hasRasterMagic(readFileSync(output).subarray(0, 32));
   } catch {
     return false;
   }
@@ -40,7 +41,7 @@ async function download(url, output) {
   try {
     const response = await fetch(url, {
       headers: {
-        "user-agent": "Hirmand-Real-Estate-fallback-assets/3.0",
+        "user-agent": "Hirmand-Real-Estate-fallback-assets/3.1",
         accept: "image/jpeg,image/webp,image/avif,image/*;q=0.8",
       },
       signal: AbortSignal.timeout(30_000),
@@ -52,7 +53,7 @@ async function download(url, output) {
 
     await pipeline(response.body, createWriteStream(temp));
     const bytes = await readFile(temp);
-    if (!isUsableFile(temp) || !hasRasterMagic(bytes.subarray(0, 32))) {
+    if (bytes.length <= 1024 || !hasRasterMagic(bytes.subarray(0, 32))) {
       throw new Error("downloaded response is not a valid raster image");
     }
 
@@ -74,6 +75,7 @@ async function main() {
     urls.map((url, index) => ({ type, url, index })),
   );
   const concurrency = 4;
+  const maxAttempts = 3;
   let cursor = 0;
   let success = 0;
   let skipped = 0;
@@ -92,15 +94,30 @@ async function main() {
         continue;
       }
 
-      try {
-        console.log("[fallback-assets] downloading " + task.type + "-" + number);
-        await download(task.url, output);
-        success += 1;
-      } catch (error) {
+      let lastError;
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        try {
+          console.log(
+            "[fallback-assets] downloading " + task.type + "-" + number +
+            " (attempt " + attempt + "/" + maxAttempts + ")",
+          );
+          await download(task.url, output);
+          success += 1;
+          lastError = undefined;
+          break;
+        } catch (error) {
+          lastError = error;
+          if (attempt < maxAttempts) {
+            await new Promise((resolve) => setTimeout(resolve, 750 * attempt));
+          }
+        }
+      }
+
+      if (lastError) {
         failed += 1;
         console.warn(
-          "[fallback-assets] skipped " + task.type + "-" + number + ": " +
-          (error instanceof Error ? error.message : String(error)),
+          "[fallback-assets] unavailable " + task.type + "-" + number + ": " +
+          (lastError instanceof Error ? lastError.message : String(lastError)),
         );
       }
     }
@@ -108,13 +125,27 @@ async function main() {
 
   await Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }, worker));
 
+  const missingApartmentPhotos = (sources.apartment ?? []).flatMap((_, index) => {
+    const number = String(index + 1).padStart(2, "0");
+    const output = join(outputDir, "apartment-" + number + ".jpg");
+    return isUsableFile(output) ? [] : [output];
+  });
+
   console.log(
     "[fallback-assets] ready: " + success + " downloaded, " +
     skipped + " cached, " + failed + " unavailable. concurrency=" + concurrency,
   );
+
+  if (missingApartmentPhotos.length) {
+    throw new Error(
+      "Build blocked: " + missingApartmentPhotos.length +
+      " required apartment photos are unavailable after retries: " +
+      missingApartmentPhotos.map((path) => path.split(/[\\/]/).pop()).join(", "),
+    );
+  }
 }
 
 main().catch((error) => {
   console.error("[fallback-assets] generator failed:", error);
-  process.exitCode = 0;
+  process.exitCode = 1;
 });
