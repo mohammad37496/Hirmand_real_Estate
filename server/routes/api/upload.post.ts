@@ -1,5 +1,7 @@
-import { defineEventHandler } from "h3";
+import { createError, defineEventHandler, getCookie } from "h3";
 import { handleChunkedUpload } from "@/lib/chunked-upload.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import { getPropertyWatermarkSettingsServer } from "@/lib/property-watermark.server";
 import { applyPropertyVideoWatermark } from "@/lib/property-video-watermark.server";
 
@@ -33,8 +35,16 @@ function mimeFromFilename(filename: string): string {
  * Property gallery uploads (photos and short clips) for the admin panel.
  * Same chunked protocol as the music library so both behave identically.
  */
-export default defineEventHandler((event) =>
-  handleChunkedUpload(event, {
+export default defineEventHandler(async (event) => {
+  const token = getCookie(event, ADMIN_SESSION_COOKIE);
+  if (!await verifyAdminSessionToken(token)) {
+    throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست." });
+  }
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "property.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "دسترسی آپلود رسانه برای فایل‌های ملک فعال نیست." });
+  }
+  return handleChunkedUpload(event, {
     kind: "media",
     pathPrefix: "properties/uploads",
     maxBytes: MAX_BYTES,
@@ -64,5 +74,5 @@ export default defineEventHandler((event) =>
       });
     },
     finish: async ({ stored }) => ({ url: stored.url }),
-  }),
-);
+  });
+});

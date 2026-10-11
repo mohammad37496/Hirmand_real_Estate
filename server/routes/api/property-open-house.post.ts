@@ -1,8 +1,9 @@
 import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { assertSameOrigin, clientFingerprint, consumeAdminAttempt } from "@/lib/admin-rate-limit.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 
 const phoneSchema=z.string().trim().regex(/^09\d{9}$/,"شماره موبایل معتبر نیست.");
 const publicSchema=z.discriminatedUnion("action",[
@@ -18,14 +19,23 @@ function iso(value:unknown){const d=new Date(String(value));return Number.isFini
 
 export default defineEventHandler(async(event)=>{
   setResponseHeader(event,"cache-control","no-store");
-  if(dbSource==="unconfigured") return {events:[]};
   const body=await readBody<Record<string, unknown>>(event).catch(()=>({} as Record<string, unknown>));
   const action=String(body?.action??"");
+  if (dbSource === "unconfigured") {
+    if (action === "list") return { events: [] };
+    throw createError({ statusCode: 503, statusMessage: "پایگاه داده برای مدیریت بازدید گروهی تنظیم نشده است." });
+  }
   const sql=await getSql();
 
   if(action==="admin_list"||action==="create"||action==="cancel"){
-    if(!await verifyAdminSessionToken(getCookie(event,ADMIN_SESSION_COOKIE))) throw createError({statusCode:401,statusMessage:"نشست مدیریت معتبر نیست."});
+    const token = getCookie(event, ADMIN_SESSION_COOKIE);
+    if(!await verifyAdminSessionToken(token)) throw createError({statusCode:401,statusMessage:"نشست مدیریت معتبر نیست."});
     assertSameOrigin(event);
+    const claims = await getAdminSessionClaims(token);
+    const permission = action === "admin_list" ? "lead.manage" : "property.manage";
+    if (!hasAdminPermission(normalizeAdminRole(claims?.role), permission)) {
+      throw createError({ statusCode: 403, statusMessage: "دسترسی مدیریت بازدید گروهی برای این حساب فعال نیست." });
+    }
     const parsed=adminSchema.safeParse(body);
     if(!parsed.success) throw createError({statusCode:422,statusMessage:"اطلاعات اوپن‌هاوس معتبر نیست."});
 

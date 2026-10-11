@@ -1,7 +1,8 @@
 import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
 import { z } from "zod";
-import { verifyAdminSessionToken, ADMIN_SESSION_COOKIE } from "@/lib/admin-session.server";
+import { verifyAdminSessionToken, getAdminSessionClaims, ADMIN_SESSION_COOKIE } from "@/lib/admin-session.server";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import {
   claimPartnerReward,
   createPartnerAccount,
@@ -17,7 +18,8 @@ import {
 } from "@/lib/partner-program.server";
 
 export default defineEventHandler(async (event) => {
-  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
+  const token = getCookie(event, ADMIN_SESSION_COOKIE);
+  if (!await verifyAdminSessionToken(token)) {
     throw createError({
       statusCode: 401,
       statusMessage: "نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.",
@@ -26,6 +28,10 @@ export default defineEventHandler(async (event) => {
 
   setResponseHeader(event, "cache-control", "no-store");
   assertSameOrigin(event);
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "commission.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "دسترسی مدیریت همکاری‌ها و پاداش‌ها برای این حساب فعال نیست." });
+  }
   const body = (await readBody(event).catch(() => ({}))) as {
     action?:
       | "list"

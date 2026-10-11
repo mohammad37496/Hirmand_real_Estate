@@ -1,5 +1,7 @@
-import { defineEventHandler } from "h3";
+import { createError, defineEventHandler, getCookie } from "h3";
 import { handleChunkedUpload } from "@/lib/chunked-upload.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import {
   ALLOWED_AUDIO_TYPE_SET,
   AUDIO_CHUNK_BYTES,
@@ -16,8 +18,16 @@ import {
  * being contacted, and a stuck upload always ends in a message that names the
  * failing step.
  */
-export default defineEventHandler((event) =>
-  handleChunkedUpload(event, {
+export default defineEventHandler(async (event) => {
+  const token = getCookie(event, ADMIN_SESSION_COOKIE);
+  if (!await verifyAdminSessionToken(token)) {
+    throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست." });
+  }
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "content.manage")) {
+    throw createError({ statusCode: 403, statusMessage: "دسترسی آپلود موسیقی برای این حساب فعال نیست." });
+  }
+  return handleChunkedUpload(event, {
     kind: "audio",
     pathPrefix: "music",
     maxBytes: MAX_AUDIO_BYTES,
@@ -45,5 +55,5 @@ export default defineEventHandler((event) =>
       });
       return { track };
     },
-  }),
-);
+  });
+});
