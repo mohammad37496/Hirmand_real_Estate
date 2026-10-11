@@ -66,8 +66,14 @@ const PROPERTY_FALLBACK_REMOTE_IMAGES: Partial<FallbackMap> = {
   ],
 };
 
-const PEXELS_FALLBACK_PATH_RE =
-  /^\/photos\/(6588599|11296221|6312353|6527027|6934188|6316055)\/pexels-photo-\\1\.jpeg$/i;
+const PEXELS_FALLBACK_PATHS = new Set([
+  "/photos/6588599/pexels-photo-6588599.jpeg",
+  "/photos/11296221/pexels-photo-11296221.jpeg",
+  "/photos/6312353/pexels-photo-6312353.jpeg",
+  "/photos/6527027/pexels-photo-6527027.jpeg",
+  "/photos/6934188/pexels-photo-6934188.jpeg",
+  "/photos/6316055/pexels-photo-6316055.jpeg",
+]);
 
 const LEGACY_FALLBACK_IMAGES: FallbackMap = {
   apartment: [
@@ -107,7 +113,7 @@ export function isPropertyFallbackImage(value: string) {
     const url = new URL(normalized, "https://hirmand.local");
     if (FALLBACK_PATH_RE.test(url.pathname)) return true;
     return url.hostname.toLowerCase() === "images.pexels.com" &&
-      PEXELS_FALLBACK_PATH_RE.test(url.pathname);
+      PEXELS_FALLBACK_PATHS.has(url.pathname);
   } catch {
     return FALLBACK_PATH_RE.test(normalized);
   }
