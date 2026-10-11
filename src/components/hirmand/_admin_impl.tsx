@@ -2135,7 +2135,7 @@ export function AdminPropertiesPage() {
               />
             </>
           ) : view === "managementReport" ? (
-            <AdminManagementReport />
+            <AdminManagementReport role={adminRole} />
           ) : (view as string) === "integrity" ? (
             <AdminDataHealth />
           ) : view === "deals" ? (

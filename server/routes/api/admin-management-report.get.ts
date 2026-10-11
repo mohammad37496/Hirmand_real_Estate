@@ -23,13 +23,21 @@ export default defineEventHandler(async (event) => {
     sql.query<Record<string,unknown>>("select coalesce(sum(amount) filter(where kind='income'),0)::numeric as income,coalesce(sum(amount) filter(where kind='expense'),0)::numeric as expense from finance_transactions where transaction_date >= current_date - ($1::int)",[days]),
     sql.query<Record<string,unknown>>("select consultant,count(*)::int as deals,coalesce(sum(amount),0)::numeric as volume from admin_deals where created_at >= current_timestamp - ($1::int * interval '1 day') and trim(consultant)<>'' group by consultant order by volume desc limit 10",[days]),
   ]);
-  const financeAllowed=hasAdminPermission(normalizeAdminRole(claims?.role),"finance.manage");
+  const role = normalizeAdminRole(claims?.role);
+  const financeAllowed = hasAdminPermission(role, "finance.manage");
+  const dealsAllowed = hasAdminPermission(role, "deal.manage");
   return {
     days,
     properties:{created:n(p[0]?.created),published:n(p[0]?.published),draft:n(p[0]?.draft),archived:n(p[0]?.archived)},
     leads:{created:n(l[0]?.created),open:n(l[0]?.open),contract:n(l[0]?.contract),closed:n(l[0]?.closed)},
-    deals:{created:n(d[0]?.created),completed:n(d[0]?.completed),contracted:n(d[0]?.contracted),volume:n(d[0]?.volume),commission:n(d[0]?.commission)},
+    deals:{
+      created:n(d[0]?.created),
+      completed:n(d[0]?.completed),
+      contracted:n(d[0]?.contracted),
+      volume: dealsAllowed ? n(d[0]?.volume) : 0,
+      commission: dealsAllowed ? n(d[0]?.commission) : 0,
+    },
     finance: financeAllowed ? {income:n(c[0]?.income),expense:n(c[0]?.expense),balance:n(c[0]?.income)-n(c[0]?.expense)} : null,
-    topConsultants: top.map(row=>({name:clean(row.consultant)||"بدون مشاور",deals:n(row.deals),volume:n(row.volume)})),
+    topConsultants: dealsAllowed ? top.map(row=>({name:clean(row.consultant)||"بدون مشاور",deals:n(row.deals),volume:n(row.volume)})) : [],
   };
 });
