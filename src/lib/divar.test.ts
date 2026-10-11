@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { extractDivarMediaUrls } from "./divar-media-utils.ts";
+import { getDivarAgencyReason } from "./divar-agency-filter.ts";
 import { findDivarCoordinates } from "./divar-coordinate-utils.ts";
 import { isDivarRemoteHost, mediaSourceCandidates } from "./media.ts";
 import type { DivarFile } from "./divar.ts";
@@ -80,6 +81,56 @@ test("partial Divar syncs are not labelled fully successful", () => {
       finishedAt: "2026-10-11T10:00:01.200Z",
     }),
     { className: "partial", label: "ناقص" },
+  );
+});
+
+
+/* -------------------------------------------------------------------------- */
+/* Agency / professional seller exclusion                                    */
+/* -------------------------------------------------------------------------- */
+
+test("agency filter catches Divar's machine-readable account types, including keys", () => {
+  assert.match(
+    getDivarAgencyReason({ widgets: [{ data: { "real-estate-business": true } }] }) ?? "",
+    /مشاور|آژانس|املاک/u,
+  );
+  assert.ok(getDivarAgencyReason({ advertiser: { type: "real_estate_business" } }));
+  assert.ok(getDivarAgencyReason({ seller_type: "real-estate-agent" }));
+});
+
+test("agency filter excludes agencies, departments, estate brands and consultants", () => {
+  const samples: unknown[] = [
+    { seller: { name: "آژانس املاک نقش جهان" } },
+    { advertiser_name: "دپارتمان املاک سپاهان" },
+    { profile: { title: "گروه مشاورین املاک اصفهان" } },
+    { seller_name: "املاک و مستغلات آریا" },
+    { seller_name: "محمد رضایی - مشاور املاک" },
+    { title: "دفتر مشاور املاک در اصفهان" },
+    { description: "ما یک دپارتمان تخصصی املاک هستیم" },
+    { description: "فعال در زمینه خرید و فروش ملک؛ مشاور املاک" },
+  ];
+  for (const sample of samples) {
+    assert.ok(getDivarAgencyReason(sample), `expected agency to be excluded: ${JSON.stringify(sample)}`);
+  }
+});
+
+test("agency filter allows owner ads that explicitly tell agents not to call", () => {
+  const samples: unknown[] = [
+    { seller_name: "علی رضایی", description: "لطفاً مشاور املاک تماس نگیرد" },
+    { seller_name: "مالک", description: "با آژانس و مشاور املاک تماس نگیرید؛ فایل شخصی است" },
+    { description: "مشاور املاک و بنگاه تماس نزنند" },
+  ];
+  for (const sample of samples) {
+    assert.equal(getDivarAgencyReason(sample), null, JSON.stringify(sample));
+  }
+});
+
+test("agency filter catches affiliation in seller metadata even when description says no agents", () => {
+  assert.ok(
+    getDivarAgencyReason({
+      seller: { name: "دپارتمان هیرمند", type: "real-estate-business" },
+      description: "مشاور املاک تماس نگیرد",
+    }),
   );
 });
 

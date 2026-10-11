@@ -9,6 +9,8 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-sessi
 import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
 import { isMoneyText, normalizeMoneyText } from "@/lib/property-input-normalization";
 import { extractDivarMediaUrls } from "./divar-media-utils";
+import { getDivarAgencyReason } from "./divar-agency-filter";
+export { getDivarAgencyReason } from "./divar-agency-filter";
 import { findDivarCoordinates } from "./divar-coordinate-utils";
 import { DIVAR_MAX_PUBLISHED_IMAGES } from "./divar-status";
 
@@ -179,24 +181,6 @@ function normalizeDivarText(value: unknown): string {
     .toLowerCase();
 }
 
-function collectStrings(value: unknown, out: string[] = [], depth = 0): string[] {
-  if (depth > 9 || out.length > 4000) return out;
-  if (typeof value === "string") {
-    if (value.trim()) out.push(value);
-    return out;
-  }
-  if (Array.isArray(value)) {
-    for (const item of value) collectStrings(item, out, depth + 1);
-    return out;
-  }
-  if (value && typeof value === "object") {
-    for (const item of Object.values(value as Record<string, unknown>)) {
-      collectStrings(item, out, depth + 1);
-    }
-  }
-  return out;
-}
-
 /** Divar serves listing photos from several rotating first-party CDN hosts. */
 function isDivarSourceUrl(value: string): boolean {
   return isDivarRemoteHost(value);
@@ -217,51 +201,6 @@ function firstStringByKey(value: unknown, pattern: RegExp, depth = 0): string | 
       if (nested) return nested;
     }
   }
-  return null;
-}
-
-export function getDivarAgencyReason(value: unknown): string | null {
-  const strings = collectStrings(value);
-  const normalizedPieces = strings
-    .map(normalizeDivarText)
-    .filter(Boolean);
-
-  const all = normalizedPieces.join("\n");
-
-  if (all.includes("real-estate-business")) {
-    return "نوع آگهی‌دهنده در داده دیوار «مشاور املاک» تشخیص داده شد.";
-  }
-
-  if (
-    /مشاور.{0,24}املاک.{0,40}(تماس نگیرید|تماس نگیرد|تماس نزن|زنگ نزن)/u.test(all) ||
-    /(تماس نگیرید|تماس نگیرد).{0,30}مشاور.{0,24}املاک/u.test(all)
-  ) {
-    return "عبارت مربوط به «مشاور املاک» یا منع تماس با مشاور در آگهی دیده شد.";
-  }
-
-  if (
-    all.includes("مشاوراملاک") ||
-    all.includes("مشاور املاک") ||
-    all.includes("دفتراملاک") ||
-    all.includes("دفتر املاک") ||
-    all.includes("بنگاهاملاک") ||
-    all.includes("بنگاه املاک") ||
-    all.includes("آژانساملاک") ||
-    all.includes("آژانس املاک")
-  ) {
-    return "نشانه صریح فعالیت مشاور/دفتر املاک در متن آگهی دیده شد.";
-  }
-
-  for (const piece of normalizedPieces) {
-    const compact = piece.replace(/\s+/g, "");
-    if (
-      /^(املاک|اژانس|آژانس|بنگاه)[\p{L}\p{N}]+/u.test(compact) ||
-      /^(املاک|اژانس|آژانس|بنگاه)[\s:：-]+[\p{L}\p{N}]/u.test(piece)
-    ) {
-      return "نام تجاری با الگوی «املاک ...» یا «آژانس ...» در اطلاعات آگهی دیده شد.";
-    }
-  }
-
   return null;
 }
 
