@@ -2,6 +2,7 @@ import { createError, defineEventHandler, getCookie } from "h3";
 import { handleChunkedUpload } from "@/lib/chunked-upload.server";
 import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
 import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
+import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 import {
   ALLOWED_AUDIO_TYPE_SET,
   AUDIO_CHUNK_BYTES,
@@ -27,6 +28,7 @@ export default defineEventHandler(async (event) => {
   if (!hasAdminPermission(normalizeAdminRole(claims?.role), "content.manage")) {
     throw createError({ statusCode: 403, statusMessage: "دسترسی آپلود موسیقی برای این حساب فعال نیست." });
   }
+  assertSameOrigin(event);
   return handleChunkedUpload(event, {
     kind: "audio",
     pathPrefix: "music",
