@@ -545,6 +545,23 @@
   box-shadow: 0 8px 20px rgba(18, 58, 90, .13);
 }
 
+.property-gallery-sample-label {
+  position: absolute;
+  z-index: 3;
+  top: 14px;
+  left: 14px;
+  max-width: calc(50% - 4px);
+  padding: 6px 10px;
+  border: 1px solid rgba(18, 58, 90, .12);
+  border-radius: 999px;
+  background: rgba(255, 252, 246, .94);
+  color: var(--pd-navy);
+  font-size: .7rem;
+  font-weight: 800;
+  line-height: 1.5;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .1);
+}
+
 .property-gallery-counter {
   left: 14px;
   bottom: 14px;
