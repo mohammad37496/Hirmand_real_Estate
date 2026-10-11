@@ -1,13 +1,19 @@
 import { createError, defineEventHandler, getCookie, setResponseHeader, type H3Event } from "h3";
 import { dbSource, getSql } from "@/lib/db";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
 
 async function requireAdmin(event: H3Event) {
-  if (!await verifyAdminSessionToken(getCookie(event, ADMIN_SESSION_COOKIE))) {
+  const token = getCookie(event, ADMIN_SESSION_COOKIE);
+  if (!await verifyAdminSessionToken(token)) {
     throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست." });
   }
   assertSameOrigin(event);
+  const claims = await getAdminSessionClaims(token);
+  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "reports.view")) {
+    throw createError({ statusCode: 403, statusMessage: "دسترسی گزارش تقاضای محله‌ها برای این حساب فعال نیست." });
+  }
 }
 
 export default defineEventHandler(async (event) => {
