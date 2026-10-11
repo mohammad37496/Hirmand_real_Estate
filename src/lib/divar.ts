@@ -937,28 +937,79 @@ export const listDivarFiles = createServerFn({ method: "POST" })
     await requireAdmin();
     if (dbSource === "unconfigured") return [];
     const sql = await getSql();
-    const rows = await sql.query<Record<string, unknown>>(
-      `select divar_files.*,
-              p.slug as imported_property_slug,
-              p.images as published_images,
-              case
-                when jsonb_typeof(coalesce(divar_files.images, '[]'::jsonb)) = 'array'
-                  then jsonb_array_length(coalesce(divar_files.images, '[]'::jsonb))
-                else 0
-              end as source_image_count,
-              case
-                when jsonb_typeof(coalesce(p.images, '[]'::jsonb)) = 'array'
-                  then jsonb_array_length(coalesce(p.images, '[]'::jsonb))
-                else 0
-              end as published_image_count
-       from divar_files
-       left join properties p on p.id = divar_files.imported_property_id
-       where divar_files.filter_status = $1
-       order by divar_files.last_seen_at desc, divar_files.created_at desc
-       limit $2 offset $3`,
-      [data.status, data.limit, data.offset],
-    );
-    return rows.map(mapRow);
+    const fetchRows = async (limit: number, offset: number) =>
+      sql.query<Record<string, unknown>>(
+        `select divar_files.*,
+                p.slug as imported_property_slug,
+                p.images as published_images,
+                case
+                  when jsonb_typeof(coalesce(divar_files.images, '[]'::jsonb)) = 'array'
+                    then jsonb_array_length(coalesce(divar_files.images, '[]'::jsonb))
+                  else 0
+                end as source_image_count,
+                case
+                  when jsonb_typeof(coalesce(p.images, '[]'::jsonb)) = 'array'
+                    then jsonb_array_length(coalesce(p.images, '[]'::jsonb))
+                  else 0
+                end as published_image_count
+         from divar_files
+         left join properties p on p.id = divar_files.imported_property_id
+         where divar_files.filter_status = $1
+         order by divar_files.last_seen_at desc, divar_files.created_at desc
+         limit $2 offset $3`,
+        [data.status, limit, offset],
+      );
+
+    if (data.status !== "accepted") {
+      return (await fetchRows(data.limit, data.offset)).map(mapRow);
+    }
+
+    // Older accepted rows may have been stored before the stricter seller
+    // filter existed. Re-check each accepted batch as it is opened, persist
+    // matches in the rejected queue, and keep fetching until the requested
+    // number of eligible rows is filled.
+    const eligibleRows: Record<string, unknown>[] = [];
+    while (eligibleRows.length < data.limit) {
+      const take = Math.min(data.limit - eligibleRows.length, 100);
+      const batch = await fetchRows(take, data.offset + eligibleRows.length);
+      if (batch.length === 0) break;
+
+      const classified = batch.map((row) => ({
+        row,
+        reason: Boolean(row.manual_override)
+          ? null
+          : getDivarAgencyReason({
+              title: row.title,
+              description: row.description,
+              seller_name: row.seller_name,
+              seller_type: row.seller_type,
+              source_url: row.source_url,
+            }),
+      }));
+      const rejected = classified.filter(
+        (item): item is { row: Record<string, unknown>; reason: string } =>
+          Boolean(item.reason),
+      );
+
+      if (rejected.length > 0) {
+        await sql.query(
+          `update divar_files as file
+              set filter_status = 'rejected',
+                  reject_reason = flagged.reason,
+                  updated_at = current_timestamp
+            from unnest($1::text[], $2::text[]) as flagged(id, reason)
+           where file.id = flagged.id
+             and file.filter_status = 'accepted'
+             and file.manual_override = false`,
+          [rejected.map(({ row }) => String(row.id)), rejected.map(({ reason }) => reason)],
+        );
+      }
+
+      eligibleRows.push(...classified.filter((item) => !item.reason).map((item) => item.row));
+      if (batch.length < take) break;
+    }
+
+    return eligibleRows.map(mapRow);
   });
 
 export const getDivarStats = createServerFn({ method: "POST" })
