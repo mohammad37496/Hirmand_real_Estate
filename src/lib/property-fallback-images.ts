@@ -76,6 +76,14 @@ const PEXELS_FALLBACK_PATHS = new Set([
   "/photos/6316055/pexels-photo-6316055.jpeg",
 ]);
 
+const LOCAL_CATEGORY_FALLBACK_PATHS = new Set([
+  "/images/type-apartment.jpg",
+  "/images/type-villa.jpg",
+  "/images/type-office.jpg",
+  "/images/type-heritage.jpg",
+  "/images/isfahan-arch.jpg",
+]);
+
 const LEGACY_FALLBACK_IMAGES: FallbackMap = {
   apartment: [
     "/images/fallback/apartment-01.svg",
@@ -113,6 +121,7 @@ export function isPropertyFallbackImage(value: string) {
   try {
     const url = new URL(normalized, "https://hirmand.local");
     if (FALLBACK_PATH_RE.test(url.pathname)) return true;
+    if (LOCAL_CATEGORY_FALLBACK_PATHS.has(url.pathname)) return true;
     return url.hostname.toLowerCase() === "images.pexels.com" &&
       PEXELS_FALLBACK_PATHS.has(url.pathname);
   } catch {
