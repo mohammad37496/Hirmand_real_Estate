@@ -2087,8 +2087,8 @@ export function AdminPropertiesPage() {
             <AdminCommandPalette
               items={visibleNavItems.map((item) => ({ id: item.view, label: item.label }))}
               onSelect={(id) => navigateTo(id as ViewMode)}
-              onNewProperty={startNew}
-              onRefresh={() => void refresh()}
+              onNewProperty={canManageProperties ? startNew : undefined}
+              onRefresh={canManageProperties ? () => void refresh() : undefined}
             />
             {view === "dashboard" || view === "list" ? (
               canManageProperties ? (

@@ -6,8 +6,8 @@ type Item = { id: string; label: string; description?: string };
 export function AdminCommandPalette(props: {
   items: Item[];
   onSelect: (id: string) => void;
-  onNewProperty: () => void;
-  onRefresh: () => void;
+  onNewProperty?: () => void;
+  onRefresh?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -63,12 +63,16 @@ export function AdminCommandPalette(props: {
               <button type="button" className="admin-icon-btn" onClick={() => setOpen(false)} aria-label="بستن"><X size={16}/></button>
             </div>
             <div style={{ display: "grid", gap: 4, padding: 8 }}>
-              <button type="button" className="admin-nav-btn" style={{ color: "var(--navy-900,#253744)", background: "var(--surface-2,#f7f5f0)" }} onClick={() => { setOpen(false); props.onNewProperty(); }}>
-                افزودن فایل جدید
-              </button>
-              <button type="button" className="admin-nav-btn" style={{ color: "var(--navy-900,#253744)" }} onClick={() => { setOpen(false); props.onRefresh(); }}>
-                به‌روزرسانی داده‌ها
-              </button>
+              {props.onNewProperty ? (
+                <button type="button" className="admin-nav-btn" style={{ color: "var(--navy-900,#253744)", background: "var(--surface-2,#f7f5f0)" }} onClick={() => { setOpen(false); props.onNewProperty?.(); }}>
+                  افزودن فایل جدید
+                </button>
+              ) : null}
+              {props.onRefresh ? (
+                <button type="button" className="admin-nav-btn" style={{ color: "var(--navy-900,#253744)" }} onClick={() => { setOpen(false); props.onRefresh?.(); }}>
+                  به‌روزرسانی داده‌ها
+                </button>
+              ) : null}
               {matches.map((item) => (
                 <button key={item.id} type="button" className="admin-nav-btn" style={{ color: "var(--navy-900,#253744)" }} onClick={() => choose(item.id)}>
                   <span style={{ display: "block", fontWeight: 900 }}>{item.label}</span>
