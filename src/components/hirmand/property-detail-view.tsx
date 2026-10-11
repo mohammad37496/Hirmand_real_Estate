@@ -682,12 +682,21 @@ function ResilientImage({
   const [failed, setFailed] = useState(false);
   const [legacyMode, setLegacyMode] = useState(false);
   const current = candidates[Math.min(attempt, Math.max(0, candidates.length - 1))] ?? fallback;
+  const sourceLegacyFallback = src.startsWith("/images/fallback/")
+    ? src.replace(/\.(?:jpe?g|webp|avif)$/i, ".svg")
+    : "";
+  const fallbackLegacyImage =
+    sourceLegacyFallback ||
+    fallbackLegacy ||
+    (fallback.startsWith("/images/fallback/")
+      ? fallback.replace(/\.(?:jpe?g|webp|avif)$/i, ".svg")
+      : "");
 
   if (failed) {
-    if (fallbackLegacy) {
+    if (fallbackLegacyImage) {
       return (
         <img
-          src={fallbackLegacy}
+          src={fallbackLegacyImage}
           alt={alt}
           className={className}
           loading={loading}
@@ -712,10 +721,6 @@ function ResilientImage({
     usingLocalRasterFallback && /\.webp$/i.test(fallback)
       ? fallback.replace(/\.webp$/i, ".avif")
       : "";
-  const fallbackLegacyImage =
-    fallbackLegacy ??
-    (fallback.startsWith("/images/fallback/") ? fallback.replace(/\.(?:webp|avif)$/i, ".svg") : fallback);
-
   return (
     <picture>
       {usingLocalRasterFallback && !legacyMode && fallbackAvif ? (
@@ -950,6 +955,9 @@ function Gallery({
           </button>
 
           <div className="property-gallery-overlays">
+            {current.startsWith("/images/fallback/") ? (
+              <span className="property-gallery-sample-label">تصویر نمونه</span>
+            ) : null}
             {featured ? <span className="property-gallery-featured">فایل ویژه</span> : null}
             {images.length > 1 ? (
               <span className="property-gallery-counter" aria-live="polite">
