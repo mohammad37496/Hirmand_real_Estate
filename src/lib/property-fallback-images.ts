@@ -52,29 +52,6 @@ export const PROPERTY_FALLBACK_IMAGES: FallbackMap = {
   ],
 };
 
-// Direct, licensed Pexels interior photos let the property-detail gallery
-// display natural photography even when the build runner cannot reach image CDNs.
-// Locally generated JPEGs remain the second-line fallback for these remote sources.
-const PROPERTY_FALLBACK_REMOTE_IMAGES: Partial<FallbackMap> = {
-  apartment: [
-    "https://images.pexels.com/photos/6588599/pexels-photo-6588599.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "https://images.pexels.com/photos/11296221/pexels-photo-11296221.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "https://images.pexels.com/photos/6312353/pexels-photo-6312353.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "https://images.pexels.com/photos/6527027/pexels-photo-6527027.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "https://images.pexels.com/photos/6934188/pexels-photo-6934188.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    "https://images.pexels.com/photos/6316055/pexels-photo-6316055.jpeg?auto=compress&cs=tinysrgb&w=1600",
-  ],
-};
-
-const PEXELS_FALLBACK_PATHS = new Set([
-  "/photos/6588599/pexels-photo-6588599.jpeg",
-  "/photos/11296221/pexels-photo-11296221.jpeg",
-  "/photos/6312353/pexels-photo-6312353.jpeg",
-  "/photos/6527027/pexels-photo-6527027.jpeg",
-  "/photos/6934188/pexels-photo-6934188.jpeg",
-  "/photos/6316055/pexels-photo-6316055.jpeg",
-]);
-
 const LEGACY_FALLBACK_IMAGES: FallbackMap = {
   apartment: [
     "/images/fallback/apartment-01.svg",
@@ -128,9 +105,9 @@ function stableIndex(value: string, length: number) {
 }
 
 export function getPropertyFallbackImages(propertyType: PropertyType) {
-  return PROPERTY_FALLBACK_REMOTE_IMAGES[propertyType] ??
-    PROPERTY_FALLBACK_IMAGES[propertyType] ??
-    PROPERTY_FALLBACK_IMAGES.apartment;
+  // Use self-hosted files first. External placeholder CDNs can be blocked or
+  // rate-limited in the visitor's network, which must not blank the main gallery.
+  return PROPERTY_FALLBACK_IMAGES[propertyType] ?? PROPERTY_FALLBACK_IMAGES.apartment;
 }
 
 export function getPropertyFallbackImage(propertyType: PropertyType, propertyId: string) {
