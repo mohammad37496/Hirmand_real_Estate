@@ -976,7 +976,7 @@ export const listDivarFiles = createServerFn({ method: "POST" })
 
       const classified = batch.map((row) => ({
         row,
-        reason: Boolean(row.manual_override)
+        reason: row.manual_override
           ? null
           : getDivarAgencyReason({
               title: row.title,
