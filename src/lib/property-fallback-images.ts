@@ -52,6 +52,23 @@ export const PROPERTY_FALLBACK_IMAGES: FallbackMap = {
   ],
 };
 
+// Direct, licensed Pexels interior photos let the property-detail gallery
+// display natural photography even when the build runner cannot reach image CDNs.
+// Locally generated JPEGs remain the second-line fallback for these remote sources.
+const PROPERTY_FALLBACK_REMOTE_IMAGES: Partial<FallbackMap> = {
+  apartment: [
+    "https://images.pexels.com/photos/6588599/pexels-photo-6588599.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "https://images.pexels.com/photos/11296221/pexels-photo-11296221.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "https://images.pexels.com/photos/6312353/pexels-photo-6312353.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "https://images.pexels.com/photos/6527027/pexels-photo-6527027.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "https://images.pexels.com/photos/6934188/pexels-photo-6934188.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "https://images.pexels.com/photos/6316055/pexels-photo-6316055.jpeg?auto=compress&cs=tinysrgb&w=1600",
+  ],
+};
+
+const PEXELS_FALLBACK_PATH_RE =
+  /^\/photos\/(6588599|11296221|6312353|6527027|6934188|6316055)\/pexels-photo-\\1\.jpeg$/i;
+
 const LEGACY_FALLBACK_IMAGES: FallbackMap = {
   apartment: [
     "/images/fallback/apartment-01.svg",
@@ -87,8 +104,10 @@ export function isPropertyFallbackImage(value: string) {
   if (!normalized) return false;
 
   try {
-    const pathname = new URL(normalized, "https://hirmand.local").pathname;
-    return FALLBACK_PATH_RE.test(pathname);
+    const url = new URL(normalized, "https://hirmand.local");
+    if (FALLBACK_PATH_RE.test(url.pathname)) return true;
+    return url.hostname.toLowerCase() === "images.pexels.com" &&
+      PEXELS_FALLBACK_PATH_RE.test(url.pathname);
   } catch {
     return FALLBACK_PATH_RE.test(normalized);
   }
@@ -103,11 +122,15 @@ function stableIndex(value: string, length: number) {
 }
 
 export function getPropertyFallbackImages(propertyType: PropertyType) {
-  return PROPERTY_FALLBACK_IMAGES[propertyType] ?? PROPERTY_FALLBACK_IMAGES.apartment;
+  return PROPERTY_FALLBACK_REMOTE_IMAGES[propertyType] ??
+    PROPERTY_FALLBACK_IMAGES[propertyType] ??
+    PROPERTY_FALLBACK_IMAGES.apartment;
 }
 
 export function getPropertyFallbackImage(propertyType: PropertyType, propertyId: string) {
-  const images = getPropertyFallbackImages(propertyType);
+  // Keep the compact single-image/card fallback local; the detail gallery uses
+  // getPropertyFallbackImages() to try the curated remote set first.
+  const images = PROPERTY_FALLBACK_IMAGES[propertyType] ?? PROPERTY_FALLBACK_IMAGES.apartment;
   return images[stableIndex(propertyId || propertyType, images.length)] ?? images[0];
 }
 
