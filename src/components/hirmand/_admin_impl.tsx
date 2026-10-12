@@ -1083,7 +1083,7 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
       setLoginNotice(null);
       setUnlocked(true);
 
-      if (showToast) toast.success("ورود به پنل مدیریت موفق بود.");
+      if (showToast) toast.success(staffMode ? "ورود به پنل کارکنان موفق بود." : "ورود به پنل مدیریت موفق بود.");
     } catch (error) {
       setUnlocked(false);
       toast.error(adminErrorMessage(error, loginMode === "key" ? "کلید مدیریت نادرست است." : "نام کاربری یا رمز عبور نادرست است."));
@@ -1770,8 +1770,8 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
         <style dangerouslySetInnerHTML={{ __html: ADMIN_CSS }} />
         <div className="admin-login-card">
           <span className="kicker">پنل داخلی هیرمند</span>
-          <h1>در حال بررسی نشست</h1>
-          <p>اعتبار نشست مدیریت بررسی می‌شود…</p>
+          <h1>{staffMode ? "در حال بررسی نشست کارمند" : "در حال بررسی نشست"}</h1>
+          <p>{staffMode ? "اعتبار حساب کارکنان بررسی می‌شود…" : "اعتبار نشست مدیریت بررسی می‌شود…"}</p>
           <div style={{ display: "grid", gap: 10, marginTop: 20 }} aria-hidden="true">
             <span className="admin-skeleton admin-skeleton-line" style={{ width: "100%", height: 14 }} />
             <span className="admin-skeleton admin-skeleton-line" style={{ width: "70%", height: 14 }} />
@@ -1838,7 +1838,7 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
             </button>
           </form>
           <p style={{ marginTop: 14, fontSize: ".78rem" }}>
-            برای ساخت اولین حساب مستقل، با کلید اصلی وارد شوید و از «امنیت مدیران» یک حساب بسازید.
+            {staffMode ? "اطلاعات ورود را از مدیر هیرمند دریافت کنید. ساخت و مدیریت حساب کارکنان فقط در اختیار مدیر است." : "برای ساخت اولین حساب مستقل، با کلید اصلی وارد شوید و از «امنیت مدیران» یک حساب بسازید."}
           </p>
           <div style={{ marginTop: 16, textAlign: "center" }}>
             <Link to="/" className="btn-ghost">
@@ -1933,17 +1933,19 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
         </nav>
         <div className="admin-sidebar-foot">
           <div className="admin-sidebar-foot-label">اقدامات سریع</div>
-          <button
-            type="button"
-            className="admin-nav-btn"
-            onClick={() => void refresh()}
-            disabled={loadingList}
-          >
-            <span className="admin-nav-btn-icon" aria-hidden="true">
-              <RefreshCw size={18} className={loadingList ? "admin-spin" : undefined} />
-            </span>
-            <span className="admin-nav-btn-label">به‌روزرسانی</span>
-          </button>
+          {canManageProperties ? (
+            <button
+              type="button"
+              className="admin-nav-btn"
+              onClick={() => void refresh()}
+              disabled={loadingList}
+            >
+              <span className="admin-nav-btn-icon" aria-hidden="true">
+                <RefreshCw size={18} className={loadingList ? "admin-spin" : undefined} />
+              </span>
+              <span className="admin-nav-btn-label">به‌روزرسانی</span>
+            </button>
+          ) : null}
           <Link to="/" className="admin-nav-btn">
             <span className="admin-nav-btn-icon" aria-hidden="true"><Home size={18} /></span>
             <span className="admin-nav-btn-label">مشاهده سایت</span>
