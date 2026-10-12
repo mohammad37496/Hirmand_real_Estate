@@ -26,9 +26,9 @@ jobs:
       - name: Install Liara CLI
         run: npm i -g @liara/cli@9
 
-      # Liara's 404 "Could not find the app" usually means the token is scoped
-      # to a different account/team, or the app ID differs. List visible apps
-      # before deployment so the run log shows what this credential can access.
+      # A 404 "Could not find the app" means the token cannot see that app ID,
+      # or the app belongs to a team that was not selected. List visible apps
+      # before deployment to make the account/team scope diagnosable.
       - name: Verify Liara credentials and list visible apps
         env:
           LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
@@ -66,15 +66,15 @@ jobs:
             TEAM_ARGS+=(--team-id="${LIARA_TEAM_ID}")
           fi
 
-          liara deploy
-          --app="hirmand"
-          --api-token="${LIARA_TOKEN}"
-          "${TEAM_ARGS[@]}"
-          --build-location="germany"
-          --port="3000"
-          --no-app-logs
-          --message="Deploy ${GITHUB_SHA::7} from ${GITHUB_REF_NAME}"
-          --debug
+          liara deploy \
+            --app="hirmand" \
+            --api-token="${LIARA_TOKEN}" \
+            "${TEAM_ARGS[@]}" \
+            --build-location="germany" \
+            --port="3000" \
+            --no-app-logs \
+            --message="Deploy ${GITHUB_SHA::7} from ${GITHUB_REF_NAME}" \
+            --debug
 
       - name: Diagnose Liara runtime on failure
         if: failure()
@@ -88,10 +88,10 @@ jobs:
           if [[ -n "${LIARA_TEAM_ID:-}" ]]; then
             TEAM_ARGS+=(--team-id="${LIARA_TEAM_ID}")
           fi
-          liara app logs
-          --app="hirmand"
-          --api-token="${LIARA_TOKEN}"
-          "${TEAM_ARGS[@]}"
-          --timestamps
-          --last-lines
-          --since="30 minutes ago"
+          liara app logs \
+            --app="hirmand" \
+            --api-token="${LIARA_TOKEN}" \
+            "${TEAM_ARGS[@]}" \
+            --timestamps \
+            --last-lines \
+            --since="30 minutes ago"
