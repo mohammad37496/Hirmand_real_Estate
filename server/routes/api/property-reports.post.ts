@@ -2,7 +2,7 @@ import { createError, defineEventHandler, getCookie, readBody, setResponseHeader
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
-import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
+import { assertSameOrigin, clientFingerprint, consumeAdminAttempt, tooManyAttemptsError } from "@/lib/admin-rate-limit.server";
 import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 
 const VISITOR_COOKIE = "hirmand_visitor_id";
@@ -40,6 +40,10 @@ export default defineEventHandler(async (event) => {
   const wantsAdmin = action === "list" || action === "updateStatus";
 
   if (!wantsAdmin) {
+    assertSameOrigin(event);
+    const attempt = await consumeAdminAttempt("property-report:" + clientFingerprint(event));
+    if (!attempt.allowed) throw tooManyAttemptsError(attempt.retryAfterSeconds);
+
     if (dbSource === "unconfigured") {
       throw createError({ statusCode: 503, statusMessage: "پایگاه داده تنظیم نشده است." });
     }
