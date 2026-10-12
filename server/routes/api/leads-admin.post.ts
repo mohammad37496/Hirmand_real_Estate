@@ -101,6 +101,9 @@ export default defineEventHandler(async (event) => {
   if (currentRole === "staff" && body.action === "delete") {
     throw createError({ statusCode: 403, statusMessage: "کارکنان اجازه حذف درخواست‌های مشتری را ندارند." });
   }
+  if (currentRole === "staff" && body.action === "export") {
+    throw createError({ statusCode: 403, statusMessage: "خروجی‌گیری انبوه از اطلاعات مشتریان فقط برای مدیر مجاز است." });
+  }
   if (!hasAdminPermission(currentRole, "lead.manage")) {
     throw createError({ statusCode: 403, statusMessage: "سطح دسترسی CRM برای این حساب فعال نیست." });
   }
