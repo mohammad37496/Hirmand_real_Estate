@@ -1489,7 +1489,7 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
           transactionType: form.transactionType,
           propertyType: form.propertyType,
           neighborhood: form.neighborhood.trim(),
-          address: form.address.trim() || undefined,
+          address: staffMode ? undefined : form.address.trim() || undefined,
           areaM2: numberOrNull(form.areaM2),
           bedrooms: numberOrNull(form.bedrooms),
           bathrooms: numberOrNull(form.bathrooms),
@@ -1519,9 +1519,9 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
           floorPlanUrl: form.floorPlanUrl.trim(),
           contactName: form.contactName.trim(),
           contactPhone: form.contactPhone.trim(),
-          ownerName: form.ownerName.trim(),
-          ownerPhone: form.ownerPhone.trim(),
-          ownerInfo: form.ownerInfo.trim(),
+          ownerName: staffMode ? "" : form.ownerName.trim(),
+          ownerPhone: staffMode ? "" : form.ownerPhone.trim(),
+          ownerInfo: staffMode ? "" : form.ownerInfo.trim(),
           latitude: form.latitude,
           longitude: form.longitude,
           virtualTourUrl: form.virtualTourUrl.trim(),
@@ -2647,7 +2647,7 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
                 <a href="#section-location">موقعیت</a>
                 <a href="#section-media">رسانه</a>
                 <a href="#section-publish">مشاور و انتشار</a>
-                <a href="#section-owner">اطلاعات صاحب فایل</a>
+                {!staffMode ? <a href="#section-owner">اطلاعات صاحب فایل</a> : null}
                 {form.id ? <a href="#section-performance">عملکرد</a> : null}
                 {form.id ? <a href="#section-history">تاریخچه</a> : null}
               </nav>
@@ -2706,16 +2706,18 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
                         ))}
                       </datalist>
                     </label>
-                    <label className="field">
-                      <span>آدرس دقیق (فقط مدیریت)</span>
-                      <input
-                        value={form.address}
-                        onChange={(e) => update("address", e.target.value)}
-                      />
-                      <small style={{ display: "block", marginTop: 5, color: "var(--muted)", fontSize: ".72rem", lineHeight: 1.8 }}>
-                        این آدرس برای اطلاعات داخلی فایل است و در صفحه عمومی ملک نمایش داده نمی‌شود.
-                      </small>
-                    </label>
+                    {!staffMode ? (
+                      <label className="field">
+                        <span>آدرس دقیق (فقط مدیریت)</span>
+                        <input
+                          value={form.address}
+                          onChange={(e) => update("address", e.target.value)}
+                        />
+                        <small style={{ display: "block", marginTop: 5, color: "var(--muted)", fontSize: ".72rem", lineHeight: 1.8 }}>
+                          این آدرس برای اطلاعات داخلی فایل است و در صفحه عمومی ملک نمایش داده نمی‌شود.
+                        </small>
+                      </label>
+                    ) : null}
                     <label className="field admin-span-2">
                       <span>توضیحات</span>
                       <textarea
@@ -3196,8 +3198,9 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
                   </div>
                 </fieldset>
 
-                <fieldset className="admin-section admin-owner-section" id="section-owner">
-                  <legend>اطلاعات صاحب فایل — خصوصی</legend>
+                {!staffMode ? (
+                  <fieldset className="admin-section admin-owner-section" id="section-owner">
+                    <legend>اطلاعات صاحب فایل — خصوصی</legend>
                   <div className="admin-private-notice">
                     این بخش فقط برای مدیریت هیرمند است و اطلاعات صاحب فایل در صفحه عمومی ملک یا کارت فایل نمایش داده نمی‌شود.
                   </div>
@@ -3232,7 +3235,8 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
                       />
                     </label>
                   </div>
-                </fieldset>
+                  </fieldset>
+                ) : null}
 
               {form.id ? <div id="section-performance"><AdminPropertyPerformance propertyId={form.id} /></div> : null}
               {form.id ? <AdminPropertyPriceHistory propertyId={form.id} /> : null}
