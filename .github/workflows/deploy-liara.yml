@@ -20,8 +20,9 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # The upload, build and release finish in about five minutes.
-    timeout-minutes: 20
+    # Liara's remote build exceeded the old 20-minute job limit; allow time for the provider
+    # to finish or return a real deployment error instead of silently cancelling mid-build.
+    timeout-minutes: 45
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
