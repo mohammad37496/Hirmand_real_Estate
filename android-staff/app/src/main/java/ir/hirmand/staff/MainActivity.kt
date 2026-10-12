@@ -95,6 +95,25 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         if (permissionCenterVisible) {
             renderPermissionCenter()
+            return
+        }
+
+        if (isAgreementAccepted() && registeredStaff() != null) {
+            StaffTelemetry.enqueuePermissionState(this, StaffPermissionTelemetry.snapshot(this))
+            startLocationTrackingIfAllowed()
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 9101) {
+            StaffTelemetry.enqueuePermissionState(this, StaffPermissionTelemetry.snapshot(this))
+            startLocationTrackingIfAllowed()
+            if (permissionCenterVisible) renderPermissionCenter()
         }
     }
 
@@ -123,6 +142,8 @@ class MainActivity : AppCompatActivity() {
                 onClose = {
                     permissionCenterVisible = false
                     setContentView(buildHome())
+                    StaffTelemetry.enqueuePermissionState(this, StaffPermissionTelemetry.snapshot(this))
+                    startLocationTrackingIfAllowed()
                 },
             ).buildView()
         )
@@ -203,8 +224,28 @@ class MainActivity : AppCompatActivity() {
             }
             else -> {
                 setContentView(buildHome())
+                startLocationTrackingIfAllowed()
                 syncRegisteredDevice()
             }
+        }
+    }
+
+    private fun startLocationTrackingIfAllowed() {
+        if (!isAgreementAccepted() || registeredStaff() == null) {
+            StaffLocationTrackingService.stop(this)
+            return
+        }
+
+        if (preferences.getString(PREF_DEVICE_STATUS, null) != "active") {
+            StaffLocationTrackingService.stop(this)
+            return
+        }
+
+        val locationReady = StaffPermissionTelemetry.snapshot(this).optBoolean("location", false)
+        if (locationReady) {
+            runCatching { StaffLocationTrackingService.start(this) }
+        } else {
+            StaffLocationTrackingService.stop(this)
         }
     }
 
@@ -610,7 +651,9 @@ class MainActivity : AppCompatActivity() {
                 }
                 editor.apply()
                 StaffTelemetry.schedulePeriodicSync(this)
+                StaffTelemetry.enqueuePermissionState(this, StaffPermissionTelemetry.snapshot(this))
                 StaffTelemetry.enqueueHeartbeat(this)
+                startLocationTrackingIfAllowed()
             }
 
             runOnUiThread {

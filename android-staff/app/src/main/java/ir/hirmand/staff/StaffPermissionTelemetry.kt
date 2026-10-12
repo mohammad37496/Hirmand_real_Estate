@@ -15,8 +15,12 @@ import org.json.JSONObject
 object StaffPermissionTelemetry {
     fun snapshot(context: Context): JSONObject {
         val management = DeviceOwnerManager.state(context)
+        val prefs = context.getSharedPreferences("hirmand_staff", Context.MODE_PRIVATE)
+        val agreementAccepted =
+            prefs.getString("accepted_agreement_version", null) == "1.1"
         return JSONObject()
             .put("managementMode", management.mode.name.lowercase())
+            .put("agreementAccepted", agreementAccepted)
             .put("location", locationGrantedAndEnabled(context))
             .put("camera", runtimeGranted(context, Manifest.permission.CAMERA))
             .put("microphone", runtimeGranted(context, Manifest.permission.RECORD_AUDIO))

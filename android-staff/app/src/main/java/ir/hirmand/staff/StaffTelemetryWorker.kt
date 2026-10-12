@@ -14,6 +14,10 @@ class StaffTelemetryWorker(
             return Result.success()
         }
 
+        StaffTelemetry.enqueuePermissionState(
+            applicationContext,
+            StaffPermissionTelemetry.snapshot(applicationContext),
+        )
         StaffTelemetry.enqueueHeartbeat(applicationContext)
         val ok = StaffTelemetry.flush(applicationContext)
 
