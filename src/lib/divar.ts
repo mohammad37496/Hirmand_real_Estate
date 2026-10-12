@@ -5,7 +5,8 @@ import { SITE, TEAM } from "@/lib/site";
 import { dbSource, getSql, type Sql } from "@/lib/db";
 import { storeMedia } from "@/lib/media-store.server";
 import { detectRasterImageType, isAllowedDivarImageUrl, isDivarRemoteHost } from "@/lib/media";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
 import { isMoneyText, normalizeMoneyText } from "@/lib/property-input-normalization";
 import { extractDivarMediaUrls } from "./divar-media-utils";
@@ -155,11 +156,17 @@ function requireAdminSync() {
  * the TanStack Start import-protection plugin rejects that at build time.
  */
 async function requireAdmin() {
-  if (await verifyAdminSessionToken(requireAdminSync())) {
-    assertAdminServerFnOrigin();
-    return;
+  const token = requireAdminSync();
+  if (!(await verifyAdminSessionToken(token))) {
+    throw new Error("نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.");
   }
-  throw new Error("نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.");
+  assertAdminServerFnOrigin();
+  const claims = await getAdminSessionClaims(token);
+  const role = normalizeAdminRole(claims?.role);
+  if (!hasAdminPermission(role, "divar.import")) {
+    throw new Error("دسترسی دریافت فایل‌های دیوار برای این حساب فعال نیست.");
+  }
+  return claims;
 }
 
 function faToEn(value: string) {
