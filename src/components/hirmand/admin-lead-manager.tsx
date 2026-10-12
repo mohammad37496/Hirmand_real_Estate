@@ -152,7 +152,7 @@ function amenityLabel(value: string) {
 
 const PAGE_SIZE = 25;
 
-export function AdminLeadManager() {
+export function AdminLeadManager({ staffMode = false }: { staffMode?: boolean } = {}) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -860,16 +860,18 @@ export function AdminLeadManager() {
                   >
                     <NotebookPen size={16} />
                   </button>
-                  <button
-                    type="button"
-                    className="admin-icon-btn danger"
-                    title="حذف درخواست"
-                    aria-label={"حذف درخواست " + lead.name}
-                    disabled={busyId === lead.id}
-                    onClick={() => void remove(lead.id, lead.name)}
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  {!staffMode ? (
+                    <button
+                      type="button"
+                      className="admin-icon-btn danger"
+                      title="حذف درخواست"
+                      aria-label={"حذف درخواست " + lead.name}
+                      disabled={busyId === lead.id}
+                      onClick={() => void remove(lead.id, lead.name)}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  ) : null}
                 </div>
               </article>
             ))}
