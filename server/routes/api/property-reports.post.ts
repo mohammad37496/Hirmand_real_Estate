@@ -26,7 +26,6 @@ async function requireAdmin(event: H3Event) {
   if (!await verifyAdminSessionToken(token)) {
     throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست." });
   }
-  assertSameOrigin(event);
   const claims = await getAdminSessionClaims(token);
   if (!hasAdminPermission(normalizeAdminRole(claims?.role), "property.manage")) {
     throw createError({ statusCode: 403, statusMessage: "دسترسی مدیریت گزارش‌های فایل برای این حساب فعال نیست." });
@@ -35,12 +34,12 @@ async function requireAdmin(event: H3Event) {
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
+  assertSameOrigin(event);
   const body = await readBody(event).catch(() => ({}));
   const action = String((body as { action?: unknown })?.action ?? "");
   const wantsAdmin = action === "list" || action === "updateStatus";
 
   if (!wantsAdmin) {
-    assertSameOrigin(event);
     const attempt = await consumeAdminAttempt("property-report:" + clientFingerprint(event));
     if (!attempt.allowed) throw tooManyAttemptsError(attempt.retryAfterSeconds);
 
