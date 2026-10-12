@@ -337,7 +337,9 @@ export function AdminDivarFiles({ staffMode = false }: { staffMode?: boolean } =
     if (!targets.length) return;
     if (
       !window.confirm(
-        `انتشار ${fa(targets.length)} فایل روی سایت؟ تصاویر همه آگهی‌ها روی فضای سایت ذخیره می‌شود و این کار ممکن است چند دقیقه طول بکشد.`,
+        staffMode
+          ? `افزودن ${fa(targets.length)} آگهی به‌صورت پیش‌نویس؟ انتشار نهایی پس از بررسی مدیر انجام می‌شود.`
+          : `انتشار ${fa(targets.length)} فایل روی سایت؟ تصاویر همه آگهی‌ها روی فضای سایت ذخیره می‌شود و این کار ممکن است چند دقیقه طول بکشد.`,
       )
     ) {
       return;
@@ -361,7 +363,9 @@ export function AdminDivarFiles({ staffMode = false }: { staffMode?: boolean } =
     await load();
     if (published) setTab("imported");
 
-    const summary = `${fa(published)} فایل منتشر شد${failed ? ` و ${fa(failed)} مورد ناموفق بود` : ""}${cancelled ? " (پیش از پایان متوقف شد)" : ""}.`;
+    const summary = staffMode
+      ? `${fa(published)} پیش‌نویس ثبت شد${failed ? ` و ${fa(failed)} مورد ناموفق بود` : ""}${cancelled ? " (پیش از پایان متوقف شد)" : ""}.`
+      : `${fa(published)} فایل منتشر شد${failed ? ` و ${fa(failed)} مورد ناموفق بود` : ""}${cancelled ? " (پیش از پایان متوقف شد)" : ""}.`;
     if (failed > 0) toast.warning(summary);
     else if (cancelled) toast.info(summary);
     else toast.success(summary);
