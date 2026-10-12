@@ -916,12 +916,12 @@ export function AdminDivarFiles({ staffMode = false }: { staffMode?: boolean } =
                 </button>
               ) : null}
 {!staffMode && tab === "imported" ? (
-                <button type="button" className="btn-gold" onClick={() => void bulkRepair()} disabled={syncing || loading || Boolean(bulk)}
+                <button type="button" className="btn-gold" onClick={() => void bulkRepair()} disabled={syncing || loading || Boolean(bulk)}>
                   <RefreshCw size={15} /> تکمیل تصاویر گروهی
                 </button>
               ) : null}
 {!staffMode && tab === "rejected" ? (
-                <button type="button" className="btn-gold" onClick={() => void bulkApprove()} disabled={syncing || loading || Boolean(bulk)}
+                <button type="button" className="btn-gold" onClick={() => void bulkApprove()} disabled={syncing || loading || Boolean(bulk)}>
                   <ShieldCheck size={15} /> تأیید دستی گروهی
                 </button>
               ) : null}
