@@ -42,7 +42,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست." });
   }
   const claims = await getAdminSessionClaims(token);
-  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "property.manage")) {
+  const role = normalizeAdminRole(claims?.role);
+  if (
+    !hasAdminPermission(role, "property.manage") &&
+    !hasAdminPermission(role, "property.create")
+  ) {
     throw createError({ statusCode: 403, statusMessage: "دسترسی آپلود رسانه برای فایل‌های ملک فعال نیست." });
   }
   assertSameOrigin(event);
