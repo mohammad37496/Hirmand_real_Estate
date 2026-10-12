@@ -685,9 +685,12 @@ function ResilientImage({
   const sourceLegacyFallback = current.startsWith("/images/fallback/")
     ? current.replace(/\.(?:jpe?g|webp|avif)$/i, ".svg")
     : "";
+  // Prefer the known, checked-in emergency asset supplied by the caller.
+  // Deriving ".svg" from a raster filename is unsafe: only legacy slots 01/02
+  // exist for each property type, while generated raster slots extend further.
   const fallbackLegacyImage =
-    sourceLegacyFallback ||
     fallbackLegacy ||
+    sourceLegacyFallback ||
     (fallback.startsWith("/images/fallback/")
       ? fallback.replace(/\.(?:jpe?g|webp|avif)$/i, ".svg")
       : "");
