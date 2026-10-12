@@ -41,7 +41,22 @@ function verify(buffer, expected) {
 
 async function download(url, redirects = 0) {
   if (redirects > 5) throw new Error("Too many FFmpeg download redirects.");
-  const response = await fetch(url, { redirect: "manual" });
+  const configuredTimeout = Number(process.env.HIRMAND_FFMPEG_DOWNLOAD_TIMEOUT_MS);
+  const timeoutMs = Number.isInteger(configuredTimeout) && configuredTimeout >= 1000 && configuredTimeout <= 120_000
+    ? configuredTimeout
+    : 45_000;
+  let response;
+  try {
+    response = await fetch(url, {
+      redirect: "manual",
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (error) {
+    if (error && typeof error === "object" && error.name === "TimeoutError") {
+      throw new Error(`FFmpeg download timed out after ${timeoutMs}ms: ${url}`);
+    }
+    throw error;
+  }
   if (response.status >= 300 && response.status < 400) {
     const location = response.headers.get("location");
     if (!location) throw new Error(`FFmpeg download redirect has no location (${response.status}).`);
