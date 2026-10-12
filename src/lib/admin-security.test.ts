@@ -69,6 +69,23 @@ test("viewer role cannot inherit mutation or sensitive-data permissions", () => 
   assert.equal(hasAdminPermission(role, "security.manage"), false);
 });
 
+test("staff role is limited to new property intake, CRM review and Divar import", () => {
+  const role = normalizeAdminRole("staff");
+  assert.equal(role, "staff");
+  assert.equal(hasAdminPermission(role, "property.create"), true);
+  assert.equal(hasAdminPermission(role, "lead.manage"), true);
+  assert.equal(hasAdminPermission(role, "divar.import"), true);
+  assert.equal(hasAdminPermission(role, "property.manage"), false);
+  assert.equal(hasAdminPermission(role, "property.publish"), false);
+  assert.equal(hasAdminPermission(role, "finance.manage"), false);
+  assert.equal(hasAdminPermission(role, "content.manage"), false);
+  assert.equal(hasAdminPermission(role, "settings.manage"), false);
+  assert.equal(hasAdminPermission(role, "backup.manage"), false);
+  assert.equal(hasAdminPermission(role, "security.manage"), false);
+  assert.equal(hasAdminPermission(role, "accounts.manage"), false);
+  assert.equal(hasAdminPermission(role, "reports.view"), false);
+});
+
 /* ------------------------------------------------------------------ */
 /* magic-byte sniffing                                                 */
 /* ------------------------------------------------------------------ */
