@@ -8,9 +8,9 @@ const middleware = await readFile(
 );
 
 test("same-origin geolocation remains available for explicit property features", () => {
-  assert.match(middleware, /geolocation=\\(self\\)/);
+  assert.match(middleware, /geolocation=\(self\)/);
 });
 
 test("camera and microphone remain blocked by the site-wide policy", () => {
-  assert.match(middleware, /camera=\\(\\), microphone=\\(\\)/);
+  assert.match(middleware, /camera=\(\), microphone=\(\)/);
 });
