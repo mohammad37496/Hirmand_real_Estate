@@ -50,7 +50,7 @@ async function verifyPayload(token: string | undefined): Promise<JWTPayload | nu
       algorithms: ["HS256"],
       subject: "hirmand-admin",
     });
-    if (!["owner", "manager", "sales", "content", "viewer", "admin"].includes(String(payload.role))) return null;
+    if (!["owner", "manager", "sales", "content", "staff", "viewer", "admin"].includes(String(payload.role))) return null;
     return payload;
   } catch {
     return null;
