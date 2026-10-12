@@ -1,6 +1,7 @@
 import { createError, defineEventHandler, getQuery, readBody, setResponseHeader } from "h3";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
+import { assertSameOrigin, clientFingerprint, consumeAdminAttempt, tooManyAttemptsError } from "@/lib/admin-rate-limit.server";
 
 const tokenSchema = z.string().trim().toUpperCase().regex(/^HIR-[A-Z0-9]{2}-[A-F0-9]{12}$/);
 const bodySchema = z.discriminatedUnion("action", [
@@ -31,6 +32,10 @@ function parseVisitDate(value: string) {
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
+  assertSameOrigin(event);
+  const attempt = await consumeAdminAttempt("public-lead-action:" + clientFingerprint(event));
+  if (!attempt.allowed) throw tooManyAttemptsError(attempt.retryAfterSeconds);
+
   if (dbSource === "unconfigured") {
     throw createError({ statusCode: 503, statusMessage: "سامانه پیگیری موقتاً در دسترس نیست." });
   }
