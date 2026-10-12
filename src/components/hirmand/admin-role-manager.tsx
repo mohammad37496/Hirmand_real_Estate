@@ -10,7 +10,7 @@ import {
 } from "@/lib/admin-accounts";
 import { ADMIN_ROLE_LABELS, type AdminRole } from "@/lib/admin-roles";
 
-const ROLE_OPTIONS: AdminRole[] = ["manager", "sales", "content", "viewer", "owner"];
+const ROLE_OPTIONS: AdminRole[] = ["manager", "sales", "staff", "content", "viewer", "owner"];
 
 export function AdminRoleManager() {
   const [accounts, setAccounts] = useState<AdminAccountSummary[]>([]);
@@ -43,7 +43,7 @@ export function AdminRoleManager() {
     setBusy("create");
     try {
       await createAdminAccount({ data: form });
-      toast.success("حساب مدیر ساخته شد.");
+      toast.success(form.role === "staff" ? "حساب کارمند ساخته شد." : "حساب مدیر ساخته شد.");
       setForm({ username: "", displayName: "", password: "", role: "sales" });
       setShowForm(false);
       await load();
