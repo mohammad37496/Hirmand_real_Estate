@@ -26,9 +26,9 @@ jobs:
       - name: Install Liara CLI
         run: npm i -g @liara/cli@9
 
-      # A 404 "Could not find the app" means the token cannot see that app ID,
-      # or the app belongs to a team that was not selected. List visible apps
-      # before deployment to make the account/team scope diagnosable.
+      # A 404 "Could not find the app" means this token cannot see the target app
+      # or the app slug is wrong. Filter output to hirmand only: action logs
+      # are visible on this public repository, so do not disclose other app names.
       - name: Verify Liara credentials and list visible apps
         env:
           LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
@@ -50,7 +50,7 @@ jobs:
             echo "If hirmand belongs to a team, add a GitHub Actions secret named LIARA_TEAM_ID."
           fi
 
-          liara app list --api-token="${LIARA_TOKEN}" "${TEAM_ARGS[@]}" --output json
+          liara app list --api-token="${LIARA_TOKEN}" "${TEAM_ARGS[@]}" --filter="name=hirmand" --output json
 
       - name: Deploy
         env:
