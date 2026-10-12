@@ -77,7 +77,7 @@ const EMPTY_STATS: DivarStats = {
 
 const TAB_LABELS: Record<Tab, string> = {
   accepted: "فایل‌های قابل انتشار",
-  imported: "فایل‌های منتشرشده",
+  imported: "فایل‌های واردشده به هیرمند",
   rejected: "فایل‌های ردشده",
 };
 
@@ -88,7 +88,7 @@ const TAB_LABELS: Record<Tab, string> = {
  * is aggressive, so every queue has an escape hatch — publish, repair the
  * gallery, approve by hand, or purge — and each one confirms or is reversible.
  */
-export function AdminDivarFiles() {
+export function AdminDivarFiles({ staffMode = false }: { staffMode?: boolean } = {}) {
   const [lists, setLists] = useState<Record<Tab, DivarFile[]>>(EMPTY_LISTS);
   const [stats, setStats] = useState<DivarStats>(EMPTY_STATS);
   const [tab, setTab] = useState<Tab>("accepted");
@@ -216,9 +216,11 @@ export function AdminDivarFiles() {
       const result = await importDivarFile({ data: { id: file.id, repair } });
       if (!quiet) {
         setProgress(100);
-        setBusyStage("انتشار در سایت…");
+        setBusyStage(staffMode ? "ثبت پیش‌نویس در هیرمند…" : "انتشار در سایت…");
         const total = Number(result.imageCount) || 0;
-        if (result.imageFailures > 0) {
+        if (staffMode) {
+          toast.success(`فایل به‌صورت پیش‌نویس ثبت شد؛ ${fa(total)} تصویر پیدا شد و انتشار نیاز به تأیید مدیر دارد.`);
+        } else if (result.imageFailures > 0) {
           toast.warning(
             `فایل منتشر شد؛ ${fa(Number(result.hostedImageCount) || 0)} تصویر روی فضای سایت ذخیره شد و ${fa(result.imageFailures)} تصویر با منبع اصلی نمایش داده می‌شود.`,
           );
@@ -719,7 +721,7 @@ export function AdminDivarFiles() {
               className={`divar-tab${tab === "imported" ? " is-active" : ""}`}
               onClick={() => setTab("imported")}
             >
-              <CheckCircle2 size={14} /> منتشرشده <b>{fa(stats.imported)}</b>
+              <CheckCircle2 size={14} /> {staffMode ? "واردشده / پیش‌نویس" : "منتشرشده"} <b>{fa(stats.imported)}</b>
             </button>
             <button
               type="button"
@@ -906,20 +908,20 @@ export function AdminDivarFiles() {
             <div className="divar-bulk-actions">
               {tab === "accepted" ? (
                 <button type="button" className="btn-gold" onClick={() => void bulkPublish()} disabled={syncing || loading || Boolean(bulk)}>
-                  <UploadCloud size={15} /> انتشار گروهی
+                  <UploadCloud size={15} /> {staffMode ? "ثبت گروهی پیش‌نویس" : "انتشار گروهی"}
                 </button>
               ) : null}
-              {tab === "imported" ? (
-                <button type="button" className="btn-gold" onClick={() => void bulkRepair()} disabled={syncing || loading || Boolean(bulk)}>
+{!staffMode && tab === "imported" ? (
+                <button type="button" className="btn-gold" onClick={() => void bulkRepair()} disabled={syncing || loading || Boolean(bulk)}
                   <RefreshCw size={15} /> تکمیل تصاویر گروهی
                 </button>
               ) : null}
-              {tab === "rejected" ? (
-                <button type="button" className="btn-gold" onClick={() => void bulkApprove()} disabled={syncing || loading || Boolean(bulk)}>
+{!staffMode && tab === "rejected" ? (
+                <button type="button" className="btn-gold" onClick={() => void bulkApprove()} disabled={syncing || loading || Boolean(bulk)}
                   <ShieldCheck size={15} /> تأیید دستی گروهی
                 </button>
               ) : null}
-              {tab !== "imported" ? (
+{!staffMode && tab !== "imported" ? (
                 <button
                   type="button"
                   className="btn-ghost"
@@ -1196,7 +1198,7 @@ export function AdminDivarFiles() {
                         </a>
                       ) : null}
 
-                      {tab === "rejected" ? (
+                      {!staffMode && tab === "rejected" ? (
                         <button
                           type="button"
                           className="btn-gold"
@@ -1222,9 +1224,9 @@ export function AdminDivarFiles() {
                           ) : (
                             <UploadCloud size={15} />
                           )}
-                          {busy ? "در حال انتشار…" : "انتشار در سایت"}
+                          {busy ? (staffMode ? "در حال ثبت…" : "در حال انتشار…") : (staffMode ? "ثبت پیش‌نویس در هیرمند" : "انتشار در سایت")}
                         </button>
-                      ) : (
+                      ) : staffMode ? null : (
                         <button
                           type="button"
                           className="btn-gold"
@@ -1258,7 +1260,7 @@ export function AdminDivarFiles() {
                         </a>
                       ) : null}
 
-                      {file.manualOverride ? (
+                      {!staffMode && file.manualOverride ? (
                         <button
                           type="button"
                           className="btn-ghost"
@@ -1269,7 +1271,7 @@ export function AdminDivarFiles() {
                         </button>
                       ) : null}
 
-                      {file.filterStatus !== "imported" ? (
+                      {!staffMode && file.filterStatus !== "imported" ? (
                         <button
                           type="button"
                           className="btn-ghost"
