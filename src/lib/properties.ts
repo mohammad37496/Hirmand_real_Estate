@@ -1715,11 +1715,15 @@ export const updatePropertySchedule = createServerFn({ method: "POST" })
 export const saveProperty = createServerFn({ method: "POST" })
   .validator(propertyInputSchema)
   .handler(async ({ data }) => {
-    const claims = await requireAdminPermission("property.manage");
+    const claims = await requireAdminPermission(data.id ? "property.manage" : "property.create");
+    const role = normalizeAdminRole(claims?.role);
+    if (role === "staff" && (data.id || data.status !== "draft" || data.featured || Boolean(data.featuredUntil))) {
+      throw new Error("کارکنان فقط مجاز به ثبت فایل جدید به‌صورت پیش‌نویس هستند.");
+    }
     const sql = await getSql();
     if (data.status === "published") {
-      const role = String(claims?.role ?? "owner");
-      if (role !== "owner" && role !== "manager") {
+      const publicationRole = String(claims?.role ?? "owner");
+      if (publicationRole !== "owner" && publicationRole !== "manager") {
         throw new Error("این حساب اجازه انتشار نهایی ندارد؛ فایل را برای تأیید مدیر ارسال کنید.");
       }
     }
