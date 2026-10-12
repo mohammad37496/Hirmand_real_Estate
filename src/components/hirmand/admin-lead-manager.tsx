@@ -499,10 +499,12 @@ export function AdminLeadManager({ staffMode = false }: { staffMode?: boolean } 
               <option value="follow_up">نزدیک‌ترین پیگیری</option>
               <option value="priority">بالاترین اولویت</option>
             </select>
-            <button type="button" className="btn-ghost" onClick={() => void exportCsv()} disabled={exporting}>
-              <Download size={16} />
-              {exporting ? "در حال ساخت…" : "خروجی CSV"}
-            </button>
+            {!staffMode ? (
+              <button type="button" className="btn-ghost" onClick={() => void exportCsv()} disabled={exporting}>
+                <Download size={16} />
+                {exporting ? "در حال ساخت…" : "خروجی CSV"}
+              </button>
+            ) : null}
             <button type="button" className="btn-ghost" onClick={() => void createOverdueTasks()}><Clock3 size={16} /> ساخت پیگیری خودکار</button>
             <button type="button" className="btn-ghost" onClick={() => void load()} disabled={loading}>
               <RefreshCw size={16} className={loading ? "admin-spin" : undefined} />
