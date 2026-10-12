@@ -48,7 +48,7 @@ test("property export rows stay aligned with all CSV headers", () => {
   const values = propertyExportRow(row);
   assert.equal(values.length, PROPERTY_EXPORT_HEADERS.length);
 
-  const index = (header: string) => PROPERTY_EXPORT_HEADERS.indexOf(header as never);
+  const index = (header: string) => (PROPERTY_EXPORT_HEADERS as readonly string[]).indexOf(header);
   assert.equal(values[index("طبقه")], null);
   assert.equal(values[index("طبقه خاص")], "سوئیت");
   assert.equal(values[index("کل طبقات")], 5);
