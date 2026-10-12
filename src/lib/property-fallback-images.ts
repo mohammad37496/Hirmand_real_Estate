@@ -140,8 +140,12 @@ function stableIndex(value: string, length: number) {
 }
 
 export function getPropertyFallbackImages(propertyType: PropertyType) {
-  return PROPERTY_FALLBACK_REMOTE_IMAGES[propertyType] ??
-    PROPERTY_FALLBACK_IMAGES[propertyType] ??
+  // Prefer same-origin assets so property galleries do not depend on Pexels
+  // being reachable from the visitor's network. The raster files are generated
+  // during deploy; ResilientImage falls back to the tracked category image and
+  // then the checked-in SVG if a generated file is missing.
+  return PROPERTY_FALLBACK_IMAGES[propertyType] ??
+    PROPERTY_FALLBACK_REMOTE_IMAGES[propertyType] ??
     PROPERTY_FALLBACK_IMAGES.apartment;
 }
 
