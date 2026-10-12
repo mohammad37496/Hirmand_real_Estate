@@ -20,7 +20,7 @@ async function requireAccountsAdmin() {
   return claims;
 }
 
-const roleSchema = z.enum(["owner","manager","sales","content","viewer"]);
+const roleSchema = z.enum(["owner","manager","sales","content","staff","viewer"]);
 
 export type AdminAccountSummary = {
   id: string;
