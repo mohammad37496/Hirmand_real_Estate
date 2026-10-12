@@ -7,21 +7,17 @@ on:
       - main
   workflow_dispatch:
 
-# Only the newest main commit should be deployed. A per-SHA group allowed
-# several Liara deployments to run at the same time and could leave the app
-# serving an older deployment.
+# Only the newest main commit should be deployed.
 concurrency:
   group: liara-deploy-main
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # Liara's remote build exceeded the old 20-minute job limit; allow time for the provider
-    # to finish or return a real deployment error instead of silently cancelling mid-build.
     timeout-minutes: 45
     steps:
       - name: Checkout repository
@@ -30,36 +26,72 @@ jobs:
       - name: Install Liara CLI
         run: npm i -g @liara/cli@9
 
+      # A 404 "Could not find the app" means this token cannot see the target app
+      # or the app slug is wrong. Filter output to hirmand only: action logs
+      # are visible on this public repository, so do not disclose other app names.
+      - name: Verify Liara credentials and list visible apps
+        env:
+          LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
+          LIARA_TEAM_ID: ${{ secrets.LIARA_TEAM_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${LIARA_TOKEN:-}" ]]; then
+            echo "::error::GitHub Actions secret LIARA_API_TOKEN is empty or unavailable."
+            exit 1
+          fi
+
+          TEAM_ARGS=()
+          if [[ -n "${LIARA_TEAM_ID:-}" ]]; then
+            TEAM_ARGS+=(--team-id="${LIARA_TEAM_ID}")
+            echo "Checking apps in the configured Liara team."
+          else
+            echo "Checking apps in the Liara account associated with LIARA_API_TOKEN."
+            echo "If hirmand belongs to a team, add a GitHub Actions secret named LIARA_TEAM_ID."
+          fi
+
+          liara app list --api-token="${LIARA_TOKEN}" "${TEAM_ARGS[@]}" --filter="name=hirmand" --output json
+
       - name: Deploy
         env:
           LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
+          LIARA_TEAM_ID: ${{ secrets.LIARA_TEAM_ID }}
           http_proxy: http://proxy.liara.ir:6666
           https_proxy: http://proxy.liara.ir:6666
-        # `--no-app-logs` is required, not cosmetic. Without it the CLI keeps
-        # streaming the app's log stream after printing "Deployment finished
-        # successfully", never exits, and the job burns the rest of its budget
-        # until the timeout cancels it — so a deploy that worked showed up as a
-        # cancelled run. That is why every run in this workflow's history reads
-        # as cancelled.
-        run: >-
-          liara deploy
-          --app="hirmand"
-          --api-token="$LIARA_TOKEN"
-          --build-location="germany"
-          --port="3000"
-          --no-app-logs
-          --message="Deploy ${GITHUB_SHA::7} from ${GITHUB_REF_NAME}"
-          --debug
+        shell: bash
+        run: |
+          set -euo pipefail
+          TEAM_ARGS=()
+          if [[ -n "${LIARA_TEAM_ID:-}" ]]; then
+            TEAM_ARGS+=(--team-id="${LIARA_TEAM_ID}")
+          fi
 
+          liara deploy \
+            --app="hirmand" \
+            --api-token="${LIARA_TOKEN}" \
+            "${TEAM_ARGS[@]}" \
+            --build-location="germany" \
+            --port="3000" \
+            --no-app-logs \
+            --message="Deploy ${GITHUB_SHA::7} from ${GITHUB_REF_NAME}" \
+            --debug
 
       - name: Diagnose Liara runtime on failure
         if: failure()
         env:
           LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
-        run: >-
-          liara app logs
-          --app="hirmand"
-          --api-token="$LIARA_TOKEN"
-          --timestamps
-          --last-lines
-          --since="30 minutes ago"
+          LIARA_TEAM_ID: ${{ secrets.LIARA_TEAM_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TEAM_ARGS=()
+          if [[ -n "${LIARA_TEAM_ID:-}" ]]; then
+            TEAM_ARGS+=(--team-id="${LIARA_TEAM_ID}")
+          fi
+          liara app logs \
+            --app="hirmand" \
+            --api-token="${LIARA_TOKEN}" \
+            "${TEAM_ARGS[@]}" \
+            --timestamps \
+            --last-lines \
+            --since="30 minutes ago"

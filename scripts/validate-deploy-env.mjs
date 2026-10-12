@@ -6,9 +6,15 @@ import {
   listDbRelatedEnvKeys,
 } from "./resolve-database-url.mjs";
 
-// Liara may invoke Vite directly instead of npm run build, which skips the prebuild lifecycle.
-// Generate self-hosted property fallback photos here too; the generator is idempotent.
-await import("./generate-fallback-assets.mjs");
+// npm runs the "prebuild" lifecycle before this "build" script. Avoid retrying
+// the same remote image downloads a second time when npm orchestrates the build.
+// If a platform invokes this validator directly (outside npm run build), keep
+// generating the fallbacks here so runtime assets are still prepared.
+if (process.env.npm_lifecycle_event !== "build") {
+  await import("./generate-fallback-assets.mjs");
+} else {
+  console.log("[deploy] fallback images already processed by the npm prebuild lifecycle.");
+}
 
 const isProduction = process.env.NODE_ENV === "production";
 
