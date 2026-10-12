@@ -1379,7 +1379,11 @@ const idSchema = z.object({
 export const importDivarFile = createServerFn({ method: "POST" })
   .validator(idSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    const claims = await requireAdmin();
+    const staffImport = normalizeAdminRole(claims?.role) === "staff";
+    if (staffImport && data.repair) {
+      throw new Error("تعمیر گالری فایل‌های قبلی فقط برای مدیر مجاز است.");
+    }
     if (dbSource === "unconfigured") {
       throw new Error("DATABASE_URL تنظیم نشده است.");
     }
@@ -1393,6 +1397,9 @@ export const importDivarFile = createServerFn({ method: "POST" })
     if (!row) throw new Error("فایل دیوار پیدا نشد.");
 
     const existingPropertyId = row.imported_property_id ? String(row.imported_property_id) : null;
+    if (staffImport && existingPropertyId) {
+      throw new Error("کارکنان فقط می‌توانند آگهی جدید را به پیش‌نویس تبدیل کنند؛ اصلاح فایل‌های واردشده فقط برای مدیر مجاز است.");
+    }
     if (row.filter_status === "rejected") {
       throw new Error("این فایل به دلیل نشانه‌های مشاور/آژانس قابل ورود نیست.");
     }
@@ -1560,11 +1567,11 @@ export const importDivarFile = createServerFn({ method: "POST" })
         built_year, parking, elevator, storage, price, deposit, rent, description,
         features, images, contact_name, contact_phone, latitude, longitude, floor_label, orientation, published_at
       ) values (
-        $1,$2,'published',false,$3,$4,$5,'اصفهان',
+        $1,$2,$28,false,$3,$4,$5,'اصفهان',
         $6,null,$7::integer,$8::smallint,$9::smallint,$10::smallint,$11::smallint,
         $12::smallint,$13,$14,$15,$16::numeric(20,0),$17::numeric(20,0),$18::numeric(20,0),$19,
         $20::jsonb,$21::jsonb,$22,$23,$24::double precision,$25::double precision,$26::text,$27::text,
-        current_timestamp
+        case when $28 = 'published' then current_timestamp else null end
       )`,
       [
         id,
@@ -1594,6 +1601,7 @@ export const importDivarFile = createServerFn({ method: "POST" })
         nullableNumber(row.longitude),
         row.floor_label === "suite" ? "suite" : null,
         row.orientation == null ? null : String(row.orientation),
+        staffImport ? "draft" : "published",
       ],
     );
 
