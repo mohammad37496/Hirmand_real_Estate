@@ -149,7 +149,7 @@ const AVAILABILITY_LABEL: Record<PropertyAvailabilityStatus, string> = {
   rented: "اجاره‌داده‌شده",
   unavailable: "فعلاً ناموجود",
 };
-type ViewMode = "dashboard" | "managementReport" | "integrity" | "deals" | "expiry" | "commission" | "consultantPerformance" | "consultantTargets" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
+type ViewMode = "staffHome" | "dashboard" | "managementReport" | "integrity" | "deals" | "expiry" | "commission" | "consultantPerformance" | "consultantTargets" | "productivity" | "list" | "form" | "music" | "leads" | "messages" | "partners" | "divar" | "consultants" | "attendance" | "matching" | "owners" | "finance" | "backup" | "watermark" | "schedule" | "trash" | "audit" | "settings" | "mediaHealth" | "security" | "seoRedirects" | "contentStudio";
 
 type ListSort = "newest" | "oldest" | "updated" | "title" | "price_asc" | "price_desc" | "area_desc";
 type MediaFilter = "all" | "with" | "without";
@@ -510,9 +510,11 @@ function propertyToForm(property: Property): FormState {
   };
 }
 
-export function AdminPropertiesPage() {
+export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staff" } = {}) {
+  const staffMode = mode === "staff";
+  const [loginNotice, setLoginNotice] = useState<string | null>(null);
   const [keyInput, setKeyInput] = useState("");
-  const [loginMode, setLoginMode] = useState<"key" | "account">("key");
+  const [loginMode, setLoginMode] = useState<"key" | "account">(staffMode ? "account" : "key");
   const [usernameInput, setUsernameInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
   const [adminRole, setAdminRole] = useState<AdminRole>("owner");
@@ -533,7 +535,7 @@ export function AdminPropertiesPage() {
   const draftKeyRef = useRef("new");
   const [loadingList, setLoadingList] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [view, setView] = useState<ViewMode>("dashboard");
+  const [view, setView] = useState<ViewMode>(staffMode ? "staffHome" : "dashboard");
   const [formDirty, setFormDirty] = useState(false);
   const [listFilter, setListFilter] = useState<"all" | PublishStatus | "featured">("all");
   const [query, setQuery] = useState("");
@@ -607,6 +609,12 @@ export function AdminPropertiesPage() {
   );
 
   const visibleNavItems = useMemo(() => {
+    if (adminRole === "staff") {
+      return [
+        { view: "staffHome" as ViewMode, section: "فضای کارکنان", label: "خانه کارکنان", icon: LayoutDashboard },
+        ...navItems.filter((item) => item.view === "leads" || item.view === "matching" || item.view === "divar"),
+      ];
+    }
     if (adminRole === "owner" || adminRole === "manager") return navItems;
     if (adminRole === "sales") {
       const allowed = new Set<ViewMode>(["dashboard", "managementReport", "productivity", "list", "leads", "messages", "matching", "divar", "deals", "expiry", "commission", "consultantPerformance", "consultantTargets"]);
@@ -620,6 +628,7 @@ export function AdminPropertiesPage() {
   }, [navItems, adminRole]);
 
   const canManageProperties = hasAdminPermission(adminRole, "property.manage");
+  const canCreateProperties = hasAdminPermission(adminRole, "property.create") || canManageProperties;
   const canManageLeads = hasAdminPermission(adminRole, "lead.manage");
   const canPublishProperties = hasAdminPermission(adminRole, "property.publish");
   const canManageFinance = hasAdminPermission(adminRole, "finance.manage");
@@ -718,7 +727,7 @@ export function AdminPropertiesPage() {
 
   function navigateTo(nextView: ViewMode) {
     const allowed = nextView === "form"
-      ? canManageProperties
+      ? canCreateProperties
       : visibleNavItems.some((item) => item.view === nextView);
     if (!allowed) {
       toast.error("دسترسی این بخش برای نقش فعلی فعال نیست.");
@@ -823,7 +832,17 @@ export function AdminPropertiesPage() {
 
         if (!data?.authenticated || cancelled) return;
         const role = normalizeAdminRole(data.role);
+        if (staffMode && role !== "staff") {
+          await fetch("/api/admin/session", { method: "POST", headers: { "content-type": "application/json" }, credentials: "same-origin", body: JSON.stringify({ action: "logout" }) }).catch(() => {});
+          if (!cancelled) setLoginNotice("برای ورود به پنل کارکنان باید با حسابی وارد شوید که نقش «کارمند» دارد.");
+          return;
+        }
+        if (!staffMode && role === "staff") {
+          window.location.replace("/staff");
+          return;
+        }
         setAdminRole(role);
+        setView(staffMode ? "staffHome" : "dashboard");
 
         if (hasAdminPermission(role, "property.manage")) {
           const [rows, totals, filteredCount] = await Promise.all([
@@ -855,7 +874,7 @@ export function AdminPropertiesPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [staffMode]);
 
   /** Parses a Persian/Arabic digit money or number input into a number. */
   function listNumber(raw: string): number | undefined {
@@ -995,6 +1014,10 @@ export function AdminPropertiesPage() {
   }
 
   async function unlock(key = keyInput.trim(), showToast = true) {
+    if (staffMode && loginMode !== "account") {
+      toast.error("ورود کارکنان فقط با نام کاربری و رمز اختصاصی انجام می‌شود.");
+      return;
+    }
     if (loginMode === "key" && !key) {
       toast.error("کلید مدیریت را وارد کنید.");
       return;
@@ -1029,6 +1052,14 @@ export function AdminPropertiesPage() {
       }
 
       const role = normalizeAdminRole(sessionData.role);
+      if (staffMode && role !== "staff") {
+        await fetch("/api/admin/session", { method: "POST", headers: { "content-type": "application/json" }, credentials: "same-origin", body: JSON.stringify({ action: "logout" }) }).catch(() => {});
+        throw new Error("این حساب نقش کارمند ندارد؛ از حساب کارمند استفاده کنید.");
+      }
+      if (!staffMode && role === "staff") {
+        window.location.replace("/staff");
+        return;
+      }
       let rows: Property[] = [];
       let totals: Awaited<ReturnType<typeof countAdminProperties>> | null = null;
       let filteredCount = 0;
@@ -1048,6 +1079,8 @@ export function AdminPropertiesPage() {
       setPropertyHasMore(rows.length < filteredCount);
       setServerStats(totals);
       setAdminRole(role);
+      setView(staffMode ? "staffHome" : "dashboard");
+      setLoginNotice(null);
       setUnlocked(true);
 
       if (showToast) toast.success("ورود به پنل مدیریت موفق بود.");
@@ -1542,7 +1575,7 @@ export function AdminPropertiesPage() {
     });
 
   function startNew() {
-    if (!canManageProperties) {
+    if (!canCreateProperties) {
       toast.error("دسترسی ایجاد فایل ملک برای این حساب فعال نیست.");
       return;
     }
@@ -1745,16 +1778,15 @@ export function AdminPropertiesPage() {
         <style dangerouslySetInnerHTML={{ __html: ADMIN_CSS }} />
         <div className="admin-login-card">
           <span className="kicker">پنل داخلی هیرمند</span>
-          <h1>ورود به مدیریت</h1>
+          <h1>{staffMode ? "ورود کارکنان هیرمند" : "ورود به مدیریت"}</h1>
           <p>
-            {loginMode === "key"
-              ? "ورود سریع با کلید اصلی مدیریت."
-              : "با حساب اختصاصی مدیر وارد شوید تا سطح دسترسی شما دقیقاً اعمال شود."}
+      {staffMode ? "ورود با حساب کاربری اختصاصی کارکنان." : loginMode === "key" ? "ورود سریع با کلید اصلی مدیریت." : "با حساب اختصاصی مدیر وارد شوید تا سطح دسترسی شما دقیقاً اعمال شود."}
           </p>
-          <div className="admin-login-switch" role="tablist" aria-label="روش ورود">
+          {!staffMode ? <div className="admin-login-switch" role="tablist" aria-label="روش ورود">
             <button type="button" className={loginMode === "key" ? "is-active" : ""} onClick={() => setLoginMode("key")}>کلید اصلی</button>
             <button type="button" className={loginMode === "account" ? "is-active" : ""} onClick={() => setLoginMode("account")}>حساب مدیر</button>
-          </div>
+          </div> : null}
+          {loginNotice ? <div className="admin-error-banner" role="alert" style={{ marginBottom: 12 }}>{loginNotice}</div> : null}
           <form
             onSubmit={(event) => {
               event.preventDefault();
@@ -1817,17 +1849,17 @@ export function AdminPropertiesPage() {
           </div>
           <div className="admin-brand-copy">
             <strong>هیرمند</strong>
-            <small>پنل مدیریت</small>
+            <small>{staffMode ? "پنل کارکنان" : "پنل مدیریت"}</small>
           </div>
           <div className="admin-brand-extra">{extra}</div>
         </div>
         <nav className="admin-sidebar-nav" aria-label="ناوبری اصلی مدیریت">
           <div className="admin-nav-intro">
-            <span className="admin-nav-intro-kicker">مرکز کنترل</span>
+            <span className="admin-nav-intro-kicker">{staffMode ? "فضای کارکنان" : "مرکز کنترل"}</span>
             <span className="admin-nav-intro-line" aria-hidden="true" />
           </div>
 
-          {canManageProperties ? (
+          {canCreateProperties ? (
             <button
               type="button"
               className={"admin-nav-btn admin-nav-btn-create" + (view === "form" && !form.id ? " is-active" : "")}
@@ -2087,7 +2119,7 @@ export function AdminPropertiesPage() {
             <AdminCommandPalette
               items={visibleNavItems.map((item) => ({ id: item.view, label: item.label }))}
               onSelect={(id) => navigateTo(id as ViewMode)}
-              onNewProperty={canManageProperties ? startNew : undefined}
+              onNewProperty={canCreateProperties ? startNew : undefined}
               onRefresh={canManageProperties ? () => void refresh() : undefined}
             />
             {view === "dashboard" || view === "list" ? (
