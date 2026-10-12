@@ -97,7 +97,11 @@ export default defineEventHandler(async (event) => {
 
   assertSameOrigin(event);
   const claims = await getAdminSessionClaims(getCookie(event, ADMIN_SESSION_COOKIE));
-  if (!hasAdminPermission(normalizeAdminRole(claims?.role), "lead.manage")) {
+  const currentRole = normalizeAdminRole(claims?.role);
+  if (currentRole === "staff" && body.action === "delete") {
+    throw createError({ statusCode: 403, statusMessage: "کارکنان اجازه حذف درخواست‌های مشتری را ندارند." });
+  }
+  if (!hasAdminPermission(currentRole, "lead.manage")) {
     throw createError({ statusCode: 403, statusMessage: "سطح دسترسی CRM برای این حساب فعال نیست." });
   }
 
