@@ -2006,7 +2006,9 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
           </button>
           <div style={{ minWidth: 0 }}>
             <h1>
-              {view === "dashboard"
+              {view === "staffHome" && staffMode
+                ? "فضای کاری کارکنان"
+                : view === "dashboard"
                 ? "داشبورد مدیریت"
                 : view === "productivity"
                   ? "مرکز مدیریت"
@@ -2076,7 +2078,9 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
                         ? "ویرایش فایل"
                         : "افزودن فایل جدید"}            </h1>
             <p>
-              {view === "dashboard"
+              {view === "staffHome" && staffMode
+                ? "افزودن فایل، بررسی درخواست‌ها، تطبیق ملک‌ها و دریافت آگهی از دیوار"
+                : view === "dashboard"
                 ? "نمای کلی فایل‌ها، ورودی مشتری و وضعیت پیگیری"
                 : view === "productivity"
                   ? "وظایف، تقویم کاری، هشدارها، سلامت فایل‌ها و فید فعالیت‌ها"
@@ -2132,15 +2136,15 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
               onNewProperty={canCreateProperties ? startNew : undefined}
               onRefresh={canManageProperties ? () => void refresh() : undefined}
             />
-            {view === "dashboard" || view === "list" ? (
-              canManageProperties ? (
+            {view === "dashboard" || view === "list" || (staffMode && view === "staffHome") ? (
+              canCreateProperties ? (
                 <button type="button" className="btn-gold" onClick={startNew}>
                   <Plus size={16} />
                   فایل جدید
                 </button>
               ) : null
             ) : (
-              <button type="button" className="btn-ghost" onClick={() => navigateTo(view === "form" ? "list" : "dashboard")}>
+              <button type="button" className="btn-ghost" onClick={() => navigateTo(view === "form" ? (staffMode ? "staffHome" : "list") : (staffMode ? "staffHome" : "dashboard"))}>
                 <X size={16} />
                 بستن
               </button>
@@ -2149,6 +2153,39 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
         </header>
 
         <div className="admin-content">
+          {view === "staffHome" && staffMode ? (
+            <section className="admin-panel" style={{ marginBottom: 16 }}>
+              <div className="admin-panel-head">
+                <div>
+                  <span className="kicker">میز کار تیم</span>
+                  <h2>امروز از اینجا شروع کنید</h2>
+                  <p className="admin-dashboard-summary">فقط ابزارهای روزمره در دسترس شماست. فایل‌هایی که اضافه می‌کنید تا تأیید مدیر پیش‌نویس می‌مانند.</p>
+                </div>
+              </div>
+              <div className="admin-stats-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))" }}>
+                <button type="button" className="admin-stat-card" onClick={startNew}>
+                  <span><Plus size={18} /> افزودن فایل جدید</span>
+                  <strong>ثبت مشخصات ملک</strong>
+                </button>
+                <button type="button" className="admin-stat-card" onClick={() => navigateTo("leads")}>
+                  <span><UsersRound size={18} /> درخواست‌های مشتری</span>
+                  <strong>بررسی و پیگیری</strong>
+                </button>
+                <button type="button" className="admin-stat-card" onClick={() => navigateTo("matching")}>
+                  <span><GitCompareArrows size={18} /> مچ کردن فایل‌ها</span>
+                  <strong>تطبیق با درخواست</strong>
+                </button>
+                <button type="button" className="admin-stat-card" onClick={() => navigateTo("divar")}>
+                  <span><Globe2 size={18} /> دریافت از دیوار</span>
+                  <strong>ورود آگهی به پیش‌نویس</strong>
+                </button>
+              </div>
+              <p style={{ margin: "16px 0 0", color: "var(--navy-700, #536575)" }}>
+                انتشار نهایی، ویرایش فایل‌های ثبت‌شده، حذف اطلاعات و تنظیمات سایت در اختیار مدیر باقی می‌ماند.
+              </p>
+            </section>
+          ) : null}
+
           {view === "dashboard" ? (
             <>
               <AdminKpiHistory />
@@ -2582,7 +2619,7 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
           {view === "security" ? <AdminSecurityCenter /> : null}
           {view === "seoRedirects" ? <AdminSeoRedirects /> : null}
           {view === "contentStudio" ? <AdminContentStudio /> : null}
-          {view === "divar" ? <AdminDivarFiles /> : null}
+          {view === "divar" ? <AdminDivarFiles staffMode={staffMode} /> : null}
 
           {view === "form" ? (
             <form className="admin-form-wrap" onSubmit={onSubmit}>
@@ -3297,41 +3334,63 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
         className={"admin-mobile-nav" + (view === "form" ? " is-form-active" : "")}
         aria-label="ناوبری سریع مدیریت"
       >
-        <button
-          type="button"
-          className={view === "dashboard" ? "is-active" : ""}
-          onClick={() => navigateTo("dashboard")}
-          title="داشبورد"
-        >
-          <BarChart3 size={19} strokeWidth={2.1} />
-          <span>داشبورد</span>
-        </button>
-        <button
-          type="button"
-          className={view === "list" ? "is-active" : ""}
-          onClick={() => navigateTo("list")}
-          title="فهرست فایل‌ها"
-        >
-          <LayoutDashboard size={19} strokeWidth={2.1} />
-          <span>فهرست</span>
-        </button>
-        <button
-          type="button"
-          className={view === "form" && !form.id ? "is-active" : ""}
-          onClick={startNew}
-          title="افزودن فایل"
-        >
-          <Plus size={20} strokeWidth={2.25} />
-          <span>جدید</span>
-        </button>
-        <button type="button" className={view === "leads" ? "is-active" : ""} onClick={() => navigateTo("leads")} title="درخواست‌های مشتریان">
-          <UsersRound size={19} strokeWidth={2.1} />
-          <span>درخواست‌ها</span>
-        </button>
-        <button type="button" onClick={() => setDrawerOpen(true)} title="باز کردن منوی کامل" aria-label="باز کردن منوی کامل مدیریت">
-          <Menu size={19} strokeWidth={2.1} />
-          <span>منو</span>
-        </button>
+        {staffMode ? (
+          <>
+            <button type="button" className={view === "staffHome" ? "is-active" : ""} onClick={() => navigateTo("staffHome")} title="خانه کارکنان">
+              <LayoutDashboard size={19} strokeWidth={2.1} /><span>خانه</span>
+            </button>
+            <button type="button" className={view === "form" ? "is-active" : ""} onClick={startNew} title="افزودن فایل">
+              <Plus size={20} strokeWidth={2.25} /><span>فایل جدید</span>
+            </button>
+            <button type="button" className={view === "leads" ? "is-active" : ""} onClick={() => navigateTo("leads")} title="درخواست‌های مشتریان">
+              <UsersRound size={19} strokeWidth={2.1} /><span>درخواست‌ها</span>
+            </button>
+            <button type="button" className={view === "matching" ? "is-active" : ""} onClick={() => navigateTo("matching")} title="مچ کردن">
+              <GitCompareArrows size={19} strokeWidth={2.1} /><span>مچینگ</span>
+            </button>
+            <button type="button" className={view === "divar" ? "is-active" : ""} onClick={() => navigateTo("divar")} title="دریافت از دیوار">
+              <Globe2 size={19} strokeWidth={2.1} /><span>دیوار</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className={view === "dashboard" ? "is-active" : ""}
+              onClick={() => navigateTo("dashboard")}
+              title="داشبورد"
+            >
+              <BarChart3 size={19} strokeWidth={2.1} />
+              <span>داشبورد</span>
+            </button>
+            <button
+              type="button"
+              className={view === "list" ? "is-active" : ""}
+              onClick={() => navigateTo("list")}
+              title="فهرست فایل‌ها"
+            >
+              <LayoutDashboard size={19} strokeWidth={2.1} />
+              <span>فهرست</span>
+            </button>
+            <button
+              type="button"
+              className={view === "form" && !form.id ? "is-active" : ""}
+              onClick={startNew}
+              title="افزودن فایل"
+            >
+              <Plus size={20} strokeWidth={2.25} />
+              <span>جدید</span>
+            </button>
+            <button type="button" className={view === "leads" ? "is-active" : ""} onClick={() => navigateTo("leads")} title="درخواست‌های مشتریان">
+              <UsersRound size={19} strokeWidth={2.1} />
+              <span>درخواست‌ها</span>
+            </button>
+            <button type="button" onClick={() => setDrawerOpen(true)} title="باز کردن منوی کامل" aria-label="باز کردن منوی کامل مدیریت">
+              <Menu size={19} strokeWidth={2.1} />
+              <span>منو</span>
+            </button>
+          </>
+        )}
         <Link to="/" className="admin-mobile-site" title="مشاهده سایت">
           <Home size={19} strokeWidth={2.1} />
           <span>سایت</span>
