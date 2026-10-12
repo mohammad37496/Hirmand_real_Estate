@@ -2601,7 +2601,7 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
           ) : null}
 
           {view === "music" ? <AdminMusicManager /> : null}
-          {view === "leads" ? <AdminLeadManager /> : null}
+          {view === "leads" ? <AdminLeadManager staffMode={staffMode} /> : null}
           {view === "messages" ? <AdminCustomerInbox /> : null}
           {view === "partners" ? <AdminPartnerManager /> : null}
           {view === "consultants" ? <AdminConsultantManager /> : null}
