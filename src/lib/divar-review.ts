@@ -84,6 +84,9 @@ export const approveDivarFile = createServerFn({ method: "POST" })
   .validator(approveSchema)
   .handler(async ({ data }) => {
     const claims = await requireAdmin();
+    if (normalizeAdminRole(claims?.role) === "staff") {
+      throw new Error("تأیید دستی یا تغییر نتیجه فیلتر آگهی‌های دیوار فقط برای مدیر مجاز است.");
+    }
     if (dbSource === "unconfigured") {
       throw new Error("DATABASE_URL تنظیم نشده است.");
     }
@@ -95,9 +98,6 @@ export const approveDivarFile = createServerFn({ method: "POST" })
     );
     const row = rows[0];
     if (!row) throw new Error("فایل دیوار پیدا نشد.");
-    if (String(claims?.role ?? "") === "staff" && (data.force || row.filter_status === "rejected")) {
-      throw new Error("تأیید دستی آگهی‌های ردشده و دور زدن فیلتر آژانس فقط برای مدیر مجاز است.");
-    }
     if (row.filter_status === "imported") {
       throw new Error("این فایل قبلاً در سایت منتشر شده است و تأیید دستی لازم ندارد.");
     }
