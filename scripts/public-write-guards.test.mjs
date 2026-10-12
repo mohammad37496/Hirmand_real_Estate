@@ -40,16 +40,16 @@ test("public property reports check origin and apply a rate limit before databas
 });
 
 test("shared-shortlist creation checks origin and rate-limits writes before database access", () => {
-  assert.match(shortlistRoute, /assertSameOrigin\\(event\\)/);
-  assert.match(shortlistRoute, /consumeAdminAttempt\\(["']shared-shortlist:["']\\s*\\+\\s*clientFingerprint\\(event\\)\\)/);
+  assert.ok(shortlistRoute.includes("assertSameOrigin(event)"));
+  assert.ok(shortlistRoute.includes('consumeAdminAttempt("shared-shortlist:" + clientFingerprint(event))'));
   const throttleIndex = shortlistRoute.indexOf('consumeAdminAttempt("shared-shortlist:"');
   const parseIndex = shortlistRoute.indexOf("schema.safeParse(await readBody(event))");
   assert.ok(throttleIndex >= 0 && parseIndex > throttleIndex);
 });
 
 test("public lead actions check origin and rate-limit capability-token operations", () => {
-  assert.match(publicLeadActionsRoute, /assertSameOrigin\\(event\\)/);
-  assert.match(publicLeadActionsRoute, /consumeAdminAttempt\\(["']public-lead-action:["']\\s*\\+\\s*clientFingerprint\\(event\\)\\)/);
+  assert.ok(publicLeadActionsRoute.includes("assertSameOrigin(event)"));
+  assert.ok(publicLeadActionsRoute.includes('consumeAdminAttempt("public-lead-action:" + clientFingerprint(event))'));
   const throttleIndex = publicLeadActionsRoute.indexOf('consumeAdminAttempt("public-lead-action:"');
   const databaseCheckIndex = publicLeadActionsRoute.indexOf('dbSource === "unconfigured"');
   assert.ok(throttleIndex >= 0 && databaseCheckIndex > throttleIndex);
