@@ -1940,7 +1940,7 @@ export const saveProperty = createServerFn({ method: "POST" })
         data.transactionType,
         data.propertyType,
         data.neighborhood,
-        data.address || null,
+        role === "staff" ? null : data.address || null,
         data.areaM2 ?? null,
         data.bedrooms ?? null,
         data.bathrooms ?? null,
@@ -1979,9 +1979,9 @@ export const saveProperty = createServerFn({ method: "POST" })
         // violated the NOT NULL constraint and made every property create or
         // update from /admin fail with
         // `null value in column "owner_name" of relation "properties"`.
-        data.ownerName.trim(),
-        data.ownerPhone.trim(),
-        data.ownerInfo.trim(),
+        role === "staff" ? "" : data.ownerName.trim(),
+        role === "staff" ? "" : data.ownerPhone.trim(),
+        role === "staff" ? "" : data.ownerInfo.trim(),
         data.availabilityStatus,
         data.internalPriority,
         data.internalNote,
