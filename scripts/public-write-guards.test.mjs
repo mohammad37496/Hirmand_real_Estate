@@ -29,12 +29,13 @@ test("public lead intake checks origin and applies a rate limit before parsing o
 });
 
 test("public property reports check origin and apply a rate limit before database writes", () => {
+  const originIndex = reportsRoute.indexOf("assertSameOrigin(event);");
+  const bodyReadIndex = reportsRoute.indexOf("readBody(event)");
   const publicBranchIndex = reportsRoute.indexOf("if (!wantsAdmin)");
-  const originIndex = reportsRoute.indexOf("assertSameOrigin(event);", publicBranchIndex);
   const throttleIndex = reportsRoute.indexOf('consumeAdminAttempt("property-report:"');
   const payloadParseIndex = reportsRoute.indexOf("publicSchema.safeParse(body)");
-  assert.ok(publicBranchIndex >= 0 && originIndex > publicBranchIndex);
-  assert.ok(throttleIndex > originIndex);
+  assert.ok(originIndex >= 0 && bodyReadIndex > originIndex);
+  assert.ok(publicBranchIndex > bodyReadIndex && throttleIndex > publicBranchIndex);
   assert.ok(payloadParseIndex > throttleIndex);
 });
 
