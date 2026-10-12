@@ -37,7 +37,7 @@ export function csvCell(value: unknown): string {
   let text = String(value ?? "").replace(/\r?\n/g, " ");
   // Spreadsheet software may evaluate formulas even when preceded by spaces
   // or control whitespace; force such cells to text before CSV quoting.
-  if (/^[\s\u0000-\u001f]*[=+\-@]/.test(text)) text = "'" + text;
+  if (/^[=+\-@]/.test(text.trimStart())) text = "'" + text;
   return /[",]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
 }
 
