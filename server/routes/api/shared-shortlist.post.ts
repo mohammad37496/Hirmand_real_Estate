@@ -1,6 +1,7 @@
 import { createError, defineEventHandler, readBody, setResponseHeader } from "h3";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
+import { assertSameOrigin, clientFingerprint, consumeAdminAttempt, tooManyAttemptsError } from "@/lib/admin-rate-limit.server";
 
 const schema = z.object({
   slugs: z.array(z.string().trim().min(1).max(220)).min(1).max(6),
@@ -14,6 +15,10 @@ function cleanToken() {
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
+  assertSameOrigin(event);
+  const attempt = await consumeAdminAttempt("shared-shortlist:" + clientFingerprint(event));
+  if (!attempt.allowed) throw tooManyAttemptsError(attempt.retryAfterSeconds);
+
   const parsed = schema.safeParse(await readBody(event));
   if (!parsed.success) throw createError({ statusCode: 422, statusMessage: "فهرست فایل‌های اشتراکی نامعتبر است." });
   if (dbSource === "unconfigured") throw createError({ statusCode: 503, statusMessage: "اشتراک آنلاین در حال حاضر فعال نیست." });

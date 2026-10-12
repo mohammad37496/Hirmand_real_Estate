@@ -2,7 +2,7 @@ import { createError, defineEventHandler, getCookie, readBody, setResponseHeader
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
-import { assertSameOrigin } from "@/lib/admin-rate-limit.server";
+import { assertSameOrigin, clientFingerprint, consumeAdminAttempt, tooManyAttemptsError } from "@/lib/admin-rate-limit.server";
 import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 
 const VISITOR_COOKIE = "hirmand_visitor_id";
@@ -26,7 +26,6 @@ async function requireAdmin(event: H3Event) {
   if (!await verifyAdminSessionToken(token)) {
     throw createError({ statusCode: 401, statusMessage: "نشست مدیریت معتبر نیست." });
   }
-  assertSameOrigin(event);
   const claims = await getAdminSessionClaims(token);
   if (!hasAdminPermission(normalizeAdminRole(claims?.role), "property.manage")) {
     throw createError({ statusCode: 403, statusMessage: "دسترسی مدیریت گزارش‌های فایل برای این حساب فعال نیست." });
@@ -35,11 +34,15 @@ async function requireAdmin(event: H3Event) {
 
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, "cache-control", "no-store");
+  assertSameOrigin(event);
   const body = await readBody(event).catch(() => ({}));
   const action = String((body as { action?: unknown })?.action ?? "");
   const wantsAdmin = action === "list" || action === "updateStatus";
 
   if (!wantsAdmin) {
+    const attempt = await consumeAdminAttempt("property-report:" + clientFingerprint(event));
+    if (!attempt.allowed) throw tooManyAttemptsError(attempt.retryAfterSeconds);
+
     if (dbSource === "unconfigured") {
       throw createError({ statusCode: 503, statusMessage: "پایگاه داده تنظیم نشده است." });
     }

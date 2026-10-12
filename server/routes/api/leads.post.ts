@@ -1,4 +1,5 @@
-import { createError, defineEventHandler, getCookie, readBody } from "h3";
+import { createError, defineEventHandler, getCookie, readBody, setResponseHeader } from "h3";
+import { assertSameOrigin, clientFingerprint, consumeAdminAttempt, tooManyAttemptsError } from "@/lib/admin-rate-limit.server";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
 import { buildBudgetLeadNote, budgetEquivalent } from "@/lib/budget-lead";
@@ -155,6 +156,11 @@ const schema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
+  setResponseHeader(event, "cache-control", "no-store");
+  assertSameOrigin(event);
+  const attempt = await consumeAdminAttempt("public-lead:" + clientFingerprint(event));
+  if (!attempt.allowed) throw tooManyAttemptsError(attempt.retryAfterSeconds);
+
   const parsed = schema.safeParse(await readBody(event));
   if (!parsed.success) throw createError({ statusCode: 422, statusMessage: "اطلاعات درخواست ناقص یا نامعتبر است." });
   if (dbSource === "unconfigured") throw createError({ statusCode: 503, statusMessage: "ثبت آنلاین درخواست در حال حاضر فعال نیست." });
