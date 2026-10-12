@@ -1525,12 +1525,12 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
           latitude: form.latitude,
           longitude: form.longitude,
           virtualTourUrl: form.virtualTourUrl.trim(),
-          status: form.status,
+          status: staffMode ? "draft" : form.status,
           availabilityStatus: form.availabilityStatus,
           internalPriority: form.internalPriority,
           internalNote: form.internalNote.trim(),
-          featured: form.featured,
-          featuredUntil: form.featuredUntil
+          featured: staffMode ? false : form.featured,
+          featuredUntil: staffMode ? null : form.featuredUntil
             ? (() => {
                 const date = new Date(form.featuredUntil);
                 if (!Number.isFinite(date.getTime())) throw new Error("تاریخ پایان ویژه نامعتبر است.");
@@ -1539,6 +1539,16 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
             : null,
         },
       });
+      if (staffMode) {
+        toast.success("فایل به‌صورت پیش‌نویس ثبت شد؛ انتشار آن به تأیید مدیر نیاز دارد.");
+        clearDraft(draftKeyRef.current);
+        setForm(emptyForm());
+        setFormDirty(false);
+        setDraftRestored(null);
+        setChangeHistory([]);
+        setView("staffHome");
+        return;
+      }
       toast.success(form.id ? "فایل به‌روزرسانی شد." : "فایل جدید ذخیره شد.");
       clearDraft(draftKeyRef.current);
       setForm(propertyToForm(result));
@@ -3058,17 +3068,19 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
                         onChange={(e) => update("contactPhone", e.target.value)}
                       />
                     </label>
-                    <label className="field">
-                      <span>وضعیت انتشار</span>
-                      <select
-                        value={form.status}
-                        onChange={(e) => update("status", e.target.value as PublishStatus)}
-                      >
-                        <option value="published" disabled={adminRole !== "owner" && adminRole !== "manager"}>منتشرشده</option>
-                        <option value="draft">پیش‌نویس</option>
-                        <option value="archived">بایگانی</option>
-                      </select>
-                    </label>
+{!staffMode ? (
+                      <label className="field">
+                        <span>وضعیت انتشار</span>
+                        <select
+                          value={form.status}
+                          onChange={(e) => update("status", e.target.value as PublishStatus)}
+                        >
+                          <option value="published" disabled={adminRole !== "owner" && adminRole !== "manager"}>منتشرشده</option>
+                          <option value="draft">پیش‌نویس</option>
+                          <option value="archived">بایگانی</option>
+                        </select>
+                      </label>
+                    ) : null}
                     <label className="field">
                       <span>وضعیت معامله</span>
                       <select
@@ -3080,32 +3092,36 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
                         ))}
                       </select>
                     </label>
-                    <label
-                      className="field"
-                      style={{ display: "flex", alignItems: "center", gap: 10, paddingTop: 22 }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={form.featured}
-                        onChange={(e) => update("featured", e.target.checked)}
-                        style={{ accentColor: "var(--brass-600)", width: 18, height: 18 }}
-                      />
-                      <span style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--navy-900)", fontWeight: 700 }}>
-                        <Star size={15} /> فایل ویژه
-                      </span>
-                    </label>
-                    <label className="field">
-                      <span>پایان ویژه (اختیاری)</span>
-                      <input
-                        type="datetime-local"
-                        value={form.featuredUntil}
-                        onChange={(e) => update("featuredUntil", e.target.value)}
-                        disabled={!form.featured}
-                      />
-                      <small className="admin-field-help">
-                        خالی = بدون انقضا. بعد از این زمان، فایل خودکار از اولویت «ویژه» خارج می‌شود.
-                      </small>
-                    </label>
+{!staffMode ? (
+                    <>
+                      <label
+                        className="field"
+                        style={{ display: "flex", alignItems: "center", gap: 10, paddingTop: 22 }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={form.featured}
+                          onChange={(e) => update("featured", e.target.checked)}
+                          style={{ accentColor: "var(--brass-600)", width: 18, height: 18 }}
+                        />
+                        <span style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--navy-900)", fontWeight: 700 }}>
+                          <Star size={15} /> فایل ویژه
+                        </span>
+                      </label>
+                      <label className="field">
+                        <span>پایان ویژه (اختیاری)</span>
+                        <input
+                          type="datetime-local"
+                          value={form.featuredUntil}
+                          onChange={(e) => update("featuredUntil", e.target.value)}
+                          disabled={!form.featured}
+                        />
+                        <small className="admin-field-help">
+                          خالی = بدون انقضا. بعد از این زمان، فایل خودکار از اولویت «ویژه» خارج می‌شود.
+                        </small>
+                      </label>
+                    </>
+                    ) : null}
                   </div>
                 </fieldset>
               </div>
@@ -3263,7 +3279,7 @@ export function AdminPropertiesPage({ mode = "admin" }: { mode?: "admin" | "staf
                 </div>
                 <div className="admin-sticky-actions">
                   <AdminPropertyPreview data={{title:form.title,transactionType:form.transactionType,propertyType:form.propertyType,neighborhood:form.neighborhood,areaM2:form.areaM2,bedrooms:form.bedrooms,bathrooms:form.bathrooms,floor:form.floorLabel==="suite"?"سوئیت":form.floor,parking:form.parking,elevator:form.elevator,storage:form.storage,price:form.price,deposit:form.deposit,rent:form.rent,description:form.description,images:form.images,contactName:form.contactName,contactPhone:form.contactPhone,featured:form.featured,status:form.status}} />
-                  <button type="button" className="btn-ghost" onClick={() => navigateTo("list")} disabled={saving}>
+                  <button type="button" className="btn-ghost" onClick={() => navigateTo(staffMode ? "staffHome" : "list")} disabled={saving}>
                     انصراف
                   </button>
                   <button type="submit" className="btn-gold" disabled={saving} aria-busy={saving}>
