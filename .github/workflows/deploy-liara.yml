@@ -26,32 +26,6 @@ jobs:
       - name: Install Liara CLI
         run: npm i -g @liara/cli@9
 
-      # A 404 "Could not find the app" means this token cannot see the target app
-      # or the app slug is wrong. Filter output to hirmand only: action logs
-      # are visible on this public repository, so do not disclose other app names.
-      - name: Verify Liara credentials and list visible apps
-        env:
-          LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
-          LIARA_TEAM_ID: ${{ secrets.LIARA_TEAM_ID }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [[ -z "${LIARA_TOKEN:-}" ]]; then
-            echo "::error::GitHub Actions secret LIARA_API_TOKEN is empty or unavailable."
-            exit 1
-          fi
-
-          TEAM_ARGS=()
-          if [[ -n "${LIARA_TEAM_ID:-}" ]]; then
-            TEAM_ARGS+=(--team-id="${LIARA_TEAM_ID}")
-            echo "Checking apps in the configured Liara team."
-          else
-            echo "Checking apps in the Liara account associated with LIARA_API_TOKEN."
-            echo "If hirmand belongs to a team, add a GitHub Actions secret named LIARA_TEAM_ID."
-          fi
-
-          liara app list --api-token="${LIARA_TOKEN}" "${TEAM_ARGS[@]}" --filter="name=hirmand" --output json
-
       - name: Deploy
         env:
           LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
@@ -61,6 +35,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if [[ -z "${LIARA_TOKEN:-}" ]]; then
+            echo "::error::GitHub Actions secret LIARA_API_TOKEN is empty or unavailable."
+            exit 1
+          fi
           TEAM_ARGS=()
           if [[ -n "${LIARA_TEAM_ID:-}" ]]; then
             TEAM_ARGS+=(--team-id="${LIARA_TEAM_ID}")
@@ -78,6 +56,8 @@ jobs:
 
       - name: Diagnose Liara runtime on failure
         if: failure()
+        continue-on-error: true
+        timeout-minutes: 2
         env:
           LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
           LIARA_TEAM_ID: ${{ secrets.LIARA_TEAM_ID }}
