@@ -12,7 +12,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { dbSource, getSql } from "@/lib/db";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { ADMIN_SESSION_COOKIE, getAdminSessionClaims, verifyAdminSessionToken } from "@/lib/admin-session.server";
+import { hasAdminPermission, normalizeAdminRole } from "@/lib/admin-roles";
 import { assertAdminServerFnOrigin } from "@/lib/admin-server-fn-guard.server";
 import {
   CATEGORIES,
@@ -35,11 +36,17 @@ import {
  * import-protection plugin then fails the production build.
  */
 async function requireAdmin() {
-  if (await verifyAdminSessionToken(getCookie(ADMIN_SESSION_COOKIE))) {
-    assertAdminServerFnOrigin();
-    return;
+  const token = getCookie(ADMIN_SESSION_COOKIE);
+  if (!(await verifyAdminSessionToken(token))) {
+    throw new Error("نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.");
   }
-  throw new Error("نشست مدیریت معتبر نیست. دوباره وارد پنل شوید.");
+  assertAdminServerFnOrigin();
+  const claims = await getAdminSessionClaims(token);
+  const role = normalizeAdminRole(claims?.role);
+  if (!hasAdminPermission(role, "divar.import")) {
+    throw new Error("دسترسی بررسی فایل‌های دیوار برای این حساب فعال نیست.");
+  }
+  return claims;
 }
 
 function tolerantMoney(value: string | null): string | null {
@@ -76,7 +83,7 @@ const approveSchema = z.object({
 export const approveDivarFile = createServerFn({ method: "POST" })
   .validator(approveSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    const claims = await requireAdmin();
     if (dbSource === "unconfigured") {
       throw new Error("DATABASE_URL تنظیم نشده است.");
     }
@@ -88,6 +95,9 @@ export const approveDivarFile = createServerFn({ method: "POST" })
     );
     const row = rows[0];
     if (!row) throw new Error("فایل دیوار پیدا نشد.");
+    if (String(claims?.role ?? "") === "staff" && (data.force || row.filter_status === "rejected")) {
+      throw new Error("تأیید دستی آگهی‌های ردشده و دور زدن فیلتر آژانس فقط برای مدیر مجاز است.");
+    }
     if (row.filter_status === "imported") {
       throw new Error("این فایل قبلاً در سایت منتشر شده است و تأیید دستی لازم ندارد.");
     }
@@ -206,7 +216,10 @@ const revokeSchema = z.object({ id: z.string().min(1) });
 export const revokeDivarOverride = createServerFn({ method: "POST" })
   .validator(revokeSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    const claims = await requireAdmin();
+    if (String(claims?.role ?? "") === "staff") {
+      throw new Error("لغو تأیید دستی آگهی‌های دیوار فقط برای مدیر مجاز است.");
+    }
     if (dbSource === "unconfigured") {
       throw new Error("DATABASE_URL تنظیم نشده است.");
     }
@@ -247,7 +260,10 @@ const deleteSchema = z.object({
 export const deleteDivarFiles = createServerFn({ method: "POST" })
   .validator(deleteSchema)
   .handler(async ({ data }) => {
-    await requireAdmin();
+    const claims = await requireAdmin();
+    if (String(claims?.role ?? "") === "staff") {
+      throw new Error("حذف فایل‌های دیوار فقط برای مدیر مجاز است.");
+    }
     if (dbSource === "unconfigured") {
       throw new Error("DATABASE_URL تنظیم نشده است.");
     }
