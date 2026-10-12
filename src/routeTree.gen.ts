@@ -279,6 +279,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/staff': typeof StaffRoute
   '/admin-mobile-management': typeof AdminMobileManagementRoute
   '/admin-mobile-management/$employeeId': typeof AdminMobileManagementEmployeeIdRoute
   '/staff-agreement': typeof StaffAgreementRoute
@@ -383,6 +384,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/staff'
     | '/admin-mobile-management'
     | '/admin-mobile-management/$employeeId'
     | '/budget-match'
