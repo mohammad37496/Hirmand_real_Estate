@@ -59,3 +59,7 @@ test-results/
 tmp/
 temp/
 artifacts/imagine_images/
+
+# Local camera attendance bridge secrets, encrypted templates, queue and calibration frames
+tools/attendance-camera-bridge/config.json
+tools/attendance-camera-bridge/data/
