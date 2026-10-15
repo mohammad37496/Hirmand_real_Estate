@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { LocateFixed, MapPin, Minus, Plus } from "lucide-react";
 import type { PropertyCardData } from "@/lib/properties";
 
@@ -138,8 +138,8 @@ export function PropertiesMap({
       for (let rawX = startX; rawX <= endX; rawX += 1) {
         const x = ((rawX % totalTiles) + totalTiles) % totalTiles;
         result.push({
-          key: \`${view.zoom}/${x}/${rawY}\`,
-          url: \`https://tile.openstreetmap.org/${view.zoom}/${x}/${rawY}.png\`,
+          key: `${view.zoom}/${x}/${rawY}`,
+          url: `https://tile.openstreetmap.org/${view.zoom}/${x}/${rawY}.png`,
           left: rawX * TILE_SIZE - worldLeft,
           top: rawY * TILE_SIZE - worldTop,
         });
@@ -159,7 +159,7 @@ export function PropertiesMap({
       const x = point.x - worldLeft;
       const y = point.y - worldTop;
       if (x < -60 || y < -60 || x > size.width + 60 || y > size.height + 60) continue;
-      const key = \`${Math.floor(x / 56)}:${Math.floor(y / 56)}\`;
+      const key = `${Math.floor(x / 56)}:${Math.floor(y / 56)}`;
       const group = groups.get(key);
       if (group) {
         group.x = (group.x * group.items.length + x) / (group.items.length + 1);
@@ -177,7 +177,7 @@ export function PropertiesMap({
     [properties],
   );
 
-  const onMapPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+  const onMapPointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0 || (event.target as HTMLElement).closest("button, a")) return;
     dragOrigin.current = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
     setDragOffset({ x: 0, y: 0 });
@@ -185,7 +185,7 @@ export function PropertiesMap({
     event.currentTarget.setPointerCapture(event.pointerId);
   }, []);
 
-  const onMapPointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+  const onMapPointerMove = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
     if (!dragOrigin.current || dragOrigin.current.pointerId !== event.pointerId) return;
     setDragOffset({
       x: event.clientX - dragOrigin.current.x,
@@ -193,7 +193,7 @@ export function PropertiesMap({
     });
   }, []);
 
-  const onMapPointerUp = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+  const onMapPointerUp = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
     const origin = dragOrigin.current;
     if (!origin || origin.pointerId !== event.pointerId) return;
     const deltaX = event.clientX - origin.x;
@@ -216,11 +216,11 @@ export function PropertiesMap({
 
   const resetMap = useCallback(() => setView(DEFAULT_VIEW), []);
 
-  const openCurrentMap = \`https://www.openstreetmap.org/#map=${view.zoom}/${view.latitude.toFixed(6)}/${view.longitude.toFixed(6)}\`;
+  const openCurrentMap = `https://www.openstreetmap.org/#map=${view.zoom}/${view.latitude.toFixed(6)}/${view.longitude.toFixed(6)}`;
 
   return (
     <div
-      className={\`pf-map-canvas${dragging ? " is-dragging" : ""}\`}
+      className={`pf-map-canvas${dragging ? " is-dragging" : ""}`}
       ref={mapRef}
       role="region"
       aria-label="نقشه تعاملی موقعیت فایل‌های ملکی در اصفهان"
@@ -253,18 +253,18 @@ export function PropertiesMap({
         const active = marker.items.some((item) => item.id === selectedPropertyId);
         const property = marker.items.find((item) => item.id === selectedPropertyId) ?? marker.items[0];
         const label = marker.items.length > 1
-          ? \`${marker.items.length.toLocaleString("fa-IR")} فایل\`
+          ? `${marker.items.length.toLocaleString("fa-IR")} فایل`
           : propertyAmountLabel(property);
         return (
           <button
             type="button"
             key={marker.items.map((item) => item.id).sort().join(":")}
-            className={\`pf-map-marker${active ? " is-active" : ""}${marker.items.length > 1 ? " is-cluster" : ""}\`}
+            className={`pf-map-marker${active ? " is-active" : ""}${marker.items.length > 1 ? " is-cluster" : ""}`}
             style={{ left: marker.x, top: marker.y }}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={() => onSelect(property.id)}
-            title={marker.items.length > 1 ? \`${marker.items.length.toLocaleString("fa-IR")} فایل در این محدوده\` : property.title}
-            aria-label={marker.items.length > 1 ? \`${marker.items.length} فایل در این محدوده\` : \`انتخاب فایل ${property.title}\`}
+            title={marker.items.length > 1 ? `${marker.items.length.toLocaleString("fa-IR")} فایل در این محدوده` : property.title}
+            aria-label={marker.items.length > 1 ? `${marker.items.length} فایل در این محدوده` : `انتخاب فایل ${property.title}`}
           >
             {label}
           </button>
