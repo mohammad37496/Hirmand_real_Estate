@@ -26,16 +26,16 @@ export function normalizeAreaDirectoryKey(value: string): string {
     .normalize("NFKC")
     .replace(/[يى]/g, "ی")
     .replace(/ك/g, "ک")
-    .replace(/[ۀة]/g, "ه")
+    .replace(/(?:ۀ|ة)/g, "ه")
     .replace(/[آأإٱ]/g, "ا")
-    .replace(/[\u064b-\u065f\u0670\u0640]/g, "")
-    .replace(/[\u200c\u200d\u200e\u200f\u202a-\u202e]/g, "")
+    .replace(/(?:[\u064b-\u065f]|\u0670|\u0640)/g, "")
+    .replace(/(?:\u200c|\u200d|\u200e|\u200f|[\u202a-\u202e])/g, "")
     .toLocaleLowerCase("fa")
     .replace(/[^\p{L}\p{N}]+/gu, "");
 }
 
 function nameKeys(value: string): string[] {
-  return [...new Set(String(value ?? "").split(/[\/،؛|]/).map(normalizeAreaDirectoryKey).filter(Boolean))];
+  return [...new Set(String(value ?? "").split(/[،؛|]/).flatMap((part) => part.split("/")).map(normalizeAreaDirectoryKey).filter(Boolean))];
 }
 
 function safeBbox(value: readonly number[] | undefined): [number, number, number, number] | undefined {
