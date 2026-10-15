@@ -46,6 +46,7 @@ export function findAreaBySlug(slug: string): AreaInfo | null {
   return allAreas().find((area) =>
     area.slug === normalizedSlug ||
     Boolean(area.divarSlug && area.divarSlug.toLowerCase() === raw) ||
+    Boolean(area.divarSecondSlug && area.divarSecondSlug.toLowerCase() === raw) ||
     normalizeAreaDirectoryKey(area.name) === normalizedName
   ) ?? null;
 }

@@ -104,6 +104,7 @@ const districts = rawDistricts.map((d) => ({
   id: d.id,
   name: String(d.name),
   slug: String(d.slug),
+  second_slug: d.second_slug == null ? null : String(d.second_slug),
   default_location: {
     latitude: coordinate(d.default_location.latitude ?? d.default_location.lat, 90),
     longitude: coordinate(d.default_location.longitude ?? d.default_location.lon ?? d.default_location.lng, 180),

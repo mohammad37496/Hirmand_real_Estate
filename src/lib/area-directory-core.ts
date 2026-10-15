@@ -16,6 +16,7 @@ export type DirectoryNeighborhood = {
   label?: string;
   divarDistrictId?: string;
   divarSlug?: string;
+  divarSecondSlug?: string | null;
   divarBbox?: [number, number, number, number];
 };
 
@@ -45,25 +46,72 @@ function safeBbox(value: readonly number[] | undefined): [number, number, number
   return [west, south, east, north];
 }
 
-/** Enrich curated items, preserve every unmatched curated place, and add all remaining Divar records. */
+/** Carefully reviewed spelling aliases: only names known to refer to the same area. */
+const AREA_NAME_ALIASES = new Map<string, string>(
+  [
+    ["درب‌کوش", "درب کوشک"],
+    ["شهزاده ابراهیم", "شاهزاده ابراهیم"],
+    ["پوزوه", "پزوه"],
+    ["پنارت", "پینارت"],
+    ["عسکریه", "عسگریه"],
+    ["آندوان", "اندوان"],
+    ["والدان", "ولدان"],
+    ["کاردالان", "کارلادان"],
+    ["لادان", "جنیران (لادان)"],
+    ["اسلامی", "محله اسلامی"],
+    ["شهید کشوری", "کوی شهید کشوری"],
+    ["گل‌نرگس", "شهرک گل نرگس"],
+    ["جوان", "جاوان"],
+    ["قلعه تبرک", "قلعه طبره"],
+  ].map(([source, target]) => [normalizeAreaDirectoryKey(source), normalizeAreaDirectoryKey(target)] as [string, string]),
+);
+
+/** Enrich every known area with source geometry, and add remaining Divar records. */
 export function mergeNeighborhoodGroups(
   curatedGroups: readonly { title: string; items: readonly DirectoryNeighborhood[] }[],
   catalog: readonly DivarCatalogEntry[],
 ): Array<{ title: string; items: DirectoryNeighborhood[] }> {
   const byName = new Map<string, DivarCatalogEntry[]>();
   for (const district of catalog) {
-    for (const key of nameKeys(district.name)) byName.set(key, [...(byName.get(key) ?? []), district]);
+    const key = normalizeAreaDirectoryKey(district.name);
+    byName.set(key, [...(byName.get(key) ?? []), district]);
   }
+
+  const curated = curatedGroups.flatMap((group, groupIndex) =>
+    group.items.map((item, itemIndex) => ({ item, groupIndex, itemIndex })),
+  );
+  const matchedByIndex = new Map<number, DivarCatalogEntry>();
   const usedIds = new Set<string>();
-  const result = curatedGroups.map(group => ({
+
+  // Pass one: exact normalized names always take precedence over aliases.
+  curated.forEach(({ item }, index) => {
+    const matches = [...new Map(
+      nameKeys(item.name).flatMap((key) => byName.get(key) ?? []).map((candidate) => [String(candidate.id), candidate]),
+    ).values()];
+    if (matches.length === 1 && !usedIds.has(String(matches[0].id))) {
+      matchedByIndex.set(index, matches[0]);
+      usedIds.add(String(matches[0].id));
+    }
+  });
+
+  // Pass two: map only reviewed alternate spellings when they resolve unambiguously.
+  curated.forEach(({ item }, index) => {
+    if (matchedByIndex.has(index)) return;
+    const alias = AREA_NAME_ALIASES.get(normalizeAreaDirectoryKey(item.name));
+    if (!alias) return;
+    const matches = byName.get(alias) ?? [];
+    if (matches.length === 1 && !usedIds.has(String(matches[0].id))) {
+      matchedByIndex.set(index, matches[0]);
+      usedIds.add(String(matches[0].id));
+    }
+  });
+
+  let flatIndex = 0;
+  const result = curatedGroups.map((group) => ({
     title: group.title,
-    items: group.items.map(item => {
-      const matches = nameKeys(item.name).flatMap(key => byName.get(key) ?? []);
-      const uniqueMatches = [...new Map(matches.map(match => [String(match.id), match])).values()];
-      const match = uniqueMatches.length === 1 && !usedIds.has(String(uniqueMatches[0].id))
-        ? uniqueMatches[0] : undefined;
+    items: group.items.map((item) => {
+      const match = matchedByIndex.get(flatIndex++);
       if (!match) return { ...item };
-      usedIds.add(String(match.id));
       const lat = Number(match.default_location?.latitude);
       const lng = Number(match.default_location?.longitude);
       const bbox = safeBbox(match.bbox);
@@ -74,14 +122,15 @@ export function mergeNeighborhoodGroups(
         ...(hasCoordinates ? { lat, lng } : {}),
         divarDistrictId: String(match.id),
         divarSlug: match.slug,
+        divarSecondSlug: match.second_slug ?? null,
         ...(bbox ? { divarBbox: bbox } : {}),
       };
     }),
   }));
 
-  const slugs = new Set(result.flatMap(group => group.items.map(item => item.divarSlug).filter((v): v is string => Boolean(v))));
-  const extras = catalog.filter(district => !usedIds.has(String(district.id)))
-    .sort((a,b) => a.name.localeCompare(b.name, "fa", { sensitivity: "base", numeric: true }))
+  const slugs = new Set(result.flatMap((group) => group.items.flatMap((item) => [item.divarSlug, item.divarSecondSlug].filter((slug): slug is string => Boolean(slug)))));
+  const extras = catalog.filter((district) => !usedIds.has(String(district.id)))
+    .sort((a, b) => a.name.localeCompare(b.name, "fa", { sensitivity: "base", numeric: true }))
     .map((district): DirectoryNeighborhood => {
       const lat = Number(district.default_location?.latitude);
       const lng = Number(district.default_location?.longitude);
@@ -91,6 +140,7 @@ export function mergeNeighborhoodGroups(
       let slug = district.slug || normalizeAreaDirectoryKey(district.name);
       if (slugs.has(slug)) slug = slug + "-" + district.id;
       slugs.add(slug);
+      if (district.second_slug) slugs.add(district.second_slug);
       return {
         name: district.name,
         address: district.name + "، اصفهان",
@@ -99,6 +149,7 @@ export function mergeNeighborhoodGroups(
         ...(hasCoordinates ? { lat, lng } : {}),
         divarDistrictId: String(district.id),
         divarSlug: district.slug,
+        divarSecondSlug: district.second_slug ?? null,
         ...(bbox ? { divarBbox: bbox } : {}),
       };
     });
