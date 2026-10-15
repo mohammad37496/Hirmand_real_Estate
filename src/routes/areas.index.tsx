@@ -24,8 +24,7 @@ export const Route = createFileRoute("/areas/")({
     return {
       areas,
       divarAreaCount: new Set(areas.map((area) => area.divarDistrictId).filter(Boolean)).size,
-      catalogSource: "snapshot" as const,
-    };
+          };
   },
   head: () => {
     const title = `راهنمای محله‌های اصفهان | جست‌وجوی مناطق | ${SITE.shortName}`;
@@ -61,7 +60,7 @@ function normalizePersian(value: string) {
 }
 
 function AreasDirectoryPage() {
-  const { areas, divarAreaCount, catalogSource } = Route.useLoaderData();
+  const { areas, divarAreaCount } = Route.useLoaderData();
   const [query, setQuery] = useState("");
   const [activeGroup, setActiveGroup] = useState("همه");
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
@@ -188,7 +187,7 @@ function AreasDirectoryPage() {
               <h2 id="areas-explorer-title">از کدام محله شروع کنیم؟</h2>
               <p>نام محله را بنویس یا یکی از مناطق زیر را انتخاب کن.</p>
             </div>
-            <span className="areas-source-note"><CheckCircle2 size={14} /> منبع: {catalogSource === "database" ? "دیتابیس سایت" : "نسخهٔ آفلاین داخلی"}</span>
+            <span className="areas-source-note"><CheckCircle2 size={14} /> منبع: کاتالوگ محلی ذخیره‌شده</span>
           </div>
 
           <label className="areas-search-box">
