@@ -209,6 +209,7 @@ export type Neighborhood = {
   label?: string;
   divarDistrictId?: string;
   divarSlug?: string;
+  divarSecondSlug?: string | null;
   divarBbox?: [number, number, number, number];
 };
 
